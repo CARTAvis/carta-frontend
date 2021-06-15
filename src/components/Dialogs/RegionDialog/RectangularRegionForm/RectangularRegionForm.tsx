@@ -1,7 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
-import {Classes, H5, InputGroup, Position, Tooltip} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, FrameStore, RegionCoordinate, RegionStore, NUMBER_FORMAT_LABEL, WCS_PRECISION} from "stores";
@@ -451,7 +452,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
             centerInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
         } else {
             centerInputX = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -461,10 +462,10 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                         onBlur={this.handleCenterWCSXChange}
                         onKeyDown={this.handleCenterWCSXChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
             centerInputY = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -474,7 +475,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                         onBlur={this.handleCenterWCSYChange}
                         onKeyDown={this.handleCenterWCSYChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
         }
         const centerInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
@@ -492,7 +493,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
             );
         } else {
             bottomLeftInputX = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -502,10 +503,10 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                         onBlur={this.handleLeftWCSChange}
                         onKeyDown={this.handleLeftWCSChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
             bottomLeftInputY = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -515,7 +516,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                         onBlur={this.handleBottomWCSChange}
                         onKeyDown={this.handleBottomWCSChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
         }
         const bottomLeftInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(bottomLeftWCSPoint)}` : `Image: ${Point2D.ToString(this.bottomLeftPoint, "px", 3)}`;
@@ -528,7 +529,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
             topRightInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated} />;
         } else {
             topRightInputX = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -538,10 +539,10 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                         onBlur={this.handleRightWCSChange}
                         onKeyDown={this.handleRightWCSChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
             topRightInputY = (
-                <Tooltip content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -551,7 +552,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                         onBlur={this.handleTopWCSChange}
                         onKeyDown={this.handleTopWCSChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
         }
         const topRightInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(topRightWCSPoint)}` : `Image: ${Point2D.ToString(this.topRightPoint, "px", 3)}`;
@@ -564,7 +565,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
             sizeHeightInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={size.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange} />;
         } else {
             sizeWidthInput = (
-                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -574,10 +575,10 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                         onBlur={this.handleWidthWCSChange}
                         onKeyDown={this.handleWidthWCSChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
             sizeHeightInput = (
-                <Tooltip content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
+                <Tooltip2 content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
@@ -587,7 +588,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                         onBlur={this.handleHeightWCSChange}
                         onKeyDown={this.handleHeightWCSChange}
                     />
-                </Tooltip>
+                </Tooltip2>
             );
         }
         const sizeInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;

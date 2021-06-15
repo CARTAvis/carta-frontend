@@ -3,7 +3,7 @@ import {Icon} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import "./CustomIcons.scss";
 
-export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments";
+export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments" | "distanceMeasuring";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number}> {
     static readonly SIZE_STANDARD = 16;
@@ -146,6 +146,13 @@ const momentGeneratorSvg = (
     />
 );
 
+const distanceMeasuringSvg = (
+    <path
+        transform="scale(1.6, 1.6) translate(-2.5, -3)"
+        d="M 11.390625 11.390625 L 10.824219 11.960938 L 10.542969 11.679688 L 11.113281 11.113281 L 9.769531 9.769531 L 9.199219 10.335938 L 8.921875 10.054688 L 9.488281 9.488281 L 8.144531 8.144531 L 7.574219 8.710938 L 7.296875 8.433594 L 7.863281 7.863281 L 6.511719 6.511719 L 5.953125 7.078125 L 5.664062 6.800781 L 6.230469 6.230469 L 4.886719 4.886719 L 4.320312 5.457031 L 4.039062 5.167969 L 4.609375 4.601562 L 3.199219 3.199219 L 3.199219 11.601562 C 3.199219 12.265625 3.734375 12.800781 4.398438 12.800781 L 12.800781 12.800781 Z M 4.800781 11.199219 L 4.800781 7.0625 L 8.9375 11.199219 Z M 4.800781 11.199219 "
+    />
+);
+
 const icons = {
     contour: contourSvg,
     center: centerSvg,
@@ -155,5 +162,6 @@ const icons = {
     stokes: stokesSvg,
     spectralLineQuery: spectralLineQuerySvg,
     smoothing: profileSmoothingSvg,
-    moments: momentGeneratorSvg
+    moments: momentGeneratorSvg,
+    distanceMeasuring: distanceMeasuringSvg
 };

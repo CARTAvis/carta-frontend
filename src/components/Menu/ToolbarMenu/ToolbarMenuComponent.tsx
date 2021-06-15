@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {AppStore, RegionMode, WidgetsStore} from "stores";
 import {ImageViewLayer} from "components";
 import {RegionCreationMode} from "models";
@@ -13,6 +14,7 @@ import "./ToolbarMenuComponent.scss";
 export class ToolbarMenuComponent extends React.Component {
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
         const appStore = AppStore.Instance;
+        appStore.updateActiveLayer(ImageViewLayer.RegionCreating);
         appStore.activeFrame.regionSet.setNewRegionType(type);
         appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
@@ -20,20 +22,12 @@ export class ToolbarMenuComponent extends React.Component {
     regionTooltip = (shape: string) => {
         const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
         return (
-            <span>
-                <br />
-                <i>
-                    <small>
-                        Click-and-drag to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).
-                        <br />
-                        Hold Ctrl to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).
-                        <br />
-                        Change the default creation mode in Preferences.
-                        <br />
-                        Hold shift key to create a {shape}.
-                    </small>
-                </i>
-            </span>
+            <span><br/><i><small>
+                Click-and-drag to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).<br/>
+                Hold Ctrl to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).<br/>
+                Change the default creation mode in Preferences.<br/>
+                Hold shift key to create a {shape}.
+            </small></i></span>
         );
     };
 
@@ -53,87 +47,56 @@ export class ToolbarMenuComponent extends React.Component {
         const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
         const regionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
 
-        const commonTooltip = (
-            <span>
-                <br />
-                <i>
-                    <small>
-                        Drag to place docked widget
-                        <br />
-                        Click to place a floating widget
-                    </small>
-                </i>
-            </span>
-        );
+        const commonTooltip = <span><br/><i><small>Drag to place docked widget<br/>Click to place a floating widget</small></i></span>;
         return (
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
-                    <Tooltip content={<span>Point</span>}>
-                        <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled} />
-                    </Tooltip>
-                    <Tooltip content={<span>Rectangle{this.regionTooltip("square")}</span>}>
-                        <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled} />
-                    </Tooltip>
-                    <Tooltip content={<span>Ellipse{this.regionTooltip("circle")}</span>}>
-                        <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled} />
-                    </Tooltip>
-                    <Tooltip
+                    <Tooltip2 content={<span>Point</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled}/>
+                    </Tooltip2>
+                    <Tooltip2 content={<span>Rectangle{this.regionTooltip("square")}</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled}/>
+                    </Tooltip2>
+                    <Tooltip2 content={<span>Ellipse{this.regionTooltip("circle")}</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled}/>
+                    </Tooltip2>
+                    <Tooltip2
                         content={
-                            <span>
-                                Polygon
-                                <span>
-                                    <br />
-                                    <i>
-                                        <small>
-                                            Define control points with a series of clicks.
-                                            <br />
-                                            Double-click to close the loop and finish polygon creation.
-                                            <br />
-                                            Double-click on a control point to delete it.
-                                            <br />
-                                            Click on a side to create a new control point.
-                                        </small>
-                                    </i>
-                                </span>
-                            </span>
+                            <span>Polygon<span><br/><i><small>Define control points with a series of clicks.<br/>
+                            Double-click to close the loop and finish polygon creation.<br/>
+                            Double-click on a control point to delete it.<br/>
+                            Click on a side to create a new control point.</small></i></span></span>
                         }
+                        position={Position.BOTTOM}
                     >
-                        <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled} />
-                    </Tooltip>
+                        <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled}/>
+                    </Tooltip2>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
                         const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
-                        const trimmedStr = widgetType.replace(/\s+/g, "");
+                        const trimmedStr = widgetType.replace(/\s+/g, '');
                         return (
-                            <Tooltip
-                                key={`${trimmedStr}Tooltip`}
-                                content={
-                                    <span>
-                                        {widgetType}
-                                        {commonTooltip}
-                                    </span>
-                                }
-                            >
+                            <Tooltip2 key={`${trimmedStr}Tooltip`} content={<span>{widgetType}{commonTooltip}</span>}>
                                 <AnchorButton
-                                    icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)}
+                                    icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName}/> : widgetConfig.icon as IconName}
                                     id={`${trimmedStr}Button`} // id particularly is for drag source in WidgetStore
                                     onClick={widgetConfig.onClick}
                                 />
-                            </Tooltip>
+                            </Tooltip2>
                         );
                     })}
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
-                    <Tooltip content={<span>File Header</span>}>
-                        <AnchorButton icon={"app-header"} onClick={dialogStore.showFileInfoDialog} active={dialogStore.fileInfoDialogVisible} />
-                    </Tooltip>
-                    <Tooltip content={<span>Preferences</span>}>
-                        <AnchorButton icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible} />
-                    </Tooltip>
-                    <Tooltip content={<span>Contours</span>}>
-                        <AnchorButton icon={<CustomIcon icon={"contour"} />} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible} />
-                    </Tooltip>
+                    <Tooltip2 content={<span>File Header</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon={"app-header"} onClick={dialogStore.showFileInfoDialog} active={dialogStore.fileInfoDialogVisible}/>
+                    </Tooltip2>
+                    <Tooltip2 content={<span>Preferences</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible}/>
+                    </Tooltip2>
+                    <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible}/>
+                    </Tooltip2>
                 </ButtonGroup>
             </React.Fragment>
         );
