@@ -1,7 +1,8 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Popover, Position, Spinner, Switch, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Position, Spinner, Switch} from "@blueprintjs/core";
+import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import SplitPane, { Pane } from "react-split-pane";
 import ReactResizeDetector from "react-resize-detector";
@@ -297,13 +298,13 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <Switch checked={widgetStore.intensityLimitEnabled} onChange={() => widgetStore.toggleIntensityLimit()}/>
                         </FormGroup>
                         {widgetStore.intensityLimitEnabled &&
-                        <Tooltip content="CDMS/JPL intensity (log)" position={Position.BOTTOM}>
+                        <Tooltip2 content="CDMS/JPL intensity (log)" position={Position.BOTTOM}>
                             <SafeNumericInput
                                 value={widgetStore.intensityLimitValue}
                                 buttonPosition="none"
                                 onValueChange={val => widgetStore.setIntensityLimitValue(val)}
                             />
-                        </Tooltip>
+                        </Tooltip2>
                         }
                     </ControlGroup>
                 </div>
@@ -331,7 +332,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
         const isSelectedWidgetExisted = widgetStore.selectedSpectralProfilerID && AppStore.Instance.widgetsStore.getSpectralWidgetStoreByID(widgetStore.selectedSpectralProfilerID);
         const widgetMenu = (
-            <Popover
+            <Popover2
                 content={
                     <Menu>
                         {AppStore.Instance.widgetsStore.spectralProfilerList.map(widgetID =>
@@ -354,7 +355,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 <Button disabled={AppStore.Instance.widgetsStore.spectralProfilerList.length <= 0} rightIcon="caret-down">
                     {isSelectedWidgetExisted ? widgetStore.selectedSpectralProfilerID : "----"}
                 </Button>
-            </Popover>
+            </Popover2>
         );
 
         const queryResultTableProps: FilterableTableComponentProps = {
@@ -419,28 +420,28 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                             {widgetMenu}
                         </FormGroup>
-                        <Tooltip content="Apply filter" position={Position.BOTTOM}>
+                        <Tooltip2 content="Apply filter" position={Position.BOTTOM}>
                             <AnchorButton
                                 text="Filter"
                                 intent={Intent.PRIMARY}
                                 disabled={widgetStore.numDataRows <= 0}
                                 onClick={this.handleFilter}
                             />
-                        </Tooltip>
-                        <Tooltip content="Reset filter" position={Position.BOTTOM}>
+                        </Tooltip2>
+                        <Tooltip2 content="Reset filter" position={Position.BOTTOM}>
                             <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.handleResetFilter}/>
-                        </Tooltip>
-                        <Tooltip content={plotTip} position={Position.BOTTOM}>
+                        </Tooltip2>
+                        <Tooltip2 content={plotTip} position={Position.BOTTOM}>
                             <AnchorButton
                                 text="Plot"
                                 intent={Intent.PRIMARY}
                                 disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
                                 onClick={this.handlePlot}
                             />
-                        </Tooltip>
-                        <Tooltip content="Clear plotted lines" position={Position.BOTTOM}>
+                        </Tooltip2>
+                        <Tooltip2 content="Clear plotted lines" position={Position.BOTTOM}>
                             <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear}/>
-                        </Tooltip>
+                        </Tooltip2>
                     </div>
                 </div>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>

@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Classes, Dialog, ProgressBar, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, Dialog, ProgressBar} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {AppStore} from "stores";
 import {toFixed} from "utilities";
 
@@ -56,9 +57,9 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
                 {this.props.cancellable &&
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Tooltip content="Cancel the current task">
+                        <Tooltip2 content="Cancel the current task">
                             <AnchorButton onClick={this.props.onCancel}>Cancel</AnchorButton>
-                        </Tooltip>
+                        </Tooltip2>
                     </div>
                 </div>
                 }

@@ -3,7 +3,8 @@ import * as Plotly from "plotly.js";
 import Plot from "react-plotly.js";
 import {action, autorun, computed, runInAction, observable, makeObservable} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
+import {FormGroup, AnchorButton, Intent, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import FuzzySearch from "fuzzy-search";
@@ -813,11 +814,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         <ProfilerInfoComponent info={this.genProfilerInfo}/>
                     </div>
                     <div className="bp3-dialog-footer-actions">
-                        <Tooltip content={"Show only selected sources at image and table viewer"}>
+                        <Tooltip2 content={"Show only selected sources at image and table viewer"}>
                             <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
                                 <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
                             </FormGroup>
-                        </Tooltip>            
+                        </Tooltip2>            
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             text="Plot"

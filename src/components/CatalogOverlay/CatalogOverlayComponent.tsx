@@ -1,7 +1,8 @@
 import * as React from "react";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, ButtonGroup, FormGroup, Intent, NonIdealState, Switch, Tooltip, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, FormGroup, Intent, NonIdealState, Switch, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import * as ScrollUtils from "../../../node_modules/@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
@@ -702,17 +703,17 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             case CatalogSystemType.Pixel0:
                 return (
                     <div key={system}>
-                        <Tooltip position="auto-end" content={<small>PIX0: 0-based image coordinates</small>}>
+                        <Tooltip2 position="auto-end" content={<small>PIX0: 0-based image coordinates</small>}>
                             {menuItem}
-                        </Tooltip>
+                        </Tooltip2>
                     </div>
                 );
             case CatalogSystemType.Pixel1:
                 return (
                     <div key={system}>
-                        <Tooltip position="auto-end" content={<small>PIX1:  1-based image coordinates</small>}>
+                        <Tooltip2 position="auto-end" content={<small>PIX1:  1-based image coordinates</small>}>
                             {menuItem}
-                        </Tooltip>
+                        </Tooltip2>
                     </div>
                 );
             default:

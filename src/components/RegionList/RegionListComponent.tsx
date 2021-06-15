@@ -1,7 +1,8 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {HTMLTable, Icon, NonIdealState, Position, Tooltip} from "@blueprintjs/core";
+import {HTMLTable, Icon, NonIdealState, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
@@ -145,9 +146,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 sizeEntry = (
                     <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {region.regionType !== CARTA.RegionType.POINT &&
-                            <Tooltip content={region.regionType === CARTA.RegionType.ELLIPSE ? "Semi-major and semi-minor axes" : "Width and height"} position={Position.BOTTOM}>
+                            <Tooltip2 content={region.regionType === CARTA.RegionType.ELLIPSE ? "Semi-major and semi-minor axes" : "Width and height"} position={Position.BOTTOM}>
                                 {sizeContent}
-                            </Tooltip>
+                            </Tooltip2>
                         }
                     </td>
                 );
