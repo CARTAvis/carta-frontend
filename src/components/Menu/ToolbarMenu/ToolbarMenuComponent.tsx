@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, ButtonGroup} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {AppStore, RegionMode, WidgetsStore} from "stores";
 import {ImageViewLayer} from "components";
@@ -50,13 +50,13 @@ export class ToolbarMenuComponent extends React.Component {
         return (
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
-                    <Tooltip2 content={<span>Point</span>}>
+                    <Tooltip2 content={<span>Point</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled}/>
                     </Tooltip2>
-                    <Tooltip2 content={<span>Rectangle{this.regionTooltip("square")}</span>}>
+                    <Tooltip2 content={<span>Rectangle{this.regionTooltip("square")}</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled}/>
                     </Tooltip2>
-                    <Tooltip2 content={<span>Ellipse{this.regionTooltip("circle")}</span>}>
+                    <Tooltip2 content={<span>Ellipse{this.regionTooltip("circle")}</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled}/>
                     </Tooltip2>
                     <Tooltip2
@@ -66,6 +66,7 @@ export class ToolbarMenuComponent extends React.Component {
                             Double-click on a control point to delete it.<br/>
                             Click on a side to create a new control point.</small></i></span></span>
                         }
+                        position={Position.BOTTOM}
                     >
                         <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled}/>
                     </Tooltip2>
