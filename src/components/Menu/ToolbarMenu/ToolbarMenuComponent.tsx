@@ -87,13 +87,13 @@ export class ToolbarMenuComponent extends React.Component {
                     })}
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
-                    <Tooltip2 content={<span>File Header</span>}>
+                    <Tooltip2 content={<span>File Header</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={"app-header"} onClick={dialogStore.showFileInfoDialog} active={dialogStore.fileInfoDialogVisible}/>
                     </Tooltip2>
-                    <Tooltip2 content={<span>Preferences</span>}>
+                    <Tooltip2 content={<span>Preferences</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible}/>
                     </Tooltip2>
-                    <Tooltip2 content={<span>Contours</span>}>
+                    <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible}/>
                     </Tooltip2>
                 </ButtonGroup>
