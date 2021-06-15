@@ -28,8 +28,8 @@ export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.Fi
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
 export interface ISelectedFile {
-    fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo,
-    hdu?: string
+    fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
+    hdu?: string;
 }
 
 export class FileBrowserStore {
@@ -47,7 +47,7 @@ export class FileBrowserStore {
     @observable fileList: CARTA.IFileListResponse;
     @observable selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     @observable selectedHDU: string;
-    @observable HDUfileInfoExtended: { [k: string]: CARTA.IFileInfoExtended };
+    @observable HDUfileInfoExtended: {[k: string]: CARTA.IFileInfoExtended};
     @observable regionFileInfo: string[];
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
@@ -88,7 +88,6 @@ export class FileBrowserStore {
                 this.resetExportRegionIndexes();
             }
         });
-
     }
 
     @observable selectedFiles: ISelectedFile[];
@@ -143,7 +142,7 @@ export class FileBrowserStore {
         this.fileList = list;
     };
 
-    @action setCatalogFileList = (list: CARTA.ICatalogListResponse) =>{
+    @action setCatalogFileList = (list: CARTA.ICatalogListResponse) => {
         this.catalogFileList = list;
     };
 
@@ -172,7 +171,7 @@ export class FileBrowserStore {
                 this.setFileList(list);
                 this.resetLoadingStates();
             }
-        } catch(err) {
+        } catch (err) {
             console.log(err);
             AppToaster.show(ErrorToast(`Error loading file list for directory ${directory}`));
             this.resetLoadingStates();
@@ -188,7 +187,7 @@ export class FileBrowserStore {
 
         try {
             const res = await backendService.getFileInfo(directory, file, hdu);
-            runInAction(()=>{
+            runInAction(() => {
                 if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                     this.HDUfileInfoExtended = res.fileInfoExtended;
                     const HDUList = Object.keys(this.HDUfileInfoExtended);
@@ -206,7 +205,7 @@ export class FileBrowserStore {
                 this.fileInfoResp = false;
                 this.HDUfileInfoExtended = null;
                 this.loadingInfo = false;
-            })
+            });
         }
     };
 
@@ -219,7 +218,7 @@ export class FileBrowserStore {
 
         try {
             const res = await backendService.getRegionFileInfo(directory, file);
-            runInAction(()=>{
+            runInAction(() => {
                 if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                     this.loadingInfo = false;
                     this.regionFileInfo = res.contents;
@@ -233,7 +232,7 @@ export class FileBrowserStore {
                 this.fileInfoResp = false;
                 this.regionFileInfo = null;
                 this.loadingInfo = false;
-            })
+            });
         }
     };
 
@@ -277,7 +276,7 @@ export class FileBrowserStore {
         }
     };
 
-    getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{ file: string, info: CARTA.IFileInfoExtended }> => {
+    getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string; info: CARTA.IFileInfoExtended}> => {
         const res = await BackendService.Instance.getFileInfo(directory, file, hdu);
         return {file: res.fileInfo.name, info: res.fileInfoExtended};
     };
@@ -447,17 +446,17 @@ export class FileBrowserStore {
     };
 
     @computed get HDUList(): IOptionProps[] {
-        return this.HDUfileInfoExtended ?
-            Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
-                // hdu extension name is in field 3 of fileInfoExtended computed entries
-                const extName = this.HDUfileInfoExtended[hdu]?.computedEntries?.length >= 3 && this.HDUfileInfoExtended[hdu].computedEntries[2]?.name === "Extension name" ?
-                    `: ${this.HDUfileInfoExtended[hdu].computedEntries[2]?.value}` : "";
-                return {
-                    label: `${hdu}${extName}`,
-                    value: hdu
-                };
-            }) :
-            null;
+        return this.HDUfileInfoExtended
+            ? Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
+                  // hdu extension name is in field 3 of fileInfoExtended computed entries
+                  const extName =
+                      this.HDUfileInfoExtended[hdu]?.computedEntries?.length >= 3 && this.HDUfileInfoExtended[hdu].computedEntries[2]?.name === "Extension name" ? `: ${this.HDUfileInfoExtended[hdu].computedEntries[2]?.value}` : "";
+                  return {
+                      label: `${hdu}${extName}`,
+                      value: hdu
+                  };
+              })
+            : null;
     }
 
     @computed get fileInfoExtended(): CARTA.IFileInfoExtended {
@@ -512,7 +511,7 @@ export class FileBrowserStore {
         }
     }
 
-    @computed get catalogHeaderDataset(): { columnHeaders: Array<CARTA.CatalogHeader>, columnsData: Map<number, ProcessedColumnData> } {
+    @computed get catalogHeaderDataset(): {columnHeaders: Array<CARTA.CatalogHeader>; columnsData: Map<number, ProcessedColumnData>} {
         let columnsData = new Map<number, ProcessedColumnData>();
 
         const nameData = [];
@@ -563,7 +562,7 @@ export class FileBrowserStore {
             [0, 3, 3], // AD
             [1, 3, 2], // BD
             [0, 2, 1], // ABC
-            [1, 3, 1], // BCD
+            [1, 3, 1] // BCD
         ];
         return options[this.saveStokesOption];
     }

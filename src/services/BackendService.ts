@@ -8,7 +8,7 @@ import {ApiService} from "./ApiService";
 export enum ConnectionStatus {
     CLOSED = 0,
     PENDING = 1,
-    ACTIVE = 2,
+    ACTIVE = 2
 }
 
 export const INVALID_ANIMATION_ID = -1;
@@ -28,7 +28,7 @@ export class Deferred<T> {
     private _promise: Promise<T> = new Promise<T>((resolve, reject) => {
         this._reject = reject;
         this._resolve = resolve;
-    })
+    });
 
     public get promise(): Promise<T> {
         return this._promise;
@@ -42,8 +42,6 @@ export class Deferred<T> {
         this._reject(reason);
     }
 }
-
-
 
 export class BackendService {
     private static staticInstance: BackendService;
@@ -89,7 +87,7 @@ export class BackendService {
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     readonly listProgressStream: Subject<CARTA.ListProgress>;
-    private readonly decoderMap: Map<CARTA.EventType, {messageClass: any, handler: HandlerFunction}>;
+    private readonly decoderMap: Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>;
 
     private constructor() {
         makeObservable(this);
@@ -115,7 +113,7 @@ export class BackendService {
         this.listProgressStream = new Subject<CARTA.ListProgress>();
 
         // Construct handler and decoder maps
-        this.decoderMap = new Map<CARTA.EventType, { messageClass: any, handler: HandlerFunction }>([
+        this.decoderMap = new Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>([
             [CARTA.EventType.REGISTER_VIEWER_ACK, {messageClass: CARTA.RegisterViewerAck, handler: this.onRegisterViewerAck}],
             [CARTA.EventType.FILE_LIST_RESPONSE, {messageClass: CARTA.FileListResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.REGION_LIST_RESPONSE, {messageClass: CARTA.RegionListResponse, handler: this.onDeferredResponse}],
@@ -168,23 +166,24 @@ export class BackendService {
         this.connection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
-        this.connection.onclose = (ev: CloseEvent) => runInAction(()=>{
-            // Only change to closed connection if the connection was originally active or this is a reconnection
-            if (this.connectionStatus === ConnectionStatus.ACTIVE || isReconnection || connectionAttempts >= BackendService.MaxConnectionAttempts) {
-                this.connectionStatus = ConnectionStatus.CLOSED;
-            } else {
-                connectionAttempts++;
-                setTimeout(() => {
-                    const newConnection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
-                    newConnection.binaryType = "arraybuffer";
-                    newConnection.onopen = this.connection.onopen;
-                    newConnection.onerror = this.connection.onerror;
-                    newConnection.onclose = this.connection.onclose;
-                    newConnection.onmessage = this.connection.onmessage;
-                    this.connection = newConnection;
-                }, BackendService.ConnectionAttemptDelay);
-            }
-        });
+        this.connection.onclose = (ev: CloseEvent) =>
+            runInAction(() => {
+                // Only change to closed connection if the connection was originally active or this is a reconnection
+                if (this.connectionStatus === ConnectionStatus.ACTIVE || isReconnection || connectionAttempts >= BackendService.MaxConnectionAttempts) {
+                    this.connectionStatus = ConnectionStatus.CLOSED;
+                } else {
+                    connectionAttempts++;
+                    setTimeout(() => {
+                        const newConnection = new WebSocket(apiService.accessToken ? url + `?token=${apiService.accessToken}` : url);
+                        newConnection.binaryType = "arraybuffer";
+                        newConnection.onopen = this.connection.onopen;
+                        newConnection.onerror = this.connection.onerror;
+                        newConnection.onclose = this.connection.onclose;
+                        newConnection.onmessage = this.connection.onmessage;
+                        this.connection = newConnection;
+                    }, BackendService.ConnectionAttemptDelay);
+                }
+            });
 
         this.deferredMap.clear();
         this.eventCounter = 1;
@@ -209,10 +208,10 @@ export class BackendService {
             }
         });
 
-        this.connection.onerror = (ev => {
+        this.connection.onerror = ev => {
             AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed.`, ["network"]);
             console.log(ev);
-        });
+        };
 
         return await deferredResponse.promise;
     }
@@ -377,7 +376,6 @@ export class BackendService {
                 return await deferredResponse.promise;
             } else {
                 throw new Error("Could not send event");
-
             }
         }
     }
@@ -386,11 +384,11 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const concatStokes: CARTA.IConcatStokesFiles= {
+            const concatStokes: CARTA.IConcatStokesFiles = {
                 stokesFiles: stokesFiles,
                 fileId: fileId,
                 renderMode: renderMode
-            }
+            };
             const message = CARTA.ConcatStokesFiles.create(concatStokes);
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.CONCAT_STOKES_FILES, requestId, message, false);
@@ -433,7 +431,7 @@ export class BackendService {
         return false;
     }
 
-        async saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], keepDegenerate?: boolean): Promise<CARTA.ISaveFileAck> {
+    async saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], keepDegenerate?: boolean): Promise<CARTA.ISaveFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -495,7 +493,7 @@ export class BackendService {
                 regionInfo: {
                     regionType: region.regionType,
                     rotation: region.rotation,
-                    controlPoints: region.controlPoints.slice(),
+                    controlPoints: region.controlPoints.slice()
                 }
             });
 
@@ -793,7 +791,7 @@ export class BackendService {
             } else {
                 def.reject(response.message);
             }
-        }else {
+        } else {
             console.log(`Can't find deferred for request ${eventId}`);
         }
     }

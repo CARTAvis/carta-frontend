@@ -53,7 +53,7 @@ export class AnimatorStore {
         this.step = val;
     };
 
-    @action startAnimation = async() => {
+    @action startAnimation = async () => {
         const appStore = AppStore.Instance;
         const preferenceStore = PreferenceStore.Instance;
         const frame = appStore.activeFrame;
@@ -95,13 +95,7 @@ export class AnimatorStore {
         // Calculate matched frames for the animation range
         const matchedFrames = new Map<number, CARTA.IMatchedFrameList>();
         for (const sibling of frame.spectralSiblings) {
-            const frameNumbers = getTransformedChannelList(
-                frame.wcsInfo3D,
-                sibling.wcsInfo3D,
-                preferenceStore.spectralMatchingType,
-                animationFrames.firstFrame.channel,
-                animationFrames.lastFrame.channel
-            );
+            const frameNumbers = getTransformedChannelList(frame.wcsInfo3D, sibling.wcsInfo3D, preferenceStore.spectralMatchingType, animationFrames.firstFrame.channel, animationFrames.lastFrame.channel);
             matchedFrames.set(sibling.frameInfo.fileId, {frameNumbers});
         }
 
@@ -204,11 +198,13 @@ export class AnimatorStore {
         return this.animationActive && this.animationMode !== AnimationMode.FRAME;
     }
 
-    private genAnimationFrames = (frame: FrameStore): {
-        startFrame: CARTA.IAnimationFrame,
-        firstFrame: CARTA.IAnimationFrame,
-        lastFrame: CARTA.IAnimationFrame,
-        deltaFrame: CARTA.IAnimationFrame
+    private genAnimationFrames = (
+        frame: FrameStore
+    ): {
+        startFrame: CARTA.IAnimationFrame;
+        firstFrame: CARTA.IAnimationFrame;
+        lastFrame: CARTA.IAnimationFrame;
+        deltaFrame: CARTA.IAnimationFrame;
     } => {
         if (!frame) {
             return null;

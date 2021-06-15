@@ -53,7 +53,7 @@
             .info-highlight {
                 background-color: yellow;
             }
-        
+
             .info-highlight-selected {
                 background-color: $gold5;
             }
@@ -69,7 +69,7 @@
         height: 100%;
         flex: 2 2 auto;
         padding: 1px;
-        font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+        font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
     }
 
     .header-search-button {
@@ -78,7 +78,7 @@
         right: 0;
         margin: 0 10px 10px 0;
         transition: opacity 400ms;
-        
+
         .bp3-button {
             transition: opacity 400ms;
             user-select: none;

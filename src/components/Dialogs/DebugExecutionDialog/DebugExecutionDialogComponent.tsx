@@ -23,13 +23,13 @@ export class DebugExecutionDialogComponent extends React.Component {
         return this.functionToExecute !== undefined;
     }
 
-    @action setFunctionToExecute = (f) => {
+    @action setFunctionToExecute = f => {
         this.functionToExecute = f;
     };
 
     @action setInputString = (val: string) => {
         this.inputString = val;
-    }
+    };
 
     constructor(props: any) {
         super(props);
@@ -37,7 +37,7 @@ export class DebugExecutionDialogComponent extends React.Component {
 
         const snippetStore = SnippetStore.Instance;
 
-        autorun(()=>{
+        autorun(() => {
             const previousSnippet = snippetStore.snippets.get("_previous");
             if (!this.filledFromHistory && previousSnippet) {
                 this.setInputString(previousSnippet.code);
@@ -45,19 +45,21 @@ export class DebugExecutionDialogComponent extends React.Component {
             }
         });
 
-        const AsyncFunction = Object.getPrototypeOf(async function () {
-        }).constructor;
+        const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
         if (AsyncFunction) {
-            autorun(() => {
-                let f;
-                try {
-                    f = new AsyncFunction(this.inputString);
-                } catch (e) {
-                    f = undefined;
-                }
-                this.setFunctionToExecute(f);
-            }, {delay: 200});
+            autorun(
+                () => {
+                    let f;
+                    try {
+                        f = new AsyncFunction(this.inputString);
+                    } catch (e) {
+                        f = undefined;
+                    }
+                    this.setFunctionToExecute(f);
+                },
+                {delay: 200}
+            );
         }
     }
 
@@ -92,15 +94,15 @@ export class DebugExecutionDialogComponent extends React.Component {
                         textareaId="codeArea"
                         style={{
                             fontFamily: "'Fira code', 'Fira Mono', monospace",
-                            fontSize: 12,
+                            fontSize: 12
                         }}
                         placeholder="Enter execution string"
                     />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.PRIMARY} onClick={this.onExecuteClicked} disabled={!this.validInput || this.isExecuting} text="Execute"/>
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideDebugExecutionDialog} text="Close"/>
+                        <AnchorButton intent={Intent.PRIMARY} onClick={this.onExecuteClicked} disabled={!this.validInput || this.isExecuting} text="Execute" />
+                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideDebugExecutionDialog} text="Close" />
                     </div>
                 </div>
             </DraggableDialogComponent>
@@ -108,7 +110,8 @@ export class DebugExecutionDialogComponent extends React.Component {
     }
 
     applyHighlight = (code: string) => {
-        return prism.highlight(code, prism.languages.js, "js")
+        return prism
+            .highlight(code, prism.languages.js, "js")
             .split("\n")
             .map((line, i) => `<span class='editor-line-number'>${i + 1}</span>${line}`)
             .join("\n");
@@ -140,7 +143,7 @@ export class DebugExecutionDialogComponent extends React.Component {
             categories: ["previous", "testing"],
             requires: [],
             code: this.inputString
-        }
+        };
         this.setIsExecuting(false);
         await SnippetStore.Instance.saveSnippet("_previous", snippet);
     };

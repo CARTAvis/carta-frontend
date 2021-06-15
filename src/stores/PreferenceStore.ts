@@ -76,7 +76,7 @@ export enum PreferenceKeys {
 const DEFAULTS = {
     SILENT: {
         fileSortingString: "-date",
-        fileFilteringType: FileFilteringType.Fuzzy,
+        fileFilteringType: FileFilteringType.Fuzzy
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -88,7 +88,7 @@ const DEFAULTS = {
         dragPanning: true,
         spectralMatchingType: SpectralType.VRAD,
         autoWCSMatching: WCSMatchingType.NONE,
-        transparentImageBackground: false,
+        transparentImageBackground: false
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
@@ -98,7 +98,7 @@ const DEFAULTS = {
         scalingGamma: 1,
         nanColorHex: "#137CBD",
         nanAlpha: 1,
-        useSmoothedBiasContrast: true,
+        useSmoothedBiasContrast: true
     },
     CONTOUR_CONFIG: {
         contourGeneratorType: ContourGeneratorType.StartStepMultiplier,
@@ -108,7 +108,7 @@ const DEFAULTS = {
         contourThickness: 1,
         contourColormapEnabled: false,
         contourColor: Colors.GREEN3,
-        contourColormap: "viridis",
+        contourColormap: "viridis"
     },
     WCS_OVERLAY: {
         astColor: "auto-blue",
@@ -118,7 +118,7 @@ const DEFAULTS = {
         beamVisible: true,
         beamColor: "auto-gray",
         beamType: BeamType.Open,
-        beamWidth: 1,
+        beamWidth: 1
     },
     REGION: {
         regionColor: "#2EE6D6",
@@ -466,51 +466,75 @@ export class PreferenceStore {
 
     @action resetGlobalSettings = () => {
         this.clearPreferences([
-            PreferenceKeys.GLOBAL_THEME, PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_LAYOUT,
-            PreferenceKeys.GLOBAL_CURSOR_POSITION, PreferenceKeys.GLOBAL_ZOOM_MODE, PreferenceKeys.GLOBAL_ZOOM_POINT,
-            PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
+            PreferenceKeys.GLOBAL_THEME,
+            PreferenceKeys.GLOBAL_AUTOLAUNCH,
+            PreferenceKeys.GLOBAL_LAYOUT,
+            PreferenceKeys.GLOBAL_CURSOR_POSITION,
+            PreferenceKeys.GLOBAL_ZOOM_MODE,
+            PreferenceKeys.GLOBAL_ZOOM_POINT,
+            PreferenceKeys.GLOBAL_DRAG_PANNING,
+            PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE,
+            PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
             PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND
         ]);
     };
 
     @action resetRenderConfigSettings = () => {
         this.clearPreferences([
-            PreferenceKeys.RENDER_CONFIG_COLORMAP, PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
-            PreferenceKeys.RENDER_CONFIG_PERCENTILE, PreferenceKeys.RENDER_CONFIG_SCALING, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
-            PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST
+            PreferenceKeys.RENDER_CONFIG_COLORMAP,
+            PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
+            PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
+            PreferenceKeys.RENDER_CONFIG_PERCENTILE,
+            PreferenceKeys.RENDER_CONFIG_SCALING,
+            PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
+            PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
+            PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST
         ]);
     };
 
     @action resetContourConfigSettings = () => {
         this.clearPreferences([
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR,
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP,
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE,
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
+            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
             PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS
         ]);
     };
 
     @action resetOverlayConfigSettings = () => {
         this.clearPreferences([
-            PreferenceKeys.WCS_OVERLAY_AST_COLOR, PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
-            PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
-            PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, PreferenceKeys.WCS_OVERLAY_WCS_TYPE
+            PreferenceKeys.WCS_OVERLAY_AST_COLOR,
+            PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_BEAM_COLOR,
+            PreferenceKeys.WCS_OVERLAY_BEAM_TYPE,
+            PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
+            PreferenceKeys.WCS_OVERLAY_WCS_TYPE
         ]);
     };
 
     @action resetRegionSettings = () => {
-        this.clearPreferences([
-            PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH,
-            PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE
-        ]);
+        this.clearPreferences([PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE]);
     };
 
     @action resetPerformanceSettings = () => {
         this.clearPreferences([
-            PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
-            PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE,
-            PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
-            PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE
+            PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
+            PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE,
+            PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
+            PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
+            PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
+            PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE,
+            PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
+            PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE,
+            PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
+            PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
+            PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE
         ]);
     };
 
@@ -518,7 +542,7 @@ export class PreferenceStore {
         if (this.isSelectingAllLogEvents || this.isSelectingIndeterminateLogEvents) {
             this.resetLogEventSettings();
         } else {
-            Event.EVENT_TYPES.forEach((eventType) => this.setPreference(PreferenceKeys.LOG_EVENT, eventType));
+            Event.EVENT_TYPES.forEach(eventType => this.setPreference(PreferenceKeys.LOG_EVENT, eventType));
         }
     };
 
@@ -528,7 +552,7 @@ export class PreferenceStore {
 
     @action resetCatalogSettings = () => {
         this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
-    }
+    };
 
     @action fetchPreferences = async () => {
         await this.upgradePreferences();
@@ -552,35 +576,67 @@ export class PreferenceStore {
 
             // Strings
             const stringKeys = [
-                PreferenceKeys.GLOBAL_THEME, PreferenceKeys.GLOBAL_LAYOUT, PreferenceKeys.GLOBAL_CURSOR_POSITION, PreferenceKeys.GLOBAL_ZOOM_MODE,
-                PreferenceKeys.GLOBAL_ZOOM_POINT, PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, PreferenceKeys.RENDER_CONFIG_COLORMAP, PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP,
-                PreferenceKeys.WCS_OVERLAY_WCS_TYPE, PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, PreferenceKeys.REGION_COLOR,
-                PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.WCS_OVERLAY_AST_COLOR,
+                PreferenceKeys.GLOBAL_THEME,
+                PreferenceKeys.GLOBAL_LAYOUT,
+                PreferenceKeys.GLOBAL_CURSOR_POSITION,
+                PreferenceKeys.GLOBAL_ZOOM_MODE,
+                PreferenceKeys.GLOBAL_ZOOM_POINT,
+                PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE,
+                PreferenceKeys.RENDER_CONFIG_COLORMAP,
+                PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP,
+                PreferenceKeys.WCS_OVERLAY_WCS_TYPE,
+                PreferenceKeys.WCS_OVERLAY_BEAM_COLOR,
+                PreferenceKeys.WCS_OVERLAY_BEAM_TYPE,
+                PreferenceKeys.REGION_COLOR,
+                PreferenceKeys.REGION_CREATION_MODE,
+                PreferenceKeys.WCS_OVERLAY_AST_COLOR,
                 PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION
             ];
 
             const intKeys = [
-                PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, PreferenceKeys.RENDER_CONFIG_SCALING, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
-                PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
-                PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
-                PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
+                PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
+                PreferenceKeys.RENDER_CONFIG_SCALING,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
+                PreferenceKeys.REGION_DASH_LENGTH,
+                PreferenceKeys.REGION_TYPE,
+                PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
+                PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
+                PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE,
+                PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE,
+                PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
+                PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
+                PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE,
+                PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
                 PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
                 PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE
             ];
 
             const numberKeys = [
-                PreferenceKeys.RENDER_CONFIG_PERCENTILE, PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
-                PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS, PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
-                PreferenceKeys.REGION_LINE_WIDTH,
+                PreferenceKeys.RENDER_CONFIG_PERCENTILE,
+                PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
+                PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
+                PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS,
+                PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
+                PreferenceKeys.REGION_LINE_WIDTH
             ];
 
             const booleanKeys = [
-                PreferenceKeys.GLOBAL_AUTOLAUNCH, PreferenceKeys.GLOBAL_DRAG_PANNING, PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
-                PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST, PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
-                PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
-                PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE
+                PreferenceKeys.GLOBAL_AUTOLAUNCH,
+                PreferenceKeys.GLOBAL_DRAG_PANNING,
+                PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
+                PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST,
+                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
+                PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE,
+                PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
+                PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
+                PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
+                PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE
             ];
 
             const preferenceObject = {};

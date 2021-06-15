@@ -3,7 +3,6 @@ import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "stores/widgets";
 
 export class StatsWidgetStore extends RegionWidgetStore {
-
     constructor() {
         super(RegionsType.CLOSED);
     }

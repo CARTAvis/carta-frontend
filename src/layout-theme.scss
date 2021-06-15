@@ -110,7 +110,7 @@ $custom-pane-controls-color-dark: white;
             width: 16px;
             height: 16px;
             // bp3 cross icon
-            background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAyMCAyMCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMjAgMjAiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGcgaWQ9ImNyb3NzX21hcmtfNl8iPg0KCTxnPg0KCQk8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTExLjQxLDEwbDQuMjktNC4yOUMxNS44OSw1LjUzLDE2LDUuMjgsMTYsNWMwLTAuNTUtMC40NS0xLTEtMQ0KCQkJYy0wLjI4LDAtMC41MywwLjExLTAuNzEsMC4yOUwxMCw4LjU5TDUuNzEsNC4yOUM1LjUzLDQuMTEsNS4yOCw0LDUsNEM0LjQ1LDQsNCw0LjQ1LDQsNWMwLDAuMjgsMC4xMSwwLjUzLDAuMjksMC43MUw4LjU5LDEwDQoJCQlsLTQuMjksNC4yOUM0LjExLDE0LjQ3LDQsMTQuNzIsNCwxNWMwLDAuNTUsMC40NSwxLDEsMWMwLjI4LDAsMC41My0wLjExLDAuNzEtMC4yOUwxMCwxMS40MWw0LjI5LDQuMjkNCgkJCUMxNC40NywxNS44OSwxNC43MiwxNiwxNSwxNmMwLjU1LDAsMS0wLjQ1LDEtMWMwLTAuMjgtMC4xMS0wLjUzLTAuMjktMC43MUwxMS40MSwxMHoiLz4NCgk8L2c+DQo8L2c+DQo8L3N2Zz4NCg==');
+            background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAyMCAyMCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMjAgMjAiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGcgaWQ9ImNyb3NzX21hcmtfNl8iPg0KCTxnPg0KCQk8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTExLjQxLDEwbDQuMjktNC4yOUMxNS44OSw1LjUzLDE2LDUuMjgsMTYsNWMwLTAuNTUtMC40NS0xLTEtMQ0KCQkJYy0wLjI4LDAtMC41MywwLjExLTAuNzEsMC4yOUwxMCw4LjU5TDUuNzEsNC4yOUM1LjUzLDQuMTEsNS4yOCw0LDUsNEM0LjQ1LDQsNCw0LjQ1LDQsNWMwLDAuMjgsMC4xMSwwLjUzLDAuMjksMC43MUw4LjU5LDEwDQoJCQlsLTQuMjksNC4yOUM0LjExLDE0LjQ3LDQsMTQuNzIsNCwxNWMwLDAuNTUsMC40NSwxLDEsMWMwLjI4LDAsMC41My0wLjExLDAuNzEtMC4yOUwxMCwxMS40MWw0LjI5LDQuMjkNCgkJCUMxNC40NywxNS44OSwxNC43MiwxNiwxNSwxNmMwLjU1LDAsMS0wLjQ1LDEtMWMwLTAuMjgtMC4xMS0wLjUzLTAuMjktMC43MUwxMS40MSwxMHoiLz4NCgk8L2c+DQo8L2c+DQo8L3N2Zz4NCg==");
             background-position: center center;
             background-repeat: no-repeat;
             right: 4px;
@@ -200,7 +200,6 @@ $custom-pane-controls-color-dark: white;
     .lm_close {
         background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAKUlEQVR4nGNgYGD4z4Af/Mdg4FKASwCnDf8JKSBoAtEmEXQTQd8RDCcA6+4Q8OvIgasAAAAASUVORK5CYII=);
     }
-
 }
 
 // Custom pane controls
@@ -212,7 +211,7 @@ $custom-pane-controls-color-dark: white;
     .lm-pin {
         color: $custom-pane-controls-color;
     }
-    
+
     .lm-settings {
         color: $custom-pane-controls-color;
     }
@@ -262,7 +261,6 @@ $custom-pane-controls-color-dark: white;
         }
     }
 }
-
 
 .dark-theme {
     .lm_goldenlayout {
@@ -339,7 +337,7 @@ $custom-pane-controls-color-dark: white;
                 width: 16px;
                 height: 16px;
                 // bp3 cross icon
-                background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAxNiAxNiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTYgMTYiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGcgaWQ9ImNyb3NzX21hcmtfNV8iPg0KCTxnPg0KCQk8cGF0aCBmaWxsPSIjRkZGRkZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTkuNDEsOGwzLjI5LTMuMjlDMTIuODksNC41MywxMyw0LjI4LDEzLDRjMC0wLjU1LTAuNDUtMS0xLTENCgkJCWMtMC4yOCwwLTAuNTMsMC4xMS0wLjcxLDAuMjlMOCw2LjU5TDQuNzEsMy4yOUM0LjUzLDMuMTEsNC4yOCwzLDQsM0MzLjQ1LDMsMywzLjQ1LDMsNGMwLDAuMjgsMC4xMSwwLjUzLDAuMjksMC43MUw2LjU5LDgNCgkJCWwtMy4yOSwzLjI5QzMuMTEsMTEuNDcsMywxMS43MiwzLDEyYzAsMC41NSwwLjQ1LDEsMSwxYzAuMjgsMCwwLjUzLTAuMTEsMC43MS0wLjI5TDgsOS40MWwzLjI5LDMuMjlDMTEuNDcsMTIuODksMTEuNzIsMTMsMTIsMTMNCgkJCWMwLjU1LDAsMS0wLjQ1LDEtMWMwLTAuMjgtMC4xMS0wLjUzLTAuMjktMC43MUw5LjQxLDh6Ii8+DQoJPC9nPg0KPC9nPg0KPC9zdmc+DQo=');
+                background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAxNiAxNiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTYgMTYiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGcgaWQ9ImNyb3NzX21hcmtfNV8iPg0KCTxnPg0KCQk8cGF0aCBmaWxsPSIjRkZGRkZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTkuNDEsOGwzLjI5LTMuMjlDMTIuODksNC41MywxMyw0LjI4LDEzLDRjMC0wLjU1LTAuNDUtMS0xLTENCgkJCWMtMC4yOCwwLTAuNTMsMC4xMS0wLjcxLDAuMjlMOCw2LjU5TDQuNzEsMy4yOUM0LjUzLDMuMTEsNC4yOCwzLDQsM0MzLjQ1LDMsMywzLjQ1LDMsNGMwLDAuMjgsMC4xMSwwLjUzLDAuMjksMC43MUw2LjU5LDgNCgkJCWwtMy4yOSwzLjI5QzMuMTEsMTEuNDcsMywxMS43MiwzLDEyYzAsMC41NSwwLjQ1LDEsMSwxYzAuMjgsMCwwLjUzLTAuMTEsMC43MS0wLjI5TDgsOS40MWwzLjI5LDMuMjlDMTEuNDcsMTIuODksMTEuNzIsMTMsMTIsMTMNCgkJCWMwLjU1LDAsMS0wLjQ1LDEtMWMwLTAuMjgtMC4xMS0wLjUzLTAuMjktMC43MUw5LjQxLDh6Ii8+DQoJPC9nPg0KPC9nPg0KPC9zdmc+DQo=");
                 background-position: center center;
                 background-repeat: no-repeat;
                 right: 4px;
@@ -429,7 +427,6 @@ $custom-pane-controls-color-dark: white;
         .lm_close {
             background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAQUlEQVR4nHXOQQ4AMAgCQeT/f6aXpsGK3jSTuCVJAAr7iBdoAwCKd0nwfaAdHbYERw5b44+E8JoBjEYGMBq5gAYP3usUDu2IvoUAAAAASUVORK5CYII=);
         }
-
     }
 
     //Custom pane controls

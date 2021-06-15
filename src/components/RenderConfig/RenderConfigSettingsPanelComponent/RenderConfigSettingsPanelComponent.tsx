@@ -12,7 +12,6 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-config-floating-settings",
@@ -59,7 +58,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const widgetStore = this.widgetStore; 
+        const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
@@ -150,7 +149,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
 
         return (
             <div className="render-config-settings-panel">
-                <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+                <LinePlotSettingsPanelComponent {...lineSettingsProps} />
             </div>
         );
     }

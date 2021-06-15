@@ -18,7 +18,7 @@ export function hanningSmoothing(data: number[]) {
 export function binning(data: number[], binWidth: number) {
     const binnedData: number[] = [];
     for (let i = 0; i < data.length - binWidth; i = i + binWidth) {
-        binnedData.push(_.mean(data.slice(i, (i + binWidth > data.length) ? data.length : i + binWidth)));
+        binnedData.push(_.mean(data.slice(i, i + binWidth > data.length ? data.length : i + binWidth)));
     }
     return binnedData;
 }
@@ -40,7 +40,7 @@ export function getIndexByValue(values: number[], targetValue: number) {
 export function profilePreprocessing(data: number[]) {
     let dataProcessed = binning(data, Math.floor(data.length / 128) + 1);
     dataProcessed = hanningSmoothing(dataProcessed);
-    dataProcessed = hanningSmoothing(dataProcessed);// seems necessary from testing
+    dataProcessed = hanningSmoothing(dataProcessed); // seems necessary from testing
     return dataProcessed;
 }
 
@@ -54,9 +54,8 @@ export function profilePreprocessing(data: number[]) {
  * hist: The values of the histogram.
  * binEdges: Return the bin edges.
  */
-export function histogram(data: number[], binN: number): { hist: number[], binEdges: number[] } {
+export function histogram(data: number[], binN: number): {hist: number[]; binEdges: number[]} {
     if (isFinite(binN) && binN > 0) {
-
     }
     const binEdges = [];
     const min = _.min(data);
@@ -98,13 +97,13 @@ export function histogramGaussianFit(y: number[], bins: number) {
     const deltaHistXCenter = histXCenterTmp[1] - histXCenterTmp[0];
     const histXCenter: number[] = [histXCenterTmp[0] - deltaHistXCenter, ...histXCenterTmp, histXCenterTmp[histXCenterTmp.length - 1] + deltaHistXCenter];
 
-    const maxHistYIndex = _.findIndex(histY, (y => y === _.max(histY)));
+    const maxHistYIndex = _.findIndex(histY, y => y === _.max(histY));
     // when maxHistYIndex is on the edge of the histY(excluded added zero), return values without Gaussian fitting
     if (maxHistYIndex === 1 || maxHistYIndex === histY.length - 2) {
         return {center: histXCenter[maxHistYIndex], stddev: deltaHistXCenter};
     }
     // [amp, center, fwhm]
-    const initialGuess = [_.max(histY), histXCenter[maxHistYIndex], 2 * Math.sqrt(Math.log(10) * 2) * 0.5 * (deltaHistXCenter)];
+    const initialGuess = [_.max(histY), histXCenter[maxHistYIndex], 2 * Math.sqrt(Math.log(10) * 2) * 0.5 * deltaHistXCenter];
     const histogramGaussianFitting = GSL.fitting(FittingFunction.GAUSSIAN, new Float64Array(histXCenter), new Float64Array(histY), initialGuess, [0, 0, 0], [0, 0], [1, 1]);
 
     const intensitySmoothedMean = histogramGaussianFitting.center[0];
@@ -112,8 +111,7 @@ export function histogramGaussianFit(y: number[], bins: number) {
     return {center: intensitySmoothedMean, stddev: intensitySmoothedStddev};
 }
 
-export function getEstimatedPoints(xInput: number[], yInput: number[]): { x: number, y: number }[] {
-
+export function getEstimatedPoints(xInput: number[], yInput: number[]): {x: number; y: number}[] {
     const yDataFlippedSum = yInput.map((value, i) => {
         return value + yInput[yInput.length - 1 - i];
     });
@@ -153,24 +151,26 @@ export function getEstimatedPoints(xInput: number[], yInput: number[]): { x: num
         yMeanSegment.push(_.mean(yInput.slice(0, Math.floor(yInput.length) / 2)));
         yMeanSegment.push(_.mean(yInput.slice(Math.floor(yInput.length / 2), yInput.length)));
     }
-    return [{x: xMeanSegment[0], y: yMeanSegment[0]}, {x: xMeanSegment[xMeanSegment.length - 1], y: yMeanSegment[yMeanSegment.length - 1]}];
+    return [
+        {x: xMeanSegment[0], y: yMeanSegment[0]},
+        {x: xMeanSegment[xMeanSegment.length - 1], y: yMeanSegment[yMeanSegment.length - 1]}
+    ];
 }
 
-export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: { order: number, yIntercept: number, slope: number }): { components: ProfileFittingIndividualStore[], order: number, yIntercept: number, slope: number } {
-
+export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: {order: number; yIntercept: number; slope: number}): {components: ProfileFittingIndividualStore[]; order: number; yIntercept: number; slope: number} {
     // This part of codes tries to analyze the input spectrum and guesses where spectral and continuum features are, then sets up a set of initial solution for the GSL profile fitter. The procedure is outlined below.
 
-    // On the GUI, there is a toggle 'w/ cont.' which sets a flag to the guesser if continuum needs to be taken into account or not. 
-    // When the flag is False (ie no continuum), a histogram of the input spectrum will be computed and a Gaussian is fitted to the peak of the histogram. 
+    // On the GUI, there is a toggle 'w/ cont.' which sets a flag to the guesser if continuum needs to be taken into account or not.
+    // When the flag is False (ie no continuum), a histogram of the input spectrum will be computed and a Gaussian is fitted to the peak of the histogram.
     // If the input spectrum is mostly line free, the center of the final Gaussian represents the mean value of the line-free part of the spectrum and the stddev of the Gaussian represents the 1-sigma noise level of the line-free part.
-    // Note that if line feature dominates the spectrum, the derived mean and stddev values are over-estimated, which might affect the subsequent procedures. 
+    // Note that if line feature dominates the spectrum, the derived mean and stddev values are over-estimated, which might affect the subsequent procedures.
 
-    // Then, the second part of the procedures is to identify segments of channels that _contain_ line features based on the derived mean and stddev from the histogram. 
+    // Then, the second part of the procedures is to identify segments of channels that _contain_ line features based on the derived mean and stddev from the histogram.
     // The output of this part is a list of channel segments.
 
     // Then the third (final) part of the procedures is to check multiplicity of each line segment to see if there are more than one line feature (ie Gaussian-like profile).
-    // The procedure is to identify local min and max first then analyze the "pattern" of min and max. 
-    // For example, if we see the distribution max-min-max in one line segment and the mean value in this segment is greater than the mean derived from the histogram, then we guess there are TWO line features in this segment. 
+    // The procedure is to identify local min and max first then analyze the "pattern" of min and max.
+    // For example, if we see the distribution max-min-max in one line segment and the mean value in this segment is greater than the mean derived from the histogram, then we guess there are TWO line features in this segment.
     // If we see min-min and the mean value in this segment is less than the mean derived from the histogram, then we guess there are TWO absorption features in this segment.
 
     // Once all line segments pass the multiplicity check, a final list of channel ranges is derived with each representing a line feature for the GSL profile fitter.
@@ -241,14 +241,17 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
     }
 
     // 1st: marking channels with signals
-    const lineBoxs: { fromIndex, toIndex, fromIndexOri, toIndexOri }[] = [];
+    const lineBoxs: {fromIndex; toIndex; fromIndexOri; toIndexOri}[] = [];
     let switchFrom = false;
     const nSigmaThreshold = 2;
     const signalChCountThreshold = 4;
     const floor = intensitySmoothedMean - nSigmaThreshold * intensitySmoothedStddev;
     const ceiling = intensitySmoothedMean + nSigmaThreshold * intensitySmoothedStddev;
 
-    let fromIndex = 0, toIndex = 0, fromIndexOri, toIndexOri;
+    let fromIndex = 0,
+        toIndex = 0,
+        fromIndexOri,
+        toIndexOri;
     for (let i = 0; i < ySmoothed.length; i++) {
         const value = ySmoothed[i];
         if ((value > ceiling || value < floor) && switchFrom === false) {
@@ -259,14 +262,20 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
             switchFrom = false;
             fromIndexOri = getIndexByValue(x, xSmoothed[fromIndex]);
             toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
-            if (toIndexOri - fromIndexOri + 1 >= signalChCountThreshold && (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)) {
+            if (
+                toIndexOri - fromIndexOri + 1 >= signalChCountThreshold &&
+                (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)
+            ) {
                 lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
         } else if ((value > ceiling || value < floor) && switchFrom === true && i === ySmoothed.length - 1) {
             toIndex = i;
             fromIndexOri = getIndexByValue(x, xSmoothed[fromIndex]);
             toIndexOri = getIndexByValue(x, xSmoothed[toIndex]);
-            if (toIndexOri - fromIndexOri + 1 >= signalChCountThreshold && (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)) {
+            if (
+                toIndexOri - fromIndexOri + 1 >= signalChCountThreshold &&
+                (_.mean(ySmoothed.slice(fromIndex, toIndex + 1)) > intensitySmoothedMean + 3 * intensitySmoothedStddev || _.mean(ySmoothed.slice(fromIndex, toIndex + 1)) < intensitySmoothedMean - 3 * intensitySmoothedStddev)
+            ) {
                 lineBoxs.push({fromIndexOri, toIndexOri, fromIndex, toIndex});
             }
             break;
@@ -274,7 +283,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
     }
 
     // 2nd: checking multiplicity per identified feature in 1st step
-    const lineBoxsFinal: { fromIndex, toIndex, fromIndexOri, toIndexOri }[] = [];
+    const lineBoxsFinal: {fromIndex; toIndex; fromIndexOri; toIndexOri}[] = [];
     const multiChCountThreshold = 12;
     const multiMeanSnThreshold = 4;
     //const multiWidthThreshold = 7;
@@ -297,7 +306,7 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
                 const tempMap = tempData.map((data, index) => {
                     return {data, index};
                 });
-                const sortedArg = _.sortBy(tempMap, temp => temp.data).map((data) => {
+                const sortedArg = _.sortBy(tempMap, temp => temp.data).map(data => {
                     return data.index;
                 });
                 if ((sortedArg[3] === 0 && sortedArg[4] === 4) || (sortedArg[3] === 4 && sortedArg[4] === 0)) {
@@ -331,7 +340,6 @@ export function autoDetecting(xInput: number[], yInput: number[], orderInputs?: 
             dividerIndex.push(lineBox.fromIndexOri);
 
             if (dividerIndexTmp.length === 0) {
-
             } else if (dividerIndexTmp.length === 1) {
                 const middle = dividerIndexTmp[0];
                 if (meanSN > 0) {

@@ -3,11 +3,7 @@
     "title": "Snippet",
     "description": "Schema for CARTA Snippet (Version 1)",
     "$id": "carta_snippet_1",
-    "required": [
-        "snippetVersion",
-        "frontendVersion",
-        "code"
-    ],
+    "required": ["snippetVersion", "frontendVersion", "code"],
     "properties": {
         "snippetVersion": {
             "description": "The version of the snippet contained",

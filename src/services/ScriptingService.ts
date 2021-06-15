@@ -43,12 +43,9 @@ export class ExecutionEntry {
             return true;
         }
         try {
-            let substitutedParameterString = parameterString.replace(
-                /\$((?:[\w[\]]+\.)*)([\w[\]]+)/gm,
-                (_match, target, variable) => {
-                    return `{"macroTarget": "${target.slice(0, -1)}", "macroVariable": "${variable}"}`;
-                }
-            );
+            let substitutedParameterString = parameterString.replace(/\$((?:[\w[\]]+\.)*)([\w[\]]+)/gm, (_match, target, variable) => {
+                return `{"macroTarget": "${target.slice(0, -1)}", "macroVariable": "${variable}"}`;
+            });
             if (pad) {
                 substitutedParameterString = `[${substitutedParameterString}]`;
             }
@@ -67,7 +64,7 @@ export class ExecutionEntry {
         }
         const currentParameters = this.parameters.map(this.mapMacro);
         let actionFunction = targetObject[this.action];
-        if (!actionFunction || typeof (actionFunction) !== "function") {
+        if (!actionFunction || typeof actionFunction !== "function") {
             throw new Error(`Missing action function: ${this.action}`);
         }
         actionFunction = actionFunction.bind(targetObject);

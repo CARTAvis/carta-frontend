@@ -61,19 +61,30 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const plot = (styleString: string) => {
                 AST.plot(
                     tempWcsInfo,
-                    frameView.xMin, frameView.xMax,
-                    frameView.yMin / frame.aspectRatio, frameView.yMax / frame.aspectRatio,
-                    settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
-                    settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
+                    frameView.xMin,
+                    frameView.xMax,
+                    frameView.yMin / frame.aspectRatio,
+                    frameView.yMax / frame.aspectRatio,
+                    settings.viewWidth * pixelRatio,
+                    settings.viewHeight * pixelRatio,
+                    settings.padding.left * pixelRatio,
+                    settings.padding.right * pixelRatio,
+                    settings.padding.top * pixelRatio,
+                    settings.padding.bottom * pixelRatio,
                     styleString,
-                    frame.distanceMeasuring.showCurve, frame.isPVImage,
-                    frame.distanceMeasuring.start.x, frame.distanceMeasuring.start.y, frame.distanceMeasuring.finish.x, frame.distanceMeasuring.finish.y);
+                    frame.distanceMeasuring.showCurve,
+                    frame.isPVImage,
+                    frame.distanceMeasuring.start.x,
+                    frame.distanceMeasuring.start.y,
+                    frame.distanceMeasuring.finish.x,
+                    frame.distanceMeasuring.finish.y
+                );
             };
 
             let currentStyleString = settings.styleString;
             // Override the AST tolerance during motion
             if (frame.moving) {
-                const tolVal = Math.max(settings.global.tolerance * 2 / 100.0, 0.1);
+                const tolVal = Math.max((settings.global.tolerance * 2) / 100.0, 0.1);
                 currentStyleString += `, Tol=${tolVal}`;
             }
 
@@ -120,10 +131,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         // Trigger switching AST overlay axis for PV image
         if (frame.isPVImage && frame.spectralAxis?.valid) {
-            AST.set(frame.wcsInfo, `${frame.spectralType ? `System(2)=${frame.spectralType},` : ""}` +
-                                    `${frame.spectralUnit ? `Unit(2)=${frame.spectralUnit},` : ""}` +
-                                    `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
-                                    `${frame.spectralType && frame.spectralSystem ? `Label(2)=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
+            AST.set(
+                frame.wcsInfo,
+                `${frame.spectralType ? `System(2)=${frame.spectralType},` : ""}` +
+                    `${frame.spectralUnit ? `Unit(2)=${frame.spectralUnit},` : ""}` +
+                    `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
+                    `${frame.spectralType && frame.spectralSystem ? `Label(2)=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
         }
 
@@ -131,6 +144,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (this.props.docked) {
             className += " docked";
         }
-        return <canvas className={className} id="overlay-canvas" key={styleString} ref={(ref) => this.canvas = ref}/>;
+        return <canvas className={className} id="overlay-canvas" key={styleString} ref={ref => (this.canvas = ref)} />;
     }
 }

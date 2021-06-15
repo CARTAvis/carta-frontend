@@ -1,4 +1,4 @@
-import { action, observable, computed, makeObservable } from "mobx";
+import {action, observable, computed, makeObservable} from "mobx";
 import {CatalogPlotType} from "stores/widgets";
 import {Point2D} from "models";
 
@@ -8,8 +8,8 @@ export interface CatalogPlotWidgetStoreProps {
     plotType: CatalogPlotType;
 }
 
-export type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
-export type XBorder = { xMin: number, xMax: number };
+export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
+export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
 export class CatalogPlotWidgetStore {
@@ -69,10 +69,10 @@ export class CatalogPlotWidgetStore {
     }
 
     @computed get isScatterAutoScaled() {
-        return (this.scatterborder === undefined);
+        return this.scatterborder === undefined;
     }
 
     @computed get isHistogramAutoScaledX() {
-        return (this.histogramBorder === undefined);
+        return this.histogramBorder === undefined;
     }
 }

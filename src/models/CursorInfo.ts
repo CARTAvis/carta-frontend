@@ -4,5 +4,5 @@ export interface CursorInfo {
     posImageSpace: Point2D;
     isInsideImage: boolean;
     posWCS: Point2D;
-    infoWCS: { x: string, y: string };
+    infoWCS: {x: string; y: string};
 }

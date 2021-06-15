@@ -18,7 +18,6 @@ export enum SpatialProfilerSettingsTabs {
 
 @observer
 export class SpatialProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spatial-profiler-floating-settings",
@@ -83,7 +82,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const widgetStore = this.widgetStore; 
+        const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
@@ -143,15 +142,20 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
         this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
-    }
+    };
 
     render() {
         const widgetStore = this.widgetStore;
-        const profileCoordinateOptions = [{
-            value: "x", label: "X"
-        }, {
-            value: "y", label: "Y"
-        }];
+        const profileCoordinateOptions = [
+            {
+                value: "x",
+                label: "X"
+            },
+            {
+                value: "y",
+                label: "Y"
+            }
+        ];
 
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
             lineColorMap: new Map<LineKey, string>([["Primary", widgetStore.primaryLineColor]]),
@@ -183,12 +187,12 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             handleYMaxChange: this.handleYMaxChange
         };
         return (
-        <div className="spatial-profiler-settings">
-            <Tabs id="spatialSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                <Tab id={SpatialProfilerSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                <Tab id={SpatialProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
-            </Tabs>
-        </div>
+            <div className="spatial-profiler-settings">
+                <Tabs id="spatialSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
+                    <Tab id={SpatialProfilerSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
+                    <Tab id={SpatialProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} />} />
+                </Tabs>
+            </div>
         );
     }
 }

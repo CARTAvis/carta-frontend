@@ -1,4 +1,4 @@
-const {version} = require('../../package.json');
+const {version} = require("../../package.json");
 
 export class Snippet {
     code: string;

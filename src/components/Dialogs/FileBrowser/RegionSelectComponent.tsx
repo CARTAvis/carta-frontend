@@ -7,7 +7,6 @@ import "./RegionSelectComponent.scss";
 
 @observer
 export class RegionSelectComponent extends React.Component {
-
     @computed private get isSelectAll(): boolean {
         const fileBrowserStore = FileBrowserStore.Instance;
         return fileBrowserStore.exportRegionNum === fileBrowserStore.regionOptionNum;
@@ -62,36 +61,27 @@ export class RegionSelectComponent extends React.Component {
     };
 
     private renderSelectAll = () => {
-        return (
-            <Checkbox
-                key={0}
-                checked={this.isSelectAll}
-                indeterminate={this.isIndeterminateSelectAll}
-                label="Select all"
-                onChange={this.handleSelectAllChanged}
-            />
-        );
+        return <Checkbox key={0} checked={this.isSelectAll} indeterminate={this.isIndeterminateSelectAll} label="Select all" onChange={this.handleSelectAllChanged} />;
     };
 
     private renderRegionOptions = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
-        return (
-            fileBrowserStore.exportRegionOptions.map(item =>
-                <Checkbox
-                    key={item.value}
-                    checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
-                    labelElement={
-                        <React.Fragment>
-                            <Icon icon={item.icon} style={{opacity: 0.5}}/>
-                            <span>&ensp;</span>{item.active ? <b>{item.label} (Active)</b> : item.label}
-                        </React.Fragment>
-                    }
-                    onChange={() => this.handleSelectRegionChanged(item.value as number)}
-                />
-            )
-        );  
+        return fileBrowserStore.exportRegionOptions.map(item => (
+            <Checkbox
+                key={item.value}
+                checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
+                labelElement={
+                    <React.Fragment>
+                        <Icon icon={item.icon} style={{opacity: 0.5}} />
+                        <span>&ensp;</span>
+                        {item.active ? <b>{item.label} (Active)</b> : item.label}
+                    </React.Fragment>
+                }
+                onChange={() => this.handleSelectRegionChanged(item.value as number)}
+            />
+        ));
     };
-    
+
     render() {
         const optionNum = FileBrowserStore.Instance.regionOptionNum;
         return (
@@ -102,7 +92,9 @@ export class RegionSelectComponent extends React.Component {
                         {optionNum > 1 ? this.renderSelectAll() : null}
                         {this.renderRegionOptions()}
                     </React.Fragment>
-                ) : <pre className="select-status">No regions in the active image.</pre>}
+                ) : (
+                    <pre className="select-status">No regions in the active image.</pre>
+                )}
             </div>
         );
     }

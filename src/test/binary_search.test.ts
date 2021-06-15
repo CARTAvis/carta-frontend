@@ -3,16 +3,35 @@ import {binarySearchByX} from "../utilities/array.ts";
 
 test("test binarySearchByX with sorted array in incremental/decremental order", () => {
     const incremental: Point2D[] = [
-        {x: -1, y: 0}, {x: 134, y: 0}, {x: 232, y: 0}, {x: 234, y: 0}, {x: 587, y: 0},
-        {x: 623, y: 0}, {x: 793, y: 0}, {x: 882, y: 0}, {x: 963, y: 0}, {x: 1074, y: 0}
+        {x: -1, y: 0},
+        {x: 134, y: 0},
+        {x: 232, y: 0},
+        {x: 234, y: 0},
+        {x: 587, y: 0},
+        {x: 623, y: 0},
+        {x: 793, y: 0},
+        {x: 882, y: 0},
+        {x: 963, y: 0},
+        {x: 1074, y: 0}
     ];
     const decremental: Point2D[] = [
-        {x: 20, y: 0}, {x: 17, y: 0}, {x: 9, y: 0}, {x: 7, y: 0}, {x: 6.5, y: 0},
-        {x: 4, y: 0}, {x: 3, y: 0}, {x: 2, y: 0}, {x: 1, y: 0}, {x: -15, y: 0}
+        {x: 20, y: 0},
+        {x: 17, y: 0},
+        {x: 9, y: 0},
+        {x: 7, y: 0},
+        {x: 6.5, y: 0},
+        {x: 4, y: 0},
+        {x: 3, y: 0},
+        {x: 2, y: 0},
+        {x: 1, y: 0},
+        {x: -15, y: 0}
     ];
 
     const empty: Point2D[] = [
-        {x: NaN, y: NaN},{x: NaN, y: NaN},{x: NaN, y: NaN},{x: NaN, y: NaN}
+        {x: NaN, y: NaN},
+        {x: NaN, y: NaN},
+        {x: NaN, y: NaN},
+        {x: NaN, y: NaN}
     ];
 
     expect(binarySearchByX(null, null)).toEqual(null);

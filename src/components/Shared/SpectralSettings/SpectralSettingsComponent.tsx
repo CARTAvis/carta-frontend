@@ -5,14 +5,26 @@ import {FrameStore} from "stores";
 import {SpectralSystem} from "models";
 
 @observer
-export class SpectralSettingsComponent extends React.Component<{frame: FrameStore, onSpectralCoordinateChange: (cooridnate: string) => void, onSpectralSystemChange: (system: string) => void, disable: boolean, disableChannelOption?: boolean}> {
+export class SpectralSettingsComponent extends React.Component<{
+    frame: FrameStore;
+    onSpectralCoordinateChange: (cooridnate: string) => void;
+    onSpectralSystemChange: (system: string) => void;
+    disable: boolean;
+    disableChannelOption?: boolean;
+}> {
     render() {
         const frame = this.props.frame;
         const nativeSpectralCoordinate = frame?.nativeSpectralCoordinate;
         const spectralTypes = frame?.spectralCoordsSupported ? Array.from(frame.spectralCoordsSupported.keys()) : [];
         const filteredSpectralTypes = this.props.disableChannelOption ? spectralTypes.filter(type => type !== "Channel") : spectralTypes;
-        const spectralCoordinateOptions: IOptionProps[] = filteredSpectralTypes.map((coord: string) => { return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord}; });
-        const spectralSystemOptions: IOptionProps[] = frame?.spectralSystemsSupported ? frame.spectralSystemsSupported.map((system) => { return {value: system, label: system}; }) : [];
+        const spectralCoordinateOptions: IOptionProps[] = filteredSpectralTypes.map((coord: string) => {
+            return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord};
+        });
+        const spectralSystemOptions: IOptionProps[] = frame?.spectralSystemsSupported
+            ? frame.spectralSystemsSupported.map(system => {
+                  return {value: system, label: system};
+              })
+            : [];
         const hasFrameCoordinateSetting = frame && (frame.isSpectralCoordinateConvertible || (frame.spectralAxis && !frame.spectralAxis.valid));
         const disableCoordinateSetting = this.props.disable || !hasFrameCoordinateSetting;
         const disableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;

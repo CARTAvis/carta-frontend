@@ -40,67 +40,67 @@ export class ProfileSmoothingStore {
 
     @action setType = (val: SmoothingType) => {
         this.type = val;
-    }
+    };
 
     @action setLineColor = (color: string) => {
         this.lineColor = color;
-    }
+    };
 
     @action setSelectedLine = (key: string) => {
         this.selectedLine = key;
-    }
+    };
 
     @action setLineType = (val: PlotType) => {
         this.lineType = val;
-    }
+    };
 
     @action setLineWidth = (val: number) => {
         if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
             this.lineWidth = val;
         }
-    }
+    };
 
     @action setPointRadius = (val: number) => {
         if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
             this.pointRadius = val;
         }
-    }
+    };
 
     @action setIsOverlayOn = (val: boolean) => {
         this.isOverlayOn = val;
-    }
+    };
 
     @action setBoxcarSize = (val: number) => {
         this.boxcarSize = val;
-    }
+    };
 
     @action setGaussianSigma = (val: number) => {
         this.gaussianSigma = val;
-    }
+    };
 
     @action setHanningSize = (val: number) => {
         this.hanningSize = val;
-    }
+    };
 
     @action setDecimationWidth = (val: number) => {
         this.decimationWidth = val;
-    }
+    };
 
     @action setBinWidth = (val: number) => {
         this.binWidth = val;
-    }
+    };
 
     @action setSavitzkyGolaySize = (val: number) => {
         this.savitzkyGolaySize = val;
-    }
+    };
 
     @action setSavitzkyGolayOrder = (val: number) => {
         this.savitzkyGolayOrder = val;
-    }
+    };
 
     @action setColorMap = (key: string, color: string) => {
         this.colorMap.set(key, color);
-    }
+    };
 
     @computed get exportData() {
         let exportData: Map<string, string> = new Map<string, string>();
@@ -150,26 +150,26 @@ export class ProfileSmoothingStore {
             h = (kernelSize - 1) / 2;
             j = (kernelSize - 1) / 2;
         } else {
-            h = (kernelSize / 2 - 1);
-            j = (kernelSize / 2);
+            h = kernelSize / 2 - 1;
+            j = kernelSize / 2;
         }
-        const startSmoothing = (xMinIndex < h) ? 0 : xMinIndex - h;
-        const endSmoothing = (xMaxIndex + j > fullLength - 1) ? fullLength - 1 : xMaxIndex + j;
-        const smoothedStart = (xMinIndex < h) ? xMinIndex : h;
+        const startSmoothing = xMinIndex < h ? 0 : xMinIndex - h;
+        const endSmoothing = xMaxIndex + j > fullLength - 1 ? fullLength - 1 : xMaxIndex + j;
+        const smoothedStart = xMinIndex < h ? xMinIndex : h;
         const smoothedEnd = smoothedStart + xMaxIndex - xMinIndex;
         return {startSmoothing, endSmoothing, smoothedStart, smoothedEnd};
     }
 
     private getLocalGroupStartEndIndexes(fullLength: number, xMinIndex: number, xMaxIndex: number, width: number) {
-        let firstGroupStartIndex = (xMinIndex % width === 0) ? xMinIndex : xMinIndex - xMinIndex % width;
-        let lastGroupEndIndex = (xMaxIndex % width === width - 1) ? xMaxIndex : xMaxIndex - xMaxIndex % width + (width - 1);
+        let firstGroupStartIndex = xMinIndex % width === 0 ? xMinIndex : xMinIndex - (xMinIndex % width);
+        let lastGroupEndIndex = xMaxIndex % width === width - 1 ? xMaxIndex : xMaxIndex - (xMaxIndex % width) + (width - 1);
         if (lastGroupEndIndex > fullLength - 1) {
             lastGroupEndIndex = fullLength - 1;
         }
         return {firstIndex: firstGroupStartIndex, lastIndex: lastGroupEndIndex};
     }
 
-    getSmoothingValues(x: number[], y: Float32Array | Float64Array, xMinIndex?: number, xMaxIndex?: number): { x: number[], y: Float32Array | Float64Array} {
+    getSmoothingValues(x: number[], y: Float32Array | Float64Array, xMinIndex?: number, xMaxIndex?: number): {x: number[]; y: Float32Array | Float64Array} {
         let smoothingYs: Float32Array | Float64Array;
         let smoothingXs = x;
         if (this.type === SmoothingType.BOXCAR) {
@@ -238,7 +238,7 @@ export class ProfileSmoothingStore {
         return {x: smoothingXs, y: smoothingYs};
     }
 
-    getSmoothingPoint2DArray(x: number[], y: Float32Array|Float64Array, xMinIndex?: number, xMaxIndex?: number): Point2D[] {
+    getSmoothingPoint2DArray(x: number[], y: Float32Array | Float64Array, xMinIndex?: number, xMaxIndex?: number): Point2D[] {
         if (this.type === SmoothingType.NONE) {
             return [];
         }
@@ -252,9 +252,9 @@ export class ProfileSmoothingStore {
         return smoothingArray;
     }
 
-    getDecimatedPoint2DArray(x: number[], y: Float32Array|Float64Array, decimationWidth: number, xMinIndex?: number, xMaxIndex?: number): Point2D[] {
+    getDecimatedPoint2DArray(x: number[], y: Float32Array | Float64Array, decimationWidth: number, xMinIndex?: number, xMaxIndex?: number): Point2D[] {
         if (!x || !y || x.length !== y.length) {
-            return[];
+            return [];
         }
         let decimatedValues;
         if ((xMinIndex || xMaxIndex === 0) && xMaxIndex) {
@@ -272,5 +272,4 @@ export class ProfileSmoothingStore {
         }
         return decimatedArray;
     }
-
 }

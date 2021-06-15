@@ -30,7 +30,6 @@ class CursorOverlayProps {
 
 @observer
 export class CursorOverlayComponent extends React.Component<CursorOverlayProps> {
-
     render() {
         const cursorInfo = this.props.cursorInfo;
         let infoStrings: string[] = [];
@@ -68,7 +67,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             infoStrings.push(`Stokes:\u00a0${this.props.currentStokes}`);
         }
 
-        const height = (this.props.height !== undefined && this.props.height >= 0) ? this.props.height : 20;
+        const height = this.props.height !== undefined && this.props.height >= 0 ? this.props.height : 20;
 
         let styleProps: CSSProperties = {
             lineHeight: height + "px"

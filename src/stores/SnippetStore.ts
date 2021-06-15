@@ -32,7 +32,7 @@ export class SnippetStore {
 
         try {
             const userSnippets = await ApiService.Instance.getSnippets();
-            runInAction(()=>{
+            runInAction(() => {
                 for (const [name, snippet] of userSnippets) {
                     this.snippets.set(name, snippet);
                 }

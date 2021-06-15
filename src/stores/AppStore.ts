@@ -270,7 +270,7 @@ export class AppStore {
         if (!this.activeFrame) {
             return -1;
         }
-        return this.frames.findIndex((frame) => frame.frameInfo.fileId === this.activeFrame.frameInfo.fileId);
+        return this.frames.findIndex(frame => frame.frameInfo.fileId === this.activeFrame.frameInfo.fileId);
     }
 
     @computed get frameNum(): number {
@@ -334,10 +334,11 @@ export class AppStore {
 
         const activeGroupFrames = [];
         for (const frame of this.frames) {
-            const groupMember = (frame === this.activeFrame)                                                 // Frame is active
-                || (frame === this.activeFrame.spatialReference)                                             // Frame is the active frame's reference
-                || (frame.spatialReference === this.activeFrame)                                             // Frame is a secondary image of the active frame
-                || (frame.spatialReference && frame.spatialReference === this.activeFrame.spatialReference); // Frame has the same reference as the active frame
+            const groupMember =
+                frame === this.activeFrame || // Frame is active
+                frame === this.activeFrame.spatialReference || // Frame is the active frame's reference
+                frame.spatialReference === this.activeFrame || // Frame is a secondary image of the active frame
+                (frame.spatialReference && frame.spatialReference === this.activeFrame.spatialReference); // Frame has the same reference as the active frame
 
             if (groupMember) {
                 activeGroupFrames.push(frame);
@@ -433,10 +434,10 @@ export class AppStore {
         }
 
         if (this.frames.length > 1) {
-            if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
+            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL && this.spatialReference !== newFrame) {
                 this.setSpatialMatchingEnabled(newFrame, true);
             }
-            if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+            if (this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
                 this.setSpectralMatchingEnabled(newFrame, true);
             }
         }
@@ -477,7 +478,7 @@ export class AppStore {
         } catch (err) {
             this.alertStore.showAlert(`Error loading file: ${err}`);
             this.endFileLoading();
-            throw(err);
+            throw err;
         }
     };
 
@@ -500,7 +501,7 @@ export class AppStore {
             console.log(err);
             this.alertStore.showAlert(`Error loading files: ${err}`);
             this.endFileLoading();
-            throw(err);
+            throw err;
         }
     };
 
@@ -743,58 +744,62 @@ export class AppStore {
             const frame = this.activeFrame;
             const fileId = this.catalogNextFileId;
 
-            this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).then(ack => runInAction(() => {
-                this.endFileLoading();
-                if (frame && ack.success && ack.dataSize) {
-                    let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                    let catalogWidgetId;
-                    const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
+            this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).then(
+                ack =>
+                    runInAction(() => {
+                        this.endFileLoading();
+                        if (frame && ack.success && ack.dataSize) {
+                            let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                            let catalogWidgetId;
+                            const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
 
-                    // update image associated catalog file
-                    let associatedCatalogFiles = [];
-                    const catalogStore = CatalogStore.Instance;
-                    const catalogComponentSize = catalogStore.catalogProfiles.size;
-                    let currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
-                    if (currentAssociatedCatalogFile?.length) {
-                        associatedCatalogFiles = currentAssociatedCatalogFile;
-                    } else {
-                        // new image append
-                        catalogStore.catalogProfiles.forEach((value, componentId) => {
-                            catalogStore.catalogProfiles.set(componentId, fileId);
-                        });
-                    }
-                    associatedCatalogFiles.push(fileId);
-                    catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
+                            // update image associated catalog file
+                            let associatedCatalogFiles = [];
+                            const catalogStore = CatalogStore.Instance;
+                            const catalogComponentSize = catalogStore.catalogProfiles.size;
+                            let currentAssociatedCatalogFile = catalogStore.imageAssociatedCatalogId.get(frame.frameInfo.fileId);
+                            if (currentAssociatedCatalogFile?.length) {
+                                associatedCatalogFiles = currentAssociatedCatalogFile;
+                            } else {
+                                // new image append
+                                catalogStore.catalogProfiles.forEach((value, componentId) => {
+                                    catalogStore.catalogProfiles.set(componentId, fileId);
+                                });
+                            }
+                            associatedCatalogFiles.push(fileId);
+                            catalogStore.updateImageAssociatedCatalogId(AppStore.Instance.activeFrame.frameInfo.fileId, associatedCatalogFiles);
 
-                    if (catalogComponentSize === 0) {
-                        const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
-                        catalogWidgetId = catalog.widgetStoreId;
-                        catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
-                    } else {
-                        catalogWidgetId = this.widgetsStore.addCatalogWidget(fileId);
-                        const key = catalogStore.catalogProfiles.keys().next().value;
-                        catalogStore.catalogProfiles.set(key, fileId);
-                    }
-                    if (catalogWidgetId) {
-                        this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                        this.catalogStore.addCatalog(fileId);
-                        this.fileBrowserStore.hideFileBrowser();
+                            if (catalogComponentSize === 0) {
+                                const catalog = this.widgetsStore.createFloatingCatalogWidget(fileId);
+                                catalogWidgetId = catalog.widgetStoreId;
+                                catalogStore.catalogProfiles.set(catalog.widgetComponentId, fileId);
+                            } else {
+                                catalogWidgetId = this.widgetsStore.addCatalogWidget(fileId);
+                                const key = catalogStore.catalogProfiles.keys().next().value;
+                                catalogStore.catalogProfiles.set(key, fileId);
+                            }
+                            if (catalogWidgetId) {
+                                this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
+                                this.catalogStore.addCatalog(fileId);
+                                this.fileBrowserStore.hideFileBrowser();
 
-                        const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
-                        catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                        resolve(fileId);
-                    } else {
-                        reject();
-                    }
-                } else {
-                    reject();
+                                const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
+                                catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                                resolve(fileId);
+                            } else {
+                                reject();
+                            }
+                        } else {
+                            reject();
+                        }
+                    }),
+                error => {
+                    console.error(error);
+                    AppToaster.show(ErrorToast(error));
+                    this.endFileLoading();
+                    reject(error);
                 }
-            }), error => {
-                console.error(error);
-                AppToaster.show(ErrorToast(error));
-                this.endFileLoading();
-                reject(error);
-            });
+            );
         });
     };
 
@@ -825,10 +830,18 @@ export class AppStore {
     }
 
     @action reorderFrame = (oldIndex: number, newIndex: number, length: number) => {
-        if (!Number.isInteger(oldIndex) || oldIndex < 0 || oldIndex >= this.frameNum ||
-            !Number.isInteger(newIndex) || newIndex < 0 || newIndex >= this.frameNum ||
-            !Number.isInteger(length) || length <= 0 || length >= this.frameNum ||
-            oldIndex === newIndex) {
+        if (
+            !Number.isInteger(oldIndex) ||
+            oldIndex < 0 ||
+            oldIndex >= this.frameNum ||
+            !Number.isInteger(newIndex) ||
+            newIndex < 0 ||
+            newIndex >= this.frameNum ||
+            !Number.isInteger(length) ||
+            length <= 0 ||
+            length >= this.frameNum ||
+            oldIndex === newIndex
+        ) {
             return;
         }
         this.frames = Utils.reorderArray(this.frames, oldIndex, newIndex, length);
@@ -1020,7 +1033,7 @@ export class AppStore {
     private histogramRequirements: Map<number, Array<number>>;
     private pendingChannelHistograms: Map<string, CARTA.IRegionHistogramData>;
 
-    throttledSetChannels = _.throttle((updates: { frame: FrameStore, channel: number, stokes: number }[]) => {
+    throttledSetChannels = _.throttle((updates: {frame: FrameStore; channel: number; stokes: number}[]) => {
         if (!updates || !updates.length) {
             return;
         }
@@ -1061,7 +1074,11 @@ export class AppStore {
     throttledSetView = _.throttle((tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
         const isAnimating = this.animatorStore.serverAnimationActive;
         if (isAnimating) {
-            this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), this.preferenceStore.animationCompressionQuality);
+            this.backendService.addRequiredTiles(
+                fileId,
+                tiles.map(t => t.encode()),
+                this.preferenceStore.animationCompressionQuality
+            );
         } else {
             this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.preferenceStore.imageCompressionQuality);
         }
@@ -1107,15 +1124,19 @@ export class AppStore {
         this.initRequirements();
         this.activeLayer = ImageViewLayer.RegionMoving;
 
-        AST.onReady.then(action(() => {
-            this.astReady = true;
-            this.logStore.addInfo("AST library loaded", ["ast"]);
-        }));
+        AST.onReady.then(
+            action(() => {
+                this.astReady = true;
+                this.logStore.addInfo("AST library loaded", ["ast"]);
+            })
+        );
 
-        CARTACompute.onReady.then(action(() => {
-            this.cartaComputeReady = true;
-            this.logStore.addInfo("Compute module loaded", ["compute"]);
-        }));
+        CARTACompute.onReady.then(
+            action(() => {
+                this.cartaComputeReady = true;
+                this.logStore.addInfo("Compute module loaded", ["compute"]);
+            })
+        );
 
         // Log the frontend git commit hash
         this.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
@@ -1157,7 +1178,10 @@ export class AppStore {
                 case ConnectionStatus.CLOSED:
                     if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
                         AppToaster.show(ErrorToast("Disconnected from server"));
-                        this.alertStore.showRetryAlert("You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.", this.onReconnectAlertClosed);
+                        this.alertStore.showRetryAlert(
+                            "You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.",
+                            this.onReconnectAlertClosed
+                        );
                     }
                     break;
                 default:
@@ -1460,15 +1484,7 @@ export class AppStore {
                 if (xColumn && yColumn && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
-                    this.catalogStore.updateCatalogData(
-                        catalogFileId,
-                        coords.wcsX,
-                        coords.wcsY,
-                        wcs,
-                        coords.xHeaderInfo.units,
-                        coords.yHeaderInfo.units,
-                        catalogProfileStore.catalogCoordinateSystem.system
-                    );
+                    this.catalogStore.updateCatalogData(catalogFileId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogProfileStore.catalogCoordinateSystem.system);
 
                     if (frame !== this.activeFrame) {
                         const imageMapId = `${frame.frameInfo.fileId}-${this.activeFrame.frameInfo.fileId}`;
@@ -1556,7 +1572,7 @@ export class AppStore {
                     regions.set(region.regionId.toFixed(), {
                         regionType: region.regionType,
                         controlPoints: region.controlPoints,
-                        rotation: region.rotation,
+                        rotation: region.rotation
                     });
                 }
             }
@@ -1590,7 +1606,7 @@ export class AppStore {
 
         const catalogFiles: CARTA.IOpenCatalogFile[] = [];
 
-        this.catalogStore.catalogProfileStores.forEach((profileStore) => {
+        this.catalogStore.catalogProfileStores.forEach(profileStore => {
             const catalogInfo = profileStore.catalogInfo;
             const existingEntry = catalogFiles.find(entry => entry.fileId === catalogInfo.fileId);
             // Skip duplicates
@@ -1624,7 +1640,7 @@ export class AppStore {
     };
 
     @computed get zfpReady() {
-        return (this.tileService && this.tileService.workersReady);
+        return this.tileService && this.tileService.workersReady;
     }
 
     @action setActiveFrame(fileId: number) {
@@ -1704,7 +1720,7 @@ export class AppStore {
     }
 
     getFrameIndex(fileId: number): number {
-        return this.frames?.findIndex((frame) => frame?.frameInfo.fileId === fileId);
+        return this.frames?.findIndex(frame => frame?.frameInfo.fileId === fileId);
     }
 
     @computed get selectedRegion(): RegionStore {
@@ -1765,7 +1781,6 @@ export class AppStore {
         if (oldRef?.secondarySpatialImages.length) {
             oldRef.secondarySpatialImages = [];
         }
-
     };
 
     @action clearSpatialReference = () => {
@@ -1906,10 +1921,10 @@ export class AppStore {
 
     exportImage = (): boolean => {
         if (this.activeFrame) {
-            const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : (this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5);
+            const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
             const composedCanvas = getImageCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
-                composedCanvas.toBlob((blob) => {
+                composedCanvas.toBlob(blob => {
                     const link = document.createElement("a") as HTMLAnchorElement;
                     link.download = `${this.activeFrame.filename}-image-${getTimestamp()}.png`;
                     link.href = URL.createObjectURL(blob);
@@ -1944,14 +1959,17 @@ export class AppStore {
     waitForImageData = async () => {
         await this.delay(25);
         return new Promise<void>(resolve => {
-            when(() => {
-                const tilesLoading = this.tileService.remainingTiles > 0;
-                const contoursLoading = this.activeFrame && this.activeFrame.contourProgress >= 0 && this.activeFrame.contourProgress < 1;
-                return !tilesLoading && !contoursLoading;
-            }, async () => {
-                await this.delay(25);
-                resolve();
-            });
+            when(
+                () => {
+                    const tilesLoading = this.tileService.remainingTiles > 0;
+                    const contoursLoading = this.activeFrame && this.activeFrame.contourProgress >= 0 && this.activeFrame.contourProgress < 1;
+                    return !tilesLoading && !contoursLoading;
+                },
+                async () => {
+                    await this.delay(25);
+                    resolve();
+                }
+            );
         });
     };
 

@@ -12,7 +12,6 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "histogram-floating-settings",
@@ -81,7 +80,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const widgetStore = this.widgetStore; 
+        const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
@@ -167,10 +166,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
             handleYMaxChange: this.handleYMaxChange
         };
-        
+
         return (
             <div className="histogram-settings-panel">
-                <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+                <LinePlotSettingsPanelComponent {...lineSettingsProps} />
             </div>
         );
     }

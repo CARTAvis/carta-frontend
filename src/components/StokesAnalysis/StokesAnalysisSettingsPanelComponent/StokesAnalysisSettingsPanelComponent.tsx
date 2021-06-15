@@ -17,7 +17,6 @@ export enum StokesAnalysisSettingsTabs {
 
 @observer
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "stokes-floating-settings",
@@ -72,13 +71,19 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     };
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
         this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
-    }
+    };
 
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            lineColorMap: new Map<LineKey, string>([["Primary", widgetStore.primaryLineColor], ["Secondary", widgetStore.secondaryLineColor]]),
-            lineOptions: [{value: "Primary", label: "Primary"}, {value: "Secondary", label: "Secondary"}],
+            lineColorMap: new Map<LineKey, string>([
+                ["Primary", widgetStore.primaryLineColor],
+                ["Secondary", widgetStore.secondaryLineColor]
+            ]),
+            lineOptions: [
+                {value: "Primary", label: "Primary"},
+                {value: "Secondary", label: "Secondary"}
+            ],
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
@@ -91,7 +96,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             },
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
-            setPlotType: widgetStore.setPlotType,
+            setPlotType: widgetStore.setPlotType
         };
 
         const scatterSettingsProps: ScatterPlotSettingsPanelComponentProps = {
@@ -99,7 +104,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             scatterPlotPointSize: widgetStore.scatterPlotPointSize,
             pointTransparency: widgetStore.pointTransparency,
             equalAxes: widgetStore.equalAxes,
-            setPointTransparency:  widgetStore.setPointTransparency,
+            setPointTransparency: widgetStore.setPointTransparency,
             setScatterPlotPointSize: widgetStore.setScatterPlotPointSize,
             setColormap: widgetStore.setColormap,
             handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged,
@@ -112,19 +117,14 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         return (
             <div className="stokes-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                    <Tab id={StokesAnalysisSettingsTabs.CONVERSION} title="Conversion"
-                        panel={
-                            <SpectralSettingsComponent
-                                frame={widgetStore.effectiveFrame}
-                                onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                disable={!hasStokes}
-                            />
-                        }
+                    <Tab
+                        id={StokesAnalysisSettingsTabs.CONVERSION}
+                        title="Conversion"
+                        panel={<SpectralSettingsComponent frame={widgetStore.effectiveFrame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={!hasStokes} />}
                     />
-                    <Tab id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING} title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                    <Tab id={StokesAnalysisSettingsTabs.SCATTER_PLOT_STYLING} title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps}/>}/>
-                    <Tab id={StokesAnalysisSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} diableStyle={true} diableDecimation={true}/>}/>
+                    <Tab id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING} title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
+                    <Tab id={StokesAnalysisSettingsTabs.SCATTER_PLOT_STYLING} title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps} />} />
+                    <Tab id={StokesAnalysisSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} diableStyle={true} diableDecimation={true} />} />
                 </Tabs>
             </div>
         );
