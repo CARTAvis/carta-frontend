@@ -125,7 +125,7 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
-    private exportRegion(directory: string, filename: string) {
+    private exportRegion = (directory: string, filename: string) => {
         if (!filename || !directory) {
             return;
         }
@@ -133,9 +133,9 @@ export class FileBrowserDialogComponent extends React.Component {
         filename = filename.trim();
         const appStore = AppStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
-        appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType);
-        console.log(`Exporting all regions to ${directory}/${filename}`);
-    }
+        appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType, fileBrowserStore.exportRegionIndexes);
+        console.log(`Exporting regions to ${directory}/${filename}`);
+    };
 
     private handleOverwriteAlertConfirmed = () => {
         this.overwriteExistingFileAlertVisible = false;
@@ -281,10 +281,10 @@ export class FileBrowserDialogComponent extends React.Component {
             case (BrowserMode.RegionExport):
                 const frame = appStore.activeFrame;
                 return (
-                    <Tooltip2 content={"Export all regions for the currently active image"}>
+                    <Tooltip2 content={"Export regions for the currently active image"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1}
+                            disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1 || fileBrowserStore.exportRegionNum < 1}
                             onClick={this.handleExportRegionsClicked}
                             text="Export Regions"
                         />
@@ -300,6 +300,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
         const coordinateTypeMenu = (
             <Popover2
+                minimal={true}
                 content={
                     <Menu>
                         <MenuItem text="World Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.WORLD)}/>
@@ -601,6 +602,8 @@ export class FileBrowserDialogComponent extends React.Component {
                 return [FileInfoType.SAVE_IMAGE, FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
             case BrowserMode.Catalog:
                 return [FileInfoType.CATALOG_FILE, FileInfoType.CATALOG_HEADER];
+            case BrowserMode.RegionExport:
+                return [FileInfoType.SELECT_REGION, FileInfoType.REGION_FILE];
             default:
                 return [FileInfoType.REGION_FILE];
         }
