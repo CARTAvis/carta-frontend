@@ -205,19 +205,6 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private roundToClosestPreferredStep(val: number) {
-        const power = Math.floor(Math.log10(val));
-        const scaledVal = val / Math.pow(10, power);
-
-        if (scaledVal < 1.5) {
-            return 1 * Math.pow(10, power);
-        } else if (scaledVal < 3.5) {
-            return 2 * Math.pow(10, power);
-        } else {
-            return 5 * Math.pow(10, power);
-        }
-    }
-
     public render() {
         const appStore = AppStore.Instance;
         const activeFrame = appStore.activeFrame;
@@ -332,9 +319,14 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             playbackClass += " wrap";
         }
 
+        let playbackModeClass = "playback-mode";
+        if (AppStore.Instance.darkTheme) {
+            playbackModeClass += " bp3-dark";
+        }
+
         const playbackModeButton = (
             <Popover2
-                className="playback-mode"
+                className={playbackModeClass}
                 content={
                     <Menu>
                         <MenuItem icon="arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.FORWARD)} />
