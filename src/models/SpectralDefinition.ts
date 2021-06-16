@@ -117,3 +117,10 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; un
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
     ["Channel", {type: SpectralType.CHANNEL, unit: null}]
 ]);
+
+// From FITS standard (Table 29 of V4.0 of "Definition of the Flexible Image Transport System")
+export const STANDARD_STOKES = new Map<number, string>([
+    [-8, "YX"], [-7, "XY"], [-6, "YY"], [-5, "XX"], [-4, "LR"],
+    [-3, "RL"], [-2, "LL"], [-1, "RR"], [1, "I"], [2, "Q"],
+    [3, "U"], [4, "V"],
+]);

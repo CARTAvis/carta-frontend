@@ -23,6 +23,7 @@ import {
     SpectralTypeSet,
     SpectralUnit,
     STANDARD_SPECTRAL_TYPE_SETS,
+    STANDARD_STOKES,
     Transform2D,
     ZoomPoint
 } from "models";
@@ -718,22 +719,9 @@ export class FrameStore {
                 const cdeltHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
                 let stokesInfo = [];
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
-                    let val = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
-                    switch (val) {
-                        case 1:
-                            stokesInfo.push("I");
-                            break;
-                        case 2:
-                            stokesInfo.push("Q");
-                            break;
-                        case 3:
-                            stokesInfo.push("U");
-                            break;
-                        case 4:
-                            stokesInfo.push("V");
-                            break;
-                        default:
-                            break;
+                    const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
+                    if (STANDARD_STOKES.has(stokesVal)) {
+                        stokesInfo.push(STANDARD_STOKES.get(stokesVal));
                     }
                 }
                 return stokesInfo;
