@@ -98,7 +98,7 @@ export class ContourWebGLService {
             ControlMapSize: this.gl.getUniformLocation(shaderProgram, "uControlMapSize"),
             ControlMapMin: this.gl.getUniformLocation(shaderProgram, "uControlMapMin"),
             ControlMapMax: this.gl.getUniformLocation(shaderProgram, "uControlMapMax"),
-            ControlMapTexture: this.gl.getUniformLocation(shaderProgram, "uControlMapTexture"),
+            ControlMapTexture: this.gl.getUniformLocation(shaderProgram, "uControlMapTexture")
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);

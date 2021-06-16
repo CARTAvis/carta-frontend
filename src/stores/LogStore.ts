@@ -60,8 +60,7 @@ export class LogStore {
     @action toggleTag(tag: string) {
         if (this.hiddenTags.indexOf(tag) === -1) {
             this.hiddenTags.push(tag);
-        }
-        else {
+        } else {
             this.hiddenTags = this.hiddenTags.filter(t => t !== tag);
         }
     }

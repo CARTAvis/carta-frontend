@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Classes, Dialog, ProgressBar, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Classes, Dialog, ProgressBar} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {AppStore} from "stores";
 import {toFixed} from "utilities";
 
@@ -16,7 +17,6 @@ interface TaskProgressDialogComponentProps {
 
 @observer
 export class TaskProgressDialogComponent extends React.Component<TaskProgressDialogComponentProps> {
-
     render() {
         let titleText = this.props.text;
         let timeRemainingText;
@@ -40,28 +40,20 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
             className += " bp3-dark";
         }
         return (
-            <Dialog
-                className={className}
-                icon={"time"}
-                canEscapeKeyClose={false}
-                canOutsideClickClose={false}
-                isCloseButtonShown={false}
-                title={titleText}
-                isOpen={this.props.isOpen}
-            >
+            <Dialog className={className} icon={"time"} canEscapeKeyClose={false} canOutsideClickClose={false} isCloseButtonShown={false} title={titleText} isOpen={this.props.isOpen}>
                 <div className={Classes.DIALOG_BODY}>
-                    <ProgressBar value={this.props.progress} animate={!isFinite(this.props.progress)} stripes={!isFinite(this.props.progress)} intent={"primary"}/>
+                    <ProgressBar value={this.props.progress} animate={!isFinite(this.props.progress)} stripes={!isFinite(this.props.progress)} intent={"primary"} />
                     <>{this.props.contentText}</>
                 </div>
-                {this.props.cancellable &&
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Tooltip content="Cancel the current task">
-                            <AnchorButton onClick={this.props.onCancel}>Cancel</AnchorButton>
-                        </Tooltip>
+                {this.props.cancellable && (
+                    <div className={Classes.DIALOG_FOOTER}>
+                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                            <Tooltip2 content="Cancel the current task">
+                                <AnchorButton onClick={this.props.onCancel}>Cancel</AnchorButton>
+                            </Tooltip2>
+                        </div>
                     </div>
-                </div>
-                }
+                )}
             </Dialog>
         );
     }

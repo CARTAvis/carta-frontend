@@ -13,7 +13,7 @@ export class TileCoordinate {
         return TileCoordinate.EncodeCoordinate(this);
     }
 
-    public static EncodeCoordinate(coordinate: { x: number, y: number, layer: number }): number {
+    public static EncodeCoordinate(coordinate: {x: number; y: number; layer: number}): number {
         if (!coordinate) {
             return -1;
         }
@@ -32,7 +32,7 @@ export class TileCoordinate {
         }
 
         // encode using bitwise operators
-        return ((layer << 24) | (y << 12) | x);
+        return (layer << 24) | (y << 12) | x;
     }
 
     // Decode all three coordinates from an encoded coordinate using bitwise operators

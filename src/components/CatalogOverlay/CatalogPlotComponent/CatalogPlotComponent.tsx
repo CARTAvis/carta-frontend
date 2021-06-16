@@ -3,7 +3,8 @@ import * as Plotly from "plotly.js";
 import Plot from "react-plotly.js";
 import {action, autorun, computed, runInAction, observable, makeObservable} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, AnchorButton, Intent, Tooltip, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
+import {FormGroup, AnchorButton, Intent, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import FuzzySearch from "fuzzy-search";
@@ -24,7 +25,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @observable catalogFileId: number;
     @observable componentId: string;
     private plotType: CatalogPlotType;
-    private histogramY: {yMin: number, yMax: number};
+    private histogramY: {yMin: number; yMax: number};
     private static emptyColumn = "None";
     private catalogFileNames: Map<number, string>;
 
@@ -46,7 +47,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        makeObservable(this)
+        makeObservable(this);
 
         this.histogramY = {yMin: undefined, yMax: undefined};
         const catalogPlot = CatalogStore.Instance.getAssociatedIdByWidgetId(this.props.id);
@@ -55,12 +56,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         this.catalogFileNames = new Map<number, string>();
         autorun(() => {
             const profileStore = this.profileStore;
-            const widgetStore =  this.widgetStore;
+            const widgetStore = this.widgetStore;
             const catalogFileIds = CatalogStore.Instance.activeCatalogFiles;
             if (!catalogFileIds?.includes(this.catalogFileId) && catalogFileIds?.length > 0) {
                 runInAction(() => {
                     this.catalogFileId = catalogFileIds[0];
-                })
+                });
             }
             if (widgetStore) {
                 this.plotType = widgetStore.plotType;
@@ -135,7 +136,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 case CatalogPlotType.Histogram:
                     if (!xColumn && plotWidgetStore.histogramBorder === undefined) {
                         const histogramCoords = profileStore.get1DPlotData(plotWidgetStore.xColumnName);
-                        const histogramXBorder =  this.getHistogramXBorder(histogramCoords.wcsData);
+                        const histogramXBorder = this.getHistogramXBorder(histogramCoords.wcsData);
                         plotWidgetStore.setHistogramXBorder(histogramXBorder);
                     }
                     break;
@@ -145,7 +146,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         } else {
             this.addNewWidgetStore();
         }
-    }
+    };
 
     private addNewWidgetStore = () => {
         const appStore = AppStore.Instance;
@@ -171,8 +172,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             default:
                 return undefined;
         }
-
-    }
+    };
 
     private getScatterBorder(xArray: number[], yArray: number[]): Border {
         const xBounds = minMaxArray(xArray);
@@ -239,7 +239,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         // increase x range to include border data
         const fraction = 1.001;
         const start = xRange.xMin;
-        const nBinx = widgetStore.nBinx? widgetStore.nBinx : this.numBinsX;
+        const nBinx = widgetStore.nBinx ? widgetStore.nBinx : this.numBinsX;
         const end = start + (xRange.xMax - xRange.xMin) * fraction;
         const size = (end - start) / nBinx;
         data.type = "histogram";
@@ -262,9 +262,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
         if (widgetStore?.plotType === CatalogPlotType.Histogram) {
-            return (widgetStore.xColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream);
+            return widgetStore.xColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream;
         } else if (widgetStore?.plotType === CatalogPlotType.D2Scatter) {
-            return (widgetStore.xColumnName !== emptyColumn && widgetStore.yColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream);
+            return widgetStore.xColumnName !== emptyColumn && widgetStore.yColumnName !== emptyColumn && !profileStore.loadingData && !profileStore.updatingDataStream;
         } else {
             return false;
         }
@@ -289,7 +289,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
         const nBinx = Math.ceil(Math.sqrt(coords.wcsData?.length));
-        return  nBinx;
+        return nBinx;
     }
 
     private handleColumnNameChange = (type: string, column: string) => {
@@ -310,7 +310,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
             widgetsStore.setHistogramXBorder(this.initHistogramXBorder);
         }
-    }
+    };
 
     private handleShowSelectedDataChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         const widgetsStore = this.widgetStore;
@@ -319,12 +319,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (widgetsStore && catalogWidgetStore) {
             catalogWidgetStore.setShowSelectedData(val);
         }
-    }
+    };
 
     private handleLogScaleYChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         const val = changeEvent.target.checked;
         this.widgetStore.setLogScaleY(val);
-    }
+    };
 
     private onHover = (event: Plotly.PlotMouseEvent) => {
         const widgetStore = this.widgetStore;
@@ -333,7 +333,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             const point = points[0];
             widgetStore.setIndicator({x: point.x as number, y: point.y as number});
         }
-    }
+    };
 
     private onDoubleClick = () => {
         const widgetsStore = this.widgetStore;
@@ -342,7 +342,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         } else {
             widgetsStore.setHistogramXBorder(this.initHistogramXBorder);
         }
-    }
+    };
 
     private onRelayout = (event: any) => {
         const widgetStore = this.widgetStore;
@@ -375,7 +375,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 if (isFinite(xMin) || isFinite(xMax)) {
                     const histogramBorder: XBorder = {
                         xMin: isFinite(xMin) ? xMin : widgetStore.histogramBorder.xMin,
-                        xMax: isFinite(xMax) ? xMax : widgetStore.histogramBorder.xMax,
+                        xMax: isFinite(xMax) ? xMax : widgetStore.histogramBorder.xMax
                     };
                     this.widgetStore.setHistogramXBorder(histogramBorder);
                 }
@@ -385,7 +385,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             }
         }
-    }
+    };
 
     private handlePlotClick = () => {
         const appStore = AppStore.Instance;
@@ -396,7 +396,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             let catalogFilter = profileStore.updateRequestDataSize;
             appStore.sendCatalogFilter(catalogFilter);
         }
-    }
+    };
 
     // region selection
     private onLassoSelected = (event: Plotly.PlotSelectionEvent) => {
@@ -436,7 +436,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 catalogWidgetStore.setCatalogTableAutoScroll(true);
             }
         }
-    }
+    };
 
     private onDeselect = () => {
         const catalogStore = CatalogStore.Instance;
@@ -446,7 +446,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         profileStore.setSelectedPointIndices([], false);
         catalogWidgetStore.setCatalogTableAutoScroll(false);
         catalogWidgetStore.setShowSelectedData(false);
-    }
+    };
 
     // Single source selected
     private onSingleSourceClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
@@ -469,49 +469,35 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             profileStore.setSelectedPointIndices(selectedPointIndex, true);
             catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
-    }
+    };
 
     private renderColumnNamePopOver = (column: string, itemProps: IItemRendererProps) => {
-        return (
-            <MenuItem
-                key={column}
-                text={column}
-                onClick={itemProps.handleClick}
-                active={itemProps.modifiers.active}
-            />
-        );
-    }
+        return <MenuItem key={column} text={column} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+    };
 
     private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
         const fileSearcher = new FuzzySearch([columnName]);
         return fileSearcher.search(query).length > 0;
-    }
+    };
 
     private updateHistogramYrange = (figure: any, graphDiv: any) => {
-        // fixed react plotlyjs bug with fixed range and changed x range 
+        // fixed react plotlyjs bug with fixed range and changed x range
         if (this.widgetStore.plotType === CatalogPlotType.Histogram) {
             const yaxis = figure.layout.yaxis.range;
             this.histogramY = {yMin: yaxis[0], yMax: yaxis[1]};
         }
-    }
+    };
 
     private onNumBinChange = (val: number) => {
         this.widgetStore.setNumBinsX(val);
         this.onDeselect();
-    }
+    };
 
     private renderFilePopOver = (fileId: number, itemProps: IItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
         let text = `${fileId}: ${fileName}`;
-        return (
-            <MenuItem
-                key={fileId}
-                text={text}
-                onClick={itemProps.handleClick}
-                active={itemProps.modifiers.active}
-            />
-        );
-    }
+        return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+    };
 
     public render() {
         const profileStore = this.profileStore;
@@ -522,7 +508,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (!widgetStore || !profileStore || !catalogWidgetStore || catalogFileIds === undefined || catalogFileIds?.length === 0) {
             return (
                 <div className="catalog-plot">
-                    <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a catalog file using the menu"}/>;
+                    <NonIdealState icon={"folder-open"} title={"No catalog file loaded"} description={"Load a catalog file using the menu"} />;
                 </div>
             );
         }
@@ -532,7 +518,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const disabled = !this.enablePlotButton;
         const isScatterPlot = this.plotType === CatalogPlotType.D2Scatter;
         const isHistogramPlot = this.plotType === CatalogPlotType.Histogram;
-        const ratio = isScatterPlot? devicePixelRatio : 1;
+        const ratio = isScatterPlot ? devicePixelRatio : 1;
         const fontFamily = "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
         let themeColor = Colors.LIGHT_GRAY5;
         let lableColor = Colors.GRAY1;
@@ -542,7 +528,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let catalogScatterClass = "catalog-scatter";
 
         let catalogFileItems = [];
-        catalogFileIds.forEach((value) => {
+        catalogFileIds.forEach(value => {
             catalogFileItems.push(value);
         });
         this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
@@ -554,10 +540,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         }
 
-        const noResults = (<MenuItem disabled={true} text="No results" />);
+        const noResults = <MenuItem disabled={true} text="No results" />;
 
         const renderFileSelect = (
-            <FormGroup  inline={true} label="File">
+            <FormGroup inline={true} label="File">
                 <Select
                     className="bp3-fill"
                     filterable={false}
@@ -565,9 +551,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     activeItem={this.catalogFileId}
                     onItemSelect={this.handleCatalogFileChange}
                     itemRenderer={this.renderFilePopOver}
-                    popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                 >
-                    <Button text={this.catalogFileId} rightIcon="double-caret-vertical"/>
+                    <Button text={this.catalogFileId} rightIcon="double-caret-vertical" />
                 </Select>
             </FormGroup>
         );
@@ -580,20 +566,20 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     activeItem={widgetStore.xColumnName}
                     onItemSelect={item => this.handleColumnNameChange("x", item)}
                     itemRenderer={this.renderColumnNamePopOver}
-                    popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                     filterable={true}
                     noResults={noResults}
                     itemPredicate={this.filterColumn}
                     resetOnSelect={true}
                 >
-                    <Button text={widgetStore.xColumnName} rightIcon="double-caret-vertical"/>
+                    <Button text={widgetStore.xColumnName} rightIcon="double-caret-vertical" />
                 </Select>
             </FormGroup>
         );
 
         const renderHistogramLog = (
             <FormGroup label={"Log Scale"} inline={true} disabled={disabled}>
-                <Switch checked={widgetStore.logScaleY} onChange={this.handleLogScaleYChanged} disabled={disabled}/>
+                <Switch checked={widgetStore.logScaleY} onChange={this.handleLogScaleYChanged} disabled={disabled} />
             </FormGroup>
         );
 
@@ -605,13 +591,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     activeItem={widgetStore.yColumnName}
                     onItemSelect={item => this.handleColumnNameChange("y", item)}
                     itemRenderer={this.renderColumnNamePopOver}
-                    popoverProps={{popoverClassName: "catalog-select", minimal: true , position: PopoverPosition.AUTO_END}}
+                    popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                     filterable={true}
                     noResults={noResults}
                     itemPredicate={this.filterColumn}
                     resetOnSelect={true}
                 >
-                    <Button text={widgetStore.yColumnName} rightIcon="double-caret-vertical"/>
+                    <Button text={widgetStore.yColumnName} rightIcon="double-caret-vertical" />
                 </Select>
             </FormGroup>
         );
@@ -624,7 +610,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         {renderXSelect}
                         {isScatterPlot && renderYSelect}
                     </div>
-                    <NonIdealState className={"non-ideal-state"} icon={"folder-open"} title={"No column selected"} description={"Please select columns"}/>;
+                    <NonIdealState className={"non-ideal-state"} icon={"folder-open"} title={"No column selected"} description={"Please select columns"} />;
                 </div>
             );
         }
@@ -642,7 +628,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             height: (this.height - 85) * ratio,
             paper_bgcolor: themeColor,
             plot_bgcolor: themeColor,
-            hovermode: "closest" ,
+            hovermode: "closest",
             xaxis: {
                 title: widgetStore.xColumnName,
                 titlefont: {
@@ -664,13 +650,13 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 mirror: true,
                 linecolor: gridColor,
                 showline: true,
-                // indicator 
+                // indicator
                 spikemode: "across",
                 spikedash: "solid",
                 spikecolor: markerColor,
                 spikethickness: 1 * ratio,
                 // d3 format
-                tickformat: ".2e",
+                tickformat: ".2e"
             },
             yaxis: {
                 titlefont: {
@@ -694,7 +680,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 spikemode: "across",
                 spikedash: "solid",
                 spikecolor: markerColor,
-                spikethickness: 1 * ratio,
+                spikethickness: 1 * ratio
             },
             margin: {
                 t: 5 * ratio,
@@ -704,7 +690,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 pad: 0
             },
             showlegend: false,
-            dragmode: widgetStore.dragmode,
+            dragmode: widgetStore.dragmode
         };
 
         let data;
@@ -745,12 +731,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let scatterDataMarker = data[0].marker;
         if (selectedPointIndices.length > 0) {
             data[0]["selectedpoints"] = selectedPointIndices;
-            data[0]["selected"] = {"marker": {"color": Colors.RED2}};
-            data[0]["unselected"] = {"marker": {"opacity": 0.5}};
+            data[0]["selected"] = {marker: {color: Colors.RED2}};
+            data[0]["unselected"] = {marker: {opacity: 0.5}};
         } else {
             data[0]["selectedpoints"] = [];
             scatterDataMarker.color = Colors.BLUE2;
-            data[0]["unselected"] = {"marker": {"opacity": 1}};
+            data[0]["unselected"] = {marker: {opacity: 1}};
         }
 
         const config: Partial<Plotly.Config> = {
@@ -759,14 +745,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             showTips: false,
             doubleClick: false,
             showAxisDragHandles: false,
-            modeBarButtonsToRemove: [
-                "zoomIn2d",
-                "zoomOut2d",
-                "resetScale2d",
-                "toggleSpikelines",
-                "hoverClosestCartesian",
-                "hoverCompareCartesian",
-            ],
+            modeBarButtonsToRemove: ["zoomIn2d", "zoomOut2d", "resetScale2d", "toggleSpikelines", "hoverClosestCartesian", "hoverCompareCartesian"]
         };
 
         const renderHistogramBins = (
@@ -775,7 +754,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 label="Bins"
                 min={1}
                 integerOnly={true}
-                value={widgetStore.nBinx? widgetStore.nBinx : this.numBinsX}
+                value={widgetStore.nBinx ? widgetStore.nBinx : this.numBinsX}
                 onValueChanged={val => this.onNumBinChange(val)}
                 onValueCleared={() => this.onNumBinChange(this.numBinsX)}
                 displayExponential={false}
@@ -783,7 +762,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             />
         );
 
-        return(
+        return (
             <div className={"catalog-plot"}>
                 <div className={"catalog-plot-option"}>
                     {renderFileSelect}
@@ -792,7 +771,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     {isHistogramPlot && renderHistogramLog}
                     {isScatterPlot && renderYSelect}
                 </div>
-                <div className={`${spikeLineClass} ${isScatterPlot && devicePixelRatio > 1? catalogScatterClass : ""}`}>
+                <div className={`${spikeLineClass} ${isScatterPlot && devicePixelRatio > 1 ? catalogScatterClass : ""}`}>
                     <Plot
                         data={data}
                         layout={layout}
@@ -805,29 +784,23 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         onClick={this.onSingleSourceClick}
                         onInitialized={this.updateHistogramYrange}
                         onUpdate={this.updateHistogramYrange}
-                        style={{transform: isScatterPlot? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
+                        style={{transform: isScatterPlot ? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
                     />
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="scatter-info">
-                        <ProfilerInfoComponent info={this.genProfilerInfo}/>
+                        <ProfilerInfoComponent info={this.genProfilerInfo} />
                     </div>
                     <div className="bp3-dialog-footer-actions">
-                        <Tooltip content={"Show only selected sources at image and table viewer"}>
+                        <Tooltip2 content={"Show only selected sources at image and table viewer"}>
                             <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
-                                <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
+                                <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
                             </FormGroup>
-                        </Tooltip>            
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            text="Plot"
-                            onClick={this.handlePlotClick}
-                            disabled={disabled}
-                        />
+                        </Tooltip2>
+                        <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled} />
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
-                </ReactResizeDetector>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
             </div>
         );
     }

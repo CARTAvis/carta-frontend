@@ -43,7 +43,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         }
 
         const catalogStore = appStore.catalogStore;
-        const catalogFileIds = catalogStore.activeCatalogFiles; 
+        const catalogFileIds = catalogStore.activeCatalogFiles;
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
             const numVertices = catalog.x.length;
@@ -102,8 +102,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 <canvas
                     id="catalog-canvas"
                     className="catalog-canvas"
-                    ref={(ref) => this.canvas = ref}
-                    onClick={(evn) => this.onClick(evn)}
+                    ref={ref => (this.canvas = ref)}
+                    onClick={evn => this.onClick(evn)}
                     onDoubleClick={this.onDoubleClick}
                     onWheel={this.onWheelCaptured}
                     style={{
@@ -113,7 +113,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                         height: baseFrame ? baseFrame.renderHeight || 1 : 1
                     }}
                 />
-            </div>);
+            </div>
+        );
     }
 
     private resizeAndClearCanvas() {
@@ -171,7 +172,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
             const isActive = frame === destinationFrame;
             const catalog = catalogStore.catalogGLData.get(fileId);
-            if(catalog) {
+            if (catalog) {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 const shape = catalogWidgetStore.shapeSettings;
                 const featherWidth = shape.featherWidth * devicePixelRatio;
@@ -180,10 +181,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
                 let pointSize = catalogWidgetStore.catalogSize + shape.diameterBase;
                 this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
-                this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData? 1.0 : 0.0);
+                this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData ? 1.0 : 0.0);
                 //FrameView
                 let sourceFrame = frame;
-                if(!isActive) {
+                if (!isActive) {
                     sourceFrame = destinationFrame;
                 }
                 if (sourceFrame.spatialReference) {
@@ -192,7 +193,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
                     rangeScale = {
                         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
-                        y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                        y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)
                     };
 
                     rangeOffset = {
@@ -205,9 +206,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     let baseRequiredView = sourceFrame.requiredFrameView;
                     rangeScale = {
                         x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
-                        y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                        y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)
                     };
-        
+
                     rangeOffset = {
                         x: -baseRequiredView.xMin * rangeScale.x,
                         y: -baseRequiredView.yMin * rangeScale.y
@@ -223,7 +224,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
                 // size
                 this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 0);
-                this.gl.uniform1i(shaderUniforms.AreaMode, catalogWidgetStore.sizeArea? 1 : 0);
+                this.gl.uniform1i(shaderUniforms.AreaMode, catalogWidgetStore.sizeArea ? 1 : 0);
                 const sizeTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Size);
                 if (!catalogWidgetStore.disableSizeMap && sizeTexture) {
                     this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 1);
@@ -235,7 +236,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 // color
                 this.gl.uniform1i(shaderUniforms.CmapEnabled, 0);
                 const colorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Color);
-                if (!catalogWidgetStore.disableColorMap && colorTexture){
+                if (!catalogWidgetStore.disableColorMap && colorTexture) {
                     this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
                     this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
                     this.gl.activeTexture(GL2.TEXTURE4);
@@ -260,12 +261,12 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 if (selectedSource) {
                     this.gl.activeTexture(GL2.TEXTURE6);
                     this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
-                    this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 6);   
+                    this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 6);
                 }
 
                 // size minor
                 this.gl.uniform1i(shaderUniforms.SizeMinorMapEnabled, 0);
-                this.gl.uniform1i(shaderUniforms.AreaModeMinor, catalogWidgetStore.sizeMinorArea? 1 : 0);
+                this.gl.uniform1i(shaderUniforms.AreaModeMinor, catalogWidgetStore.sizeMinorArea ? 1 : 0);
                 const sizeMinorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SizeMinor);
                 if (!catalogWidgetStore.disableSizeMinorMap && sizeMinorTexture && catalogWidgetStore.catalogShape === CatalogOverlayShape.ELLIPSE_LINED) {
                     this.gl.uniform1i(shaderUniforms.SizeMinorMapEnabled, 1);
@@ -280,14 +281,14 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
                     this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
                     this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio);
-                    
-                    if(!isActive) {
+
+                    if (!isActive) {
                         const imageMapId = `${frame.frameInfo.fileId}-${destinationFrame.frameInfo.fileId}`;
                         const positionTexture = this.catalogWebGLService.getSpatialMatchedTexture(imageMapId, fileId);
                         this.gl.activeTexture(GL2.TEXTURE8);
                         this.gl.bindTexture(GL2.TEXTURE_2D, positionTexture.x);
                         this.gl.uniform1i(shaderUniforms.XTexture, 8);
-    
+
                         this.gl.activeTexture(GL2.TEXTURE9);
                         this.gl.bindTexture(GL2.TEXTURE_2D, positionTexture.y);
                         this.gl.uniform1i(shaderUniforms.YTexture, 9);
@@ -297,7 +298,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                         this.gl.activeTexture(GL2.TEXTURE1);
                         this.gl.bindTexture(GL2.TEXTURE_2D, x);
                         this.gl.uniform1i(shaderUniforms.XTexture, 1);
-    
+
                         this.gl.activeTexture(GL2.TEXTURE2);
                         this.gl.bindTexture(GL2.TEXTURE_2D, y);
                         this.gl.uniform1i(shaderUniforms.YTexture, 2);
@@ -310,7 +311,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         });
     }
 
-    private onWheelCaptured = (event) => {
+    private onWheelCaptured = event => {
         if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
             const wheelEvent = event.nativeEvent;
             const frame = AppStore.Instance.activeFrame;
@@ -323,7 +324,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         }
     };
 
-    private onClick = (event) => {
+    private onClick = event => {
         const clickEvent = event.nativeEvent;
         const catalogStore = CatalogStore.Instance;
 
@@ -337,8 +338,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 selectedPoint.minDistanceSquared = closestPoint.minDistanceSquared;
                 selectedPoint.fileId = fileId;
             }
-        }); 
-        
+        });
+
         if (selectedPoint.fileId !== undefined && selectedPoint.minIndex !== undefined) {
             const catalogProfileStore = catalogStore.catalogProfileStores.get(selectedPoint.fileId);
             const widgetStoreId = catalogStore.catalogWidgets.get(selectedPoint.fileId);
@@ -347,12 +348,12 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             catalogProfileStore.setSelectedPointIndices([selectedPoint.minIndex], false);
             catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
-    }
+    };
 
     private onDoubleClick() {
         const catalogStore = CatalogStore.Instance;
-        if (catalogStore?.catalogGLData?.size) {   
-            catalogStore.catalogProfileStores?.forEach((profileStore) => {   
+        if (catalogStore?.catalogGLData?.size) {
+            catalogStore.catalogProfileStores?.forEach(profileStore => {
                 const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(profileStore.catalogFileId);
                 profileStore.setSelectedPointIndices([], false);
                 WidgetsStore.Instance.catalogWidgets.get(widgetStoreId)?.setCatalogTableAutoScroll(false);

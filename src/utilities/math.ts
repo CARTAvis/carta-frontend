@@ -30,7 +30,7 @@ export function polarizedIntensity(q: number, u: number) {
 
 // 0.5 * Math.atan2(U, Q) * 180 / Math.pi
 export function polarizationAngle(q: number, u: number) {
-    return 0.5 * Math.atan2(u, q) * 180 / Math.PI;
+    return (0.5 * Math.atan2(u, q) * 180) / Math.PI;
 }
 
 // normalising a by b
@@ -96,7 +96,7 @@ function getSmoothedValue(bias: number, contrast: number) {
     if (denominator <= 0) {
         denominator = 0.1;
     }
-    return ({bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator});
+    return {bias: smoothedBias, contrast: smoothedContrast, offset: offset, denominator: denominator};
 }
 
 export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5, bias: number = 0, contrast: number = 1, useSmoothedBiasContrast: boolean = true) {
@@ -183,7 +183,7 @@ export function floorToPower(val: number, power: number) {
     return Math.pow(power, Math.floor(Math.log(val) / Math.log(power)));
 }
 
-export function minMaxArray(data: Array<number> | TypedArray): { minVal: number, maxVal: number } {
+export function minMaxArray(data: Array<number> | TypedArray): {minVal: number; maxVal: number} {
     if (data && data.length) {
         let maxVal = -Number.MAX_VALUE;
         let minVal = Number.MAX_VALUE;
@@ -214,5 +214,5 @@ export function gaussian(x: number, amp: number, center: number, fwhm: number) {
 }
 
 export function lorentzian(x: number, amp: number, center: number, fwhm: number) {
-    return amp * 0.25 * Math.pow(fwhm, 2) / (Math.pow(x - center, 2) + 0.25 * Math.pow(fwhm, 2));
+    return (amp * 0.25 * Math.pow(fwhm, 2)) / (Math.pow(x - center, 2) + 0.25 * Math.pow(fwhm, 2));
 }

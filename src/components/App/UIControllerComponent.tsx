@@ -19,19 +19,19 @@ export class UIControllerComponent extends React.Component {
     render() {
         return (
             <React.Fragment>
-                <RootMenuComponent/>
-                <RegionDialogComponent/>
-                <ContourDialogComponent/>
-                <FileInfoDialogComponent/>
-                <FileBrowserDialogComponent/>
-                <PreferenceDialogComponent/>
-                <SaveLayoutDialogComponent/>
-                <DebugExecutionDialogComponent/>
-                <AboutDialogComponent/>
-                <ExternalPageDialogComponent/>
-                <HelpDrawerComponent/>
-                <StokesDialogComponent/>
-                <SplashScreenComponent/>
+                <RootMenuComponent />
+                <RegionDialogComponent />
+                <ContourDialogComponent />
+                <FileInfoDialogComponent />
+                <FileBrowserDialogComponent />
+                <PreferenceDialogComponent />
+                <SaveLayoutDialogComponent />
+                <DebugExecutionDialogComponent />
+                <AboutDialogComponent />
+                <ExternalPageDialogComponent />
+                <HelpDrawerComponent />
+                <StokesDialogComponent />
+                <SplashScreenComponent />
             </React.Fragment>
         );
     }

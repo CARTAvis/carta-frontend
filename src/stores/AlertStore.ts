@@ -5,7 +5,7 @@ export enum AlertType {
     Info,
     Interactive,
     Retry
-};
+}
 
 export class AlertStore {
     private static staticInstance: AlertStore;

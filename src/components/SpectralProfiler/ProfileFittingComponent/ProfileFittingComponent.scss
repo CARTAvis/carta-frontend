@@ -1,7 +1,5 @@
-.profile-fitting-panel{
-
-    .profile-fitting-form{
-
+.profile-fitting-panel {
+    .profile-fitting-form {
         .bp3-form-group {
             &:first-of-type {
                 margin-left: 0px;
@@ -12,75 +10,75 @@
             }
         }
 
-        .components-input{
+        .components-input {
             display: flex;
             flex-direction: row;
 
-            .bp3-input-group{
+            .bp3-input-group {
                 width: 40px;
             }
         }
 
-        .components-slider{
+        .components-slider {
             display: flex;
             flex-direction: row;
             height: 30px;
 
-            .bp3-slider{
+            .bp3-slider {
                 margin-left: 20px;
                 min-width: 200px;
                 width: 100%;
             }
 
-            .bp3-button{
+            .bp3-button {
                 margin-left: 20px;
             }
         }
 
-        .component-input{
+        .component-input {
             display: flex;
             flex-direction: row;
 
-            .bp3-switch{
+            .bp3-switch {
                 margin-left: 15px;
             }
         }
 
-        .fitting-result{
+        .fitting-result {
             display: flex;
             flex-direction: column;
             height: 210px;
             width: 350px;
 
-            .fitting-result-pre{
+            .fitting-result-pre {
                 overflow: auto;
                 height: 100%;
                 flex: 1;
                 user-select: text;
 
-                .fitting-result-text{
+                .fitting-result-text {
                     font-size: 14px;
                 }
             }
         }
 
-        .fitting-result-hover-button{
+        .fitting-result-hover-button {
             position: relative;
             top: -50px;
             left: 310px;
         }
     }
 
-    .profile-fitting-footer{
+    .profile-fitting-footer {
         display: flex;
         flex-direction: row;
         justify-content: flex-end;
 
-        .bp3-button{
+        .bp3-button {
             margin-left: 10px;
         }
 
-        .switch-wrapper{
+        .switch-wrapper {
             display: flex;
             align-items: center;
             height: 30px;
@@ -90,33 +88,31 @@
     }
 }
 
-.fitting-popover{
-
-    .fitting-log{
+.fitting-popover {
+    .fitting-log {
         display: flex;
         flex-direction: column;
         height: 400px;
-        .fitting-log-pre{
+        .fitting-log-pre {
             overflow: auto;
             height: 100%;
             flex: 1;
             margin: 5px;
             user-select: text;
 
-            .fitting-log-text{
+            .fitting-log-text {
                 font-size: 14px;
             }
         }
     }
 
-    .fitting-popover-footer{
+    .fitting-popover-footer {
         display: flex;
         flex-direction: row;
         justify-content: flex-end;
 
-        .fitting-log-button{
-            margin: 10px
+        .fitting-log-button {
+            margin: 10px;
         }
     }
-
 }

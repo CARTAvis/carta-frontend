@@ -1,4 +1,4 @@
-import { action, observable, makeObservable } from "mobx";
+import {action, observable, makeObservable} from "mobx";
 import {Position} from "@blueprintjs/core";
 
 export class HelpStore {
@@ -45,7 +45,7 @@ export enum HelpType {
     HISTOGRAM = "histogram",
     HISTOGRAM_SETTINGS = "histogram-settings",
     IMAGE_VIEW = "image-view",
-    IMAGE_VIEW_SETTINGS  = "image-view-settings",
+    IMAGE_VIEW_SETTINGS = "image-view-settings",
     LAYER_LIST = "layer-list",
     LOG = "log",
     PLACEHOLDER = "placeholder",

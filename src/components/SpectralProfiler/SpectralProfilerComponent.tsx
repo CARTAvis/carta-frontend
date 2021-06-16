@@ -51,7 +51,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return this.widgetStore.plotData;
     }
 
-    @computed get isMeanRmsVisible(): boolean { // Show Mean/RMS when only 1 profile
+    @computed get isMeanRmsVisible(): boolean {
+        // Show Mean/RMS when only 1 profile
         return this.widgetStore.meanRmsVisible && this.plotData?.numProfiles === 1;
     }
 
@@ -144,7 +145,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return LinePlotSelectingMode.BOX;
     }
 
-    onGraphCursorMoved = _.throttle((x) => {
+    onGraphCursorMoved = _.throttle(x => {
         this.widgetStore.setCursor(x);
     }, 33);
 
@@ -176,7 +177,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const cursorXValue = isCursorInsideLinePlots ? this.widgetStore.cursorX : this.currentChannelValue;
             const cursorXUnit = frame.spectralUnitStr;
 
-            if (this.plotData.numProfiles === 1) { // Single profile, Mean/RMS is available
+            if (this.plotData.numProfiles === 1) {
+                // Single profile, Mean/RMS is available
                 const data = this.plotData.data[0];
                 const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
                 profilerInfo.push({
@@ -257,7 +259,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         if (!this.widgetStore) {
-            return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
+            return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"} />;
         }
 
         let linePlotProps: LinePlotComponentProps = {
@@ -431,7 +433,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     horizontal: false,
                     color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
-                    isMouseMove: true,
+                    isMouseMove: true
                 });
             }
             if (!isNaN(this.currentChannelValue)) {
@@ -440,7 +442,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     id: "marker-channel-current",
                     opacity: 0.4,
                     draggable: false,
-                    horizontal: false,
+                    horizontal: false
                 });
             }
             if (!isNaN(this.requiredChannelValue)) {
@@ -449,7 +451,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     id: "marker-channel-required",
                     draggable: !AnimatorStore.Instance.animationActive,
                     dragMove: this.onChannelChanged,
-                    horizontal: false,
+                    horizontal: false
                 });
             }
 
@@ -501,24 +503,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             <div className={className}>
                 <div className="profile-container">
                     <div className="profile-toolbar">
-                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id}/>
+                        <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
                     </div>
-                    <SplitPane
-                        className="body-split-pane"
-                        split="horizontal"
-                        primary={"second"}
-                        defaultSize={this.plotData?.numProfiles > 1 ? "25%" : "12%"}
-                        minSize={"12%"}
-                    >
+                    <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={this.plotData?.numProfiles > 1 ? "25%" : "12%"} minSize={"12%"}>
                         <Pane className={"line-plot-container"}>
-                            <LinePlotComponent {...linePlotProps}/>
+                            <LinePlotComponent {...linePlotProps} />
                         </Pane>
                         <Pane className={"info-container"}>
-                            <SpectralProfilerInfoComponent profileInfo={this.genProfilerInfo()}/>
+                            <SpectralProfilerInfoComponent profileInfo={this.genProfilerInfo()} />
                         </Pane>
                     </SplitPane>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33} />
             </div>
         );
     }

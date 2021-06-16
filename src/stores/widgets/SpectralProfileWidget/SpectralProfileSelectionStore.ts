@@ -19,7 +19,7 @@ interface ProfileConfig {
     statsType: CARTA.StatsType;
     coordinate: string;
     colorKey: LineKey;
-    label: {image: string, plot: string};
+    label: {image: string; plot: string};
 }
 
 interface SpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
@@ -29,7 +29,11 @@ interface SpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
 
 const SUPPORTED_STOKES = ["z", "Iz", "Qz", "Uz", "Vz"];
 const SUPPORTED_STOKES_LABEL_MAP = new Map<string, string>([
-    ["z", "Current"], ["Iz", "I"], ["Qz", "Q"], ["Uz", "U"], ["Vz", "V"]
+    ["z", "Current"],
+    ["Iz", "I"],
+    ["Qz", "Q"],
+    ["Uz", "U"],
+    ["Vz", "V"]
 ]);
 
 const MAXIMUM_PROFILES = 10;
@@ -74,7 +78,7 @@ export class SpectralProfileSelectionStore {
         return formattedSpectralConfigs;
     };
 
-    private genProfileLabel = (fileId: number, regionName: string, statsType: CARTA.StatsType, coordinate: string): {image: string, plot: string} => {
+    private genProfileLabel = (fileId: number, regionName: string, statsType: CARTA.StatsType, coordinate: string): {image: string; plot: string} => {
         return {
             image: AppStore.Instance.getFrameName(fileId),
             plot: `${regionName}, Statistic ${StatsTypeString(statsType)}, Cooridnate ${SUPPORTED_STOKES_LABEL_MAP.get(coordinate)}`
@@ -173,11 +177,11 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get profiles(): {
-        channelValues: number[],
-        data: ProcessedSpectralProfile,
-        colorKey: string,
-        label: {image: string, plot: string},
-        comments: string[]
+        channelValues: number[];
+        data: ProcessedSpectralProfile;
+        colorKey: string;
+        label: {image: string; plot: string};
+        comments: string[];
     }[] {
         let profiles = [];
         this.profileConfigs?.forEach(profileConfig => {
@@ -199,7 +203,7 @@ export class SpectralProfileSelectionStore {
         return profiles;
     }
 
-    @computed get profilesPlotName(): {image: string, plot: string} {
+    @computed get profilesPlotName(): {image: string; plot: string} {
         let images, regions, statTypes, coordinates;
         let prevFileId, prevRegionId, prevStatsType, prevCoordinate;
         images = regions = statTypes = coordinates = "";
@@ -283,14 +287,16 @@ export class SpectralProfileSelectionStore {
                 });
             });
         } else {
-            options = options.concat(frameOptions?.map(frameNameOption => {
-                return {
-                    value: frameNameOption.value,
-                    label: frameNameOption.label,
-                    active: frameNameOption.value === appStore.activeFrameFileId,
-                    disabled: !frameNameOption.hasZAxis
-                };
-            }));
+            options = options.concat(
+                frameOptions?.map(frameNameOption => {
+                    return {
+                        value: frameNameOption.value,
+                        label: frameNameOption.label,
+                        active: frameNameOption.value === appStore.activeFrameFileId,
+                        disabled: !frameNameOption.hasZAxis
+                    };
+                })
+            );
         }
         return options;
     }
@@ -303,20 +309,26 @@ export class SpectralProfileSelectionStore {
             const appStore = AppStore.Instance;
             const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
             const filteredRegions = frame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
-            options = options.concat(filteredRegions?.map(r => {
-                return {
-                    value: r.regionId,
-                    label: r.nameString,
-                    active: this.widgetStore.isEffectiveFrameEqualToActiveFrame && r.regionId === activeRegionId
-                };
-            }));
+            options = options.concat(
+                filteredRegions?.map(r => {
+                    return {
+                        value: r.regionId,
+                        label: r.nameString,
+                        active: this.widgetStore.isEffectiveFrameEqualToActiveFrame && r.regionId === activeRegionId
+                    };
+                })
+            );
         }
         return options;
     }
 
     @computed get statsTypeOptions(): LineOption[] {
-        const sortedKeys = Array.from(STATISTICS_TEXT.keys())?.sort((a, b) => {return a - b;});
-        return sortedKeys?.map(key => {return {value: key, label: STATISTICS_TEXT.get(key)};});
+        const sortedKeys = Array.from(STATISTICS_TEXT.keys())?.sort((a, b) => {
+            return a - b;
+        });
+        return sortedKeys?.map(key => {
+            return {value: key, label: STATISTICS_TEXT.get(key)};
+        });
     }
 
     @computed get coordinateOptions(): LineOption[] {
@@ -440,9 +452,7 @@ export class SpectralProfileSelectionStore {
         }
 
         // Switch previously selected category to single selection mode from multi selection mode
-        if (this.activeProfileCategory === MultiProfileCategory.REGION ||
-            this.activeProfileCategory === MultiProfileCategory.STATISTIC ||
-            this.activeProfileCategory === MultiProfileCategory.STOKES) {
+        if (this.activeProfileCategory === MultiProfileCategory.REGION || this.activeProfileCategory === MultiProfileCategory.STATISTIC || this.activeProfileCategory === MultiProfileCategory.STOKES) {
             this.switchToSingleModeHandily(this.activeProfileCategory);
         }
         this.activeProfileCategory = profileCategory;
@@ -451,7 +461,8 @@ export class SpectralProfileSelectionStore {
         const widgetStore = this.widgetStore;
         const primaryLineColor = widgetStore.primaryLineColor;
         widgetStore.clearProfileColors();
-        if (profileCategory === MultiProfileCategory.NONE) { // Single profile mode
+        if (profileCategory === MultiProfileCategory.NONE) {
+            // Single profile mode
             widgetStore.setProfileColor(SpectralProfileWidgetStore.PRIMARY_LINE_KEY, primaryLineColor);
         } else if (profileCategory === MultiProfileCategory.IMAGE) {
             if (this.selectedFrame) {
@@ -528,7 +539,9 @@ export class SpectralProfileSelectionStore {
             this.removeSelectedRegionMultiMode(regionId);
         } else if (!this.selectedRegionIds?.includes(regionId) && this.selectedRegionIds?.length < MAXIMUM_PROFILES) {
             // add selection
-            this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {return a - b;});
+            this.selectedRegionIds = [...this.selectedRegionIds, regionId].sort((a, b) => {
+                return a - b;
+            });
             const color = this.selectedRegionIds.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(itemIndex);
             this.widgetStore.setProfileColor(regionId, color);
         }
@@ -542,7 +555,9 @@ export class SpectralProfileSelectionStore {
                 this.widgetStore.removeProfileColor(statsType);
             } else if (!this.selectedStatsTypes?.includes(statsType) && this.selectedStatsTypes?.length < MAXIMUM_PROFILES) {
                 // add selection
-                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {return a - b;});
+                this.selectedStatsTypes = [...this.selectedStatsTypes, statsType].sort((a, b) => {
+                    return a - b;
+                });
                 const color = this.selectedStatsTypes.length === 1 ? this.widgetStore.primaryLineColor : genColorFromIndex(itemIndex);
                 this.widgetStore.setProfileColor(statsType, color);
             }
@@ -559,9 +574,9 @@ export class SpectralProfileSelectionStore {
                 // add selection
                 this.selectedCoordinates = [...this.selectedCoordinates, coordinate].sort((a, b) => {
                     // always place z in the first element
-                    if (a === 'z') {
+                    if (a === "z") {
                         return -1;
-                    } else if (b === 'z') {
+                    } else if (b === "z") {
                         return 1;
                     }
                     return a.charCodeAt(0) - b.charCodeAt(0);
@@ -629,7 +644,7 @@ export class SpectralProfileSelectionStore {
                 if (matchedFileIds.includes(this.selectedFrameFileId)) {
                     matchedFileIds.forEach((fileId, index) => {
                         const widgetStore = this.widgetStore;
-                         // index + 1 to avoid choosing blue(conflict with native primary color(auto-blue))
+                        // index + 1 to avoid choosing blue(conflict with native primary color(auto-blue))
                         const color = fileId === this.selectedFrameFileId ? widgetStore.primaryLineColor : genColorFromIndex(index + 1);
                         widgetStore.setProfileColor(fileId, color);
                     });

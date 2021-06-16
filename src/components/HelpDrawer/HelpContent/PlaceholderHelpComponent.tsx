@@ -6,7 +6,7 @@ export class PlaceholderHelpComponent extends React.Component {
         return (
             <React.Fragment>
                 <p>To be added.</p>
-                <img src={underConstruction} style={{width: "20%", height: "auto"}}/>
+                <img src={underConstruction} style={{width: "20%", height: "auto"}} />
             </React.Fragment>
         );
     }
