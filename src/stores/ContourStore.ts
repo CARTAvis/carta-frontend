@@ -1,16 +1,16 @@
 import {action, computed, observable, makeObservable} from "mobx";
+import {Queue} from "mnemonist";
 import * as CARTACompute from "carta_computation";
 import {ContourWebGLService} from "../services";
 
 export class ContourStore {
     @observable progress: number;
     @observable numGeneratedVertices: number[];
-    @observable vertexCount: number = 0;
     @observable chunkCount: number = 0;
 
-    private indexOffsets: Int32Array[];
     private vertexData: Float32Array[];
     private vertexBuffers: WebGLBuffer[];
+    private dataQueue: Queue<Float32Array>;
 
     private gl: WebGLRenderingContext;
     // Number of vertex data "float" values (normals are actually int16, so both coordinates count as one 32-bit value)
@@ -31,44 +31,85 @@ export class ContourStore {
 
     constructor() {
         makeObservable(this);
+        this.dataQueue = new Queue<Float32Array>();
         this.gl = ContourWebGLService.Instance.gl;
     }
 
-    @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {
-        // Clear existing data to remove data buffers
-        this.clearData();
-        this.addContourData(indexOffsets, vertexData, progress);
-    };
+    @action enqueueContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
+        if (!sourceVertices.length) {
+            return;
+        }
+        const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets).slice();
+        this.dataQueue.enqueue(vertexData);
+        this.progress = progress;
 
-    @action addContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
-        const numVertices = sourceVertices.length / 2;
+        if (progress >= 1.0) {
+            // Flush the queue
+            this.clearData();
+            while (this.dataQueue.size) {
+                this.addGeneratedContourData(this.dataQueue.dequeue(), 1.0)
+            }
+        }
+    }
 
-        if (!numVertices) {
+    @action clearQueue = () => {
+        this.progress = 1.0;
+        this.dataQueue.clear();
+    }
+
+    // @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {
+    //     // Clear existing data to remove data buffers
+    //     this.clearData();
+    //     this.addContourData(indexOffsets, vertexData, progress);
+    // };
+
+    @action addGeneratedContourData = (vertexData: Float32Array, progress: number) => {
+        if (!vertexData.length) {
             return;
         }
 
         if (!this.vertexData) {
             this.vertexData = [];
         }
-        if (!this.indexOffsets) {
-            this.indexOffsets = [];
-        }
         if (!this.numGeneratedVertices) {
             this.numGeneratedVertices = [];
         }
 
-        const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets);
         this.vertexData.push(vertexData);
-        this.indexOffsets.push(indexOffsets);
         this.progress = progress;
         this.numGeneratedVertices.push(vertexData.length / (ContourStore.VertexDataElements / 2));
 
         const index = this.vertexData.length - 1;
         this.generateBuffers(index);
-
-        this.vertexCount += numVertices;
         this.chunkCount++;
     };
+
+    // @action addContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
+    //     const numVertices = sourceVertices.length / 2;
+    //
+    //     if (!numVertices) {
+    //         return;
+    //     }
+    //
+    //     if (!this.vertexData) {
+    //         this.vertexData = [];
+    //     }
+    //
+    //     if (!this.numGeneratedVertices) {
+    //         this.numGeneratedVertices = [];
+    //     }
+    //
+    //     const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets);
+    //     this.vertexData.push(vertexData);
+    //     //this.indexOffsets.push(indexOffsets);
+    //     this.progress = progress;
+    //     this.numGeneratedVertices.push(vertexData.length / (ContourStore.VertexDataElements / 2));
+    //
+    //     const index = this.vertexData.length - 1;
+    //     this.generateBuffers(index);
+    //
+    //     this.chunkCount++;
+    // };
 
     private generateBuffers(index: number) {
         if (!this.vertexBuffers) {
@@ -90,10 +131,8 @@ export class ContourStore {
     }
 
     @action clearData = () => {
-        this.indexOffsets = [];
         this.vertexData = [];
         this.numGeneratedVertices = [];
-        this.vertexCount = 0;
         this.chunkCount = 0;
 
         if (this.gl && this.vertexBuffers) {

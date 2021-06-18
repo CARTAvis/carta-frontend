@@ -201,9 +201,15 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const dashMode = config.dashMode;
             const bias = config.colormapBias;
             const contrast = config.colormapContrast;
-            frame.contourStores.forEach(contourStore => {
-                const numVertices = contourStore.vertexCount;
-            });
+            for (const [_level, contourStore] of frame.contourStores) {
+                if (!contourStore.numGeneratedVertices) {
+                    continue;
+                }
+                let numVertices = 0;
+                for (const n of contourStore.numGeneratedVertices) {
+                    numVertices += n;
+                }
+            }
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 

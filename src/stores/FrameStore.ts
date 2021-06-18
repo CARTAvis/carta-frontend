@@ -1459,11 +1459,20 @@ export class FrameStore {
                 this.contourStores.set(contourSet.level, contourStore);
             }
 
-            if (!contourStore.isComplete && processedData.progress > 0) {
-                contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+            if (contourStore.isComplete) {
+                contourStore.clearQueue();
+                contourStore.enqueueContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
             } else {
-                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                contourStore.enqueueContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
             }
+            // if (!contourStore.isComplete && processedData.progress > 0) {
+            //     contourStore.enqueueContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+            //     //contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+            // } else {
+            //     contourStore.clearQueue();
+            //     contourStore.enqueueContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+            //     //contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+            // }
         }
 
         // Clear up stale contour levels by checking against the config, and update total contour progress
