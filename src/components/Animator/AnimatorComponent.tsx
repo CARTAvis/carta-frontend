@@ -304,6 +304,9 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 min={0}
                                 showTrackFill={false}
                                 max={activeFrame.frameInfo.fileInfoExtended.stokes - 1}
+                                labelRenderer={(val: number) => {
+                                    return isFinite(val) && val >= 0 && val < activeFrame?.stokesInfo?.length ? activeFrame.stokesInfo[val] : "";
+                                }}
                                 onChange={this.onStokesChanged}
                                 disabled={appStore.animatorStore.animationActive}
                             />
