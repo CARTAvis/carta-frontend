@@ -73,6 +73,9 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip2 content={<span>Point</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled} />
                     </Tooltip2>
+                    <Tooltip2 content={<span>Line</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon={"slash"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.LINE)} active={isRegionCreating && newRegionType === CARTA.RegionType.LINE} disabled={regionButtonsDisabled} />
+                    </Tooltip2>
                     <Tooltip2 content={<span>Rectangle{this.regionTooltip("square")}</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled} />
                     </Tooltip2>

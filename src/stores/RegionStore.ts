@@ -49,6 +49,8 @@ export class RegionStore {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "Point";
+            case CARTA.RegionType.LINE:
+                return "Line";
             case CARTA.RegionType.RECTANGLE:
                 return "Rectangle";
             case CARTA.RegionType.ELLIPSE:
@@ -64,6 +66,8 @@ export class RegionStore {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "symbol-square";
+            case CARTA.RegionType.LINE:
+                return "slash";
             case CARTA.RegionType.RECTANGLE:
                 return "square";
             case CARTA.RegionType.ELLIPSE:
@@ -77,6 +81,7 @@ export class RegionStore {
 
     static readonly AVAILABLE_REGION_TYPES = new Map<CARTA.RegionType, string>([
         [CARTA.RegionType.POINT, "Point"],
+        [CARTA.RegionType.LINE, "Line"],
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
         [CARTA.RegionType.ELLIPSE, "Ellipse"],
         [CARTA.RegionType.POLYGON, "Polygon"]
