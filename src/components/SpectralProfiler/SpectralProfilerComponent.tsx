@@ -499,13 +499,20 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             className += " dark-theme";
         }
 
+        let infoHeight = "28px";
+        if (this.plotData?.numProfiles > 1 && this.plotData?.numProfiles <= 5) {
+            infoHeight = `${this.plotData?.numProfiles * 20}px`;
+        } else if (this.plotData?.numProfiles > 5) {
+            infoHeight = "100px";
+        }
+
         return (
             <div className={className}>
                 <div className="profile-container">
                     <div className="profile-toolbar">
                         <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
                     </div>
-                    <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={this.plotData?.numProfiles > 1 ? "25%" : "12%"} minSize={"12%"}>
+                    <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={infoHeight} minSize={"28px"}>
                         <Pane className={"line-plot-container"}>
                             <LinePlotComponent {...linePlotProps} />
                         </Pane>
