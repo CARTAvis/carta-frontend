@@ -118,7 +118,7 @@ export class BackendService {
             [CARTA.EventType.FILE_LIST_RESPONSE, {messageClass: CARTA.FileListResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.REGION_LIST_RESPONSE, {messageClass: CARTA.RegionListResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.CATALOG_LIST_RESPONSE, {messageClass: CARTA.CatalogListResponse, handler: this.onDeferredResponse}],
-            [CARTA.EventType.FILE_LIST_PROGRESS, {messageClass: CARTA.ListProgress, handler: this.onStreameListProgress}],
+            [CARTA.EventType.FILE_LIST_PROGRESS, {messageClass: CARTA.ListProgress, handler: this.onStreamedListProgress}],
             [CARTA.EventType.FILE_INFO_RESPONSE, {messageClass: CARTA.FileInfoResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, {messageClass: CARTA.RegionFileInfoResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, {messageClass: CARTA.CatalogFileInfoResponse, handler: this.onDeferredResponse}],
@@ -853,7 +853,7 @@ export class BackendService {
         this.momentProgressStream.next(momentProgress);
     }
 
-    private onStreameListProgress(_eventId: number, listProgress: CARTA.ListProgress) {
+    private onStreamedListProgress(_eventId: number, listProgress: CARTA.ListProgress) {
         this.listProgressStream.next(listProgress);
     }
 

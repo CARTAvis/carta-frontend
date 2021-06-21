@@ -952,6 +952,8 @@ export class AppStore {
                     }
                 }
             }
+            frame.resetMomentRequestState();
+            this.endFileLoading();
         } catch (err) {
             frame.resetMomentRequestState();
             this.endFileLoading();
