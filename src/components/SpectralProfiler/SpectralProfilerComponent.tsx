@@ -12,11 +12,12 @@ import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfo
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
 
 const INFO_HEIGHT_MIN = 28;
+const INFO_HEIGHT_MAX = 100;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -500,21 +501,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             className += " dark-theme";
         }
 
-        const numProfiles = this.plotData?.numProfiles;
-        let infoHeight = INFO_HEIGHT_MIN;
-        if (numProfiles > 1 && numProfiles <= 5) {
-            infoHeight = numProfiles * 20;
-        } else if (numProfiles > 5) {
-            infoHeight = 100;
-        }
-
         return (
             <div className={className}>
                 <div className="profile-container">
                     <div className="profile-toolbar">
                         <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
                     </div>
-                    <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={infoHeight} minSize={INFO_HEIGHT_MIN}>
+                    <SplitPane
+                        className="body-split-pane"
+                        split="horizontal"
+                        primary={"second"}
+                        defaultSize={clamp(this.plotData?.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
+                        minSize={INFO_HEIGHT_MIN}
+                    >
                         <Pane className={"line-plot-container"}>
                             <LinePlotComponent {...linePlotProps} />
                         </Pane>
