@@ -1,14 +1,13 @@
 import tinycolor from "tinycolor2";
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, computed, observable, override, makeObservable} from "mobx";
 import {FrameStore, ProfileSmoothingStore} from "stores";
+import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {SpatialProfilerSettingsTabs} from "components";
 import {isAutoColor} from "utilities";
 
-export class SpatialProfileWidgetStore {
-    @observable fileId: number;
-    @observable regionId: number;
+export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable minX: number;
     @observable maxX: number;
@@ -31,16 +30,9 @@ export class SpatialProfileWidgetStore {
 
     private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vy"];
 
-    @action setFileId = (fileId: number) => {
-        // Reset zoom when changing between files
+    @override setRegionId = (fileId: number, regionId: number) => {
+        this.regionIdMap.set(fileId, regionId);
         this.clearXYBounds();
-        this.fileId = fileId;
-    };
-
-    @action setRegionId = (regionId: number) => {
-        // Reset zoom when changing between regions
-        this.clearXYBounds();
-        this.regionId = regionId;
     };
 
     @action setCoordinate = (coordinate: string) => {
@@ -114,12 +106,11 @@ export class SpatialProfileWidgetStore {
         this.settingsTabId = val;
     };
 
-    constructor(coordinate: string = "x", fileId: number = -1, regionId: number = 0) {
+    constructor(coordinate: string = "x") {
+        super(RegionsType.CLOSED_AND_POINT);
         makeObservable(this);
         // Describes which data is being visualised
         this.coordinate = coordinate;
-        this.fileId = fileId;
-        this.regionId = regionId;
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
