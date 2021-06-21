@@ -16,6 +16,7 @@ import {binarySearchByX, formattedExponential, formattedNotation, toExponential,
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
 
+const INFO_HEIGHT_MIN = 28;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -499,13 +500,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             className += " dark-theme";
         }
 
-        const infoMinHeight = "28px";
         const numProfiles = this.plotData?.numProfiles;
-        let infoHeight = infoMinHeight;
+        let infoHeight = INFO_HEIGHT_MIN;
         if (numProfiles > 1 && numProfiles <= 5) {
-            infoHeight = `${numProfiles * 20}px`;
+            infoHeight = numProfiles * 20;
         } else if (numProfiles > 5) {
-            infoHeight = "100px";
+            infoHeight = 100;
         }
 
         return (
@@ -514,7 +514,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     <div className="profile-toolbar">
                         <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
                     </div>
-                    <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={infoHeight} minSize={infoMinHeight}>
+                    <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={infoHeight} minSize={INFO_HEIGHT_MIN}>
                         <Pane className={"line-plot-container"}>
                             <LinePlotComponent {...linePlotProps} />
                         </Pane>
