@@ -5,7 +5,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AppStore, ASTSettingsString, DefaultWidgetConfig, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
@@ -521,10 +521,15 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return (
             <div className={"spatial-profiler-widget"}>
                 <div className="profile-container">
+                    <div className="profile-toolbar">
+                        <RegionSelectorComponent widgetStore={this.widgetStore} />
+                    </div>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps} />
                     </div>
-                    <ProfilerInfoComponent info={this.genProfilerInfo()} />
+                    <div className="profile-info">
+                        <ProfilerInfoComponent info={this.genProfilerInfo()} />
+                    </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
             </div>

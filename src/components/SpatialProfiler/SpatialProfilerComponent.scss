@@ -8,9 +8,25 @@
     .profile-container {
         flex: 3 3 auto;
         min-width: 0;
+
+        .bp3-form-group {
+            padding: 5px 5px 1px;
+            margin: 0;
+        }
+
+        .profile-toolbar {
+            overflow: hidden;
+            display: flex;
+            height: 40px;
+        }
+
         .profile-plot {
-            height: calc(100% - 15px);
+            height: calc(100% - 55px);
             position: relative;
+        }
+
+        .profile-info {
+            height: 15px;
         }
     }
 }
