@@ -485,7 +485,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     // Valid region for moments:
-    // 1. cursor(regionSet.selectedRegion === 0 or undefined), request moments of whole image
+    // 1. cursor, request moments of whole image
     // 2. closed region
     @computed get isMomentRegionValid(): boolean {
         if (this.effectiveFrame) {
