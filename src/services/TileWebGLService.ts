@@ -32,6 +32,9 @@ interface ShaderUniforms {
     TileTextureSize: WebGLUniformLocation;
     TextureSize: WebGLUniformLocation;
     TileBorder: WebGLUniformLocation;
+    PixelGridCutoff: WebGLUniformLocation;
+    PixelGridColor: WebGLUniformLocation;
+    PixelGridOpacity: WebGLUniformLocation;
 }
 
 export class TileWebGLService {
@@ -102,7 +105,10 @@ export class TileWebGLService {
             TileTextureOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureOffset"),
             TextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTextureSize"),
             TileTextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureSize"),
-            TileBorder: this.gl.getUniformLocation(this.shaderProgram, "uTileBorder")
+            TileBorder: this.gl.getUniformLocation(this.shaderProgram, "uTileBorder"),
+            PixelGridCutoff: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridCutoff"),
+            PixelGridColor: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridColor"),
+            PixelGridOpacity: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridOpacity")
         };
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
@@ -125,6 +131,9 @@ export class TileWebGLService {
         this.gl.uniform1f(this.shaderUniforms.TextureSize, TEXTURE_SIZE);
         this.gl.uniform1f(this.shaderUniforms.TileTextureSize, TILE_SIZE);
         this.gl.uniform4f(this.shaderUniforms.NaNColor, 0, 0, 1, 1);
+        this.gl.uniform1f(this.shaderUniforms.PixelGridCutoff, 0);
+        this.gl.uniform4f(this.shaderUniforms.PixelGridColor, 1, 1, 1, 1);
+        this.gl.uniform1f(this.shaderUniforms.PixelGridOpacity, 0);
     }
 
     private initBuffers() {

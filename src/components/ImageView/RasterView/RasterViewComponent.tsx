@@ -3,7 +3,7 @@ import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
 import {AppStore, RasterRenderType} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D} from "utilities";
+import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D, smoothStep} from "utilities";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
 import "./RasterViewComponent.scss";
 
@@ -72,6 +72,28 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             if (nanColor.isValid()) {
                 const rgba = nanColor.toRgb();
                 this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
+            }
+
+            // TODO: handle different pixel sizes!
+            let zoom;
+            let zoomFactor = 1.0;
+            if (frame.spatialReference) {
+                zoomFactor = frame.spatialTransform.scale;
+                zoom = (frame.spatialReference.zoomLevel / devicePixelRatio) * zoomFactor;
+            } else {
+                zoom = frame.zoomLevel / devicePixelRatio;
+            }
+
+            const pixelGridZoomLow = 5.0 * zoomFactor;
+            const pixelGridZoomHigh = 8.0 * zoomFactor;
+
+            if (zoom >= pixelGridZoomLow) {
+                const cutoff = 0.5 / zoom;
+                const opacity = 0.25 * smoothStep(zoom, pixelGridZoomLow, pixelGridZoomHigh);
+                this.gl.uniform1f(shaderUniforms.PixelGridCutoff, cutoff);
+                this.gl.uniform1f(shaderUniforms.PixelGridOpacity, opacity);
+            } else {
+                this.gl.uniform1f(shaderUniforms.PixelGridOpacity, 0);
             }
         }
     }

@@ -35,6 +35,11 @@ uniform vec2 uTileTextureOffset;
 uniform float uTextureSize;
 uniform float uTileTextureSize;
 
+// Pixel grid
+uniform float uPixelGridCutoff;
+uniform vec4 uPixelGridColor;
+uniform float uPixelGridOpacity;
+
 // Some shader compilers have trouble with NaN checks, so we instead use a dummy value of -FLT_MAX
 bool isnan(float val) {
     return val <= -FLT_MAX;
@@ -57,6 +62,13 @@ void main(void) {
     vec2 tileCoordsPixel = vUV * uTileTextureSize;
     // Prevent edge artefacts
     vec2 texCoordsPixel = clamp(tileCoordsPixel, 0.5, uTileTextureSize - 0.5) + uTileTextureOffset;
+    vec2 f = fract(texCoordsPixel);
+
+    float gridOpacity = 0.0;
+    float edge = min(f.x, min(f.y, min(1.0 - f.x, 1.0 - f.y)));
+    if (edge <= uPixelGridCutoff)  {
+        gridOpacity = uPixelGridOpacity;
+    }
     texCoords = texCoordsPixel / uTextureSize;
 
     float range = uMaxVal - uMinVal;
@@ -113,4 +125,6 @@ void main(void) {
     float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
     vec2 cmapCoords = vec2(x, cmapYVal);
     gl_FragColor = isnan(rawVal) ? uNaNColor * uNaNColor.a : texture2D(uCmapTexture, cmapCoords);
+    // Apply pixel grid mixing
+    gl_FragColor = mix(gl_FragColor, uPixelGridColor, gridOpacity);
 }
