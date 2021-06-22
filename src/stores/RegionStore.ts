@@ -189,6 +189,8 @@ export class RegionStore {
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.POLYGON:
                 return this.controlPoints.length >= 1;
+            case CARTA.RegionType.LINE:
+                return this.controlPoints.length === 1 || this.controlPoints.length === 2;
             default:
                 return false;
         }

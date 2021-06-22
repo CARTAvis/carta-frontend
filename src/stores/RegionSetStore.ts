@@ -59,6 +59,10 @@ export class RegionSetStore {
         return this.addRegion(points, 0, CARTA.RegionType.POLYGON, temporary);
     };
 
+    @action addLineRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.LINE, temporary);
+    };
+
     @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[]) => {
         const region = this.addRegion(points, rotation, regionType, true, regionId, name);
         // additional imported style properties;
