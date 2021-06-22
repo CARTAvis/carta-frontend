@@ -54,15 +54,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get profileStore(): SpatialProfileStore {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            let keyStruct = {fileId: this.widgetStore.fileId, regionId: this.widgetStore.regionId};
-            // Replace "current file" fileId with active frame's fileId
-            if (this.widgetStore.fileId === -1) {
-                keyStruct.fileId = appStore.activeFrame.frameInfo.fileId;
-            }
-            const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
-            return appStore.spatialProfiles.get(key);
+        const widgetStore = this.widgetStore;
+        if (widgetStore.effectiveFrame) {
+            const fileId = widgetStore.effectiveFrame.frameInfo.fileId;
+            const regionId = widgetStore.effectiveRegionId;
+            return AppStore.Instance.spatialProfiles.get(`${fileId}-${regionId}`);
         }
         return undefined;
     }
@@ -217,7 +213,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const currentData = this.plotData;
                 if (appStore && coordinate) {
                     const coordinateString = `${coordinate.toUpperCase()} Profile`;
-                    const regionString = this.widgetStore.regionId === 0 ? "Cursor" : `Region #${this.widgetStore.regionId}`;
+                    const regionString = this.widgetStore.effectiveRegionId === 0 ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
                     appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
                 }
                 if (currentData) {

@@ -55,7 +55,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                 const coordinate = this.widgetStore.coordinate;
                 if (appStore && coordinate) {
                     const coordinateString = `${coordinate.toUpperCase()} Profile`;
-                    const regionString = this.widgetStore.regionId === 0 ? "Cursor" : `Region #${this.widgetStore.regionId}`;
+                    const regionString = this.widgetStore.effectiveRegionId === 0 ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
                     appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString}`);
                 }
             } else {
