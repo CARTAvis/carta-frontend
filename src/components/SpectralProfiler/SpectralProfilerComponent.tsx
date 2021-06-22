@@ -12,10 +12,12 @@ import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfo
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
 
+const INFO_HEIGHT_MIN = 28;
+const INFO_HEIGHT_MAX = 100;
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -505,7 +507,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     <div className="profile-toolbar">
                         <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} id={this.props.id} />
                     </div>
-                    <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"25%"} minSize={"25%"}>
+                    <SplitPane
+                        className="body-split-pane"
+                        split="horizontal"
+                        primary={"second"}
+                        defaultSize={clamp(this.plotData?.numProfiles > 0 ? this.plotData.numProfiles * 20 : INFO_HEIGHT_MIN, INFO_HEIGHT_MIN, INFO_HEIGHT_MAX)}
+                        minSize={INFO_HEIGHT_MIN}
+                    >
                         <Pane className={"line-plot-container"}>
                             <LinePlotComponent {...linePlotProps} />
                         </Pane>
