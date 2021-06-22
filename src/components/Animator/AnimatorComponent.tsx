@@ -285,7 +285,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         if (numStokes > 1) {
             stokesSlider = (
                 <div className="animator-slider">
-                    <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Stokes" />
+                    <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Polarization" />
                     {hideSliders && (
                         <SafeNumericInput
                             value={activeFrame.requiredStokes}
@@ -305,7 +305,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 showTrackFill={false}
                                 max={activeFrame.frameInfo.fileInfoExtended.stokes - 1}
                                 labelRenderer={(val: number) => {
-                                    return isFinite(val) && val >= 0 && val < activeFrame?.stokesInfo?.length ? activeFrame.stokesInfo[val] : "";
+                                    return isFinite(val) && val >= 0 && val < activeFrame?.stokesInfo?.length ? `Stokes ${activeFrame.stokesInfo[val]}` : `${val}`;
                                 }}
                                 onChange={this.onStokesChanged}
                                 disabled={appStore.animatorStore.animationActive}

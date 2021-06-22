@@ -23,7 +23,7 @@ import {
     SpectralTypeSet,
     SpectralUnit,
     STANDARD_SPECTRAL_TYPE_SETS,
-    STANDARD_STOKES,
+    STANDARD_POLARIZATIONS,
     Transform2D,
     ZoomPoint
 } from "models";
@@ -720,8 +720,8 @@ export class FrameStore {
                 let stokesInfo = [];
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
-                    if (STANDARD_STOKES.has(stokesVal)) {
-                        stokesInfo.push(STANDARD_STOKES.get(stokesVal));
+                    if (stokesVal > 0 && STANDARD_POLARIZATIONS.has(stokesVal)) {
+                        stokesInfo.push(STANDARD_POLARIZATIONS.get(stokesVal));
                     }
                 }
                 return stokesInfo;
