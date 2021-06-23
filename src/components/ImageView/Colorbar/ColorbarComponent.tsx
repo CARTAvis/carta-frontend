@@ -10,7 +10,7 @@ import {getColorForTheme} from "utilities";
 import "./ColorbarComponent.scss";
 
 @observer
-export class ColorbarComponent extends React.Component {
+export class ColorbarComponent extends React.Component<{onCursorHoverValueChanged: (number) => void}> {
     @observable hoverInfoText: string = "";
     @observable showHoverInfo: boolean = false;
     @observable cursorY: number = -1;
@@ -31,6 +31,7 @@ export class ColorbarComponent extends React.Component {
 
     @action onMouseLeave = () => {
         this.showHoverInfo = false;
+        this.props.onCursorHoverValueChanged(NaN);
     };
 
     @action setCursorY = (y: number) => {
@@ -52,7 +53,9 @@ export class ColorbarComponent extends React.Component {
             scaledPos = colorbarSettings.height - scaledPos;
         }
         scaledPos = scaledPos / colorbarSettings.height;
-        this.setHoverInfoText((renderConfig.scaleMinVal + scaledPos * (renderConfig.scaleMaxVal - renderConfig.scaleMinVal)).toExponential(5));
+        const hoverValue = renderConfig.scaleMinVal + scaledPos * (renderConfig.scaleMaxVal - renderConfig.scaleMinVal);
+        this.setHoverInfoText(hoverValue.toExponential(5));
+        this.props.onCursorHoverValueChanged(hoverValue);
         this.setCursorY(point);
     };
 

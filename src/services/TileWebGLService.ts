@@ -8,6 +8,7 @@ import pixelShader from "!raw-loader!./GLSL/pixel_shader_raster.glsl";
 interface ShaderUniforms {
     MinVal: WebGLUniformLocation;
     MaxVal: WebGLUniformLocation;
+    PixelHighlightVal: WebGLUniformLocation;
     Bias: WebGLUniformLocation;
     Contrast: WebGLUniformLocation;
     UseSmoothedBiasContrast: WebGLUniformLocation;
@@ -79,6 +80,7 @@ export class TileWebGLService {
         this.shaderUniforms = {
             MinVal: this.gl.getUniformLocation(this.shaderProgram, "uMinVal"),
             MaxVal: this.gl.getUniformLocation(this.shaderProgram, "uMaxVal"),
+            PixelHighlightVal: this.gl.getUniformLocation(this.shaderProgram, "uPixelHighlightVal"),
             NaNColor: this.gl.getUniformLocation(this.shaderProgram, "uNaNColor"),
             Bias: this.gl.getUniformLocation(this.shaderProgram, "uBias"),
             Contrast: this.gl.getUniformLocation(this.shaderProgram, "uContrast"),
