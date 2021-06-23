@@ -3,7 +3,7 @@ import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
 import {AppStore, RasterRenderType} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D, smoothStep} from "utilities";
+import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D, smoothStep, getColorForTheme} from "utilities";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
 import "./RasterViewComponent.scss";
 
@@ -72,6 +72,14 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             if (nanColor.isValid()) {
                 const rgba = nanColor.toRgb();
                 this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
+            }
+
+            const pixelGridColor = tinycolor(getColorForTheme(appStore.preferenceStore.pixelGridColor));
+            if (pixelGridColor.isValid()) {
+                const rgba = pixelGridColor.toRgb();
+                this.gl.uniform4f(shaderUniforms.PixelGridColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
+            } else {
+                this.gl.uniform4f(shaderUniforms.PixelGridColor, 0, 0, 0, 0);
             }
         }
     }
@@ -201,7 +209,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderTile(tile: TileCoordinate, rasterTile: RasterTile, mip: number) {
-        const frame = AppStore.Instance.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         const shaderUniforms = TileWebGLService.Instance.shaderUniforms;
         const tileService = TileService.Instance;
 
@@ -267,7 +276,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const pixelGridZoomLow = 6.0;
         const pixelGridZoomHigh = 12.0;
 
-        if (zoom >= pixelGridZoomLow && mip === 1) {
+        if (zoom >= pixelGridZoomLow && mip === 1 && appStore.preferenceStore.pixelGridVisible) {
             const cutoff = 0.5 / zoom;
             const opacity = 0.25 * smoothStep(zoom, pixelGridZoomLow, pixelGridZoomHigh);
             this.gl.uniform1f(shaderUniforms.PixelGridCutoff, cutoff);
@@ -310,7 +319,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 inverted: frame.renderConfig.inverted,
                 visibility: frame.renderConfig.visible,
                 nanColorHex: appStore.preferenceStore.nanColorHex,
-                nanAlpha: appStore.preferenceStore.nanAlpha
+                nanAlpha: appStore.preferenceStore.nanAlpha,
+                pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
+                pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
             };
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
