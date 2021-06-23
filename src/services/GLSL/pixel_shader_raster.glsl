@@ -39,6 +39,7 @@ uniform float uTileTextureSize;
 uniform float uPixelGridCutoff;
 uniform vec4 uPixelGridColor;
 uniform float uPixelGridOpacity;
+uniform float uPixelAspectRatio;
 
 // Some shader compilers have trouble with NaN checks, so we instead use a dummy value of -FLT_MAX
 bool isnan(float val) {
@@ -65,8 +66,9 @@ void main(void) {
     vec2 f = fract(tileCoordsPixel);
 
     float gridOpacity = 0.0;
-    float edge = min(f.x, min(f.y, min(1.0 - f.x, 1.0 - f.y)));
-    if (edge <= uPixelGridCutoff)  {
+    float edgeX = min(f.x, 1.0 - f.x);
+    float edgeY = min(f.y, 1.0 - f.y);
+    if (edgeX <= uPixelGridCutoff / uPixelAspectRatio || edgeY <= uPixelGridCutoff)  {
         gridOpacity = uPixelGridOpacity;
     }
     texCoords = texCoordsPixel / uTextureSize;
