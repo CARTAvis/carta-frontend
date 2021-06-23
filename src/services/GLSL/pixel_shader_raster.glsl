@@ -68,7 +68,7 @@ void main(void) {
     float gridOpacity = 0.0;
     float edgeX = min(f.x, 1.0 - f.x);
     float edgeY = min(f.y, 1.0 - f.y);
-    if (edgeX <= uPixelGridCutoff / uPixelAspectRatio || edgeY <= uPixelGridCutoff)  {
+    if (edgeX < uPixelGridCutoff / uPixelAspectRatio || edgeY < uPixelGridCutoff)  {
         gridOpacity = uPixelGridOpacity;
     }
     texCoords = texCoordsPixel / uTextureSize;
