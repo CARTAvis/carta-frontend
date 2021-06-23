@@ -58,11 +58,11 @@ void main(void) {
     }
     vec2 texCoords;
 
-    // Mimic texel fetch in WebGL1
+    // Mimics texel fetch in WebGL1
     vec2 tileCoordsPixel = vUV * uTileTextureSize;
     // Prevent edge artefacts
     vec2 texCoordsPixel = clamp(tileCoordsPixel, 0.5, uTileTextureSize - 0.5) + uTileTextureOffset;
-    vec2 f = fract(texCoordsPixel);
+    vec2 f = fract(tileCoordsPixel);
 
     float gridOpacity = 0.0;
     float edge = min(f.x, min(f.y, min(1.0 - f.x, 1.0 - f.y)));

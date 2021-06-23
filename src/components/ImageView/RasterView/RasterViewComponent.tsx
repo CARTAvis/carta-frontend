@@ -73,28 +73,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 const rgba = nanColor.toRgb();
                 this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
             }
-
-            // TODO: handle different pixel sizes!
-            let zoom;
-            let zoomFactor = 1.0;
-            if (frame.spatialReference) {
-                zoomFactor = frame.spatialTransform.scale;
-                zoom = (frame.spatialReference.zoomLevel / devicePixelRatio) * zoomFactor;
-            } else {
-                zoom = frame.zoomLevel / devicePixelRatio;
-            }
-
-            const pixelGridZoomLow = 5.0 * zoomFactor;
-            const pixelGridZoomHigh = 8.0 * zoomFactor;
-
-            if (zoom >= pixelGridZoomLow) {
-                const cutoff = 0.5 / zoom;
-                const opacity = 0.25 * smoothStep(zoom, pixelGridZoomLow, pixelGridZoomHigh);
-                this.gl.uniform1f(shaderUniforms.PixelGridCutoff, cutoff);
-                this.gl.uniform1f(shaderUniforms.PixelGridOpacity, opacity);
-            } else {
-                this.gl.uniform1f(shaderUniforms.PixelGridOpacity, 0);
-            }
         }
     }
 
@@ -272,6 +250,28 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         } else {
             this.gl.uniform1f(tileRenderService.shaderUniforms.RotationAngle, 0);
             this.gl.uniform1f(tileRenderService.shaderUniforms.ScaleAdjustment, 1);
+        }
+
+        // TODO: refactor this and handle different pixel sizes!
+        let zoom;
+        let zoomFactor = 1.0;
+        if (frame.spatialReference) {
+            zoomFactor = frame.spatialTransform.scale;
+            zoom = (frame.spatialReference.zoomLevel / devicePixelRatio) * zoomFactor;
+        } else {
+            zoom = frame.zoomLevel / devicePixelRatio;
+        }
+
+        const pixelGridZoomLow = 6.0 * zoomFactor;
+        const pixelGridZoomHigh = 12.0 * zoomFactor;
+
+        if (zoom >= pixelGridZoomLow && mip === 1) {
+            const cutoff = 0.5 / zoom;
+            const opacity = 0.25 * smoothStep(zoom, pixelGridZoomLow, pixelGridZoomHigh);
+            this.gl.uniform1f(tileRenderService.shaderUniforms.PixelGridCutoff, cutoff);
+            this.gl.uniform1f(tileRenderService.shaderUniforms.PixelGridOpacity, opacity);
+        } else {
+            this.gl.uniform1f(tileRenderService.shaderUniforms.PixelGridOpacity, 0);
         }
 
         // take zoom level into account to convert from image space to canvas space
