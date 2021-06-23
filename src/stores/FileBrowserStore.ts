@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore, RegionStore} from "stores";
 import {RegionId} from "stores/widgets";
+import {AppToaster, ErrorToast} from "components/Shared";
 import {FileInfoType} from "components";
 import {LineOption, ProcessedColumnData} from "models";
 import {getDataTypeString} from "utilities";
@@ -137,8 +138,17 @@ export class FileBrowserStore {
         DialogStore.Instance.hideFileBrowserDialog();
     };
 
-    @action getFileList = (directory: string) => {
+    @action setFileList = (list: CARTA.IFileListResponse) => {
+        this.fileList = list;
+    };
+
+    @action setCatalogFileList = (list: CARTA.ICatalogListResponse) => {
+        this.catalogFileList = list;
+    };
+
+    @action getFileList = async (directory: string) => {
         const backendService = BackendService.Instance;
+
         this.loadingList = true;
         this.selectedFile = null;
         this.selectedHDU = null;
@@ -147,107 +157,86 @@ export class FileBrowserStore {
         this.catalogFileInfo = null;
         AppStore.Instance.restartTaskProgress();
 
-        if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
-            backendService.getFileList(directory).subscribe(
-                res =>
-                    runInAction(() => {
-                        this.fileList = res;
-                        this.resetLoadingStates();
-                    }),
-                err =>
-                    runInAction(() => {
-                        console.log(err);
-                        this.resetLoadingStates();
-                    })
-            );
-        } else if (this.browserMode === BrowserMode.Catalog) {
-            backendService.getCatalogList(directory).subscribe(
-                res =>
-                    runInAction(() => {
-                        this.catalogFileList = res;
-                        this.resetLoadingStates();
-                    }),
-                err =>
-                    runInAction(() => {
-                        console.log(err);
-                        this.resetLoadingStates();
-                    })
-            );
-        } else {
-            backendService.getRegionList(directory).subscribe(
-                res =>
-                    runInAction(() => {
-                        this.fileList = res;
-                        this.resetLoadingStates();
-                    }),
-                err =>
-                    runInAction(() => {
-                        console.log(err);
-                        this.resetLoadingStates();
-                    })
-            );
+        try {
+            if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
+                const list = await backendService.getFileList(directory);
+                this.setFileList(list);
+                this.resetLoadingStates();
+            } else if (this.browserMode === BrowserMode.Catalog) {
+                const list = await backendService.getCatalogList(directory);
+                this.setCatalogFileList(list);
+                this.resetLoadingStates();
+            } else {
+                const list = await backendService.getRegionList(directory);
+                this.setFileList(list);
+                this.resetLoadingStates();
+            }
+        } catch (err) {
+            console.log(err);
+            AppToaster.show(ErrorToast(`Error loading file list for directory ${directory}`));
+            this.resetLoadingStates();
         }
     };
 
-    @action getFileInfo = (directory: string, file: string, hdu: string) => {
+    @action getFileInfo = async (directory: string, file: string, hdu: string) => {
         const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.HDUfileInfoExtended = null;
         this.responseErrorMessage = "";
 
-        backendService.getFileInfo(directory, file, hdu).subscribe(
-            (res: CARTA.FileInfoResponse) =>
-                runInAction(() => {
-                    if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                        this.HDUfileInfoExtended = res.fileInfoExtended;
-                        const HDUList = Object.keys(this.HDUfileInfoExtended);
-                        if (HDUList?.length >= 1) {
-                            this.selectedHDU = HDUList[0];
-                        }
-                        this.loadingInfo = false;
+        try {
+            const res = await backendService.getFileInfo(directory, file, hdu);
+            runInAction(() => {
+                if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                    this.HDUfileInfoExtended = res.fileInfoExtended;
+                    const HDUList = Object.keys(this.HDUfileInfoExtended);
+                    if (HDUList?.length >= 1) {
+                        this.selectedHDU = HDUList[0];
                     }
-                    this.fileInfoResp = true;
-                }),
-            err =>
-                runInAction(() => {
-                    console.log(err);
-                    this.responseErrorMessage = err;
-                    this.fileInfoResp = false;
-                    this.HDUfileInfoExtended = null;
                     this.loadingInfo = false;
-                })
-        );
+                }
+                this.fileInfoResp = true;
+            });
+        } catch (err) {
+            runInAction(() => {
+                console.log(err);
+                this.responseErrorMessage = err;
+                this.fileInfoResp = false;
+                this.HDUfileInfoExtended = null;
+                this.loadingInfo = false;
+            });
+        }
     };
 
-    @action getRegionFileInfo = (directory: string, file: string) => {
+    @action getRegionFileInfo = async (directory: string, file: string) => {
         const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.regionFileInfo = null;
         this.responseErrorMessage = "";
 
-        backendService.getRegionFileInfo(directory, file).subscribe(
-            (res: CARTA.IRegionFileInfoResponse) =>
-                runInAction(() => {
-                    if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                        this.loadingInfo = false;
-                        this.regionFileInfo = res.contents;
-                    }
-                    this.fileInfoResp = true;
-                }),
-            err =>
-                runInAction(() => {
-                    console.log(err);
-                    this.responseErrorMessage = err;
-                    this.fileInfoResp = false;
-                    this.regionFileInfo = null;
+        try {
+            const res = await backendService.getRegionFileInfo(directory, file);
+            runInAction(() => {
+                if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                     this.loadingInfo = false;
-                })
-        );
+                    this.regionFileInfo = res.contents;
+                }
+                this.fileInfoResp = true;
+            });
+        } catch (err) {
+            runInAction(() => {
+                console.log(err);
+                this.responseErrorMessage = err;
+                this.fileInfoResp = false;
+                this.regionFileInfo = null;
+                this.loadingInfo = false;
+            });
+        }
     };
 
-    @action getCatalogFileInfo = (directory: string, filename: string) => {
+    @action getCatalogFileInfo = async (directory: string, filename: string) => {
         const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
@@ -255,27 +244,25 @@ export class FileBrowserStore {
         this.catalogHeaders = [];
         this.responseErrorMessage = "";
 
-        backendService.getCatalogFileInfo(directory, filename).subscribe(
-            (res: CARTA.ICatalogFileInfoResponse) =>
-                runInAction(() => {
-                    if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                        this.loadingInfo = false;
-                        this.catalogFileInfo = res.fileInfo;
-                        this.catalogHeaders = res.headers.sort((a, b) => {
-                            return a.columnIndex - b.columnIndex;
-                        });
-                    }
-                    this.fileInfoResp = true;
-                }),
-            err =>
-                runInAction(() => {
-                    console.log(err);
-                    this.responseErrorMessage = err;
-                    this.fileInfoResp = false;
-                    this.catalogFileInfo = null;
+        try {
+            const res = await backendService.getCatalogFileInfo(directory, filename);
+            runInAction(() => {
+                if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                     this.loadingInfo = false;
-                })
-        );
+                    this.catalogFileInfo = res.fileInfo;
+                    this.catalogHeaders = res.headers.sort((a, b) => {
+                        return a.columnIndex - b.columnIndex;
+                    });
+                }
+                this.fileInfoResp = true;
+            });
+        } catch (err) {
+            console.log(err);
+            this.responseErrorMessage = err;
+            this.fileInfoResp = false;
+            this.catalogFileInfo = null;
+            this.loadingInfo = false;
+        }
     };
 
     /// Update the spectral range for save image file
@@ -288,17 +275,10 @@ export class FileBrowserStore {
             this.saveSpectralRange = [min.toString(), max.toString(), delta.toString()];
         }
     };
-    @action getConcatFilesHeader = (directory: string, file: string, hdu: string): Promise<{file: string; info: CARTA.IFileInfoExtended}> => {
-        return new Promise((resolve, reject) => {
-            BackendService.Instance.getFileInfo(directory, file, hdu).subscribe(
-                (res: CARTA.FileInfoResponse) => {
-                    resolve({file: res.fileInfo.name, info: res.fileInfoExtended});
-                },
-                err => {
-                    reject(err);
-                }
-            );
-        });
+
+    getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string; info: CARTA.IFileInfoExtended}> => {
+        const res = await BackendService.Instance.getFileInfo(directory, file, hdu);
+        return {file: res.fileInfo.name, info: res.fileInfoExtended};
     };
 
     @action selectFile = (file: ISelectedFile) => {
