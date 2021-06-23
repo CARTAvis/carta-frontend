@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Snippet",
+    "description": "Schema for CARTA Snippet (Version 1)",
+    "$id": "carta_snippet_1",
+    "required": ["snippetVersion", "frontendVersion", "code"],
+    "properties": {
+        "snippetVersion": {
+            "description": "The version of the snippet contained",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1
+        },
+        "frontendVersion": {
+            "description": "The version of the frontend targeted by this snippet",
+            "type": "string"
+        },
+        "code": {
+            "description": "Snippet source code",
+            "type": "string"
+        },
+        "tags": {
+            "description": "List of tags associated with this snippet",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "categories": {
+            "description": "List of categories under which to place this snippet",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "requires": {
+            "description": "List of snippets (by name) which need to be run before running this snippet",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}
