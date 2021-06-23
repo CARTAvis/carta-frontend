@@ -264,8 +264,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             zoom = frame.zoomLevel / devicePixelRatio;
         }
 
-        const pixelGridZoomLow = 6.0 * zoomFactor;
-        const pixelGridZoomHigh = 12.0 * zoomFactor;
+        const pixelGridZoomLow = 6.0;
+        const pixelGridZoomHigh = 12.0;
 
         if (zoom >= pixelGridZoomLow && mip === 1) {
             const cutoff = 0.5 / zoom;
