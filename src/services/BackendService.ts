@@ -1,6 +1,6 @@
 import {action, observable, makeObservable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {Observable, Observer, Subject, throwError} from "rxjs";
+import {Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
 import {mapToObject} from "utilities";
 import {ApiService} from "./ApiService";
@@ -14,6 +14,34 @@ export enum ConnectionStatus {
 export const INVALID_ANIMATION_ID = -1;
 
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
+
+interface IBackendResponse {
+    success?: boolean;
+    message?: string;
+}
+
+// Deferred class adapted from https://stackoverflow.com/a/58610922/1727322
+export class Deferred<T> {
+    private _resolve: (value: T) => void = () => {};
+    private _reject: (reason: any) => void = () => {};
+
+    private _promise: Promise<T> = new Promise<T>((resolve, reject) => {
+        this._reject = reject;
+        this._resolve = resolve;
+    });
+
+    public get promise(): Promise<T> {
+        return this._promise;
+    }
+
+    public resolve(value: T) {
+        this._resolve(value);
+    }
+
+    public reject(reason: any) {
+        this._reject(reason);
+    }
+}
 
 export class BackendService {
     private static staticInstance: BackendService;
@@ -44,7 +72,7 @@ export class BackendService {
     private connection: WebSocket;
     private lastPingTime: number;
     private lastPongTime: number;
-    private observerRequestMap: Map<number, Observer<any>>;
+    private deferredMap: Map<number, Deferred<IBackendResponse>>;
     private eventCounter: number;
 
     readonly rasterTileStream: Subject<CARTA.RasterTileData>;
@@ -64,7 +92,8 @@ export class BackendService {
     private constructor() {
         makeObservable(this);
         this.loggingEnabled = true;
-        this.observerRequestMap = new Map<number, Observer<any>>();
+        this.deferredMap = new Map<number, Deferred<IBackendResponse>>();
+
         this.eventCounter = 1;
         this.sessionId = 0;
         this.endToEndPing = NaN;
@@ -86,20 +115,20 @@ export class BackendService {
         // Construct handler and decoder maps
         this.decoderMap = new Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>([
             [CARTA.EventType.REGISTER_VIEWER_ACK, {messageClass: CARTA.RegisterViewerAck, handler: this.onRegisterViewerAck}],
-            [CARTA.EventType.FILE_LIST_RESPONSE, {messageClass: CARTA.FileListResponse, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.REGION_LIST_RESPONSE, {messageClass: CARTA.RegionListResponse, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.CATALOG_LIST_RESPONSE, {messageClass: CARTA.CatalogListResponse, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.FILE_LIST_PROGRESS, {messageClass: CARTA.ListProgress, handler: this.onStreameListProgress}],
-            [CARTA.EventType.FILE_INFO_RESPONSE, {messageClass: CARTA.FileInfoResponse, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.REGION_FILE_INFO_RESPONSE, {messageClass: CARTA.RegionFileInfoResponse, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, {messageClass: CARTA.CatalogFileInfoResponse, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.OPEN_FILE_ACK, {messageClass: CARTA.OpenFileAck, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.SAVE_FILE_ACK, {messageClass: CARTA.SaveFileAck, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.OPEN_CATALOG_FILE_ACK, {messageClass: CARTA.OpenCatalogFileAck, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.IMPORT_REGION_ACK, {messageClass: CARTA.ImportRegionAck, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.EXPORT_REGION_ACK, {messageClass: CARTA.ExportRegionAck, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.SET_REGION_ACK, {messageClass: CARTA.SetRegionAck, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.RESUME_SESSION_ACK, {messageClass: CARTA.ResumeSessionAck, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.FILE_LIST_RESPONSE, {messageClass: CARTA.FileListResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.REGION_LIST_RESPONSE, {messageClass: CARTA.RegionListResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.CATALOG_LIST_RESPONSE, {messageClass: CARTA.CatalogListResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.FILE_LIST_PROGRESS, {messageClass: CARTA.ListProgress, handler: this.onStreamedListProgress}],
+            [CARTA.EventType.FILE_INFO_RESPONSE, {messageClass: CARTA.FileInfoResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.REGION_FILE_INFO_RESPONSE, {messageClass: CARTA.RegionFileInfoResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, {messageClass: CARTA.CatalogFileInfoResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.OPEN_FILE_ACK, {messageClass: CARTA.OpenFileAck, handler: this.onDeferredResponse}],
+            [CARTA.EventType.SAVE_FILE_ACK, {messageClass: CARTA.SaveFileAck, handler: this.onDeferredResponse}],
+            [CARTA.EventType.OPEN_CATALOG_FILE_ACK, {messageClass: CARTA.OpenCatalogFileAck, handler: this.onDeferredResponse}],
+            [CARTA.EventType.IMPORT_REGION_ACK, {messageClass: CARTA.ImportRegionAck, handler: this.onDeferredResponse}],
+            [CARTA.EventType.EXPORT_REGION_ACK, {messageClass: CARTA.ExportRegionAck, handler: this.onDeferredResponse}],
+            [CARTA.EventType.SET_REGION_ACK, {messageClass: CARTA.SetRegionAck, handler: this.onDeferredResponse}],
+            [CARTA.EventType.RESUME_SESSION_ACK, {messageClass: CARTA.ResumeSessionAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.START_ANIMATION_ACK, {messageClass: CARTA.StartAnimationAck, handler: this.onStartAnimationAck}],
             [CARTA.EventType.RASTER_TILE_DATA, {messageClass: CARTA.RasterTileData, handler: this.onStreamedRasterTileData}],
             [CARTA.EventType.REGION_HISTOGRAM_DATA, {messageClass: CARTA.RegionHistogramData, handler: this.onStreamedRegionHistogramData}],
@@ -111,10 +140,10 @@ export class BackendService {
             [CARTA.EventType.CATALOG_FILTER_RESPONSE, {messageClass: CARTA.CatalogFilterResponse, handler: this.onStreamedCatalogData}],
             [CARTA.EventType.RASTER_TILE_SYNC, {messageClass: CARTA.RasterTileSync, handler: this.onStreamedRasterSync}],
             [CARTA.EventType.MOMENT_PROGRESS, {messageClass: CARTA.MomentProgress, handler: this.onStreamedMomentProgress}],
-            [CARTA.EventType.MOMENT_RESPONSE, {messageClass: CARTA.MomentResponse, handler: this.onSimpleMappedResponse}],
+            [CARTA.EventType.MOMENT_RESPONSE, {messageClass: CARTA.MomentResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.SCRIPTING_REQUEST, {messageClass: CARTA.ScriptingRequest, handler: this.onScriptingRequest}],
-            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onSimpleMappedResponse}],
-            [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onSimpleMappedResponse}]
+            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}]
         ]);
 
         // check ping every 5 seconds
@@ -122,7 +151,7 @@ export class BackendService {
     }
 
     @action("connect")
-    connect(url: string): Observable<CARTA.RegisterViewerAck> {
+    async connect(url: string): Promise<CARTA.IRegisterViewerAck> {
         if (this.connection) {
             this.connection.onclose = null;
             this.connection.close();
@@ -156,28 +185,35 @@ export class BackendService {
                 }
             });
 
-        return new Observable<CARTA.RegisterViewerAck>(observer => {
-            this.connection.onopen = action(() => {
-                if (this.connectionStatus === ConnectionStatus.CLOSED) {
-                    this.connectionDropped = true;
-                }
-                this.connectionStatus = ConnectionStatus.ACTIVE;
-                const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
-                // observer map is cleared, so that old subscriptions don't get incorrectly fired
-                this.observerRequestMap.clear();
-                this.eventCounter = 1;
-                const requestId = this.eventCounter;
-                this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
-                if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
-                    this.observerRequestMap.set(requestId, observer);
-                }
-            });
+        this.deferredMap.clear();
+        this.eventCounter = 1;
+        const requestId = this.eventCounter;
 
-            this.connection.onerror = ev => {
-                AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed.`, ["network"]);
-                console.log(ev);
-            };
+        const deferredResponse = new Deferred<CARTA.IRegisterViewerAck>();
+        this.deferredMap.set(requestId, deferredResponse);
+
+        this.connection.onopen = action(() => {
+            if (this.connectionStatus === ConnectionStatus.CLOSED) {
+                this.connectionDropped = true;
+            }
+            this.connectionStatus = ConnectionStatus.ACTIVE;
+            const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+            // observer map is cleared, so that old subscriptions don't get incorrectly fired
+
+            this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
+                this.deferredMap.set(requestId, deferredResponse);
+            } else {
+                throw new Error("Could not send event");
+            }
         });
+
+        this.connection.onerror = ev => {
+            AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed.`, ["network"]);
+            console.log(ev);
+        };
+
+        return await deferredResponse.promise;
     }
 
     sendPing = () => {
@@ -191,172 +227,162 @@ export class BackendService {
         this.endToEndPing = this.lastPongTime - this.lastPingTime;
     };
 
-    @action("file list")
-    getFileList(directory: string): Observable<CARTA.FileListResponse> {
+    async getFileList(directory: string): Promise<CARTA.IFileListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.FileListRequest.create({directory});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_LIST_REQUEST, CARTA.FileListRequest.encode(message).finish())) {
-                return new Observable<CARTA.FileListResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IFileListResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("region list")
-    getRegionList(directory: string): Observable<CARTA.RegionListResponse> {
+    async getRegionList(directory: string): Promise<CARTA.IRegionListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.RegionListRequest.create({directory});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.REGION_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_LIST_REQUEST, CARTA.RegionListRequest.encode(message).finish())) {
-                return new Observable<CARTA.RegionListResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IRegionListResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("catalog list")
-    getCatalogList(directory: string): Observable<CARTA.CatalogListResponse> {
+    async getCatalogList(directory: string): Promise<CARTA.ICatalogListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.CatalogListRequest.create({directory});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.CATALOG_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.CATALOG_LIST_REQUEST, CARTA.CatalogListRequest.encode(message).finish())) {
-                return new Observable<CARTA.CatalogListResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.ICatalogListResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("file info")
-    getFileInfo(directory: string, file: string, hdu: string): Observable<CARTA.FileInfoResponse> {
+    async getFileInfo(directory: string, file: string, hdu: string): Promise<CARTA.IFileInfoResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.FileInfoRequest.create({directory, file, hdu});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_INFO_REQUEST, CARTA.FileInfoRequest.encode(message).finish())) {
-                return new Observable<CARTA.FileInfoResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IFileInfoResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("region info")
-    getRegionFileInfo(directory: string, file: string): Observable<CARTA.RegionFileInfoResponse> {
+    async getRegionFileInfo(directory: string, file: string): Promise<CARTA.IRegionFileInfoResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.RegionFileInfoRequest.create({directory, file});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, CARTA.RegionFileInfoRequest.encode(message).finish())) {
-                return new Observable<CARTA.RegionFileInfoResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IRegionFileInfoResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("catalog info")
-    getCatalogFileInfo(directory: string, name: string): Observable<CARTA.CatalogFileInfoResponse> {
+    async getCatalogFileInfo(directory: string, name: string): Promise<CARTA.ICatalogFileInfoResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.CatalogFileInfoRequest.create({directory, name});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.CATALOG_FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.CATALOG_FILE_INFO_REQUEST, CARTA.CatalogFileInfoRequest.encode(message).finish())) {
-                return new Observable<CARTA.CatalogFileInfoResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.ICatalogFileInfoResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("import region")
-    importRegion(directory: string, file: string, type: CARTA.FileType, fileId: number): Observable<CARTA.ImportRegionAck> {
+    async importRegion(directory: string, file: string, type: CARTA.FileType, fileId: number): Promise<CARTA.IImportRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.ImportRegion.create({directory, file, type, groupId: fileId});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.IMPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.IMPORT_REGION, CARTA.ImportRegion.encode(message).finish())) {
-                return new Observable<CARTA.ImportRegionAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IImportRegionAck>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("export regions")
-    exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>): Observable<CARTA.ExportRegionAck> {
+    async exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>): Promise<CARTA.IExportRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionStyles: mapToObject(regionStyles), coordType});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.EXPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.EXPORT_REGION, CARTA.ExportRegion.encode(message).finish())) {
-                return new Observable<CARTA.ExportRegionAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IExportRegionAck>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("load file")
-    loadFile(directory: string, file: string, hdu: string, fileId: number, renderMode: CARTA.RenderMode): Observable<CARTA.OpenFileAck> {
+    async loadFile(directory: string, file: string, hdu: string, fileId: number, renderMode: CARTA.RenderMode): Promise<CARTA.IOpenFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.OpenFile.create({directory, file, hdu, fileId, renderMode});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.OPEN_FILE, CARTA.OpenFile.encode(message).finish())) {
-                return new Observable<CARTA.OpenFileAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IOpenFileAck>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("load individual stokes")
-    loadStokeFiles(stokesFiles: CARTA.IStokesFile[], fileId: number, renderMode: CARTA.RenderMode): Observable<CARTA.ConcatStokesFilesAck> {
+    async loadStokeFiles(stokesFiles: CARTA.IStokesFile[], fileId: number, renderMode: CARTA.RenderMode): Promise<CARTA.IConcatStokesFilesAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const concatStokes: CARTA.IConcatStokesFiles = {
                 stokesFiles: stokesFiles,
@@ -367,29 +393,28 @@ export class BackendService {
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.CONCAT_STOKES_FILES, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.CONCAT_STOKES_FILES, CARTA.ConcatStokesFiles.encode(message).finish())) {
-                return new Observable<CARTA.ConcatStokesFilesAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IConcatStokesFilesAck>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("load catalog file")
-    loadCatalogFile(directory: string, name: string, fileId: number, previewDataSize: number): Observable<CARTA.OpenCatalogFileAck> {
+    async loadCatalogFile(directory: string, name: string, fileId: number, previewDataSize: number): Promise<CARTA.IOpenCatalogFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.OpenCatalogFile.create({directory, name, fileId, previewDataSize});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_CATALOG_FILE, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.OPEN_CATALOG_FILE, CARTA.OpenCatalogFile.encode(message).finish())) {
-                return new Observable<CARTA.OpenCatalogFileAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IOpenCatalogFileAck>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
@@ -406,25 +431,23 @@ export class BackendService {
         return false;
     }
 
-    @action("save file")
-    saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], keepDegenerate?: boolean): Observable<CARTA.SaveFileAck> {
+    async saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], keepDegenerate?: boolean): Promise<CARTA.ISaveFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.SaveFile.create({fileId, outputFileDirectory, outputFileName, outputFileType, regionId, channels, stokes, keepDegenerate});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SAVE_FILE, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.SAVE_FILE, CARTA.SaveFile.encode(message).finish())) {
-                return new Observable<CARTA.SaveFileAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.ISaveFileAck>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("close file")
     closeFile(fileId: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             const message = CARTA.CloseFile.create({fileId});
@@ -460,10 +483,9 @@ export class BackendService {
         return false;
     }
 
-    @action("set region")
-    setRegion(fileId: number, regionId: number, region: RegionStore): Observable<CARTA.SetRegionAck> {
+    async setRegion(fileId: number, regionId: number, region: RegionStore): Promise<CARTA.ISetRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.SetRegion.create({
                 fileId,
@@ -478,11 +500,11 @@ export class BackendService {
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SET_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.SET_REGION, CARTA.SetRegion.encode(message).finish())) {
-                return new Observable<CARTA.SetRegionAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.ISetRegionAck>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
@@ -578,19 +600,18 @@ export class BackendService {
         return false;
     }
 
-    @action("start animation")
-    startAnimation(animationMessage: CARTA.IStartAnimation): Observable<CARTA.StartAnimationAck> {
+    async startAnimation(animationMessage: CARTA.IStartAnimation): Promise<CARTA.IStartAnimationAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.START_ANIMATION, requestId, animationMessage, false);
             if (this.sendEvent(CARTA.EventType.START_ANIMATION, CARTA.StartAnimation.encode(animationMessage).finish())) {
-                return new Observable<CARTA.StartAnimationAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IStartAnimationAck>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
@@ -629,19 +650,18 @@ export class BackendService {
         return false;
     }
 
-    @action("resume session")
-    resumeSession(message: CARTA.IResumeSession): Observable<CARTA.ResumeSessionAck> {
+    async resumeSession(message: CARTA.IResumeSession): Promise<CARTA.IResumeSessionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.RESUME_SESSION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.RESUME_SESSION, CARTA.ResumeSession.encode(message).finish())) {
-                return new Observable<CARTA.ResumeSessionAck>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IResumeSessionAck>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
@@ -651,24 +671,22 @@ export class BackendService {
         document.cookie = `CARTA-Authorization=${token}; path=/`;
     };
 
-    @action("request moment")
-    requestMoment(message: CARTA.IMomentRequest): Observable<CARTA.MomentResponse> {
+    async requestMoment(message: CARTA.IMomentRequest): Promise<CARTA.IMomentResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.MOMENT_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.MOMENT_REQUEST, CARTA.MomentRequest.encode(message).finish())) {
-                return new Observable<CARTA.MomentResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.IMomentResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
 
-    @action("cancel requesting moment")
     cancelRequestingMoment(fileId: number) {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
@@ -696,20 +714,19 @@ export class BackendService {
         }
     }
 
-    @action("request spectral line")
-    requestSpectralLine(frequencyRange: CARTA.DoubleBounds, intensityLimit: number): Observable<CARTA.SpectralLineResponse> {
+    async requestSpectralLine(frequencyRange: CARTA.DoubleBounds, intensityLimit: number): Promise<CARTA.ISpectralLineResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.SpectralLineRequest.create({frequencyRange: frequencyRange, lineIntensityLowerLimit: intensityLimit});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, CARTA.SpectralLineRequest.encode(message).finish())) {
-                return new Observable<CARTA.SpectralLineResponse>(observer => {
-                    this.observerRequestMap.set(requestId, observer);
-                });
+                const deferredResponse = new Deferred<CARTA.ISpectralLineResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
@@ -766,18 +783,16 @@ export class BackendService {
         }
     }
 
-    private onSimpleMappedResponse(eventId: number, response: any) {
-        const observer = this.observerRequestMap.get(eventId);
-        if (observer) {
+    private onDeferredResponse(eventId: number, response: IBackendResponse) {
+        const def = this.deferredMap.get(eventId);
+        if (def) {
             if (response.success) {
-                observer.next(response);
+                def.resolve(response);
             } else {
-                observer.error(response.message);
+                def.reject(response.message);
             }
-            observer.complete();
-            this.observerRequestMap.delete(eventId);
         } else {
-            console.log(`Can't find observable for request ${eventId}`);
+            console.log(`Can't find deferred for request ${eventId}`);
         }
     }
 
@@ -786,12 +801,12 @@ export class BackendService {
         this.serverFeatureFlags = ack.serverFeatureFlags;
         this.grpcPort = ack.grpcPort;
 
-        this.onSimpleMappedResponse(eventId, ack);
+        this.onDeferredResponse(eventId, ack);
     }
 
     private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
         this.animationId = ack.success ? ack.animationId : INVALID_ANIMATION_ID;
-        this.onSimpleMappedResponse(eventId, ack);
+        this.onDeferredResponse(eventId, ack);
     }
 
     private onStreamedRasterTileData(_eventId: number, rasterTileData: CARTA.RasterTileData) {
@@ -838,7 +853,7 @@ export class BackendService {
         this.momentProgressStream.next(momentProgress);
     }
 
-    private onStreameListProgress(_eventId: number, listProgress: CARTA.ListProgress) {
+    private onStreamedListProgress(_eventId: number, listProgress: CARTA.ListProgress) {
         this.listProgressStream.next(listProgress);
     }
 

@@ -53,7 +53,7 @@ export class AnimatorStore {
         this.step = val;
     };
 
-    @action startAnimation = () => {
+    @action startAnimation = async () => {
         const appStore = AppStore.Instance;
         const preferenceStore = PreferenceStore.Instance;
         const frame = appStore.activeFrame;
@@ -112,17 +112,16 @@ export class AnimatorStore {
             matchedFrames: mapToObject(matchedFrames)
         };
 
-        appStore.backendService.startAnimation(animationMessage).subscribe(
-            () => {
-                console.log("Animation started successfully");
-            },
-            err => {
-                console.log(err);
-                appStore.tileService.setAnimationEnabled(false);
-            }
-        );
-        appStore.tileService.setAnimationEnabled(true);
         this.animationActive = true;
+
+        try {
+            await appStore.backendService.startAnimation(animationMessage);
+            appStore.tileService.setAnimationEnabled(true);
+            console.log("Animation started successfully");
+        } catch (err) {
+            console.log(err);
+            appStore.tileService.setAnimationEnabled(false);
+        }
 
         clearTimeout(this.stopHandle);
         this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.stopAnimationPlaybackMinutes);
