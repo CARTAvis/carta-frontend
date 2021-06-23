@@ -1,5 +1,5 @@
 # CARTA Frontend
-The carta-frontend is used in conjunction with the [carta-backend](https://github.com/CARTAvis/carta-backend) and for general use, a pre-built production carta-frontend is usually installed alongside the carta-backend automatically. 
+The carta-frontend is used in conjunction with the [carta-backend](https://github.com/CARTAvis/carta-backend), and for general use a pre-built production carta-frontend is usually installed alongside the carta-backend automatically. 
 However, a user may wish to install the carta-frontend component separately in order to test beta versions, for example, or to develop it.
 
 ## Pre-built production packages
@@ -13,9 +13,7 @@ If you have Node.js and `npm` already installed on your system, a production car
 
 ```
 npm i carta-frontend
-
 ```
-
 The files will be installed to your `node-modules` directory.
 Specific carta-frontend versions can be installed by appending `@` and the version number. For example,
 ```
@@ -30,7 +28,7 @@ wget https://registry.npmjs.org/carta-frontend/-/carta-frontend-2.0.0.tgz
 ```
 The `tgz` extracts to `package/build`. 
 
-The carta-backend can be started up to use any non-default carta-frontend by specifying its location with the `--frontend_folder` flag. e.g.
+The carta-backend can be started up to use any non-default carta-frontend by specifying its location with the `--frontend_folder` flag. For example,
 ```
 ./carta-backend --frontend_folder $HOME/package/build
 ```
@@ -76,7 +74,7 @@ The default install location for the carta-frontend is `/usr/local/share/carta/f
 
 ## Development
 
-If you wish to modify or develop the carta-frontend, you need to build non-production carta-frontend from source. Here are the instructions to do so:
+If you wish to modify or develop the carta-frontend, you may build a production or non-production carta-frontend from source. Here are the instructions to do so:
 
 ### Prerequisites
 
@@ -95,7 +93,7 @@ Additional build steps (building WebAssembly wrappers, protocol buffer modules a
 
 To run a development build server, simply run `npm run start`. 
 
-## Build process (without Docker/Singularity)
+### Build process (without Docker/Singularity)
 If your build environment does not have access to Docker or Singularity, WebAssembly compilation must be performed in an environment with access to the Emscripten compiler. 
 
 Initialise submodules and install package dependencies:
