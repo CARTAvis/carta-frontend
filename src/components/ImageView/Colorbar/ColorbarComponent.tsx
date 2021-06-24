@@ -12,7 +12,7 @@ import "./ColorbarComponent.scss";
 @observer
 export class ColorbarComponent extends React.Component<{onCursorHoverValueChanged: (number) => void}> {
     @observable hoverInfoText: string = "";
-    @observable showHoverInfo: boolean = false;
+    @observable isHovering: boolean = false;
     @observable cursorY: number = -1;
     private mouseEnterHandle;
 
@@ -34,12 +34,12 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
             clearTimeout(this.mouseEnterHandle);
         }
         this.mouseEnterHandle = setTimeout(() => {
-            this.showHoverInfo = true;
+            this.isHovering = true;
         }, ColorbarComponent.HoverDelay);
     };
 
     @action onMouseLeave = () => {
-        this.showHoverInfo = false;
+        this.isHovering = false;
         if (this.mouseEnterHandle) {
             clearTimeout(this.mouseEnterHandle);
         }
@@ -73,7 +73,7 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
 
         const hoverValue = renderConfig.scaleMinVal + scaledPos * (renderConfig.scaleMaxVal - renderConfig.scaleMinVal);
         this.setHoverInfoText(hoverValue.toExponential(5));
-        if (this.showHoverInfo) {
+        if (colorbarSettings.showHoverInfo && this.isHovering) {
             this.props.onCursorHoverValueChanged(hoverValue);
         } else {
             this.props.onCursorHoverValueChanged(NaN);
@@ -248,12 +248,12 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
         ) : null;
 
         const hoverBar =
-            colorbarSettings.showHoverInfo && this.showHoverInfo ? (
+            colorbarSettings.showHoverInfo && this.isHovering ? (
                 <Line points={hoverBarPosition} stroke={colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color)} strokeWidth={1 / devicePixelRatio} />
             ) : null;
 
         const hoverInfo =
-            colorbarSettings.showHoverInfo && this.showHoverInfo ? (
+            colorbarSettings.showHoverInfo && this.isHovering ? (
                 <div className={"colorbar-info"}>
                     <ProfilerInfoComponent info={[`Colorscale: ${this.hoverInfoText} ${frame.unit}`]} />
                 </div>
