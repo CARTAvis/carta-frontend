@@ -6,7 +6,7 @@ import {ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
 import {fonts} from "ast_wrapper";
 import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
-import {getColorForTheme} from "utilities";
+import {clamp, getColorForTheme} from "utilities";
 import "./ColorbarComponent.scss";
 
 @observer
@@ -14,6 +14,10 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
     @observable hoverInfoText: string = "";
     @observable showHoverInfo: boolean = false;
     @observable cursorY: number = -1;
+    private mouseEnterHandle;
+
+    private static readonly HoverDelay = 500;
+
     private astFonts: Font[] = fonts.map((x, i) => new Font(x, i));
 
     constructor(props) {
@@ -26,11 +30,19 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
     };
 
     @action onMouseEnter = () => {
-        this.showHoverInfo = true;
+        if (this.mouseEnterHandle) {
+            clearTimeout(this.mouseEnterHandle);
+        }
+        this.mouseEnterHandle = setTimeout(() => {
+            this.showHoverInfo = true;
+        }, ColorbarComponent.HoverDelay);
     };
 
     @action onMouseLeave = () => {
         this.showHoverInfo = false;
+        if (this.mouseEnterHandle) {
+            clearTimeout(this.mouseEnterHandle);
+        }
         this.props.onCursorHoverValueChanged(NaN);
     };
 
@@ -47,15 +59,25 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
         }
 
         const stage = event.target.getStage();
-        const point = colorbarSettings.position === "right" ? stage.getPointerPosition().y : stage.getPointerPosition().x;
+        let point = colorbarSettings.position === "right" ? stage.getPointerPosition().y : stage.getPointerPosition().x;
         let scaledPos = point - colorbarSettings.yOffset;
         if (colorbarSettings.position === "right") {
             scaledPos = colorbarSettings.height - scaledPos;
         }
-        scaledPos = scaledPos / colorbarSettings.height;
+        scaledPos /= colorbarSettings.height;
+        scaledPos = clamp(scaledPos, 0.0, 1.0);
+        // Recalculate clamped point position
+        point = clamp(point, colorbarSettings.yOffset, colorbarSettings.yOffset + colorbarSettings.height);
+        // Lock to mid-pixel for sharp lines
+        point = Math.floor(point) + 0.5;
+
         const hoverValue = renderConfig.scaleMinVal + scaledPos * (renderConfig.scaleMaxVal - renderConfig.scaleMinVal);
         this.setHoverInfoText(hoverValue.toExponential(5));
-        this.props.onCursorHoverValueChanged(hoverValue);
+        if (this.showHoverInfo) {
+            this.props.onCursorHoverValueChanged(hoverValue);
+        } else {
+            this.props.onCursorHoverValueChanged(NaN);
+        }
         this.setCursorY(point);
     };
 
@@ -239,11 +261,7 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
 
         return (
             <React.Fragment>
-                <Stage className={"colorbar-stage"} width={stageWidth} height={stageHeight} style={{left: stageLeft, top: stageTop}}
-                       onMouseEnter={this.onMouseEnter}
-                       onMouseMove={this.handleMouseMove}
-                       onMouseLeave={this.onMouseLeave}
-                >
+                <Stage className={"colorbar-stage"} width={stageWidth} height={stageHeight} style={{left: stageLeft, top: stageTop}} onMouseEnter={this.onMouseEnter} onMouseMove={this.handleMouseMove} onMouseLeave={this.onMouseLeave}>
                     <Layer>
                         {colorbar}
                         {ticks}
