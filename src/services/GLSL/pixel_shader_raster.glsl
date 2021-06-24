@@ -65,10 +65,10 @@ void main(void) {
     vec2 texCoordsPixel = clamp(tileCoordsPixel, 0.5, uTileTextureSize - 0.5) + uTileTextureOffset;
     vec2 f = fract(tileCoordsPixel);
 
-    // Pixel grid: 1px feather on line width
+    // Pixel grid: 1.1px feather on line width. 1.1 instead of 1.0 to reduce Moire effects
     float edgeX = min(f.x, 1.0 - f.x);
     float edgeY = min(f.y, 1.0 - f.y);
-    float featherWidth = 1.0;
+    float featherWidth = 1.1;
     float opA = smoothstep(uPixelGridCutoff * (1.0 + featherWidth / 2.0), uPixelGridCutoff * (1.0 - featherWidth / 2.0), edgeX * uPixelAspectRatio);
     float opB = smoothstep(uPixelGridCutoff * (1.0 + featherWidth / 2.0), uPixelGridCutoff * (1.0 - featherWidth / 2.0), edgeY);
     float gridOpacity = max(opA, opB) * uPixelGridOpacity;
