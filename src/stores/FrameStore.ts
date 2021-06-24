@@ -1,5 +1,5 @@
 import {action, autorun, computed, observable, makeObservable, runInAction} from "mobx";
-import {NumberRange} from "@blueprintjs/core";
+import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, DistanceMeasuringStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
@@ -708,7 +708,8 @@ export class FrameStore {
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
     }
 
-    @computed get stokesInfo(): string[] {
+    @computed get stokesOptions(): IOptionProps[] {
+        let stokesOptions = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
             const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value.toUpperCase() === "STOKES");
             if (ctype && ctype.name.indexOf("CTYPE") !== -1) {
@@ -717,17 +718,19 @@ export class FrameStore {
                 const crpixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${index}`) !== -1);
                 const crvalHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${index}`) !== -1);
                 const cdeltHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
-                let stokesInfo = [];
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (stokesVal > 0 && STANDARD_POLARIZATIONS.has(stokesVal)) {
-                        stokesInfo.push(STANDARD_POLARIZATIONS.get(stokesVal));
+                        stokesOptions.push({value: stokesVal - 1, label: STANDARD_POLARIZATIONS.get(stokesVal)});
                     }
                 }
-                return stokesInfo;
             }
         }
-        return [];
+        return stokesOptions;
+    }
+
+    @computed get stokesInfo(): string[] {
+        return this.stokesOptions?.map(option => {return option?.label;});
     }
 
     constructor(frameInfo: FrameInfo) {
@@ -1463,8 +1466,14 @@ export class FrameStore {
     }
 
     @action setChannels(channel: number, stokes: number, recursive: boolean) {
-        const sanitizedChannel = this.sanitizeChannelNumber(channel);
+        if (stokes < 0) {
+            stokes += this.frameInfo.fileInfoExtended.stokes;
+        }
+        if (stokes >= this.frameInfo.fileInfoExtended.stokes) {
+            stokes = 0;
+        }
 
+        const sanitizedChannel = this.sanitizeChannelNumber(channel);
         // Automatically switch to per-channel histograms when Stokes parameter changes
         if (this.requiredStokes !== stokes) {
             this.renderConfig.setUseCubeHistogram(false);
