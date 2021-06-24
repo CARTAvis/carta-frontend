@@ -1,4 +1,4 @@
-import { observable, computed, action, makeObservable } from "mobx";
+import {observable, computed, action, makeObservable} from "mobx";
 import {AppStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
 import {LayoutConfig, PresetLayout} from "models";
@@ -57,7 +57,7 @@ export class LayoutStore {
     };
 
     private initLayoutsFromPresets = () => {
-        PresetLayout.PRESETS.forEach((presetName) => {
+        PresetLayout.PRESETS.forEach(presetName => {
             const presetConfig = LayoutConfig.GetPresetConfig(presetName);
             if (presetConfig) {
                 this.layouts[presetName] = presetConfig;
@@ -70,7 +70,7 @@ export class LayoutStore {
     }
 
     @computed get userLayoutNames(): string[] {
-        return this.layouts ? Object.keys(this.layouts).filter((layoutName) => !PresetLayout.isPreset(layoutName)) : [];
+        return this.layouts ? Object.keys(this.layouts).filter(layoutName => !PresetLayout.isPreset(layoutName)) : [];
     }
 
     @computed get orderedLayoutNames(): string[] {
@@ -108,19 +108,22 @@ export class LayoutStore {
         // generate new layout config & apply
         // Does this work?
         // @ts-ignore
-        this.dockedLayout = new GoldenLayout({
-            settings: {
-                showPopoutIcon: false,
-                showCloseIcon: false
+        this.dockedLayout = new GoldenLayout(
+            {
+                settings: {
+                    showPopoutIcon: false,
+                    showCloseIcon: false
+                },
+                dimensions: {
+                    minItemWidth: 250,
+                    minItemHeight: 200,
+                    dragProxyWidth: 600,
+                    dragProxyHeight: 270
+                },
+                content: [dockedConfig]
             },
-            dimensions: {
-                minItemWidth: 250,
-                minItemHeight: 200,
-                dragProxyWidth: 600,
-                dragProxyHeight: 270,
-            },
-            content: [dockedConfig]
-        }, appStore.getAppContainer());
+            appStore.getAppContainer()
+        );
         appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
         this.dockedLayout.init();
         this.currentLayoutName = layoutName;
@@ -160,12 +163,15 @@ export class LayoutStore {
         // save layout to layouts[] & server/local storage
         this.layouts[this.layoutNameToBeSaved] = configToSave;
         if (!PresetLayout.isPreset(this.layoutNameToBeSaved)) {
-            appStore.apiService.setLayout(this.layoutNameToBeSaved, configToSave).then(success => {
-                this.handleSaveResult(success);
-            }, err => {
-                console.log(err);
-                this.handleSaveResult(false);
-            });
+            appStore.apiService.setLayout(this.layoutNameToBeSaved, configToSave).then(
+                success => {
+                    this.handleSaveResult(success);
+                },
+                err => {
+                    console.log(err);
+                    this.handleSaveResult(false);
+                }
+            );
         }
     };
 
@@ -186,18 +192,21 @@ export class LayoutStore {
             return;
         }
 
-        appStore.apiService.clearLayout(layoutName).then(success => {
-            if (success) {
-                delete this.layouts[layoutName];
-                if (layoutName === this.currentLayoutName) {
-                    this.currentLayoutName = "";
+        appStore.apiService.clearLayout(layoutName).then(
+            success => {
+                if (success) {
+                    delete this.layouts[layoutName];
+                    if (layoutName === this.currentLayoutName) {
+                        this.currentLayoutName = "";
+                    }
                 }
+                this.handleDeleteResult(layoutName, success);
+            },
+            err => {
+                console.log(err);
+                this.handleDeleteResult(layoutName, false);
             }
-            this.handleDeleteResult(layoutName, success);
-        }, err => {
-            console.log(err);
-            this.handleDeleteResult(layoutName, false);
-        });
+        );
     };
 
     private handleDeleteResult = (layoutName: string, success: boolean) => {

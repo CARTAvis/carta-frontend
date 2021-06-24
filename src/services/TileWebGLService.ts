@@ -110,7 +110,7 @@ export class TileWebGLService {
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.CmapIndex, 2);
         this.gl.uniform1f(this.shaderUniforms.MinVal, 3.4);
-        this.gl.uniform1f(this.shaderUniforms.MaxVal, 5.50);
+        this.gl.uniform1f(this.shaderUniforms.MaxVal, 5.5);
         this.gl.uniform1f(this.shaderUniforms.Bias, 0);
         this.gl.uniform1f(this.shaderUniforms.Contrast, 1);
         this.gl.uniform1i(this.shaderUniforms.UseSmoothedBiasContrast, 1);
@@ -133,22 +133,12 @@ export class TileWebGLService {
         }
         this.vertexPositionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
-        const vertices = new Float32Array([
-            0.0, 0.0, 0,
-            1.0, 0.0, 0,
-            0.0, 1.0, 0,
-            1.0, 1.0, 0
-        ]);
+        const vertices = new Float32Array([0.0, 0.0, 0, 1.0, 0.0, 0, 0.0, 1.0, 0, 1.0, 1.0, 0]);
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertices, WebGLRenderingContext.STATIC_DRAW);
 
         this.vertexUVBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
-        const uvs = new Float32Array([
-            0.0, 0.0,
-            1.0, 0.0,
-            0.0, 1.0,
-            1.0, 1.0
-        ]);
+        const uvs = new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, uvs, WebGLRenderingContext.STATIC_DRAW);
     }
 

@@ -14,7 +14,7 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
     };
 
     constructor(props: {widgetStore: HistogramWidgetStore}) {
-        super(props)
+        super(props);
         const widgetStore = this.props.widgetStore;
         // When frame is changed(coordinateOptions changes), coordinate stay unchanged if new frame also support it, otherwise to default('z')
         autorun(() => {
@@ -30,7 +30,7 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
         let enableStokesSelect = false;
         let stokesClassName = "unlinked-to-selected";
         const coordinateOptions = [{value: "z", label: "Current"}];
-        
+
         if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
             enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
             const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
@@ -43,9 +43,9 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
         }
         return (
             <div className="spectral-profiler-toolbar">
-                <RegionSelectorComponent widgetStore={this.props.widgetStore}/>
+                <RegionSelectorComponent widgetStore={this.props.widgetStore} />
                 <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
-                    <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
+                    <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} />
                 </FormGroup>
             </div>
         );

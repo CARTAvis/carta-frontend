@@ -83,7 +83,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             relativeOppositeAnchorPointUnrotated.y = +h * sizeFactor;
         }
 
-        const relativeOppositeAnchorPoint = rotate2D(relativeOppositeAnchorPointUnrotated, this.props.region.rotation * Math.PI / 180.0);
+        const relativeOppositeAnchorPoint = rotate2D(relativeOppositeAnchorPointUnrotated, (this.props.region.rotation * Math.PI) / 180.0);
         this.editOppositeAnchorPoint = add2D(this.editStartCenterPoint, relativeOppositeAnchorPoint);
         this.props.region.beginEditing();
     };
@@ -114,7 +114,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
 
         let deltaAnchors = subtract2D(newAnchorPoint, this.editOppositeAnchorPoint);
         // Apply inverse rotation to get difference between anchors without rotation
-        const deltaAnchorsUnrotated = rotate2D(deltaAnchors, -region.rotation * Math.PI / 180.0);
+        const deltaAnchorsUnrotated = rotate2D(deltaAnchors, (-region.rotation * Math.PI) / 180.0);
 
         if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorsUnrotated.x) * sizeFactor;
@@ -130,7 +130,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
         }
 
         // re-rotate after clamping the anchor bounds to get the correct position of the anchor point
-        deltaAnchors = rotate2D(deltaAnchorsUnrotated, region.rotation * Math.PI / 180.0);
+        deltaAnchors = rotate2D(deltaAnchorsUnrotated, (region.rotation * Math.PI) / 180.0);
         const newCenter = add2D(this.editOppositeAnchorPoint, scale2D(deltaAnchors, 0.5));
 
         if (region.regionType === CARTA.RegionType.RECTANGLE) {
@@ -164,7 +164,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
 
         let deltaAnchorPoint = subtract2D(newAnchorPoint, centerPoint);
         // Apply inverse rotation to get difference between anchor and center without rotation
-        const deltaAnchorPointUnrotated = rotate2D(deltaAnchorPoint, -region.rotation * Math.PI / 180.0);
+        const deltaAnchorPointUnrotated = rotate2D(deltaAnchorPoint, (-region.rotation * Math.PI) / 180.0);
 
         if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
@@ -294,8 +294,8 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
                     newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
                 }
                 const delta = subtract2D(newAnchorPoint, region.center);
-                const topAnchorPosition = rotate2D({x: 0, y: 1}, region.rotation * Math.PI / 180.0);
-                const angle = 180.0 / Math.PI * angle2D(topAnchorPosition, delta);
+                const topAnchorPosition = rotate2D({x: 0, y: 1}, (region.rotation * Math.PI) / 180.0);
+                const angle = (180.0 / Math.PI) * angle2D(topAnchorPosition, delta);
                 region.setRotation(region.rotation + angle);
             } else {
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
@@ -323,14 +323,14 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             onMouseOut: this.handleAnchorMouseOut,
             onDragStart: this.handleAnchorDragStart,
             onDragEnd: this.handleAnchorDragEnd,
-            onDragMove: this.handleAnchorDrag,
+            onDragMove: this.handleAnchorDrag
         };
         if (anchor === "rotator") {
             // Circle radius adjusted so that it circumscribes the other anchor squares
-            return <Circle {...commonProps} radius={SimpleShapeRegionComponent.AnchorWidth / Math.sqrt(2)}/>;
+            return <Circle {...commonProps} radius={SimpleShapeRegionComponent.AnchorWidth / Math.sqrt(2)} />;
         }
         const offset = SimpleShapeRegionComponent.AnchorWidth / 2.0;
-        return <Rect {...commonProps} offsetX={offset} offsetY={offset} width={offset * 2} height={offset * 2}/>;
+        return <Rect {...commonProps} offsetX={offset} offsetY={offset} width={offset * 2} height={offset * 2} />;
     }
 
     render() {
@@ -359,7 +359,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
                     y={centerPixelSpace.y}
                     stroke={region.color}
                     strokeWidth={region.lineWidth}
-                    opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}
+                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     dash={[region.dashLength]}
                     closed={true}
                     listening={this.props.listening && !region.locked}
@@ -393,7 +393,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
                 y: centerPixelSpace.y,
                 stroke: region.color,
                 strokeWidth: region.lineWidth,
-                opacity: region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1),
+                opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
                 dash: [region.dashLength],
                 draggable: true,
                 listening: this.props.listening && !region.locked,
@@ -403,27 +403,13 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
                 onClick: this.handleClick,
                 onDblClick: this.handleDoubleClick,
                 onContextMenu: this.handleContextMenu,
-                perfectDrawEnabled: false,
+                perfectDrawEnabled: false
             };
 
             if (region.regionType === CARTA.RegionType.RECTANGLE) {
-                shapeNode = (
-                    <Rect
-                        {...commonProps}
-                        width={width * frame.aspectRatio}
-                        height={height}
-                        offsetX={width * frame.aspectRatio / 2.0}
-                        offsetY={height / 2.0}
-                    />
-                );
+                shapeNode = <Rect {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} />;
             } else {
-                shapeNode = (
-                    <Ellipse
-                        {...commonProps}
-                        radiusY={width}
-                        radiusX={height * frame.aspectRatio}
-                    />
-                );
+                shapeNode = <Ellipse {...commonProps} radiusY={width} radiusX={height * frame.aspectRatio} />;
             }
         }
 
@@ -459,8 +445,8 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
                 anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offsetY + rotatorOffset}});
             }
 
-            anchors = anchorConfigs.map((config) => {
-                let posImage = add2D(centerReferenceImage, rotate2D(config.offset, region.rotation * Math.PI / 180));
+            anchors = anchorConfigs.map(config => {
+                let posImage = add2D(centerReferenceImage, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
                 if (frame.spatialReference) {
                     posImage = transformPoint(frame.spatialTransformAST, posImage, false);
                 }

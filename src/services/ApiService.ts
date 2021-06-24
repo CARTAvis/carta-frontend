@@ -47,7 +47,7 @@ export class ApiService {
         if (isFinite(tokenLifetime) && tokenLifetime > 0) {
             // Store tokens from URL parameters as session cookie
             if (tokenLifetime === Number.MAX_VALUE) {
-                document.cookie = `carta-auth-token=${tokenString}`
+                document.cookie = `carta-auth-token=${tokenString}`;
             } else {
                 console.log(`Token updated and valid for ${tokenLifetime.toFixed()} seconds`);
             }
@@ -75,7 +75,7 @@ export class ApiService {
     };
 
     @computed get authenticated() {
-        return (this._accessToken && this._tokenLifetime > 0);
+        return this._accessToken && this._tokenLifetime > 0;
     }
 
     constructor() {
@@ -268,7 +268,7 @@ export class ApiService {
                     default:
                         preferences.astColor = "auto-blue";
                         break;
-                    }
+                }
             }
             preferences.version = 2;
             this.setPreferences(preferences);
@@ -336,7 +336,7 @@ export class ApiService {
     };
 
     public getLayouts = async () => {
-        let savedLayouts: { [name: string]: any };
+        let savedLayouts: {[name: string]: any};
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/layouts`;

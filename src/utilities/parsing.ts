@@ -11,7 +11,7 @@ export enum ComparisonOperator {
     Greater = ">",
     RangeClosed = "...",
     RangeOpen = ".."
- }
+}
 
 export function parseBoolean(value: string, defaultValue: boolean): boolean {
     if (value === "true") {
@@ -41,7 +41,7 @@ export function trimFitsComment(val: string): string {
 }
 
 export function mapToObject<K, T>(map: Map<K, T>) {
-    const obj: { [k: string]: T } = {};
+    const obj: {[k: string]: T} = {};
     map.forEach((value, key) => {
         obj[key.toString()] = value;
     });
@@ -52,9 +52,11 @@ export function findDeep(obj: any, pred: (obj: any) => boolean) {
     if (pred(obj)) {
         return [obj];
     }
-    return _.flatten(_.map(obj, child => {
-        return typeof child === "object" ? findDeep(child, pred) : [];
-    }));
+    return _.flatten(
+        _.map(obj, child => {
+            return typeof child === "object" ? findDeep(child, pred) : [];
+        })
+    );
 }
 
 // parsing filter string for TableComponent filter function
@@ -62,7 +64,7 @@ function getNumberFromFilterString(filterString: string): number {
     return Number(filterString.replace(/[^0-9.+-.]+/g, ""));
 }
 
-export function getComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator, values: number[]} {
+export function getComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
     const filter = filterString.replace(/\s/g, "");
     let result = {operator: -1, values: []};
     // order matters, since ... and .. both include .. (same for < and <=, > and >=)

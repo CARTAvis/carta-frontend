@@ -7,9 +7,13 @@ export class PreferencesHelpComponent extends React.Component {
     public render() {
         return (
             <div>
-                <p><ImageComponent light={headPreferenceButton} dark={headPreferenceButton_d} width="90%"/></p>
-                <p>The preferences dialog provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are
-                    effective immediately.</p>
+                <p>
+                    <ImageComponent light={headPreferenceButton} dark={headPreferenceButton_d} width="90%" />
+                </p>
+                <p>
+                    The preferences dialog provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are
+                    effective immediately.
+                </p>
                 <h3 id="global">Global</h3>
                 <p>This section provides usability customization.</p>
                 <ul>
@@ -31,7 +35,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Default colormap: colormap for rendering a raster image</li>
                     <li>Default percentile ranks: clip level to be applied to the pixel value-to-color mapping</li>
                     <li>NaN color: color to render a NaN (not a number) pixel</li>
-                    <li>Smoothed bias/contrast: when this is enabled (default), smooth bias and contrast functions are applied, resulting   a smooth scaling function. When it is disabled, the final scaling function contains kinks.</li>
+                    <li>Smoothed bias/contrast: when this is enabled (default), smooth bias and contrast functions are applied, resulting a smooth scaling function. When it is disabled, the final scaling function contains kinks.</li>
                 </ul>
                 <h3 id="contour-configuration">Contour configuration</h3>
                 <p>This section provides customization of how a contour layer is calculated and rendered by default.</p>
@@ -72,8 +76,10 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Creation mode: the way how rectangle and ellipse regions are created with cursor</li>
                 </ul>
                 <h3 id="performance">Performance</h3>
-                <p>Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the <code>low bandwidth
-                    mode</code> which reduces displayed image resolution and cursor responsiveness.</p>
+                <p>
+                    Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the <code>low bandwidth mode</code>{" "}
+                    which reduces displayed image resolution and cursor responsiveness.
+                </p>
                 <h3 id="log-events">Log events</h3>
                 <p>This is for development and debugging purpose. General users should not enable anything here.</p>
             </div>

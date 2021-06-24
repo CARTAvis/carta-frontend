@@ -2,9 +2,10 @@ import {IOptionProps, TabId} from "@blueprintjs/core";
 import {action, computed, observable, makeObservable, runInAction, autorun} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, DialogStore, PreferenceKeys, PreferenceStore, RegionStore} from "stores";
+import {RegionId} from "stores/widgets";
 import {FileInfoType} from "components";
-import {ProcessedColumnData} from "models";
+import {LineOption, ProcessedColumnData} from "models";
 import {getDataTypeString} from "utilities";
 
 export enum BrowserMode {
@@ -26,8 +27,8 @@ export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.Fi
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
 
 export interface ISelectedFile {
-    fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo,
-    hdu?: string
+    fileInfo?: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
+    hdu?: string;
 }
 
 export class FileBrowserStore {
@@ -56,6 +57,7 @@ export class FileBrowserStore {
     @observable exportFilename: string;
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
+    @observable exportRegionIndexes: number[] = [];
 
     @observable catalogFileList: CARTA.ICatalogListResponse;
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
@@ -75,14 +77,16 @@ export class FileBrowserStore {
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
         this.exportFileType = CARTA.FileType.CRTF;
 
-        // Update channelValueBounds for save image
         autorun(() => {
             if (AppStore.Instance.activeFrame) {
+                // Update channelValueBounds for save image
                 FileBrowserStore.Instance.initialSaveSpectralRange();
                 this.setSaveFileType(AppStore.Instance.activeFrame.frameInfo?.fileInfo.type === CARTA.FileType.CASA ? CARTA.FileType.CASA : CARTA.FileType.FITS);
+
+                // update regions
+                this.resetExportRegionIndexes();
             }
         });
-
     }
 
     @observable selectedFiles: ISelectedFile[];
@@ -144,29 +148,44 @@ export class FileBrowserStore {
         AppStore.Instance.restartTaskProgress();
 
         if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
-            backendService.getFileList(directory).subscribe(res => runInAction(() => {
-                this.fileList = res;
-                this.resetLoadingStates();
-            }), err => runInAction(() => {
-                console.log(err);
-                this.resetLoadingStates();
-            }));
+            backendService.getFileList(directory).subscribe(
+                res =>
+                    runInAction(() => {
+                        this.fileList = res;
+                        this.resetLoadingStates();
+                    }),
+                err =>
+                    runInAction(() => {
+                        console.log(err);
+                        this.resetLoadingStates();
+                    })
+            );
         } else if (this.browserMode === BrowserMode.Catalog) {
-            backendService.getCatalogList(directory).subscribe(res => runInAction(() => {
-                this.catalogFileList = res;
-                this.resetLoadingStates();
-            }), err => runInAction(() => {
-                console.log(err);
-                this.resetLoadingStates();
-            }));
+            backendService.getCatalogList(directory).subscribe(
+                res =>
+                    runInAction(() => {
+                        this.catalogFileList = res;
+                        this.resetLoadingStates();
+                    }),
+                err =>
+                    runInAction(() => {
+                        console.log(err);
+                        this.resetLoadingStates();
+                    })
+            );
         } else {
-            backendService.getRegionList(directory).subscribe(res => runInAction(() => {
-                this.fileList = res;
-                this.resetLoadingStates();
-            }), err => runInAction(() => {
-                console.log(err);
-                this.resetLoadingStates();
-            }));
+            backendService.getRegionList(directory).subscribe(
+                res =>
+                    runInAction(() => {
+                        this.fileList = res;
+                        this.resetLoadingStates();
+                    }),
+                err =>
+                    runInAction(() => {
+                        console.log(err);
+                        this.resetLoadingStates();
+                    })
+            );
         }
     };
 
@@ -177,23 +196,28 @@ export class FileBrowserStore {
         this.HDUfileInfoExtended = null;
         this.responseErrorMessage = "";
 
-        backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => runInAction(() => {
-            if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                this.HDUfileInfoExtended = res.fileInfoExtended;
-                const HDUList = Object.keys(this.HDUfileInfoExtended);
-                if (HDUList?.length >= 1) {
-                    this.selectedHDU = HDUList[0];
-                }
-                this.loadingInfo = false;
-            }
-            this.fileInfoResp = true;
-        }), err => runInAction(() => {
-            console.log(err);
-            this.responseErrorMessage = err;
-            this.fileInfoResp = false;
-            this.HDUfileInfoExtended = null;
-            this.loadingInfo = false;
-        }));
+        backendService.getFileInfo(directory, file, hdu).subscribe(
+            (res: CARTA.FileInfoResponse) =>
+                runInAction(() => {
+                    if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                        this.HDUfileInfoExtended = res.fileInfoExtended;
+                        const HDUList = Object.keys(this.HDUfileInfoExtended);
+                        if (HDUList?.length >= 1) {
+                            this.selectedHDU = HDUList[0];
+                        }
+                        this.loadingInfo = false;
+                    }
+                    this.fileInfoResp = true;
+                }),
+            err =>
+                runInAction(() => {
+                    console.log(err);
+                    this.responseErrorMessage = err;
+                    this.fileInfoResp = false;
+                    this.HDUfileInfoExtended = null;
+                    this.loadingInfo = false;
+                })
+        );
     };
 
     @action getRegionFileInfo = (directory: string, file: string) => {
@@ -203,19 +227,24 @@ export class FileBrowserStore {
         this.regionFileInfo = null;
         this.responseErrorMessage = "";
 
-        backendService.getRegionFileInfo(directory, file).subscribe((res: CARTA.IRegionFileInfoResponse) => runInAction(() => {
-            if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                this.loadingInfo = false;
-                this.regionFileInfo = res.contents;
-            }
-            this.fileInfoResp = true;
-        }), err => runInAction(() => {
-            console.log(err);
-            this.responseErrorMessage = err;
-            this.fileInfoResp = false;
-            this.regionFileInfo = null;
-            this.loadingInfo = false;
-        }));
+        backendService.getRegionFileInfo(directory, file).subscribe(
+            (res: CARTA.IRegionFileInfoResponse) =>
+                runInAction(() => {
+                    if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                        this.loadingInfo = false;
+                        this.regionFileInfo = res.contents;
+                    }
+                    this.fileInfoResp = true;
+                }),
+            err =>
+                runInAction(() => {
+                    console.log(err);
+                    this.responseErrorMessage = err;
+                    this.fileInfoResp = false;
+                    this.regionFileInfo = null;
+                    this.loadingInfo = false;
+                })
+        );
     };
 
     @action getCatalogFileInfo = (directory: string, filename: string) => {
@@ -226,22 +255,27 @@ export class FileBrowserStore {
         this.catalogHeaders = [];
         this.responseErrorMessage = "";
 
-        backendService.getCatalogFileInfo(directory, filename).subscribe((res: CARTA.ICatalogFileInfoResponse) => runInAction(() => {
-            if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                this.loadingInfo = false;
-                this.catalogFileInfo = res.fileInfo;
-                this.catalogHeaders = res.headers.sort((a, b) => {
-                    return a.columnIndex - b.columnIndex;
-                });
-            }
-            this.fileInfoResp = true;
-        }), err => runInAction(() => {
-            console.log(err);
-            this.responseErrorMessage = err;
-            this.fileInfoResp = false;
-            this.catalogFileInfo = null;
-            this.loadingInfo = false;
-        }));
+        backendService.getCatalogFileInfo(directory, filename).subscribe(
+            (res: CARTA.ICatalogFileInfoResponse) =>
+                runInAction(() => {
+                    if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                        this.loadingInfo = false;
+                        this.catalogFileInfo = res.fileInfo;
+                        this.catalogHeaders = res.headers.sort((a, b) => {
+                            return a.columnIndex - b.columnIndex;
+                        });
+                    }
+                    this.fileInfoResp = true;
+                }),
+            err =>
+                runInAction(() => {
+                    console.log(err);
+                    this.responseErrorMessage = err;
+                    this.fileInfoResp = false;
+                    this.catalogFileInfo = null;
+                    this.loadingInfo = false;
+                })
+        );
     };
 
     /// Update the spectral range for save image file
@@ -254,15 +288,18 @@ export class FileBrowserStore {
             this.saveSpectralRange = [min.toString(), max.toString(), delta.toString()];
         }
     };
-    @action getConcatFilesHeader = (directory: string, file: string, hdu: string): Promise<{file: string, info: CARTA.IFileInfoExtended}> => {
+    @action getConcatFilesHeader = (directory: string, file: string, hdu: string): Promise<{file: string; info: CARTA.IFileInfoExtended}> => {
         return new Promise((resolve, reject) => {
-            BackendService.Instance.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
-                resolve({file: res.fileInfo.name, info: res.fileInfoExtended});
-            }, err => {
-                reject(err);
-            });
-        })
-    }
+            BackendService.Instance.getFileInfo(directory, file, hdu).subscribe(
+                (res: CARTA.FileInfoResponse) => {
+                    resolve({file: res.fileInfo.name, info: res.fileInfoExtended});
+                },
+                err => {
+                    reject(err);
+                }
+            );
+        });
+    };
 
     @action selectFile = (file: ISelectedFile) => {
         const fileList = this.getfileListByMode;
@@ -344,6 +381,33 @@ export class FileBrowserStore {
         this.exportFileType = fileType;
     };
 
+    @action resetExportRegionIndexes = () => {
+        if (AppStore.Instance.activeFrame?.regionSet?.regions) {
+            // include all region indexes except cursor region
+            this.exportRegionIndexes = Array.from(AppStore.Instance.activeFrame.regionSet.regions.keys()).slice(1);
+        } else {
+            this.exportRegionIndexes = [];
+        }
+    };
+
+    @action clearExportRegionIndexes = () => {
+        this.exportRegionIndexes = [];
+    };
+
+    @action addExportRegionIndex = (regionIndex: number) => {
+        if (!this.exportRegionIndexes.includes(regionIndex)) {
+            this.exportRegionIndexes.push(regionIndex);
+            this.exportRegionIndexes.sort();
+        }
+    };
+
+    @action deleteExportRegionIndex = (regionIndex: number) => {
+        const index = this.exportRegionIndexes.indexOf(regionIndex);
+        if (index > -1) {
+            this.exportRegionIndexes.splice(index, 1);
+        }
+    };
+
     @action setSaveFilename = (filename: string) => {
         this.saveFilename = filename;
     };
@@ -370,14 +434,14 @@ export class FileBrowserStore {
     @action setSaveSpectralRangeMax = (max: string) => {
         this.saveSpectralRange[1] = max;
     };
-    
+
     @action setSelectedFiles = (selection: ISelectedFile[]) => {
         this.selectedFiles = selection;
     };
 
     @action showLoadingDialog = () => {
         this.isLoadingDialogOpen = true;
-    }
+    };
 
     @action updateLoadingState = (progress: number, checkedCount: number, totalCount: number) => {
         this.loadingProgress = progress;
@@ -402,17 +466,17 @@ export class FileBrowserStore {
     };
 
     @computed get HDUList(): IOptionProps[] {
-        return this.HDUfileInfoExtended ?
-            Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
-                // hdu extension name is in field 3 of fileInfoExtended computed entries
-                const extName = this.HDUfileInfoExtended[hdu]?.computedEntries?.length >= 3 && this.HDUfileInfoExtended[hdu].computedEntries[2]?.name === "Extension name" ?
-                    `: ${this.HDUfileInfoExtended[hdu].computedEntries[2]?.value}` : "";
-                return {
-                    label: `${hdu}${extName}`,
-                    value: hdu
-                }
-            }) :
-            null;
+        return this.HDUfileInfoExtended
+            ? Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
+                  // hdu extension name is in field 3 of fileInfoExtended computed entries
+                  const extName =
+                      this.HDUfileInfoExtended[hdu]?.computedEntries?.length >= 3 && this.HDUfileInfoExtended[hdu].computedEntries[2]?.name === "Extension name" ? `: ${this.HDUfileInfoExtended[hdu].computedEntries[2]?.value}` : "";
+                  return {
+                      label: `${hdu}${extName}`,
+                      value: hdu
+                  };
+              })
+            : null;
     }
 
     @computed get fileInfoExtended(): CARTA.IFileInfoExtended {
@@ -460,12 +524,14 @@ export class FileBrowserStore {
                 return FileInfoType.SAVE_IMAGE;
             case BrowserMode.Catalog:
                 return FileInfoType.CATALOG_FILE;
+            case BrowserMode.RegionExport:
+                return FileInfoType.SELECT_REGION;
             default:
                 return FileInfoType.REGION_FILE;
         }
     }
 
-    @computed get catalogHeaderDataset(): { columnHeaders: Array<CARTA.CatalogHeader>, columnsData: Map<number, ProcessedColumnData> } {
+    @computed get catalogHeaderDataset(): {columnHeaders: Array<CARTA.CatalogHeader>; columnsData: Map<number, ProcessedColumnData>} {
         let columnsData = new Map<number, ProcessedColumnData>();
 
         const nameData = [];
@@ -516,8 +582,36 @@ export class FileBrowserStore {
             [0, 3, 3], // AD
             [1, 3, 2], // BD
             [0, 2, 1], // ABC
-            [1, 3, 1], // BCD
+            [1, 3, 1] // BCD
         ];
         return options[this.saveStokesOption];
+    }
+
+    @computed get exportRegionOptions(): LineOption[] {
+        let options: LineOption[] = [];
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        if (frame?.regionSet?.regions) {
+            const activeRegionId = appStore.selectedRegion ? appStore.selectedRegion.regionId : RegionId.CURSOR;
+            frame.regionSet.regions.forEach((region, index) => {
+                if (region.regionId !== RegionId.CURSOR) {
+                    options.push({
+                        value: index,
+                        label: region.nameString,
+                        active: region.regionId === activeRegionId,
+                        icon: RegionStore.RegionIconString(region.regionType)
+                    });
+                }
+            });
+        }
+        return options;
+    }
+
+    @computed get regionOptionNum(): number {
+        return this.exportRegionOptions?.length;
+    }
+
+    @computed get exportRegionNum(): number {
+        return this.exportRegionIndexes?.length;
     }
 }

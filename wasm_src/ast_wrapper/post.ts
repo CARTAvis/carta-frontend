@@ -57,7 +57,8 @@ Module.colors = [
     "blue", // tick
     "blue", // axe
     "blue", // number
-    "blue" // label
+    "blue", // label
+    "#62D96B"
 ];
 Module.shapes = [
     "\u25A1", // Square

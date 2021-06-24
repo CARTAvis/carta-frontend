@@ -3,7 +3,7 @@ import allMaps from "../static/allmaps.png";
 import catalogVertexShader from "!raw-loader!./GLSL/vertex_shader_catalog.glsl";
 import catalogPixelShader from "!raw-loader!./GLSL/pixel_shader_catalog.glsl";
 
-export enum CatalogTextureType{
+export enum CatalogTextureType {
     Size,
     Color,
     Orientation,
@@ -14,43 +14,43 @@ export enum CatalogTextureType{
 }
 
 interface ShaderUniforms {
-    LineThickness: WebGLUniformLocation,
-    FeatherWidth: WebGLUniformLocation,
-    ShapeType: WebGLUniformLocation,
-    PointColor: WebGLUniformLocation,
-    PointSize: WebGLUniformLocation,
-    SelectedSourceColor: WebGLUniformLocation,
-    ShowSelectedSource: WebGLUniformLocation,
-    RotationAngle: WebGLUniformLocation,
-    RangeOffset: WebGLUniformLocation,
-    RangeScale: WebGLUniformLocation,
-    ScaleAdjustment: WebGLUniformLocation,
+    LineThickness: WebGLUniformLocation;
+    FeatherWidth: WebGLUniformLocation;
+    ShapeType: WebGLUniformLocation;
+    PointColor: WebGLUniformLocation;
+    PointSize: WebGLUniformLocation;
+    SelectedSourceColor: WebGLUniformLocation;
+    ShowSelectedSource: WebGLUniformLocation;
+    RotationAngle: WebGLUniformLocation;
+    RangeOffset: WebGLUniformLocation;
+    RangeScale: WebGLUniformLocation;
+    ScaleAdjustment: WebGLUniformLocation;
     // texture
-    XTexture: WebGLUniformLocation,
-    YTexture: WebGLUniformLocation,
-    OrientationTexture: WebGLUniformLocation,
-    ColorTexture: WebGLUniformLocation,
-    SizeTexture: WebGLUniformLocation,
-    SelectedSourceTexture: WebGLUniformLocation,
-    SizeMinorTexture: WebGLUniformLocation,
+    XTexture: WebGLUniformLocation;
+    YTexture: WebGLUniformLocation;
+    OrientationTexture: WebGLUniformLocation;
+    ColorTexture: WebGLUniformLocation;
+    SizeTexture: WebGLUniformLocation;
+    SelectedSourceTexture: WebGLUniformLocation;
+    SizeMinorTexture: WebGLUniformLocation;
     // size
-    SizeMajorMapEnabled: WebGLUniformLocation,
-    AreaMode: WebGLUniformLocation,
-    SizeMinorMapEnabled: WebGLUniformLocation,
-    AreaModeMinor: WebGLUniformLocation,
+    SizeMajorMapEnabled: WebGLUniformLocation;
+    AreaMode: WebGLUniformLocation;
+    SizeMinorMapEnabled: WebGLUniformLocation;
+    AreaModeMinor: WebGLUniformLocation;
     // color map
-    CmapEnabled: WebGLUniformLocation,
-    CmapTexture: WebGLUniformLocation,
-    NumCmaps: WebGLUniformLocation,
-    CmapIndex: WebGLUniformLocation,
+    CmapEnabled: WebGLUniformLocation;
+    CmapTexture: WebGLUniformLocation;
+    NumCmaps: WebGLUniformLocation;
+    CmapIndex: WebGLUniformLocation;
     //orientation
-    OmapEnabled: WebGLUniformLocation
+    OmapEnabled: WebGLUniformLocation;
 }
 
 export class CatalogWebGLService {
     private static staticInstance: CatalogWebGLService;
     private cmapTexture: WebGLTexture;
-    private spatialMatchedDataTextures: Map<string, Map<number, {x: WebGLTexture, y: WebGLTexture}>>;
+    private spatialMatchedDataTextures: Map<string, Map<number, {x: WebGLTexture; y: WebGLTexture}>>;
     private xTextures: Map<number, WebGLTexture>;
     private yTextures: Map<number, WebGLTexture>;
     private sizeTextures: Map<number, WebGLTexture>;
@@ -106,7 +106,7 @@ export class CatalogWebGLService {
             default:
                 break;
         }
-    }
+    };
 
     public getDataTexture = (fileId: number, textureType: CatalogTextureType): WebGLTexture => {
         switch (textureType) {
@@ -127,24 +127,24 @@ export class CatalogWebGLService {
             default:
                 return undefined;
         }
-    }
+    };
 
     public updateSpatialMatchedTexture = (imageMapId: string, catalogFileId: number, x: Float32Array, y: Float32Array) => {
         const textures = this.spatialMatchedDataTextures.get(imageMapId);
         const xTexture = createTextureFromArray(this.gl, x, WebGL2RenderingContext.TEXTURE8, 1);
-        const yTexture = createTextureFromArray(this.gl, y, WebGL2RenderingContext.TEXTURE9, 1)
+        const yTexture = createTextureFromArray(this.gl, y, WebGL2RenderingContext.TEXTURE9, 1);
         if (textures) {
             this.spatialMatchedDataTextures.get(imageMapId).set(catalogFileId, {x: xTexture, y: yTexture});
         } else {
-            const destinationTextures = new Map<number, {x: WebGLTexture, y: WebGLTexture}>();
+            const destinationTextures = new Map<number, {x: WebGLTexture; y: WebGLTexture}>();
             destinationTextures.set(catalogFileId, {x: xTexture, y: yTexture});
             this.spatialMatchedDataTextures.set(imageMapId, destinationTextures);
         }
-    }
+    };
 
     public getSpatialMatchedTexture = (imageMapId: string, catalogFileId: number) => {
         return this.spatialMatchedDataTextures.get(imageMapId)?.get(catalogFileId);
-    }
+    };
 
     public clearTexture = (fileId: number) => {
         this.xTextures.delete(fileId);
@@ -155,13 +155,13 @@ export class CatalogWebGLService {
         this.orientationTextures.delete(fileId);
         this.sizeMinorTextures.delete(fileId);
         this.clearSpatialMatchedTexture(fileId);
-    }
+    };
 
     private clearSpatialMatchedTexture = (catalogFileId: number) => {
         this.spatialMatchedDataTextures.forEach(catalogs => {
             catalogs.delete(catalogFileId);
-        })
-    }
+        });
+    };
 
     private initShaders() {
         if (!this.gl) {
@@ -210,7 +210,7 @@ export class CatalogWebGLService {
             SizeTexture: this.gl.getUniformLocation(shaderProgram, "uSizeTexture"),
             ColorTexture: this.gl.getUniformLocation(shaderProgram, "uColorTexture"),
             SelectedSourceTexture: this.gl.getUniformLocation(shaderProgram, "uSelectedSourceTexture"),
-            SizeMinorTexture: this.gl.getUniformLocation(shaderProgram, "uSizeMinorTexture"),
+            SizeMinorTexture: this.gl.getUniformLocation(shaderProgram, "uSizeMinorTexture")
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
@@ -222,7 +222,7 @@ export class CatalogWebGLService {
         this.sizeTextures = new Map<number, WebGLTexture>();
         this.colorTextures = new Map<number, WebGLTexture>();
         this.sizeMinorTextures = new Map<number, WebGLTexture>();
-        this.spatialMatchedDataTextures = new Map<string, Map<number, {x: WebGLTexture, y: WebGLTexture}>>();
+        this.spatialMatchedDataTextures = new Map<string, Map<number, {x: WebGLTexture; y: WebGLTexture}>>();
     }
 
     private constructor() {

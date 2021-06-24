@@ -18,8 +18,8 @@ export function imageToCanvasPos(imageX: number, imageY: number, frameView: Fram
     const viewWidth = frameView.xMax - frameView.xMin;
     const viewHeight = frameView.yMax - frameView.yMin;
     return {
-        x: ((imageX - frameView.xMin) / viewWidth * layerWidth),
-        y: layerHeight - ((imageY - frameView.yMin) / viewHeight * layerHeight)
+        x: ((imageX - frameView.xMin) / viewWidth) * layerWidth,
+        y: layerHeight - ((imageY - frameView.yMin) / viewHeight) * layerHeight
     };
 }
 

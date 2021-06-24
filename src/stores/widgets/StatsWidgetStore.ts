@@ -34,7 +34,6 @@ export class StatsWidgetStore extends RegionWidgetStore {
             const coordinate = widgetStore.coordinate;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (regionId === -1 || (region && region.isClosedRegion)) {
-
                 let frameRequirements = updatedRequirements.get(fileId);
                 if (!frameRequirements) {
                     frameRequirements = new Map<number, CARTA.SetStatsRequirements>();
@@ -48,14 +47,13 @@ export class StatsWidgetStore extends RegionWidgetStore {
                 }
 
                 if (!regionRequirements.statsConfigs) {
-                    regionRequirements.statsConfigs =[];
+                    regionRequirements.statsConfigs = [];
                 }
 
                 let hitogramConfig = regionRequirements.statsConfigs.find(config => config.coordinate === coordinate);
                 if (!hitogramConfig) {
                     regionRequirements.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
                 }
-
             }
         });
         return updatedRequirements;
@@ -111,8 +109,8 @@ export class StatsWidgetStore extends RegionWidgetStore {
                         if (configCount === 0) {
                             return;
                         }
-                        const sortedUpdatedConfigs = updatedRegionRequirements.statsConfigs.sort(((a, b) => a.coordinate > b.coordinate ? 1 : -1));
-                        const sortedConfigs = regionRequirements.statsConfigs.sort(((a, b) => a.coordinate > b.coordinate ? 1 : -1));
+                        const sortedUpdatedConfigs = updatedRegionRequirements.statsConfigs.sort((a, b) => (a.coordinate > b.coordinate ? 1 : -1));
+                        const sortedConfigs = regionRequirements.statsConfigs.sort((a, b) => (a.coordinate > b.coordinate ? 1 : -1));
 
                         for (let i = 0; i < updatedConfigCount; i++) {
                             const updatedConfig = sortedUpdatedConfigs[i];
@@ -125,9 +123,8 @@ export class StatsWidgetStore extends RegionWidgetStore {
                     }
                 });
             }
-
         });
         // Sort list so that requirements clearing occurs first
-        return diffList.sort((a, b) => a.statsConfigs.length > b.statsConfigs.length ? 1 : -1);
+        return diffList.sort((a, b) => (a.statsConfigs.length > b.statsConfigs.length ? 1 : -1));
     }
 }

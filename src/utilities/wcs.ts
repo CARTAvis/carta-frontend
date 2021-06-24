@@ -134,13 +134,13 @@ export function isAstBadPoint(point: Point2D) {
 }
 
 export function getApproximateEllipsePoints(astTransform: AST.FrameSet, centerReferenceImage: Point2D, radA: number, radB: number, rotation: number, targetVertexCount: number): Point2D[] {
-    const dTheta = 2.0 * Math.PI / targetVertexCount;
+    const dTheta = (2.0 * Math.PI) / targetVertexCount;
     const xCoords = new Float64Array(targetVertexCount);
     const yCoords = new Float64Array(targetVertexCount);
 
     for (let i = 0; i < targetVertexCount; i++) {
         const theta = i * dTheta;
-        const p = add2D(centerReferenceImage, rotate2D({x: radA * Math.cos(theta), y: radB * Math.sin(theta)}, rotation * Math.PI / 180.0));
+        const p = add2D(centerReferenceImage, rotate2D({x: radA * Math.cos(theta), y: radB * Math.sin(theta)}, (rotation * Math.PI) / 180.0));
         xCoords[i] = p.x;
         yCoords[i] = p.y;
     }

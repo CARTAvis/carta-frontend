@@ -1,5 +1,6 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 
 export enum PlotType {
     STEPS = "Steps",
@@ -14,7 +15,6 @@ interface PlotTypeSelectComponentProps {
 }
 
 export class PlotTypeSelectorComponent extends React.Component<PlotTypeSelectComponentProps> {
-
     private static getIconForType(value: PlotType) {
         switch (value) {
             case PlotType.STEPS:
@@ -28,9 +28,9 @@ export class PlotTypeSelectorComponent extends React.Component<PlotTypeSelectCom
 
     private plotTypeButton = (value: PlotType) => {
         return (
-            <Tooltip content={value}>
-                <AnchorButton icon={PlotTypeSelectorComponent.getIconForType(value)} active={this.props.value === value} onClick={() => this.props.onValueChanged(value)}/>
-            </Tooltip>
+            <Tooltip2 content={value}>
+                <AnchorButton icon={PlotTypeSelectorComponent.getIconForType(value)} active={this.props.value === value} onClick={() => this.props.onValueChanged(value)} />
+            </Tooltip2>
         );
     };
 

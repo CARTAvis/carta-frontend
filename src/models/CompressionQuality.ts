@@ -3,7 +3,7 @@ export class CompressionQuality {
     public static readonly IMAGE_MAX = 32;
     public static readonly IMAGE_STEP = 1;
     public static readonly IMAGE_DEFAULT = 11;
-    
+
     public static readonly ANIMATION_MIN = 1;
     public static readonly ANIMATION_MAX = 32;
     public static readonly ANIMATION_STEP = 1;

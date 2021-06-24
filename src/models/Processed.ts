@@ -149,10 +149,9 @@ export class ProtobufProcessing {
                 return {dataType: CARTA.ColumnType.UnsupportedType, data: []};
         }
         return {dataType: column.dataType, data: data};
-
     }
 
-    static ProcessCatalogData(catalogData: { [k: string]: CARTA.IColumnData }): Map<number, ProcessedColumnData> {
+    static ProcessCatalogData(catalogData: {[k: string]: CARTA.IColumnData}): Map<number, ProcessedColumnData> {
         const dataMap = new Map<number, ProcessedColumnData>();
         const originalMap = new Map(Object.entries(catalogData));
         originalMap.forEach((column, i) => {
