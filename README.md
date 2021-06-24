@@ -46,7 +46,7 @@ sudo apt-get install carta-frontend
 
 The Ubuntu package install location for the frontend is `/usr/share/carta/frontend/`.
 
-The PPA also provides a carta metapackage which automatically installs the CARTA frontend and backend packages. In addition to the latest release versions, beta versions are provided in a parallel set of packages.
+The PPA also provides a `carta` metapackage which automatically installs the CARTA frontend and backend packages. In addition to the latest release versions, beta versions are provided in a parallel set of packages.
 
 
 ### RPM
@@ -67,7 +67,7 @@ sudo yum install carta-frontend
 ```
 The RPM package install location for the frontend is `/usr/share/carta/frontend/`.
 
-The RPM repo also provides a carta metapackage which automatically installs the CARTA frontend and backend packages. In addition to the latest release versions, beta versions are provided in a parallel set of packages.
+The RPM repo also provides a `carta` metapackage which automatically installs the CARTA frontend and backend packages. In addition to the latest release versions, beta versions are provided in a parallel set of packages.
 
 
 ## Development
