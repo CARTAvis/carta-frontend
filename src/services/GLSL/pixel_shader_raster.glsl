@@ -65,12 +65,14 @@ void main(void) {
     vec2 texCoordsPixel = clamp(tileCoordsPixel, 0.5, uTileTextureSize - 0.5) + uTileTextureOffset;
     vec2 f = fract(tileCoordsPixel);
 
-    float gridOpacity = 0.0;
+    // Pixel grid: 1px feather on line width
     float edgeX = min(f.x, 1.0 - f.x);
     float edgeY = min(f.y, 1.0 - f.y);
-    if (edgeX < uPixelGridCutoff / uPixelAspectRatio || edgeY < uPixelGridCutoff)  {
-        gridOpacity = uPixelGridOpacity;
-    }
+    float featherWidth = 1.0;
+    float opA = smoothstep(uPixelGridCutoff * (1.0 + featherWidth / 2.0), uPixelGridCutoff * (1.0 - featherWidth / 2.0), edgeX * uPixelAspectRatio);
+    float opB = smoothstep(uPixelGridCutoff * (1.0 + featherWidth / 2.0), uPixelGridCutoff * (1.0 - featherWidth / 2.0), edgeY);
+    float gridOpacity = max(opA, opB) * uPixelGridOpacity;
+
     texCoords = texCoordsPixel / uTextureSize;
 
     float range = uMaxVal - uMinVal;
