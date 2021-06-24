@@ -1,41 +1,42 @@
 # CARTA Frontend
-The carta-frontend is used in conjunction with the [carta-backend](https://github.com/CARTAvis/carta-backend), and for general use a pre-built production carta-frontend is usually installed alongside the carta-backend automatically. 
-However, a user may wish to install the carta-frontend component separately in order to test beta versions, for example, or to develop it.
+The CARTA frontend is used in conjunction with the [CARTA backend](https://github.com/CARTAvis/carta-backend), and for general use a pre-built production frontend is usually installed alongside the backend automatically. 
+However, a user may wish to install the frontend component separately in order to test beta versions, for example, or to develop it.
 
 ## Pre-built production packages
-The simplest way to install the carta-frontend component is to use the pre-built production packages from NPM (any OS with Node.js installed), our PPA (Debian packages for Ubuntu), our RPM repository (for RHEL based systems), or Homebrew (for MacOS).
+The simplest way to install the frontend component is to use the pre-built production packages from NPM (for any OS with Node.js installed), our PPA (Debian packages for Ubuntu), and our RPM repository (for RHEL based systems).
 
 ### NPM
 
-Pre-built production carta-frontends can be obtained from the [npmjs.com carta-frontend repository](https://www.npmjs.com/package/carta-frontend?activeTab=explore).
+Pre-built production frontends can be obtained from the [npmjs.com carta-frontend repository](https://www.npmjs.com/package/carta-frontend?activeTab=explore).
 
-If you have Node.js and `npm` already installed on your system, a production carta-frontend can be installed using the following command:
+If you have Node.js and `npm` already installed on your system, you can install a production frontend using the following command:
 
 ```
 npm i carta-frontend
 ```
-The files will be installed to your `node-modules` directory.
-Specific carta-frontend versions can be installed by appending `@` and the version number. For example,
+The files will be installed to your `node-modules` directory. For a system-wide 'global' installation (using the `-g` flag) it would be at `/usr/lib/node_modules`, whereas for a local user installation, it would be at `$PWD/node_modules`.
+
+You can install specific frontend versions by appending `@` plus the version number. For example,
 ```
 npm i carta-frontend@1.4.0
 npm i carta-frontend@2.0.0-beta.0
 ```
 The available versions are listed in the [npmjs.com carta-frontend versions tab](https://www.npmjs.com/package/carta-frontend?activeTab=versions).
 
-Alternatively, the pre-built production carta-frontend can be downloaded directly without npm. For example,
+Alternatively, the pre-built production frontend can be downloaded directly without npm. For example,
 ```
 wget https://registry.npmjs.org/carta-frontend/-/carta-frontend-2.0.0.tgz
 ```
-The `tgz` extracts to `package/build`. 
+The standalone `tgz` archive file extracts as `package/build` in your current directory.
 
-The carta-backend can be started up to use any non-default carta-frontend by specifying its location with the `--frontend_folder` flag. For example,
+You can start the CARTA backend with a non-default frontend by specifying its location with the `--frontend_folder` flag. For example,
 ```
 ./carta-backend --frontend_folder $HOME/package/build
 ```
 
 ### PPA
 
-A Personal Package Archive (PPA) is a third-party package repository for Ubuntu. We supply pre-built production carta-frontends at the [CARTAvis-team PPA on the Ubuntu Lauchpad](https://launchpad.net/~cartavis-team/+archive/ubuntu/carta).
+A Personal Package Archive (PPA) is a third-party package repository for Ubuntu. We supply pre-built production frontends at the [CARTAvis-team PPA on the Ubuntu Lauchpad](https://launchpad.net/~cartavis-team/+archive/ubuntu/carta).
 
 To install the latest release version:
 ```
@@ -44,11 +45,13 @@ sudo apt-get update
 sudo apt-get install carta-frontend
 ```
 
-The default install location for the carta-frontend is `/usr/local/share/carta/frontend/`
+The Ubuntu package install location for the frontend is `/usr/share/carta/frontend/`.
+
+(Once the PPA is added, you can also install the `carta` metapackage that includes both the CARTA backend and frontend components, as well as well as Beta versions of all the packages e.g. `carta-beta`, `carta-frontend-beta` and `carta-backend-beta`).
 
 ### RPM
 
-RPMs are for users of Red Hat Enterprise Linux (RHEL) and other Red Hat-based Linux distributions, i.e. CentOS. 
+RPMs are for users of Red Hat Enterprise Linux (RHEL) and other Red Hat-based Linux distributions, e.g. CentOS. 
 To install the latest release version, add the appropriate repository file depending on whether you are using RHEL7 (**el7**) or RHEL8 (**el8**):
 
 ```
@@ -58,23 +61,18 @@ or
 ```
 sudo curl https://packages.cartavis.org/cartavis-el8.repo --output /etc/yum.repos.d/cartavis.repo
 ```
-Then the carta-frontend component can be installed using `yum` or `dnf` :
+Then the frontend component can be installed using `yum` or `dnf` :
 ```
 sudo yum install carta-frontend
 ```
-The default install location for the carta-frontend RPM is `/usr/local/share/carta/frontend/`
+The RPM package install location for the frontend is `/usr/share/carta/frontend/`.
 
-### Homebrew
-MacOS users can install the carta-frontend component using [Homebrew](https://brew.sh/) from the [CARTAvis Homebrew Tap](https://github.com/CARTAvis/homebrew-tap). 
-```
-brew install cartavis/tap/carta-frontend
-```
-The default install location for the carta-frontend is `/usr/local/share/carta/frontend/`
+(Once the RPM repo is added, you can also install the `carta` metapackage that includes both the CARTA backend and frontend components, as well as well as Beta versions of all the packages e.g. `carta-beta`, `carta-frontend-beta` and `carta-backend-beta`).
 
 
 ## Development
 
-If you wish to modify or develop the carta-frontend, you may build a production or non-production carta-frontend from source. Here are the instructions to do so:
+If you wish to modify or develop the CARTA frontend, you may build a production or non-production frontend from source. Here are the instructions to do so:
 
 ### Prerequisites
 
