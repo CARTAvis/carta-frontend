@@ -229,6 +229,12 @@
             "type": "integer",
             "minimum": 5,
             "maximum": 30
+        },
+        "pixelGridVisible": {
+            "type": "boolean"
+        },
+        "pixelGridColor": {
+            "type": "string"
         }
     }
 }
