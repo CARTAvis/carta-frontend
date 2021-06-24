@@ -1,9 +1,8 @@
 # CARTA Frontend
-The CARTA frontend is used in conjunction with the [CARTA backend](https://github.com/CARTAvis/carta-backend), and for general use a pre-built production frontend is usually installed alongside the backend automatically. 
-However, a user may wish to install the frontend component separately in order to test beta versions, for example, or to develop it.
+The CARTA frontend is used in conjunction with the [CARTA backend](https://github.com/CARTAvis/carta-backend), and for general use a pre-built production frontend is usually installed alongside the backend automatically. However, a user may wish to install the frontend component separately in order to test beta versions, for example, or to develop it.
 
 ## Pre-built production packages
-The simplest way to install the frontend component is to use the pre-built production packages from NPM (for any OS with Node.js installed), our PPA (Debian packages for Ubuntu), and our RPM repository (for RHEL based systems).
+The simplest way to install the frontend component is to use the pre-built production packages from NPM (for any OS with Node.js installed), our PPA (Debian packages for Ubuntu), or our RPM repository (for RHEL based systems).
 
 ### NPM
 
@@ -14,7 +13,7 @@ If you have Node.js and `npm` already installed on your system, you can install 
 ```
 npm i carta-frontend
 ```
-The files will be installed to your `node-modules` directory. For a system-wide 'global' installation (using the `-g` flag) it would be at `/usr/lib/node_modules`, whereas for a local user installation, it would be at `$PWD/node_modules`.
+The files will be installed to your `node-modules` directory. For a system-wide 'global' installation (using the `-g` flag) this is located at `/usr/lib/node_modules`, whereas for a local user installation, it is located at `$PWD/node_modules`.
 
 You can install specific frontend versions by appending `@` plus the version number. For example,
 ```
@@ -47,7 +46,8 @@ sudo apt-get install carta-frontend
 
 The Ubuntu package install location for the frontend is `/usr/share/carta/frontend/`.
 
-(Once the PPA is added, you can also install the `carta` metapackage that includes both the CARTA backend and frontend components, as well as well as Beta versions of all the packages e.g. `carta-beta`, `carta-frontend-beta` and `carta-backend-beta`).
+The PPA also provides a carta metapackage which automatically installs the CARTA frontend and backend packages. In addition to the latest release versions, beta versions are provided in a parallel set of packages.
+
 
 ### RPM
 
@@ -67,7 +67,7 @@ sudo yum install carta-frontend
 ```
 The RPM package install location for the frontend is `/usr/share/carta/frontend/`.
 
-(Once the RPM repo is added, you can also install the `carta` metapackage that includes both the CARTA backend and frontend components, as well as well as Beta versions of all the packages e.g. `carta-beta`, `carta-frontend-beta` and `carta-backend-beta`).
+The RPM repo also provides a carta metapackage which automatically installs the CARTA frontend and backend packages. In addition to the latest release versions, beta versions are provided in a parallel set of packages.
 
 
 ## Development
