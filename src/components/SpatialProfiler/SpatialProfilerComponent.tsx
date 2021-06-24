@@ -524,17 +524,18 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 <div className="profile-container">
                     <div className="profile-toolbar">
                         <RegionSelectorComponent widgetStore={widgetStore} />
-                        <FormGroup label={"Stokes"} inline={true} disabled={!widgetStore.effectiveFrame?.hasStokes}>
-                            <HTMLSelect
-                                value={widgetStore.effectiveFrame?.requiredStokes}
-                                options={widgetStore.effectiveFrame?.stokesOptions}
-                                onChange={ev => {
-                                    const frame = widgetStore.effectiveFrame;
-                                    frame?.setChannels(frame.requiredChannel, parseInt(ev.currentTarget.value), true);
-                                }}
-                                disabled={!widgetStore.effectiveFrame?.hasStokes}
-                            />
-                        </FormGroup>
+                        {widgetStore.effectiveFrame?.hasStokes &&
+                            <FormGroup label={"Stokes"} inline={true}>
+                                <HTMLSelect
+                                    value={widgetStore.effectiveFrame?.requiredStokes}
+                                    options={widgetStore.effectiveFrame?.stokesOptions}
+                                    onChange={ev => {
+                                        const frame = widgetStore.effectiveFrame;
+                                        frame?.setChannels(frame.requiredChannel, parseInt(ev.currentTarget.value), true);
+                                    }}
+                                />
+                            </FormGroup>
+                        }
                     </div>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps} />
