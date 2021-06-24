@@ -21,7 +21,7 @@
         background-image: none;
     }
 
-    .bp3-popover-target {
+    .bp3-popover2-target {
         width: inherit;
 
         .bp3-input-group {
@@ -41,17 +41,17 @@
 
 .column-popover {
     max-width: 250px;
-    .bp3-popover-arrow {
-        .bp3-popover-arrow-fill {
+    .bp3-popover2-arrow {
+        .bp3-popover2-arrow-fill {
             fill: #394b59 !important;
         }
 
-        .bp3-popover-arrow-border {
+        .bp3-popover2-arrow-border {
             fill: #10161a !important;
             fill-opacity: 0.1 !important;
         }
     }
-    .bp3-popover-content {
+    .bp3-popover2-content {
         padding: 10px 12px !important;
         background: #394b59 !important;
         color: #f5f8fa !important;
@@ -61,17 +61,17 @@
 
 .column-popover-dark {
     max-width: 250px;
-    .bp3-popover-arrow {
-        .bp3-popover-arrow-fill {
+    .bp3-popover2-arrow {
+        .bp3-popover2-arrow-fill {
             fill: #e1e8ed !important;
         }
 
-        .bp3-popover-arrow-border {
+        .bp3-popover2-arrow-border {
             fill: #10161a !important;
             fill-opacity: 0.2 !important;
         }
     }
-    .bp3-popover-content {
+    .bp3-popover2-content {
         padding: 10px 12px !important;
         background: #e1e8ed !important;
         color: #394b59 !important;
