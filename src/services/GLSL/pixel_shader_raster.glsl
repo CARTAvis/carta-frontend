@@ -36,6 +36,12 @@ uniform vec2 uTileTextureOffset;
 uniform float uTextureSize;
 uniform float uTileTextureSize;
 
+// Pixel grid
+uniform float uPixelGridCutoff;
+uniform vec4 uPixelGridColor;
+uniform float uPixelGridOpacity;
+uniform float uPixelAspectRatio;
+
 // Some shader compilers have trouble with NaN checks, so we instead use a dummy value of -FLT_MAX
 bool isnan(float val) {
     return val <= -FLT_MAX;
@@ -54,10 +60,20 @@ void main(void) {
     }
     vec2 texCoords;
 
-    // Mimic texel fetch in WebGL1
+    // Mimics texel fetch in WebGL1
     vec2 tileCoordsPixel = vUV * uTileTextureSize;
     // Prevent edge artefacts
     vec2 texCoordsPixel = clamp(tileCoordsPixel, 0.5, uTileTextureSize - 0.5) + uTileTextureOffset;
+    vec2 f = fract(tileCoordsPixel);
+
+    // Pixel grid: 1.1px feather on line width. 1.1 instead of 1.0 to reduce Moire effects
+    float edgeX = min(f.x, 1.0 - f.x);
+    float edgeY = min(f.y, 1.0 - f.y);
+    float featherWidth = 1.1;
+    float opA = smoothstep(uPixelGridCutoff * (1.0 + featherWidth / 2.0), uPixelGridCutoff * (1.0 - featherWidth / 2.0), edgeX * uPixelAspectRatio);
+    float opB = smoothstep(uPixelGridCutoff * (1.0 + featherWidth / 2.0), uPixelGridCutoff * (1.0 - featherWidth / 2.0), edgeY);
+    float gridOpacity = max(opA, opB) * uPixelGridOpacity;
+
     texCoords = texCoordsPixel / uTextureSize;
 
     float range = uMaxVal - uMinVal;
@@ -114,6 +130,7 @@ void main(void) {
     float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
     vec2 cmapCoords = vec2(x, cmapYVal);
 
+    // Apply pixel highlight
     if (isnan(rawVal)) {
         gl_FragColor = uNaNColor * uNaNColor.a;
     } else if (rawVal < uPixelHighlightVal) {
@@ -121,4 +138,7 @@ void main(void) {
     } else {
         gl_FragColor = texture2D(uCmapTexture, cmapCoords);
     }
+
+    // Apply pixel grid
+    gl_FragColor = mix(gl_FragColor, uPixelGridColor, gridOpacity);
 }
