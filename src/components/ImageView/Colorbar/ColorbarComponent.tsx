@@ -127,9 +127,6 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
                 fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
                 stroke={colorbarSettings.borderVisible ? getColor(colorbarSettings.borderCustomColor, colorbarSettings.borderColor) : null}
                 strokeWidth={colorbarSettings.borderWidth / devicePixelRatio}
-                onMouseEnter={this.onMouseEnter}
-                onMouseMove={this.handleMouseMove}
-                onMouseLeave={this.onMouseLeave}
             />
         );
 
@@ -242,7 +239,11 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
 
         return (
             <React.Fragment>
-                <Stage className={"colorbar-stage"} width={stageWidth} height={stageHeight} style={{left: stageLeft, top: stageTop}}>
+                <Stage className={"colorbar-stage"} width={stageWidth} height={stageHeight} style={{left: stageLeft, top: stageTop}}
+                       onMouseEnter={this.onMouseEnter}
+                       onMouseMove={this.handleMouseMove}
+                       onMouseLeave={this.onMouseLeave}
+                >
                     <Layer>
                         {colorbar}
                         {ticks}
