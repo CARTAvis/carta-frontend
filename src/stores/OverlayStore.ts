@@ -687,7 +687,7 @@ export class OverlayLabelSettings {
 
 export class OverlayColorbarSettings {
     @observable visible: boolean;
-    @observable showHoverInfo: boolean;
+    @observable interactive: boolean;
     @observable width: number;
     @observable offset: number;
     @observable position: string;
@@ -723,7 +723,7 @@ export class OverlayColorbarSettings {
     constructor() {
         makeObservable(this);
         this.visible = true;
-        this.showHoverInfo = true;
+        this.interactive = true;
         this.width = 15;
         this.offset = 5;
         this.position = "right";
@@ -760,8 +760,8 @@ export class OverlayColorbarSettings {
         this.visible = visible;
     };
 
-    @action setShowHoverInfo = (show: boolean) => {
-        this.showHoverInfo = show;
+    @action setInteractive = (interactive: boolean) => {
+        this.interactive = interactive;
     };
 
     @action setWidth = (width: number) => {
