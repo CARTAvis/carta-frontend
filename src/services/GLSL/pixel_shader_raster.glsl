@@ -23,6 +23,7 @@ uniform int uInverted;
 uniform int uUseSmoothedBiasContrast;
 uniform float uMinVal;
 uniform float uMaxVal;
+uniform float uPixelHighlightVal;
 uniform float uBias;
 uniform float uContrast;
 uniform float uGamma;
@@ -128,7 +129,16 @@ void main(void) {
 
     float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
     vec2 cmapCoords = vec2(x, cmapYVal);
-    gl_FragColor = isnan(rawVal) ? uNaNColor * uNaNColor.a : texture2D(uCmapTexture, cmapCoords);
-    // Apply pixel grid mixing
+
+    // Apply pixel highlight
+    if (isnan(rawVal)) {
+        gl_FragColor = uNaNColor * uNaNColor.a;
+    } else if (rawVal < uPixelHighlightVal) {
+        gl_FragColor = vec4(x, x, x, 1);
+    } else {
+        gl_FragColor = texture2D(uCmapTexture, cmapCoords);
+    }
+
+    // Apply pixel grid
     gl_FragColor = mix(gl_FragColor, uPixelGridColor, gridOpacity);
 }

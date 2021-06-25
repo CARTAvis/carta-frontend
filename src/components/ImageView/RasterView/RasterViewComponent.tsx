@@ -9,6 +9,7 @@ import "./RasterViewComponent.scss";
 
 export class RasterViewComponentProps {
     docked: boolean;
+    pixelHighlightValue: number;
 }
 
 @observer
@@ -80,6 +81,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 this.gl.uniform4f(shaderUniforms.PixelGridColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
             } else {
                 this.gl.uniform4f(shaderUniforms.PixelGridColor, 0, 0, 0, 0);
+            }
+
+            if (isFinite(this.props.pixelHighlightValue)) {
+                this.gl.uniform1f(shaderUniforms.PixelHighlightVal, this.props.pixelHighlightValue);
+            } else {
+                this.gl.uniform1f(shaderUniforms.PixelHighlightVal, renderConfig.scaleMinVal);
             }
         }
     }
