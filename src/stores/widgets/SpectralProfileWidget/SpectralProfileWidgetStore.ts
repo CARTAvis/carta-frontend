@@ -493,7 +493,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 return true;
             } else if (this.momentRegionId === RegionId.ACTIVE) {
                 const region = this.effectiveFrame.regionSet?.selectedRegion;
-                return region?.regionId === RegionId.CURSOR ? true : region?.isClosedRegion;
+                return !region || region?.regionId === RegionId.CURSOR ? true : region?.isClosedRegion;
             } else {
                 const region = this.effectiveFrame.getRegion(this.momentRegionId);
                 return region?.isClosedRegion ?? false;
