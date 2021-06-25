@@ -63,14 +63,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const existingValue = this.props.region.center.x;
 
         if (isFinite(value) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
-            const region = this.props.region;
-            const newCenter = {x: value, y: region.center.y};
-            const rotation = (region.rotation * Math.PI) / 180.0;
-            const dx = length2D(region.size) * Math.sin(-rotation);
-            const dy = length2D(region.size) * Math.cos(rotation);
-            const newStart = {x: newCenter.x - dx / 2, y: newCenter.y - dy / 2};
-            const newEnd = {x: newCenter.x + dx / 2, y: newCenter.y + dy / 2};
-            region.setControlPoints([newStart, newEnd]);
+            this.props.region.setCenter({x: value, y: this.props.region.center.y});
             return;
         }
 
@@ -86,14 +79,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const existingValue = this.props.region.center.y;
 
         if (isFinite(value) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
-            const region = this.props.region;
-            const newCenter = {x: region.center.x, y: value};
-            const rotation = (region.rotation * Math.PI) / 180.0;
-            const dx = length2D(region.size) * Math.sin(-rotation);
-            const dy = length2D(region.size) * Math.cos(rotation);
-            const newStart = {x: newCenter.x - dx / 2, y: newCenter.y - dy / 2};
-            const newEnd = {x: newCenter.x + dx / 2, y: newCenter.y + dy / 2};
-            region.setControlPoints([newStart, newEnd]);
+            this.props.region.setCenter({x: this.props.region.center.x, y: value});
             return;
         }
 
@@ -116,13 +102,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCSPoint.y});
             const existingValue = this.props.region.center.x;
             if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
-                const region = this.props.region;
-                const rotation = (region.rotation * Math.PI) / 180.0;
-                const dx = length2D(region.size) * Math.sin(-rotation);
-                const dy = length2D(region.size) * Math.cos(rotation);
-                const newStart = {x: newPoint.x - dx / 2, y: newPoint.y - dy / 2};
-                const newEnd = {x: newPoint.x + dx / 2, y: newPoint.y + dy / 2};
-                region.setControlPoints([newStart, newEnd]);
+                this.props.region.setCenter(newPoint);
                 return;
             }
         }
@@ -146,13 +126,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCSPoint.x, y: wcsString});
             const existingValue = this.props.region.center.y;
             if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
-                const region = this.props.region;
-                const rotation = (region.rotation * Math.PI) / 180.0;
-                const dx = length2D(region.size) * Math.sin(-rotation);
-                const dy = length2D(region.size) * Math.cos(rotation);
-                const newStart = {x: newPoint.x - dx / 2, y: newPoint.y - dy / 2};
-                const newEnd = {x: newPoint.x + dx / 2, y: newPoint.y + dy / 2};
-                region.setControlPoints([newStart, newEnd]);
+                this.props.region.setCenter(newPoint);
                 return;
             }
         }
@@ -171,11 +145,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const rotation = (region.rotation * Math.PI) / 180.0;
-            const dx = value * Math.sin(-rotation);
-            const dy = value * Math.cos(rotation);
-            const newStart = {x: region.center.x - dx / 2, y: region.center.y - dy / 2};
-            const newEnd = {x: region.center.x + dx / 2, y: region.center.y + dy / 2};
-            region.setControlPoints([newStart, newEnd]);
+            region.setSize({x: value * Math.cos(rotation), y: value * Math.cos(rotation)});
             return;
         }
 
@@ -198,11 +168,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const rotation = (region.rotation * Math.PI) / 180.0;
-            const dx = value * Math.sin(-rotation);
-            const dy = value * Math.cos(rotation);
-            const newStart = {x: region.center.x - dx / 2, y: region.center.y - dy / 2};
-            const newEnd = {x: region.center.x + dx / 2, y: region.center.y + dy / 2};
-            region.setControlPoints([newStart, newEnd]);
+            region.setSize({x: value * Math.cos(rotation), y: value * Math.cos(rotation)});
             return;
         }
 
@@ -408,8 +374,8 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isFinite(value) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const newRotation = (((value + 360) % 360) * Math.PI) / 180.0;
-            const dx = length2D(region.size) * Math.sin(-newRotation);
-            const dy = length2D(region.size) * Math.cos(newRotation);
+            const dx = length2D(region.size) * Math.cos(newRotation);
+            const dy = length2D(region.size) * Math.sin(newRotation);
             const newStart = {x: region.center.x - dx / 2, y: region.center.y - dy / 2};
             const newEnd = {x: region.center.x + dx / 2, y: region.center.y + dy / 2};
             region.setControlPoints([newStart, newEnd]);
@@ -608,29 +574,33 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                                     <span className="info-string">{centerInfoString}</span>
                                 </td>
                             </tr>
-                            <tr>
-                                <td>Length {pxUnitSpan}</td>
-                                <td>{lengthInput}</td>
-                                <td>
-                                    <span className="info-string">{lengthInfoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
-                                </td>
-                                <td>
-                                    <SafeNumericInput
-                                        disabled={!this.props.frame?.hasSquarePixels}
-                                        selectAllOnFocus={true}
-                                        buttonPosition="none"
-                                        placeholder="P.A."
-                                        value={region.rotation}
-                                        onBlur={this.handleRotationChange}
-                                        onKeyDown={this.handleRotationChange}
-                                    />
-                                </td>
-                            </tr>
+                            {this.props.frame?.hasSquarePixels ? (
+                                <React.Fragment>
+                                    <tr>
+                                        <td>Length {pxUnitSpan}</td>
+                                        <td>{lengthInput}</td>
+                                        <td>
+                                            <span className="info-string">{lengthInfoString}</span>
+                                        </td>
+                                        
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
+                                        </td>
+                                        <td>
+                                            <SafeNumericInput
+                                                selectAllOnFocus={true}
+                                                buttonPosition="none"
+                                                placeholder="P.A."
+                                                value={region.rotation}
+                                                onBlur={this.handleRotationChange}
+                                                onKeyDown={this.handleRotationChange}
+                                            />
+                                        </td>
+                                    </tr>
+                                </React.Fragment>
+                            ) : null}
                         </tbody>
                     </table>
                 </div>

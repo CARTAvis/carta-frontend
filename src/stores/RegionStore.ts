@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
+import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 import {FrameStore} from "stores";
 
 export const CURSOR_REGION_ID = 0;
@@ -263,10 +263,8 @@ export class RegionStore {
 
     private getLineAngle = (start: Point2D, end: Point2D): number => {
         let angle = (Math.atan((end.y - start.y) / (end.x - start.x)) * 180.0) / Math.PI;
-        if (end.x >= start.x) {
-            angle += 270;
-        } else if (end.x < start.x) {
-            angle += 90;
+        if (end.x < start.x) {
+            angle += 180;
         }
         return angle;
     };
@@ -317,11 +315,26 @@ export class RegionStore {
     };
 
     @action setCenter = (p: Point2D, skipUpdate = false) => {
-        this.setControlPoint(CENTER_POINT_INDEX, p, skipUpdate);
+        if (this.regionType === CARTA.RegionType.LINE) {
+            const rotation = (this.rotation * Math.PI) / 180.0;
+            const dx = length2D(this.size) * Math.cos(rotation);
+            const dy = length2D(this.size) * Math.sin(rotation);
+            const newStart = {x: p.x - dx / 2, y: p.y - dy / 2};
+            const newEnd = {x: p.x + dx / 2, y: p.y + dy / 2};
+            this.setControlPoints([newStart, newEnd]);
+        } else {
+            this.setControlPoint(CENTER_POINT_INDEX, p, skipUpdate);
+        }
     };
 
     @action setSize = (p: Point2D, skipUpdate = false) => {
-        this.setControlPoint(SIZE_POINT_INDEX, p, skipUpdate);
+        if (this.regionType === CARTA.RegionType.LINE) {
+            const newStart = {x: this.center.x - p.x / 2, y: this.center.y - p.y / 2};
+            const newEnd = {x: this.center.x + p.x / 2, y: this.center.y + p.y / 2};
+            this.setControlPoints([newStart, newEnd]);
+        } else {
+            this.setControlPoint(SIZE_POINT_INDEX, p, skipUpdate);
+        }
     };
 
     @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
