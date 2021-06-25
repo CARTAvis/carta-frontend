@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {action, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import Konva from "konva";
@@ -97,6 +97,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.isCtrlPressed = isCtrlPressed;
     };
 
+    @computed get isRegionCornerMode() {
+        return (this.props.isRegionCornerMode && !this.isCtrlPressed) || (!this.props.isRegionCornerMode && this.isCtrlPressed)
+    }
+
     @action private regionCreationStart = (mouseEvent: MouseEvent) => {
         if (this.creatingRegion) {
             return;
@@ -152,13 +156,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 break;
             case CARTA.RegionType.LINE:
                 const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
-                if ((this.props.isRegionCornerMode && !this.isCtrlPressed) || (!this.props.isRegionCornerMode && this.isCtrlPressed)) {
-                    // corner-to-corner region creation
-                    this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
-                } else {
-                    // center-to-corner region creation
-                    const start = {x: this.regionStartPoint.x * 2 - cursorPosImageSpace.x, y: this.regionStartPoint.y * 2 - cursorPosImageSpace.y};
+                const start = this.isRegionCornerMode ? cursorPosImageSpace : {x: this.regionStartPoint.x * 2 - cursorPosImageSpace.x, y: this.regionStartPoint.y * 2 - cursorPosImageSpace.y};
+                if (start.x < cursorPosImageSpace.x) {
                     this.creatingRegion.setControlPoints([start, cursorPosImageSpace]);
+                } else {
+                    this.creatingRegion.setControlPoints([cursorPosImageSpace, start]);
                 }
                 break;
             default:
@@ -208,7 +210,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             dx = Math.sign(dx) * maxDiff;
             dy = Math.sign(dy) * maxDiff;
         }
-        if ((this.props.isRegionCornerMode && !this.isCtrlPressed) || (!this.props.isRegionCornerMode && this.isCtrlPressed)) {
+        if (this.isRegionCornerMode) {
             // corner-to-corner region creation
             const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
             const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
@@ -619,11 +621,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     }
                     break;
                 case CARTA.RegionType.LINE:
-                    if ((this.props.isRegionCornerMode && !this.isCtrlPressed) || (!this.props.isRegionCornerMode && this.isCtrlPressed)) {
-                        // corner-to-corner region creation
+                    if (this.isRegionCornerMode) {
                         points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y];
                     } else {
-                        // center-to-corner region creation
                         points = [lineStart.x * 2 - this.currentCursorPos.x, lineStart.y * 2 - this.currentCursorPos.y, this.currentCursorPos.x, this.currentCursorPos.y];
                     }
                     break;

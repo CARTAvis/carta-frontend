@@ -115,6 +115,8 @@ export class RegionStore {
             case CARTA.RegionType.POLYGON:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
+            case CARTA.RegionType.LINE:
+                return midpoint2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: 0, y: 0};
         }
@@ -127,6 +129,8 @@ export class RegionStore {
                 return this.controlPoints[SIZE_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
                 return this.boundingBox;
+            case CARTA.RegionType.LINE:
+                return subtract2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: undefined, y: undefined};
         }
@@ -257,6 +261,16 @@ export class RegionStore {
         return approximatePoints;
     }
 
+    private getLineAngle = (start: Point2D, end: Point2D): number => {
+        let angle = Math.atan((end.y - start.y) / (end.x - start.x)) * 180.0 / Math.PI;
+        if (end.x >= start.x) {
+            angle += 270;
+        } else if (end.x < start.x) {
+            angle += 90;
+        }
+        return angle;
+    };
+
     constructor(
         backendService: BackendService,
         fileId: number,
@@ -322,6 +336,10 @@ export class RegionStore {
             if (this.regionType === CARTA.RegionType.POLYGON) {
                 this.simplePolygonTest(index);
             }
+
+            if (this.regionType === CARTA.RegionType.LINE) {
+                this.setRotation(this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]): 0);
+            }
         }
     };
 
@@ -343,6 +361,11 @@ export class RegionStore {
         if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
             this.simplePolygonTest();
         }
+
+        if (this.regionType === CARTA.RegionType.LINE) {
+            this.setRotation(points.length === 2 ? this.getLineAngle(points[0], points[1]) : 0);
+        }
+
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
