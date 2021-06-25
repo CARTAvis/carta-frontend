@@ -30,11 +30,12 @@ vec2 scaleAboutPoint2D(vec2 vector, vec2 origin, float scale) {
 }
 
 void main(void) {
-    vec2 tilePosition = rotateAboutPoint2D(aVertexPosition.xy * uTileScaling * uTileSize + uTileOffset, uRotationOrigin, uRotationAngle);
+    vec2 tilePosition = aVertexPosition.xy * uTileScaling * uTileSize + uTileOffset;
+    tilePosition = rotateAboutPoint2D(tilePosition, uRotationOrigin, uRotationAngle);
     // adjust based on pixel scales
     tilePosition = floor(scaleAboutPoint2D(tilePosition, uRotationOrigin, uScaleAdjustment));
     // convert XY from canvas space to [-1, 1]
     vec2 adjustedPosition = vec2(tilePosition.x / uCanvasWidth, tilePosition.y / uCanvasHeight) * 2.0 - 1.0;
     gl_Position = vec4(adjustedPosition.x, adjustedPosition.y, aVertexPosition.z, 1.0);
-    vUV = aVertexUV * uTileSize / uTileTextureSize;
+    vUV = aVertexUV * uTileSize / (uTileTextureSize + 1.0);
 }
