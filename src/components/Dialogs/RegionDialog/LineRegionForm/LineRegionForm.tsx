@@ -400,12 +400,8 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const startWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.startPoint);
         let startInputX, startInputY;
         if (region.coordinate === RegionCoordinate.Image) {
-            startInputX = (
-                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.startPoint.x} onBlur={this.handleStartXChange} onKeyDown={this.handleStartXChange} />
-            );
-            startInputY = (
-                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.startPoint.y} onBlur={this.handleStartYChange} onKeyDown={this.handleStartYChange} />
-            );
+            startInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.startPoint.x} onBlur={this.handleStartXChange} onKeyDown={this.handleStartXChange} />;
+            startInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.startPoint.y} onBlur={this.handleStartYChange} onKeyDown={this.handleStartYChange} />;
         } else {
             startInputX = (
                 <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -582,21 +578,13 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                                         <td>
                                             <span className="info-string">{lengthInfoString}</span>
                                         </td>
-                                        
                                     </tr>
                                     <tr>
                                         <td>
                                             P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
                                         </td>
                                         <td>
-                                            <SafeNumericInput
-                                                selectAllOnFocus={true}
-                                                buttonPosition="none"
-                                                placeholder="P.A."
-                                                value={region.rotation}
-                                                onBlur={this.handleRotationChange}
-                                                onKeyDown={this.handleRotationChange}
-                                            />
+                                            <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange} />
                                         </td>
                                     </tr>
                                 </React.Fragment>
