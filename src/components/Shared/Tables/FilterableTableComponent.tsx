@@ -234,6 +234,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             hoverCloseDelay={0}
                             content={headerDescription ?? "Description not avaliable"}
                             position={Position.BOTTOM}
+                            popoverClassName={AppStore.Instance.darkTheme ? "bp3-dark" : ""}
                         >
                             {column.name}
                         </Tooltip2>
