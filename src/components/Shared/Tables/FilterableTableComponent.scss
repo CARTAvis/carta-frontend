@@ -1,0 +1,44 @@
+.bp3-table-header-content .bp3-checkbox {
+    margin: 0 0 0 10px;
+}
+
+.catalog-sort-menu-item {
+    min-width: fit-content !important;
+}
+
+.column-filter-table {
+    .bp3-table-selection-region {
+        border: 0px;
+        background-color: rgba(255, 255, 255, 0);
+    }
+
+    .bp3-table-region {
+        border: 0px;
+        background-color: rgba(255, 255, 255, 0);
+    }
+
+    .bp3-table-header.bp3-table-header-selected::before {
+        background-image: none;
+    }
+
+    label.bp3-label .bp3-popover2-target {
+        margin-top: 0px;
+    }
+
+    .bp3-popover2-target {
+        width: inherit;
+
+        .bp3-input-group {
+            .bp3-input {
+                border-radius: 0px;
+                vertical-align: baseline;
+                box-shadow: none;
+                background: #ffffff00;
+            }
+        }
+    }
+
+    .sort-label .bp3-label {
+        margin-bottom: 0px;
+    }
+}
