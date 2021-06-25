@@ -324,7 +324,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             onDragStart: this.handleAnchorDragStart,
             onDragEnd: this.handleAnchorDragEnd,
             onDragMove: this.handleAnchorDrag,
-            dragBoundFunc: () => {return {x, y};}
+            dragBoundFunc: () => this.anchorDragBound(x, y)
         };
         if (anchor === "rotator") {
             // Circle radius adjusted so that it circumscribes the other anchor squares
@@ -332,6 +332,10 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
         }
         const offset = SimpleShapeRegionComponent.AnchorWidth / 2.0;
         return <Rect {...commonProps} offsetX={offset} offsetY={offset} width={offset * 2} height={offset * 2} />;
+    }
+
+    private anchorDragBound(x: number, y: number) {
+        return {x, y};
     }
 
     render() {
