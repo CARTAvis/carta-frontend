@@ -2,10 +2,10 @@ import * as React from "react";
 import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {action, autorun, makeObservable, observable} from "mobx";
-import {Select, ItemRenderer} from "@blueprintjs/select";
-import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, Tabs, TabId} from "@blueprintjs/core";
+import {ItemRenderer, Select} from "@blueprintjs/select";
+import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
 import {AutoColorPickerComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {AppStore, BeamType, LabelType, SystemType, HelpType, NumberFormatType, NUMBER_FORMAT_LABEL, DefaultWidgetConfig, WidgetProps} from "stores";
+import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
 
@@ -13,7 +13,7 @@ enum ImageViewSettingsPanelTabs {
     GLOBAL = "Global",
     TITLE = "Title",
     TICKS = "Ticks",
-    GRID = "Grid",
+    GRIDS = "Grids",
     BORDER = "Border",
     AXES = "Axes",
     NUMBERS = "Numbers",
@@ -132,6 +132,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const colorbar = overlayStore.colorbar;
         const beam = overlayStore.beam;
         const beamSettings = beam.settingsForDisplay;
+        const preferences = appStore.preferenceStore;
 
         const interior: boolean = global.labelType === LabelType.Interior;
 
@@ -231,7 +232,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const gridPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Visible">
+                <FormGroup inline={true} label="WCS grid">
                     <Switch checked={grid.visible} onChange={ev => grid.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!grid.visible}>
@@ -256,6 +257,12 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         <SafeNumericInput placeholder="Gap" min={0.001} stepSize={0.01} minorStepSize={0.001} majorStepSize={0.1} value={grid.gapY} disabled={!grid.visible} onValueChange={(value: number) => grid.setGapY(value)} />
                     </FormGroup>
                 </Collapse>
+                <FormGroup inline={true} label="Pixel grid">
+                    <Switch checked={preferences.pixelGridVisible} onChange={ev => preferences.setPreference(PreferenceKeys.PIXEL_GRID_VISIBLE, ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Pixel grid color">
+                    <AutoColorPickerComponent color={preferences.pixelGridColor} presetColors={SWATCH_COLORS} setColor={color => preferences.setPreference(PreferenceKeys.PIXEL_GRID_COLOR, color)} disableAlpha={true} />
+                </FormGroup>
             </div>
         );
 
@@ -658,7 +665,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={titlePanel} />
                     <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={ticksPanel} />
-                    <Tab id={ImageViewSettingsPanelTabs.GRID} title={ImageViewSettingsPanelTabs.GRID} panel={gridPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.GRIDS} title={ImageViewSettingsPanelTabs.GRIDS} panel={gridPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.BORDER} title={ImageViewSettingsPanelTabs.BORDER} panel={borderPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.AXES} title={ImageViewSettingsPanelTabs.AXES} panel={axesPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.NUMBERS} title={ImageViewSettingsPanelTabs.NUMBERS} panel={numbersPanel} />
