@@ -542,6 +542,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                                 onSelect={regionSet.selectRegion}
                                 onDoubleClick={this.handleRegionDoubleClick}
                                 listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
+                                isRegionCornerMode={this.props.isRegionCornerMode}
                             />
                         );
                     } else if (r.regionType === CARTA.RegionType.POINT) {

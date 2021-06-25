@@ -17,6 +17,7 @@ export interface LineSegmentRegionComponentProps {
     layerHeight: number;
     listening: boolean;
     selected: boolean;
+    isRegionCornerMode: boolean;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
@@ -110,8 +111,18 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 if (frame.spatialReference) {
                     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
-                region.setControlPoint(index, positionImageSpace);
-                this.hoverIntersection = null;
+                const isCtrlPressed = evt.ctrlKey || evt.metaKey;
+                if (region.regionType !== CARTA.RegionType.LINE || (this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
+                    region.setControlPoint(index, positionImageSpace);
+                    this.hoverIntersection = null;
+                } else {
+                    if (index === 0) {
+                        region.setControlPoints([positionImageSpace, {x: region.center.x * 2 - positionImageSpace.x, y: region.center.y * 2 - positionImageSpace.y}]);
+                    } else {
+                        region.setControlPoints([{x: region.center.x * 2 - positionImageSpace.x, y: region.center.y * 2 - positionImageSpace.y}, positionImageSpace]);
+                    }
+                    this.hoverIntersection = null;
+                }
             }
         }
     };
