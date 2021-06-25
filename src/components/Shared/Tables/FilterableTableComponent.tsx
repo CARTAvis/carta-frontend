@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
-import {Checkbox, InputGroup, Icon, Label} from "@blueprintjs/core";
+import {Checkbox, InputGroup, Icon, Label, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
@@ -125,6 +125,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                         className={"column-popover"}
                         popoverClassName={this.props.darkTheme ? "column-popover-dark" : "column-popover"}
                         content={filterSyntax}
+                        position={Position.BOTTOM}
                     >
                         <InputGroup
                             key={"column-popover-" + columnIndex}
@@ -238,6 +239,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             className={"column-popover"}
                             popoverClassName={popOverClass}
                             content={headerDescription ?? "Description not avaliable"}
+                            position={Position.BOTTOM}
                         >
                             {column.name}
                         </Tooltip2>
@@ -250,7 +252,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />
                 <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
-                    <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} className={"column-popover"} popoverClassName={popOverClass} content={filterSyntax}>
+                    <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} className={"column-popover"} popoverClassName={popOverClass} content={filterSyntax} position={Position.BOTTOM}>
                         <InputGroup key={"column-popover-" + columnIndex} small={true} placeholder="Click to filter" value={controlheader?.filter ?? ""} onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)} />
                     </Tooltip2>
                 </ColumnHeaderCell>
