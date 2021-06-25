@@ -98,7 +98,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     @computed get isRegionCornerMode() {
-        return (this.props.isRegionCornerMode && !this.isCtrlPressed) || (!this.props.isRegionCornerMode && this.isCtrlPressed)
+        return (this.props.isRegionCornerMode && !this.isCtrlPressed) || (!this.props.isRegionCornerMode && this.isCtrlPressed);
     }
 
     @action private regionCreationStart = (mouseEvent: MouseEvent) => {
@@ -152,6 +152,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     this.creatingRegion.setSize(scale2D({x: 1, y: 1}, scaleFactor));
                 }
                 break;
+            case CARTA.RegionType.POINT:
             case CARTA.RegionType.POLYGON:
                 break;
             case CARTA.RegionType.LINE:
@@ -412,8 +413,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         switch (this.props.frame.regionSet.newRegionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+                this.regionCreationStart(konvaEvent.evt);
+                break;
             case CARTA.RegionType.POINT:
                 this.regionCreationStart(konvaEvent.evt);
+                this.regionCreationEnd();
                 break;
             default:
                 break;
@@ -612,7 +616,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const lineStart = this.getCursorCanvasPos(firstControlPoint.x, firstControlPoint.y);
             const lineEnd = this.getCursorCanvasPos(lastControlPoint.x, lastControlPoint.y);
             let points: number[];
-            switch(this.creatingRegion?.regionType) {
+            switch (this.creatingRegion?.regionType) {
                 case CARTA.RegionType.POLYGON:
                     if (this.creatingRegion.controlPoints.length > 1) {
                         points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y, lineEnd.x, lineEnd.y];

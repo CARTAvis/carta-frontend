@@ -262,7 +262,7 @@ export class RegionStore {
     }
 
     private getLineAngle = (start: Point2D, end: Point2D): number => {
-        let angle = Math.atan((end.y - start.y) / (end.x - start.x)) * 180.0 / Math.PI;
+        let angle = (Math.atan((end.y - start.y) / (end.x - start.x)) * 180.0) / Math.PI;
         if (end.x >= start.x) {
             angle += 270;
         } else if (end.x < start.x) {
@@ -338,7 +338,7 @@ export class RegionStore {
             }
 
             if (this.regionType === CARTA.RegionType.LINE) {
-                this.setRotation(this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]): 0);
+                this.setRotation(this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0);
             }
         }
     };

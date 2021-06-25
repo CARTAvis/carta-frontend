@@ -3,12 +3,12 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Circle, Group, Line, Rect} from "react-konva";
 import Konva from "konva";
+import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D, angle2D, length2D, pointDistance} from "utilities";
+import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D, angle2D, length2D} from "utilities";
 import {canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
-import { CARTA } from "carta-protobuf";
 
 export interface LineSegmentRegionComponentProps {
     region: RegionStore;
@@ -97,9 +97,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
                 }
                 const delta = subtract2D(newAnchorPoint, region.center);
-                const topAnchorPosition = rotate2D({x: 0, y: 1}, (region.rotation + 90) * Math.PI / 180.0);
-                const angle = angle2D(topAnchorPosition, delta) * 180.0 / Math.PI;
-                const newRotation = (region.rotation + angle + 360) % 360 * Math.PI / 180.0;
+                const topAnchorPosition = rotate2D({x: 0, y: 1}, ((region.rotation + 90) * Math.PI) / 180.0);
+                const angle = (angle2D(topAnchorPosition, delta) * 180.0) / Math.PI;
+                const newRotation = (((region.rotation + angle + 360) % 360) * Math.PI) / 180.0;
                 const dx = length2D(region.size) * Math.sin(-newRotation);
                 const dy = length2D(region.size) * Math.cos(newRotation);
                 const newStart = {x: region.center.x - dx / 2, y: region.center.y - dy / 2};
@@ -250,17 +250,6 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         return pointArray;
     }
 
-    private ringBoundary = (pos) => {
-        const frame = this.props.frame;
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        let center = average2D(this.props.region.controlPoints);
-        center = imageToCanvasPos(center.x, center.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
-        
-        const rotatorOffset = 15;
-        const scale = rotatorOffset / pointDistance(pos, center);
-        return {x: Math.round((pos.x - center.x) * scale + center.x), y: Math.round((pos.y - center.y) * scale + center.y)};
-    };
-
     private anchorNode(x: number, y: number, rotation: number = 0, key: number = undefined, editableAnchor: boolean = false, rotator: boolean = false) {
         let anchorProps: any = {
             x: x,
@@ -293,7 +282,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         }
         if (rotator) {
             const radius = ANCHOR_WIDTH / Math.sqrt(2);
-            return <Circle {...anchorProps} radius={radius} offsetX={0} offsetY={0} dragBoundFunc={pos => this.ringBoundary(pos)}/>;
+            return <Circle {...anchorProps} radius={radius} offsetX={0} offsetY={0} dragBoundFunc={() => ({x, y})} />;
         } else {
             return <Rect {...anchorProps} />;
         }
@@ -334,7 +323,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
                 if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
                     const rotatorOffset = 15;
-                    const rotatorAngle = rotation * Math.PI / 180.0;
+                    const rotatorAngle = (rotation * Math.PI) / 180.0;
                     anchors.push(this.anchorNode(centerPointCanvasSpace.x - rotatorOffset * Math.cos(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.sin(rotatorAngle), rotation, 2, true, true));
                 }
             }
@@ -358,7 +347,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
                 if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
                     const rotatorOffset = 15;
-                    const rotatorAngle = rotation * Math.PI / 180.0;
+                    const rotatorAngle = (rotation * Math.PI) / 180.0;
                     anchors.push(this.anchorNode(centerPointCanvasSpace.x - rotatorOffset * Math.cos(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.sin(rotatorAngle), rotation, 2, true, true));
                 }
             }
