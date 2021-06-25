@@ -395,8 +395,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Visible">
                     <Switch checked={colorbar.visible} onChange={ev => colorbar.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Cursor info" disabled={!colorbar.visible}>
-                    <Switch disabled={!colorbar.visible} checked={colorbar.showHoverInfo} onChange={ev => colorbar.setShowHoverInfo(ev.currentTarget.checked)} />
+                <FormGroup inline={true} label="Interactive" disabled={!colorbar.visible}>
+                    <Switch disabled={!colorbar.visible} checked={colorbar.interactive} onChange={ev => colorbar.setInteractive(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!colorbar.visible}>
                     <SafeNumericInput
