@@ -2,9 +2,10 @@ import axios, {AxiosInstance} from "axios";
 import Ajv from "ajv";
 import {action, computed, observable, makeObservable} from "mobx";
 import {AppToaster} from "components/Shared";
-import {LayoutConfig} from "../models";
+import {LayoutConfig, Snippet} from "models";
 
 const preferencesSchema = require("models/preferences_schema_2.json");
+const snippetSchema = require("models/snippet_schema_1.json");
 
 export interface RuntimeConfig {
     dashboardAddress?: string;
@@ -36,6 +37,7 @@ export class ApiService {
     }
 
     private static PreferenceValidator = new Ajv({strictTypes: false}).compile(preferencesSchema);
+    private static SnippetValidator = new Ajv({strictTypes: false}).compile(snippetSchema);
 
     @observable private _accessToken: string;
     private _tokenLifetime: number;
@@ -376,7 +378,7 @@ export class ApiService {
         }
     };
 
-    public setLayout = async (layoutName: string, layout: any) => {
+    public setLayout = async (layoutName: string, layout: any): Promise<boolean> => {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/layout`;
@@ -413,6 +415,90 @@ export class ApiService {
                 const obj = JSON.parse(localStorage.getItem("savedLayouts")) ?? {};
                 delete obj[layoutName];
                 localStorage.setItem("savedLayouts", JSON.stringify(obj));
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    public getSnippets = async () => {
+        let savedSnippets: {[name: string]: any};
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippets`;
+                const response = await this.axiosInstance.get(url);
+                if (response?.data?.success) {
+                    savedSnippets = response.data.snippets;
+                } else {
+                    return undefined;
+                }
+            } catch (err) {
+                console.log(err);
+                return undefined;
+            }
+        } else {
+            try {
+                savedSnippets = JSON.parse(localStorage.getItem("savedSnippets")) ?? {};
+            } catch (err) {
+                console.log(err);
+                return undefined;
+            }
+        }
+        if (savedSnippets) {
+            const validSnippets = new Map<string, Snippet>();
+            for (const snippetName of Object.keys(savedSnippets)) {
+                const snippet = savedSnippets[snippetName];
+                const valid = ApiService.SnippetValidator(snippet);
+                if (!valid) {
+                    console.log(ApiService.SnippetValidator.errors);
+                } else {
+                    validSnippets.set(snippetName, snippet);
+                }
+            }
+            return validSnippets;
+        } else {
+            return undefined;
+        }
+    };
+
+    public setSnippet = async (snippetName: string, snippet: Snippet) => {
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippet`;
+                const response = await this.axiosInstance.put(url, {snippetName, snippet});
+                return response?.data?.success;
+            } catch (err) {
+                console.log(err);
+                return false;
+            }
+        } else {
+            try {
+                const obj = JSON.parse(localStorage.getItem("savedSnippets")) ?? {};
+                obj[snippetName] = snippet;
+                localStorage.setItem("savedSnippets", JSON.stringify(obj));
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    public clearSnippet = async (snippetName: string) => {
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippet`;
+                const response = await this.axiosInstance.delete(url, {data: {snippetName}});
+                return response?.data?.success;
+            } catch (err) {
+                console.log(err);
+                return false;
+            }
+        } else {
+            try {
+                const obj = JSON.parse(localStorage.getItem("savedSnippets")) ?? {};
+                delete obj[snippetName];
+                localStorage.setItem("savedSnippets", JSON.stringify(obj));
                 return true;
             } catch (err) {
                 return false;
