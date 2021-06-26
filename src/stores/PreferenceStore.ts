@@ -70,13 +70,18 @@ export enum PreferenceKeys {
     LOG_EVENT = "logEventList",
 
     CATALOG_DISPLAYED_COLUMN_SIZE = "catalogDisplayedColumnSize",
-    CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition"
+    CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
+
+    PIXEL_GRID_VISIBLE = "pixelGridVisible",
+    PIXEL_GRID_COLOR = "pixelGridColor"
 }
 
 const DEFAULTS = {
     SILENT: {
         fileSortingString: "-date",
-        fileFilteringType: FileFilteringType.Fuzzy
+        fileFilteringType: FileFilteringType.Fuzzy,
+        pixelGridVisible: false,
+        pixelGridColor: "#FFFFFF"
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -424,6 +429,14 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION) ?? DEFAULTS.CATALOG.catalogTableSeparatorPosition;
     }
 
+    @computed get pixelGridVisible(): boolean {
+        return this.preferences.get(PreferenceKeys.PIXEL_GRID_VISIBLE) ?? DEFAULTS.SILENT.pixelGridVisible;
+    }
+
+    @computed get pixelGridColor(): string {
+        return this.preferences.get(PreferenceKeys.PIXEL_GRID_COLOR) ?? DEFAULTS.SILENT.pixelGridColor;
+    }
+
     @action setPreference = async (key: PreferenceKeys, value: any) => {
         if (!key) {
             return false;
@@ -461,7 +474,7 @@ export class PreferenceStore {
 
     // reset functions
     @action resetSilentSettings = () => {
-        this.clearPreferences([PreferenceKeys.SILENT_FILE_SORTING_STRING, PreferenceKeys.SILENT_FILE_FILTERING_TYPE]);
+        this.clearPreferences([PreferenceKeys.SILENT_FILE_SORTING_STRING, PreferenceKeys.SILENT_FILE_FILTERING_TYPE, PreferenceKeys.PIXEL_GRID_VISIBLE, PreferenceKeys.PIXEL_GRID_COLOR]);
     };
 
     @action resetGlobalSettings = () => {
@@ -593,7 +606,8 @@ export class PreferenceStore {
                 PreferenceKeys.REGION_COLOR,
                 PreferenceKeys.REGION_CREATION_MODE,
                 PreferenceKeys.WCS_OVERLAY_AST_COLOR,
-                PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION
+                PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION,
+                PreferenceKeys.PIXEL_GRID_COLOR
             ];
 
             const intKeys = [
@@ -636,7 +650,8 @@ export class PreferenceStore {
                 PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
                 PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
                 PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
-                PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE
+                PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE,
+                PreferenceKeys.PIXEL_GRID_VISIBLE
             ];
 
             const preferenceObject = {};
