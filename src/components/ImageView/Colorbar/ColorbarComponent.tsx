@@ -6,14 +6,18 @@ import {ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
 import {fonts} from "ast_wrapper";
 import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
-import {getColorForTheme} from "utilities";
+import {clamp, getColorForTheme} from "utilities";
 import "./ColorbarComponent.scss";
 
 @observer
-export class ColorbarComponent extends React.Component {
+export class ColorbarComponent extends React.Component<{onCursorHoverValueChanged: (number) => void}> {
     @observable hoverInfoText: string = "";
-    @observable showHoverInfo: boolean = false;
+    @observable isHovering: boolean = false;
     @observable cursorY: number = -1;
+    private mouseEnterHandle;
+
+    private static readonly HoverDelay = 500;
+
     private astFonts: Font[] = fonts.map((x, i) => new Font(x, i));
 
     constructor(props) {
@@ -26,11 +30,20 @@ export class ColorbarComponent extends React.Component {
     };
 
     @action onMouseEnter = () => {
-        this.showHoverInfo = true;
+        if (this.mouseEnterHandle) {
+            clearTimeout(this.mouseEnterHandle);
+        }
+        this.mouseEnterHandle = setTimeout(() => {
+            this.isHovering = true;
+        }, ColorbarComponent.HoverDelay);
     };
 
     @action onMouseLeave = () => {
-        this.showHoverInfo = false;
+        this.isHovering = false;
+        if (this.mouseEnterHandle) {
+            clearTimeout(this.mouseEnterHandle);
+        }
+        this.props.onCursorHoverValueChanged(NaN);
     };
 
     @action setCursorY = (y: number) => {
@@ -46,13 +59,25 @@ export class ColorbarComponent extends React.Component {
         }
 
         const stage = event.target.getStage();
-        const point = colorbarSettings.position === "right" ? stage.getPointerPosition().y : stage.getPointerPosition().x;
+        let point = colorbarSettings.position === "right" ? stage.getPointerPosition().y : stage.getPointerPosition().x;
         let scaledPos = point - colorbarSettings.yOffset;
         if (colorbarSettings.position === "right") {
             scaledPos = colorbarSettings.height - scaledPos;
         }
-        scaledPos = scaledPos / colorbarSettings.height;
-        this.setHoverInfoText((renderConfig.scaleMinVal + scaledPos * (renderConfig.scaleMaxVal - renderConfig.scaleMinVal)).toExponential(5));
+        scaledPos /= colorbarSettings.height;
+        scaledPos = clamp(scaledPos, 0.0, 1.0);
+        // Recalculate clamped point position
+        point = clamp(point, colorbarSettings.yOffset, colorbarSettings.yOffset + colorbarSettings.height);
+        // Lock to mid-pixel for sharp lines
+        point = Math.floor(point) + 0.5;
+
+        const hoverValue = renderConfig.scaleMinVal + scaledPos * (renderConfig.scaleMaxVal - renderConfig.scaleMinVal);
+        this.setHoverInfoText(hoverValue.toExponential(5));
+        if (colorbarSettings.interactive && this.isHovering) {
+            this.props.onCursorHoverValueChanged(hoverValue);
+        } else {
+            this.props.onCursorHoverValueChanged(NaN);
+        }
         this.setCursorY(point);
     };
 
@@ -124,9 +149,6 @@ export class ColorbarComponent extends React.Component {
                 fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
                 stroke={colorbarSettings.borderVisible ? getColor(colorbarSettings.borderCustomColor, colorbarSettings.borderColor) : null}
                 strokeWidth={colorbarSettings.borderWidth / devicePixelRatio}
-                onMouseEnter={this.onMouseEnter}
-                onMouseMove={this.handleMouseMove}
-                onMouseLeave={this.onMouseLeave}
             />
         );
 
@@ -226,12 +248,12 @@ export class ColorbarComponent extends React.Component {
         ) : null;
 
         const hoverBar =
-            colorbarSettings.showHoverInfo && this.showHoverInfo ? (
+            colorbarSettings.interactive && this.isHovering ? (
                 <Line points={hoverBarPosition} stroke={colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color)} strokeWidth={1 / devicePixelRatio} />
             ) : null;
 
         const hoverInfo =
-            colorbarSettings.showHoverInfo && this.showHoverInfo ? (
+            colorbarSettings.interactive && this.isHovering ? (
                 <div className={"colorbar-info"}>
                     <ProfilerInfoComponent info={[`Colorscale: ${this.hoverInfoText} ${frame.unit}`]} />
                 </div>
@@ -239,7 +261,7 @@ export class ColorbarComponent extends React.Component {
 
         return (
             <React.Fragment>
-                <Stage className={"colorbar-stage"} width={stageWidth} height={stageHeight} style={{left: stageLeft, top: stageTop}}>
+                <Stage className={"colorbar-stage"} width={stageWidth} height={stageHeight} style={{left: stageLeft, top: stageTop}} onMouseEnter={this.onMouseEnter} onMouseMove={this.handleMouseMove} onMouseLeave={this.onMouseLeave}>
                     <Layer>
                         {colorbar}
                         {ticks}
