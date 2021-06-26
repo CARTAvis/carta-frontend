@@ -1,5 +1,17 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .debug-execution-dialog {
     user-select: none;
+
+    .bp3-dialog-body {
+        background: $white;
+    }
+
+    &.bp3-dark {
+        .bp3-dialog-body {
+            background: $dark-gray1;
+        }
+    }
 
     .input-text {
         margin-left: 5px;
@@ -9,5 +21,28 @@
 
     .bp3-input-group {
         margin-bottom: 10px;
+    }
+
+    // Line number CSS adapted from https://github.com/satya164/react-simple-code-editor/issues/16
+    .line-numbers {
+        counter-reset: line;
+
+        #codeArea {
+            outline: none;
+            padding-left: 60px !important;
+        }
+
+        pre {
+            padding-left: 60px !important;
+        }
+
+        .editor-line-number {
+            position: absolute;
+            left: 0;
+            color: #cccccc;
+            text-align: right;
+            width: 40px;
+            font-weight: 100;
+        }
     }
 }

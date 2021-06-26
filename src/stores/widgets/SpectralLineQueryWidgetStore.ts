@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable, makeObservable} from "mobx";
+import {action, autorun, computed, observable, makeObservable, runInAction} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
@@ -260,7 +260,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.filterNum = 0;
     };
 
-    @action query = () => {
+    @action query = async () => {
         let valueMin = 0;
         let valueMax = 0;
         if (this.queryRangeType === SpectralLineQueryRangeType.Range) {
@@ -274,41 +274,44 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         const freqMHzFrom = this.calculateFreqMHz(valueMin, this.queryUnit);
         const freqMHzTo = this.calculateFreqMHz(valueMax, this.queryUnit);
 
+        const alertStore = AppStore.Instance.alertStore;
+
         if (!isFinite(freqMHzFrom) || !isFinite(freqMHzTo) || freqMHzFrom < 0 || freqMHzTo < 0) {
-            AppStore.Instance.alertStore.showAlert("Invalid frequency range.");
+            alertStore.showAlert("Invalid frequency range.");
+            return;
         } else if (freqMHzFrom === freqMHzTo) {
-            AppStore.Instance.alertStore.showAlert("Please specify a frequency range.");
+            alertStore.showAlert("Please specify a frequency range.");
+            return;
         } else if (Math.abs(freqMHzTo - freqMHzFrom) > FREQUENCY_RANGE_LIMIT) {
-            AppStore.Instance.alertStore.showAlert(
+            alertStore.showAlert(
                 `Frequency range ${freqMHzFrom <= freqMHzTo ? freqMHzFrom : freqMHzTo} MHz to ${freqMHzFrom <= freqMHzTo ? freqMHzTo : freqMHzFrom} MHz is too wide.` +
                     `Please specify a frequency range within ${FREQUENCY_RANGE_LIMIT / 1e3} GHz.`
             );
-        } else {
-            this.isQuerying = true;
-            const backendService = BackendService.Instance;
-            backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN).subscribe(
-                ack => {
-                    if (ack.success && ack.dataSize >= 0) {
-                        this.numDataRows = ack.dataSize;
-                        this.columnHeaders = this.preprocessHeaders(ack.headers);
-                        this.controlHeader = this.initControlHeader(this.columnHeaders);
-                        this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
-                        this.updateFilterResult(this.fullRowIndexes);
-                        this.isDataFiltered = false;
-                        this.filterNum = 0;
-                    } else {
-                        this.resetQueryContents();
-                        AppStore.Instance.alertStore.showAlert(ack.message);
-                    }
-                    this.isQuerying = false;
-                },
-                error => {
-                    this.isQuerying = false;
-                    console.error(error);
-                    AppStore.Instance.alertStore.showAlert(error);
-                }
-            );
+            return;
         }
+
+        this.isQuerying = true;
+        const backendService = BackendService.Instance;
+        try {
+            const ack = await backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN);
+            if (ack.dataSize >= 0) {
+                runInAction(() => {
+                    this.numDataRows = ack.dataSize;
+                    this.columnHeaders = this.preprocessHeaders(ack.headers);
+                    this.controlHeader = this.initControlHeader(this.columnHeaders);
+                    this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
+                    this.updateFilterResult(this.fullRowIndexes);
+                    this.isDataFiltered = false;
+                    this.filterNum = 0;
+                });
+            } else {
+                this.resetQueryContents();
+            }
+        } catch (err) {
+            this.resetQueryContents();
+            alertStore.showAlert(err);
+        }
+        this.isQuerying = false;
     };
 
     @action setColumnFilter = (filterInput: string, columnName: string) => {
