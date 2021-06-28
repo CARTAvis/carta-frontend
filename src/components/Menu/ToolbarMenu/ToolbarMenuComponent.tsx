@@ -60,9 +60,7 @@ export class ToolbarMenuComponent extends React.Component {
                 {RegionStore.RegionTypeString(type)}
                 <span>
                     <br />
-                        <i>
-                            {tooltip}
-                        </i>
+                    <i>{tooltip}</i>
                 </span>
             </span>
         );

@@ -525,7 +525,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 </Tooltip2>
             );
         }
-        const lengthInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${this.lengthWCS}` : `Image: ${length}`;
+        const lengthInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${this.lengthWCS}` : `Image: ${length.toFixed(3)} px`;
 
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
@@ -575,6 +575,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                                     <tr>
                                         <td>Length {pxUnitSpan}</td>
                                         <td>{lengthInput}</td>
+                                        <td></td>
                                         <td>
                                             <span className="info-string">{lengthInfoString}</span>
                                         </td>
