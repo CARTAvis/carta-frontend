@@ -157,7 +157,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 break;
             case CARTA.RegionType.LINE:
                 const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
-                const start = this.isRegionCornerMode ? cursorPosImageSpace : {x: this.regionStartPoint.x * 2 - cursorPosImageSpace.x, y: this.regionStartPoint.y * 2 - cursorPosImageSpace.y};
+                const start = this.isRegionCornerMode ? this.regionStartPoint : {x: this.regionStartPoint.x * 2 - cursorPosImageSpace.x, y: this.regionStartPoint.y * 2 - cursorPosImageSpace.y};
                 if (start.x < cursorPosImageSpace.x) {
                     this.creatingRegion.setControlPoints([start, cursorPosImageSpace]);
                 } else {
