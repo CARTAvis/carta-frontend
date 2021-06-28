@@ -7,7 +7,7 @@ import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID} from "stores/w
 import "./RegionSelectorComponent.scss";
 
 @observer
-export class RegionSelectorComponent extends React.Component<{widgetStore: RegionWidgetStore; onFrameChanged?: (newFrame: FrameStore) => void}> {
+export class RegionSelectorComponent extends React.Component<{widgetStore: RegionWidgetStore, disableClosedRegion?: boolean, onFrameChanged?: (newFrame: FrameStore) => void}> {
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
@@ -64,6 +64,10 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
                 default:
                     fiteredRegions = regions;
             }
+            if (this.props.disableClosedRegion) {
+                fiteredRegions = fiteredRegions.filter(r => !r.isClosedRegion);
+            }
+
             regionOptions = regionOptions.concat(
                 fiteredRegions.map(r => {
                     return {value: r.regionId, label: r.nameString};

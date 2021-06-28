@@ -523,7 +523,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             <div className={"spatial-profiler-widget"}>
                 <div className="profile-container">
                     <div className="profile-toolbar">
-                        <RegionSelectorComponent widgetStore={widgetStore} />
+                        <RegionSelectorComponent widgetStore={widgetStore} disableClosedRegion={true} />
                         {widgetStore.effectiveFrame?.hasStokes &&
                             <FormGroup label={"Stokes"} inline={true}>
                                 <HTMLSelect
