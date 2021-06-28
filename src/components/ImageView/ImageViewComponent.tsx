@@ -107,7 +107,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     private cachedImageSize: Point2D;
 
     @observable showRatioIndicator: boolean;
-    @observable pixelHighlightValue: number = -1;
+    @observable pixelHighlightValue: number = NaN;
     readonly activeLayer: ImageViewLayer;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
