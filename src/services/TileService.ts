@@ -1,5 +1,5 @@
 import {Subject} from "rxjs";
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
 import {Point2D, TileCoordinate} from "models";
@@ -539,11 +539,10 @@ export class TileService {
             }
         } else {
             // Handle single tile, no sync required
-            const textureCoordinate = this.textureCoordinateQueue.pop();
             const rasterTile: RasterTile = {
                 width,
                 height,
-                textureCoordinate,
+                textureCoordinate: 0,
                 data: decompressedData
             };
             const gpuCacheCoordinate = encodedCoordinate + fileId / MAX_FILES;
@@ -551,6 +550,8 @@ export class TileService {
             if (oldValue) {
                 this.clearTile(oldValue.value, oldValue.key);
             }
+            rasterTile.textureCoordinate = this.textureCoordinateQueue.pop();
+
             pendingCompressionMap.delete(encodedCoordinate);
             this.tileStream.next({tileCount: 1, fileId, channel, stokes, flush: false});
         }
