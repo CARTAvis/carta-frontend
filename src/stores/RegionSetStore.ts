@@ -94,12 +94,13 @@ export class RegionSetStore {
         );
         this.regions.push(region);
         if (!temporary) {
-            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
-                if (ack.success) {
+            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).then(
+                ack => {
                     console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
                     region.setRegionId(ack.regionId);
-                }
-            });
+                },
+                err => console.log(err)
+            );
         }
 
         return region;

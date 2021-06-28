@@ -430,16 +430,17 @@ export class RegionStore {
         this.editing = true;
     };
 
-    @action endCreating = () => {
+    @action endCreating = async () => {
         this.creating = false;
         this.editing = false;
         if (this.regionType !== CARTA.RegionType.POINT) {
-            this.backendService.setRegion(this.fileId, -1, this).subscribe(ack => {
-                if (ack.success) {
-                    console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
-                    this.setRegionId(ack.regionId);
-                }
-            });
+            try {
+                const ack = await this.backendService.setRegion(this.fileId, -1, this);
+                console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
+                this.setRegionId(ack.regionId);
+            } catch (err) {
+                console.log(err);
+            }
         }
     };
 
@@ -482,18 +483,17 @@ export class RegionStore {
     };
 
     // Update the region with the backend
-    private updateRegion = () => {
+    private updateRegion = async () => {
         if (this.isValid) {
             if (this.regionId === CURSOR_REGION_ID && this.regionType === CARTA.RegionType.POINT) {
                 this.backendService.setCursor(this.fileId, this.center.x, this.center.y);
             } else {
-                this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
-                    if (ack.success) {
-                        console.log(`Region updated`);
-                    } else {
-                        console.log(ack.message);
-                    }
-                });
+                try {
+                    await this.backendService.setRegion(this.fileId, this.regionId, this);
+                    console.log("Region updated");
+                } catch (err) {
+                    console.log(err);
+                }
             }
         }
     };
