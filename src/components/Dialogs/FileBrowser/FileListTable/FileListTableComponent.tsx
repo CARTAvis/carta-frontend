@@ -111,13 +111,13 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 } else if (filterType === FileFilteringType.Unix) {
                     // glob search case-insensitive
                     regex = RegExp(globToRegExp(filterString.toLowerCase()));
-                    filteredSubdirectories = filteredSubdirectories?.filter(value => value.toLowerCase().match(regex));
+                    filteredSubdirectories = filteredSubdirectories?.filter(info => info.name.toLowerCase().match(regex));
                     // @ts-ignore
                     filteredFiles = filteredFiles?.filter(file => file.name.toLowerCase().match(regex));
                 } else {
                     // Strict regex search is case-sensitive
                     regex = RegExp(filterString);
-                    filteredSubdirectories = filteredSubdirectories?.filter(value => value.match(regex));
+                    filteredSubdirectories = filteredSubdirectories?.filter(info => info.name.match(regex));
                     // @ts-ignore
                     filteredFiles = filteredFiles?.filter(file => file.name.match(regex));
                 }
@@ -131,12 +131,25 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         const entries: FileEntry[] = [];
         const sortingConfig = {direction: this.props.sortingString.startsWith("+") ? 1 : -1, columnName: this.props.sortingString.substring(1).toLowerCase()};
         if (filteredSubdirectories && filteredSubdirectories.length) {
-            if (sortingConfig?.columnName === "filename") {
-                filteredSubdirectories.sort((a, b) => sortingConfig.direction * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
+            switch (sortingConfig?.columnName) {
+                case "filename":
+                    filteredSubdirectories.sort((a, b) => sortingConfig.direction * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
+                    break;
+                case "size":
+                    filteredSubdirectories.sort((a, b) => sortingConfig.direction * (a.itemCount < b.itemCount ? -1 : 1));
+                    break;
+                case "date":
+                    filteredSubdirectories.sort((a, b) => sortingConfig.direction * (a.date < b.date ? -1 : 1));
+                    break;
+                default:
+                    break;
             }
+
             for (const directory of filteredSubdirectories) {
                 entries.push({
-                    filename: directory,
+                    filename: directory.name,
+                    size: directory.itemCount > 0 ? directory.itemCount : undefined,
+                    date: directory.date as number,
                     isDirectory: true
                 });
             }
@@ -332,7 +345,8 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             <Cell>
                 <React.Fragment>
                     <div onClick={event => this.handleEntryClicked(event, entry, rowIndex)} onDoubleClick={() => this.handleEntryDoubleClicked(entry)}>
-                        {isFinite(sizeInBytes) && FileListTableComponent.GetFileSizeDisplay(sizeInBytes)}
+                        {isFinite(sizeInBytes) && !entry.isDirectory && FileListTableComponent.GetFileSizeDisplay(sizeInBytes)}
+                        {isFinite(sizeInBytes) && entry.isDirectory && `${sizeInBytes} items`}
                     </div>
                 </React.Fragment>
             </Cell>
