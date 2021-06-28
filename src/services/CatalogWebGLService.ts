@@ -177,7 +177,9 @@ export class CatalogWebGLService {
         this.gl.linkProgram(shaderProgram);
 
         if (!this.gl.getProgramParameter(shaderProgram, WebGL2RenderingContext.LINK_STATUS)) {
-            console.log("Could not initialise shaders");
+            const linkInfo = this.gl.getProgramInfoLog(shaderProgram);
+            console.error("Could not initialise shaders");
+            console.info(linkInfo);
         }
 
         this.gl.useProgram(shaderProgram);
