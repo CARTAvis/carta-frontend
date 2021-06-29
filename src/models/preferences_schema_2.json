@@ -189,8 +189,8 @@
         },
         "GPUTileCache": {
             "type": "integer",
-            "multipleOf": 128,
-            "minimum": 512
+            "multipleOf": 256,
+            "minimum": 1024
         },
         "systemTileCache": {
             "type": "integer",
