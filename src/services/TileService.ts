@@ -63,7 +63,7 @@ export class TileService {
     private readonly channelMap: Map<number, {channel: number; stokes: number}>;
     private readonly completedChannels: Map<string, boolean>;
     readonly tileStream: Subject<TileStreamDetails>;
-    private cachedTiles: LRUCache<string, RasterTile>;
+    private cachedTiles: LRUCache<number, RasterTile>;
     private lruCapacitySystem: number;
     private textureArray: Array<WebGLTexture>;
     private textureCoordinateQueue: Array<number>;
@@ -95,7 +95,7 @@ export class TileService {
         this.textureArray = new Array<WebGLTexture>(numTextures);
         this.initTextures();
         this.resetCoordinateQueue();
-        this.cachedTiles = new LRUCache<string, RasterTile>(lruCapacityGPU);
+        this.cachedTiles = new LRUCache<number, RasterTile>(Float64Array, null, lruCapacityGPU);
 
         // L2 cache: compressed tiles on system memory
         this.lruCapacitySystem = lruCapacitySystem;
@@ -164,7 +164,7 @@ export class TileService {
     }
 
     getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number, peek: boolean = false) {
-        const gpuCacheCoordinate = `${tileCoordinateEncoded}_${fileId}`;
+        const gpuCacheCoordinate = TileCoordinate.AddFileId(tileCoordinateEncoded, fileId);
         if (peek) {
             return this.cachedTiles.peek(gpuCacheCoordinate);
         }
@@ -191,7 +191,7 @@ export class TileService {
                 continue;
             }
             const encodedCoordinate = tile.encode();
-            const gpuCacheCoordinate = `${encodedCoordinate}_${fileId}`;
+            const gpuCacheCoordinate = TileCoordinate.AddFileId(encodedCoordinate, fileId);
             const pendingRequestsMap = this.pendingRequests.get(key);
             const tileCached = !channelsChanged && this.cachedTiles.has(gpuCacheCoordinate);
             if (!tileCached && !(pendingRequestsMap && pendingRequestsMap.has(encodedCoordinate))) {
@@ -248,13 +248,12 @@ export class TileService {
     clearGPUCache(fileId: number) {
         console.log(`Clearing GPU cache for fileId ${fileId}`);
         const cacheCapacity = this.cachedTiles.capacity;
-        const keys: string[] = [];
+        const keys: number[] = [];
         const tiles: RasterTile[] = [];
 
-        const fileSuffix = `_${fileId}`;
         for (const [key, tile] of this.cachedTiles) {
             // Clear tile if it matches the fileId, otherwise add it to the collection of tiles to add to the new cache
-            if (key.endsWith(fileSuffix)) {
+            if (TileCoordinate.GetFileId(key) === fileId) {
                 this.clearTile(tile, key);
             } else {
                 keys.push(key);
@@ -263,7 +262,7 @@ export class TileService {
         }
 
         // populate new cache with old entries, from oldest to newest, in order to preserve LRU ordering
-        this.cachedTiles = new LRUCache<string, RasterTile>(cacheCapacity);
+        this.cachedTiles = new LRUCache<number, RasterTile>(Float64Array, null, cacheCapacity);
         for (let i = keys.length - 1; i >= 0; i--) {
             this.cachedTiles.set(keys[i], tiles[i]);
         }
@@ -360,7 +359,7 @@ export class TileService {
             return;
         }
 
-        // At the start of the stream, create a new pending decompressions map for the channel about to be streamed
+        // At the start of the stream, create a new pending decompression map for the channel about to be streamed
         if (!syncMessage.endSync) {
             this.completedChannels.delete(key);
             this.pendingDecompressions.set(key, new Map<number, boolean>());
@@ -501,7 +500,7 @@ export class TileService {
 
                 for (const tilePair of receivedTiles) {
                     tilePair.tile.textureCoordinate = this.textureCoordinateQueue.pop();
-                    const gpuCacheCoordinate = `${tilePair.coordinate}_${fileId}`;
+                    const gpuCacheCoordinate = TileCoordinate.AddFileId(tilePair.coordinate, fileId);
                     // console.log(`Assigning GPU texture coordinate ${tilePair.tile.textureCoordinate} to tile ${tilePair.coordinate} of file ${fileId}`);
                     const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, tilePair.tile);
                     if (oldValue) {
@@ -520,7 +519,7 @@ export class TileService {
                 textureCoordinate: 0,
                 data: decompressedData
             };
-            const gpuCacheCoordinate = `${encodedCoordinate}_${fileId}`;
+            const gpuCacheCoordinate = TileCoordinate.AddFileId(encodedCoordinate, fileId);
             const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, rasterTile);
             if (oldValue) {
                 this.clearTile(oldValue.value, oldValue.key);
