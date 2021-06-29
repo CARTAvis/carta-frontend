@@ -1,6 +1,6 @@
 import tinycolor from "tinycolor2";
 import {action, computed, observable, override, makeObservable} from "mobx";
-import {FrameStore, ProfileSmoothingStore} from "stores";
+import {ProfileSmoothingStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
@@ -133,12 +133,12 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         return this.minY === undefined || this.maxY === undefined;
     }
 
-    public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpatialProfileWidgetStore>) {
+    public static CalculateRequirementsMap(widgetsMap: Map<string, SpatialProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
         widgetsMap.forEach(widgetStore => {
+            const frame = widgetStore.effectiveFrame;
             const fileId = frame.frameInfo.fileId;
-            // Cursor region only for now
-            const regionId = 0;
+            const regionId = widgetStore.effectiveRegionId;
             const coordinate = widgetStore.coordinate;
 
             if (!frame.regionSet) {
