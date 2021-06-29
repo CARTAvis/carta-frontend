@@ -28,9 +28,9 @@ export class ToolbarMenuComponent extends React.Component {
             case CARTA.RegionType.LINE:
                 tooltip = (
                     <small>
-                        {type === CARTA.RegionType.LINE ? "Click" : "Click-and-drag"} to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).
+                        Click-and-drag to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).
                         <br />
-                        Hold Ctrl to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).
+                        Hold Ctrl/Cmd to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).
                         <br />
                         Change the default creation mode in Preferences.
                         <br />
