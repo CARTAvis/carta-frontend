@@ -120,7 +120,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.LINE:
                 this.creatingRegion = frame.regionSet.addLineRegion([cursorPosImageSpace, cursorPosImageSpace], true);
                 this.regionStartPoint = cursorPosImageSpace;
-                this.polygonRegionCreating(mouseEvent);
                 break;
             default:
                 return;
