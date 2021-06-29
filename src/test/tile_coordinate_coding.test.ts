@@ -19,12 +19,16 @@ test("returns identical round trip coordinates", () => {
         const layerWidth = 2 ** layer;
         const x = Math.floor(Math.random() * layerWidth);
         const y = Math.floor(Math.random() * layerWidth);
-
+        const id = Math.floor(Math.random() * 2 ** 16);
         const coordinate = new TileCoordinate(x, y, layer);
         const encodedVal = coordinate.encode();
         const roundTripCoordinate = TileCoordinate.Decode(encodedVal);
-
         expect(roundTripCoordinate).toEqual(coordinate);
+        const encodedValWithId = TileCoordinate.AddFileId(coordinate.encode(), id);
+        const roundTripCoordinateWithId = TileCoordinate.Decode(encodedValWithId);
+        const roundTripId = TileCoordinate.GetFileId(encodedValWithId);
+        expect(roundTripCoordinateWithId).toEqual(coordinate);
+        expect(roundTripId).toEqual(id);
     }
 });
 
