@@ -64,13 +64,10 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
                 default:
                     fiteredRegions = regions;
             }
-            if (this.props.disableClosedRegion) {
-                fiteredRegions = fiteredRegions.filter(r => !r.isClosedRegion);
-            }
 
             regionOptions = regionOptions.concat(
                 fiteredRegions.map(r => {
-                    return {value: r.regionId, label: r.nameString};
+                    return {value: r.regionId, label: r.nameString, disabled: this.props.disableClosedRegion ? r.isClosedRegion : false};
                 })
             );
 
