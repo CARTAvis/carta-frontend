@@ -203,7 +203,6 @@ export class TileService {
                         this.pendingDecompressions.set(key, new Map<number, boolean>());
                     }
                     // Load from L2 cache instead
-                    console.log(`Fetching tile (L=${compressedTile.tile.layer}, x=${compressedTile.tile.x}, y=${compressedTile.tile.y})  for fileId ${fileId} from L2 cache [${gpuCacheCoordinate}]`);
                     this.asyncDecompressTile(fileId, channel, stokes, compressedTile.tile, compressedTile.compressionQuality, encodedCoordinate);
                 } else if (!compressedTile) {
                     // Request from backend
@@ -246,7 +245,6 @@ export class TileService {
     }
 
     clearGPUCache(fileId: number) {
-        console.log(`Clearing GPU cache for fileId ${fileId}`);
         const cacheCapacity = this.cachedTiles.capacity;
         const keys: number[] = [];
         const tiles: RasterTile[] = [];
@@ -501,11 +499,9 @@ export class TileService {
                 for (const tilePair of receivedTiles) {
                     tilePair.tile.textureCoordinate = this.textureCoordinateQueue.pop();
                     const gpuCacheCoordinate = TileCoordinate.AddFileId(tilePair.coordinate, fileId);
-                    // console.log(`Assigning GPU texture coordinate ${tilePair.tile.textureCoordinate} to tile ${tilePair.coordinate} of file ${fileId}`);
                     const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, tilePair.tile);
                     if (oldValue) {
                         this.clearTile(oldValue.value, oldValue.key);
-                        // console.log(`Removing old tile ${oldValue.key}`);
                     }
                 }
                 this.receivedSynchronisedTiles.set(key, receivedTiles);
