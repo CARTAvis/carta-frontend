@@ -43,6 +43,11 @@ export enum PreferenceKeys {
     WCS_OVERLAY_AST_GRID_VISIBLE = "astGridVisible",
     WCS_OVERLAY_AST_LABELS_VISIBLE = "astLabelsVisible",
     WCS_OVERLAY_WCS_TYPE = "wcsType",
+    WCS_OVERLAY_COLORBAR_VISIBLE = "colorbarVisible",
+    WCS_OVERLAY_COLORBAR_INTERACTIVE = "colorbarInteractive",
+    WCS_OVERLAY_COLORBAR_WIDTH = "colorbarWidth",
+    WCS_OVERLAY_COLORBAR_TICKS_DENSITY = "colorbarTicksDensity",
+    WCS_OVERLAY_COLORBAR_LABEL_VISIBLE = "colorbarLabelVisible",
     WCS_OVERLAY_BEAM_VISIBLE = "beamVisible",
     WCS_OVERLAY_BEAM_COLOR = "beamColor",
     WCS_OVERLAY_BEAM_TYPE = "beamType",
@@ -120,6 +125,11 @@ const DEFAULTS = {
         astGridVisible: false,
         astLabelsVisible: true,
         wcsType: WCSType.AUTOMATIC,
+        colorbarVisible: true,
+        colorbarInteractive: true,
+        colorbarWidth: 15,
+        colorbarTicksDensity: 1,
+        colorbarLabelVisible: false,
         beamVisible: true,
         beamColor: "auto-gray",
         beamType: BeamType.Open,
@@ -310,6 +320,26 @@ export class PreferenceStore {
 
     @computed get wcsType(): string {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE) ?? DEFAULTS.WCS_OVERLAY.wcsType;
+    }
+
+    @computed get colorbarVisible(): boolean {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarVisible;
+    }
+
+    @computed get colorbarInteractive(): boolean {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? DEFAULTS.WCS_OVERLAY.colorbarInteractive;
+    }
+
+    @computed get colorbarWidth(): number {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH) ?? DEFAULTS.WCS_OVERLAY.colorbarWidth;
+    }
+
+    @computed get colorbarTicksDensity(): number {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY) ?? DEFAULTS.WCS_OVERLAY.colorbarTicksDensity;
+    }
+
+    @computed get colorbarLabelVisible(): boolean {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE) ?? DEFAULTS.WCS_OVERLAY.colorbarLabelVisible;
     }
 
     @computed get beamVisible(): boolean {
@@ -523,6 +553,11 @@ export class PreferenceStore {
             PreferenceKeys.WCS_OVERLAY_AST_COLOR,
             PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE,
             PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE,
             PreferenceKeys.WCS_OVERLAY_BEAM_COLOR,
             PreferenceKeys.WCS_OVERLAY_BEAM_TYPE,
             PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
@@ -636,6 +671,8 @@ export class PreferenceStore {
                 PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
                 PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
                 PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS,
+                PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH,
+                PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY,
                 PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
                 PreferenceKeys.REGION_LINE_WIDTH
             ];
@@ -648,6 +685,9 @@ export class PreferenceStore {
                 PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
                 PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE,
                 PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
+                PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE,
+                PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE,
+                PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE,
                 PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
                 PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
                 PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE,
