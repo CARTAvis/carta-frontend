@@ -169,6 +169,11 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
     double matrixElements[] = {cosTheta * scaleX, -sinTheta * scaleX, sinTheta * scaleY, cosTheta * scaleY};
     AstMatrixMap* matrixMap = astMatrixMap(2, 2, 0, matrixElements, "");
 
+    if (matrixMap == AST__NULL) {
+        cout << "Creating matrix map failed." << endl;
+        return nullptr;
+    }
+
     // 2D shifts
     double offsetToOrigin[] = {-originX, -originY};
     double offsetFromOrigin[] = {originX + offsetX, originY + offsetY};

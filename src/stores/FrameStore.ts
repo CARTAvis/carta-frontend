@@ -1689,6 +1689,12 @@ export class FrameStore {
             this.spatialReference = null;
             return false;
         }
+
+        if (!this.transformedWcsInfo) {
+            this.spatialReference = null;
+            return false;
+        }
+
         this.spatialReference = frame;
         const currentTransform = this.spatialTransform;
         if (
