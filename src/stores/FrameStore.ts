@@ -1690,14 +1690,11 @@ export class FrameStore {
             return false;
         }
 
-        if (!this.transformedWcsInfo) {
-            this.spatialReference = null;
-            return false;
-        }
-
         this.spatialReference = frame;
         const currentTransform = this.spatialTransform;
         if (
+            !this.spatialTransform ||
+            !this.transformedWcsInfo ||
             !isFinite(currentTransform.rotation) ||
             !isFinite(currentTransform.scale) ||
             !isFinite(currentTransform.translation.x) ||

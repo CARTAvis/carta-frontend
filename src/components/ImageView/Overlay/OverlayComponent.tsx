@@ -48,7 +48,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             AST.setCanvas(this.canvas);
 
             // Take aspect ratio scaling into account
-            let tempWcsInfo = AST.copy(wcsInfo);
+            const tempWcsInfo = AST.copy(wcsInfo);
 
             if (!frame.hasSquarePixels) {
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
