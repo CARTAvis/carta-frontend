@@ -1693,7 +1693,7 @@ export class FrameStore {
         this.spatialReference = frame;
         const currentTransform = this.spatialTransform;
         if (
-            !this.spatialTransform ||
+            !currentTransform ||
             !this.transformedWcsInfo ||
             !isFinite(currentTransform.rotation) ||
             !isFinite(currentTransform.scale) ||
