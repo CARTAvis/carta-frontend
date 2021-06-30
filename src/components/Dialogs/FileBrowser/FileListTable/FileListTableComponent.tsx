@@ -104,7 +104,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             try {
                 let regex: RegExp;
                 if (filterType === FileFilteringType.Fuzzy) {
-                    const folderSearcher = new FuzzySearch(filteredSubdirectories);
+                    const folderSearcher = new FuzzySearch(filteredSubdirectories, ["name"]);
                     filteredSubdirectories = folderSearcher.search(filterString);
                     const fileSearcher = new FuzzySearch(filteredFiles, ["name"]);
                     filteredFiles = fileSearcher.search(filterString);
