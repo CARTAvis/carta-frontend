@@ -859,10 +859,11 @@ export class FrameStore {
 
         const cUnit1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CUNIT1");
         const cUnit2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CUNIT2");
-        const sameUnits = cUnit1 && cUnit2 && trimFitsComment(cUnit1.value) === trimFitsComment(cUnit2.value);
+        const hasUnits = cUnit1 && cUnit2;
+        const sameUnits = hasUnits && trimFitsComment(cUnit1.value) === trimFitsComment(cUnit2.value);
 
         // If the two units are different, there's no fixed aspect ratio
-        if (!sameUnits) {
+        if (hasUnits && !sameUnits) {
             this.framePixelRatio = NaN;
         } else {
             const cDelt1 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT1"));
