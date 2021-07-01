@@ -156,13 +156,6 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
 {
-    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 1);
-    AstFrame* pixFrameCopy = static_cast<AstFrame*> astCopy(pixFrame);
-    AstFrame* skyFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 2);
-    AstMapping* pixToSkyMapping = static_cast<AstMapping*> astGetMapping(wcsinfo, 1, 2);
-
-    AstFrameSet* wcsInfoTransformed = astFrameSet(pixFrame, "");
-
     // 2D scale and rotation matrix
     double sinTheta = sin(angle);
     double cosTheta = cos(angle);
@@ -173,6 +166,12 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
         cout << "Creating matrix map failed." << endl;
         return nullptr;
     }
+
+    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 1);
+    AstFrame* pixFrameCopy = static_cast<AstFrame*> astCopy(pixFrame);
+    AstFrame* skyFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 2);
+    AstMapping* pixToSkyMapping = static_cast<AstMapping*> astGetMapping(wcsinfo, 1, 2);
+    AstFrameSet* wcsInfoTransformed = astFrameSet(pixFrame, "");
 
     // 2D shifts
     double offsetToOrigin[] = {-originX, -originY};
