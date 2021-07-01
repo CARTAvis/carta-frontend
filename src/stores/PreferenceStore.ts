@@ -45,6 +45,7 @@ export enum PreferenceKeys {
     WCS_OVERLAY_WCS_TYPE = "wcsType",
     WCS_OVERLAY_COLORBAR_VISIBLE = "colorbarVisible",
     WCS_OVERLAY_COLORBAR_INTERACTIVE = "colorbarInteractive",
+    WCS_OVERLAY_COLORBAR_POSITION = "colorbarPosition",
     WCS_OVERLAY_COLORBAR_WIDTH = "colorbarWidth",
     WCS_OVERLAY_COLORBAR_TICKS_DENSITY = "colorbarTicksDensity",
     WCS_OVERLAY_COLORBAR_LABEL_VISIBLE = "colorbarLabelVisible",
@@ -127,6 +128,7 @@ const DEFAULTS = {
         wcsType: WCSType.AUTOMATIC,
         colorbarVisible: true,
         colorbarInteractive: true,
+        colorbarPosition: "right",
         colorbarWidth: 15,
         colorbarTicksDensity: 1,
         colorbarLabelVisible: false,
@@ -328,6 +330,10 @@ export class PreferenceStore {
 
     @computed get colorbarInteractive(): boolean {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE) ?? DEFAULTS.WCS_OVERLAY.colorbarInteractive;
+    }
+
+    @computed get colorbarPosition(): string {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION) ?? DEFAULTS.WCS_OVERLAY.colorbarPosition;
     }
 
     @computed get colorbarWidth(): number {
@@ -555,6 +561,7 @@ export class PreferenceStore {
             PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
             PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE,
             PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE,
+            PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION,
             PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH,
             PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY,
             PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE,
@@ -636,6 +643,7 @@ export class PreferenceStore {
                 PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR,
                 PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP,
                 PreferenceKeys.WCS_OVERLAY_WCS_TYPE,
+                PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION,
                 PreferenceKeys.WCS_OVERLAY_BEAM_COLOR,
                 PreferenceKeys.WCS_OVERLAY_BEAM_TYPE,
                 PreferenceKeys.REGION_COLOR,

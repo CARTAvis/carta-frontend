@@ -798,6 +798,10 @@ export class FrameStore {
         if (colorbarInteractive !== this.overlayStore.colorbar.interactive) {
             this.overlayStore.colorbar.setInteractive(colorbarInteractive);
         }
+        const colorbarPosition = preferenceStore.colorbarPosition;
+        if (colorbarPosition !== this.overlayStore.colorbar.position) {
+            this.overlayStore.colorbar.setPosition(colorbarPosition);
+        }
         const colorbarWidth = preferenceStore.colorbarWidth;
         if (colorbarWidth !== this.overlayStore.colorbar.width) {
             this.overlayStore.colorbar.setWidth(colorbarWidth);

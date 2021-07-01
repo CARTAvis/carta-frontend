@@ -727,7 +727,7 @@ export class OverlayColorbarSettings {
         this.interactive = preference.colorbarInteractive;
         this.width = preference.colorbarWidth;
         this.offset = 5;
-        this.position = "right";
+        this.position = preference.colorbarPosition;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
         this.borderVisible = true;
