@@ -1081,7 +1081,7 @@ export class FrameStore {
         return null;
     };
 
-    private createTransformedWcsInfo = (spatialTransform: Transform2D) => {
+    private createTransformedWcsInfo = (spatialTransform: Transform2D): AST.FrameSet => {
         if (spatialTransform) {
             let adjTranslation: Point2D = {
                 x: -spatialTransform.translation.x / spatialTransform.scale,
