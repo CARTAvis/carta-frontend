@@ -40,10 +40,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const frame = this.props.frame;
         const pixelRatio = devicePixelRatio;
 
-        if (frame.wcsInfo) {
-            const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
-            const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-
+        const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        console.log(wcsInfo);
+        if (wcsInfo && frameView) {
             this.updateImageDimensions();
             AST.setCanvas(this.canvas);
 
@@ -104,7 +104,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const styleString = this.props.overlaySettings.styleString;
 
         const frame = this.props.frame;
-        const refFrame = frame.spatialReference || frame;
+        const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
         // Dummy variables for triggering re-render
