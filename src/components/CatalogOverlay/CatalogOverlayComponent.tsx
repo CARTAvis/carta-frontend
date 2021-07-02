@@ -715,7 +715,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateSortRequest: this.updateSortRequest,
             sortingInfo: profileStore.sortingInfo,
             disableSort: profileStore.loadOntoImage,
-            darkTheme: AppStore.Instance.darkTheme,
             tableHeaders: profileStore.catalogHeader
         };
 
