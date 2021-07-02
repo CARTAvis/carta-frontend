@@ -1,7 +1,7 @@
 import * as React from "react";
 import $ from "jquery";
 import {observer} from "mobx-react";
-import {autorun, makeObservable, observable, runInAction} from "mobx";
+import {action, autorun, makeObservable, observable, runInAction} from "mobx";
 import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
@@ -107,6 +107,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     private cachedImageSize: Point2D;
 
     @observable showRatioIndicator: boolean;
+    @observable pixelHighlightValue: number = NaN;
     readonly activeLayer: ImageViewLayer;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -122,6 +123,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             helpType: HelpType.IMAGE_VIEW
         };
     }
+
+    @action setPixelHighlightValue = (val: number) => {
+        this.pixelHighlightValue = val;
+    };
 
     constructor(props: WidgetProps) {
         super(props);
@@ -233,7 +238,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                             showStokes={true}
                         />
                     )}
-                    {appStore.activeFrame && overlayStore.colorbar.visible && <ColorbarComponent />}
+                    {appStore.activeFrame && overlayStore.colorbar.visible && <ColorbarComponent onCursorHoverValueChanged={this.setPixelHighlightValue} />}
                     {appStore.activeFrame && <BeamProfileOverlayComponent top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
                     {appStore.activeFrame && <CatalogViewGLComponent docked={this.props.docked} onZoomed={this.onZoomed} />}
                     {appStore.activeFrame && (
@@ -270,7 +275,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                <RasterViewComponent docked={this.props.docked} />
+                <RasterViewComponent docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} />
                 <ContourViewComponent docked={this.props.docked} />
                 {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>

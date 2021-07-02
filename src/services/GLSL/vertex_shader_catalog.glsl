@@ -81,7 +81,7 @@ vec4 getValueByIndexFromTexture(sampler2D texture, int index) {
     return texelFetch(texture, ivec2(col, row), 0);
 }
 
-uvec4 getValueByIndexFromTexture(usampler2D texture, int index) {
+uvec4 getValueByIndexFromTextureU(usampler2D texture, int index) {
     ivec2 size = textureSize(texture, 0);
     int row = index / size.x;
     int col = index - row * size.x;
@@ -132,7 +132,7 @@ vec2 rotate2D(vec2 vector, float theta) {
 void main() {
     vec4 x = getValueByIndexFromTexture(uXTexture, gl_VertexID);
     vec4 y = getValueByIndexFromTexture(uYTexture, gl_VertexID);
-    uvec4 selectedSource = getValueByIndexFromTexture(uSelectedSourceTexture, gl_VertexID);
+    uvec4 selectedSource = getValueByIndexFromTextureU(uSelectedSourceTexture, gl_VertexID);
     // Scale and rotate
     vec2 pos = rotate2D(vec2(x.x,y.x), uRotationAngle) * uRangeScale + uRangeOffset;
 
