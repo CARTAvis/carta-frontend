@@ -3,6 +3,7 @@ import $ from "jquery";
 import {action, computed, observable, makeObservable} from "mobx";
 import {
     AnimatorComponent,
+    CursorInfoComponent,
     HistogramComponent,
     ImageViewComponent,
     LayerListComponent,
@@ -56,7 +57,8 @@ export enum WidgetType {
     StokesAnalysis = "Stokes Analysis Widget",
     ImageList = "Image List Widget",
     Catalog = "Catalog Widget",
-    SpectralLineQuery = "Spectral Line Query Widget"
+    SpectralLineQuery = "Spectral Line Query Widget",
+    CursorInfo = "Cursor Information Widget"
 }
 
 export interface DefaultWidgetConfig {
@@ -156,6 +158,7 @@ export class WidgetsStore {
     @observable catalogWidgets: Map<string, CatalogWidgetStore>;
     @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore>;
     @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
+    @observable cursorInfoWidgets: Map<string, EmptyWidgetStore>;
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
@@ -260,6 +263,15 @@ export class WidgetsStore {
                 onClick: () => WidgetsStore.Instance.createFloatingSpectralLineQueryWidget(),
                 widgetConfig: SpectralLineQueryComponent.WIDGET_CONFIG
             }
+        ],
+        [
+            WidgetType.CursorInfo,
+            {
+                isCustomIcon: false,
+                icon: "geolocation",
+                onClick: () => WidgetsStore.Instance.createFloatingCursorInfoWidget(),
+                widgetConfig: CursorInfoComponent.WIDGET_CONFIG
+            }
         ]
     ]);
 
@@ -319,6 +331,7 @@ export class WidgetsStore {
         this.floatingSettingsWidgets = new Map<string, string>();
         this.catalogPlotWidgets = new Map<string, CatalogPlotWidgetStore>();
         this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
+        this.cursorInfoWidgets = new Map<string, EmptyWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -333,7 +346,8 @@ export class WidgetsStore {
             [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
             [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogWidgets],
             [CatalogPlotComponent.WIDGET_CONFIG.type, this.catalogPlotWidgets],
-            [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets]
+            [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets],
+            [CursorInfoComponent.WIDGET_CONFIG.type, this.cursorInfoWidgets]
         ]);
 
         this.floatingWidgets = [];
@@ -370,6 +384,8 @@ export class WidgetsStore {
                 return CatalogPlotComponent.WIDGET_CONFIG;
             case SpectralLineQueryComponent.WIDGET_CONFIG.type:
                 return SpectralLineQueryComponent.WIDGET_CONFIG;
+            case CursorInfoComponent.WIDGET_CONFIG.type:
+                    return CursorInfoComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -514,6 +530,9 @@ export class WidgetsStore {
             case SpectralLineQueryComponent.WIDGET_CONFIG.type:
                 itemId = this.addSpectralLineQueryWidget();
                 break;
+            case CursorInfoComponent.WIDGET_CONFIG.type:
+                itemId = this.addCursorInfoWidget();
+                break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.catalogProfiles.set(itemId, 1);
@@ -616,6 +635,7 @@ export class WidgetsStore {
         layout.registerComponent("render-config", RenderConfigComponent);
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("layer-list", LayerListComponent);
+        layout.registerComponent("cursor-info", CursorInfoComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
@@ -1199,7 +1219,7 @@ export class WidgetsStore {
 
     // endregion
 
-    // region Basic widget types (log, animator, region list, layer list)
+    // region Basic widget types (log, animator, region list, layer list, cursor info)
 
     createFloatingLogWidget = () => {
         this.addFloatingWidget(new WidgetConfig(this.addLogWidget(), LogComponent.WIDGET_CONFIG));
@@ -1257,6 +1277,21 @@ export class WidgetsStore {
 
         if (id) {
             this.layerListWidgets.set(id, new EmptyWidgetStore());
+        }
+        return id;
+    }
+
+    createFloatingCursorInfoWidget = () => {
+        this.addFloatingWidget(new WidgetConfig(this.addCursorInfoWidget(), CursorInfoComponent.WIDGET_CONFIG));
+    };
+
+    @action addCursorInfoWidget(id: string = null) {
+        if (!id) {
+            id = this.getNextId(CursorInfoComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.cursorInfoWidgets.set(id, new EmptyWidgetStore());
         }
         return id;
     }
