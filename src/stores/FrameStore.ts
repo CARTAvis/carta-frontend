@@ -879,8 +879,6 @@ export class FrameStore {
                 }
             }
         });
-
-        autorun(() => {console.log(`spatialReference ${this.spatialReference}`);});
     }
 
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
