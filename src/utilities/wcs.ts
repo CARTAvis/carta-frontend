@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D, WCSPoint2D, SpectralType, SPECTRAL_DEFAULT_UNIT} from "models";
-import {NumberFormatType} from "stores";
+import {FrameStore, NumberFormatType} from "stores";
 import {add2D, polygonPerimeter, rotate2D, scale2D, subtract2D, magDir2D} from "./math2d";
 import {trimFitsComment} from "./parsing";
 
@@ -36,7 +36,32 @@ export function transformPoint(astTransform: AST.FrameSet, point: Point2D, forwa
     return AST.transformPoint(astTransform, point.x, point.y, forward);
 }
 
-// TODO: possibly move to region class since they are the only callers
+export function getReferencePixel(frame: FrameStore): Point2D {
+    const x = getHeaderNumericValue(frame?.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CRPIX1"));
+    const y = getHeaderNumericValue(frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CRPIX2"));
+    return {x, y};
+}
+
+export function getPixelSize(frame: FrameStore, axis: number): number {
+    const headerEntries = frame?.frameInfo?.fileInfoExtended?.headerEntries;
+    if (!headerEntries) {
+        return NaN;
+    }
+
+    // First try the usual CDELT value
+    let header = headerEntries.find(entry => entry.name === `CDELT${axis}`);
+    if (!header) {
+        // Otherwise revert to PC matrix
+        header = headerEntries.find(entry => entry.name === `PC${axis}_${axis}`);
+        if (!header) {
+            // Finally, try the deprecated CD matrix
+            header = headerEntries.find(entry => entry.name === `CD${axis}_${axis}`);
+        }
+    }
+
+    return getHeaderNumericValue(header);
+}
+
 export function getFormattedWCSPoint(astTransform: AST.FrameSet, pixelCoords: Point2D) {
     if (astTransform) {
         const pointWCS = transformPoint(astTransform, pixelCoords);
