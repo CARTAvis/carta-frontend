@@ -1751,17 +1751,13 @@ export class FrameStore {
 
         if (this.spatialTransformAST) {
             AST.deleteObject(this.spatialTransformAST);
-            this.spatialTransformAST = null;
         }
-
-        if (this.spatialTransform) {
-            this.spatialTransform = null;
-        }
-
         if (this.transformedWcsInfo) {
             AST.deleteObject(this.transformedWcsInfo);
-            this.transformedWcsInfo = null;
         }
+        this.spatialTransformAST = null;
+        this.spatialTransform = null;
+        this.transformedWcsInfo = null;
 
         const gl = ContourWebGLService.Instance.gl;
         if (gl) {
