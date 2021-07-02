@@ -42,7 +42,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        console.log(wcsInfo);
         if (wcsInfo && frameView) {
             this.updateImageDimensions();
             AST.setCanvas(this.canvas);
