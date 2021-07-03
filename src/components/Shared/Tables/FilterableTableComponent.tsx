@@ -1,15 +1,15 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
-import {Checkbox, InputGroup, Icon, Label} from "@blueprintjs/core";
-import {Popover2, Popover2InteractionKind} from "@blueprintjs/popover2";
+import {Checkbox, InputGroup, Icon, Label, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
-import {ControlHeader} from "stores";
+import {AppStore, ControlHeader} from "stores";
 import {SpectralLineHeaders} from "stores/widgets";
 import {ProcessedColumnData} from "models";
-import "./TableComponent.scss";
+import "./FilterableTableComponent.scss";
 
 export type ColumnFilter = {index: number; columnFilter: string};
 
@@ -37,7 +37,6 @@ export class FilterableTableComponentProps {
     flipRowSelection?: (rowIndex: number) => void;
     sortingInfo?: {columnName: string; sortingType: CARTA.SortingType};
     disableSort?: boolean;
-    darkTheme?: boolean;
     tableHeaders?: Array<CARTA.ICatalogHeader>;
 }
 
@@ -119,13 +118,11 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                     />
                 </ColumnHeaderCell>
                 <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
-                    <Popover2
+                    <Tooltip2
                         hoverOpenDelay={250}
                         hoverCloseDelay={0}
-                        className={"column-popover"}
-                        popoverClassName={this.props.darkTheme ? "column-popover-dark" : "column-popover"}
                         content={filterSyntax}
-                        interactionKind={Popover2InteractionKind.HOVER}
+                        position={Position.BOTTOM}
                     >
                         <InputGroup
                             key={"column-popover-" + columnIndex}
@@ -134,7 +131,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             value={controlheader?.filter ?? ""}
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, columnHeader.name)}
                         />
-                    </Popover2>
+                    </Tooltip2>
                 </ColumnHeaderCell>
             </ColumnHeaderCell>
         );
@@ -212,7 +209,6 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const sortingInfo = this.props.sortingInfo;
         const headerDescription = this.props.tableHeaders?.[controlheader?.dataIndex]?.description;
         const disableSort = this.props.disableSort;
-        let popOverClass = this.props.darkTheme ? "column-popover-dark" : "column-popover";
 
         const nameRenderer = () => {
             // sharing css with fileList table
@@ -233,16 +229,15 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType))}>
                     <Label disabled={disableSort} className="bp3-inline label">
                         <Icon className={iconClass} icon={sortIcon as IconName} />
-                        <Popover2
+                        <Tooltip2
                             hoverOpenDelay={250}
                             hoverCloseDelay={0}
-                            className={"column-popover"}
-                            popoverClassName={popOverClass}
                             content={headerDescription ?? "Description not avaliable"}
-                            interactionKind={Popover2InteractionKind.HOVER}
+                            position={Position.BOTTOM}
+                            popoverClassName={AppStore.Instance.darkTheme ? "bp3-dark" : ""}
                         >
                             {column.name}
-                        </Popover2>
+                        </Tooltip2>
                     </Label>
                 </div>
             );
@@ -252,9 +247,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             <ColumnHeaderCell>
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />
                 <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
-                    <Popover2 hoverOpenDelay={250} hoverCloseDelay={0} className={"column-popover"} popoverClassName={popOverClass} content={filterSyntax} interactionKind={Popover2InteractionKind.HOVER}>
+                    <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
                         <InputGroup key={"column-popover-" + columnIndex} small={true} placeholder="Click to filter" value={controlheader?.filter ?? ""} onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)} />
-                    </Popover2>
+                    </Tooltip2>
                 </ColumnHeaderCell>
             </ColumnHeaderCell>
         );
@@ -313,9 +308,14 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             tableColumns.push(column);
         });
 
+        let className = "column-filter-table";
+        if (AppStore.Instance.darkTheme) {
+            className += " dark-theme";
+        }
+
         return (
             <Table
-                className={"column-filter-table"}
+                className={className}
                 ref={table.updateTableRef ? ref => table.updateTableRef(ref) : null}
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.BATCH}
