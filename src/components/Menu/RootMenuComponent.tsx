@@ -1,11 +1,11 @@
 import * as React from "react";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Icon, Menu, Position, MenuDivider} from "@blueprintjs/core";
+import {Alert, Icon, Menu, Position, MenuDivider, AnchorButton} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
-import {PresetLayout} from "models";
-import {AppStore, BrowserMode, PreferenceKeys, WidgetsStore, WidgetType} from "stores";
+import {PresetLayout, Snippet} from "models";
+import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {IconName} from "@blueprintjs/icons";
@@ -27,13 +27,23 @@ export class RootMenuComponent extends React.Component {
         window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
     };
 
+    private handleWidgetExecuteClicked = async (ev: React.MouseEvent<HTMLElement>, snippet: Snippet) => {
+        ev.stopPropagation();
+        const snippetStore = SnippetStore.Instance;
+        if (snippet?.code) {
+            snippetStore.setSnippetString(snippet.code);
+            await snippetStore.executeCurrentSnippet();
+        }
+    };
+
     private genWidgetsMenu = () => {
-        const regionListConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.Region);
-        const imageListConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.ImageList);
-        const logConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.Log);
-        const spatialProfilerConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.SpatialProfiler);
-        const spectralProfilerConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.SpectralProfiler);
-        const restWidgets = Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).filter(widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler].includes(widget));
+        const cartaWidgets = WidgetsStore.Instance.CARTAWidgets;
+        const regionListConfig = cartaWidgets.get(WidgetType.Region);
+        const imageListConfig = cartaWidgets.get(WidgetType.ImageList);
+        const logConfig = cartaWidgets.get(WidgetType.Log);
+        const spatialProfilerConfig = cartaWidgets.get(WidgetType.SpatialProfiler);
+        const spectralProfilerConfig = cartaWidgets.get(WidgetType.SpectralProfiler);
+        const restWidgets = Array.from(cartaWidgets.keys()).filter(widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler].includes(widget));
 
         return (
             <Menu className="widgets-menu">
@@ -47,7 +57,7 @@ export class RootMenuComponent extends React.Component {
                     <Menu.Item text={WidgetType.SpectralProfiler} icon={<CustomIcon icon={spectralProfilerConfig.icon as CustomIconName} />} onClick={spectralProfilerConfig.onClick} />
                 </Menu.Item>
                 {restWidgets.map(widgetType => {
-                    const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
+                    const widgetConfig = cartaWidgets.get(widgetType);
                     const trimmedStr = widgetType.replace(/\s+/g, "");
                     return (
                         <Menu.Item key={`${trimmedStr}Menu`} text={widgetType} icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)} onClick={widgetConfig.onClick} />
@@ -184,7 +194,8 @@ export class RootMenuComponent extends React.Component {
                     </Menu.Item>
                 )}
                 <Menu.Item text="File header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
-                <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} onClick={appStore.dialogStore.showContourDialog} />
+                <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showContourDialog} />
+                <Menu.Item text="Code snippets" icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} />
             </Menu>
         );
 
@@ -192,8 +203,29 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 <Menu.Item text="Online Manual" icon={"manual"} onClick={this.handleDocumentationClicked} />
                 <Menu.Item text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog} />
-                <Menu.Item text="Debug Execution" icon={"console"} onClick={appStore.dialogStore.showDebugExecutionDialog} />
                 <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog} />
+            </Menu>
+        );
+
+        const snippetEntries: React.ReactNode[] = [];
+        for (const [name, snippet] of appStore.snippetStore.snippets) {
+            // Skip hidden snippets
+            if (snippet?.categories?.includes("hidden")) {
+                continue;
+            }
+            const labelElement = (
+                <Tooltip2 content={"Execute code snippet"} hoverOpenDelay={500}>
+                    <AnchorButton small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet)} />
+                </Tooltip2>
+            );
+            snippetEntries.push(<Menu.Item key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showExistingCodeSnippet(snippet)} />);
+        }
+
+        const snippetsMenu = (
+            <Menu>
+                {snippetEntries}
+                {snippetEntries.length > 0 && <Menu.Divider />}
+                <Menu.Item text="Create new snippet" icon={"code-block"} onClick={appStore.dialogStore.showNewCodeSnippet} />
             </Menu>
         );
 
@@ -298,6 +330,11 @@ export class RootMenuComponent extends React.Component {
                         <Menu.Item text="Widgets" />
                     </Menu>
                 </Popover2>
+                <Popover2 autoFocus={false} minimal={true} content={snippetsMenu} position={Position.BOTTOM_LEFT}>
+                    <Menu className="root-menu-entry">
+                        <Menu.Item text="Snippets" />
+                    </Menu>
+                </Popover2>
                 <Popover2 autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="Help" />
@@ -321,6 +358,11 @@ export class RootMenuComponent extends React.Component {
                         }
                     >
                         <Icon icon={"feed"} className="connectivity-icon warning" />
+                    </Tooltip2>
+                )}
+                {appStore.snippetStore.isExecuting && (
+                    <Tooltip2 content="CARTA is currently executing a code snippet.">
+                        <Icon icon={"console"} intent={"warning"} />
                     </Tooltip2>
                 )}
                 <Tooltip2 content={connectivityTooltip}>
