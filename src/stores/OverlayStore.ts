@@ -1,35 +1,22 @@
 import * as AST from "ast_wrapper";
-import {Colors} from "@blueprintjs/core";
-import { action, autorun, computed, observable, makeObservable } from "mobx";
+import {action, autorun, computed, observable, makeObservable} from "mobx";
 import {AppStore, FrameStore, PreferenceStore, WCS_PRECISION} from "stores";
 import {WCSType} from "models";
-import {toFixed} from "utilities";
+import {toFixed, clamp, getColorForTheme} from "utilities";
 
-const AST_DEFAULT_COLOR = 4; // blue
+const AST_DEFAULT_COLOR = "auto-blue";
 
-export const dayPalette = [
-    Colors.BLACK,        // 0
-    Colors.WHITE,        // 1
-    Colors.RED2,         // 2
-    Colors.FOREST3,      // 3
-    Colors.BLUE2,        // 4
-    Colors.TURQUOISE2,   // 5
-    Colors.VIOLET2,      // 6
-    Colors.GOLD2,        // 7
-    Colors.GRAY2         // 8
-];
-
-export const nightPalette = [
-    Colors.BLACK,        // 0
-    Colors.WHITE,        // 1
-    Colors.RED4,         // 2
-    Colors.FOREST4,      // 3
-    Colors.BLUE4,        // 4
-    Colors.TURQUOISE4,   // 5
-    Colors.VIOLET4,      // 6
-    Colors.GOLD4,        // 7
-    Colors.GRAY4         // 8
-];
+export enum AstColorsIndex {
+    GLOBAL = 0,
+    TITLE = 1,
+    GRID = 2,
+    BORDER = 3,
+    TICK = 4,
+    AXIS = 5,
+    NUMBER = 6,
+    LABEL = 7,
+    DISTANCE_MEASURE = 8
+}
 
 export enum LabelType {
     Interior = "Interior",
@@ -42,7 +29,7 @@ export enum SystemType {
     FK4 = "FK4",
     FK5 = "FK5",
     Galactic = "GALACTIC",
-    ICRS = "ICRS",
+    ICRS = "ICRS"
 }
 
 export enum NumberFormatType {
@@ -54,7 +41,7 @@ export enum NumberFormatType {
 export const NUMBER_FORMAT_LABEL = new Map<NumberFormatType, string>([
     [NumberFormatType.HMS, "H:M:S"],
     [NumberFormatType.DMS, "D:M:S"],
-    [NumberFormatType.Degrees, "Degrees"],
+    [NumberFormatType.Degrees, "Degrees"]
 ]);
 
 export enum BeamType {
@@ -78,7 +65,7 @@ export class ASTSettingsString {
 
     add(name: string, value: any, storeIf: boolean = true) {
         if (value !== undefined && storeIf) {
-            let storedValue = (typeof value === "boolean" ? (value ? 1 : 0) : value);
+            let storedValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
             this.stringList.push(`${name}=${storedValue}`);
         }
     }
@@ -96,7 +83,7 @@ export class ASTSettingsString {
 
 export class OverlayGlobalSettings {
     @observable labelType: LabelType;
-    @observable color: number;
+    @observable color: string;
     @observable tolerance: number; // percentage
     @observable system: SystemType;
 
@@ -107,9 +94,8 @@ export class OverlayGlobalSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("Labelling", this.labelType);
-        astString.add("Color", this.color);
-        astString.add("Tol", toFixed(this.tolerance / 100, 2), (this.tolerance >= 0.001)); // convert to fraction
-        astString.add("System", this.explicitSystem);
+        astString.add("Color", AstColorsIndex.GLOBAL);
+        astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
         return astString.toString();
     }
 
@@ -130,15 +116,16 @@ export class OverlayGlobalSettings {
         makeObservable(this);
         this.system = SystemType.Auto;
         this.labelType = LabelType.Exterior;
-        this.color = PreferenceStore.Instance.astColor;
+        this.setColor(PreferenceStore.Instance.astColor);
         this.tolerance = 2; // percentage
 
         this.defaultSystem = SystemType.Auto;
         this.validWcs = false;
     }
 
-    @action setColor = (color: number) => {
+    @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(getColorForTheme(color), AstColorsIndex.GLOBAL);
     };
 
     @action setTolerance(tolerance: number) {
@@ -151,6 +138,12 @@ export class OverlayGlobalSettings {
 
     @action setSystem(system: SystemType) {
         this.system = system;
+
+        // update distance measuring position tranformation before plotting
+        const wcsInfo = AppStore.Instance.activeFrame?.wcsInfo;
+        if (wcsInfo && this.explicitSystem) {
+            AST.set(wcsInfo, `System=${this.explicitSystem}`);
+        }
     }
 
     @action setDefaultSystem(system: SystemType) {
@@ -167,7 +160,7 @@ export class OverlayTitleSettings {
     @observable font: number;
     @observable fontSize: number;
     @observable customColor: boolean;
-    @observable color: number;
+    @observable color: string;
     @observable hidden: boolean;
     @observable customText: boolean;
     @observable customTitleString: string;
@@ -177,7 +170,7 @@ export class OverlayTitleSettings {
         astString.add("DrawTitle", this.show);
         astString.add("Font(Title)", this.font);
         astString.add("Size(Title)", this.fontSize);
-        astString.add("Color(Title)", this.color, this.customColor);
+        astString.add("Color(Title)", AstColorsIndex.TITLE, this.customColor);
         astString.add("Title", this.customTitleString, this.customText);
         return astString.toString();
     }
@@ -218,8 +211,9 @@ export class OverlayTitleSettings {
         this.customColor = customColor;
     }
 
-    @action setColor = (color: number) => {
+    @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(getColorForTheme(color), AstColorsIndex.TITLE);
     };
 
     @action setCustomText = (customTitle: boolean) => {
@@ -234,7 +228,7 @@ export class OverlayTitleSettings {
 export class OverlayGridSettings {
     @observable visible: boolean;
     @observable customColor: boolean;
-    @observable color: number;
+    @observable color: string;
     @observable width: number;
     @observable customGap: boolean;
     @observable gapX: number;
@@ -243,8 +237,8 @@ export class OverlayGridSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("Grid", this.visible);
-        astString.add("Color(Grid)", this.color, this.customColor);
-        astString.add("Width(Grid)", this.width, (this.width > 0));
+        astString.add("Color(Grid)", AstColorsIndex.GRID, this.customColor);
+        astString.add("Width(Grid)", this.width, this.width > 0);
         astString.add("Gap(1)", this.gapX, this.customGap);
         astString.add("Gap(2)", this.gapY, this.customGap);
         return astString.toString();
@@ -269,8 +263,9 @@ export class OverlayGridSettings {
         this.customColor = customColor;
     }
 
-    @action setColor = (color: number) => {
+    @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(getColorForTheme(color), AstColorsIndex.GRID);
     };
 
     @action setWidth(width: number) {
@@ -293,14 +288,14 @@ export class OverlayGridSettings {
 export class OverlayBorderSettings {
     @observable visible: boolean;
     @observable customColor: boolean;
-    @observable color: number;
+    @observable color: string;
     @observable width: number;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("Border", this.visible);
-        astString.add("Color(Border)", this.color, this.customColor);
-        astString.add("Width(Border)", this.width, (this.width > 0));
+        astString.add("Color(Border)", AstColorsIndex.BORDER, this.customColor);
+        astString.add("Width(Border)", this.width, this.width > 0);
         return astString.toString();
     }
 
@@ -320,8 +315,9 @@ export class OverlayBorderSettings {
         this.customColor = customColor;
     }
 
-    @action setColor = (color: number) => {
+    @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(getColorForTheme(color), AstColorsIndex.BORDER);
     };
 
     @action setWidth(width: number) {
@@ -335,7 +331,7 @@ export class OverlayTickSettings {
     @observable densityY: number;
     @observable customDensity: boolean;
     @observable customColor: boolean;
-    @observable color: number;
+    @observable color: string;
     @observable width: number;
     @observable length: number; // percentage
     @observable majorLength: number; // percentage
@@ -345,8 +341,8 @@ export class OverlayTickSettings {
         astString.add("TickAll", this.drawAll);
         astString.add("MinTick(1)", this.densityX, this.customDensity);
         astString.add("MinTick(2)", this.densityY, this.customDensity);
-        astString.add("Color(Ticks)", this.color, this.customColor);
-        astString.add("Width(Ticks)", this.width, (this.width > 0));
+        astString.add("Color(Ticks)", AstColorsIndex.TICK, this.customColor);
+        astString.add("Width(Ticks)", this.width, this.width > 0);
         astString.add("MinTickLen", toFixed(this.length / 100, 2)); // convert to fraction
         astString.add("MajTickLen", toFixed(this.majorLength / 100, 2)); // convert to fraction
         return astString.toString();
@@ -385,8 +381,9 @@ export class OverlayTickSettings {
         this.customColor = customColor;
     }
 
-    @action setColor = (color: number) => {
+    @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(getColorForTheme(color), AstColorsIndex.TICK);
     };
 
     @action setWidth(width: number) {
@@ -405,7 +402,7 @@ export class OverlayTickSettings {
 export class OverlayAxisSettings {
     @observable visible: boolean;
     @observable customColor: boolean;
-    @observable color: number;
+    @observable color: string;
     @observable width: number;
 
     constructor() {
@@ -420,8 +417,8 @@ export class OverlayAxisSettings {
         let astString = new ASTSettingsString();
 
         astString.add("DrawAxes", this.visible);
-        astString.add("Color(Axes)", this.color, this.customColor);
-        astString.add("Width(Axes)", this.width, (this.width > 0));
+        astString.add("Color(Axes)", AstColorsIndex.AXIS, this.customColor);
+        astString.add("Width(Axes)", this.width, this.width > 0);
 
         return astString.toString();
     }
@@ -434,8 +431,9 @@ export class OverlayAxisSettings {
         this.customColor = customColor;
     }
 
-    @action setColor = (color: number) => {
+    @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(getColorForTheme(color), AstColorsIndex.AXIS);
     };
 
     @action setWidth(width: number) {
@@ -449,7 +447,7 @@ export class OverlayNumberSettings {
     @observable font: number;
     @observable fontSize: number;
     @observable customColor: boolean;
-    @observable color: number;
+    @observable color: string;
     @observable customFormat: boolean;
     @observable formatX: NumberFormatType;
     @observable formatY: NumberFormatType;
@@ -500,7 +498,7 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        const precision = (this.customPrecision ? this.precision : "*");
+        const precision = this.customPrecision ? this.precision : "*";
         return `${this.formatTypeX}.${precision}`;
     }
 
@@ -509,7 +507,7 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        const precision = (this.customPrecision ? this.precision : "*");
+        const precision = this.customPrecision ? this.precision : "*";
         return `${this.formatTypeY}.${precision}`;
     }
 
@@ -518,7 +516,7 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = (this.customFormat ? this.formatX : this.defaultFormatX);
+        let format = this.customFormat ? this.formatX : this.defaultFormatX;
         return `${format}.${precision}`;
     }
 
@@ -527,7 +525,7 @@ export class OverlayNumberSettings {
             return undefined;
         }
 
-        let format = (this.customFormat ? this.formatY : this.defaultFormatY);
+        let format = this.customFormat ? this.formatY : this.defaultFormatY;
         return `${format}.${precision}`;
     }
 
@@ -537,7 +535,7 @@ export class OverlayNumberSettings {
         astString.add("NumLab", this.show);
         astString.add("Font(NumLab)", this.font);
         astString.add("Size(NumLab)", this.fontSize);
-        astString.add("Color(NumLab)", this.color, this.customColor);
+        astString.add("Color(NumLab)", AstColorsIndex.NUMBER, this.customColor);
 
         // Add settings for individual axes
         astString.add("Format(1)", this.formatStringX);
@@ -570,8 +568,9 @@ export class OverlayNumberSettings {
         this.customColor = customColor;
     }
 
-    @action setColor = (color: number) => {
+    @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(getColorForTheme(color), AstColorsIndex.NUMBER);
     };
 
     @action setCustomFormat(customFormat: boolean) {
@@ -611,7 +610,7 @@ export class OverlayLabelSettings {
     @observable visible: boolean;
     @observable hidden: boolean;
     @observable customColor: boolean;
-    @observable color: number;
+    @observable color: string;
     @observable font: number;
     @observable fontSize: number;
     @observable customText: boolean;
@@ -637,7 +636,7 @@ export class OverlayLabelSettings {
         astString.add("TextLab", this.show);
         astString.add("Font(TextLab)", this.font);
         astString.add("Size(TextLab)", this.fontSize);
-        astString.add("Color(TextLab)", this.color, this.customColor);
+        astString.add("Color(TextLab)", AstColorsIndex.LABEL, this.customColor);
         astString.add("Label(1)", this.customLabelX, this.customText);
         astString.add("Label(2)", this.customLabelY, this.customText);
 
@@ -660,8 +659,9 @@ export class OverlayLabelSettings {
         this.customColor = customColor;
     }
 
-    @action setColor = (color: number) => {
+    @action setColor = (color: string) => {
         this.color = color;
+        AST.setColor(getColorForTheme(color), AstColorsIndex.LABEL);
     };
 
     @action setFont = (font: number) => {
@@ -683,6 +683,310 @@ export class OverlayLabelSettings {
     @action setCustomLabelY = (label: string) => {
         this.customLabelY = label;
     };
+}
+
+export class OverlayColorbarSettings {
+    @observable visible: boolean;
+    @observable interactive: boolean;
+    @observable width: number;
+    @observable offset: number;
+    @observable position: string;
+    @observable customColor: boolean;
+    @observable color: string;
+    @observable borderVisible: boolean;
+    @observable borderWidth: number;
+    @observable borderCustomColor: boolean;
+    @observable borderColor: string;
+    @observable tickVisible: boolean;
+    @observable tickDensity: number;
+    @observable tickLen: number;
+    @observable tickWidth: number;
+    @observable tickCustomColor: boolean;
+    @observable tickColor: string;
+    @observable numberVisible: boolean;
+    @observable numberRotation: number;
+    @observable numberFont: number;
+    @observable numberFontSize: number;
+    @observable numberCustomPrecision: boolean;
+    @observable numberPrecision: number;
+    @observable numberCustomColor: boolean;
+    @observable numberColor: string;
+    @observable labelVisible: boolean;
+    @observable labelRotation: number;
+    @observable labelFont: number;
+    @observable labelFontSize: number;
+    @observable labelCustomText: boolean;
+    @observable labelCustomColor: boolean;
+    @observable labelColor: string;
+    private textRatio = [0.5, 0.45, 0.5, 0.45, 0.6];
+
+    constructor() {
+        makeObservable(this);
+        this.visible = true;
+        this.interactive = true;
+        this.width = 15;
+        this.offset = 5;
+        this.position = "right";
+        this.customColor = false;
+        this.color = AST_DEFAULT_COLOR;
+        this.borderVisible = true;
+        this.borderWidth = 1;
+        this.borderCustomColor = false;
+        this.borderColor = AST_DEFAULT_COLOR;
+        this.tickVisible = true;
+        this.tickDensity = 1;
+        this.tickLen = 6;
+        this.tickWidth = 1;
+        this.tickCustomColor = false;
+        this.tickColor = AST_DEFAULT_COLOR;
+        this.numberVisible = true;
+        this.numberRotation = -90;
+        this.numberFont = 0;
+        this.numberFontSize = 12;
+        this.numberCustomPrecision = false;
+        this.numberPrecision = 3;
+        this.numberCustomColor = false;
+        this.numberColor = AST_DEFAULT_COLOR;
+        this.labelVisible = false;
+        this.labelRotation = -90;
+        this.labelFont = 0;
+        this.labelFontSize = 15;
+        this.labelCustomText = false;
+        this.labelCustomColor = false;
+        this.labelColor = AST_DEFAULT_COLOR;
+    }
+
+    @action setVisible = (visible: boolean) => {
+        this.visible = visible;
+    };
+
+    @action setInteractive = (interactive: boolean) => {
+        this.interactive = interactive;
+    };
+
+    @action setWidth = (width: number) => {
+        this.width = width;
+    };
+
+    @action setOffset = (offset: number) => {
+        this.offset = offset;
+    };
+
+    @action setPosition = (position: string) => {
+        this.position = position;
+    };
+
+    @action setCustomColor = (customColor: boolean) => {
+        this.customColor = customColor;
+    };
+
+    @action setColor = (color: string) => {
+        this.color = color;
+    };
+
+    @action setBorderVisible = (visible: boolean) => {
+        this.borderVisible = visible;
+    };
+
+    @action setBorderWidth = (width: number) => {
+        this.borderWidth = width;
+    };
+
+    @action setBorderCustomColor = (customColor: boolean) => {
+        this.borderCustomColor = customColor;
+    };
+
+    @action setBorderColor = (color: string) => {
+        this.borderColor = color;
+    };
+
+    @action setTickVisible = (visible: boolean) => {
+        this.tickVisible = visible;
+    };
+
+    @action setTickDensity = (density: number) => {
+        this.tickDensity = density;
+    };
+
+    @action setTickLen = (len: number) => {
+        this.tickLen = len;
+    };
+
+    @action setTickWidth = (width: number) => {
+        this.tickWidth = width;
+    };
+
+    @action setTickCustomColor = (customColor: boolean) => {
+        this.tickCustomColor = customColor;
+    };
+
+    @action setTickColor = (color: string) => {
+        this.tickColor = color;
+    };
+
+    @action setNumberVisible = (visible: boolean) => {
+        this.numberVisible = visible;
+    };
+
+    @action setNumberRotation = (rotation: number) => {
+        this.numberRotation = rotation;
+    };
+
+    @action setNumberFont = (font: number) => {
+        this.numberFont = font;
+    };
+
+    @action setNumberFontSize = (fontSize: number) => {
+        this.numberFontSize = fontSize;
+    };
+
+    @action setNumberCustomPrecision = (customPrecision: boolean) => {
+        this.numberCustomPrecision = customPrecision;
+    };
+
+    @action setNumberPrecision = (precision: number) => {
+        this.numberPrecision = precision;
+    };
+
+    @action setNumberCustomColor = (customColor: boolean) => {
+        this.numberCustomColor = customColor;
+    };
+
+    @action setNumberColor = (color: string) => {
+        this.numberColor = color;
+    };
+
+    @action setLabelVisible = (visible: boolean) => {
+        this.labelVisible = visible;
+    };
+
+    @action setLabelRotation = (rotation: number) => {
+        this.labelRotation = rotation;
+    };
+
+    @action setLabelFont = (font: number) => {
+        this.labelFont = font;
+    };
+
+    @action setLabelFontSize = (fontSize: number) => {
+        this.labelFontSize = fontSize;
+    };
+
+    @action setLabelCustomText = (customText: boolean) => {
+        this.labelCustomText = customText;
+    };
+
+    @action setLabelCustomColor = (customColor: boolean) => {
+        this.labelCustomColor = customColor;
+    };
+
+    @action setLabelColor = (color: string) => {
+        this.labelColor = color;
+    };
+
+    @computed get yOffset(): number {
+        const padding = AppStore.Instance?.overlayStore?.padding;
+        return this.position === "right" ? padding?.top : padding?.left;
+    }
+
+    @computed get height(): number {
+        const overlayStore = AppStore.Instance?.overlayStore;
+        return this.position === "right" ? overlayStore?.renderHeight : overlayStore?.renderWidth;
+    }
+
+    @computed get tickNum(): number {
+        const tickNum = Math.round((this.height / 100.0) * this.tickDensity);
+        return this.height && tickNum > 1 ? tickNum : 1;
+    }
+
+    private getOrder = (x: number): number => {
+        return x === 0 ? 0 : Math.log10(Math.abs(x));
+    };
+
+    private getPrecision = (x: number): number => {
+        return Math.floor(this.getOrder(x));
+    };
+
+    @computed get roundedNumbers(): {numbers: number[]; precision: number} {
+        const frame = AppStore.Instance?.activeFrame;
+        const scaleMinVal = frame?.renderConfig?.scaleMinVal;
+        const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
+        const tickNum = this.tickNum;
+        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || scaleMinVal >= scaleMaxVal || !tickNum) {
+            return null;
+        } else {
+            let dy = (scaleMaxVal - scaleMinVal) / tickNum; // estimate the step
+            let precision = -this.getPrecision(dy); // estimate precision
+            const roundBase = Math.pow(10, precision);
+            const min = Math.round(scaleMinVal * roundBase) / roundBase;
+            dy = Math.ceil(dy * roundBase) / roundBase; // the exact step
+            precision = -this.getPrecision(dy); // the exact precision of the step
+
+            const indexArray = Array.from(Array(tickNum).keys());
+            let numbers = indexArray.map(x => min + dy * (x + (min <= scaleMinVal ? 1 : 0)));
+
+            const isOutofBound = (element: number) => element >= scaleMaxVal;
+            const outofBoundIndex = numbers.findIndex(isOutofBound);
+            if (outofBoundIndex !== -1) {
+                numbers = numbers.slice(0, outofBoundIndex);
+            }
+            return {numbers: numbers, precision: precision};
+        }
+    }
+
+    @computed get texts(): string[] {
+        if (!this.roundedNumbers) {
+            return [];
+        }
+        const orders = this.roundedNumbers.numbers.map(x => this.getOrder(x));
+        const maxOrder = Math.max(...orders);
+        const minOrder = Math.min(...orders);
+        if (maxOrder >= 5.0 || minOrder <= -5.0) {
+            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : x === 0 ? 0 : clamp(this.roundedNumbers.precision + this.getPrecision(x), 0, 50)));
+        } else {
+            return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 50)));
+        }
+    }
+
+    @computed get positions(): number[] {
+        const frame = AppStore.Instance?.activeFrame;
+        const scaleMinVal = frame?.renderConfig?.scaleMinVal;
+        const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
+        if (!this.roundedNumbers || !frame || !isFinite(this.yOffset)) {
+            return [];
+        }
+        if (this.position === "right") {
+            return this.roundedNumbers.numbers.map(x => this.yOffset + (this.height * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
+        } else {
+            return this.roundedNumbers.numbers.map(x => this.yOffset + (this.height * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
+        }
+    }
+
+    @computed get rightBorderPos(): number {
+        return this.position === "top" ? this.stageWidth - this.offset - this.width : this.offset + this.width;
+    }
+
+    @computed get textGap(): number {
+        return 5;
+    }
+
+    @computed get numberWidth(): number {
+        const textWidth = Math.max(...this.texts.map(x => x.length)) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
+        return this.numberVisible ? this.numberFontSize * (this.numberRotation || this.position !== "right" ? 1 : textWidth) + this.textGap : 0;
+    }
+
+    @computed get labelWidth(): number {
+        return this.labelVisible ? this.labelFontSize + this.textGap : 0;
+    }
+
+    @computed get totalWidth(): number {
+        return this.offset + this.width + this.numberWidth + this.labelWidth;
+    }
+
+    @computed get stageWidth(): number {
+        // total width + base
+        return this.totalWidth + 5;
+    }
 }
 
 export class OverlayBeamStore {
@@ -781,6 +1085,7 @@ export class OverlayStore {
     @observable numbers: OverlayNumberSettings;
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
+    @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
     private constructor() {
@@ -793,6 +1098,7 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
+        this.colorbar = new OverlayColorbarSettings();
         this.beam = new OverlayBeamSettings();
         this.viewHeight = 1;
         this.viewWidth = 1;
@@ -803,8 +1109,8 @@ export class OverlayStore {
             const _ = this.global.system;
             this.setFormatsFromSystem();
             const frame = AppStore.Instance.activeFrame;
-            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
-                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
+            if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem) {
+                AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
             }
         });
 
@@ -812,8 +1118,8 @@ export class OverlayStore {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _ = this.numbers.formatTypeX;
             const frame = AppStore.Instance.activeFrame;
-            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
-                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(1)=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
+            if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeX) {
+                AST.set(frame.wcsInfoForTransformation, `Format(1)=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
             }
         });
 
@@ -821,8 +1127,8 @@ export class OverlayStore {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _ = this.numbers.formatTypeY;
             const frame = AppStore.Instance.activeFrame;
-            if (frame && frame.wcsInfoForTransformation && frame.validWcs) {
-                AST.set(AppStore.Instance.activeFrame.wcsInfoForTransformation, `Format(2)=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
+            if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeY) {
+                AST.set(frame.wcsInfoForTransformation, `Format(2)=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
             }
         });
     }
@@ -885,7 +1191,7 @@ export class OverlayStore {
     };
 
     @computed get labelsHidden() {
-        return (this.labels.hidden && this.numbers.hidden && this.title.hidden);
+        return this.labels.hidden && this.numbers.hidden && this.title.hidden;
     }
 
     @computed get styleString() {
@@ -900,6 +1206,8 @@ export class OverlayStore {
         astString.addSection(this.numbers.styleString);
         astString.addSection(this.labels.styleString);
 
+        astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
+
         astString.add("LabelUp", 0);
         astString.add("TitleGap", this.titleGap / this.minSize);
         astString.add("NumLabGap", this.defaultGap / this.minSize);
@@ -910,11 +1218,11 @@ export class OverlayStore {
     }
 
     @computed get minSize() {
-        return Math.min(this.viewWidth, this.viewHeight);
+        return Math.min(this.renderWidth, this.renderHeight);
     }
 
     @computed get showNumbers() {
-        return (this.numbers.show && this.global.labelType === LabelType.Exterior);
+        return this.numbers.show && this.global.labelType === LabelType.Exterior;
     }
 
     @computed get defaultGap() {
@@ -922,40 +1230,63 @@ export class OverlayStore {
     }
 
     @computed get titleGap() {
-        return this.defaultGap * 2;
+        return this.defaultGap * 2 + (this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
     }
 
     @computed get cumulativeLabelGap() {
-        const numGap = (this.showNumbers ? this.defaultGap : 0);
-        const numHeight = (this.showNumbers ? this.numbers.fontSize : 0);
-        return (numGap + numHeight + this.defaultGap);
+        const numGap = this.showNumbers ? this.defaultGap : 0;
+        const numHeight = this.showNumbers ? this.numbers.fontSize : 0;
+        return numGap + numHeight + this.defaultGap;
+    }
+
+    @computed get base() {
+        return 5;
+    }
+
+    @computed get numberWidth(): number {
+        return this.showNumbers ? this.defaultGap + this.numbers.fontSize : 0;
+    }
+
+    @computed get labelWidth(): number {
+        return this.labels.show ? this.defaultGap + this.labels.fontSize : 0;
+    }
+
+    @computed get colorbarHoverInfoHeight(): number {
+        return !this.colorbar.visible || (this.colorbar.visible && this.colorbar.position !== "bottom" && this.labels.show) || (this.colorbar.visible && this.colorbar.position === "bottom" && this.colorbar.labelVisible) ? 0 : 10;
+    }
+
+    @computed get paddingLeft(): number {
+        return this.base + this.numberWidth + this.labelWidth;
+    }
+
+    @computed get paddingRight(): number {
+        return this.base + (this.colorbar.visible && this.colorbar.position === "right" ? this.colorbar.totalWidth : 0);
+    }
+
+    @computed get paddingTop(): number {
+        return this.base + (this.title.show ? this.titleGap + this.title.fontSize : this.colorbar.visible && this.colorbar.position === "top" ? this.colorbar.totalWidth : 0);
+    }
+
+    @computed get paddingBottom(): number {
+        return this.base + this.numberWidth + this.labelWidth + (this.colorbar.visible && this.colorbar.position === "bottom" ? this.colorbar.totalWidth : 0) + this.colorbarHoverInfoHeight;
     }
 
     @computed get padding(): Padding {
-        const base = 5;
-
-        const numGap = (this.showNumbers ? this.defaultGap : 0);
-        const numHeight = (this.showNumbers ? this.numbers.fontSize : 0);
-
-        const labelGap = (this.labels.show ? this.defaultGap : 0);
-        const labelHeight = (this.labels.show ? this.labels.fontSize : 0);
-
-        const titleGap = (this.title.show ? this.titleGap : 0);
-        const titleHeight = (this.title.show ? this.title.fontSize : 0);
-
         return {
-            left: base + numGap + numHeight + labelGap + labelHeight,
-            right: base,
-            top: base + titleGap + titleHeight,
-            bottom: base + numGap + numHeight + labelGap + labelHeight
+            left: this.paddingLeft,
+            right: this.paddingRight,
+            top: this.paddingTop,
+            bottom: this.paddingBottom
         };
     }
 
     @computed get renderWidth() {
-        return this.viewWidth - this.padding.left - this.padding.right;
+        const renderWidth = this.viewWidth - this.paddingLeft - this.paddingRight;
+        return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
     }
 
     @computed get renderHeight() {
-        return this.viewHeight - this.padding.top - this.padding.bottom;
+        const renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
+        return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
     }
 }

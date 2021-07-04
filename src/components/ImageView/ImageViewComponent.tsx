@@ -1,34 +1,42 @@
 import * as React from "react";
 import $ from "jquery";
 import {observer} from "mobx-react";
-import {autorun, makeObservable, observable, runInAction} from "mobx";
+import {action, autorun, makeObservable, observable, runInAction} from "mobx";
 import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
+import {ColorbarComponent} from "./Colorbar/ColorbarComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {ContourViewComponent} from "./ContourView/ContourViewComponent";
-import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
+import {CatalogViewGLComponent} from "./CatalogView/CatalogViewGLComponent";
 import {AppStore, RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, Padding} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.scss";
 
-export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
+export const getImageCanvas = (padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+    const catalogCanvas = document.getElementById("catalog-canvas") as HTMLCanvasElement;
 
     if (!rasterCanvas || !contourCanvas || !overlayCanvas) {
         return null;
     }
 
+    let colorbarCanvas: HTMLCanvasElement;
     let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
-    let catalogCanvas: HTMLCanvasElement;
+
+    const colorbarQuery = $(".colorbar-stage").children().children("canvas");
+    if (colorbarQuery && colorbarQuery.length) {
+        colorbarCanvas = colorbarQuery[0] as HTMLCanvasElement;
+    }
+
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
     if (beamProfileQuery && beamProfileQuery.length) {
         beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
@@ -37,11 +45,6 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     const regionQuery = $(".region-stage").children().children("canvas");
     if (regionQuery && regionQuery.length) {
         regionCanvas = regionQuery[0] as HTMLCanvasElement;
-    }
-
-    const catalogQuery = $(".catalog-plotly")?.children()?.children()?.children(".gl-container")?.children(".gl-canvas-context");
-    if (catalogQuery && catalogQuery.length) {
-        catalogCanvas = catalogQuery[0] as HTMLCanvasElement;
     }
 
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -53,24 +56,40 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    if (colorbarCanvas) {
+        let xPos, yPos;
+        switch (colorbarPosition) {
+            case "top":
+                xPos = 0;
+                yPos = padding.top * devicePixelRatio - colorbarCanvas.height;
+                break;
+            case "bottom":
+                xPos = 0;
+                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * devicePixelRatio;
+                break;
+            case "right":
+            default:
+                xPos = padding.left * devicePixelRatio + rasterCanvas.width;
+                yPos = 0;
+                break;
+        }
+        ctx.drawImage(colorbarCanvas, xPos, yPos);
+    }
+
     if (beamProfileCanvas) {
         ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    }
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(overlayCanvas, 0, 0);
+
+    if (catalogCanvas) {
+        ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
 
     if (regionCanvas) {
         ctx.drawImage(regionCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
-
-    if (catalogCanvas) {
-        if (devicePixelRatio === 1) {
-            ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio, catalogCanvas.width / 2, catalogCanvas.height / 2);   
-        } else {
-            ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
-        }
-    }
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(overlayCanvas, 0, 0);
 
     return composedCanvas;
 };
@@ -78,7 +97,8 @@ export const getImageCanvas = (padding: Padding, backgroundColor: string = "rgba
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",
     Catalog = "catalog",
-    RegionMoving = "regionMoving"
+    RegionMoving = "regionMoving",
+    DistanceMeasuring = "distanceMeasuring"
 }
 
 @observer
@@ -87,6 +107,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     private cachedImageSize: Point2D;
 
     @observable showRatioIndicator: boolean;
+    @observable pixelHighlightValue: number = NaN;
     readonly activeLayer: ImageViewLayer;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -103,6 +124,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         };
     }
 
+    @action setPixelHighlightValue = (val: number) => {
+        this.pixelHighlightValue = val;
+    };
+
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
@@ -116,10 +141,14 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 if (!this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y) {
                     this.cachedImageSize = imageSize;
                     clearTimeout(this.ratioIndicatorTimeoutHandle);
-                    runInAction(() => this.showRatioIndicator = true);
-                    this.ratioIndicatorTimeoutHandle = setTimeout(() => runInAction(() => {
-                        this.showRatioIndicator = false;
-                    }), 1000);
+                    runInAction(() => (this.showRatioIndicator = true));
+                    this.ratioIndicatorTimeoutHandle = setTimeout(
+                        () =>
+                            runInAction(() => {
+                                this.showRatioIndicator = false;
+                            }),
+                        1000
+                    );
                 }
             }
         });
@@ -180,81 +209,57 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         if (appStore.activeFrame && appStore.activeFrame.isRenderable && appStore.astReady) {
             const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
-            const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
+            const imageRatioTagOffset = {
+                x: overlayStore.padding.left + overlayStore.viewWidth / 2.0,
+                y: overlayStore.padding.top + overlayStore.viewHeight / 2.0
+            };
 
             divContents = (
                 <React.Fragment>
-                    {appStore.activeFrame.valid &&
-                    <OverlayComponent
-                        frame={appStore.activeFrame}
-                        overlaySettings={overlayStore}
-                        docked={this.props.docked}
-                    />
-                    }
-                    {appStore.activeFrame.cursorInfo &&
-                    <CursorOverlayComponent
-                        cursorInfo={appStore.activeFrame.cursorInfo}
-                        cursorValue={appStore.activeFrame.cursorInfo.isInsideImage ? appStore.activeFrame.cursorValue.value : undefined}
-                        isValueCurrent={appStore.activeFrame.isCursorValueCurrent}
-                        spectralInfo={appStore.activeFrame.spectralInfo}
-                        width={overlayStore.viewWidth}
-                        left={overlayStore.padding.left}
-                        right={overlayStore.padding.right}
-                        docked={this.props.docked}
-                        unit={appStore.activeFrame.unit}
-                        top={overlayStore.padding.top}
-                        currentStokes={appStore.activeFrame.hasStokes ? appStore.activeFrame.stokesInfo[appStore.activeFrame.requiredStokes] : ""}
-                        showImage={true}
-                        showWCS={true}
-                        showValue={true}
-                        showChannel={false}
-                        showSpectral={true}
-                        showStokes={true}
-                    />
-                    }
-                    {appStore.activeFrame &&
-                    <BeamProfileOverlayComponent
-                        top={overlayStore.padding.top}
-                        left={overlayStore.padding.left}
-                        docked={this.props.docked}
-                        padding={10}
-                    />
-                    }
-                    {appStore.activeFrame &&
-                    <RegionViewComponent
-                        frame={appStore.activeFrame}
-                        width={appStore.activeFrame.renderWidth}
-                        height={appStore.activeFrame.renderHeight}
-                        top={overlayStore.padding.top}
-                        left={overlayStore.padding.left}
-                        onClicked={this.onClicked}
-                        onRegionDoubleClicked={this.handleRegionDoubleClicked}
-                        onZoomed={this.onZoomed}
-                        overlaySettings={overlayStore}
-                        isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
-                        dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                        cursorFrozen={appStore.cursorFrozen}
-                        cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
-                        docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
-                    />
-                    }
-                    {appStore.activeFrame &&
-                    <CatalogViewComponent
-                        width={appStore.activeFrame.renderWidth}
-                        height={appStore.activeFrame.renderHeight}
-                        activeLayer={this.activeLayer}
-                        docked={this.props.docked && appStore.activeLayer === ImageViewLayer.Catalog}
-                        onClicked={this.onClicked}
-                        onZoomed={this.onZoomed}
-                    />
-                    }
-                    <ToolbarComponent
-                        docked={this.props.docked}
-                        visible={appStore.imageToolbarVisible}
-                        vertical={false}
-                        onActiveLayerChange={appStore.updateActiveLayer}
-                        activeLayer={this.activeLayer}
-                    />
+                    {appStore.activeFrame.valid && <OverlayComponent frame={appStore.activeFrame} overlaySettings={overlayStore} docked={this.props.docked} />}
+                    {appStore.activeFrame.cursorInfo && (
+                        <CursorOverlayComponent
+                            cursorInfo={appStore.activeFrame.cursorInfo}
+                            cursorValue={appStore.activeFrame.cursorInfo.isInsideImage ? appStore.activeFrame.cursorValue.value : undefined}
+                            isValueCurrent={appStore.activeFrame.isCursorValueCurrent}
+                            spectralInfo={appStore.activeFrame.spectralInfo}
+                            width={overlayStore.viewWidth}
+                            left={overlayStore.padding.left}
+                            right={overlayStore.padding.right}
+                            docked={this.props.docked}
+                            unit={appStore.activeFrame.unit}
+                            top={overlayStore.padding.top}
+                            currentStokes={appStore.activeFrame.hasStokes ? appStore.activeFrame.stokesInfo[appStore.activeFrame.requiredStokes] : ""}
+                            showImage={true}
+                            showWCS={true}
+                            showValue={true}
+                            showChannel={false}
+                            showSpectral={true}
+                            showStokes={true}
+                        />
+                    )}
+                    {appStore.activeFrame && overlayStore.colorbar.visible && <ColorbarComponent onCursorHoverValueChanged={this.setPixelHighlightValue} />}
+                    {appStore.activeFrame && <BeamProfileOverlayComponent top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
+                    {appStore.activeFrame && <CatalogViewGLComponent docked={this.props.docked} onZoomed={this.onZoomed} />}
+                    {appStore.activeFrame && (
+                        <RegionViewComponent
+                            frame={appStore.activeFrame}
+                            width={appStore.activeFrame.renderWidth}
+                            height={appStore.activeFrame.renderHeight}
+                            top={overlayStore.padding.top}
+                            left={overlayStore.padding.left}
+                            onClicked={this.onClicked}
+                            onRegionDoubleClicked={this.handleRegionDoubleClicked}
+                            onZoomed={this.onZoomed}
+                            overlaySettings={overlayStore}
+                            isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
+                            dragPanningEnabled={appStore.preferenceStore.dragPanning}
+                            cursorFrozen={appStore.cursorFrozen}
+                            cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
+                            docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
+                        />
+                    )}
+                    <ToolbarComponent docked={this.props.docked} visible={appStore.imageToolbarVisible} vertical={false} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
                     <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
                         <Tag large={true}>
                             {effectiveWidth} x {effectiveHeight} ({toFixed(effectiveWidth / effectiveHeight, 2)})
@@ -263,21 +268,17 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 </React.Fragment>
             );
         } else if (!appStore.astReady) {
-            divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>;
+            divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
+            divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
         }
 
         return (
             <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                <RasterViewComponent
-                    docked={this.props.docked}
-                />
-                <ContourViewComponent
-                    docked={this.props.docked}
-                />
+                <RasterViewComponent docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} />
+                <ContourViewComponent docked={this.props.docked} />
                 {divContents}
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
             </div>
         );
     }

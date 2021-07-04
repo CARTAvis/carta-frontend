@@ -13,6 +13,7 @@ interface ShaderUniforms {
     DashLength: WebGLUniformLocation;
     LineColor: WebGLUniformLocation;
     LineThickness: WebGLUniformLocation;
+    PixelRatio: WebGLUniformLocation;
     CmapEnabled: WebGLUniformLocation;
     CmapValue: WebGLUniformLocation;
     CmapTexture: WebGLUniformLocation;
@@ -85,6 +86,7 @@ export class ContourWebGLService {
             DashLength: this.gl.getUniformLocation(shaderProgram, "uDashLength"),
             LineColor: this.gl.getUniformLocation(shaderProgram, "uLineColor"),
             LineThickness: this.gl.getUniformLocation(shaderProgram, "uLineThickness"),
+            PixelRatio: this.gl.getUniformLocation(shaderProgram, "uPixelRatio"),
             CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
             CmapValue: this.gl.getUniformLocation(shaderProgram, "uCmapValue"),
             CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
@@ -96,7 +98,7 @@ export class ContourWebGLService {
             ControlMapSize: this.gl.getUniformLocation(shaderProgram, "uControlMapSize"),
             ControlMapMin: this.gl.getUniformLocation(shaderProgram, "uControlMapMin"),
             ControlMapMax: this.gl.getUniformLocation(shaderProgram, "uControlMapMax"),
-            ControlMapTexture: this.gl.getUniformLocation(shaderProgram, "uControlMapTexture"),
+            ControlMapTexture: this.gl.getUniformLocation(shaderProgram, "uControlMapTexture")
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);

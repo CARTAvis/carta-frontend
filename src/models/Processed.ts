@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import * as CARTACompute from "carta_computation";
 
-type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array | BigInt64Array | BigUint64Array;
+export type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array;
 export type ColumnArray = Array<string> | Array<boolean> | Array<number>;
 
 export interface ProcessedSpatialProfile extends CARTA.ISpatialProfile {
@@ -30,7 +30,7 @@ export interface ProcessedContourSet {
 
 export interface ProcessedColumnData {
     dataType: CARTA.ColumnType;
-    data: ColumnArray;
+    data: ColumnArray | TypedArray;
 }
 
 export class ProtobufProcessing {
@@ -111,7 +111,6 @@ export class ProtobufProcessing {
 
     static GetProcessedData(column: CARTA.IColumnData): ProcessedColumnData {
         let data: TypedArray;
-
         switch (column.dataType) {
             case CARTA.ColumnType.Uint8:
                 data = new Uint8Array(column.binaryData.slice().buffer);
@@ -149,19 +148,10 @@ export class ProtobufProcessing {
             default:
                 return {dataType: CARTA.ColumnType.UnsupportedType, data: []};
         }
-        const N = data.length;
-        let arr = new Array<number>(N);
-
-        // Convert values from typed arrays to a plain JS array for use with plotly
-        for (let i = N - 1; i >= 0; i--) {
-            arr[i] = data[i];
-        }
-
-        return {dataType: column.dataType, data: arr};
-
+        return {dataType: column.dataType, data: data};
     }
 
-    static ProcessCatalogData(catalogData: { [k: string]: CARTA.IColumnData }): Map<number, ProcessedColumnData> {
+    static ProcessCatalogData(catalogData: {[k: string]: CARTA.IColumnData}): Map<number, ProcessedColumnData> {
         const dataMap = new Map<number, ProcessedColumnData>();
         const originalMap = new Map(Object.entries(catalogData));
         originalMap.forEach((column, i) => {

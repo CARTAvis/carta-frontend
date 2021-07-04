@@ -75,7 +75,7 @@ export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileS
 
     const adjustedTileSize: Point2D = {
         x: frameView.mip * tileSize.x,
-        y: frameView.mip * tileSize.y,
+        y: frameView.mip * tileSize.y
     };
 
     const xStart = Math.floor(boundedFrameView.xMin / adjustedTileSize.x);

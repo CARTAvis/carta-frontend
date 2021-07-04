@@ -1,5 +1,6 @@
 import {CARTA} from "carta-protobuf";
 import {ColumnArray, ProcessedColumnData} from "models";
+import {getComparisonOperatorAndValue} from ".";
 
 export function getDataTypeString(dataType: CARTA.ColumnType): string {
     switch (dataType) {
@@ -60,4 +61,101 @@ export function filterProcessedColumnData(columnData: ProcessedColumnData, selec
         }
     }
     return {dataType: columnData.dataType, data};
+}
+
+export function numericFiltering(columnData: Array<number>, dataIndexes: number[], filterString: string): number[] {
+    if (columnData?.length <= 0 || dataIndexes?.length <= 0 || !filterString) {
+        return [];
+    }
+
+    const filter = getComparisonOperatorAndValue(filterString);
+    if (filter?.operator === -1 || filter?.values.length <= 0) {
+        return [];
+    }
+
+    let compareFunction = undefined;
+    if (filter.operator === CARTA.ComparisonOperator.Equal && filter.values.length === 1) {
+        compareFunction = (data: number): boolean => {
+            return data - filter.values[0] === 0;
+        };
+    } else if (filter.operator === CARTA.ComparisonOperator.NotEqual && filter.values.length === 1) {
+        compareFunction = (data: number): boolean => {
+            return data - filter.values[0] !== 0;
+        };
+    } else if (filter.operator === CARTA.ComparisonOperator.Lesser && filter.values.length === 1) {
+        compareFunction = (data: number): boolean => {
+            return data < filter.values[0];
+        };
+    } else if (filter.operator === CARTA.ComparisonOperator.LessorOrEqual && filter.values.length === 1) {
+        compareFunction = (data: number): boolean => {
+            return data <= filter.values[0];
+        };
+    } else if (filter.operator === CARTA.ComparisonOperator.Greater && filter.values.length === 1) {
+        compareFunction = (data: number): boolean => {
+            return data > filter.values[0];
+        };
+    } else if (filter.operator === CARTA.ComparisonOperator.GreaterOrEqual && filter.values.length === 1) {
+        compareFunction = (data: number): boolean => {
+            return data >= filter.values[0];
+        };
+    } else if (filter.operator === CARTA.ComparisonOperator.RangeOpen && filter.values.length === 2) {
+        const min = Math.min(filter.values[0], filter.values[1]);
+        const max = Math.max(filter.values[0], filter.values[1]);
+        compareFunction = (data: number): boolean => {
+            return data >= min && data <= max;
+        };
+    } else if (filter.operator === CARTA.ComparisonOperator.RangeClosed && filter.values.length === 2) {
+        const min = Math.min(filter.values[0], filter.values[1]);
+        const max = Math.max(filter.values[0], filter.values[1]);
+        compareFunction = (data: number): boolean => {
+            return data > min && data < max;
+        };
+    } else {
+        return [];
+    }
+
+    let filteredDataIndexes = [];
+    dataIndexes.forEach(dataIndex => {
+        if (dataIndex >= 0 && dataIndex < columnData.length && compareFunction(columnData[dataIndex])) {
+            filteredDataIndexes.push(dataIndex);
+        }
+    });
+    return filteredDataIndexes;
+}
+
+export function booleanFiltering(columnData: Array<boolean>, dataIndexes: number[], filterString: string): number[] {
+    if (columnData?.length <= 0 || dataIndexes?.length <= 0 || !filterString) {
+        return [];
+    }
+
+    let filteredDataIndexes = [];
+    const trimmedLowercase = filterString?.trim()?.toLowerCase();
+    if (trimmedLowercase === "t" || trimmedLowercase === "true") {
+        dataIndexes.forEach(dataIndex => {
+            if (dataIndex >= 0 && dataIndex < columnData.length && columnData[dataIndex]) {
+                filteredDataIndexes.push(dataIndex);
+            }
+        });
+    } else if (trimmedLowercase === "f" || trimmedLowercase === "false") {
+        dataIndexes.forEach(dataIndex => {
+            if (dataIndex >= 0 && dataIndex < columnData.length && !columnData[dataIndex]) {
+                filteredDataIndexes.push(dataIndex);
+            }
+        });
+    }
+    return filteredDataIndexes;
+}
+
+export function stringFiltering(columnData: Array<string>, dataIndexes: number[], filterString: string): number[] {
+    if (columnData?.length <= 0 || dataIndexes?.length <= 0 || !filterString) {
+        return [];
+    }
+
+    let filteredDataIndexes = [];
+    dataIndexes.forEach(dataIndex => {
+        if (dataIndex >= 0 && dataIndex < columnData.length && columnData[dataIndex]?.includes(filterString)) {
+            filteredDataIndexes.push(dataIndex);
+        }
+    });
+    return filteredDataIndexes;
 }

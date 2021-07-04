@@ -8,8 +8,10 @@ import pixelShader from "!raw-loader!./GLSL/pixel_shader_raster.glsl";
 interface ShaderUniforms {
     MinVal: WebGLUniformLocation;
     MaxVal: WebGLUniformLocation;
+    PixelHighlightVal: WebGLUniformLocation;
     Bias: WebGLUniformLocation;
     Contrast: WebGLUniformLocation;
+    UseSmoothedBiasContrast: WebGLUniformLocation;
     Gamma: WebGLUniformLocation;
     Alpha: WebGLUniformLocation;
     ScaleType: WebGLUniformLocation;
@@ -31,6 +33,10 @@ interface ShaderUniforms {
     TileTextureSize: WebGLUniformLocation;
     TextureSize: WebGLUniformLocation;
     TileBorder: WebGLUniformLocation;
+    PixelGridCutoff: WebGLUniformLocation;
+    PixelGridColor: WebGLUniformLocation;
+    PixelGridOpacity: WebGLUniformLocation;
+    PixelAspectRatio: WebGLUniformLocation;
 }
 
 export class TileWebGLService {
@@ -78,9 +84,11 @@ export class TileWebGLService {
         this.shaderUniforms = {
             MinVal: this.gl.getUniformLocation(this.shaderProgram, "uMinVal"),
             MaxVal: this.gl.getUniformLocation(this.shaderProgram, "uMaxVal"),
+            PixelHighlightVal: this.gl.getUniformLocation(this.shaderProgram, "uPixelHighlightVal"),
             NaNColor: this.gl.getUniformLocation(this.shaderProgram, "uNaNColor"),
             Bias: this.gl.getUniformLocation(this.shaderProgram, "uBias"),
             Contrast: this.gl.getUniformLocation(this.shaderProgram, "uContrast"),
+            UseSmoothedBiasContrast: this.gl.getUniformLocation(this.shaderProgram, "uUseSmoothedBiasContrast"),
             Gamma: this.gl.getUniformLocation(this.shaderProgram, "uGamma"),
             Alpha: this.gl.getUniformLocation(this.shaderProgram, "uAlpha"),
             ScaleType: this.gl.getUniformLocation(this.shaderProgram, "uScaleType"),
@@ -100,7 +108,11 @@ export class TileWebGLService {
             TileTextureOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureOffset"),
             TextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTextureSize"),
             TileTextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureSize"),
-            TileBorder: this.gl.getUniformLocation(this.shaderProgram, "uTileBorder")
+            TileBorder: this.gl.getUniformLocation(this.shaderProgram, "uTileBorder"),
+            PixelGridCutoff: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridCutoff"),
+            PixelGridColor: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridColor"),
+            PixelGridOpacity: this.gl.getUniformLocation(this.shaderProgram, "uPixelGridOpacity"),
+            PixelAspectRatio: this.gl.getUniformLocation(this.shaderProgram, "uPixelAspectRatio")
         };
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
@@ -108,9 +120,10 @@ export class TileWebGLService {
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.CmapIndex, 2);
         this.gl.uniform1f(this.shaderUniforms.MinVal, 3.4);
-        this.gl.uniform1f(this.shaderUniforms.MaxVal, 5.50);
+        this.gl.uniform1f(this.shaderUniforms.MaxVal, 5.5);
         this.gl.uniform1f(this.shaderUniforms.Bias, 0);
         this.gl.uniform1f(this.shaderUniforms.Contrast, 1);
+        this.gl.uniform1i(this.shaderUniforms.UseSmoothedBiasContrast, 1);
         this.gl.uniform1f(this.shaderUniforms.Gamma, 1);
         this.gl.uniform1f(this.shaderUniforms.Alpha, 1000);
         this.gl.uniform1i(this.shaderUniforms.Inverted, 0);
@@ -122,6 +135,10 @@ export class TileWebGLService {
         this.gl.uniform1f(this.shaderUniforms.TextureSize, TEXTURE_SIZE);
         this.gl.uniform1f(this.shaderUniforms.TileTextureSize, TILE_SIZE);
         this.gl.uniform4f(this.shaderUniforms.NaNColor, 0, 0, 1, 1);
+        this.gl.uniform1f(this.shaderUniforms.PixelGridCutoff, 0);
+        this.gl.uniform4f(this.shaderUniforms.PixelGridColor, 1, 1, 1, 1);
+        this.gl.uniform1f(this.shaderUniforms.PixelGridOpacity, 0);
+        this.gl.uniform1f(this.shaderUniforms.PixelAspectRatio, 1);
     }
 
     private initBuffers() {
@@ -130,22 +147,12 @@ export class TileWebGLService {
         }
         this.vertexPositionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
-        const vertices = new Float32Array([
-            0.0, 0.0, 0,
-            1.0, 0.0, 0,
-            0.0, 1.0, 0,
-            1.0, 1.0, 0
-        ]);
+        const vertices = new Float32Array([0.0, 0.0, 0, 1.0, 0.0, 0, 0.0, 1.0, 0, 1.0, 1.0, 0]);
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertices, WebGLRenderingContext.STATIC_DRAW);
 
         this.vertexUVBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
-        const uvs = new Float32Array([
-            0.0, 0.0,
-            1.0, 0.0,
-            0.0, 1.0,
-            1.0, 1.0
-        ]);
+        const uvs = new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, uvs, WebGLRenderingContext.STATIC_DRAW);
     }
 

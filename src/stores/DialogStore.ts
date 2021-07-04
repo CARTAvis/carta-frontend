@@ -1,4 +1,4 @@
-import { action, observable, makeObservable } from "mobx";
+import {action, observable, makeObservable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {FileInfoType} from "../components";
 
@@ -119,5 +119,14 @@ export class DialogStore {
     };
     @action hideExternalPageDialog = () => {
         this.externalPageDialogVisible = false;
+    };
+
+    // Stokes
+    @observable stokesDialogVisible: boolean = false;
+    @action showStokesDialog = () => {
+        this.stokesDialogVisible = true;
+    };
+    @action hideStokesDialog = () => {
+        this.stokesDialogVisible = false;
     };
 }

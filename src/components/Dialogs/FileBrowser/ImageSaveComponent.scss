@@ -1,0 +1,92 @@
+.file-save {
+    display: block;
+    overflow-x: auto;
+    height: 100%;
+    width: 100%;
+    margin: 0.5em;
+    margin-top: 1em;
+
+    .file-name {
+        margin: 0em;
+        margin-bottom: 0em;
+
+        .label {
+            width: 22%;
+        }
+        .text {
+            margin-left: 0;
+            width: 72%;
+        }
+    }
+
+    .region-select {
+        margin: 0em;
+
+        .label {
+            margin-top: 0.5em;
+            width: 22%;
+        }
+        .bp3-html-select {
+            margin-left: 0;
+            width: auto;
+        }
+    }
+
+    .coordinate-select {
+        margin: 0em;
+        margin-top: 0em;
+
+        .bp3-form-group {
+            margin: 0;
+            margin-top: 0.5em;
+
+            .bp3-label {
+                width: 20%;
+            }
+            .bp3-select {
+                margin-left: 0;
+            }
+        }
+    }
+
+    .range-select {
+        margin: 0em;
+        margin-top: 0.5em;
+
+        .bp3-control-group {
+            margin: 0;
+
+            .bp3-label {
+                margin-top: 1em;
+                width: 21%;
+            }
+            .bp3-numeric-input {
+                margin: 0em;
+                width: 14em;
+                .bp3-input {
+                    width: 13em;
+                }
+            }
+        }
+    }
+
+    .stokes-select {
+        margin-top: 0.5em;
+
+        .bp3-form-group {
+            margin: 0em;
+
+            .bp3-label {
+                width: 20%;
+            }
+            .bp3-select {
+                margin-left: 0;
+            }
+        }
+    }
+
+    .drop-degenerate {
+        margin-top: 1em;
+        width: 14em;
+    }
+}

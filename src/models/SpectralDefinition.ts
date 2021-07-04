@@ -1,11 +1,11 @@
-export interface ChannelType {
+export interface SpectralTypeSet {
     code: string;
     unit: string;
     name: string;
 }
 
 // From FITS standard (Table 25 of V4.0 of "Definition of the Flexible Image Transport System")
-export const CHANNEL_TYPES: ChannelType[] = [
+export const STANDARD_SPECTRAL_TYPE_SETS: SpectralTypeSet[] = [
     {code: "FREQ", name: "Frequency", unit: "Hz"},
     {code: "ENER", name: "Energy", unit: "J"},
     {code: "WAVN", name: "Wavenumber", unit: "1/m"},
@@ -15,8 +15,15 @@ export const CHANNEL_TYPES: ChannelType[] = [
     {code: "ZOPT", name: "Redshift", unit: ""},
     {code: "AWAV", name: "Air wavelength", unit: "m"},
     {code: "VELO", name: "Apparent radial velocity", unit: "m/s"},
-    {code: "BETA", name: "Beta", unit: ""},
+    {code: "BETA", name: "Beta", unit: ""}
 ];
+
+// FREQ, ENER, WAVN
+export enum SpectralColorMap {
+    FREQ = "FREQ",
+    ENER = "ENER",
+    WAVE = "WAVE"
+}
 
 export enum SpectralType {
     VRAD = "VRAD",
@@ -28,8 +35,9 @@ export enum SpectralType {
 }
 
 // Channel is not a valid standalone spectral type
-export const IsSpectralTypeSupported = (type: string): boolean => {
-    return type && type !== SpectralType.CHANNEL && Object.values(SpectralType).includes(type as SpectralType);
+export const IsSpectralTypeSupported = (typeStr: string): boolean => {
+    const normalizedStr = typeStr?.toUpperCase();
+    return Object.values(SpectralType).includes(normalizedStr as SpectralType) && normalizedStr !== SpectralType.CHANNEL;
 };
 
 export const SPECTRAL_MATCHING_TYPES: SpectralType[] = [SpectralType.VRAD, SpectralType.VOPT, SpectralType.FREQ, SpectralType.CHANNEL];
@@ -48,8 +56,9 @@ export enum SpectralUnit {
     MM = "mm",
     UM = "um",
     NM = "nm",
-    ANGSTROM  = "Angstrom"
+    ANGSTROM = "Angstrom"
 }
+
 export const IsSpectralUnitSupported = (unit: string): boolean => {
     return unit && Object.values(SpectralUnit).includes(unit as SpectralUnit);
 };
@@ -60,8 +69,10 @@ export enum SpectralSystem {
     BARY = "BARYCENT",
     TOPO = "TOPOCENT"
 }
-export const IsSpectralSystemSupported = (system: string): boolean => {
-    return system && Object.values(SpectralSystem).includes(system as SpectralSystem);
+
+export const IsSpectralSystemSupported = (systemStr: string): boolean => {
+    const normalizedStr = systemStr?.toUpperCase();
+    return Object.values(SpectralSystem).includes(normalizedStr as SpectralSystem);
 };
 
 export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([
@@ -85,7 +96,7 @@ export const GenCoordinateLabel = (type: SpectralType, unit: SpectralUnit): stri
     return `${type ? SPECTRAL_TYPE_STRING.get(type) : ""}${unit ? " (" + unit + ")" : ""}`;
 };
 
-export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
+export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; unit: SpectralUnit}>([
     [GenCoordinateLabel(SpectralType.VRAD, SpectralUnit.KMS), {type: SpectralType.VRAD, unit: SpectralUnit.KMS}],
     [GenCoordinateLabel(SpectralType.VRAD, SpectralUnit.MS), {type: SpectralType.VRAD, unit: SpectralUnit.MS}],
     [GenCoordinateLabel(SpectralType.VOPT, SpectralUnit.KMS), {type: SpectralType.VOPT, unit: SpectralUnit.KMS}],
@@ -104,5 +115,21 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType, un
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.UM), {type: SpectralType.AWAV, unit: SpectralUnit.UM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.NM), {type: SpectralType.AWAV, unit: SpectralUnit.NM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
-    ["Channel", {type: SpectralType.CHANNEL, unit: null}],
+    ["Channel", {type: SpectralType.CHANNEL, unit: null}]
+]);
+
+// From FITS standard (Table 29 of V4.0 of "Definition of the Flexible Image Transport System")
+export const STANDARD_POLARIZATIONS = new Map<number, string>([
+    [-8, "YX"],
+    [-7, "XY"],
+    [-6, "YY"],
+    [-5, "XX"],
+    [-4, "LR"],
+    [-3, "RL"],
+    [-2, "LL"],
+    [-1, "RR"],
+    [1, "I"],
+    [2, "Q"],
+    [3, "U"],
+    [4, "V"]
 ]);

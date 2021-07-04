@@ -3,18 +3,20 @@ import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
 import {AppStore, RasterRenderType} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D} from "utilities";
+import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D, smoothStep, getColorForTheme} from "utilities";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
 import "./RasterViewComponent.scss";
 
 export class RasterViewComponentProps {
     docked: boolean;
+    pixelHighlightValue: number;
 }
 
 @observer
 export class RasterViewComponent extends React.Component<RasterViewComponentProps> {
     private canvas: HTMLCanvasElement;
     private gl: WebGLRenderingContext;
+    private static readonly Float32Max = 3.402823466e38;
 
     componentDidMount() {
         this.gl = TileWebGLService.Instance.gl;
@@ -62,15 +64,30 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Bias, renderConfig.bias);
             this.gl.uniform1f(shaderUniforms.Contrast, renderConfig.contrast);
+            this.gl.uniform1i(shaderUniforms.UseSmoothedBiasContrast, appStore.preferenceStore.useSmoothedBiasContrast ? 1 : 0);
             this.gl.uniform1f(shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(shaderUniforms.Alpha, renderConfig.alpha);
-            this.gl.uniform1f(shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio);
+            this.gl.uniform1f(shaderUniforms.CanvasWidth, (frame.renderWidth * devicePixelRatio) / frame.aspectRatio);
             this.gl.uniform1f(shaderUniforms.CanvasHeight, frame.renderHeight * devicePixelRatio);
 
             const nanColor = tinycolor(appStore.preferenceStore.nanColorHex).setAlpha(appStore.preferenceStore.nanAlpha);
             if (nanColor.isValid()) {
                 const rgba = nanColor.toRgb();
                 this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
+            }
+
+            const pixelGridColor = tinycolor(getColorForTheme(appStore.preferenceStore.pixelGridColor));
+            if (pixelGridColor.isValid()) {
+                const rgba = pixelGridColor.toRgb();
+                this.gl.uniform4f(shaderUniforms.PixelGridColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
+            } else {
+                this.gl.uniform4f(shaderUniforms.PixelGridColor, 0, 0, 0, 0);
+            }
+
+            if (isFinite(this.props.pixelHighlightValue)) {
+                this.gl.uniform1f(shaderUniforms.PixelHighlightVal, this.props.pixelHighlightValue);
+            } else {
+                this.gl.uniform1f(shaderUniforms.PixelHighlightVal, -RasterViewComponent.Float32Max);
             }
         }
     }
@@ -155,22 +172,22 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     highResPlaceholders.push({
                         layer: tile.layer + 1,
                         x: tile.x * 2,
-                        y: tile.y * 2,
+                        y: tile.y * 2
                     });
                     highResPlaceholders.push({
                         layer: tile.layer + 1,
                         x: tile.x * 2 + 1,
-                        y: tile.y * 2,
+                        y: tile.y * 2
                     });
                     highResPlaceholders.push({
                         layer: tile.layer + 1,
                         x: tile.x * 2,
-                        y: tile.y * 2 + 1,
+                        y: tile.y * 2 + 1
                     });
                     highResPlaceholders.push({
                         layer: tile.layer + 1,
                         x: tile.x * 2 + 1,
-                        y: tile.y * 2 + 1,
+                        y: tile.y * 2 + 1
                     });
                 }
 
@@ -179,7 +196,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     const lowResTile = {
                         layer: tile.layer - 1,
                         x: Math.floor(tile.x / 2.0),
-                        y: Math.floor(tile.y / 2.0),
+                        y: Math.floor(tile.y / 2.0)
                     };
                     placeholderTileMap.set(TileCoordinate.EncodeCoordinate(lowResTile), true);
                 }
@@ -200,8 +217,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderTile(tile: TileCoordinate, rasterTile: RasterTile, mip: number) {
-        const frame = AppStore.Instance.activeFrame;
-        const tileRenderService = TileWebGLService.Instance;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        const shaderUniforms = TileWebGLService.Instance.shaderUniforms;
         const tileService = TileService.Instance;
 
         if (!rasterTile) {
@@ -218,7 +236,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, textureParameters.texture);
             this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, GL.NEAREST);
             this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, GL.NEAREST);
-            this.gl.uniform2f(tileRenderService.shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
+            this.gl.uniform2f(shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
         }
 
         const spatialRef = frame.spatialReference || frame;
@@ -232,7 +250,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             yMax: (tile.y + 1) * tileSizeAdjusted,
             mip: 1
         };
-        let bottomLeft = {x: (tileImageView.xMin - full.xMin) - 0.5, y: (tileImageView.yMin - full.yMin) - 0.5};
+        let bottomLeft = {x: tileImageView.xMin - full.xMin - 0.5, y: tileImageView.yMin - full.yMin - 0.5};
         let tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
 
         if (frame.spatialReference && frame.spatialTransform) {
@@ -241,22 +259,47 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const rotationOriginImageSpace: Point2D = add2D(frame.spatialTransform.origin, frame.spatialTransform.translation);
             const rotationOriginCanvasSpace: Point2D = {
                 x: spatialRef.zoomLevel * (rotationOriginImageSpace.x - full.xMin),
-                y: spatialRef.zoomLevel * (rotationOriginImageSpace.y - full.yMin),
+                y: spatialRef.zoomLevel * (rotationOriginImageSpace.y - full.yMin)
             };
-            this.gl.uniform2f(tileRenderService.shaderUniforms.RotationOrigin, rotationOriginCanvasSpace.x, rotationOriginCanvasSpace.y);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale);
+            this.gl.uniform2f(shaderUniforms.RotationOrigin, rotationOriginCanvasSpace.x, rotationOriginCanvasSpace.y);
+            this.gl.uniform1f(shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
+            this.gl.uniform1f(shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale);
         } else {
-            this.gl.uniform1f(tileRenderService.shaderUniforms.RotationAngle, 0);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.ScaleAdjustment, 1);
+            this.gl.uniform1f(shaderUniforms.RotationAngle, 0);
+            this.gl.uniform1f(shaderUniforms.ScaleAdjustment, 1);
         }
+
+        // TODO: refactor this and handle different pixel sizes!
+        let zoom;
+        let zoomFactor = 1.0;
+        let aspectRatio = 1.0;
+        if (frame.spatialReference) {
+            zoomFactor = frame.spatialTransform.scale;
+            zoom = (frame.spatialReference.zoomLevel / devicePixelRatio) * zoomFactor;
+        } else {
+            aspectRatio = frame.aspectRatio;
+            zoom = frame.zoomLevel / devicePixelRatio;
+        }
+
+        const pixelGridZoomLow = 6.0;
+        const pixelGridZoomHigh = 12.0;
+
+        if (zoom >= pixelGridZoomLow && mip === 1 && appStore.preferenceStore.pixelGridVisible) {
+            const cutoff = 0.5 / zoom;
+            const opacity = 0.25 * smoothStep(zoom, pixelGridZoomLow, pixelGridZoomHigh);
+            this.gl.uniform1f(shaderUniforms.PixelGridCutoff, cutoff);
+            this.gl.uniform1f(shaderUniforms.PixelGridOpacity, opacity);
+        } else {
+            this.gl.uniform1f(shaderUniforms.PixelGridOpacity, 0);
+        }
+        this.gl.uniform1f(shaderUniforms.PixelAspectRatio, aspectRatio);
 
         // take zoom level into account to convert from image space to canvas space
         bottomLeft = scale2D(bottomLeft, spatialRef.zoomLevel);
 
-        this.gl.uniform2f(tileRenderService.shaderUniforms.TileSize, rasterTile.width, rasterTile.height);
-        this.gl.uniform2f(tileRenderService.shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
-        this.gl.uniform2f(tileRenderService.shaderUniforms.TileScaling, tileScaling.x, tileScaling.y);
+        this.gl.uniform2f(shaderUniforms.TileSize, rasterTile.width, rasterTile.height);
+        this.gl.uniform2f(shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
+        this.gl.uniform2f(shaderUniforms.TileScaling, tileScaling.x, tileScaling.y);
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -277,13 +320,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 colorMap: frame.renderConfig.colorMapIndex,
                 contrast: frame.renderConfig.contrast,
                 bias: frame.renderConfig.bias,
+                useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
                 scaling: frame.renderConfig.scaling,
                 gamma: frame.renderConfig.gamma,
                 alpha: frame.renderConfig.alpha,
                 inverted: frame.renderConfig.inverted,
                 visibility: frame.renderConfig.visible,
                 nanColorHex: appStore.preferenceStore.nanColorHex,
-                nanAlpha: appStore.preferenceStore.nanAlpha
+                nanAlpha: appStore.preferenceStore.nanAlpha,
+                pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
+                pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
             };
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -298,14 +344,15 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 <canvas
                     className="raster-canvas"
                     id="raster-canvas"
-                    ref={(ref) => this.canvas = ref}
+                    ref={ref => (this.canvas = ref)}
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frame && frame.isRenderable ? (frame.renderWidth || 1) : 1,
-                        height: frame && frame.isRenderable ? (frame.renderHeight || 1) : 1
+                        width: frame && frame.isRenderable ? frame.renderWidth || 1 : 1,
+                        height: frame && frame.isRenderable ? frame.renderHeight || 1 : 1
                     }}
                 />
-            </div>);
+            </div>
+        );
     }
 }

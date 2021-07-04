@@ -1,10 +1,10 @@
 import tinycolor from "tinycolor2";
 import {action, computed, observable, makeObservable} from "mobx";
-import {Colors} from "@blueprintjs/core";
 import {FrameStore, ProfileSmoothingStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {SpatialProfilerSettingsTabs} from "components";
+import {isAutoColor} from "utilities";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;
@@ -18,14 +18,14 @@ export class SpatialProfileWidgetStore {
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
 
-    // settings 
+    // settings
     @observable wcsAxisVisible: boolean;
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
-    @observable primaryLineColor: { colorHex: string, fixed: boolean };
+    @observable primaryLineColor: string;
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
-    @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
+    @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: SpatialProfilerSettingsTabs;
 
@@ -112,7 +112,7 @@ export class SpatialProfileWidgetStore {
 
     @action setSettingsTabId = (val: SpatialProfilerSettingsTabs) => {
         this.settingsTabId = val;
-    }
+    };
 
     constructor(coordinate: string = "x", fileId: number = -1, regionId: number = 0) {
         makeObservable(this);
@@ -126,20 +126,20 @@ export class SpatialProfileWidgetStore {
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
         this.wcsAxisVisible = true;
-        this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
+        this.primaryLineColor = "auto-blue";
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
-        this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+        this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
     }
 
     @computed get isAutoScaledX() {
-        return (this.minX === undefined || this.maxX === undefined);
+        return this.minX === undefined || this.maxX === undefined;
     }
 
     @computed get isAutoScaledY() {
-        return (this.minY === undefined || this.maxY === undefined);
+        return this.minY === undefined || this.maxY === undefined;
     }
 
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpatialProfileWidgetStore>) {
@@ -244,31 +244,30 @@ export class SpatialProfileWidgetStore {
                     }
                 });
             }
-
         });
         // Sort list so that requirements clearing occurs first
-        return diffList.sort((a, b) => a.spatialProfiles.length > b.spatialProfiles.length ? 1 : -1);
+        return diffList.sort((a, b) => (a.spatialProfiles.length > b.spatialProfiles.length ? 1 : -1));
     }
 
     // settings
-    @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
-        this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
-    }
+    @action setPrimaryLineColor = (color: string) => {
+        this.primaryLineColor = color;
+    };
 
     @action setLineWidth = (val: number) => {
         if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
-            this.lineWidth = val;   
+            this.lineWidth = val;
         }
-    }
+    };
 
     @action setLinePlotPointSize = (val: number) => {
         if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
-            this.linePlotPointSize = val;   
+            this.linePlotPointSize = val;
         }
-    }
+    };
 
-    @action initXYBoundaries (minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
-        this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
+    @action initXYBoundaries(minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
+        this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
 
     public init = (widgetSettings): void => {
@@ -279,8 +278,8 @@ export class SpatialProfileWidgetStore {
             this.coordinate = widgetSettings.coordinate;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
-        if (lineColor.isValid()) {
-            this.primaryLineColor.colorHex = lineColor.toHexString();
+        if (lineColor.isValid() || isAutoColor(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor = widgetSettings.primaryLineColor;
         }
         if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
@@ -314,7 +313,7 @@ export class SpatialProfileWidgetStore {
     public toConfig = () => {
         return {
             coordinate: this.coordinate,
-            primaryLineColor: this.primaryLineColor.colorHex,
+            primaryLineColor: this.primaryLineColor,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             wcsAxisVisible: this.wcsAxisVisible,

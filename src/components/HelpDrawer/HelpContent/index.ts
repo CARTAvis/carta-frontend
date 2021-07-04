@@ -1,4 +1,3 @@
-
 export * from "./ContourHelpComponent";
 export * from "./FileBrowserHelpComponent";
 export * from "./FileInfoHelpComponent";
@@ -24,6 +23,7 @@ export * from "./SpectralProfilerSettingsConversionHelpComponent";
 export * from "./SpectralProfilerSettingsStylingHelpComponent";
 export * from "./SpectralProfilerSettingsSmoothingHelpComponent";
 export * from "./SpectralProfilerSettingsMomentsHelpComponent";
+export * from "./SpectralProfilerSettingsFittingHelpComponent";
 export * from "./StatsHelpComponent";
 export * from "./StokesAnalysisHelpComponent";
 export * from "./StokesAnalysisSettingsConversionHelpComponent";
@@ -33,4 +33,8 @@ export * from "./StokesAnalysisSettingsSmoothingHelpComponent";
 export * from "./CatalogOverlayHelpComponent";
 export * from "./CatalogHistogramPlotHelpComponent";
 export * from "./CatalogScatterPlotHelpComponent";
+export * from "./CatalogSettingsColorHelpComponent";
+export * from "./CatalogSettingsSizeHelpComponent";
+export * from "./CatalogSettingsOrientationHelpComponent";
 export * from "./SpectralLineQueryHelpComponent";
+export * from "./StokesHypercubeDialogHelpComponent";

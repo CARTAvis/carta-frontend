@@ -3,14 +3,14 @@ import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {NonIdealState, Colors} from "@blueprintjs/core";
+import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
 import {LinePlotComponent, LinePlotComponentProps} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
 import {FrameStore, WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
-import {clamp} from "utilities";
+import {clamp, getColorForTheme} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.scss";
 
@@ -74,7 +74,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
+    @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
         const histogram = this.histogramData;
         if (histogram) {
             let minIndex = 0;
@@ -93,7 +93,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             let yMin = histogram.bins[minIndex];
             let yMax = yMin;
 
-            let values: Array<{ x: number, y: number }>;
+            let values: Array<{x: number; y: number}>;
             const N = maxIndex - minIndex;
             if (N > 0 && !isNaN(N)) {
                 values = new Array(maxIndex - minIndex);
@@ -184,19 +184,18 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    onGraphCursorMoved = _.throttle((x) => {
+    onGraphCursorMoved = _.throttle(x => {
         this.widgetStore.setCursor(x);
     }, 100);
 
     render() {
-
         const appStore = AppStore.Instance;
         const frame = this.widgetStore.effectiveFrame;
 
         if (!frame || !this.widgetStore) {
             return (
                 <div className="histogram-widget">
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
+                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </div>
             );
         }
@@ -234,12 +233,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 linePlotProps.data = currentPlotData.values;
 
                 // set line color
-                let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
-                if (appStore.darkTheme) {
-                    if (!this.widgetStore.primaryLineColor.fixed) {
-                        primaryLineColor = Colors.BLUE4;   
-                    }
-                }
+                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
                 linePlotProps.lineColor = primaryLineColor;
 
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
@@ -275,12 +269,12 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="histogram-container">
-                    <HistogramToolbarComponent widgetStore={this.widgetStore}/>
+                    <HistogramToolbarComponent widgetStore={this.widgetStore} />
                     <div className="histogram-plot">
-                        <LinePlotComponent {...linePlotProps}/>
+                        <LinePlotComponent {...linePlotProps} />
                     </div>
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
             </div>
         );
     }

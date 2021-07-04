@@ -1,12 +1,13 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, Tab, Tabs} from "@blueprintjs/core";
+import {Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
+import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
@@ -15,25 +16,31 @@ export enum SpectralProfilerSettingsTabs {
     CONVERSION,
     STYLING,
     SMOOTHING,
-    MOMENTS
+    MOMENTS,
+    FITTING
 }
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler-floating-settings",
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 480,
-            defaultHeight: 575,
+            defaultWidth: 550,
+            defaultHeight: 600,
             title: "spectral-profiler-settings",
             isCloseable: true,
             parentId: "spectal-profiler",
             parentType: "spectral-profiler",
-            helpType: [HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION, HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING, HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS]
+            helpType: [
+                HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION,
+                HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING,
+                HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING,
+                HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS,
+                HelpType.SPECTRAL_PROFILER_SETTINGS_FITTING
+            ]
         };
     }
 
@@ -55,18 +62,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         autorun(() => {
             if (this.widgetStore) {
                 const frame = this.widgetStore.effectiveFrame;
-                const coordinate = this.widgetStore.coordinate;
-                if (frame && coordinate) {
-                    let coordinateString: string;
-                    if (coordinate.length === 2) {
-                        coordinateString = `Z Profile (Stokes ${coordinate[0]})`;
-                    } else {
-                        coordinateString = `Z Profile`;
-                    }
+                if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString} ${selectedString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Z Profile Settings: ${regionString} ${selectedString}`);
                 }
             }
         });
@@ -82,7 +82,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const widgetStore = this.widgetStore; 
+        const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
@@ -142,18 +142,18 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
         this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
-    }
+    };
 
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: AppStore.Instance.darkTheme,
-            primaryDarkModeLineColor: Colors.BLUE4,
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: widgetStore.lineColorMap,
+            lineOrderedKeys: widgetStore.profileSelectionStore.profileOrderedKeys,
+            lineOptions: widgetStore.profileSelectionStore.profileOptions,
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: widgetStore.setProfileColor,
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
@@ -175,10 +175,23 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         return (
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                    <Tab id={SpectralProfilerSettingsTabs.CONVERSION} panelClassName="conversion-tab-panel" title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={false}/>}/>
-                    <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                    <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore}/>}/>
-                    <Tab id={SpectralProfilerSettingsTabs.MOMENTS} panelClassName="moment-tab-panel" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore}/>}/>
+                    <Tab
+                        id={SpectralProfilerSettingsTabs.CONVERSION}
+                        panelClassName="conversion-tab-panel"
+                        title="Conversion"
+                        panel={
+                            <SpectralSettingsComponent
+                                frame={widgetStore.effectiveFrame}
+                                onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                disable={widgetStore.effectiveFrame?.isPVImage}
+                            />
+                        }
+                    />
+                    <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
+                    <Tab id={SpectralProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} disableColorAndLineWidth={widgetStore.profileNum > 1} />} />
+                    <Tab id={SpectralProfilerSettingsTabs.MOMENTS} panelClassName="moment-tab-panel" title="Moments" panel={<MomentGeneratorComponent widgetStore={widgetStore} />} />
+                    <Tab id={SpectralProfilerSettingsTabs.FITTING} panelClassName="fitting-tab-panel" title="Fitting" panel={<ProfileFittingComponent fittingStore={widgetStore.fittingStore} widgetStore={widgetStore} />} />
                 </Tabs>
             </div>
         );

@@ -16,7 +16,7 @@ export enum TickType {
 export class PlotContainerProps {
     width?: number;
     height?: number;
-    data?: { x: number, y: number, z?: number }[];
+    data?: {x: number; y: number; z?: number}[];
     xMin?: number;
     xMax?: number;
     yMin?: number;
@@ -54,13 +54,19 @@ export class PlotContainerProps {
 }
 
 export class MultiPlotProps {
-    data: { x: number, y: number }[];
+    imageName: string;
+    plotName: string;
+    data: {x: number; y: number}[];
     type: PlotType;
     borderColor?: string;
     borderWidth?: number;
     pointRadius?: number;
+    opacity?: number;
     order?: number;
-    exportData?: Map<string, string>;
+    comments?: string[];
+    hidden?: boolean;
+    followingData?: string[];
+    noExport?: boolean;
 }
 
 interface MulticolorLineChartDatasets extends ChartDataSets {
@@ -74,7 +80,6 @@ const Chart = require("react-chartjs-2").Chart;
 Chart.defaults.multicolorLine = Chart.defaults.line;
 Chart.controllers.multicolorLine = Chart.controllers.line.extend({
     draw: function (ease: any) {
-
         let startIndex = 0;
         const meta = this.getMeta();
         const points = meta.data || [];
@@ -116,7 +121,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
     private afterChartLayout = (chart: any) => {
         if (this.props.isGroupSubPlot) {
-            
             var xScale = chart.scales["x-axis-0"];
             var yScale = chart.scales["y-axis-0"];
             const currentWidth = chart.width;
@@ -145,7 +149,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
     };
 
-    private onRef = (ref) => {
+    private onRef = ref => {
         if (ref !== this.plotRef) {
             this.plotRef = ref;
             if (this.props.plotRefUpdated) {
@@ -160,7 +164,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             let filteredTicks = ticks.filter(v => {
                 const power = Math.floor(Math.log10(v));
                 const mantissa = v * Math.pow(10, power);
-                return (Math.abs(mantissa % 1.0) < 1e-6);
+                return Math.abs(mantissa % 1.0) < 1e-6;
             });
             if (filteredTicks.length > 8) {
                 // Limit log axis ticks to power of 10 values or multiples of 2 of powers of 10 (i.e. 1, 2, 10, 0.1, 0.2)
@@ -169,7 +173,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     // Limit log axis ticks to power of 10 values
                     filteredTicks = ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
                 }
-
             }
             return filteredTicks;
         }
@@ -339,73 +342,78 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             maintainAspectRatio: false,
             events: ["mousedown", "mouseup", "mousemove", "dblclick"],
             legend: {
-                display: this.props.showLegend === undefined ? false : this.props.showLegend,
+                display: this.props.showLegend === undefined ? false : this.props.showLegend
             },
             scales: {
-                xAxes: [{
-                    id: "x-axis-0",
-                    position: "bottom",
-                    afterBuildTicks: this.filterLinearTicks,
-                    scaleLabel: {
-                        fontColor: labelColor,
-                        display: this.props.showXAxisLabel === undefined ? true : this.props.showXAxisLabel,
-                        labelString: this.props.xLabel
-                    },
-                    ticks: {
-                        display: this.props.showXAxisTicks === undefined ? true : this.props.showXAxisTicks,
-                        minor: {
+                xAxes: [
+                    {
+                        id: "x-axis-0",
+                        position: "bottom",
+                        afterBuildTicks: this.filterLinearTicks,
+                        scaleLabel: {
                             fontColor: labelColor,
+                            display: this.props.showXAxisLabel === undefined ? true : this.props.showXAxisLabel,
+                            labelString: this.props.xLabel
                         },
-                        maxRotation: 0,
-                        min: this.props.xMin,
-                        max: this.props.xMax,
-                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
-                    },
-                    gridLines: {
-                        drawBorder: false,
-                        color: gridColor,
-                        zeroLineColor: this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor,
-                        zeroLineWidth: this.props.zeroLineWidth ? this.props.zeroLineWidth : 1,
-                        tickMarkLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
-                    },
-                }, {
-                    id: "x-axis-1",
-                    position: "top",
-                    afterBuildTicks: this.filterLinearTicks,
-                    type: "linear",
-                    display: this.props.showTopAxis,
-                    ticks: {
-                        minor: {
-                            fontColor: labelColor,
+                        ticks: {
+                            display: this.props.showXAxisTicks === undefined ? true : this.props.showXAxisTicks,
+                            minor: {
+                                fontColor: labelColor
+                            },
+                            maxRotation: 0,
+                            min: this.props.xMin,
+                            max: this.props.xMax,
+                            callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
                         },
-                        maxRotation: 0,
-                        min: this.props.xMin,
-                        max: this.props.xMax,
+                        gridLines: {
+                            drawBorder: false,
+                            color: gridColor,
+                            zeroLineColor: this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor,
+                            zeroLineWidth: this.props.zeroLineWidth ? this.props.zeroLineWidth : 1,
+                            tickMarkLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
+                        }
+                    },
+                    {
+                        id: "x-axis-1",
+                        position: "top",
+                        afterBuildTicks: this.filterLinearTicks,
+                        type: "linear",
+                        display: this.props.showTopAxis,
+                        ticks: {
+                            minor: {
+                                fontColor: labelColor
+                            },
+                            maxRotation: 0,
+                            min: this.props.xMin,
+                            max: this.props.xMax
+                        }
                     }
-                }],
-                yAxes: [{
-                    id: "y-axis-0",
-                    scaleLabel: {
-                        fontColor: labelColor,
-                        display: this.props.showYAxisLabel === undefined ? true : this.props.showYAxisLabel,
-                        labelString: this.props.yLabel
-                    },
-                    ticks: {
-                        minor: {
+                ],
+                yAxes: [
+                    {
+                        id: "y-axis-0",
+                        scaleLabel: {
                             fontColor: labelColor,
+                            display: this.props.showYAxisLabel === undefined ? true : this.props.showYAxisLabel,
+                            labelString: this.props.yLabel
                         },
-                        display: this.props.showYAxisTicks === undefined ? true : this.props.showYAxisTicks,
-                        min: this.props.yMin,
-                        max: this.props.yMax,
-                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY)
-                    },
-                    gridLines: {
-                        drawBorder: false,
-                        color: gridColor,
-                        zeroLineColor: this.props.yZeroLineColor ? this.props.yZeroLineColor : gridColor,
-                        zeroLineWidth: this.props.zeroLineWidth ? this.props.zeroLineWidth : 1,
-                    },
-                }]
+                        ticks: {
+                            minor: {
+                                fontColor: labelColor
+                            },
+                            display: this.props.showYAxisTicks === undefined ? true : this.props.showYAxisTicks,
+                            min: this.props.yMin,
+                            max: this.props.yMax,
+                            callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY)
+                        },
+                        gridLines: {
+                            drawBorder: false,
+                            color: gridColor,
+                            zeroLineColor: this.props.yZeroLineColor ? this.props.yZeroLineColor : gridColor,
+                            zeroLineWidth: this.props.zeroLineWidth ? this.props.zeroLineWidth : 1
+                        }
+                    }
+                ]
             },
             animation: {
                 duration: 0
@@ -459,7 +467,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     datasetConfig.multicolorLineColors = this.props.multiColorSingleLineColors;
                 }
             }
-            // line data point background color 
+            // line data point background color
             if (this.props.dataBackgroundColor) {
                 datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
             }
@@ -468,9 +476,14 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
         if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
             this.props.multiPlotPropsMap.forEach((props, key) => {
+                if (props.hidden) {
+                    return;
+                }
+
                 let currentLineColor = props.borderColor ? props.borderColor : lineColor;
-                if (opacity < 1.0) {
-                    currentLineColor = tinycolor(currentLineColor).setAlpha(opacity).toRgbString();
+                let currentOpacity = clamp((props.opacity ? props.opacity : opacity) || 1.0, 0, 1);
+                if (currentOpacity < 1.0) {
+                    currentLineColor = tinycolor(currentLineColor).setAlpha(currentOpacity).toRgbString();
                 }
                 const multiPlotDatasetConfig: MulticolorLineChartDatasets = {
                     type: "line",
@@ -504,7 +517,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     multiPlotDatasetConfig.showLine = true;
                     multiPlotDatasetConfig.pointRadius = 0.5;
                     multiPlotDatasetConfig.pointStyle = "line";
-                    multiPlotDatasetConfig.steppedLine = (props.type === PlotType.STEPS) ? "middle" : false;
+                    multiPlotDatasetConfig.steppedLine = props.type === PlotType.STEPS ? "middle" : false;
                     multiPlotDatasetConfig.borderWidth = currentLineWidth ? currentLineWidth : 1;
                     multiPlotDatasetConfig.type = "multicolorLine";
                     multiPlotDatasetConfig.borderColor = currentLineColor;
@@ -514,10 +527,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             });
         }
 
-        let plugins = [{
-            afterLayout: this.afterChartLayout,
-        }];
+        let plugins = [
+            {
+                afterLayout: this.afterChartLayout
+            }
+        ];
 
-        return <Scatter data={{datasets: plotData}} options={plotOptions} plugins={plugins} ref={this.onRef}/>;
+        return <Scatter data={{datasets: plotData}} options={plotOptions} plugins={plugins} ref={this.onRef} />;
     }
 }

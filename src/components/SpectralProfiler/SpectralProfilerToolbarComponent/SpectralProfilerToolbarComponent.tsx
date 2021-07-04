@@ -1,24 +1,271 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {AnchorButton, FormGroup, HTMLSelect, IOptionProps, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/widgets";
-import {RegionSelectorComponent, SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
-import "./SpectralProfilerToolbarComponent.scss";
+import {AnchorButton, ButtonGroup, Checkbox, Intent, Menu, MenuItem, Position} from "@blueprintjs/core";
+import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {AppStore} from "stores";
+import {MultiProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
+import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
+import {LineOption} from "models";
+import "./SpectralProfilerToolbarComponent.scss";
+
+type MultiSelectItem = string | CARTA.StatsType;
+
+class ProfileSelectionButtonComponentProps {
+    categoryName: MultiProfileCategory;
+    isActiveCategory: boolean;
+    itemOptions: LineOption[];
+    itemSelected: MultiSelectItem[];
+    disabled: boolean;
+    disableOptions?: boolean;
+    isSelectingSpecificItem?: boolean;
+    categoryTooltip: JSX.Element;
+    dropdownTooltip: {nonActive: string; active: string; disabled: string};
+    onCategorySelect: () => void;
+    onItemSelect: (item: MultiSelectItem, itemIndex: number) => void;
+}
 
 @observer
-export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, id: string }> {
+class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionButtonComponentProps> {
+    public render() {
+        const itemOptions = this.props.itemOptions;
+        const itemSelected = this.props.itemSelected;
+        let dropdownText = "";
+        if (itemOptions && itemSelected?.length > 0) {
+            itemSelected.forEach((selectedItemValue, index) => {
+                const selectedItemOption = itemOptions.find(item => item.value === selectedItemValue);
+                if (selectedItemOption?.label) {
+                    dropdownText += `${selectedItemOption.label}${index !== itemSelected.length - 1 ? "," : ""}`;
+                }
+            });
+        }
 
-    private handleStatsChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        this.props.widgetStore.setStatsType(parseInt(changeEvent.target.value));
+        let dropdownHelpText = "";
+        if (!this.props.disabled && this.props.dropdownTooltip) {
+            if (this.props.disableOptions) {
+                dropdownHelpText = this.props.dropdownTooltip.disabled ?? "Selection is disabled.";
+            } else if (this.props.isActiveCategory) {
+                dropdownHelpText = this.props.dropdownTooltip.active ?? "Click to select multiple items.";
+            } else {
+                dropdownHelpText = this.props.dropdownTooltip.nonActive ?? "Click to select an item.";
+            }
+        }
+
+        let className = "category-set";
+        if (AppStore.Instance.darkTheme) {
+            className += " bp3-dark";
+        }
+
+        return (
+            <div className={className}>
+                <Tooltip2 content={this.props.categoryTooltip} position={Position.TOP}>
+                    <Checkbox className={"category-checkbox"} label={this.props.categoryName} checked={this.props.isActiveCategory} onChange={ev => this.props.onCategorySelect()} disabled={this.props.disabled} />
+                </Tooltip2>
+                <Popover2
+                    content={
+                        <Menu>
+                            {this.props.itemOptions?.map((item, index) => (
+                                <MenuItem
+                                    key={item.value}
+                                    text={item.active ? <b>{item.label}</b> : item.label}
+                                    disabled={item?.disabled}
+                                    intent={item.hightlight ? Intent.PRIMARY : Intent.NONE}
+                                    onClick={ev => this.props.onItemSelect(item.value, index)}
+                                    icon={this.props.itemSelected?.includes(item.value) ? "tick" : "blank"}
+                                    shouldDismissPopover={false}
+                                />
+                            ))}
+                        </Menu>
+                    }
+                    minimal={true}
+                    placement={Position.BOTTOM}
+                    disabled={this.props.disabled || this.props.disableOptions}
+                >
+                    <Tooltip2 disabled={!dropdownHelpText} content={dropdownHelpText} position={Position.TOP}>
+                        <AnchorButton
+                            text={
+                                <span className="overflow-text" title={dropdownText}>
+                                    {this.props.isSelectingSpecificItem ? <b>{dropdownText}</b> : dropdownText}
+                                </span>
+                            }
+                            className="dropdown-button"
+                            rightIcon={"caret-down"}
+                            disabled={this.props.disabled || this.props.disableOptions}
+                        />
+                    </Tooltip2>
+                </Popover2>
+            </div>
+        );
+    }
+}
+
+@observer
+class ProfileSelectionComponent extends React.Component<{profileSelectionStore: SpectralProfileSelectionStore}> {
+    // Frame selection does not allow multiple selection
+    private onFrameItemClick = (selectedFrame: number, itemIndex: number) => {
+        this.props.profileSelectionStore.selectFrame(selectedFrame);
     };
 
-    private handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        this.props.widgetStore.setCoordinate(changeEvent.target.value);
+    private onRegionItemClick = (selectedRegion: number, itemIndex: number) => {
+        const profileSelectionStore = this.props.profileSelectionStore;
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION) {
+            profileSelectionStore.selectRegionSingleMode(selectedRegion);
+        } else {
+            profileSelectionStore.selectRegionMultiMode(selectedRegion, itemIndex + 1);
+        }
     };
 
+    private onStatsItemClick = (selectedStatsType: CARTA.StatsType, itemIndex: number) => {
+        const profileSelectionStore = this.props.profileSelectionStore;
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC) {
+            profileSelectionStore.selectStatSingleMode(selectedStatsType);
+        } else {
+            profileSelectionStore.selectStatMultiMode(selectedStatsType, itemIndex + 1);
+        }
+    };
+
+    private onStokesItemClick = (selectedStokes: string, itemIndex: number) => {
+        const profileSelectionStore = this.props.profileSelectionStore;
+        if (profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES) {
+            profileSelectionStore.selectCoordinateSingleMode(selectedStokes);
+        } else {
+            profileSelectionStore.selectCoordinateMultiMode(selectedStokes, itemIndex + 1);
+        }
+    };
+
+    public render() {
+        const profileSelectionStore = this.props.profileSelectionStore;
+        const frame = profileSelectionStore.selectedFrame;
+        const disabled = !frame?.channelInfo;
+
+        return (
+            <div className="profile-selection-panel">
+                <ProfileSelectionButtonComponent
+                    categoryName={MultiProfileCategory.IMAGE}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE}
+                    itemOptions={profileSelectionStore.frameOptions}
+                    itemSelected={[profileSelectionStore.selectedFrameWidgetFileId]}
+                    disabled={!frame}
+                    isSelectingSpecificItem={profileSelectionStore.isSelectingActiveFrame}
+                    onCategorySelect={() => {
+                        profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.IMAGE ? MultiProfileCategory.IMAGE : MultiProfileCategory.NONE);
+                    }}
+                    onItemSelect={this.onFrameItemClick}
+                    categoryTooltip={
+                        <span>
+                            {`Click to enable/disable multiple profiles of ${MultiProfileCategory.IMAGE}`}
+                            <span>
+                                <br />
+                                <i>
+                                    <small>
+                                        When enabled, Spectral Profiler will show multiple profiles from
+                                        <br />
+                                        different images which are matched both spatially and spectrally.
+                                        <br />
+                                        Toggle both spatial(XY) and spectral(Z) matching in Image List widget.
+                                    </small>
+                                </i>
+                            </span>
+                        </span>
+                    }
+                    dropdownTooltip={{
+                        nonActive: "Click to select an image.",
+                        active: "Click to select an image. Images matched by toggling both spatial(XY) and spectral(Z) matching via Image List widget are highlighted.",
+                        disabled: undefined
+                    }}
+                />
+                <ProfileSelectionButtonComponent
+                    categoryName={MultiProfileCategory.REGION}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.REGION}
+                    itemOptions={profileSelectionStore.regionOptions}
+                    itemSelected={profileSelectionStore.selectedRegionIds}
+                    disabled={disabled}
+                    isSelectingSpecificItem={profileSelectionStore.isSelectingActiveRegion}
+                    onCategorySelect={() => {
+                        profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.REGION ? MultiProfileCategory.REGION : MultiProfileCategory.NONE);
+                    }}
+                    onItemSelect={this.onRegionItemClick}
+                    categoryTooltip={
+                        <span>
+                            {`Click to enable/disable multiple selections of ${MultiProfileCategory.REGION}`}
+                            <span>
+                                <br />
+                                <i>
+                                    <small>When enabled, Spectral Profiler will show multiple profiles from different selected regions.</small>
+                                </i>
+                            </span>
+                        </span>
+                    }
+                    dropdownTooltip={{
+                        nonActive: "Click to select a region.",
+                        active: "Click to select multiple regions.",
+                        disabled: undefined
+                    }}
+                />
+                <ProfileSelectionButtonComponent
+                    categoryName={MultiProfileCategory.STATISTIC}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.STATISTIC}
+                    itemOptions={profileSelectionStore.statsTypeOptions}
+                    itemSelected={profileSelectionStore.isStatsTypeSelectionAvailable ? profileSelectionStore.selectedStatsTypes : [CARTA.StatsType.Mean]}
+                    disabled={disabled}
+                    disableOptions={!profileSelectionStore.isStatsTypeSelectionAvailable}
+                    onCategorySelect={() => {
+                        profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STATISTIC ? MultiProfileCategory.STATISTIC : MultiProfileCategory.NONE);
+                    }}
+                    onItemSelect={this.onStatsItemClick}
+                    categoryTooltip={
+                        <span>
+                            {`Click to enable/disable multiple selections of ${MultiProfileCategory.STATISTIC}`}
+                            <span>
+                                <br />
+                                <i>
+                                    <small>When enabled, Spectral Profiler will show multiple profiles with different selected statistic quantities.</small>
+                                </i>
+                            </span>
+                        </span>
+                    }
+                    dropdownTooltip={{
+                        nonActive: "Click to select a statistic quantity.",
+                        active: "Click to select multiple statistic quantities.",
+                        disabled: "Statistic options are available only for non-point regions."
+                    }}
+                />
+                <ProfileSelectionButtonComponent
+                    categoryName={MultiProfileCategory.STOKES}
+                    isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.STOKES}
+                    itemOptions={profileSelectionStore.coordinateOptions}
+                    itemSelected={profileSelectionStore.selectedCoordinates}
+                    disabled={disabled}
+                    disableOptions={!frame?.hasStokes}
+                    onCategorySelect={() => {
+                        profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.STOKES ? MultiProfileCategory.STOKES : MultiProfileCategory.NONE);
+                    }}
+                    onItemSelect={this.onStokesItemClick}
+                    categoryTooltip={
+                        <span>
+                            {`Click to enable/disable multiple selections of ${MultiProfileCategory.STOKES}`}
+                            <span>
+                                <br />
+                                <i>
+                                    <small>When enabled, Spectral Profiler will show multiple profiles with different selected Stokes.</small>
+                                </i>
+                            </span>
+                        </span>
+                    }
+                    dropdownTooltip={{
+                        nonActive: "Click to select a Stokes parameter.",
+                        active: "Click to select multiple Stokes parameters.",
+                        disabled: "There is no other Stokes parameter in the selected image."
+                    }}
+                />
+            </div>
+        );
+    }
+}
+
+@observer
+export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore; id: string}> {
     private smoothingShortcutClick = () => {
         this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.SMOOTHING);
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
@@ -29,65 +276,26 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
-    private handleFrameChanged = (newFrame: FrameStore) => {
-        if (newFrame && !newFrame.stokesInfo.includes(this.props.widgetStore.coordinate)) {
-            this.props.widgetStore.setCoordinate("z");
-        }
+    private fittingShortcutClick = () => {
+        this.props.widgetStore.setSettingsTabId(SpectralProfilerSettingsTabs.FITTING);
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget(SpectralProfilerComponent.WIDGET_CONFIG.title, this.props.id, SpectralProfilerComponent.WIDGET_CONFIG.type);
     };
 
     public render() {
         const widgetStore = this.props.widgetStore;
-
-        let enableStatsSelect = false;
-        let enableStokesSelect = false;
-        let stokesClassName = "unlinked-to-selected";
-        let regionId = 0;
-        const profileCoordinateOptions = [{value: "z", label: "Current"}];
-        
-        if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
-            regionId = widgetStore.effectiveRegionId;
-
-            const selectedRegion = widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
-            enableStatsSelect = (selectedRegion && selectedRegion.isClosedRegion);
-            enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
-            
-            const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
-            stokesInfo.forEach(stokes => profileCoordinateOptions.push({value: `${stokes}z`, label: stokes}));
-
-            const linkedClass = "linked-to-selected-stokes";
-            if (enableStokesSelect && widgetStore.matchActiveFrame && (widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z")) {
-                stokesClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
-            }
-        }
-
-        const profileStatsOptions: IOptionProps[] = [
-            {value: CARTA.StatsType.Sum, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Sum)},
-            {value: CARTA.StatsType.Mean, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Mean)},
-            {value: CARTA.StatsType.FluxDensity, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.FluxDensity)},
-            {value: CARTA.StatsType.Sigma, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Sigma)},
-            {value: CARTA.StatsType.Min, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Min)},
-            {value: CARTA.StatsType.Max, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Max)},
-            {value: CARTA.StatsType.Extrema, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Extrema)},
-            {value: CARTA.StatsType.RMS, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.RMS)},
-            {value: CARTA.StatsType.SumSq, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.SumSq)}
-        ];
-
         return (
             <div className="spectral-profiler-toolbar">
-                <RegionSelectorComponent widgetStore={widgetStore} onFrameChanged={this.handleFrameChanged}/>
-                <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
-                    <HTMLSelect value={enableStatsSelect ? widgetStore.statsType : CARTA.StatsType.Mean} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
-                </FormGroup>
-                <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
-                    <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
-                </FormGroup>
-                <ButtonGroup className="profile-buttons">
-                    <Tooltip content="Smoothing">
-                        <AnchorButton icon={<CustomIcon icon="smoothing"/>} onClick={this.smoothingShortcutClick}/>
-                    </Tooltip>
-                    <Tooltip content="Moments">
-                        <AnchorButton icon={<CustomIcon icon="moments"/>} onClick={this.momentsShortcutClick}/>
-                    </Tooltip>
+                <ProfileSelectionComponent profileSelectionStore={widgetStore.profileSelectionStore} />
+                <ButtonGroup className="shortcut-buttons">
+                    <Tooltip2 content="Smoothing">
+                        <AnchorButton icon={<CustomIcon icon="smoothing" />} onClick={this.smoothingShortcutClick} />
+                    </Tooltip2>
+                    <Tooltip2 content="Moments">
+                        <AnchorButton icon={<CustomIcon icon="moments" />} onClick={this.momentsShortcutClick} />
+                    </Tooltip2>
+                    <Tooltip2 content="Fitting">
+                        <AnchorButton icon="regression-chart" onClick={this.fittingShortcutClick} />
+                    </Tooltip2>
                 </ButtonGroup>
             </div>
         );

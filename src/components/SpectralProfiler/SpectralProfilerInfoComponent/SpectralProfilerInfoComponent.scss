@@ -1,0 +1,18 @@
+.spectral-profiler-info {
+    margin: 5px;
+    user-select: none;
+
+    pre {
+        font-size: x-small;
+        margin: 0 0 0 0;
+    }
+
+    .profile-legend {
+        display: block;
+
+        .profile-info {
+            display: inline-flex;
+            flex-wrap: nowrap;
+        }
+    }
+}

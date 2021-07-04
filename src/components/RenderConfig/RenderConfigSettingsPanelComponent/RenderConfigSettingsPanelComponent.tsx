@@ -1,24 +1,24 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
-import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
-import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
+import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
+import {LineKey} from "models";
+import "./RenderConfigSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "render-config-floating-settings",
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 300,
+            defaultWidth: 350,
             defaultHeight: 375,
             title: "render-config-settings",
             isCloseable: true,
@@ -58,7 +58,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const widgetStore = this.widgetStore; 
+        const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
@@ -119,13 +119,12 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: AppStore.Instance.darkTheme,
-            primaryDarkModeLineColor: Colors.BLUE4,
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: new Map<LineKey, string>([["Primary", widgetStore.primaryLineColor]]),
+            lineOptions: [{value: "Primary", label: "Primary"}],
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: (lineKey: LineKey, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
@@ -149,7 +148,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         };
 
         return (
-            <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            <div className="render-config-settings-panel">
+                <LinePlotSettingsPanelComponent {...lineSettingsProps} />
+            </div>
         );
     }
 }

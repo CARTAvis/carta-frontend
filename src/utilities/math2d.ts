@@ -1,6 +1,6 @@
 import {Point2D} from "../models";
 
-type Point3D = { x: number, y: number, z?: number };
+type Point3D = {x: number; y: number; z?: number};
 
 export function dot2D(a: Point2D, b: Point2D): number {
     return a.x * b.x + a.y * b.y;
@@ -75,7 +75,7 @@ export function scaleAndRotateAboutPoint2D(point: Point2D, origin: Point2D, scal
     return add2D(scale2D(rotate2D(subtract2D(point, origin), theta), scale), origin);
 }
 
-export function minMax2D(points: Point2D[]): { maxPoint: Point2D, minPoint: Point2D } {
+export function minMax2D(points: Point2D[]): {maxPoint: Point2D; minPoint: Point2D} {
     let maxPoint = {x: -Number.MAX_VALUE, y: -Number.MAX_VALUE};
     let minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
 
@@ -91,7 +91,7 @@ export function minMax2D(points: Point2D[]): { maxPoint: Point2D, minPoint: Poin
     return {maxPoint, minPoint};
 }
 
-export function minMaxPointArrayX(points: Point2D[]): { maxVal: number, minVal: number } {
+export function minMaxPointArrayX(points: Point2D[]): {maxVal: number; minVal: number} {
     let maxVal = -Number.MAX_VALUE;
     let minVal = Number.MAX_VALUE;
 
@@ -105,7 +105,7 @@ export function minMaxPointArrayX(points: Point2D[]): { maxVal: number, minVal: 
     return {maxVal, minVal};
 }
 
-export function minMaxPointArrayY(points: Point2D[]): { maxVal: number, minVal: number } {
+export function minMaxPointArrayY(points: Point2D[]): {maxVal: number; minVal: number} {
     let maxVal = -Number.MAX_VALUE;
     let minVal = Number.MAX_VALUE;
 
@@ -119,7 +119,7 @@ export function minMaxPointArrayY(points: Point2D[]): { maxVal: number, minVal: 
     return {maxVal, minVal};
 }
 
-export function minMaxPointArrayZ(points: Point3D[]): { maxVal: number, minVal: number } {
+export function minMaxPointArrayZ(points: Point3D[]): {maxVal: number; minVal: number} {
     let maxVal = -Number.MAX_VALUE;
     let minVal = Number.MAX_VALUE;
 
@@ -134,7 +134,7 @@ export function minMaxPointArrayZ(points: Point3D[]): { maxVal: number, minVal: 
 }
 
 // Returns the closest point from a point to a line segment, as well as the distance to the line segment, and whether the point lies within the line segment
-export function closestPointOnLine(p0: Point2D, p1: Point2D, p2: Point2D): { point: Point2D, bounded: boolean, distance: number } {
+export function closestPointOnLine(p0: Point2D, p1: Point2D, p2: Point2D): {point: Point2D; bounded: boolean; distance: number} {
     const lineVector = subtract2D(p2, p1);
     const lineDirection = normalize2D(lineVector);
     const r = subtract2D(p0, p1);
@@ -217,7 +217,7 @@ export function pointDistanceSquared(p1: Point2D, p2: Point2D) {
     return distance.x * distance.x + distance.y * distance.y;
 }
 
-// Returns the closest point index from a points array to current cursor point. 
+// Returns the closest point index from a points array to current cursor point.
 export function closestPointIndexToCursor(cursor: Point2D, points: readonly Point2D[]) {
     let minDistanceSquared = Number.MAX_VALUE;
     let minIndex = 0;
@@ -252,4 +252,17 @@ export function angle2D(a: Point2D, b: Point2D) {
 
 export function round2D(a: Point2D) {
     return {x: Math.round(a.x), y: Math.round(a.y)};
+}
+
+export function closestCatalogIndexToCursor(cursor: Point2D, xArray: Float32Array, yArray: Float32Array): {minIndex: number; minDistanceSquared: number} {
+    let minDistanceSquared = Number.MAX_VALUE;
+    let minIndex = 0;
+    for (let index = 0; index < xArray.length; index++) {
+        const distance = pointDistanceSquared(cursor, {x: xArray[index], y: yArray[index]});
+        if (distance < minDistanceSquared) {
+            minDistanceSquared = distance;
+            minIndex = index;
+        }
+    }
+    return {minIndex: minIndex, minDistanceSquared: minDistanceSquared};
 }

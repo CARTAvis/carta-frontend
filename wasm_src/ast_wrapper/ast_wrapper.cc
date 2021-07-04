@@ -32,23 +32,19 @@ using namespace std;
 
 extern "C" {
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
+EMSCRIPTEN_KEEPALIVE AstFitsChan* emptyFitsChan()
 {
-     if (!header)
-    {
-        cout << "Missing header argument." << endl;
-        return nullptr;
-    }
+    return astFitsChan(nullptr, nullptr, "");
+}
 
-    AstFitsChan* fitschan = astFitsChan(nullptr, nullptr, "");
-    if (!fitschan)
-    {
-        cout << "astFitsChan returned null :(" << endl;
-        return nullptr;
-    }
+EMSCRIPTEN_KEEPALIVE void putFits(AstFitsChan* fitschan, const char* card)
+{
+    astPutFits(fitschan, card, true);
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* getFrameFromFitsChan(AstFitsChan* fitschan, bool checkSkyDomain)
+{
     astClear(fitschan, "Card");
-    astPutCards(fitschan, header);
-
     AstFrameSet* frameSet = static_cast<AstFrameSet*>(astRead(fitschan));
     if (!frameSet || !astIsAFrameSet(frameSet))
     {
@@ -57,9 +53,12 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     }
 
     // work around for missing CTYPE1 & CTYPE2
-    const char *domain = astGetC(frameSet, "Domain");
-    if (!strstr(domain, "SKY")) {
-        return nullptr;
+    if (checkSkyDomain) {
+        const char *domain = astGetC(frameSet, "Domain");
+        if (!strstr(domain, "SKY")) {
+            astDelete(frameSet);
+            return nullptr;
+        }
     }
 
     return frameSet;
@@ -67,7 +66,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 
 EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
 {
-   if (!frameSet || !astIsAFrameSet(frameSet))
+    if (!frameSet || !astIsAFrameSet(frameSet))
     {
         cout << "Invalid frame set." << endl;
         return nullptr;
@@ -80,7 +79,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
         cout << "Creating spectral template failed." << endl;
         return nullptr;
     }
-    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " " );
+    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " ");
     if (!found)
     {
         cout << "Spectral frame not found." << endl;
@@ -93,7 +92,66 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
         return nullptr;
     }
 
-    return specframe;
+    return static_cast<AstSpecFrame*> astCopy(specframe);
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
+{
+    if (!frameSet || !astIsAFrameSet(frameSet))
+    {
+        cout << "Invalid frame set." << endl;
+        return nullptr;
+    }
+
+    // Create 2D base frame
+    AstFrame *baseframe = astFrame(2, "Title=Pixel Coordinates,Domain=GRID,Label(1)=Pixel axis 1,Label(2)=Pixel axis 2");
+    if (!baseframe)
+    {
+        cout << "Create 2D base frame failed." << endl;
+        return nullptr;
+    }
+
+    // Find sky frame with sky template
+    AstSkyFrame *skyTemplate = astSkyFrame("MaxAxes=100,MinAxes=0");
+    if (!skyTemplate)
+    {
+        cout << "Creating sky template failed." << endl;
+        return nullptr;
+    }
+    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, skyTemplate, " ");
+    if (!found)
+    {
+        cout << "Sky frame not found." << endl;
+        return nullptr;
+    }
+    AstSkyFrame *skyframe = static_cast<AstSkyFrame*>astGetFrame(found, AST__CURRENT);
+    if (!skyframe)
+    {
+        cout << "Getting sky frame failed." << endl;
+        return nullptr;
+    }
+
+    // Get 2D map
+    int inaxes[2] = {1, 2};
+    int outaxes[3];
+    AstMapping *map2D;
+    astMapSplit(frameSet, 2, inaxes, outaxes, &map2D); // map is a deep copy
+    if (!map2D)
+    {
+        cout << "Getting 2D mapping failed." << endl;
+        return nullptr;
+    }
+
+    // Create frame set with base frame, sky frame, 2D mapping
+    AstFrameSet *skyframeSet = astFrameSet(baseframe, "");
+    if (!skyframeSet)
+    {
+        cout << "Creating sky frame set failed." << endl;
+        return nullptr;
+    }
+    astAddFrame(skyframeSet, AST__CURRENT, astSimplify(map2D), skyframe);
+
+    return skyframeSet;
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
@@ -135,34 +193,101 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
     return frameSet;
 }
 
-EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
-                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args)
+void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* finish)
 {
- if (!wcsinfo)
+    double dist = astDistance(wcsinfo, start, finish);
+    double middle[2];
+    astOffset(plot, start, finish, dist / 2, middle);
+    float up[] = {0.0f, 1.0f}; // horizontal text
+
+    string distString;
+    const char* unit = astGetC(wcsinfo, "Unit(1)");
+    if (strstr(unit, "degree") != nullptr || strstr(unit, "hh:mm:s") != nullptr)
+    {
+        if (dist < M_PI / 180.0 / 60.0)
+        {
+            distString = to_string(dist * 180.0 / M_PI * 3600.0);
+            distString += '"';
+        }
+        else if (dist < M_PI / 180.0)
+        {
+            distString = to_string(dist * 180.0 / M_PI * 60.0);
+            distString += "'";
+        }
+        else
+        {
+            distString = to_string(dist * 180.0 / M_PI);
+            distString += "\u00B0";
+        }
+    }
+    else
+    {
+        distString = to_string(dist);
+        if (unit[0] == '\0') {
+            distString += "pix";
+        }
+    }
+    const char* distChar = distString.c_str();
+
+    astText(plot, distChar, middle, up, "TC");
+}
+
+EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
+                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args,
+                                        bool showCurve, bool isPVImage, double curveX1, double curveY1, double curveX2, double curveY2)
+{
+    if (!wcsinfo)
     {
         return 1;
     }
 
-	AstPlot* plot;
-	double hi = 1, lo = -1, scale, x1 = paddingLeft, x2 = width - paddingRight, xleft, xright, xscale;
-	double y1 = paddingBottom, y2 = height - paddingTop, ybottom, yscale, ytop;
+    AstPlot* plot;
+    double hi = 1, lo = -1, scale, x1 = paddingLeft, x2 = width - paddingRight, xleft, xright, xscale;
+    double y1 = paddingBottom, y2 = height - paddingTop, ybottom, yscale, ytop;
 
-	double nx = imageX2 - imageX1;
-	double ny = imageY2 - imageY1;
+    double nx = imageX2 - imageX1;
+    double ny = imageY2 - imageY1;
 
-	xscale = (x2 - x1) / nx;
-	yscale = (y2 - y1) / ny;
-	scale = (xscale < yscale) ? xscale : yscale;
-	xleft = 0.5f * (x1 + x2 - nx * scale);
-	xright = 0.5f * (x1 + x2 + nx * scale);
-	ybottom = 0.5f * (y1 + y2 - ny * scale);
-	ytop = 0.5f * (y1 + y2 + ny * scale);
+    xscale = (x2 - x1) / nx;
+    yscale = (y2 - y1) / ny;
+    scale = (xscale < yscale) ? xscale : yscale;
+    xleft = 0.5f * (x1 + x2 - nx * scale);
+    xright = 0.5f * (x1 + x2 + nx * scale);
+    ybottom = 0.5f * (y1 + y2 - ny * scale);
+    ytop = 0.5f * (y1 + y2 + ny * scale);
 
-	float gbox[] = {(float)xleft, (float)ybottom, (float)xright, (float)ytop};
-	double pbox[] = {imageX1, imageY1, imageX2, imageY2};
-	plot = astPlot(wcsinfo, gbox, pbox, args);
-	astBBuf(plot);
+    float gbox[] = {(float)xleft, (float)ybottom, (float)xright, (float)ytop};
+    double pbox[] = {imageX1, imageY1, imageX2, imageY2};
+    plot = astPlot(wcsinfo, gbox, pbox, args);
+    astBBuf(plot);
     astGrid(plot);
+
+    if (showCurve)
+    {
+        const double x[] = {curveX1, curveX2};
+        const double y[] = {curveY1, curveY2};
+        double xtran[2];
+        double ytran[2];
+        astTran2(wcsinfo, 2, x, y, 1, xtran, ytran);
+        
+        double in[2][4] = {{xtran[0], xtran[1], xtran[1], xtran[0]}, {ytran[0], ytran[1], ytran[0], ytran[0]}};
+        const double* inPtr = in[0];
+        astPolyCurve(plot, 4, 2, 4, inPtr);
+
+        double start[] = {xtran[0], ytran[0]};
+        double finish[] = {xtran[1], ytran[1]};
+        if (isPVImage)
+        {
+            double corner[] = {xtran[1], ytran[0]};
+            plotDistText(wcsinfo, plot, start, corner);
+            plotDistText(wcsinfo, plot, finish, corner);
+        }
+        else
+        {
+            plotDistText(wcsinfo, plot, start, finish);
+        }        
+    }
+
     astEBuf(plot);
     astAnnul(plot);
     if (!astOK)
@@ -220,6 +345,17 @@ EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
     }
     return 0;
 }
+
+EMSCRIPTEN_KEEPALIVE void  setI(AstObject* obj, const char* attrib, int val)
+{
+    astSetI(obj, attrib, val);
+}
+
+EMSCRIPTEN_KEEPALIVE void  setD(AstObject* obj, const char* attrib, double val)
+{
+    astSetD(obj, attrib, val);
+}
+
 
 EMSCRIPTEN_KEEPALIVE int clear(AstObject* obj, const char* attrib)
 {
@@ -287,7 +423,7 @@ EMSCRIPTEN_KEEPALIVE int transform3D(AstSpecFrame* wcsinfo, double x, double y, 
         return 1;
     }
 
-    double in[] ={x, y, z};
+    double in[] = {x, y, z};
     astTranN(wcsinfo, 1, 3, 1, in, forward, 3, 1, out);
     if (!astOK)
     {
@@ -342,9 +478,9 @@ EMSCRIPTEN_KEEPALIVE void deleteObject(AstFrameSet* src)
     astDelete(src);
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* copy(AstFrameSet* src)
+EMSCRIPTEN_KEEPALIVE AstObject* copy(AstObject* src)
 {
-    return static_cast<AstFrameSet*> astCopy(src);
+    return static_cast<AstObject*> astCopy(src);
 }
 
 EMSCRIPTEN_KEEPALIVE void invert(AstFrameSet* src)
@@ -366,6 +502,22 @@ EMSCRIPTEN_KEEPALIVE AstShiftMap* shiftMap2D(double x, double y)
 EMSCRIPTEN_KEEPALIVE double axDistance(AstFrameSet* wcsinfo, int axis, double v1, double v2)
 {
     return astAxDistance(wcsinfo, axis, v1, v2);
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrame* frame(int naxes, const char* options)
+{
+    return astFrame(naxes, options);
+}
+
+EMSCRIPTEN_KEEPALIVE void addFrame(AstFrameSet* frameSet, int iframe, AstMapping* map, AstFrame* frame)
+{
+    astAddFrame(frameSet, iframe, map, frame);
+}
+
+EMSCRIPTEN_KEEPALIVE AstMatrixMap* scaleMap2D(double sx, double sy)
+{
+    double diags[] = {sx, sy};
+    return astMatrixMap(2, 2, 1, diags, "");
 }
 
 EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin, double xMax, int nx, double yMin, double yMax, int ny, int forward)

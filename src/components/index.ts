@@ -13,6 +13,7 @@ export * from "./RegionList/RegionListComponent";
 export * from "./SpatialProfiler/SpatialProfilerComponent";
 export * from "./SpectralLineQuery/SpectralLineQueryComponent";
 export * from "./SpectralProfiler/SpectralProfilerComponent";
+export * from "./SpectralProfiler/SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 export * from "./Stats/StatsComponent";
 export * from "./Histogram/HistogramComponent";
 export * from "./StokesAnalysis/StokesAnalysisComponent";
@@ -25,7 +26,6 @@ export * from "./Histogram/HistogramSettingsPanelComponent/HistogramSettingsPane
 export * from "./SplashScreen/SplashScreenComponent";
 export * from "./FileInfo/FileInfoComponent";
 export * from "./App/UIControllerComponent";
-export * from "./RegionSelector/RegionSelectorComponent";
 export * from "./HelpDrawer/HelpDrawerComponent";
 export * from "./CatalogOverlay/CatalogPlotComponent/CatalogPlotComponent";
 export * from "./CatalogOverlay/CatalogOverlayPlotSettingsPanelComponent/CatalogOverlayPlotSettingsPanelComponent";

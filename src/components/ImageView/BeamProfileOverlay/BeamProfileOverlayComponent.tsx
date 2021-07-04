@@ -3,7 +3,8 @@ import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
 import {AppStore, BeamType, FrameStore} from "stores";
-import { Point2D } from "models";
+import {Point2D} from "models";
+import {getColorForTheme} from "utilities";
 import "./BeamProfileOverlayComponent.scss";
 
 interface BeamProfileOverlayComponentProps {
@@ -27,7 +28,6 @@ interface BeamPlotProps {
 
 @observer
 export class BeamProfileOverlayComponent extends React.Component<BeamProfileOverlayComponentProps> {
-
     private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps => {
         if (!frame.hasVisibleBeam) {
             return null;
@@ -36,16 +36,16 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const id = frame.frameInfo.fileId;
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const beamSettings = frame.overlayBeamSettings;
-        const color = beamSettings.color;
+        const color = getColorForTheme(beamSettings.color);
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
         const type = beamSettings.type;
         const strokeWidth = beamSettings.width;
         const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;
         const shiftX = beamSettings.shiftX;
         const shiftY = beamSettings.shiftY;
-        const a = frame.beamProperties.x / 2.0 * zoomLevel / devicePixelRatio;
-        const b = frame.beamProperties.y / 2.0 * zoomLevel / devicePixelRatio;
-        let theta = (90.0 - frame.beamProperties.angle) * Math.PI / 180.0;
+        const a = ((frame.beamProperties.x / 2.0) * zoomLevel) / devicePixelRatio;
+        const b = ((frame.beamProperties.y / 2.0) * zoomLevel) / devicePixelRatio;
+        let theta = ((90.0 - frame.beamProperties.angle) * Math.PI) / 180.0;
         if (frame.spatialTransform) {
             theta -= frame.spatialTransform.rotation;
         }
@@ -71,7 +71,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         }
 
         return {id, position: {x: positionX, y: positionY}, a, b, theta, type, color, axisColor, strokeWidth};
-    }
+    };
 
     private plotBeam(plotProps: BeamPlotProps) {
         if (!plotProps) {
@@ -82,22 +82,17 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         switch (plotProps.type) {
             case BeamType.Open:
             default:
-                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth}/>;
+                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth} />;
                 break;
-            case  BeamType.Solid:
-                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} fill={plotProps.color} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth}/>;
+            case BeamType.Solid:
+                ellipse = <Ellipse radiusX={plotProps.a} radiusY={plotProps.b} fill={plotProps.color} stroke={plotProps.color} strokeWidth={plotProps.strokeWidth} />;
                 break;
         }
         return (
-            <Group
-                x={plotProps.position.x}
-                y={plotProps.position.y}
-                rotation={plotProps.theta * 180.0 / Math.PI}
-                key={plotProps.id}
-            >
+            <Group x={plotProps.position.x} y={plotProps.position.y} rotation={(plotProps.theta * 180.0) / Math.PI} key={plotProps.id}>
                 {plotProps.a > 0 && plotProps.b > 0 && ellipse}
-                <Line points={[-plotProps.a, 0, plotProps.a, 0]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth}/>
-                <Line points={[0, -plotProps.b, 0, plotProps.b]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth}/>
+                <Line points={[-plotProps.a, 0, plotProps.a, 0]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth} />
+                <Line points={[0, -plotProps.b, 0, plotProps.b]} stroke={plotProps.axisColor} strokeWidth={plotProps.strokeWidth} />
             </Group>
         );
     }

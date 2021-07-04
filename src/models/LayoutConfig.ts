@@ -7,95 +7,137 @@ import {CatalogOverlayComponent} from "components";
 const layoutSchema = require("models/layout_schema_2.json");
 
 const COMPONENT_CONFIG = new Map<string, any>([
-    ["image-view", {
-        type: "react-component",
-        component: "image-view",
-        title: "No image loaded",
-        height: smoothStepOffset(window.innerHeight, 720, 1080, 65, 75), // image view fraction: adjust layout properties based on window dimensions
-        id: "image-view",
-        isClosable: false
-    }],
-    ["render-config", {
-        type: "react-component",
-        component: "render-config",
-        title: "Render Configuration",
-        id: "render-config"
-    }],
-    ["region-list", {
-        type: "react-component",
-        component: "region-list",
-        title: "Region List",
-        id: "region-list"
-    }],
-    ["animator", {
-        type: "react-component",
-        component: "animator",
-        title: "Animator",
-        id: "animator"
-    }],
-    ["spatial-profiler", {
-        type: "react-component",
-        component: "spatial-profiler",
-        id: "spatial-profiler"
-    }],
-    ["spectral-profiler", {
-        type: "react-component",
-        component: "spectral-profiler",
-        id: "spectral-profiler",
-        title: "Z Profile: Cursor"
-    }],
-    ["stokes", {
-        type: "react-component",
-        component: "stokes",
-        id: "stokes",
-        title: "Stokes Analysis"
-    }],
-    ["histogram", {
-        type: "react-component",
-        component: "histogram",
-        title: "Histogram",
-        id: "histogram"
-    }],
-    ["stats", {
-        type: "react-component",
-        component: "stats",
-        title: "Statistics",
-        id: "stats"
-    }],
-    ["layer-list", {
-        type: "react-component",
-        component: "layer-list",
-        title: "Image List",
-        id: "layer-list"
-    }],
-    ["log", {
-        type: "react-component",
-        component: "log",
-        title: "Log",
-        id: "log"
-    }],
-    ["catalog-overlay", {
-        type: "react-component",
-        component: "catalog-overlay",
-        title: "Catalog Overlay",
-        id: "catalog-overlay"
-    }],
-    ["catalog-plot", {
-        type: "react-component",
-        component: "catalog-plot",
-        title: "Catalog Plot",
-        id: "catalog-plot"
-    }],
-    ["spectral-line-query", {
-        type: "react-component",
-        component: "spectral-line-query",
-        title: "Spectral Line Query",
-        id: "spectral-line-query"
-    }]
+    [
+        "image-view",
+        {
+            type: "react-component",
+            component: "image-view",
+            title: "No image loaded",
+            height: smoothStepOffset(window.innerHeight, 720, 1080, 65, 75), // image view fraction: adjust layout properties based on window dimensions
+            id: "image-view",
+            isClosable: false
+        }
+    ],
+    [
+        "render-config",
+        {
+            type: "react-component",
+            component: "render-config",
+            title: "Render Configuration",
+            id: "render-config"
+        }
+    ],
+    [
+        "region-list",
+        {
+            type: "react-component",
+            component: "region-list",
+            title: "Region List",
+            id: "region-list"
+        }
+    ],
+    [
+        "animator",
+        {
+            type: "react-component",
+            component: "animator",
+            title: "Animator",
+            id: "animator"
+        }
+    ],
+    [
+        "spatial-profiler",
+        {
+            type: "react-component",
+            component: "spatial-profiler",
+            id: "spatial-profiler"
+        }
+    ],
+    [
+        "spectral-profiler",
+        {
+            type: "react-component",
+            component: "spectral-profiler",
+            id: "spectral-profiler",
+            title: "Z Profile: Cursor"
+        }
+    ],
+    [
+        "stokes",
+        {
+            type: "react-component",
+            component: "stokes",
+            id: "stokes",
+            title: "Stokes Analysis"
+        }
+    ],
+    [
+        "histogram",
+        {
+            type: "react-component",
+            component: "histogram",
+            title: "Histogram",
+            id: "histogram"
+        }
+    ],
+    [
+        "stats",
+        {
+            type: "react-component",
+            component: "stats",
+            title: "Statistics",
+            id: "stats"
+        }
+    ],
+    [
+        "layer-list",
+        {
+            type: "react-component",
+            component: "layer-list",
+            title: "Image List",
+            id: "layer-list"
+        }
+    ],
+    [
+        "log",
+        {
+            type: "react-component",
+            component: "log",
+            title: "Log",
+            id: "log"
+        }
+    ],
+    [
+        "catalog-overlay",
+        {
+            type: "react-component",
+            component: "catalog-overlay",
+            title: "Catalog Overlay",
+            id: "catalog-overlay"
+        }
+    ],
+    [
+        "catalog-plot",
+        {
+            type: "react-component",
+            component: "catalog-plot",
+            title: "Catalog Plot",
+            id: "catalog-plot"
+        }
+    ],
+    [
+        "spectral-line-query",
+        {
+            type: "react-component",
+            component: "spectral-line-query",
+            title: "Spectral Line Query",
+            id: "spectral-line-query"
+        }
+    ]
 ]);
 
 export class LayoutConfig {
-    public static LayoutValidator = new Ajv({useDefaults: "empty"}).compile(layoutSchema);
+    public static LayoutValidator = new Ajv({useDefaults: "empty", strictTypes: false}).compile(layoutSchema);
     public static CurrentSchemaVersion = 2;
 
     public static GetPresetConfig = (presetName: string) => {
@@ -112,20 +154,23 @@ export class LayoutConfig {
             layoutVersion: LayoutConfig.CurrentSchemaVersion,
             docked: {
                 type: "row",
-                content: [{
-                    type: "column",
-                    width: 60,
-                    content: [{type: "component", id: "image-view"}, config.leftBottomContent]
-                }, {
-                    type: "column",
-                    content: config.rightColumnContent
-                }]
+                content: [
+                    {
+                        type: "column",
+                        width: 60,
+                        content: [{type: "component", id: "image-view"}, config.leftBottomContent]
+                    },
+                    {
+                        type: "column",
+                        content: config.rightColumnContent
+                    }
+                ]
             },
             floating: []
         };
     };
 
-    public static UpgradeLayout = (layout: { layoutVersion: 1 | 2, docked: any, floating: any }) => {
+    public static UpgradeLayout = (layout: {layoutVersion: 1 | 2; docked: any; floating: any}) => {
         // Upgrade to V2 if required
         if (layout.layoutVersion === 1) {
             const spatialProfileWidgets = findDeep(layout, item => item.id === "spatial-profiler");
@@ -143,6 +188,8 @@ export class LayoutConfig {
 
         // Upgrade floating widgets to consistent type
         if (layout.floating && Array.isArray(layout.floating)) {
+            // Remove floating settings widget in order to be backward compatible
+            layout.floating = layout.floating.filter(floatingWidget => floatingWidget?.id !== "floating-settings");
             for (const widget of layout.floating) {
                 if (widget.type !== "component") {
                     // Store widget type as id, to be consistent with docked widgets
@@ -190,7 +237,11 @@ export class LayoutConfig {
         LayoutConfig.GenSimpleConfigToSave(appStore, configToSave.docked.content, rootConfig.content);
 
         // 2. handle floating widgets
-        appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
+        appStore.widgetsStore.floatingWidgets?.forEach((config: WidgetConfig) => {
+            // skip saving floating settings panel
+            if (config?.type === "floating-settings") {
+                return;
+            }
             let floatingConfig = {
                 type: "component",
                 id: config.type,
@@ -227,14 +278,15 @@ export class LayoutConfig {
             return;
         }
 
-        parentContent.forEach((child) => {
+        parentContent.forEach(child => {
             if (child.type) {
                 if (child.type === "stack" || child.type === "row" || child.type === "column") {
                     let simpleChild = {
                         type: child.type,
                         content: []
                     };
-                    if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) { // save active tab
+                    if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) {
+                        // save active tab
                         simpleChild["activeItemIndex"] = child.activeItemIndex;
                     }
                     if (child.width) {
@@ -248,7 +300,7 @@ export class LayoutConfig {
                         LayoutConfig.GenSimpleConfigToSave(appStore, simpleChild.content, child.content);
                     }
                 } else if (child.type === "component" && child.id) {
-                    const widgetType = (child.id).replace(/(-component)?-\d+$/, "");
+                    const widgetType = child.id.replace(/(-component)?-\d+$/, "");
                     let simpleChild = {
                         type: child.type,
                         id: widgetType
@@ -287,14 +339,15 @@ export class LayoutConfig {
             return;
         }
 
-        parentContent.forEach((child) => {
+        parentContent.forEach(child => {
             if (child.type) {
                 if (child.type === "stack" || child.type === "row" || child.type === "column") {
                     let simpleChild = {
                         type: child.type,
                         content: []
                     };
-                    if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) { // load active tab
+                    if (child.type === "stack" && child.activeItemIndex >= 0 && child.activeItemIndex < child.content?.length) {
+                        // load active tab
                         simpleChild["activeItemIndex"] = child.activeItemIndex;
                     }
                     if (child.width) {
@@ -308,7 +361,7 @@ export class LayoutConfig {
                         LayoutConfig.CreateConfigToApply(simpleChild.content, child.content, componentConfigs);
                     }
                 } else if (child.type === "component" && child.id) {
-                    const widgetType = (child.id).replace(/-\d+$/, "");
+                    const widgetType = child.id.replace(/-\d+$/, "");
                     if (COMPONENT_CONFIG.has(widgetType)) {
                         let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(widgetType));
                         if (child.width) {

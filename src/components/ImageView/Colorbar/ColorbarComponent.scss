@@ -1,0 +1,17 @@
+.colorbar-stage {
+    position: absolute;
+    z-index: 5; // on top of overlay-canvas
+}
+
+.colorbar-info {
+    width: 300px;
+    height: 12px;
+    position: absolute;
+    bottom: 3px;
+    right: 5px;
+
+    .profiler-info {
+        left: auto;
+        right: 0px;
+    }
+}

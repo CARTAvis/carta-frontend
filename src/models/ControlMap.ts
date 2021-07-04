@@ -14,7 +14,7 @@ export class ControlMap {
     private texture: WebGLTexture;
     private gl: WebGLRenderingContext;
 
-    constructor(src: FrameStore, dst: FrameStore, astTransform: number, width: number, height: number) {
+    constructor(src: FrameStore, dst: FrameStore, astTransform: AST.FrameSet, width: number, height: number) {
         this.source = src;
         this.destination = dst;
         this.width = width;
@@ -28,8 +28,8 @@ export class ControlMap {
             AST.invert(copySrc);
             AST.invert(copyDest);
             astTransform = AST.convert(copySrc, copyDest, "");
-            AST.delete(copySrc);
-            AST.delete(copyDest);
+            AST.deleteObject(copySrc);
+            AST.deleteObject(copyDest);
             cleanUpTransform = true;
         }
 
@@ -37,9 +37,9 @@ export class ControlMap {
         const paddingY = Math.ceil(src.frameInfo.fileInfoExtended.height / height);
         this.minPoint = {x: -paddingX, y: -paddingY};
         this.maxPoint = {x: paddingX + src.frameInfo.fileInfoExtended.width, y: paddingY + src.frameInfo.fileInfoExtended.height};
-        this.grid = AST.getTransformGrid(astTransform, this.minPoint.x, this.maxPoint.x, width, this.minPoint.y, this.maxPoint.y, height, 1);
+        this.grid = AST.getTransformGrid(astTransform, this.minPoint.x, this.maxPoint.x, width, this.minPoint.y, this.maxPoint.y, height, true);
         if (cleanUpTransform) {
-            AST.delete(astTransform);
+            AST.deleteObject(astTransform);
         }
     }
 
@@ -68,8 +68,8 @@ export class ControlMap {
         const range = subtract2D(this.maxPoint, this.minPoint);
         const shiftedPoint = subtract2D(point, this.minPoint);
         const index2D: Point2D = {
-            x: this.width * shiftedPoint.x / range.x,
-            y: this.height * shiftedPoint.y / range.y,
+            x: (this.width * shiftedPoint.x) / range.x,
+            y: (this.height * shiftedPoint.y) / range.y
         };
 
         const indexFloor = {x: Math.floor(index2D.x), y: Math.floor(index2D.y)};
@@ -92,6 +92,6 @@ export class ControlMap {
     }
 
     static IsWidthValid(width: number) {
-        return (width >= 128 && width <= 1024);
+        return width >= 128 && width <= 1024;
     }
 }

@@ -1,4 +1,4 @@
-import { action, observable, makeObservable } from "mobx";
+import {action, observable, makeObservable} from "mobx";
 import {Position} from "@blueprintjs/core";
 
 export class HelpStore {
@@ -38,13 +38,14 @@ export enum HelpType {
     FILE_INFO = "file-info",
     SAVE_LAYOUT = "save-layout",
     REGION_DIALOG = "region-dialog",
+    STOKES = "STOKES",
 
     // Widgets
     ANIMATOR = "animator",
     HISTOGRAM = "histogram",
     HISTOGRAM_SETTINGS = "histogram-settings",
     IMAGE_VIEW = "image-view",
-    IMAGE_VIEW_SETTINGS  = "image-view-settings",
+    IMAGE_VIEW_SETTINGS = "image-view-settings",
     LAYER_LIST = "layer-list",
     LOG = "log",
     PLACEHOLDER = "placeholder",
@@ -59,6 +60,7 @@ export enum HelpType {
     SPECTRAL_PROFILER_SETTINGS_STYLING = "spectral-profiler-settings-styling",
     SPECTRAL_PROFILER_SETTINGS_SMOOTHING = "spectral-profiler-settings-smoothing",
     SPECTRAL_PROFILER_SETTINGS_MOMENTS = "spectral-profiler-settings-moments",
+    SPECTRAL_PROFILER_SETTINGS_FITTING = "spectral-profiler-settings-fitting",
     STATS = "stats",
     STOKES_ANALYSIS = "stoke-analysis",
     STOKES_ANALYSIS_SETTINGS_CONVERSION = "stoke-analysis-settings-conversion",
@@ -71,5 +73,7 @@ export enum HelpType {
     CATALOG_SETTINGS_GOLBAL = "catalog-settings-golbal",
     CATALOG_SETTINGS_OVERLAY = "catalog-settings-overlay",
     CATALOG_SETTINGS_COLOR = "catalog-settings-color",
+    CATALOG_SETTINGS_SIZE = "catalog-settings-size",
+    CATALOG_SETTINGS_ORIENTATION = "catalog-settings-orientation",
     SPECTRAL_LINE_QUERY = "spectral-line-query"
 }

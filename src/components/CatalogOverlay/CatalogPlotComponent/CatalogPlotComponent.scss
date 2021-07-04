@@ -20,7 +20,7 @@
                 .bp3-control-group {
                     .bp3-input-group {
                         width: 100px;
-                    } 
+                    }
                 }
             }
         }
@@ -45,7 +45,7 @@
         width: calc(100% - 10px);
         height: calc(100% - 90px);
         position: relative;
-        
+
         .js-plotly-plot .plotly .hoverlayer .spikeline {
             stroke: $gray4 !important;
             stroke-width: 1px;
@@ -64,21 +64,24 @@
         }
     }
 
-    .catalog-plot-footer {
-        width: 100%;
+    .bp3-dialog-footer {
         height: 50px;
+        margin: 0px;
+        padding: 0 5px 5px 5px;
+        .bp3-button {
+            height: 30px;
+        }
+        .bp3-form-group {
+            margin: 0;
+            .bp3-label {
+                margin: 0;
+            }
+        }
 
         .scatter-info {
             height: 15px;
             width: 100%;
             position: relative;
-        }
-
-        .actions {
-            display: inline-flex;
-            float: right;
-            padding-right: 5px;
-            height: 35px;
         }
     }
 }

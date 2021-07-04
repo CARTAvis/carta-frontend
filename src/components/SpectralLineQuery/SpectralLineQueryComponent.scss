@@ -71,11 +71,11 @@
                 border-color: transparent;
             }
 
-            .Pane1  {
+            .Pane1 {
                 min-height: 10px !important;
             }
 
-            .Pane2  {
+            .Pane2 {
                 min-height: 10px !important;
             }
 
@@ -93,7 +93,7 @@
                     .header-table-cell {
                         line-height: 250%;
                     }
-                    .cell-switch-button{
+                    .cell-switch-button {
                         margin: 0;
                     }
                 }
@@ -142,6 +142,7 @@
             height: 30px;
         }
         .bp3-form-group {
+            margin: 0;
             .bp3-label {
                 margin: 0;
             }

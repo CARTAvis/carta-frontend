@@ -1,10 +1,11 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, Tab, Tabs} from "@blueprintjs/core";
+import {Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
+import {LineKey} from "models";
 import "./StokesAnalysisSettingsPanelComponent.scss";
 
 export enum StokesAnalysisSettingsTabs {
@@ -16,7 +17,6 @@ export enum StokesAnalysisSettingsTabs {
 
 @observer
 export class StokesAnalysisSettingsPanelComponent extends React.Component<WidgetProps> {
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "stokes-floating-settings",
@@ -66,27 +66,37 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         this.widgetStore.setEqualAxesValue(changeEvent.target.checked);
     };
 
+    handleInvertedColorMapChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.widgetStore.setInvertedColorMap(changeEvent.target.checked);
+    };
     handleSelectedTabChanged = (newTabId: React.ReactText) => {
         this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
-    }
+    };
 
     render() {
-        const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: appStore.darkTheme,
-            primaryDarkModeLineColor: Colors.BLUE4,
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: new Map<LineKey, string>([
+                ["Primary", widgetStore.primaryLineColor],
+                ["Secondary", widgetStore.secondaryLineColor]
+            ]),
+            lineOptions: [
+                {value: "Primary", label: "Primary"},
+                {value: "Secondary", label: "Secondary"}
+            ],
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: (lineKey: LineKey, color: string) => {
+                if (lineKey === "Primary") {
+                    widgetStore.setPrimaryLineColor(color);
+                } else if (lineKey === "Secondary") {
+                    widgetStore.setSecondaryLineColor(color);
+                }
+            },
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
-            setPlotType: widgetStore.setPlotType,
-            secondaryDarkModeLineColor: Colors.ORANGE4,
-            secondaryLineColor: widgetStore.secondaryLineColor,
-            setSecondaryLineColor: widgetStore.setSecondaryLineColor
+            setPlotType: widgetStore.setPlotType
         };
 
         const scatterSettingsProps: ScatterPlotSettingsPanelComponentProps = {
@@ -94,10 +104,12 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             scatterPlotPointSize: widgetStore.scatterPlotPointSize,
             pointTransparency: widgetStore.pointTransparency,
             equalAxes: widgetStore.equalAxes,
-            setPointTransparency:  widgetStore.setPointTransparency,
+            setPointTransparency: widgetStore.setPointTransparency,
             setScatterPlotPointSize: widgetStore.setScatterPlotPointSize,
             setColormap: widgetStore.setColormap,
-            handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged
+            handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged,
+            invertedColorMap: widgetStore.invertedColorMap,
+            handleInvertedColorMapChanged: this.handleInvertedColorMapChanged
         };
 
         const hasStokes = widgetStore.effectiveFrame && widgetStore.effectiveFrame.hasStokes;
@@ -105,10 +117,14 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         return (
             <div className="stokes-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                    <Tab id={StokesAnalysisSettingsTabs.CONVERSION} title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={!hasStokes}/>}/>
-                    <Tab id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING} title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                    <Tab id={StokesAnalysisSettingsTabs.SCATTER_PLOT_STYLING} title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps}/>}/>
-                    <Tab id={StokesAnalysisSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} diableStyle={true} diableDecimation={true}/>}/>
+                    <Tab
+                        id={StokesAnalysisSettingsTabs.CONVERSION}
+                        title="Conversion"
+                        panel={<SpectralSettingsComponent frame={widgetStore.effectiveFrame} onSpectralCoordinateChange={widgetStore.setSpectralCoordinate} onSpectralSystemChange={widgetStore.setSpectralSystem} disable={!hasStokes} />}
+                    />
+                    <Tab id={StokesAnalysisSettingsTabs.LINE_PLOT_STYLING} title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
+                    <Tab id={StokesAnalysisSettingsTabs.SCATTER_PLOT_STYLING} title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProps} />} />
+                    <Tab id={StokesAnalysisSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} diableStyle={true} diableDecimation={true} />} />
                 </Tabs>
             </div>
         );

@@ -1,24 +1,24 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed, autorun} from "mobx";
-import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {HistogramWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
+import {LineKey} from "models";
+import "./HistogramSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
 @observer
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "histogram-floating-settings",
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 300,
+            defaultWidth: 350,
             defaultHeight: 320,
             title: "histogram-settings",
             isCloseable: true,
@@ -80,7 +80,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const widgetStore = this.widgetStore; 
+        const widgetStore = this.widgetStore;
         const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
         const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
@@ -141,13 +141,12 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: AppStore.Instance.darkTheme,
-            primaryDarkModeLineColor: Colors.BLUE4,
-            primaryLineColor: widgetStore.primaryLineColor,
+            lineColorMap: new Map<LineKey, string>([["Primary", widgetStore.primaryLineColor]]),
+            lineOptions: [{value: "Primary", label: "Primary"}],
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineColor: (lineKey: LineKey, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
@@ -167,9 +166,11 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
             handleYMaxChange: this.handleYMaxChange
         };
-        
+
         return (
-            <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            <div className="histogram-settings-panel">
+                <LinePlotSettingsPanelComponent {...lineSettingsProps} />
+            </div>
         );
     }
 }

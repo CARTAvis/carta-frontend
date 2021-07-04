@@ -1,14 +1,4 @@
-@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
-
-.bp3-form-group {
-    margin-bottom: 5px;
-    margin-top: 5px;
-    margin-left: 15px;
-
-    &:first-of-type {
-        margin-left: 5px;
-    }
-}
+@import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
 .unlinked-to-selected {
     border: 1px solid transparent;

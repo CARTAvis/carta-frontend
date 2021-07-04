@@ -2,8 +2,9 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
-import {filterProcessedColumnData, minMaxArray} from "utilities";
-import {ProcessedColumnData} from "models";
+import {filterProcessedColumnData, minMaxArray, transformPoint} from "utilities";
+import {ProcessedColumnData, TypedArray} from "models";
+import {CatalogWebGLService, CatalogTextureType} from "services";
 
 export interface CatalogInfo {
     fileId: number;
@@ -17,7 +18,7 @@ export enum CatalogCoordinate {
     Y = "Y",
     PlotSize = "Size",
     PlotShape = "Shape",
-    NONE = "None",
+    NONE = "None"
 }
 
 export enum CatalogOverlay {
@@ -33,7 +34,7 @@ export enum CatalogOverlay {
     X0 = "X0",
     Y0 = "Y0",
     X1 = "X1",
-    Y1 = "Y1",
+    Y1 = "Y1"
 }
 
 export enum CatalogUpdateMode {
@@ -49,10 +50,10 @@ export enum CatalogSystemType {
     Galactic = "GALACTIC",
     ICRS = "ICRS",
     Pixel0 = "Pixel0",
-    Pixel1 = "Pixel1",
+    Pixel1 = "Pixel1"
 }
 
-export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, filter: string, columnWidth: number };
+export type ControlHeader = {columnIndex: number; dataIndex: number; display: boolean; filter: string; columnWidth: number};
 
 export class CatalogProfileStore {
     public static readonly InitTableRows = 50;
@@ -67,33 +68,22 @@ export class CatalogProfileStore {
     ]);
     private static readonly DataChunkSize = 50;
     // Number.NEGATIVE_INFINITY -1.797693134862316E+308
-    private static readonly NEGATIVE_INFINITY = -1.7976931348623157e+308;
-    private static readonly POSITIVE_INFINITY = 1.7976931348623157e+308;
-    private systemCoordinateMap = new Map<CatalogSystemType, { x: CatalogOverlay, y: CatalogOverlay }>([
+    private static readonly NEGATIVE_INFINITY = -1.7976931348623157e308;
+    private static readonly POSITIVE_INFINITY = 1.7976931348623157e308;
+    private systemCoordinateMap = new Map<CatalogSystemType, {x: CatalogOverlay; y: CatalogOverlay}>([
         [CatalogSystemType.FK4, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
         [CatalogSystemType.FK5, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
         [CatalogSystemType.ICRS, {x: CatalogOverlay.RA, y: CatalogOverlay.DEC}],
         [CatalogSystemType.Galactic, {x: CatalogOverlay.GLON, y: CatalogOverlay.GLAT}],
         [CatalogSystemType.Ecliptic, {x: CatalogOverlay.ELON, y: CatalogOverlay.ELAT}],
         [CatalogSystemType.Pixel0, {x: CatalogOverlay.X0, y: CatalogOverlay.Y0}],
-        [CatalogSystemType.Pixel1, {x: CatalogOverlay.X1, y: CatalogOverlay.Y1}],
+        [CatalogSystemType.Pixel1, {x: CatalogOverlay.X1, y: CatalogOverlay.Y1}]
     ]);
 
-    private readonly InitialedColumnsKeyWords = [
-        "ANGULAR DISTANCE",
-        "MAIN IDENTIFIER",
-        "RADIAL VELOCITY",
-        "REDSHIFT"];
-    private readonly InitialedExcludeColumnsKeyWords = [
-        "PROPER MOTION",
-        "SIGMA"
-    ];
-    private InitialedRAColumnsKeyWords = [
-        "RIGHT ASCENSION", "RA", "R.A"
-    ];
-    private InitialedDECColumnsKeyWords = [
-        "DECLINATION", "DEC", "Dec."
-    ];
+    private readonly InitialedColumnsKeyWords = ["ANGULAR DISTANCE", "MAIN IDENTIFIER", "RADIAL VELOCITY", "REDSHIFT"];
+    private readonly InitialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
+    private InitialedRAColumnsKeyWords = ["RIGHT ASCENSION", "RA", "R.A"];
+    private InitialedDECColumnsKeyWords = ["DECLINATION", "DEC", "Dec."];
 
     @observable progress: number;
     @observable catalogInfo: CatalogInfo;
@@ -106,18 +96,18 @@ export class CatalogProfileStore {
     @observable updatingDataStream: boolean;
     @observable updateMode: CatalogUpdateMode;
     @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
-    @observable catalogCoordinateSystem: { system: CatalogSystemType, equinox: string, epoch: string, coordinate: { x: CatalogOverlay, y: CatalogOverlay } };
+    @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string; epoch: string; coordinate: {x: CatalogOverlay; y: CatalogOverlay}};
     @observable selectedPointIndices: number[];
     @observable filterDataSize: number;
     @observable updateTableView: boolean;
-    @observable sortingInfo: {columnName: string, sortingType: CARTA.SortingType};
+    @observable sortingInfo: {columnName: string; sortingType: CARTA.SortingType};
     @observable maxRows: number;
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>) {
         makeObservable(this);
         this.catalogInfo = catalogInfo;
         this.catalogHeader = catalogHeader.sort((a, b) => {
-            return (a.columnIndex - b.columnIndex);
+            return a.columnIndex - b.columnIndex;
         });
         this.catalogData = catalogData;
         this.catalogControlHeader = this.initCatalogControlHeader;
@@ -171,7 +161,7 @@ export class CatalogProfileStore {
         };
     }
 
-    @computed get activedSystem(): {x: CatalogOverlay, y: CatalogOverlay} {
+    @computed get activedSystem(): {x: CatalogOverlay; y: CatalogOverlay} {
         return this.systemCoordinateMap.get(this.catalogCoordinateSystem.system);
     }
 
@@ -195,7 +185,7 @@ export class CatalogProfileStore {
         this.sortingInfo = {columnName, sortingType};
     }
 
-    private static  FillAllocatedArray<T>(existingArray: Array<T>, newArray: Array<T>, insertionIndex: number, allocationSize: number): Array<T> {
+    private static FillAllocatedArray<T>(existingArray: Array<T>, newArray: Array<T>, insertionIndex: number, allocationSize: number): Array<T> {
         const newDataSize = newArray.length;
         let destArr: Array<T>;
         // fill in-place
@@ -228,7 +218,7 @@ export class CatalogProfileStore {
 
         if (this.subsetEndIndex <= this.filterDataSize) {
             let numVisibleRows = this.numVisibleRows + subsetDataSize;
-            catalogData.forEach(((newData, key) => {
+            catalogData.forEach((newData, key) => {
                 let currentData = this.catalogData.get(key);
                 if (!currentData) {
                     this.catalogData.set(key, newData);
@@ -248,9 +238,8 @@ export class CatalogProfileStore {
                         const newArr = newData.data as Array<number>;
                         currentData.data = CatalogProfileStore.FillAllocatedArray<number>(currentArr, newArr, startIndex, totalDataSize);
                     }
-
                 }
-            }));
+            });
             this.setNumVisibleRows(numVisibleRows);
             this.subsetEndIndex = subsetEndIndex;
         }
@@ -279,7 +268,7 @@ export class CatalogProfileStore {
         };
         this.catalogControlHeader.set(columnName, newHeader);
         this.updateTableStatus(true);
-    }
+    };
 
     @action updateTableStatus(val: boolean) {
         this.updateTableView = val;
@@ -310,7 +299,7 @@ export class CatalogProfileStore {
         this.sortingInfo.columnName = null;
         this.sortingInfo.sortingType = null;
         this.maxRows = this.catalogInfo.dataSize;
-    }
+    };
 
     @action resetFilterRequestControlParams() {
         this.setUpdateMode(CatalogUpdateMode.TableUpdate);
@@ -321,7 +310,7 @@ export class CatalogProfileStore {
     }
 
     @computed get loadOntoImage() {
-        return (this.loadingData || this.updatingDataStream);
+        return this.loadingData || this.updatingDataStream;
     }
 
     @computed get initCatalogControlHeader() {
@@ -352,49 +341,54 @@ export class CatalogProfileStore {
 
     @action setSelectedPointIndices = (pointIndices: Array<number>, autoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
-
-        const coords = CatalogStore.Instance.catalogData.get(this.catalogFileId);
-        if (coords?.xImageCoords?.length) {
+        const catalogStore = CatalogStore.Instance;
+        const coordsArray = CatalogStore.Instance.catalogGLData.get(this.catalogFileId);
+        if (coordsArray?.x?.length) {
             let selectedX = [];
             let selectedY = [];
-            let xArray = coords.xImageCoords;
-            let yArray = coords.yImageCoords;
-
+            const selectedData = new Uint8Array(coordsArray.x.length);
             for (let index = 0; index < pointIndices.length; index++) {
-                const pointIndex = pointIndices[index];
-                const x = xArray[pointIndex];
-                const y = yArray[pointIndex];
+                const i = pointIndices[index];
+                const x = coordsArray.x[i];
+                const y = coordsArray.y[i];
+
                 if (!this.isInfinite(x) && !this.isInfinite(y)) {
                     selectedX.push(x);
                     selectedY.push(y);
                 }
+                selectedData[i] = 1.0;
             }
-            CatalogStore.Instance.updateSelectedPoints(this.catalogFileId, selectedX, selectedY);
-
+            CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
             if (autoPanZoom) {
+                const appStore = AppStore.Instance;
+                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
                 const selectedDataLength = selectedX.length;
-                if (selectedDataLength === 1) {
-                    const x = selectedX[0];
-                    const y = selectedY[0];
-                    AppStore.Instance.activeFrame.setCenter(x, y);      
-                }
-
+                let positionImageSpace = {x: selectedX[0], y: selectedY[0]};
                 if (selectedDataLength > 1) {
                     const minMaxX = minMaxArray(selectedX);
                     const minMaxY = minMaxArray(selectedY);
                     const width = minMaxX.maxVal - minMaxX.minVal;
                     const height = minMaxY.maxVal - minMaxY.minVal;
-                    AppStore.Instance.activeFrame.setCenter(width / 2 + minMaxX.minVal, height / 2 + minMaxY.minVal);
-                    const zoomLevel = Math.min(AppStore.Instance.activeFrame.renderWidth / width, AppStore.Instance.activeFrame.renderHeight / height);
-                    AppStore.Instance.activeFrame.setZoom(zoomLevel);   
+                    positionImageSpace = {x: width / 2 + minMaxX.minVal, y: height / 2 + minMaxY.minVal};
+                    const zoomLevel = Math.min(appStore.activeFrame.renderWidth / width, appStore.activeFrame.renderHeight / height);
+                    appStore.activeFrame.setZoom(zoomLevel);
                 }
 
+                if (frame.spatialReference && frame !== appStore.activeFrame) {
+                    positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+                }
+
+                if (appStore.activeFrame.spatialReference && !frame.spatialReference) {
+                    appStore.activeFrame.setCenter(positionImageSpace.x, positionImageSpace.y, false);
+                } else {
+                    appStore.activeFrame.setCenter(positionImageSpace.x, positionImageSpace.y);
+                }
             }
         }
     };
 
     @action setMaxRows(maxRows: number) {
-        this.updateTableStatus(true);   
+        this.updateTableStatus(true);
         this.maxRows = maxRows;
     }
 
@@ -503,7 +497,7 @@ export class CatalogProfileStore {
             const selectedData = new Map<number, ProcessedColumnData>();
             this.catalogData.forEach((data, i) => {
                 if (displayed.includes(i)) {
-                    selectedData.set(i, filterProcessedColumnData(data, selectedPointIndices));   
+                    selectedData.set(i, filterProcessedColumnData(data, selectedPointIndices));
                 }
             });
 
@@ -528,7 +522,7 @@ export class CatalogProfileStore {
         return this.catalogInfo.fileId;
     }
 
-    public get2DPlotData(xColumnName: string, yColumnName: string, columnsData: Map<number, ProcessedColumnData>): { wcsX?: Array<number>, wcsY?: Array<number>, xHeaderInfo: CARTA.ICatalogHeader, yHeaderInfo: CARTA.ICatalogHeader } {
+    public get2DPlotData(xColumnName: string, yColumnName: string, columnsData: Map<number, ProcessedColumnData>): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.ICatalogHeader; yHeaderInfo: CARTA.ICatalogHeader} {
         const controlHeader = this.catalogControlHeader;
         const xHeader = controlHeader.get(xColumnName);
         const yHeader = controlHeader.get(yColumnName);
@@ -538,8 +532,7 @@ export class CatalogProfileStore {
         const xColumn = columnsData.get(xHeaderInfo.columnIndex);
         const yColumn = columnsData.get(yHeaderInfo.columnIndex);
 
-        if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool &&
-            yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
+        if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool && yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
             const wcsX = xColumn.data as Array<number>;
             const wcsY = yColumn.data as Array<number>;
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
@@ -548,14 +541,13 @@ export class CatalogProfileStore {
         }
     }
 
-    public get1DPlotData(column: string): { wcsData?: Array<number>, headerInfo: CARTA.ICatalogHeader } {
+    public get1DPlotData(column: string): {wcsData?: TypedArray; headerInfo: CARTA.ICatalogHeader} {
         const controlHeader = this.catalogControlHeader;
         const header = controlHeader.get(column);
         const headerInfo = this.catalogHeader[header.dataIndex];
         const xColumn = this.catalogData.get(headerInfo.columnIndex);
-
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
-            const wcsData = xColumn.data as Array<number>;
+            const wcsData = xColumn.data as TypedArray;
             return {wcsData, headerInfo};
         } else {
             return {headerInfo};
@@ -604,10 +596,6 @@ export class CatalogProfileStore {
     }
 
     private isInfinite(value: number) {
-        return (
-            !isFinite(value) || 
-            value === CatalogProfileStore.NEGATIVE_INFINITY || 
-            value === CatalogProfileStore.POSITIVE_INFINITY
-        );
+        return !isFinite(value) || value === CatalogProfileStore.NEGATIVE_INFINITY || value === CatalogProfileStore.POSITIVE_INFINITY;
     }
 }

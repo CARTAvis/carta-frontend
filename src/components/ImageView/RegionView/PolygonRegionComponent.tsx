@@ -113,11 +113,17 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
     };
 
     @action private handleStrokeMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (konvaEvent.target?.getStage()) {
+            this.previousCursorStyle = konvaEvent.target.getStage().container().style.cursor;
+        }
         this.handleMouseMove(konvaEvent);
     };
 
-    @action private handleStrokeMouseLeave = () => {
+    @action private handleStrokeMouseLeave = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         this.hoverIntersection = null;
+        if (konvaEvent.target?.getStage()) {
+            konvaEvent.target.getStage().container().style.cursor = this.previousCursorStyle;
+        }
     };
 
     @action private handleMouseMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -146,21 +152,27 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             if (closestIndex >= 0 && minDistance <= NEW_ANCHOR_MAX_DISTANCE) {
                 this.hoverIntersection = closestPoint;
                 this.hoverIndex = closestIndex;
+                if (konvaEvent.target?.getStage()) {
+                    konvaEvent.target.getStage().container().style.cursor = "crosshair";
+                }
             } else {
                 this.hoverIntersection = null;
+                if (konvaEvent.target?.getStage()) {
+                    konvaEvent.target.getStage().container().style.cursor = this.previousCursorStyle;
+                }
             }
         }
     };
 
     private handleAnchorMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.target && konvaEvent.target.getStage()) {
+        if (konvaEvent.target?.getStage()) {
             this.previousCursorStyle = konvaEvent.target.getStage().container().style.cursor;
             konvaEvent.target.getStage().container().style.cursor = "move";
         }
     };
 
     private handleAnchorMouseOut = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.target && konvaEvent.target.getStage()) {
+        if (konvaEvent.target?.getStage()) {
             konvaEvent.target.getStage().container().style.cursor = this.previousCursorStyle;
         }
     };
@@ -211,8 +223,8 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
 
         const pointArray = new Array<number>(points.length * 2);
         for (let i = 0; i < points.length; i++) {
-            const x = ((points[i].x + offset.x - currentView.xMin) / viewWidth * this.props.layerWidth);
-            const y = this.props.layerHeight - ((points[i].y + offset.y - currentView.yMin) / viewHeight * this.props.layerHeight);
+            const x = ((points[i].x + offset.x - currentView.xMin) / viewWidth) * this.props.layerWidth;
+            const y = this.props.layerHeight - ((points[i].y + offset.y - currentView.yMin) / viewHeight) * this.props.layerHeight;
             pointArray[i * 2] = x;
             pointArray[i * 2 + 1] = y;
         }
@@ -242,13 +254,13 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 onDragStart: this.handleAnchorDragStart,
                 onDragEnd: this.handleAnchorDragEnd,
                 onDragMove: this.handleAnchorDrag,
-                onDblClick: this.handleAnchorDoubleClick,
+                onDblClick: this.handleAnchorDoubleClick
             };
         } else {
             anchorProps.opacity = 0.5;
             anchorProps.listening = false;
         }
-        return <Rect {...anchorProps}/>;
+        return <Rect {...anchorProps} />;
     }
 
     render() {
@@ -291,7 +303,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 newAnchor = this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation);
             }
 
-            rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
+            rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
             rotation = 0;
             controlPoints = controlPoints.map(p => imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform));
@@ -323,7 +335,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                     y={centerPointCanvasSpace.y}
                     stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
                     strokeWidth={region.lineWidth}
-                    opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}
+                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     dash={[region.dashLength]}
                     closed={!region.creating}
                     listening={this.props.listening && !region.locked}
