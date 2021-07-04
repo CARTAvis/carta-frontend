@@ -717,7 +717,7 @@ export class BackendService {
 
     async pingSplatalogue(): Promise<CARTA.ISplataloguePong> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            return throwError(new Error("Not connected"));
+            throw new Error("Not connected");
         } else {
             const message = CARTA.SplataloguePing.create();
             const requestId = this.eventCounter;
@@ -727,7 +727,7 @@ export class BackendService {
                 this.deferredMap.set(requestId, deferredResponse);
                 return await deferredResponse.promise;
             } else {
-                return throwError(new Error("Could not send event"));
+                throw new Error("Could not send event");
             }
         }
     }
