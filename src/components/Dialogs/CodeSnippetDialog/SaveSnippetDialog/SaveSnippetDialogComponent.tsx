@@ -38,10 +38,27 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         }
     };
 
-    @action private handleTagsRemoved = (_value, index) => {
+    @action private handleTagRemoved = (_value, index) => {
         if (index >= 0 && index < this.tags.length) {
             const tagToRemove = this.tags[index];
             this.tags = this.tags.filter(t => t !== tagToRemove);
+        }
+    };
+
+    @action private handleCategoriesAdded = (newCategories?: string[]) => {
+        if (newCategories) {
+            for (const category of newCategories) {
+                if (!this.categories.includes(category)) {
+                    this.categories.push(category);
+                }
+            }
+        }
+    };
+
+    @action private handleCategoryRemoved = (_value, index) => {
+        if (index >= 0 && index < this.categories.length) {
+            const categoryToRemove = this.categories[index];
+            this.categories = this.categories.filter(t => t !== categoryToRemove);
         }
     };
 
@@ -81,7 +98,16 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
             >
                 <div className={Classes.DIALOG_BODY}>
                     <InputGroup className="snippet-name-input" placeholder="Enter snippet name" value={this.snippetName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
-                    <TagInput intent={"primary"} placeholder="Enter tags as comma-separated list" addOnBlur={true} tagProps={{minimal: true}} values={this.tags} onAdd={this.handleTagsAdded} onRemove={this.handleTagsRemoved} />
+                    <TagInput intent={Intent.PRIMARY} placeholder="Enter tags as comma-separated list" addOnBlur={true} tagProps={{minimal: true}} values={this.tags} onAdd={this.handleTagsAdded} onRemove={this.handleTagRemoved} />
+                    <TagInput
+                        intent={Intent.PRIMARY}
+                        placeholder="Enter categories as comma-separated list"
+                        addOnBlur={true}
+                        tagProps={{minimal: true}}
+                        values={this.categories}
+                        onAdd={this.handleCategoriesAdded}
+                        onRemove={this.handleCategoryRemoved}
+                    />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
