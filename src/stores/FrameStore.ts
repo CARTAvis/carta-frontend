@@ -27,7 +27,7 @@ import {
     Transform2D,
     ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";
@@ -883,14 +883,16 @@ export class FrameStore {
 
         const cUnit1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CUNIT1");
         const cUnit2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CUNIT2");
-        const sameUnits = cUnit1 && cUnit2 && trimFitsComment(cUnit1.value) === trimFitsComment(cUnit2.value);
+        const hasUnits = cUnit1 && cUnit2;
+        const sameUnits = hasUnits && trimFitsComment(cUnit1.value) === trimFitsComment(cUnit2.value);
 
         // If the two units are different, there's no fixed aspect ratio
-        if (!sameUnits) {
+        if (hasUnits && !sameUnits) {
             this.framePixelRatio = NaN;
         } else {
-            const cDelt1 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT1"));
-            const cDelt2 = getHeaderNumericValue(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CDELT2"));
+            // Assumes non-rotated pixels
+            const cDelt1 = getPixelSize(this, 1);
+            const cDelt2 = getPixelSize(this, 2);
             this.framePixelRatio = Math.abs(cDelt1 / cDelt2);
             // Correct for numerical errors in CDELT values if they're within 0.1% of each other
             if (Math.abs(this.framePixelRatio - 1.0) < 0.001) {
