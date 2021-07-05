@@ -41,7 +41,7 @@ export class CodeSnippetDialogComponent extends React.Component {
             tags,
             snippetVersion: Snippet.SnippetVersion,
             frontendVersion: Snippet.FrontendVersion
-        }
+        };
         const success = await snippetStore.saveSnippet(snippetName, snippet);
         if (success) {
             this.hideSaveDialog();
@@ -91,17 +91,17 @@ export class CodeSnippetDialogComponent extends React.Component {
                             fontSize: 12
                         }}
                         placeholder="Enter execution string"
-                        ref={ref => this.editorRef = ref}
+                        ref={ref => (this.editorRef = ref)}
                     />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton icon="floppy-disk" intent={Intent.PRIMARY} onClick={this.showSaveDialog} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Save"/>
-                        <AnchorButton icon="play" intent={Intent.SUCCESS} onClick={this.onExecuteClicked} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Execute"/>
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideCodeSnippetDialog} text="Close"/>
+                        <AnchorButton icon="floppy-disk" intent={Intent.PRIMARY} onClick={this.showSaveDialog} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Save" />
+                        <AnchorButton icon="play" intent={Intent.SUCCESS} onClick={this.onExecuteClicked} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Execute" />
+                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideCodeSnippetDialog} text="Close" />
                     </div>
                 </div>
-                <SaveSnippetDialogComponent onSaveClicked={this.handleSaveClicked} onCancelClicked={this.hideSaveDialog} isOpen={this.saveDialogOpen}/>
+                <SaveSnippetDialogComponent onSaveClicked={this.handleSaveClicked} onCancelClicked={this.hideSaveDialog} isOpen={this.saveDialogOpen} />
             </DraggableDialogComponent>
         );
     }
