@@ -107,6 +107,9 @@ export class PreferenceDialogComponent extends React.Component {
                         <option value={Theme.DARK}>Dark</option>
                     </HTMLSelect>
                 </FormGroup>
+                <FormGroup inline={true} label="Enable Code Snippets">
+                    <Switch checked={preference.codeSnippetsEnabled} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED, ev.currentTarget.checked)} />
+                </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
                     <Switch checked={preference.autoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
                 </FormGroup>

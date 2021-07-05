@@ -137,28 +137,30 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon={"contour"} />} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible} />
                     </Tooltip2>
-                    <Tooltip2
-                        content={
-                            <span>
-                                Code Snippets
+                    {appStore.preferenceStore.codeSnippetsEnabled && (
+                        <Tooltip2
+                            content={
                                 <span>
-                                    <br />
-                                    <i>
-                                        <small>
-                                            Use to save, load or run small code snippets,
-                                            <br />
-                                            providing additional functionality to CARTA.
-                                            <br />
-                                            Warning: Use at own risk!
-                                        </small>
-                                    </i>
+                                    Code Snippets
+                                    <span>
+                                        <br />
+                                        <i>
+                                            <small>
+                                                Use to save, load or run small code snippets,
+                                                <br />
+                                                providing additional functionality to CARTA.
+                                                <br />
+                                                Warning: Use at own risk!
+                                            </small>
+                                        </i>
+                                    </span>
                                 </span>
-                            </span>
-                        }
-                        position={Position.BOTTOM}
-                    >
-                        <AnchorButton icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} active={dialogStore.codeSnippetDialogVisible} />
-                    </Tooltip2>
+                            }
+                            position={Position.BOTTOM}
+                        >
+                            <AnchorButton icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} active={dialogStore.codeSnippetDialogVisible} />
+                        </Tooltip2>
+                    )}
                 </ButtonGroup>
             </React.Fragment>
         );

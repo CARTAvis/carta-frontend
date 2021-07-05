@@ -330,11 +330,13 @@ export class RootMenuComponent extends React.Component {
                         <Menu.Item text="Widgets" />
                     </Menu>
                 </Popover2>
-                <Popover2 autoFocus={false} minimal={true} content={snippetsMenu} position={Position.BOTTOM_LEFT}>
-                    <Menu className="root-menu-entry">
-                        <Menu.Item text="Snippets" />
-                    </Menu>
-                </Popover2>
+                {appStore.preferenceStore.codeSnippetsEnabled && (
+                    <Popover2 autoFocus={false} minimal={true} content={snippetsMenu} position={Position.BOTTOM_LEFT}>
+                        <Menu className="root-menu-entry">
+                            <Menu.Item text="Snippets" />
+                        </Menu>
+                    </Popover2>
+                )}
                 <Popover2 autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="Help" />
