@@ -28,7 +28,7 @@ export class SpectralLineQuerySplashScreenComponent extends React.Component<{spl
                         </Tooltip>
                     }
                     <div className={"loadingInfo-div"}>
-                        <p>{this.props.splataloguePingStatus === SplataloguePingStatus.Checking ? "Checking Splatalogue..." : "Connecting to Splatalogue failed! Please try again."}</p>
+                        <p>{this.props.splataloguePingStatus === SplataloguePingStatus.Checking ? "Checking Splatalogue status..." : "Connecting to Splatalogue failed! Please try again."}</p>
                     </div>
                 </div>
             </Overlay>

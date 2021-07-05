@@ -9,7 +9,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
 import {SpectralLineQuerySplashScreenComponent} from "./SpectralLineQuerySplashScreenComponent";
 import {AppStore, HelpType, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit} from "stores/widgets";
+import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit, SplataloguePingStatus} from "stores/widgets";
 import "./SpectralLineQueryComponent.scss";
 
 enum HeaderTableColumnName {
@@ -287,7 +287,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                     </ControlGroup>
                 </div>
                 <div>
-                    <Button intent={Intent.PRIMARY} onClick={widgetStore.query}>
+                    <Button intent={Intent.PRIMARY} onClick={widgetStore.query} disabled={widgetStore.splataloguePingStatus !== SplataloguePingStatus.Success}>
                         Query
                     </Button>
                 </div>
