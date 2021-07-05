@@ -112,7 +112,7 @@ export class RootMenuComponent extends React.Component {
 
             const menuItem = <Menu.Item key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showExistingCodeSnippet(snippet)} />;
 
-            if (snippet.categories) {
+            if (snippet.categories?.length) {
                 for (const category of snippet.categories) {
                     const categoryParts = category.split("/");
                     let menuRoot = snippetObj;

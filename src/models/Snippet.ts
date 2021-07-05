@@ -2,10 +2,13 @@ const {version} = require("../../package.json");
 
 export class Snippet {
     code: string;
-    snippetVersion: number = 1;
-    frontendVersion: string = version;
+    snippetVersion: number;
+    frontendVersion: string;
     description?: string;
     tags?: string[];
     categories?: string[];
     requires?: string[];
+
+    static readonly FrontendVersion = version;
+    static readonly SnippetVersion = 1;
 }

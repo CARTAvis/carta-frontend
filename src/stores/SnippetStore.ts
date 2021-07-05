@@ -82,19 +82,19 @@ export class SnippetStore {
 
         try {
             const success = await ApiService.Instance.setSnippet(name, snippet);
-
-            // Silently exit on success if silent flag is set
-            if (silent && success) {
-                return;
-            }
-
             if (success) {
-                AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.ToasterTimeout));
+                // Silently exit on success if silent flag is set
+                if (!silent) {
+                    AppToaster.show(SuccessToast("console", `Snippet ${name} saved successfully.`, SnippetStore.ToasterTimeout));
+                }
+                return true;
             } else {
                 AlertStore.Instance.showAlert(`Saving snippet ${name} failed!`);
+                return false;
             }
         } catch (err) {
             AlertStore.Instance.showAlert(`Saving snippet ${name} failed!`);
+            return false;
         }
     };
 
