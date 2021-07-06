@@ -43,12 +43,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
         if (wcsInfo && frameView) {
-            this.updateImageDimensions();
-            AST.setCanvas(this.canvas);
-
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
+            if (!tempWcsInfo) {
+                return;
+            }
 
+            this.updateImageDimensions();
+            AST.setCanvas(this.canvas);
             if (!frame.hasSquarePixels) {
                 const scaleMapping = AST.scaleMap2D(1.0, 1.0 / frame.aspectRatio);
                 const newFrame = AST.frame(2, "Domain=PIXEL");
