@@ -323,7 +323,7 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Colorbar Interactive">
                     <Switch checked={preference.colorbarInteractive} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE, ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Position">
+                <FormGroup inline={true} label="Colorbar Position">
                     <HTMLSelect value={preference.colorbarPosition} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION, ev.currentTarget.value)}>
                         <option value={"right"}>right</option>
                         <option value={"top"}>top</option>
