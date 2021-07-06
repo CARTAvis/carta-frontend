@@ -722,11 +722,12 @@ export class OverlayColorbarSettings {
 
     constructor() {
         makeObservable(this);
-        this.visible = true;
-        this.interactive = true;
-        this.width = 15;
+        const preference = PreferenceStore.Instance;
+        this.visible = preference.colorbarVisible;
+        this.interactive = preference.colorbarInteractive;
+        this.width = preference.colorbarWidth;
         this.offset = 5;
-        this.position = "right";
+        this.position = preference.colorbarPosition;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
         this.borderVisible = true;
@@ -734,7 +735,7 @@ export class OverlayColorbarSettings {
         this.borderCustomColor = false;
         this.borderColor = AST_DEFAULT_COLOR;
         this.tickVisible = true;
-        this.tickDensity = 1;
+        this.tickDensity = preference.colorbarTicksDensity;
         this.tickLen = 6;
         this.tickWidth = 1;
         this.tickCustomColor = false;
@@ -747,7 +748,7 @@ export class OverlayColorbarSettings {
         this.numberPrecision = 3;
         this.numberCustomColor = false;
         this.numberColor = AST_DEFAULT_COLOR;
-        this.labelVisible = false;
+        this.labelVisible = preference.colorbarLabelVisible;
         this.labelRotation = -90;
         this.labelFont = 0;
         this.labelFontSize = 15;
