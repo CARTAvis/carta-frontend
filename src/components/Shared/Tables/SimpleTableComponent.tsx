@@ -1,20 +1,34 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Cell, Column, Table, SelectionModes, RenderMode} from "@blueprintjs/table";
+import {Cell, Column, Table, SelectionModes, RenderMode, RowHeaderCell} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {ProcessedColumnData} from "models";
+//import {ProcessedColumnData} from "models";
 
 export class SimpleTableComponentProps {
-    dataset: Map<number, ProcessedColumnData>;
+    dataset: Map<number, any>;
     columnHeaders: Array<CARTA.CatalogHeader>;
     numVisibleRows: number;
-    columnWidths?: Array<number>;
+    defaultColumnWidths?: Array<number>;
+    defaultRowHeight?: number;
+    enableGhostCells?: boolean;
+    isIndexZero?: boolean;
     updateTableRef?: (ref: Table) => void;
 }
 
 @observer
 export class SimpleTableComponent extends React.Component<SimpleTableComponentProps> {
-    private renderDataColumn(columnName: string, columnData: any) {
+
+    private widths = this.props.defaultColumnWidths;
+
+    private onWidthChanged = (index: number, size: number) => {
+        this.widths[index] = size;
+    };
+
+    private renderRowHeaderCell = (rowIndex: number) => {
+        return <RowHeaderCell name={rowIndex.toString()} />;
+    };
+
+    private renderDataColumn = (columnName: string, columnData: any) => {
         return (
             <Column
                 key={columnName}
@@ -26,7 +40,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 )}
             />
         );
-    }
+    };
 
     render() {
         const table = this.props;
@@ -47,9 +61,12 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 renderMode={RenderMode.NONE}
                 enableRowReordering={false}
                 selectionModes={SelectionModes.NONE}
-                enableGhostCells={true}
+                enableGhostCells={this.props.enableGhostCells ?? true}
+                defaultRowHeight={this.props.defaultRowHeight}
+                rowHeaderCellRenderer={this.props.isIndexZero ? this.renderRowHeaderCell : null}
                 enableRowResizing={false}
-                columnWidths={table.columnWidths}
+                columnWidths={this.widths}
+                onColumnWidthChanged={this.onWidthChanged}
             >
                 {tableColumns}
             </Table>
