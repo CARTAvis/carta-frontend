@@ -1683,7 +1683,6 @@ export class AppStore {
 
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
-            this.tileService.clearRequestQueue(frame.frameInfo.fileId);
             // Set overlay defaults from current frame
             this.overlayStore.setDefaultsFromAST(frame);
         }
