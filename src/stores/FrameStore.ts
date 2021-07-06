@@ -237,7 +237,7 @@ export class FrameStore {
                 y: -this.spatialTransform.translation.y / this.spatialTransform.scale
             };
             adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
-            if (this.cachedTransformedWcsInfo >= 0) {
+            if (this.cachedTransformedWcsInfo > 0) {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
