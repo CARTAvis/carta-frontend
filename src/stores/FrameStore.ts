@@ -1677,8 +1677,8 @@ export class FrameStore {
             this.spatialReference = null;
             return false;
         }
-        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
         this.spatialReference = frame;
+        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
         const copySrc = AST.copy(this.wcsInfo);
         const copyDest = AST.copy(frame.wcsInfo);
@@ -1692,7 +1692,6 @@ export class FrameStore {
             this.spatialReference = null;
             return false;
         }
-        this.spatialReference = frame;
         const currentTransform = this.spatialTransform;
         if (
             !currentTransform ||
