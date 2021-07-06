@@ -62,6 +62,7 @@ export class FrameStore {
     private readonly logStore: LogStore;
 
     private spectralTransformAST: AST.FrameSet;
+    private cachedTransformedWcsInfo: AST.FrameSet = -1;
     private zoomTimeoutHandler;
 
     public readonly wcsInfo: AST.FrameSet;
@@ -73,8 +74,6 @@ export class FrameStore {
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
     public spatialTransformAST: AST.FrameSet;
-    public spatialTransform: Transform2D;
-    public transformedWcsInfo: AST.FrameSet;
 
     public distanceMeasuring: DistanceMeasuringStore;
 
@@ -212,6 +211,49 @@ export class FrameStore {
                 mip: mipRoundedPow2
             };
         }
+    }
+
+    @computed get spatialTransform() {
+        if (this.spatialReference && this.spatialTransformAST) {
+            const center = transformPoint(this.spatialTransformAST, this.spatialReference.center, false);
+            // Try use center of the screen as a reference point
+            if (!isAstBadPoint(center)) {
+                return new Transform2D(this.spatialTransformAST, center);
+            } else {
+                // Otherwise use the center of the image
+                return new Transform2D(this.spatialTransformAST, {
+                    x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5,
+                    y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5
+                });
+            }
+        }
+        return null;
+    }
+
+    @computed get transformedWcsInfo() {
+        if (this.spatialTransform) {
+            let adjTranslation: Point2D = {
+                x: -this.spatialTransform.translation.x / this.spatialTransform.scale,
+                y: -this.spatialTransform.translation.y / this.spatialTransform.scale
+            };
+            adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
+            if (this.cachedTransformedWcsInfo >= 0) {
+                AST.deleteObject(this.cachedTransformedWcsInfo);
+            }
+
+            this.cachedTransformedWcsInfo = AST.createTransformedFrameset(
+                this.wcsInfo,
+                adjTranslation.x,
+                adjTranslation.y,
+                -this.spatialTransform.rotation,
+                this.spatialTransform.origin.x,
+                this.spatialTransform.origin.y,
+                1.0 / this.spatialTransform.scale,
+                1.0 / this.spatialTransform.scale
+            );
+            return this.cachedTransformedWcsInfo;
+        }
+        return null;
     }
 
     @computed get renderWidth() {
@@ -723,8 +765,6 @@ export class FrameStore {
         this.overlayBeamSettings = new OverlayBeamStore();
         this.spatialReference = null;
         this.spatialTransformAST = null;
-        this.spatialTransform = null;
-        this.transformedWcsInfo = null;
         this.controlMaps = new Map<FrameStore, ControlMap>();
         this.secondarySpatialImages = [];
         this.secondarySpectralImages = [];
@@ -1050,59 +1090,6 @@ export class FrameStore {
                 }),
             FrameStore.ZoomInertiaDuration
         );
-    };
-
-    private createSpatialTransformAST = (spatialReference: FrameStore): AST.FrameSet => {
-        if (spatialReference) {
-            const copySrc = AST.copy(this.wcsInfo);
-            const copyDest = AST.copy(spatialReference.wcsInfo);
-            AST.invert(copySrc);
-            AST.invert(copyDest);
-            const spatialTransformAST = AST.convert(copySrc, copyDest, "");
-            AST.deleteObject(copySrc);
-            AST.deleteObject(copyDest);
-            return spatialTransformAST;
-        }
-        return null;
-    };
-
-    private createSpatialTransform = (spatialTransformAST: AST.FrameSet, spatialReference: FrameStore): Transform2D => {
-        if (spatialTransformAST && spatialReference) {
-            const center = transformPoint(spatialTransformAST, spatialReference.center, false);
-            // Try use center of the screen as a reference point
-            if (!isAstBadPoint(center)) {
-                return new Transform2D(spatialTransformAST, center);
-            } else {
-                // Otherwise use the center of the image
-                return new Transform2D(spatialTransformAST, {
-                    x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5,
-                    y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5
-                });
-            }
-        }
-        return null;
-    };
-
-    private createTransformedWcsInfo = (spatialTransform: Transform2D): AST.FrameSet => {
-        if (spatialTransform) {
-            let adjTranslation: Point2D = {
-                x: -spatialTransform.translation.x / spatialTransform.scale,
-                y: -spatialTransform.translation.y / spatialTransform.scale
-            };
-            adjTranslation = rotate2D(adjTranslation, -spatialTransform.rotation);
-
-            return AST.createTransformedFrameset(
-                this.wcsInfo,
-                adjTranslation.x,
-                adjTranslation.y,
-                -spatialTransform.rotation,
-                spatialTransform.origin.x,
-                spatialTransform.origin.y,
-                1.0 / spatialTransform.scale,
-                1.0 / spatialTransform.scale
-            );
-        }
-        return null;
     };
 
     public getRegion = (regionId: number): RegionStore => {
@@ -1681,46 +1668,49 @@ export class FrameStore {
 
         if (!frame.hasSquarePixels || !this.hasSquarePixels) {
             console.log("Cannot perform spatial transform between images with non-square pixels");
-            this.clearSpatialReference();
+            this.spatialReference = null;
             return false;
         }
 
         if (this.validWcs !== frame.validWcs) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
-            this.clearSpatialReference();
+            this.spatialReference = null;
             return false;
         }
+        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
+        this.spatialReference = frame;
 
-        this.spatialTransformAST = this.createSpatialTransformAST(frame);
+        const copySrc = AST.copy(this.wcsInfo);
+        const copyDest = AST.copy(frame.wcsInfo);
+        AST.invert(copySrc);
+        AST.invert(copyDest);
+        this.spatialTransformAST = AST.convert(copySrc, copyDest, "");
+        AST.deleteObject(copySrc);
+        AST.deleteObject(copyDest);
         if (!this.spatialTransformAST) {
-            console.log(`Error creating AST object of spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
-            this.clearSpatialReference();
+            console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
+            this.spatialReference = null;
             return false;
         }
-
-        this.spatialTransform = this.createSpatialTransform(this.spatialTransformAST, frame);
+        this.spatialReference = frame;
+        const currentTransform = this.spatialTransform;
         if (
-            !this.spatialTransform ||
-            !isFinite(this.spatialTransform.rotation) ||
-            !isFinite(this.spatialTransform.scale) ||
-            !isFinite(this.spatialTransform.translation.x) ||
-            !isFinite(this.spatialTransform.translation.y) ||
-            !isFinite(this.spatialTransform.origin.x) ||
-            !isFinite(this.spatialTransform.origin.y)
+            !currentTransform ||
+            !isFinite(currentTransform.rotation) ||
+            !isFinite(currentTransform.scale) ||
+            !isFinite(currentTransform.translation.x) ||
+            !isFinite(currentTransform.translation.y) ||
+            !isFinite(currentTransform.origin.x) ||
+            !isFinite(currentTransform.origin.y) ||
+            !this.transformedWcsInfo
         ) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
-            this.clearSpatialReference();
+            this.spatialReference = null;
+            AST.deleteObject(this.spatialTransformAST);
+            this.spatialTransformAST = null;
             return false;
         }
 
-        this.transformedWcsInfo = this.createTransformedWcsInfo(this.spatialTransform);
-        if (!this.transformedWcsInfo) {
-            console.log(`Error creating spatial transform wcs info between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
-            this.clearSpatialReference();
-            return false;
-        }
-
-        this.spatialReference = frame;
         this.spatialReference.addSecondarySpatialImage(this);
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
         // Update cursor position
@@ -1754,12 +1744,6 @@ export class FrameStore {
         if (this.spatialTransformAST) {
             AST.deleteObject(this.spatialTransformAST);
         }
-        if (this.transformedWcsInfo) {
-            AST.deleteObject(this.transformedWcsInfo);
-        }
-        this.spatialTransformAST = null;
-        this.spatialTransform = null;
-        this.transformedWcsInfo = null;
 
         const gl = ContourWebGLService.Instance.gl;
         if (gl) {
