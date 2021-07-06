@@ -323,7 +323,8 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             onMouseOut: this.handleAnchorMouseOut,
             onDragStart: this.handleAnchorDragStart,
             onDragEnd: this.handleAnchorDragEnd,
-            onDragMove: this.handleAnchorDrag
+            onDragMove: this.handleAnchorDrag,
+            dragBoundFunc: () => ({x, y})
         };
         if (anchor === "rotator") {
             // Circle radius adjusted so that it circumscribes the other anchor squares
