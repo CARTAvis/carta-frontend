@@ -398,11 +398,18 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 <FormGroup inline={true} label="Interactive" disabled={!colorbar.visible}>
                     <Switch disabled={!colorbar.visible} checked={colorbar.interactive} onChange={ev => colorbar.setInteractive(ev.currentTarget.checked)} />
                 </FormGroup>
+                <FormGroup inline={true} label="Position" disabled={!colorbar.visible}>
+                    <HTMLSelect value={colorbar.position} disabled={!colorbar.visible} onChange={ev => colorbar.setPosition(ev.currentTarget.value)}>
+                        <option value={"right"}>right</option>
+                        <option value={"top"}>top</option>
+                        <option value={"bottom"}>bottom</option>
+                    </HTMLSelect>
+                </FormGroup>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!colorbar.visible}>
                     <SafeNumericInput
                         placeholder="Width"
                         min={1}
-                        max={overlayStore.viewWidth * 0.3}
+                        max={100}
                         value={colorbar.width}
                         stepSize={1}
                         minorStepSize={1}
@@ -416,7 +423,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput
                         placeholder="Offset"
                         min={0}
-                        max={overlayStore.viewWidth * 0.3}
+                        max={100}
                         value={colorbar.offset}
                         stepSize={1}
                         minorStepSize={1}
@@ -425,13 +432,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onValueChange={(value: number) => colorbar.setOffset(value)}
                         intOnly={true}
                     />
-                </FormGroup>
-                <FormGroup inline={true} label="Position" disabled={!colorbar.visible}>
-                    <HTMLSelect value={colorbar.position} disabled={!colorbar.visible} onChange={ev => colorbar.setPosition(ev.currentTarget.value)}>
-                        <option value={"right"}>right</option>
-                        <option value={"top"}>top</option>
-                        <option value={"bottom"}>bottom</option>
-                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Ticks density" labelInfo="(per 100px)" disabled={!colorbar.visible || (!colorbar.tickVisible && !colorbar.numberVisible)}>
                     <SafeNumericInput
