@@ -177,7 +177,7 @@ export class RegionSetStore {
                         rotation = region.rotation + ((forward ? 1 : -1) * transform.rotation * 180) / Math.PI;
                         newControlPoints = [centerNewFrame, size];
                     }
-                } else if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.POLYGON) {
+                } else if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.LINE) {
                     for (const point of region.controlPoints) {
                         const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
                         if (!isAstBadPoint(pointNewFrame)) {
