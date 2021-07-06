@@ -1712,7 +1712,6 @@ export class FrameStore {
         }
 
         this.spatialReference.addSecondarySpatialImage(this);
-        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
         // Update cursor position
         const spatialRefCursorPos = this.spatialReference.cursorInfo?.posImageSpace;
         if (spatialRefCursorPos) {
@@ -1744,6 +1743,7 @@ export class FrameStore {
         if (this.spatialTransformAST) {
             AST.deleteObject(this.spatialTransformAST);
         }
+        this.spatialTransformAST = null;
 
         const gl = ContourWebGLService.Instance.gl;
         if (gl) {
