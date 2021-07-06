@@ -317,6 +317,47 @@ export class PreferenceDialogComponent extends React.Component {
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, event.currentTarget.value)}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Colorbar Visible">
+                    <Switch checked={preference.colorbarVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE, ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Colorbar Interactive">
+                    <Switch checked={preference.colorbarInteractive} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_INTERACTIVE, ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Colorbar Position">
+                    <HTMLSelect value={preference.colorbarPosition} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION, ev.currentTarget.value)}>
+                        <option value={"right"}>right</option>
+                        <option value={"top"}>top</option>
+                        <option value={"bottom"}>bottom</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Colorbar Width" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Colorbar Width"
+                        min={1}
+                        max={100}
+                        value={preference.colorbarWidth}
+                        stepSize={1}
+                        minorStepSize={1}
+                        majorStepSize={2}
+                        intOnly={true}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH, value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Colorbar Ticks Density" labelInfo="(per 100px)">
+                    <SafeNumericInput
+                        placeholder="Colorbar Ticks Density"
+                        min={0.2}
+                        max={20}
+                        value={preference.colorbarTicksDensity}
+                        stepSize={0.2}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY, value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Colorbar Label Visible">
+                    <Switch checked={preference.colorbarLabelVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_COLORBAR_LABEL_VISIBLE, ev.currentTarget.checked)} />
+                </FormGroup>
                 <FormGroup inline={true} label="Beam Visible">
                     <Switch checked={preference.beamVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>

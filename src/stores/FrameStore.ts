@@ -791,6 +791,30 @@ export class FrameStore {
         if (astLabelsVisible !== this.overlayStore.labels.visible) {
             this.overlayStore.labels.setVisible(astLabelsVisible);
         }
+        const colorbarVisible = preferenceStore.colorbarVisible;
+        if (colorbarVisible !== this.overlayStore.colorbar.visible) {
+            this.overlayStore.colorbar.setVisible(colorbarVisible);
+        }
+        const colorbarInteractive = preferenceStore.colorbarInteractive;
+        if (colorbarInteractive !== this.overlayStore.colorbar.interactive) {
+            this.overlayStore.colorbar.setInteractive(colorbarInteractive);
+        }
+        const colorbarPosition = preferenceStore.colorbarPosition;
+        if (colorbarPosition !== this.overlayStore.colorbar.position) {
+            this.overlayStore.colorbar.setPosition(colorbarPosition);
+        }
+        const colorbarWidth = preferenceStore.colorbarWidth;
+        if (colorbarWidth !== this.overlayStore.colorbar.width) {
+            this.overlayStore.colorbar.setWidth(colorbarWidth);
+        }
+        const colorbarTicksDensity = preferenceStore.colorbarTicksDensity;
+        if (colorbarTicksDensity !== this.overlayStore.colorbar.tickDensity) {
+            this.overlayStore.colorbar.setTickDensity(colorbarTicksDensity);
+        }
+        const colorbarLabelVisible = preferenceStore.colorbarLabelVisible;
+        if (colorbarLabelVisible !== this.overlayStore.colorbar.labelVisible) {
+            this.overlayStore.colorbar.setLabelVisible(colorbarLabelVisible);
+        }
 
         this.frameRegionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
         this.valid = true;
