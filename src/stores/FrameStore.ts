@@ -1744,7 +1744,6 @@ export class FrameStore {
             AST.deleteObject(this.spatialTransformAST);
         }
         this.spatialTransformAST = null;
-
         const gl = ContourWebGLService.Instance.gl;
         if (gl) {
             this.controlMaps.forEach(controlMap => {
