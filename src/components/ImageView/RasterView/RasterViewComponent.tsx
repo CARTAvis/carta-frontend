@@ -265,11 +265,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
             this.gl.uniform1f(shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale);
         } else {
+            this.gl.uniform2f(shaderUniforms.RotationOrigin, 0, 0);
             this.gl.uniform1f(shaderUniforms.RotationAngle, 0);
             this.gl.uniform1f(shaderUniforms.ScaleAdjustment, 1);
         }
 
-        // TODO: refactor this and handle different pixel sizes!
         let zoom;
         let zoomFactor = 1.0;
         let aspectRatio = 1.0;
