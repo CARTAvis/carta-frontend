@@ -46,6 +46,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
             if (!tempWcsInfo) {
+                console.log("Create wcs info copy failed.");
                 return;
             }
 
