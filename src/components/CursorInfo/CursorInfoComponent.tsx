@@ -1,6 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
+import {action, makeObservable, observable} from "mobx";
 import {NonIdealState} from "@blueprintjs/core";
+import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent} from "components/Shared";
 import {toFixed} from "utilities";
@@ -22,6 +24,19 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             isCloseable: true,
         };
     }
+
+    @observable width: number = 0;
+    @observable height: number = 0;
+
+    constructor(props: any) {
+        super(props);
+        makeObservable(this);
+    }
+
+    @action private onResize = (width: number, height: number) => {
+        this.width = width;
+        this.height = height;
+    };
 
     render() {
         const appStore = AppStore.Instance;
@@ -77,15 +92,18 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="cursor-info-widget">
-                <SimpleTableComponent
-                    dataset={columnsData}
-                    columnHeaders={columnHeaders}
-                    numVisibleRows={appStore.frames.length}
-                    defaultColumnWidths={columnWidths}
-                    enableGhostCells={false}
-                    defaultRowHeight={40}
-                    isIndexZero={true}
-                />
+                {this.width > 0 && ( // prevent row index header not rendering
+                    <SimpleTableComponent
+                        dataset={columnsData}
+                        columnHeaders={columnHeaders}
+                        numVisibleRows={appStore.frames.length}
+                        defaultColumnWidths={columnWidths}
+                        enableGhostCells={false}
+                        defaultRowHeight={40}
+                        isIndexZero={true}
+                    />
+                )}
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
             </div>
         );
     }
