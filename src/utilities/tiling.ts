@@ -1,4 +1,6 @@
-import {FrameView, Point2D, TileCoordinate} from "../models";
+import {TileCoordinate} from "models/TileCoordinate";
+import {Point2D} from "models/Point2D";
+import {FrameView} from "models/FrameView";
 
 export function TileSort(a: TileCoordinate, b: TileCoordinate) {
     if (a.layer !== b.layer) {
