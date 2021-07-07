@@ -138,6 +138,29 @@
             "type": "string",
             "enum": ["automatic", "degrees", "sexagesimal"]
         },
+        "colorbarVisible": {
+            "type": "boolean"
+        },
+        "colorbarInteractive": {
+            "type": "boolean"
+        },
+        "colorbarPosition": {
+            "type": "string",
+            "enum": ["right", "top", "bottom"]
+        },
+        "colorbarWidth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+        },
+        "colorbarTicksDensity": {
+            "type": "number",
+            "minimum": 0.2,
+            "maximum": 20
+        },
+        "colorbarLabelVisible": {
+            "type": "boolean"
+        },
         "beamVisible": {
             "type": "boolean"
         },
