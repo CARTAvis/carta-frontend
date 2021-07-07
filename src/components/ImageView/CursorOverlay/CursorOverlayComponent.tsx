@@ -2,12 +2,13 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {CSSProperties} from "react";
 import {CursorInfo, SpectralInfo} from "models";
-import {formattedExponential, toFixed} from "utilities";
+import {toFixed} from "utilities";
 import "./CursorOverlayComponent.scss";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;
     cursorValue: number;
+    cursorValueString: String;
     isValueCurrent: boolean;
     spectralInfo: SpectralInfo;
     docked: boolean;
@@ -40,16 +41,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             infoStrings.push(`Image:\u00a0(${toFixed(cursorInfo.posImageSpace.x)},\u00a0${toFixed(cursorInfo.posImageSpace.y)})`);
         }
         if (this.props.showValue && this.props.cursorValue !== undefined) {
-            let valueString = `Value:\u00a0${formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
-            if (isNaN(this.props.cursorValue)) {
-                valueString = "NaN";
-            }
-            if (!this.props.isValueCurrent) {
-                valueString += "*";
-            } else {
-                valueString += " ";
-            }
-            infoStrings.push(valueString);
+            infoStrings.push(`Value:\u00a0${this.props.cursorValueString}`);
         }
         if (this.props.showChannel && this.props.spectralInfo.channel !== undefined) {
             infoStrings.push(`Channel:\u00a0${this.props.spectralInfo.channel}`);

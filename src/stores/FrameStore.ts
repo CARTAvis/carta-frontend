@@ -27,7 +27,7 @@ import {
     Transform2D,
     ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize, formattedExponential} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";
@@ -728,6 +728,22 @@ export class FrameStore {
             }
         }
         return [];
+    }
+
+    @computed get cursorValueString(): string {
+        if (this.cursorValue !== undefined) {
+            let valueString = formattedExponential(this.cursorValue.value, 5, this.unit, true, true);
+            if (isNaN(this.cursorValue.value)) {
+                valueString = "NaN";
+            }
+            if (!this.isCursorValueCurrent) {
+                valueString += "*";
+            } else {
+                valueString += " ";
+            }
+            return valueString;
+        }
+        return "";
     }
 
     constructor(frameInfo: FrameInfo) {

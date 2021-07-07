@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent} from "components/Shared";
-import {formattedExponential, toFixed} from "utilities";
+import {toFixed} from "utilities";
 import {AppStore, DefaultWidgetConfig, WidgetProps} from "stores";
 import "./CursorInfoComponent.scss";
 
@@ -47,19 +47,25 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         ];
 
         const imageNames = appStore.frames.map(frame => frame.filename);
-        const values = appStore.frames.map(frame => {
-            const isValueCurrent = frame.isCursorValueCurrent ? "" : "*";
-            const value = frame.cursorInfo?.isInsideImage ? frame.cursorValue.value : undefined;
-            if (isNaN(value)) {
-                return "NaN" + isValueCurrent;
-            } else {
-                return formattedExponential(value, 5, frame.unit, true, true) + isValueCurrent;
-            }
-        });
+        const values = appStore.frames.map(frame => frame.cursorValueString);
         const worldCoords = appStore.frames.map(frame => <React.Fragment>{frame.cursorInfo?.infoWCS?.x}<br />{frame.cursorInfo?.infoWCS?.y}</React.Fragment>);
         const imageCoords = appStore.frames.map(frame => <React.Fragment>{toFixed(frame.cursorInfo?.posImageSpace?.x, 3)}<br />{toFixed(frame.cursorInfo?.posImageSpace?.y, 3)}</React.Fragment>);
         const zCoords = appStore.frames.map(frame => {
-            return <React.Fragment>{frame.simpleSpectralInfo}</React.Fragment>;
+            let zCoordString = [];
+            if (frame.spectralInfo?.spectralString) {
+                zCoordString.push(frame.spectralInfo.spectralString.replace(/.*: /, ""));
+                if (frame.spectralInfo.freqString) {
+                    zCoordString.push(<br key={0}/>);
+                    zCoordString.push(frame.spectralInfo.freqString.replace(/.*: /, ""));
+                }
+                if (frame.spectralInfo.velocityString) {
+                    zCoordString.push(<br key={1}/>);
+                    zCoordString.push(frame.spectralInfo.velocityString.replace(/.*: /, ""));
+                }
+            } else {
+                zCoordString.push("NaN");
+            }
+            return <React.Fragment>{zCoordString}</React.Fragment>;
         });
 
         let columnsData = new Map<number, any>();

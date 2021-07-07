@@ -20,7 +20,10 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
     private widths = this.props.defaultColumnWidths;
 
-    private onWidthChanged = (index: number, size: number) => {
+    private onColumnWidthChanged = (index: number, size: number) => {
+        if (!Number.isInteger(index) || index < 0 || index >= this.widths.length || size <= 0) {
+            return;
+        }
         this.widths[index] = size;
     };
 
@@ -66,7 +69,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 rowHeaderCellRenderer={this.props.isIndexZero ? this.renderRowHeaderCell : null}
                 enableRowResizing={false}
                 columnWidths={this.widths}
-                onColumnWidthChanged={this.onWidthChanged}
+                onColumnWidthChanged={this.onColumnWidthChanged}
             >
                 {tableColumns}
             </Table>
