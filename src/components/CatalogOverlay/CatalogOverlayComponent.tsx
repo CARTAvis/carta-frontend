@@ -566,11 +566,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     catalogStore.updateCatalogData(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, profileStore.catalogCoordinateSystem.system);
                     profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
                     catalogWidgetStore.setCatalogTableAutoScroll(false);
-
-                    if (frame !== appStore.activeFrame) {
-                        const imageMapId = `${frame.frameInfo.fileId}-${appStore.activeFrame.frameInfo.fileId}`;
-                        catalogStore.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
-                    }
                 }
                 if (profileStore.shouldUpdateData) {
                     profileStore.setUpdatingDataStream(true);
