@@ -1,5 +1,5 @@
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {GetRequiredTiles, LayerToMip, MipToLayer, TileSortEncoded} from "../utilities";
+import {GetRequiredTiles, LayerToMip, MipToLayer, TileSortEncoded} from "utilities/tiling";
 
 // Some default tile/image sizes
 const Tile256: Point2D = {x: 256, y: 256};
