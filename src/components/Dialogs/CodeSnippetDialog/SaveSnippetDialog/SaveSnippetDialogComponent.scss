@@ -2,3 +2,12 @@
     margin: 3px;
     user-select: none;
 }
+
+.snippet-save-dialog-formgroup {
+    .bp3-label {
+        width: 70px !important;
+    }
+    .bp3-form-content {
+        width: calc(100% - 70px);
+    }
+}

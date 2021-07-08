@@ -9,8 +9,8 @@ import {AppToaster, WarningToast} from "components/Shared";
 import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
 import {AppStore, SnippetStore} from "stores";
 import {Snippet} from "models";
+import {ThemeProvider} from "./ThemeProvider";
 
-import "prismjs/themes/prism.css";
 import "./CodeSnippetDialogComponent.scss";
 
 @observer
@@ -75,31 +75,38 @@ export class CodeSnippetDialogComponent extends React.Component {
             title: "Edit code snippet"
         };
 
+        const editor = (
+            <Editor
+                className={"language-js line-numbers"}
+                value={snippetStore.activeSnippet?.code}
+                onValueChange={snippetStore.setSnippetString}
+                highlight={this.applyHighlight}
+                tabSize={4}
+                autoFocus={true}
+                textareaId="codeArea"
+                style={{
+                    fontFamily: "'Fira code', 'Fira Mono', monospace",
+                    fontSize: 12
+                }}
+                placeholder="Enter execution string"
+                ref={ref => (this.editorRef = ref)}
+            />
+        );
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={700} defaultHeight={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
-                    <Editor
-                        className={"language-js line-numbers"}
-                        value={snippetStore.activeSnippet?.code}
-                        onValueChange={snippetStore.setSnippetString}
-                        highlight={this.applyHighlight}
-                        tabSize={4}
-                        padding={5}
-                        autoFocus={true}
-                        textareaId="codeArea"
-                        style={{
-                            fontFamily: "'Fira code', 'Fira Mono', monospace",
-                            fontSize: 12
-                        }}
-                        placeholder="Enter execution string"
-                        ref={ref => (this.editorRef = ref)}
-                    />
+                    <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton icon="trash" intent={Intent.WARNING} onClick={this.handleDeleteClicked} disabled={!snippetStore.validInput || snippetStore.isExecuting || !snippetStore.activeSnippetName} text="Delete" />
-                        <AnchorButton icon="floppy-disk" intent={Intent.PRIMARY} onClick={this.showSaveDialog} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Save" />
                         <AnchorButton icon="play" intent={Intent.SUCCESS} onClick={this.handleExecuteClicked} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Execute" />
+                    </div>
+                    <div className="spacer" />
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <AnchorButton icon="add" intent={Intent.SUCCESS} onClick={this.handleNewClicked} disabled={snippetStore.isExecuting} text="New" />
+                        <AnchorButton icon="trash" intent={Intent.WARNING} onClick={this.handleDeleteClicked} disabled={snippetStore.isExecuting || !snippetStore.activeSnippetName} text="Delete" />
+                        <AnchorButton icon="floppy-disk" intent={Intent.PRIMARY} onClick={this.showSaveDialog} disabled={snippetStore.isExecuting} text="Save" />
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideCodeSnippetDialog} text="Close" />
                     </div>
                 </div>
@@ -135,5 +142,9 @@ export class CodeSnippetDialogComponent extends React.Component {
             await appStore.snippetStore.deleteSnippet(appStore.snippetStore.activeSnippetName);
             appStore.snippetStore.clearActiveSnippet();
         }
+    };
+
+    handleNewClicked = () => {
+        SnippetStore.Instance.clearActiveSnippet();
     };
 }

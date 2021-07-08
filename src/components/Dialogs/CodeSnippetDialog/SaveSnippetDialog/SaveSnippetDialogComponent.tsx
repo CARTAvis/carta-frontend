@@ -1,7 +1,7 @@
 import * as React from "react";
 import {computed, makeObservable, action} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, InputGroup, Button, Intent, Classes, Dialog, TagInput} from "@blueprintjs/core";
+import {AnchorButton, InputGroup, Button, Intent, Classes, Dialog, TagInput, FormGroup} from "@blueprintjs/core";
 import {AlertStore, AppStore, SnippetStore} from "stores";
 import "./SaveSnippetDialogComponent.scss";
 
@@ -36,10 +36,10 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
     };
 
     @action private handleTagRemoved = (_value, index) => {
-        const existingTags = SnippetStore.Instance.activeSnippet.tags;
-        if (index >= 0 && index < existingTags.length) {
-            const tagToRemove = existingTags[index];
-            SnippetStore.Instance.activeSnippet.tags = existingTags.filter(t => t !== tagToRemove);
+        const snippet = SnippetStore.Instance.activeSnippet;
+        if (index >= 0 && index < snippet.tags.length) {
+            const tagToRemove = snippet.tags[index];
+            snippet.tags = snippet.tags.filter(t => t !== tagToRemove);
         }
     };
 
@@ -55,10 +55,12 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
     };
 
     @action private handleCategoryRemoved = (_value, index) => {
-        const existingCategories = SnippetStore.Instance.activeSnippet.categories;
-        if (index >= 0 && index < existingCategories) {
-            const categoryToRemove = existingCategories[index];
-            SnippetStore.Instance.activeSnippet.categories = existingCategories.filter(t => t !== categoryToRemove);
+        console.log(_value);
+        console.log(index);
+        const snippet = SnippetStore.Instance.activeSnippet;
+        if (index >= 0 && index < snippet.categories.length) {
+            const categoryToRemove = snippet.categories[index];
+            snippet.categories = snippet.categories.filter(t => t !== categoryToRemove);
         }
     };
 
@@ -106,17 +108,33 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
                 title="Save Code Snippet"
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <InputGroup className="snippet-name-input" placeholder="Enter snippet name" value={snippetStore.activeSnippetName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
-                    <TagInput intent={Intent.PRIMARY} placeholder="Enter tags as comma-separated list" addOnBlur={true} tagProps={{minimal: true}} values={snippet.tags} onAdd={this.handleTagsAdded} onRemove={this.handleTagRemoved} />
-                    <TagInput
-                        intent={Intent.PRIMARY}
-                        placeholder="Enter categories as comma-separated list"
-                        addOnBlur={true}
-                        tagProps={{minimal: true}}
-                        values={snippet.categories}
-                        onAdd={this.handleCategoriesAdded}
-                        onRemove={this.handleCategoryRemoved}
-                    />
+                    <FormGroup inline={true} label="Name" className="snippet-save-dialog-formgroup">
+                        <InputGroup className="snippet-name-input" fill={true} placeholder="Enter snippet name" value={snippetStore.activeSnippetName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Tags" className="snippet-save-dialog-formgroup">
+                        <TagInput
+                            intent={Intent.PRIMARY}
+                            fill={true}
+                            placeholder="Enter tags as comma-separated list"
+                            addOnBlur={true}
+                            tagProps={{minimal: true}}
+                            values={snippet.tags.filter(c => c !== "previous")}
+                            onAdd={this.handleTagsAdded}
+                            onRemove={this.handleTagRemoved}
+                        />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Categories" className="snippet-save-dialog-formgroup">
+                        <TagInput
+                            intent={Intent.PRIMARY}
+                            fill={true}
+                            placeholder="Enter categories as comma-separated list"
+                            addOnBlur={true}
+                            tagProps={{minimal: true}}
+                            values={snippet.categories.filter(c => c !== "hidden")}
+                            onAdd={this.handleCategoriesAdded}
+                            onRemove={this.handleCategoryRemoved}
+                        />
+                    </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>

@@ -108,7 +108,9 @@ export class RootMenuComponent extends React.Component {
                 continue;
             }
 
-            const labelElement = <Button small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />;
+            const labelElement = (
+                <Button className="snippet-run-button" small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
+            );
 
             const menuItem = <Menu.Item key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showExistingCodeSnippet(snippet, name)} />;
 
@@ -134,7 +136,7 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 {snippetEntries}
                 {snippetEntries.length > 0 && <Menu.Divider />}
-                <Menu.Item text="Create new snippet" icon={"code-block"} onClick={appStore.dialogStore.showNewCodeSnippet} />
+                <Menu.Item text="Create new snippet" icon="add" onClick={appStore.dialogStore.showNewCodeSnippet} />
             </Menu>
         );
     }
