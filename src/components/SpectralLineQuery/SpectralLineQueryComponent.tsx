@@ -62,7 +62,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             }
         }
         console.log("can't find store for widget");
-        return new SpectralLineQueryWidgetStore();
+        return null;
     }
 
     @action onResize = (width: number, height: number) => {
@@ -405,7 +405,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         </Tooltip2>
                     </div>
                 </div>
-                <SpectralLineQuerySplashScreenComponent splataloguePingStatus={widgetStore.splataloguePingStatus} onReload={widgetStore.pingSplatalogue}/>
+                <SpectralLineQuerySplashScreenComponent splataloguePingStatus={widgetStore.splataloguePingStatus} onReload={widgetStore.pingSplatalogue} onClose={() => WidgetsStore.Instance.removeFloatingWidget(this.props.id)}/>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
