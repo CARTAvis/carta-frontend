@@ -307,6 +307,9 @@ export class RegionStore {
 
         this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
+        if (this.regionType === CARTA.RegionType.LINE && controlPoints.length === 2) {
+            this.setRotation(this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0);
+        }
         this.modifiedTimestamp = performance.now();
     }
 
