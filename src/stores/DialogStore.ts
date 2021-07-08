@@ -103,15 +103,15 @@ export class DialogStore {
 
     // Code snippet dialog
     @observable codeSnippetDialogVisible: boolean = false;
-    @action showExistingCodeSnippet = (snippet: Snippet) => {
+    @action showExistingCodeSnippet = (snippet: Snippet, name: string) => {
         if (snippet) {
-            SnippetStore.Instance.setSnippetString(snippet.code);
+            SnippetStore.Instance.setActiveSnippet(snippet, name);
         }
         this.codeSnippetDialogVisible = true;
     };
 
     @action showNewCodeSnippet = () => {
-        SnippetStore.Instance.setSnippetString("");
+        SnippetStore.Instance.clearActiveSnippet();
         this.codeSnippetDialogVisible = true;
     };
 

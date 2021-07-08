@@ -1,8 +1,8 @@
 import * as React from "react";
-import {observable, computed, makeObservable, action} from "mobx";
+import {computed, makeObservable, action} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, InputGroup, Button, Intent, Classes, Dialog, TagInput} from "@blueprintjs/core";
-import {AppStore} from "stores";
+import {AlertStore, AppStore, SnippetStore} from "stores";
 import "./SaveSnippetDialogComponent.scss";
 
 const KEYCODE_ENTER = 13;
@@ -15,71 +15,80 @@ interface SaveSnippetDialogProps {
 
 @observer
 export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialogProps> {
-    @observable private snippetName: string = "";
-    @observable private tags: string[] = [];
-    @observable private categories: string[] = [];
-
     constructor(props: any) {
         super(props);
         makeObservable(this);
     }
 
     @action private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
-        this.snippetName = ev.currentTarget.value;
+        SnippetStore.Instance.activeSnippetName = ev.currentTarget.value;
     };
 
     @action private handleTagsAdded = (newTags?: string[]) => {
         if (newTags) {
+            const existingTags = SnippetStore.Instance.activeSnippet.tags;
             for (const tag of newTags) {
-                if (!this.tags.includes(tag)) {
-                    this.tags.push(tag);
+                if (!existingTags.includes(tag)) {
+                    existingTags.push(tag);
                 }
             }
         }
     };
 
     @action private handleTagRemoved = (_value, index) => {
-        if (index >= 0 && index < this.tags.length) {
-            const tagToRemove = this.tags[index];
-            this.tags = this.tags.filter(t => t !== tagToRemove);
+        const existingTags = SnippetStore.Instance.activeSnippet.tags;
+        if (index >= 0 && index < existingTags.length) {
+            const tagToRemove = existingTags[index];
+            SnippetStore.Instance.activeSnippet.tags = existingTags.filter(t => t !== tagToRemove);
         }
     };
 
     @action private handleCategoriesAdded = (newCategories?: string[]) => {
         if (newCategories) {
+            const existingCategories = SnippetStore.Instance.activeSnippet.categories;
             for (const category of newCategories) {
-                if (!this.categories.includes(category)) {
-                    this.categories.push(category);
+                if (!existingCategories.includes(category)) {
+                    existingCategories.push(category);
                 }
             }
         }
     };
 
     @action private handleCategoryRemoved = (_value, index) => {
-        if (index >= 0 && index < this.categories.length) {
-            const categoryToRemove = this.categories[index];
-            this.categories = this.categories.filter(t => t !== categoryToRemove);
+        const existingCategories = SnippetStore.Instance.activeSnippet.categories;
+        if (index >= 0 && index < existingCategories) {
+            const categoryToRemove = existingCategories[index];
+            SnippetStore.Instance.activeSnippet.categories = existingCategories.filter(t => t !== categoryToRemove);
         }
     };
 
     private handleKeyDown = ev => {
-        if (ev.keyCode === KEYCODE_ENTER && this.snippetName?.length) {
+        if (ev.keyCode === KEYCODE_ENTER && SnippetStore.Instance.activeSnippetName?.length) {
             this.saveSnippet();
         }
     };
 
     @computed get validInput() {
-        return this.snippetName?.length > 0 && this.tags && this.categories;
+        const snippetStore = SnippetStore.Instance;
+        return snippetStore.activeSnippetName?.length > 0 && snippetStore.activeSnippet?.tags && snippetStore.activeSnippet?.categories;
     }
 
-    @action saveSnippet = () => {
-        //TODO: check for overwrites
-        this.props.onSaveClicked(this.snippetName, this.categories, this.tags);
+    saveSnippet = async () => {
+        const snippetStore = SnippetStore.Instance;
+
+        if (snippetStore.snippets.has(snippetStore.activeSnippetName)) {
+            const confirmed = await AlertStore.Instance.showInteractiveAlert(`Are you sure to overwrite the existing snippet ${snippetStore.activeSnippetName}?`);
+            if (!confirmed) {
+                return;
+            }
+        }
+        this.props.onSaveClicked(snippetStore.activeSnippetName, snippetStore.activeSnippet.categories, snippetStore.activeSnippet.tags);
     };
 
     render() {
         const appStore = AppStore.Instance;
-
+        const snippetStore = appStore.snippetStore;
+        const snippet = snippetStore.activeSnippet;
         let className = "preference-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -97,14 +106,14 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
                 title="Save Code Snippet"
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <InputGroup className="snippet-name-input" placeholder="Enter snippet name" value={this.snippetName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
-                    <TagInput intent={Intent.PRIMARY} placeholder="Enter tags as comma-separated list" addOnBlur={true} tagProps={{minimal: true}} values={this.tags} onAdd={this.handleTagsAdded} onRemove={this.handleTagRemoved} />
+                    <InputGroup className="snippet-name-input" placeholder="Enter snippet name" value={snippetStore.activeSnippetName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
+                    <TagInput intent={Intent.PRIMARY} placeholder="Enter tags as comma-separated list" addOnBlur={true} tagProps={{minimal: true}} values={snippet.tags} onAdd={this.handleTagsAdded} onRemove={this.handleTagRemoved} />
                     <TagInput
                         intent={Intent.PRIMARY}
                         placeholder="Enter categories as comma-separated list"
                         addOnBlur={true}
                         tagProps={{minimal: true}}
-                        values={this.categories}
+                        values={snippet.categories}
                         onAdd={this.handleCategoriesAdded}
                         onRemove={this.handleCategoryRemoved}
                     />

@@ -1,5 +1,6 @@
 import {action, observable, makeObservable} from "mobx";
 import React from "react";
+import {Deferred} from "../services";
 
 export enum AlertType {
     Info,
@@ -22,8 +23,7 @@ export class AlertStore {
     @observable alertIcon: any;
     @observable alertType: AlertType;
     @observable interactiveAlertText: string | React.ReactNode;
-
-    interactiveAlertCallback: (confirmed: boolean) => void;
+    private interactionPromise: Deferred<boolean>;
 
     @action showAlert = (text: string | React.ReactNode, icon?: any) => {
         this.alertText = text;
@@ -36,26 +36,29 @@ export class AlertStore {
         this.alertVisible = false;
     };
 
-    @action showInteractiveAlert = (text: string | React.ReactNode, onClose: (confirmed: boolean) => void, icon?: any) => {
+    @action showInteractiveAlert = (text: string | React.ReactNode, icon?: any) => {
         this.interactiveAlertText = text;
         this.alertIcon = icon;
         this.alertType = AlertType.Interactive;
         this.alertVisible = true;
-        this.interactiveAlertCallback = onClose;
+        this.interactionPromise = new Deferred<boolean>();
+        return this.interactionPromise.promise;
     };
 
-    @action showRetryAlert = (text: string | React.ReactNode, onClose: (confirmed: boolean) => void, icon?: any) => {
+    @action showRetryAlert = (text: string | React.ReactNode, icon?: any) => {
         this.interactiveAlertText = text;
         this.alertIcon = icon;
         this.alertType = AlertType.Retry;
         this.alertVisible = true;
-        this.interactiveAlertCallback = onClose;
+        this.interactionPromise = new Deferred<boolean>();
+        return this.interactionPromise.promise;
     };
 
     @action handleInteractiveAlertClosed = (confirmed: boolean) => {
         this.alertVisible = false;
-        if (this.interactiveAlertCallback) {
-            this.interactiveAlertCallback(confirmed);
+        if (this.interactionPromise) {
+            this.interactionPromise.resolve(confirmed);
+            this.interactionPromise = null;
         }
     };
 

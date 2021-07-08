@@ -27,11 +27,11 @@ export class RootMenuComponent extends React.Component {
         window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
     };
 
-    private handleWidgetExecuteClicked = async (ev: React.MouseEvent<HTMLElement>, snippet: Snippet) => {
+    private handleWidgetExecuteClicked = async (ev: React.MouseEvent<HTMLElement>, snippet: Snippet, name: string) => {
         ev.stopPropagation();
         const snippetStore = SnippetStore.Instance;
         if (snippet?.code) {
-            snippetStore.setSnippetString(snippet.code);
+            snippetStore.setActiveSnippet(snippet, name);
             await snippetStore.executeCurrentSnippet();
         }
     };
@@ -108,9 +108,9 @@ export class RootMenuComponent extends React.Component {
                 continue;
             }
 
-            const labelElement = <Button small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet)} />;
+            const labelElement = <Button small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />;
 
-            const menuItem = <Menu.Item key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showExistingCodeSnippet(snippet)} />;
+            const menuItem = <Menu.Item key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showExistingCodeSnippet(snippet, name)} />;
 
             if (snippet.categories?.length) {
                 for (const category of snippet.categories) {

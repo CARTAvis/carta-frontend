@@ -563,19 +563,19 @@ export class AppStore {
         }
     };
 
-    @action closeFile = (frame: FrameStore, confirmClose: boolean = true) => {
+    @action closeFile = async (frame: FrameStore, confirmClose: boolean = true) => {
         if (!frame) {
             return;
         }
         // Display confirmation if image has secondary images
         const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
         const numSecondaries = secondaries.length;
+
         if (confirmClose && numSecondaries) {
-            this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`, confirmed => {
-                if (confirmed) {
-                    this.removeFrame(frame);
-                }
-            });
+            const confirmed = await this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`);
+            if (confirmed) {
+                this.removeFrame(frame);
+            }
         } else {
             this.removeFrame(frame);
         }
@@ -1183,10 +1183,9 @@ export class AppStore {
                 case ConnectionStatus.CLOSED:
                     if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
                         AppToaster.show(ErrorToast("Disconnected from server"));
-                        this.alertStore.showRetryAlert(
-                            "You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.",
-                            this.onReconnectAlertClosed
-                        );
+                        this.alertStore
+                            .showRetryAlert("You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.")
+                            .then(this.onReconnectAlertClosed);
                     }
                     break;
                 default:

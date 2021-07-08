@@ -36,7 +36,7 @@ export class CodeSnippetDialogComponent extends React.Component {
         console.log({snippetName, categories, tags});
         const snippetStore = SnippetStore.Instance;
         const snippet: Snippet = {
-            code: snippetStore.activeSnippetString,
+            code: snippetStore.activeSnippet?.code,
             categories,
             tags,
             snippetVersion: Snippet.SnippetVersion,
@@ -46,6 +46,7 @@ export class CodeSnippetDialogComponent extends React.Component {
         if (success) {
             this.hideSaveDialog();
         }
+        snippetStore.setActiveSnippet(snippet, snippetName);
     };
 
     private tryRefocusEditor = () => {
@@ -58,7 +59,7 @@ export class CodeSnippetDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
-        let className = "debug-execution-dialog";
+        let className = "code-snippet-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
         }
@@ -79,7 +80,7 @@ export class CodeSnippetDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_BODY}>
                     <Editor
                         className={"language-js line-numbers"}
-                        value={snippetStore.activeSnippetString}
+                        value={snippetStore.activeSnippet?.code}
                         onValueChange={snippetStore.setSnippetString}
                         highlight={this.applyHighlight}
                         tabSize={4}
@@ -96,8 +97,9 @@ export class CodeSnippetDialogComponent extends React.Component {
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <AnchorButton icon="trash" intent={Intent.WARNING} onClick={this.handleDeleteClicked} disabled={!snippetStore.validInput || snippetStore.isExecuting || !snippetStore.activeSnippetName} text="Delete" />
                         <AnchorButton icon="floppy-disk" intent={Intent.PRIMARY} onClick={this.showSaveDialog} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Save" />
-                        <AnchorButton icon="play" intent={Intent.SUCCESS} onClick={this.onExecuteClicked} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Execute" />
+                        <AnchorButton icon="play" intent={Intent.SUCCESS} onClick={this.handleExecuteClicked} disabled={!snippetStore.validInput || snippetStore.isExecuting} text="Execute" />
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideCodeSnippetDialog} text="Close" />
                     </div>
                 </div>
@@ -114,7 +116,7 @@ export class CodeSnippetDialogComponent extends React.Component {
             .join("\n");
     };
 
-    onExecuteClicked = async () => {
+    handleExecuteClicked = async () => {
         const snippetStore = SnippetStore.Instance;
 
         if (snippetStore.validInput) {
@@ -124,5 +126,14 @@ export class CodeSnippetDialogComponent extends React.Component {
             }
         }
         this.tryRefocusEditor();
+    };
+
+    handleDeleteClicked = async () => {
+        const appStore = AppStore.Instance;
+        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this snippet?");
+        if (confirmed) {
+            await appStore.snippetStore.deleteSnippet(appStore.snippetStore.activeSnippetName);
+            appStore.snippetStore.clearActiveSnippet();
+        }
     };
 }
