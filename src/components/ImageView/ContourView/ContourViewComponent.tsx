@@ -7,6 +7,7 @@ import "./ContourViewComponent.scss";
 
 export interface ContourViewComponentProps {
     docked: boolean;
+    frame: FrameStore;
 }
 
 @observer
@@ -28,7 +29,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     }
 
     private resizeAndClearCanvas() {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.props.frame;
         if (!frame) {
             return;
         }
@@ -49,7 +50,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     private updateCanvas = () => {
         const appStore = AppStore.Instance;
-        const baseFrame = appStore.activeFrame;
+        const baseFrame = this.props.frame;
+        // TODO: Get contour frames for the current frame, rather than the active one
         const contourFrames = appStore.contourFrames;
         if (baseFrame && this.canvas && this.gl && this.contourWebGLService.shaderUniforms) {
             this.resizeAndClearCanvas();
@@ -188,7 +190,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         // dummy values to trigger React's componentDidUpdate()
         /* eslint-disable @typescript-eslint/no-unused-vars */
         const appStore = AppStore.Instance;
-        const baseFrame = appStore.activeFrame;
+        const baseFrame = this.props.frame;
         if (baseFrame) {
             const view = baseFrame.requiredFrameView;
         }

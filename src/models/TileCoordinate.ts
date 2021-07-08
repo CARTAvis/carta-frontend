@@ -1,4 +1,6 @@
 export class TileCoordinate {
+    private static readonly FileIdOffset = 2 ** 32;
+
     layer: number;
     x: number;
     y: number;
@@ -18,6 +20,14 @@ export class TileCoordinate {
             return -1;
         }
         return TileCoordinate.Encode(coordinate.x, coordinate.y, coordinate.layer);
+    }
+
+    public static AddFileId(encodedCoordinate: number, fileId: number) {
+        return encodedCoordinate + fileId * TileCoordinate.FileIdOffset;
+    }
+
+    public static RemoveFileId(encodedCoordinate: number) {
+        return encodedCoordinate % TileCoordinate.FileIdOffset;
     }
 
     // Encoding a tile combines x, y and layer coordinates into a single number. This makes it more efficient
@@ -46,5 +56,9 @@ export class TileCoordinate {
     // Shortcut to quickly decode just the layer from an encoded coordinate
     public static GetLayer(encodedCoordinate: number): number {
         return (encodedCoordinate >> 24) & 127;
+    }
+
+    public static GetFileId(encodedCoordinate: number): number {
+        return Math.floor(encodedCoordinate / TileCoordinate.FileIdOffset);
     }
 }
