@@ -1,8 +1,8 @@
 export const exampleSnippets: {name: string; section?: string; code: string}[] = [
     {
         name: "01. Basics",
-        section: "Introduction",
-        code: `// 01. Introduction/Basics
+        section: "Tutorial",
+        code: `// 01. Tutorial/Basics
 
 // Code snippets are regular ES6-based JavaScript (JS) code blocks
 // Any valid JS should work.
@@ -21,8 +21,8 @@ x += 15;`
     },
     {
         name: "02. Functions",
-        section: "Introduction",
-        code: `// 02. Introduction/Functions
+        section: "Tutorial",
+        code: `// 02. Tutorial/Functions
 
 // Functions can be defined in a number of ways
 function squared (x) {
