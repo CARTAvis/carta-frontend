@@ -28,9 +28,11 @@ export class SpectralLineQuerySplashScreenComponent extends React.Component<{spl
                             <Tooltip2 content="Reconnect to Splatalogue" position={Position.BOTTOM}>
                                 <AnchorButton icon="repeat" onClick={this.props.onReload}/>
                             </Tooltip2>
-                            <Tooltip2 content="Close Spectral Line Query widget" position={Position.BOTTOM}>
-                                <AnchorButton icon="cross" onClick={this.props.onClose}/>
-                            </Tooltip2>
+                            {this.props.onClose && (
+                                <Tooltip2 content="Close Spectral Line Query widget" position={Position.BOTTOM}>
+                                    <AnchorButton icon="cross" onClick={this.props.onClose}/>
+                                </Tooltip2>
+                            )}
                         </ButtonGroup>
                     }
                     <div className={"loadingInfo-div"}>

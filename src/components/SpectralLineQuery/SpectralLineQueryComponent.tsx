@@ -405,7 +405,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         </Tooltip2>
                     </div>
                 </div>
-                <SpectralLineQuerySplashScreenComponent splataloguePingStatus={widgetStore.splataloguePingStatus} onReload={widgetStore.pingSplatalogue} onClose={() => WidgetsStore.Instance.removeFloatingWidget(this.props.id)}/>
+                <SpectralLineQuerySplashScreenComponent splataloguePingStatus={widgetStore.splataloguePingStatus} onReload={widgetStore.pingSplatalogue} onClose={this.props.docked ? undefined : () => WidgetsStore.Instance.removeFloatingWidget(this.props.id)}/>
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
