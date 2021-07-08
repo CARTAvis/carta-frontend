@@ -564,7 +564,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
             this.splataloguePingStatus = ack?.success ? SplataloguePingStatus.Success : SplataloguePingStatus.Failure;
         } catch (err) {
             this.splataloguePingStatus = SplataloguePingStatus.Failure;
-            AppStore.Instance.alertStore.showAlert(err);
+            AppStore.Instance.alertStore.showAlert(`${err}`);
             console.error(err);
         }
     };
