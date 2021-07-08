@@ -90,7 +90,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const padding = appStore.overlayStore.padding;
-        // console.log(this.props.docked, appStore.activeLayer)
         let className = "catalog-div";
         if (this.props.docked) {
             className += " docked";
