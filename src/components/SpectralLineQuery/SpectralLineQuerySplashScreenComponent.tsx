@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {AnchorButton, Classes, Intent, Overlay, Position, Spinner, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import {SplataloguePingStatus} from "stores/widgets";
-import * as splatalogueLogoPng from "static/splatalogue_logo.png";
+import splatalogueLogoPng from "static/splatalogue_logo.png";
 import "./SpectralLineQuerySplashScreenComponent.scss";
 
 @observer
