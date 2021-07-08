@@ -143,15 +143,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 let sizeContent: React.ReactNode;
                 if (region.size) {
                     if (frame.validWcs) {
-                        sizeContent = region.regionType === CARTA.RegionType.LINE ? (
-                            formattedArcsec(length2D(region.wcsSize), WCS_PRECISION)
-                        ) : (
-                            <React.Fragment>
-                                {formattedArcsec(region.wcsSize.x, WCS_PRECISION)}
-                                <br />
-                                {formattedArcsec(region.wcsSize.y, WCS_PRECISION)}
-                            </React.Fragment>
-                        );
+                        sizeContent =
+                            region.regionType === CARTA.RegionType.LINE ? (
+                                formattedArcsec(length2D(region.wcsSize), WCS_PRECISION)
+                            ) : (
+                                <React.Fragment>
+                                    {formattedArcsec(region.wcsSize.x, WCS_PRECISION)}
+                                    <br />
+                                    {formattedArcsec(region.wcsSize.y, WCS_PRECISION)}
+                                </React.Fragment>
+                            );
                     } else {
                         sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(length2D(region.wcsSize), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
                     }
