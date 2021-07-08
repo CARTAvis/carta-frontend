@@ -11,7 +11,6 @@ import "./CursorInfoComponent.scss";
 
 @observer
 export class CursorInfoComponent extends React.Component<WidgetProps> {
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "cursor-info",
@@ -21,7 +20,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             defaultWidth: 650,
             defaultHeight: 180,
             title: "Cursor Information",
-            isCloseable: true,
+            isCloseable: true
         };
     }
 
@@ -50,7 +49,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             );
         }
 
-        const columnWidths = [90, 140, 125, 125, 128]
+        const columnWidths = [90, 140, 125, 125, 128];
 
         const dataType = CARTA.ColumnType.String;
         const columnHeaders = [
@@ -63,18 +62,30 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
 
         const imageNames = appStore.frames.map(frame => frame.filename);
         const values = appStore.frames.map(frame => frame.cursorValueString);
-        const worldCoords = appStore.frames.map(frame => <React.Fragment>{frame.cursorInfo?.infoWCS?.x}<br />{frame.cursorInfo?.infoWCS?.y}</React.Fragment>);
-        const imageCoords = appStore.frames.map(frame => <React.Fragment>{toFixed(frame.cursorInfo?.posImageSpace?.x, 3)}<br />{toFixed(frame.cursorInfo?.posImageSpace?.y, 3)}</React.Fragment>);
+        const worldCoords = appStore.frames.map(frame => (
+            <React.Fragment>
+                {frame.cursorInfo?.infoWCS?.x}
+                <br />
+                {frame.cursorInfo?.infoWCS?.y}
+            </React.Fragment>
+        ));
+        const imageCoords = appStore.frames.map(frame => (
+            <React.Fragment>
+                {toFixed(frame.cursorInfo?.posImageSpace?.x, 3)}
+                <br />
+                {toFixed(frame.cursorInfo?.posImageSpace?.y, 3)}
+            </React.Fragment>
+        ));
         const zCoords = appStore.frames.map(frame => {
             let zCoordString = [];
             if (frame.spectralInfo?.spectralString) {
                 zCoordString.push(frame.spectralInfo.spectralString.replace(/.*: /, ""));
                 if (frame.spectralInfo.freqString) {
-                    zCoordString.push(<br key={0}/>);
+                    zCoordString.push(<br key={0} />);
                     zCoordString.push(frame.spectralInfo.freqString.replace(/.*: /, ""));
                 }
                 if (frame.spectralInfo.velocityString) {
-                    zCoordString.push(<br key={1}/>);
+                    zCoordString.push(<br key={1} />);
                     zCoordString.push(frame.spectralInfo.velocityString.replace(/.*: /, ""));
                 }
             } else {
@@ -93,15 +104,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         return (
             <div className="cursor-info-widget">
                 {this.width > 0 && ( // prevent row index header not rendering
-                    <SimpleTableComponent
-                        dataset={columnsData}
-                        columnHeaders={columnHeaders}
-                        numVisibleRows={appStore.frames.length}
-                        defaultColumnWidths={columnWidths}
-                        enableGhostCells={false}
-                        defaultRowHeight={40}
-                        isIndexZero={true}
-                    />
+                    <SimpleTableComponent dataset={columnsData} columnHeaders={columnHeaders} numVisibleRows={appStore.frames.length} defaultColumnWidths={columnWidths} enableGhostCells={false} defaultRowHeight={40} isIndexZero={true} />
                 )}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
             </div>

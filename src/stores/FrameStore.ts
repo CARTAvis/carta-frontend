@@ -28,7 +28,7 @@ import {
     ZoomPoint
 } from "models";
 import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize, formattedExponential} from "utilities";
-import {BackendService, ContourWebGLService} from "services";
+import {BackendService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";
 
@@ -53,6 +53,7 @@ export const WCS_PRECISION = 10;
 export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
+    private static readonly CursorMovementDuration = 250;
 
     private readonly spectralFrame: AST.SpecFrame;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
@@ -74,6 +75,7 @@ export class FrameStore {
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
     public spatialTransformAST: AST.FrameSet;
+    private cursorMovementHandle: NodeJS.Timeout;
 
     public distanceMeasuring: DistanceMeasuringStore;
 
@@ -88,6 +90,7 @@ export class FrameStore {
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: {position: Point2D; channel: number; value: number};
+    @observable cursorMoving: boolean;
     @observable zoomLevel: number;
     @observable stokes: number;
     @observable channel: number;
@@ -136,6 +139,10 @@ export class FrameStore {
 
     @computed get sharedRegions(): boolean {
         return !!this.spatialReference;
+    }
+
+    @computed get maxMip(): number {
+        return Math.pow(2, Math.ceil(Math.log2(this.frameInfo.fileInfoExtended.width / TILE_SIZE)));
     }
 
     @computed get aspectRatio(): number {
@@ -221,10 +228,7 @@ export class FrameStore {
                 return new Transform2D(this.spatialTransformAST, center);
             } else {
                 // Otherwise use the center of the image
-                return new Transform2D(this.spatialTransformAST, {
-                    x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5,
-                    y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5
-                });
+                return new Transform2D(this.spatialTransformAST, {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5});
             }
         }
         return null;
@@ -788,6 +792,7 @@ export class FrameStore {
 
         this.isRequestingMoments = false;
         this.requestingMomentsProgress = 0;
+        this.cursorMovementHandle = null;
 
         this.stokesFiles = [];
 
@@ -805,6 +810,30 @@ export class FrameStore {
         const astLabelsVisible = preferenceStore.astLabelsVisible;
         if (astLabelsVisible !== this.overlayStore.labels.visible) {
             this.overlayStore.labels.setVisible(astLabelsVisible);
+        }
+        const colorbarVisible = preferenceStore.colorbarVisible;
+        if (colorbarVisible !== this.overlayStore.colorbar.visible) {
+            this.overlayStore.colorbar.setVisible(colorbarVisible);
+        }
+        const colorbarInteractive = preferenceStore.colorbarInteractive;
+        if (colorbarInteractive !== this.overlayStore.colorbar.interactive) {
+            this.overlayStore.colorbar.setInteractive(colorbarInteractive);
+        }
+        const colorbarPosition = preferenceStore.colorbarPosition;
+        if (colorbarPosition !== this.overlayStore.colorbar.position) {
+            this.overlayStore.colorbar.setPosition(colorbarPosition);
+        }
+        const colorbarWidth = preferenceStore.colorbarWidth;
+        if (colorbarWidth !== this.overlayStore.colorbar.width) {
+            this.overlayStore.colorbar.setWidth(colorbarWidth);
+        }
+        const colorbarTicksDensity = preferenceStore.colorbarTicksDensity;
+        if (colorbarTicksDensity !== this.overlayStore.colorbar.tickDensity) {
+            this.overlayStore.colorbar.setTickDensity(colorbarTicksDensity);
+        }
+        const colorbarLabelVisible = preferenceStore.colorbarLabelVisible;
+        if (colorbarLabelVisible !== this.overlayStore.colorbar.labelVisible) {
+            this.overlayStore.colorbar.setLabelVisible(colorbarLabelVisible);
         }
 
         this.frameRegionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
@@ -912,6 +941,7 @@ export class FrameStore {
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo(this.center);
         this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
+        this.cursorMoving = false;
 
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing
@@ -1323,7 +1353,8 @@ export class FrameStore {
         }
     }
 
-    @action private setChannelValues(values: number[]) {
+    @action
+    private setChannelValues(values: number[]) {
         this.channelValues = values;
     }
 
@@ -1550,6 +1581,15 @@ export class FrameStore {
                 frame.cursorInfo = frame.getCursorInfo(posSecondaryImage);
             }
         }
+        this.cursorMoving = true;
+        clearTimeout(this.cursorMovementHandle);
+        this.cursorMovementHandle = setTimeout(
+            () =>
+                runInAction(() => {
+                    this.cursorMoving = false;
+                }),
+            FrameStore.CursorMovementDuration
+        );
     }
 
     @action setCursorValue(position: Point2D, channel: number, value: number) {

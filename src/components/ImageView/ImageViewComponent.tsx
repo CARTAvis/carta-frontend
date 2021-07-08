@@ -209,10 +209,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         if (appStore.activeFrame && appStore.activeFrame.isRenderable && appStore.astReady) {
             const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
-            const imageRatioTagOffset = {
-                x: overlayStore.padding.left + overlayStore.viewWidth / 2.0,
-                y: overlayStore.padding.top + overlayStore.viewHeight / 2.0
-            };
+            const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
 
             divContents = (
                 <React.Fragment>
@@ -241,7 +238,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     )}
                     {appStore.activeFrame && overlayStore.colorbar.visible && <ColorbarComponent onCursorHoverValueChanged={this.setPixelHighlightValue} />}
                     {appStore.activeFrame && <BeamProfileOverlayComponent top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
-                    {appStore.activeFrame && <CatalogViewGLComponent docked={this.props.docked} onZoomed={this.onZoomed} />}
+                    {appStore.activeFrame && <CatalogViewGLComponent frame={appStore.activeFrame} docked={this.props.docked} onZoomed={this.onZoomed} />}
                     {appStore.activeFrame && (
                         <RegionViewComponent
                             frame={appStore.activeFrame}
@@ -276,8 +273,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                <RasterViewComponent docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} />
-                <ContourViewComponent docked={this.props.docked} />
+                <RasterViewComponent frame={appStore.activeFrame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} />
+                <ContourViewComponent frame={appStore.activeFrame} docked={this.props.docked} />
                 {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
             </div>
