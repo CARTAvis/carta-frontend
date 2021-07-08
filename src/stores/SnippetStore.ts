@@ -3,6 +3,7 @@ import {AlertStore} from "stores";
 import {AppToaster, SuccessToast} from "components/Shared";
 import {ApiService} from "services";
 import {Snippet} from "models/Snippet";
+import {exampleSnippets} from "./ExampleSnippets";
 
 export class SnippetStore {
     private static staticInstance: SnippetStore;
@@ -23,7 +24,7 @@ export class SnippetStore {
 
     private constructor() {
         makeObservable(this);
-        this.snippets = new Map<string, Snippet>();
+        this.setDefaultSnippets();
         this.clearActiveSnippet();
         this.isExecuting = false;
     }
@@ -32,8 +33,31 @@ export class SnippetStore {
         return name && this.snippets.has(name);
     };
 
-    @action fetchSnippets = async () => {
+    @action setDefaultSnippets = () => {
+        if (!this.snippets) {
+            this.snippets = new Map<string, Snippet>();
+        }
         this.snippets.clear();
+        for (const example of exampleSnippets) {
+            let category = "Examples";
+            if (example.section) {
+                category += `/${example.section}`;
+            }
+
+            const snippet: Snippet = {
+                tags: ["example"],
+                categories: [category],
+                code: example.code,
+                frontendVersion: Snippet.FrontendVersion,
+                snippetVersion: Snippet.SnippetVersion
+            };
+
+            this.snippets.set(example.name, snippet);
+        }
+    };
+
+    @action fetchSnippets = async () => {
+        this.setDefaultSnippets();
 
         try {
             const userSnippets = await ApiService.Instance.getSnippets();
@@ -83,7 +107,15 @@ export class SnippetStore {
         if (!this.activeSnippet.tags) {
             this.activeSnippet.tags = [];
         }
-        this.activeSnippetName = name;
+
+        this.activeSnippet.tags = this.activeSnippet.tags.filter(t => t !== "previous");
+        this.activeSnippet.categories = this.activeSnippet.categories.filter(c => c !== "hidden");
+
+        if (snippet.tags.includes("example")) {
+            this.activeSnippetName = "";
+        } else {
+            this.activeSnippetName = name;
+        }
     };
 
     @action clearActiveSnippet = () => {

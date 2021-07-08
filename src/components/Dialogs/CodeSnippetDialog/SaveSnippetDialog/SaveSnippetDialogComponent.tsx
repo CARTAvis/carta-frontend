@@ -118,7 +118,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
                             placeholder="Enter tags as comma-separated list"
                             addOnBlur={true}
                             tagProps={{minimal: true}}
-                            values={snippet.tags.filter(c => c !== "previous")}
+                            values={snippet.tags}
                             onAdd={this.handleTagsAdded}
                             onRemove={this.handleTagRemoved}
                         />
@@ -130,7 +130,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
                             placeholder="Enter categories as comma-separated list"
                             addOnBlur={true}
                             tagProps={{minimal: true}}
-                            values={snippet.categories.filter(c => c !== "hidden")}
+                            values={snippet.categories}
                             onAdd={this.handleCategoriesAdded}
                             onRemove={this.handleCategoryRemoved}
                         />

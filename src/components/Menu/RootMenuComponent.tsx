@@ -88,7 +88,7 @@ export class RootMenuComponent extends React.Component {
             const lengthA = a.props?.children?.length ?? 0;
             const lengthB = b.props?.children?.length ?? 0;
             if ((lengthA > 0 && lengthB > 0) || lengthA === lengthB) {
-                return a.props?.name > b.props.name ? 1 : -1;
+                return a.key > b.key ? 1 : -1;
             }
             return Math.sign(lengthB - lengthA);
         });
