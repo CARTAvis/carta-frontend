@@ -71,16 +71,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get plotData(): {
-        values: Array<Point2D>;
-        smoothingValues: Array<Point2D>;
-        xMin: number;
-        xMax: number;
-        yMin: number;
-        yMax: number;
-        yMean: number;
-        yRms: number;
-    } {
+    @computed get plotData(): {values: Array<Point2D>; smoothingValues: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number; yMean: number; yRms: number} {
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
         if (!this.frame || !this.width || !this.profileStore) {
             return null;
@@ -118,48 +109,66 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
-            const N = Math.floor(Math.min(xMax - xMin + 1, coordinateData.values.length));
-
-            const numPixels = this.width;
-            const decimationFactor = Math.round(N / numPixels);
-
             let values: Array<{x: number; y: number}>;
             let smoothingValues: Array<{x: number; y: number}>;
-            if (N > 0) {
-                let xArray: number[] = new Array(coordinateData.values.length);
-                for (let i = 0; i < coordinateData.values.length; i++) {
-                    xArray[i] = i;
-                }
-                if (decimationFactor <= 1 || this.widgetStore.plotType === PlotType.POINTS) {
-                    // full resolution data
-                    values = new Array(N);
-                    for (let i = 0; i < N; i++) {
-                        const y = coordinateData.values[i + xMin];
-                        const x = coordinateData.start + i + xMin;
-                        if (x >= xMin && x <= xMax && isFinite(y)) {
-                            yMin = Math.min(yMin, y);
-                            yMax = Math.max(yMax, y);
-                            yCount++;
-                            ySum += y;
-                            ySum2 += y * y;
-                        }
-                        values[i] = {x, y};
+            let N: number;
+
+            if (coordinateData.mip > 1 || coordinateData.start > 0 || coordinateData.end < xMax) {
+                N = coordinateData.values.length;
+                values = new Array(N);
+                for (let i = 0; i < N; i++) {
+                    const y = coordinateData.values[i];
+                    const x = coordinateData.start + i * coordinateData.mip;
+                    if (x >= xMin && x <= xMax && isFinite(y)) {
+                        yMin = Math.min(yMin, y);
+                        yMax = Math.max(yMax, y);
+                        yCount++;
+                        ySum += y;
+                        ySum2 += y * y;
                     }
-                } else {
-                    // Decimated data
-                    for (let i = 0; i < N; i++) {
-                        const val = coordinateData.values[i + xMin];
-                        if (isFinite(val)) {
-                            yMin = Math.min(yMin, val);
-                            yMax = Math.max(yMax, val);
-                            yCount++;
-                            ySum += val;
-                            ySum2 += val * val;
-                        }
-                    }
-                    values = this.widgetStore.smoothingStore.getDecimatedPoint2DArray(xArray, coordinateData.values, decimationFactor, xMin, xMax);
+                    values[i] = {x, y};
                 }
-                smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values, xMin, xMax);
+            } else {
+                N = Math.floor(Math.min(xMax - xMin + 1, coordinateData.values.length));
+                if (N > 0) {
+                    let xArray: number[] = new Array(coordinateData.values.length);
+                    for (let i = 0; i < coordinateData.values.length; i++) {
+                        xArray[i] = i;
+                    }
+                    const numPixels = this.width;
+                    const decimationFactor = Math.round(N / numPixels);
+
+                    if (decimationFactor <= 1 || this.widgetStore.plotType === PlotType.POINTS) {
+                        // full resolution data
+                        values = new Array(N);
+                        for (let i = 0; i < N; i++) {
+                            const y = coordinateData.values[i + xMin];
+                            const x = coordinateData.start + i + xMin;
+                            if (x >= xMin && x <= xMax && isFinite(y)) {
+                                yMin = Math.min(yMin, y);
+                                yMax = Math.max(yMax, y);
+                                yCount++;
+                                ySum += y;
+                                ySum2 += y * y;
+                            }
+                            values[i] = {x, y};
+                        }
+                    } else {
+                        // Decimated data
+                        for (let i = 0; i < N; i++) {
+                            const val = coordinateData.values[i + xMin];
+                            if (isFinite(val)) {
+                                yMin = Math.min(yMin, val);
+                                yMax = Math.max(yMax, val);
+                                yCount++;
+                                ySum += val;
+                                ySum2 += val * val;
+                            }
+                        }
+                        values = this.widgetStore.smoothingStore.getDecimatedPoint2DArray(xArray, coordinateData.values, decimationFactor, xMin, xMax);
+                    }
+                    smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values, xMin, xMax);
+                }
             }
 
             if (yCount > 0) {
@@ -426,7 +435,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     let primaryLineColor = getColorForTheme(widgetStore.primaryLineColor);
                     linePlotProps.lineColor = primaryLineColor;
                     const smoothingStore = widgetStore.smoothingStore;
-                    if (smoothingStore.type !== SmoothingType.NONE) {
+                    if (smoothingStore.type !== SmoothingType.NONE && currentPlotData?.smoothingValues) {
                         if (!smoothingStore.isOverlayOn) {
                             linePlotProps.lineColor = "#00000000";
                         }

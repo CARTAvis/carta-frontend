@@ -118,12 +118,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                     />
                 </ColumnHeaderCell>
                 <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
-                    <Tooltip2
-                        hoverOpenDelay={250}
-                        hoverCloseDelay={0}
-                        content={filterSyntax}
-                        position={Position.BOTTOM}
-                    >
+                    <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
                             small={true}
@@ -229,13 +224,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType))}>
                     <Label disabled={disableSort} className="bp3-inline label">
                         <Icon className={iconClass} icon={sortIcon as IconName} />
-                        <Tooltip2
-                            hoverOpenDelay={250}
-                            hoverCloseDelay={0}
-                            content={headerDescription ?? "Description not avaliable"}
-                            position={Position.BOTTOM}
-                            popoverClassName={AppStore.Instance.darkTheme ? "bp3-dark" : ""}
-                        >
+                        <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp3-dark" : ""}>
                             {column.name}
                         </Tooltip2>
                     </Label>
