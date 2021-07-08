@@ -449,7 +449,7 @@ export class RootMenuComponent extends React.Component {
         if (appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === fileId) {
             return;
         } else {
-            appStore.setActiveFrame(fileId);
+            appStore.setActiveFrameById(fileId);
         }
     };
 }

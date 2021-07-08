@@ -424,7 +424,7 @@ export class AppStore {
         }
 
         const imageFileId = newFrame.frameInfo.fileId;
-        this.setActiveFrame(imageFileId);
+        this.setActiveFrameById(imageFileId);
         // init image associated catalog
         this.catalogStore.updateImageAssociatedCatalogId(imageFileId, []);
 
@@ -478,7 +478,7 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
-            return ack.fileId;
+            return this.getFrame(ack.fileId);
         } catch (err) {
             this.alertStore.showAlert(`Error loading file: ${err}`);
             this.endFileLoading();
@@ -529,7 +529,7 @@ export class AppStore {
      * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
      * @return {Promise<number>} [async] the file ID of the opened file
      */
-    @action appendFile = (path: string, filename: string, hdu: string) => {
+    @action appendFile = async (path: string, filename: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
         return this.loadFile(path, filename, hdu);
@@ -722,7 +722,7 @@ export class AppStore {
             const frameIds = this.frames.map(f => f.frameInfo.fileId);
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
-            this.setActiveFrame(frameIds[requiredIndex]);
+            this.setActiveFrameById(frameIds[requiredIndex]);
         }
     };
 
@@ -1097,6 +1097,7 @@ export class AppStore {
         makeObservable(this);
         AppStore.staticInstance = this;
         window["app"] = this;
+        window["carta"] = this;
         // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
@@ -1654,31 +1655,36 @@ export class AppStore {
         return this.tileService && this.tileService.workersReady;
     }
 
-    @action setActiveFrame(fileId: number) {
+    @action setActiveFrame(frame: FrameStore) {
+        if (!frame) {
+            return;
+        }
+
         // Ignore changes when animating
         if (this.animatorStore.serverAnimationActive) {
             return;
         }
+
         // Disable rendering of old frame
-        if (this.activeFrame && this.activeFrame.frameInfo.fileId !== fileId) {
+        if (this.activeFrame && this.activeFrame !== frame) {
             this.activeFrame.renderType = RasterRenderType.NONE;
         }
 
+        this.changeActiveFrame(frame);
+    }
+
+    @action setActiveFrameById(fileId: number) {
         const requiredFrame = this.getFrame(fileId);
         if (requiredFrame) {
-            this.changeActiveFrame(requiredFrame);
+            this.setActiveFrame(requiredFrame);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
     }
 
     @action setActiveFrameByIndex(index: number) {
-        // Ignore changes when animating
-        if (this.animatorStore.serverAnimationActive) {
-            return;
-        }
         if (index >= 0 && this.frames.length > index) {
-            this.changeActiveFrame(this.frames[index]);
+            this.setActiveFrame(this.frames[index]);
         } else {
             console.log(`Invalid frame index ${index}`);
         }
@@ -1700,7 +1706,7 @@ export class AppStore {
     @action setContourDataSource = (frame: FrameStore) => {
         this.contourDataSource = frame;
         if (this.syncFrameToContour) {
-            this.setActiveFrame(frame.frameInfo.fileId);
+            this.setActiveFrameById(frame.frameInfo.fileId);
         }
     };
 

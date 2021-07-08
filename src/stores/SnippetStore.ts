@@ -200,9 +200,9 @@ export class SnippetStore {
                 };
                 await this.saveSnippet("_previous", snippet, true);
                 return true;
-            } catch (e) {
+            } catch (err) {
                 this.setSnippetExecuting(false);
-                console.log(e);
+                console.warn(err);
                 return false;
             }
         } else {
