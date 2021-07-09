@@ -253,10 +253,6 @@ export class AppStore {
         }
     }
 
-    @computed get lightTheme(): boolean {
-        return !this.darkTheme;
-    }
-
     @computed get openFileDisabled(): boolean {
         return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
     }
