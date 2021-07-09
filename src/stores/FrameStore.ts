@@ -27,7 +27,22 @@ import {
     Transform2D,
     ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize, formattedExponential} from "utilities";
+import {
+    clamp,
+    formattedFrequency,
+    getHeaderNumericValue,
+    getTransformedChannel,
+    transformPoint,
+    isAstBadPoint,
+    minMax2D,
+    rotate2D,
+    toFixed,
+    trimFitsComment,
+    round2D,
+    getFormattedWCSPoint,
+    getPixelSize,
+    formattedExponential
+} from "utilities";
 import {BackendService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";

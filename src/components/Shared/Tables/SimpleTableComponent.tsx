@@ -17,7 +17,6 @@ export class SimpleTableComponentProps {
 
 @observer
 export class SimpleTableComponent extends React.Component<SimpleTableComponentProps> {
-
     private widths = this.props.defaultColumnWidths;
 
     private onColumnWidthChanged = (index: number, size: number) => {

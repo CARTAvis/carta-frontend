@@ -34,7 +34,9 @@ export class RootMenuComponent extends React.Component {
         const logConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.Log);
         const spatialProfilerConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.SpatialProfiler);
         const spectralProfilerConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.SpectralProfiler);
-        const restWidgets = Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).filter(widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.CursorInfo, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler].includes(widget));
+        const restWidgets = Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).filter(
+            widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.CursorInfo, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler].includes(widget)
+        );
 
         return (
             <Menu className="widgets-menu">

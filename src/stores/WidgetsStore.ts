@@ -385,7 +385,7 @@ export class WidgetsStore {
             case SpectralLineQueryComponent.WIDGET_CONFIG.type:
                 return SpectralLineQueryComponent.WIDGET_CONFIG;
             case CursorInfoComponent.WIDGET_CONFIG.type:
-                    return CursorInfoComponent.WIDGET_CONFIG;
+                return CursorInfoComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }

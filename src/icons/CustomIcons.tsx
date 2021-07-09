@@ -153,12 +153,7 @@ const distanceMeasuringSvg = (
     />
 );
 
-const cursorSvg = (
-    <path
-        transform="scale(1.2, 1.2) translate(-11, -10)"
-        d="M18.23,16.26L22,15l-10-3l3,10l1.26-3.77l4.27,4.27l1.98-1.98L18.23,16.26z"
-    />
-);
+const cursorSvg = <path transform="scale(1.2, 1.2) translate(-11, -10)" d="M18.23,16.26L22,15l-10-3l3,10l1.26-3.77l4.27,4.27l1.98-1.98L18.23,16.26z" />;
 
 const icons = {
     contour: contourSvg,

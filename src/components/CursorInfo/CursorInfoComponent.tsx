@@ -78,7 +78,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             new CARTA.CatalogHeader({name: "XY (Image)", dataType, columnIndex: 4}),
             new CARTA.CatalogHeader({name: "Z", dataType, columnIndex: 5}),
             new CARTA.CatalogHeader({name: "Channel", dataType, columnIndex: 6}),
-            new CARTA.CatalogHeader({name: "Stokes", dataType, columnIndex: 7}),
+            new CARTA.CatalogHeader({name: "Stokes", dataType, columnIndex: 7})
         ];
 
         const imageNames = appStore.frames.map(frame => frame.filename);
