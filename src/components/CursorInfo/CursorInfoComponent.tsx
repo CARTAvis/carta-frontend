@@ -6,7 +6,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent} from "components/Shared";
 import {toFixed} from "utilities";
-import {AppStore, DefaultWidgetConfig, WidgetProps} from "stores";
+import {AppStore, DefaultWidgetConfig, FrameStore, WidgetProps} from "stores";
 import "./CursorInfoComponent.scss";
 
 @observer
@@ -37,53 +37,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    render() {
-        const appStore = AppStore.Instance;
-        const frameNum = appStore.frames.length;
-        const frame = appStore.activeFrame;
-
-        if (frameNum <= 0) {
-            return (
-                <div className="region-list-widget">
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
-                </div>
-            );
-        }
-
-        const columnWidths = [90, 140, 125, 125, 128];
-        const dataType = CARTA.ColumnType.String;
-        const columnHeaders = [
-            new CARTA.CatalogHeader({name: "Image", dataType, columnIndex: 0}),
-            new CARTA.CatalogHeader({name: "Value", dataType, columnIndex: 1}),
-            new CARTA.CatalogHeader({name: "XY (World)", dataType, columnIndex: 2}),
-            new CARTA.CatalogHeader({name: "XY (Image)", dataType, columnIndex: 3}),
-            new CARTA.CatalogHeader({name: "Z", dataType, columnIndex: 4})
-        ];
-
-        let imageNames = appStore.frames.map(frame => frame.filename);
-        let values = Array(frameNum).fill("-");
-        let worldCoords = Array(frameNum).fill("-");
-        let imageCoords = Array(frameNum).fill("-");
-        let zCoords = Array(frameNum).fill("-");
-
-        const activeFrameIndex = appStore.activeFrameIndex;
-        if (frame.cursorInfo.isInsideImage) {
-            values[activeFrameIndex] = frame.cursorValueString;
-        }
-        worldCoords[activeFrameIndex] = (
-            <React.Fragment>
-                {frame.cursorInfo?.infoWCS?.x}
-                <br />
-                {frame.cursorInfo?.infoWCS?.y}
-            </React.Fragment>
-        );
-        imageCoords[activeFrameIndex] = (
-            <React.Fragment>
-                {toFixed(frame.cursorInfo?.posImageSpace?.x, 3)}
-                <br />
-                {toFixed(frame.cursorInfo?.posImageSpace?.y, 3)}
-            </React.Fragment>
-        );
+    private genZCoordString = (frame: FrameStore): Array<any> => {
         let zCoordString = [];
         if (frame.spectralInfo?.spectralString) {
             zCoordString.push(frame.spectralInfo.spectralString.replace(/\w+\s\(/, "")?.replace(/\):\s/, "\u000A"));
@@ -98,16 +52,73 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         } else {
             zCoordString.push("NaN");
         }
-        zCoords[activeFrameIndex] = (
-            <React.Fragment>{zCoordString}</React.Fragment>
+        return zCoordString;
+    };
+
+    render() {
+        const appStore = AppStore.Instance;
+        const frameNum = appStore.frames.length;
+        const frame = appStore.activeFrame;
+
+        if (frameNum <= 0) {
+            return (
+                <div className="region-list-widget">
+                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
+                </div>
+            );
+        }
+
+        const columnWidths = [90, 140, 50, 95, 95, 128, 70, 70];
+        const dataType = CARTA.ColumnType.String;
+        const columnHeaders = [
+            new CARTA.CatalogHeader({name: "Image", dataType, columnIndex: 0}),
+            new CARTA.CatalogHeader({name: "Value", dataType, columnIndex: 1}),
+            new CARTA.CatalogHeader({name: "WCS", dataType, columnIndex: 2}),
+            new CARTA.CatalogHeader({name: "XY (World)", dataType, columnIndex: 3}),
+            new CARTA.CatalogHeader({name: "XY (Image)", dataType, columnIndex: 4}),
+            new CARTA.CatalogHeader({name: "Z", dataType, columnIndex: 5}),
+            new CARTA.CatalogHeader({name: "Channel", dataType, columnIndex: 6}),
+            new CARTA.CatalogHeader({name: "Stokes", dataType, columnIndex: 7}),
+        ];
+
+        const imageNames = appStore.frames.map(frame => frame.filename);
+        let values = Array(frameNum).fill("-");
+        let systems = Array(frameNum).fill("-");
+        let worldCoords = Array(frameNum).fill("-");
+        let imageCoords = Array(frameNum).fill("-");
+        const zCoords = appStore.frames.map(frame => this.genZCoordString(frame));
+        const channels = appStore.frames.map(frame => frame.requiredChannel);
+        const stokes = appStore.frames.map(frame => frame.requiredStokes);
+
+        const activeFrameIndex = appStore.activeFrameIndex;
+        if (frame.cursorInfo.isInsideImage) {
+            values[activeFrameIndex] = frame.cursorValueString;
+        }
+        systems[activeFrameIndex] = appStore.overlayStore.global.explicitSystem;
+        worldCoords[activeFrameIndex] = (
+            <React.Fragment>
+                {frame.cursorInfo?.infoWCS?.x}
+                <br />
+                {frame.cursorInfo?.infoWCS?.y}
+            </React.Fragment>
+        );
+        imageCoords[activeFrameIndex] = (
+            <React.Fragment>
+                {toFixed(frame.cursorInfo?.posImageSpace?.x, 3)}
+                <br />
+                {toFixed(frame.cursorInfo?.posImageSpace?.y, 3)}
+            </React.Fragment>
         );
 
         let columnsData = new Map<number, any>();
         columnsData.set(0, {dataType, data: imageNames});
         columnsData.set(1, {dataType, data: values});
-        columnsData.set(2, {dataType, data: worldCoords});
-        columnsData.set(3, {dataType, data: imageCoords});
-        columnsData.set(4, {dataType, data: zCoords});
+        columnsData.set(2, {dataType, data: systems});
+        columnsData.set(3, {dataType, data: worldCoords});
+        columnsData.set(4, {dataType, data: imageCoords});
+        columnsData.set(5, {dataType, data: zCoords});
+        columnsData.set(6, {dataType, data: channels});
+        columnsData.set(7, {dataType, data: stokes});
 
         return (
             <div className="cursor-info-widget">
