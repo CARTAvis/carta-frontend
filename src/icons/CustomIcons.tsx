@@ -3,7 +3,7 @@ import {Icon} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import "./CustomIcons.scss";
 
-export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments" | "distanceMeasuring";
+export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments" | "distanceMeasuring" | "cursor";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number}> {
     static readonly SIZE_STANDARD = 16;
@@ -153,6 +153,13 @@ const distanceMeasuringSvg = (
     />
 );
 
+const cursorSvg = (
+    <path
+        transform="scale(1.2, 1.2) translate(-11, -10)"
+        d="M18.23,16.26L22,15l-10-3l3,10l1.26-3.77l4.27,4.27l1.98-1.98L18.23,16.26z"
+    />
+);
+
 const icons = {
     contour: contourSvg,
     center: centerSvg,
@@ -163,5 +170,6 @@ const icons = {
     spectralLineQuery: spectralLineQuerySvg,
     smoothing: profileSmoothingSvg,
     moments: momentGeneratorSvg,
-    distanceMeasuring: distanceMeasuringSvg
+    distanceMeasuring: distanceMeasuringSvg,
+    cursor: cursorSvg
 };

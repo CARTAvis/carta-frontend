@@ -19,7 +19,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             minHeight: 180,
             defaultWidth: 650,
             defaultHeight: 180,
-            title: "Cursor Information",
+            title: "Cursor Info",
             isCloseable: true
         };
     }

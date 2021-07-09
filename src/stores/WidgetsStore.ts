@@ -58,7 +58,7 @@ export enum WidgetType {
     ImageList = "Image List Widget",
     Catalog = "Catalog Widget",
     SpectralLineQuery = "Spectral Line Query Widget",
-    CursorInfo = "Cursor Information Widget"
+    CursorInfo = "Cursor Info Widget"
 }
 
 export interface DefaultWidgetConfig {
@@ -267,8 +267,8 @@ export class WidgetsStore {
         [
             WidgetType.CursorInfo,
             {
-                isCustomIcon: false,
-                icon: "geolocation",
+                isCustomIcon: true,
+                icon: "cursor",
                 onClick: () => WidgetsStore.Instance.createFloatingCursorInfoWidget(),
                 widgetConfig: CursorInfoComponent.WIDGET_CONFIG
             }
