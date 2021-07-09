@@ -1805,7 +1805,7 @@ export class AppStore {
 
         if (val) {
             if (!frame.setSpatialReference(this.spatialReference)) {
-                AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found`));
+                AppToaster.show(WarningToast(`Could not enable spatial matching of ${frame.filename} to reference image ${this.spatialReference.filename}. No valid transform was found.`));
             }
         } else {
             frame.clearSpatialReference();
