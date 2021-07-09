@@ -1,6 +1,6 @@
 import {action, observable, makeObservable} from "mobx";
 import React from "react";
-import {Deferred} from "../services";
+import {Deferred} from "services";
 
 export enum AlertType {
     Info,

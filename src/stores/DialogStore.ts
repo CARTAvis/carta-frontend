@@ -1,8 +1,8 @@
 import {action, observable, makeObservable} from "mobx";
 import {TabId} from "@blueprintjs/core";
-import {FileInfoType} from "../components";
-import {Snippet} from "../models";
-import {SnippetStore} from "./SnippetStore";
+import {FileInfoType} from "components";
+import {SnippetStore} from "stores";
+import {Snippet} from "models";
 
 export class DialogStore {
     private static staticInstance: DialogStore;
