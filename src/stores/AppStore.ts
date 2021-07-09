@@ -140,7 +140,7 @@ export class AppStore {
         this.username = username;
     };
 
-    connectToServer = async () => {
+    private connectToServer = async () => {
         // Remove query parameters, replace protocol and remove trailing /
         let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
         if (process.env.NODE_ENV === "development") {
@@ -1304,11 +1304,11 @@ export class AppStore {
             this.apiService.setToken(authTokenParam);
         }
 
-        autorun(() => {
+        autorun(async () => {
             if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
+                await this.connectToServer();
                 this.preferenceStore.fetchPreferences().then(() => {
                     this.layoutStore.fetchLayouts().then(() => {
-                        // Attempt connection after authenticating
                         this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
                         if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
                             AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
@@ -1316,7 +1316,6 @@ export class AppStore {
                             this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                         }
                         this.cursorFrozen = this.preferenceStore.isCursorFrozen;
-                        this.connectToServer();
                     });
                     this.snippetStore.fetchSnippets();
                     this.updateASTColors();

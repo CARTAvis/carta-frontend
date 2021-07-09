@@ -373,39 +373,45 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
         return (
             <div className={className}>
-                <div className="bp3-dialog-body">
-                    {queryPanel}
-                    <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"60%"} minSize={"5%"} onChange={this.onTableResize}>
-                        <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
-                        <Pane className={"result-table-container"}>
-                            {redshiftPanel}
-                            <div className="result-table">{this.width > 0 && <FilterableTableComponent {...queryResultTableProps} />}</div>
-                        </Pane>
-                    </SplitPane>
-                </div>
-                <div className="bp3-dialog-footer">
-                    <div className="result-table-info">
-                        <pre>{widgetStore.resultTableInfo}</pre>
-                    </div>
-                    <div className="bp3-dialog-footer-actions">
-                        <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
-                            {widgetMenu}
-                        </FormGroup>
-                        <Tooltip2 content="Apply filter" position={Position.BOTTOM}>
-                            <AnchorButton text="Filter" intent={Intent.PRIMARY} disabled={widgetStore.numDataRows <= 0} onClick={this.handleFilter} />
-                        </Tooltip2>
-                        <Tooltip2 content="Reset filter" position={Position.BOTTOM}>
-                            <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.handleResetFilter} />
-                        </Tooltip2>
-                        <Tooltip2 content={plotTip} position={Position.BOTTOM}>
-                            <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit} onClick={this.handlePlot} />
-                        </Tooltip2>
-                        <Tooltip2 content="Clear plotted lines" position={Position.BOTTOM}>
-                            <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear} />
-                        </Tooltip2>
-                    </div>
-                </div>
-                <SpectralLineQuerySplashScreenComponent splataloguePingStatus={widgetStore.splataloguePingStatus} onReload={widgetStore.pingSplatalogue} onClose={this.props.docked ? undefined : () => WidgetsStore.Instance.removeFloatingWidget(this.props.id)}/>
+                {widgetStore.splataloguePingStatus !== SplataloguePingStatus.Success &&
+                    <SpectralLineQuerySplashScreenComponent splataloguePingStatus={widgetStore.splataloguePingStatus} onReload={widgetStore.pingSplatalogue}/>
+                }
+                {widgetStore.splataloguePingStatus === SplataloguePingStatus.Success &&
+                    <React.Fragment>
+                        <div className="bp3-dialog-body">
+                            {queryPanel}
+                            <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"60%"} minSize={"5%"} onChange={this.onTableResize}>
+                                <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
+                                <Pane className={"result-table-container"}>
+                                    {redshiftPanel}
+                                    <div className="result-table">{this.width > 0 && <FilterableTableComponent {...queryResultTableProps} />}</div>
+                                </Pane>
+                            </SplitPane>
+                        </div>
+                        <div className="bp3-dialog-footer">
+                            <div className="result-table-info">
+                                <pre>{widgetStore.resultTableInfo}</pre>
+                            </div>
+                            <div className="bp3-dialog-footer-actions">
+                                <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
+                                    {widgetMenu}
+                                </FormGroup>
+                                <Tooltip2 content="Apply filter" position={Position.BOTTOM}>
+                                    <AnchorButton text="Filter" intent={Intent.PRIMARY} disabled={widgetStore.numDataRows <= 0} onClick={this.handleFilter} />
+                                </Tooltip2>
+                                <Tooltip2 content="Reset filter" position={Position.BOTTOM}>
+                                    <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.handleResetFilter} />
+                                </Tooltip2>
+                                <Tooltip2 content={plotTip} position={Position.BOTTOM}>
+                                    <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit} onClick={this.handlePlot} />
+                                </Tooltip2>
+                                <Tooltip2 content="Clear plotted lines" position={Position.BOTTOM}>
+                                    <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear} />
+                                </Tooltip2>
+                            </div>
+                        </div>
+                    </React.Fragment>
+                }
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
