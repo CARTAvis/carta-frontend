@@ -12,6 +12,8 @@ import {Snippet} from "models";
 import {ThemeProvider} from "./ThemeProvider";
 import "./CodeSnippetDialogComponent.scss";
 
+const KEYCODE_ENTER = 13;
+
 @observer
 export class CodeSnippetDialogComponent extends React.Component {
     @observable saveDialogOpen: boolean = false;
@@ -31,6 +33,21 @@ export class CodeSnippetDialogComponent extends React.Component {
         this.saveDialogOpen = true;
     };
 
+    private tryRefocusEditor = () => {
+        const focusFunction = this.editorRef?._input?.focus;
+        if (focusFunction && typeof focusFunction === "function") {
+            this.editorRef._input.focus();
+        }
+    };
+
+    applyHighlight = (code: string) => {
+        return prism
+            .highlight(code, prism.languages.js, "js")
+            .split("\n")
+            .map((line, i) => `<span class='editor-line-number'>${i + 1}</span>${line}`)
+            .join("\n");
+    };
+
     handleSaveClicked = async (snippetName: string, categories: string[], tags: []) => {
         console.log({snippetName, categories, tags});
         const snippetStore = SnippetStore.Instance;
@@ -48,10 +65,38 @@ export class CodeSnippetDialogComponent extends React.Component {
         snippetStore.setActiveSnippet(snippet, snippetName);
     };
 
-    private tryRefocusEditor = () => {
-        const focusFunction = this.editorRef?._input?.focus;
-        if (focusFunction && typeof focusFunction === "function") {
-            this.editorRef._input.focus();
+    handleExecuteClicked = async () => {
+        const snippetStore = SnippetStore.Instance;
+
+        if (snippetStore.validInput && !snippetStore.isExecuting) {
+            const success = await snippetStore.executeCurrentSnippet();
+            if (!success) {
+                AppToaster.show(WarningToast("Error encountered while executing snippet. See JavaScript console for details."));
+            }
+        }
+        this.tryRefocusEditor();
+    };
+
+    handleDeleteClicked = async () => {
+        const appStore = AppStore.Instance;
+        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this snippet?");
+        if (confirmed) {
+            await appStore.snippetStore.deleteSnippet(appStore.snippetStore.activeSnippetName);
+            appStore.snippetStore.clearActiveSnippet();
+        }
+    };
+
+    handleNewClicked = () => {
+        SnippetStore.Instance.clearActiveSnippet();
+    };
+
+    private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+        // Ctrl/Cmd + Enter executes current code
+        if (ev.ctrlKey || ev.metaKey) {
+            this.handleExecuteClicked();
         }
     };
 
@@ -79,6 +124,7 @@ export class CodeSnippetDialogComponent extends React.Component {
                 className={"language-js line-numbers"}
                 value={snippetStore.activeSnippet?.code}
                 onValueChange={snippetStore.setSnippetString}
+                onKeyDown={this.handleKeyDown}
                 highlight={this.applyHighlight}
                 tabSize={4}
                 autoFocus={true}
@@ -113,37 +159,4 @@ export class CodeSnippetDialogComponent extends React.Component {
             </DraggableDialogComponent>
         );
     }
-
-    applyHighlight = (code: string) => {
-        return prism
-            .highlight(code, prism.languages.js, "js")
-            .split("\n")
-            .map((line, i) => `<span class='editor-line-number'>${i + 1}</span>${line}`)
-            .join("\n");
-    };
-
-    handleExecuteClicked = async () => {
-        const snippetStore = SnippetStore.Instance;
-
-        if (snippetStore.validInput) {
-            const success = await snippetStore.executeCurrentSnippet();
-            if (!success) {
-                AppToaster.show(WarningToast("Error encountered while executing snippet. See JavaScript console for details."));
-            }
-        }
-        this.tryRefocusEditor();
-    };
-
-    handleDeleteClicked = async () => {
-        const appStore = AppStore.Instance;
-        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this snippet?");
-        if (confirmed) {
-            await appStore.snippetStore.deleteSnippet(appStore.snippetStore.activeSnippetName);
-            appStore.snippetStore.clearActiveSnippet();
-        }
-    };
-
-    handleNewClicked = () => {
-        SnippetStore.Instance.clearActiveSnippet();
-    };
 }
