@@ -10,7 +10,6 @@ import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogC
 import {AppStore, SnippetStore} from "stores";
 import {Snippet} from "models";
 import {ThemeProvider} from "./ThemeProvider";
-
 import "./CodeSnippetDialogComponent.scss";
 
 @observer

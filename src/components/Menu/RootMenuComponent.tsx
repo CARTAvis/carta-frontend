@@ -2,16 +2,16 @@ import * as React from "react";
 import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, Button, Icon, Menu, MenuDivider, Position} from "@blueprintjs/core";
+import {IconName} from "@blueprintjs/icons";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {CARTA} from "carta-protobuf";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {PresetLayout, Snippet} from "models";
 import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
-import {IconName} from "@blueprintjs/icons";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import "./RootMenuComponent.scss";
-import {CARTA} from "carta-protobuf";
 
 @observer
 export class RootMenuComponent extends React.Component {

@@ -8,7 +8,6 @@ export class Snippet {
     tags: string[];
     categories: string[];
     requires?: string[];
-    temporary?: boolean;
 
     static readonly FrontendVersion = version;
     static readonly SnippetVersion = 1;

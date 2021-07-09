@@ -1,6 +1,6 @@
 import axios, {AxiosInstance} from "axios";
 import Ajv from "ajv";
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet} from "models";
 
@@ -463,17 +463,11 @@ export class ApiService {
     };
 
     public setSnippet = async (snippetName: string, snippet: Snippet) => {
-        const {temporary, ...strippedSnippet} = snippet;
-
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippet`;
-                const response = await this.axiosInstance.put(url, {snippetName, strippedSnippet});
-                const success = response?.data?.success;
-                if (success && temporary) {
-                    delete snippet.temporary;
-                }
-                return success;
+                const response = await this.axiosInstance.put(url, {snippetName, snippet});
+                return response?.data?.success;
             } catch (err) {
                 console.log(err);
                 return false;
@@ -481,11 +475,8 @@ export class ApiService {
         } else {
             try {
                 const obj = JSON.parse(localStorage.getItem("savedSnippets")) ?? {};
-                obj[snippetName] = strippedSnippet;
+                obj[snippetName] = snippet;
                 localStorage.setItem("savedSnippets", JSON.stringify(obj));
-                if (temporary) {
-                    delete snippet.temporary;
-                }
                 return true;
             } catch (err) {
                 return false;

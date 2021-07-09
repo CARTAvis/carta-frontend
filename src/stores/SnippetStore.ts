@@ -125,7 +125,6 @@ export class SnippetStore {
             snippetVersion: Snippet.FrontendVersion,
             tags: [],
             categories: [],
-            temporary: true
         };
         this.activeSnippetName = "";
     };
