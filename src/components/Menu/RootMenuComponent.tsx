@@ -7,7 +7,7 @@ import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {PresetLayout, Snippet} from "models";
-import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
+import {AppStore, BrowserMode, FrameStore, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
@@ -205,14 +205,7 @@ export class RootMenuComponent extends React.Component {
         );
 
         let layerItems = appStore.frames.map(frame => {
-            return (
-                <Menu.Item
-                    text={frame.filename}
-                    active={appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === frame.frameInfo.fileId}
-                    key={frame.frameInfo.fileId}
-                    onClick={() => this.handleFrameSelect(frame.frameInfo.fileId)}
-                />
-            );
+            return <Menu.Item text={frame.filename} active={appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === frame.frameInfo.fileId} key={frame.frameInfo.fileId} onClick={() => this.handleFrameSelect(frame)} />;
         });
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
@@ -444,12 +437,12 @@ export class RootMenuComponent extends React.Component {
         this.documentationAlertVisible = false;
     };
 
-    handleFrameSelect = (fileId: number) => {
+    handleFrameSelect = (frame: FrameStore) => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === fileId) {
+        if (appStore.activeFrame && appStore.activeFrame === frame) {
             return;
         } else {
-            appStore.setActiveFrameById(fileId);
+            appStore.setActiveFrame(frame);
         }
     };
 }

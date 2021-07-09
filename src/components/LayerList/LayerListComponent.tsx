@@ -60,8 +60,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private onFileSelected = (appStore: AppStore, frame: FrameStore) => {
-        const fileId = frame.frameInfo.fileId;
-        appStore.setActiveFrameById(fileId);
+        appStore.setActiveFrame(frame);
         if (frame.secondarySpatialImages?.length || frame.spatialReference) {
             appStore.catalogStore.convertSpatialMatchedData();
         }

@@ -423,10 +423,9 @@ export class AppStore {
             this.setSpectralReference(newFrame);
         }
 
-        const imageFileId = newFrame.frameInfo.fileId;
-        this.setActiveFrameById(imageFileId);
+        this.setActiveFrame(newFrame);
         // init image associated catalog
-        this.catalogStore.updateImageAssociatedCatalogId(imageFileId, []);
+        this.catalogStore.updateImageAssociatedCatalogId(newFrame.frameInfo.fileId, []);
 
         // Set animation mode to frame if the new image is 2D, or to channel if the image is 3D and there are no other frames
         if (newFrame.frameInfo.fileInfoExtended.depth <= 1 && newFrame.frameInfo.fileInfoExtended.stokes <= 1) {
@@ -722,7 +721,7 @@ export class AppStore {
             const frameIds = this.frames.map(f => f.frameInfo.fileId);
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
-            this.setActiveFrameById(frameIds[requiredIndex]);
+            this.setActiveFrameByIndex(requiredIndex);
         }
     };
 
@@ -1706,7 +1705,7 @@ export class AppStore {
     @action setContourDataSource = (frame: FrameStore) => {
         this.contourDataSource = frame;
         if (this.syncFrameToContour) {
-            this.setActiveFrameById(frame.frameInfo.fileId);
+            this.setActiveFrame(frame);
         }
     };
 
