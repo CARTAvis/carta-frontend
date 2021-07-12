@@ -69,7 +69,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         }
 
         const columnWidths = [90, 95, 50, 95, 95, 128, 70, 70];
-        const columnNames = ["Image", "Value", "WCS", "XY (World)", "XY (Image)", "Z", "Channel", "Stokes"]
+        const columnNames = ["Image", "Value", "WCS", "XY (World)", "XY (Image)", "Z", "Channel", "Stokes"];
         const dataType = CARTA.ColumnType.String;
         const columnHeaders = columnNames.map((name, index) => new CARTA.CatalogHeader({name: name, dataType, columnIndex: index}));
 
