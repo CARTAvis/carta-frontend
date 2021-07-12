@@ -203,9 +203,9 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
 
     // This function diffs the updated requirements map with the existing requirements map, and reacts to changes
     // Three diff cases are checked:
-    // 1. The old map has an entry, but the new one does not => send an "empty" SetSpectralRequirements message
-    // 2. The old and new maps both have entries, but they are different => send the new SetSpectralRequirements message
-    // 3. The new map has an entry, but the old one does not => send the new SetSpectralRequirements message
+    // 1. The old map has an entry, but the new one does not => send an "empty" SetSpatialRequirements message
+    // 2. The old and new maps both have entries, but they are different => send the new SetSpatialRequirements message
+    // 3. The new map has an entry, but the old one does not => send the new SetSpatialRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
     public static DiffSpatialRequirements(originalRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>) {
         const diffList: CARTA.SetSpatialRequirements[] = [];
