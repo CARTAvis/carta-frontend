@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
+import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
@@ -360,14 +361,15 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
                     profilerInfo.push("Cursor: (" + wcsLabel + imageLabel + valueLabel + ")");
                 }
-            } else {
-                // get value directly from frame when cursor is in image viewer
-                const cursorInfo = this.frame.cursorInfo;
-                const cursorValue = this.frame.cursorValue?.value;
-                if (cursorInfo?.posImageSpace) {
-                    const wcsLabel = cursorInfo?.infoWCS ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
-                    const imageLabel = `Image: ${toFixed(isXCoordinate ? cursorInfo.posImageSpace.x : cursorInfo.posImageSpace.y)} px, `;
-                    const valueLabel = `${cursorValue !== undefined ? formattedExponential(cursorValue, 5) : ""}`;
+            } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
+                // get value directly from point region
+                const pointRegionInfo = this.frame.getCursorInfo(this.widgetStore.effectiveRegion.center);
+                const profileKey = `${this.widgetStore.effectiveFrame?.frameInfo.fileId}-${this.widgetStore.effectiveRegionId}`;
+                const pointRegionValue = AppStore.Instance.spatialProfiles.get(profileKey)?.value;
+                if (pointRegionInfo?.posImageSpace) {
+                    const wcsLabel = pointRegionInfo?.infoWCS ? `WCS: ${isXCoordinate ? pointRegionInfo.infoWCS.x : pointRegionInfo.infoWCS.y}, ` : "";
+                    const imageLabel = `Image: ${toFixed(isXCoordinate ? pointRegionInfo.posImageSpace.x : pointRegionInfo.posImageSpace.y)} px, `;
+                    const valueLabel = `${pointRegionValue !== undefined ? formattedExponential(pointRegionValue, 5) : ""}`;
                     profilerInfo.push("Data: (" + wcsLabel + imageLabel + valueLabel + ")");
                 }
             }
