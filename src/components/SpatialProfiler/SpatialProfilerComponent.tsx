@@ -363,12 +363,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
                 // get value directly from point region
                 const pointRegionInfo = this.frame.getCursorInfo(this.widgetStore.effectiveRegion.center);
-                const profileKey = `${this.widgetStore.effectiveFrame?.frameInfo.fileId}-${this.widgetStore.effectiveRegionId}`;
-                const pointRegionValue = AppStore.Instance.spatialProfiles.get(profileKey)?.value;
                 if (pointRegionInfo?.posImageSpace) {
                     const wcsLabel = pointRegionInfo?.infoWCS ? `WCS: ${isXCoordinate ? pointRegionInfo.infoWCS.x : pointRegionInfo.infoWCS.y}, ` : "";
                     const imageLabel = `Image: ${toFixed(isXCoordinate ? pointRegionInfo.posImageSpace.x : pointRegionInfo.posImageSpace.y)} px, `;
-                    const valueLabel = `${pointRegionValue !== undefined ? formattedExponential(pointRegionValue, 5) : ""}`;
+                    const valueLabel = `${this.profileStore?.value !== undefined ? formattedExponential(this.profileStore.value, 5) : ""}`;
                     profilerInfo.push("Data: (" + wcsLabel + imageLabel + valueLabel + ")");
                 }
             }
