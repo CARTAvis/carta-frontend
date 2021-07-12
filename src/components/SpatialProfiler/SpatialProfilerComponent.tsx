@@ -23,9 +23,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             id: "spatial-profiler",
             type: "spatial-profiler",
             minWidth: 250,
-            minHeight: 225,
+            minHeight: 250,
             defaultWidth: 650,
-            defaultHeight: 225,
+            defaultHeight: 250,
             title: "X Profile: Cursor",
             isCloseable: true,
             helpType: HelpType.SPATIAL_PROFILER
