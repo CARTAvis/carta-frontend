@@ -41,7 +41,6 @@ import {
     round2D,
     getFormattedWCSPoint,
     getPixelSize,
-    formattedExponential
 } from "utilities";
 import {BackendService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
@@ -747,22 +746,6 @@ export class FrameStore {
             }
         }
         return [];
-    }
-
-    @computed get cursorValueString(): string {
-        if (this.cursorValue !== undefined) {
-            let valueString = formattedExponential(this.cursorValue.value, 5, this.unit, true, true);
-            if (isNaN(this.cursorValue.value)) {
-                valueString = "NaN";
-            }
-            if (!this.isCursorValueCurrent) {
-                valueString += "*";
-            } else {
-                valueString += " ";
-            }
-            return valueString;
-        }
-        return "";
     }
 
     constructor(frameInfo: FrameInfo) {

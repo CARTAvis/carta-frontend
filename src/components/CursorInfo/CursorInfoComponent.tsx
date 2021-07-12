@@ -5,7 +5,7 @@ import {NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent} from "components/Shared";
-import {toFixed} from "utilities";
+import {formattedExponential, toFixed} from "utilities";
 import {AppStore, DefaultWidgetConfig, FrameStore, WidgetProps} from "stores";
 import "./CursorInfoComponent.scss";
 
@@ -68,18 +68,10 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             );
         }
 
-        const columnWidths = [90, 140, 50, 95, 95, 128, 70, 70];
+        const columnWidths = [90, 95, 50, 95, 95, 128, 70, 70];
+        const columnNames = ["Image", "Value", "WCS", "XY (World)", "XY (Image)", "Z", "Channel", "Stokes"]
         const dataType = CARTA.ColumnType.String;
-        const columnHeaders = [
-            new CARTA.CatalogHeader({name: "Image", dataType, columnIndex: 0}),
-            new CARTA.CatalogHeader({name: "Value", dataType, columnIndex: 1}),
-            new CARTA.CatalogHeader({name: "WCS", dataType, columnIndex: 2}),
-            new CARTA.CatalogHeader({name: "XY (World)", dataType, columnIndex: 3}),
-            new CARTA.CatalogHeader({name: "XY (Image)", dataType, columnIndex: 4}),
-            new CARTA.CatalogHeader({name: "Z", dataType, columnIndex: 5}),
-            new CARTA.CatalogHeader({name: "Channel", dataType, columnIndex: 6}),
-            new CARTA.CatalogHeader({name: "Stokes", dataType, columnIndex: 7})
-        ];
+        const columnHeaders = columnNames.map((name, index) => new CARTA.CatalogHeader({name: name, dataType, columnIndex: index}));
 
         const imageNames = appStore.frames.map(frame => frame.filename);
         let values = Array(frameNum).fill("-");
@@ -91,8 +83,23 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         const stokes = appStore.frames.map(frame => frame.requiredStokes);
 
         const activeFrameIndex = appStore.activeFrameIndex;
-        if (frame.cursorInfo.isInsideImage) {
-            values[activeFrameIndex] = frame.cursorValueString;
+        if (frame.cursorInfo.isInsideImage && frame.cursorValue !== undefined) {
+            let valueString = formattedExponential(frame.cursorValue.value, 5, "", true, true);
+            if (isNaN(frame.cursorValue.value)) {
+                valueString = "NaN";
+            }
+            if (!frame.isCursorValueCurrent) {
+                valueString += "*";
+            } else {
+                valueString += " ";
+            }
+            values[activeFrameIndex] = (
+                <React.Fragment>
+                    {valueString}
+                    <br />
+                    {frame.unit}
+                </React.Fragment>
+            );
         }
         systems[activeFrameIndex] = appStore.overlayStore.global.explicitSystem;
         worldCoords[activeFrameIndex] = (
