@@ -398,8 +398,6 @@ export class RegionStore {
             } catch (err) {
                 console.log(err);
             }
-        } else {
-            this.requestSpatialProfile();
         }
     };
 
@@ -441,15 +439,11 @@ export class RegionStore {
         }
     };
 
-    private requestSpatialProfile = () => {
-        this.backendService.setCursor(this.fileId, this.center.x, this.center.y);
-    };
-
     // Update the region with the backend
     private updateRegion = async () => {
         if (this.isValid) {
-            if (this.regionType === CARTA.RegionType.POINT) {
-                this.requestSpatialProfile();
+            if (this.regionId === CURSOR_REGION_ID && this.regionType === CARTA.RegionType.POINT) {
+                this.backendService.setCursor(this.fileId, this.center.x, this.center.y);
             } else {
                 try {
                     await this.backendService.setRegion(this.fileId, this.regionId, this);
