@@ -281,12 +281,12 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 0);
                     this.gl.uniform1i(shaderUniforms.ControlMapTexture, 0);
                 } else {
-                    const controlMap = frame.getControlMap(appStore.activeFrame);
+                    const controlMap = frame.getCatalogControlMap(appStore.activeFrame);
                     if (controlMap) {
                         controlMap.updateCatalogBoundary();
                         this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 1);
-                        this.gl.uniform2f(shaderUniforms.ControlMapMin, controlMap.minPoint2.x, controlMap.minPoint2.y);
-                        this.gl.uniform2f(shaderUniforms.ControlMapMax, controlMap.maxPoint2.x, controlMap.maxPoint2.y);
+                        this.gl.uniform2f(shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
+                        this.gl.uniform2f(shaderUniforms.ControlMapMax, controlMap.maxPoint.x, controlMap.maxPoint.y);
                         this.gl.uniform2f(shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
                     } else {
                         console.error("Could not generate control map for contours");
