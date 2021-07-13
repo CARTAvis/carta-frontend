@@ -1,12 +1,12 @@
 import tinycolor from "tinycolor2";
 import {action, computed, observable, override, makeObservable} from "mobx";
 import * as _ from "lodash";
-import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {RegionWidgetStore, RegionId, RegionsType} from "./RegionWidgetStore";
 import {CARTA} from "carta-protobuf";
-import {ProfileSmoothingStore} from "stores";
+import {AppStore, FrameStore, ProfileSmoothingStore} from "stores";
 import {PlotType, LineSettings} from "components/Shared";
 import {SpatialProfilerSettingsTabs} from "components";
-import {isAutoColor} from "utilities";
+import {clamp, isAutoColor} from "utilities";
 
 export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -134,6 +134,31 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         return this.minY === undefined || this.maxY === undefined;
     }
 
+    private static GetSpatialConfig(frame: FrameStore, coordinate: string, isCursor: boolean): CARTA.SetSpatialRequirements.ISpatialConfig {
+        if (frame.cursorMoving && !AppStore.Instance.cursorFrozen && isCursor) {
+            if (coordinate.includes("x")) {
+                return {
+                    coordinate,
+                    mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
+                    start: Math.floor(clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width)),
+                    end: Math.ceil(clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width))
+                };
+            } else {
+                return {
+                    coordinate,
+                    mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
+                    start: Math.floor(clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height)),
+                    end: Math.ceil(clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height))
+                };
+            }
+        } else {
+            return {
+                coordinate,
+                mip: 1
+            };
+        }
+    }
+
     public static CalculateRequirementsMap(widgetsMap: Map<string, SpatialProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
         widgetsMap.forEach(widgetStore => {
@@ -168,7 +193,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                 if (existingConfig) {
                     // TODO: Merge existing configs, rather than only allowing a single one
                 } else {
-                    regionRequirements.spatialProfiles.push({coordinate, mip: 1});
+                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, coordinate, regionId === RegionId.CURSOR));
                 }
             }
         });
