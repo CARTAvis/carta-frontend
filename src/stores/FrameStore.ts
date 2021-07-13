@@ -243,7 +243,7 @@ export class FrameStore {
                 y: -this.spatialTransform.translation.y / this.spatialTransform.scale
             };
             adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
-            if (this.cachedTransformedWcsInfo >= 0) {
+            if (this.cachedTransformedWcsInfo > 0) {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
@@ -769,6 +769,7 @@ export class FrameStore {
         this.zooming = false;
         this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
         this.overlayBeamSettings = new OverlayBeamStore();
+        this.spatialReference = null;
         this.spatialTransformAST = null;
         this.catalogControlMaps = new Map<FrameStore, CatalogControlMap>();
         this.controlMaps = new Map<FrameStore, ControlMap>();
@@ -1744,8 +1745,8 @@ export class FrameStore {
             this.spatialReference = null;
             return false;
         }
-        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
         this.spatialReference = frame;
+        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
         const copySrc = AST.copy(this.wcsInfo);
         const copyDest = AST.copy(frame.wcsInfo);
@@ -1759,15 +1760,16 @@ export class FrameStore {
             this.spatialReference = null;
             return false;
         }
-        this.spatialReference = frame;
         const currentTransform = this.spatialTransform;
         if (
+            !currentTransform ||
             !isFinite(currentTransform.rotation) ||
             !isFinite(currentTransform.scale) ||
             !isFinite(currentTransform.translation.x) ||
             !isFinite(currentTransform.translation.y) ||
             !isFinite(currentTransform.origin.x) ||
-            !isFinite(currentTransform.origin.y)
+            !isFinite(currentTransform.origin.y) ||
+            !this.transformedWcsInfo
         ) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;

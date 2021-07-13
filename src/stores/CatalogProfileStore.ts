@@ -84,12 +84,12 @@ export class CatalogProfileStore {
     private readonly InitialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
     private InitialedRAColumnsKeyWords = ["RIGHT ASCENSION", "RA", "R.A"];
     private InitialedDECColumnsKeyWords = ["DECLINATION", "DEC", "Dec."];
+    private _catalogData: Map<number, ProcessedColumnData>;
 
     @observable progress: number;
     @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;
-    @observable catalogData: Map<number, ProcessedColumnData>;
     @observable loadingData: boolean;
     @observable numVisibleRows: number;
     @observable subsetEndIndex: number;
@@ -109,7 +109,7 @@ export class CatalogProfileStore {
         this.catalogHeader = catalogHeader.sort((a, b) => {
             return a.columnIndex - b.columnIndex;
         });
-        this.catalogData = catalogData;
+        this._catalogData = catalogData;
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.loadingData = false;
         this.catalogFilterRequest = this.initCatalogFilterRequest;
@@ -149,6 +149,10 @@ export class CatalogProfileStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
+    }
+
+    get catalogData(): Map<number, ProcessedColumnData> {
+        return this._catalogData;
     }
 
     @action setCatalogCoordinateSystem(catalogSystem: CatalogSystemType) {
@@ -208,7 +212,7 @@ export class CatalogProfileStore {
         return destArr;
     }
 
-    @action updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
+    updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
         let subsetDataSize = catalogFilter.subsetDataSize;
         const subsetEndIndex = catalogFilter.subsetEndIndex;
         const startIndex = subsetEndIndex - subsetDataSize;
@@ -245,7 +249,7 @@ export class CatalogProfileStore {
         }
     }
 
-    @action clearData() {
+    clearData() {
         this.catalogData.clear();
     }
 
