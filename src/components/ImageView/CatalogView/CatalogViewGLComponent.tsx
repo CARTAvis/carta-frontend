@@ -291,7 +291,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                         console.error("Could not generate control map for contours");
                     }
                     this.gl.activeTexture(GL2.TEXTURE1);
-                    this.gl.bindTexture(GL2.TEXTURE_2D, controlMap.getTextureX2(this.gl));
+                    this.gl.bindTexture(GL2.TEXTURE_2D, controlMap.getTextureX(this.gl));
                     this.gl.uniform1i(shaderUniforms.ControlMapTexture, 1);
                 }
 

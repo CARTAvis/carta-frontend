@@ -1263,7 +1263,7 @@ export class FrameStore {
         const gl2 = CatalogWebGLService.Instance.gl;
         const controlMap = this.catalogControlMaps.get(frame);
         if (controlMap && gl2 && controlMap.hasTextureForContext(gl2)) {
-            const texture = controlMap.getTextureX2(gl2);
+            const texture = controlMap.getTextureX(gl2);
             gl2.deleteTexture(texture);
         }
         this.catalogControlMaps.delete(frame);
@@ -1826,7 +1826,7 @@ export class FrameStore {
         if (gl2) {
             this.catalogControlMaps.forEach(controlMap => {
                 if (controlMap.hasTextureForContext(gl)) {
-                    const texture = controlMap.getTextureX2(gl2);
+                    const texture = controlMap.getTextureX(gl2);
                     gl2.deleteTexture(texture);
                 }
             });

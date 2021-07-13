@@ -77,7 +77,7 @@ export class CatalogControlMap {
         }
     }
 
-    getTextureX2 = (gl2: WebGL2RenderingContext) => {
+    getTextureX = (gl2: WebGL2RenderingContext) => {
         if (gl2 !== this.gl2 || !this.texture || this.boundaryUpdated) {
             this.boundaryUpdated = false;
             // Context has changed, texture needs to be regenerated
