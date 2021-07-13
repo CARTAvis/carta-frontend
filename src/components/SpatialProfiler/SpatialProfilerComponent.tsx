@@ -9,7 +9,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AppStore, ASTSettingsString, DefaultWidgetConfig, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
-import {SpatialProfileWidgetStore} from "stores/widgets";
+import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme} from "utilities";
 import "./SpatialProfilerComponent.scss";
@@ -222,7 +222,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const currentData = this.plotData;
                 if (appStore && coordinate) {
                     const coordinateString = `${coordinate.toUpperCase()} Profile`;
-                    const regionString = this.widgetStore.effectiveRegionId === 0 ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
+                    const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
                     appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
                 }
                 if (currentData) {

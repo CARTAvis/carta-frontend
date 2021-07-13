@@ -3,7 +3,7 @@ import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {Tabs, Tab} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent} from "components/Shared";
-import {SpatialProfileWidgetStore} from "stores/widgets";
+import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
 import {LineKey} from "models";
@@ -55,7 +55,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                 const coordinate = this.widgetStore.coordinate;
                 if (appStore && coordinate) {
                     const coordinateString = `${coordinate.toUpperCase()} Profile`;
-                    const regionString = this.widgetStore.effectiveRegionId === 0 ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
+                    const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
                     appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString}`);
                 }
             } else {
