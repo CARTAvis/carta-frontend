@@ -66,7 +66,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     updateDistanceMeasureFinishPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
-        const imagePos = canvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
+        const imagePos = canvasToTransformedImagePos(x, y, frame.spatialReference ?? frame, this.props.width, this.props.height);
         frame.distanceMeasuring.setFinish(imagePos);
     }, 100);
 
@@ -298,8 +298,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
-            const imagePos = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
-            const wcsPos = transformPoint(frame.wcsInfo, imagePos);
+            const imagePos = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame.spatialReference ?? frame, this.props.width, this.props.height);
+            const wcsPos = transformPoint(frame.spatialReference ? frame.spatialTransformAST : frame.wcsInfo, imagePos);
             if (!isAstBadPoint(wcsPos)) {
                 const dist = frame.distanceMeasuring;
                 if (!dist.isCreating && !dist.showCurve) {
