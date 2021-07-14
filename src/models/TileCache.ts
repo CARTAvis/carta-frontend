@@ -1,8 +1,8 @@
 export class TileCache {
-    public static readonly GPU_MIN = 512;
+    public static readonly GPU_MIN = 1024;
     public static readonly GPU_MAX = 8192;
-    public static readonly GPU_STEP = 128;
-    public static readonly GPU_DEFAULT = 512;
+    public static readonly GPU_STEP = 256;
+    public static readonly GPU_DEFAULT = 1024;
 
     public static readonly SYSTEM_MIN = 1024;
     public static readonly SYSTEM_MAX = 16384;
