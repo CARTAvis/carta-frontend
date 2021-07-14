@@ -2077,4 +2077,12 @@ export class AppStore {
     }
 
     // endregion
+
+    public resetRegionSpectralProfileProgress = (regionId: number) => {
+        // Reset spectral profile progress right after region is updated to avoid showing old data in spectral profiler
+        const regionProfileStoreMaps = Array.from(this.spectralProfiles?.values());
+        regionProfileStoreMaps?.forEach(regionProfileStoreMap => {
+            regionProfileStoreMap.get(regionId)?.resetProfilesProgress();
+        });
+    };
 }

@@ -24,6 +24,14 @@ export class SpectralProfileStore {
         return null;
     };
 
+    public resetProfilesProgress = () => {
+        this.profiles.forEach(statsProfilesMap => {statsProfilesMap?.forEach(processedSpectralProfile => {
+            if (processedSpectralProfile) {
+                processedSpectralProfile.progress = 0;
+            }
+        })});
+    };
+
     @action clearProfiles = () => {
         this.profiles = new Map<string, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>();
     };
