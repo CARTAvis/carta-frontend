@@ -2,7 +2,6 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, RowHeaderCell} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-//import {ProcessedColumnData} from "models";
 
 export class SimpleTableComponentProps {
     dataset: Map<number, any>;
@@ -17,7 +16,7 @@ export class SimpleTableComponentProps {
 
 @observer
 export class SimpleTableComponent extends React.Component<SimpleTableComponentProps> {
-    private widths = this.props.defaultColumnWidths;
+    private widths: number[] = this.props.defaultColumnWidths;
 
     private onColumnWidthChanged = (index: number, size: number) => {
         if (!Number.isInteger(index) || index < 0 || index >= this.widths.length || size <= 0) {

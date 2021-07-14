@@ -90,16 +90,17 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             }
             if (!frame.isCursorValueCurrent) {
                 valueString += "*";
-            } else {
-                valueString += " ";
             }
-            values[activeFrameIndex] = (
-                <React.Fragment>
-                    {valueString}
-                    <br />
-                    {frame.unit}
-                </React.Fragment>
-            );
+            values[activeFrameIndex] =
+                frame.unit === undefined || !frame.unit.length ? (
+                    valueString
+                ) : (
+                    <React.Fragment>
+                        {valueString}
+                        <br />
+                        {frame.unit}
+                    </React.Fragment>
+                );
         }
         systems[activeFrameIndex] = appStore.overlayStore.global.explicitSystem;
         worldCoords[activeFrameIndex] = (
@@ -117,15 +118,16 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             </React.Fragment>
         );
 
-        let columnsData = new Map<number, any>();
-        columnsData.set(0, {dataType, data: imageNames});
-        columnsData.set(1, {dataType, data: values});
-        columnsData.set(2, {dataType, data: systems});
-        columnsData.set(3, {dataType, data: worldCoords});
-        columnsData.set(4, {dataType, data: imageCoords});
-        columnsData.set(5, {dataType, data: zCoords});
-        columnsData.set(6, {dataType, data: channels});
-        columnsData.set(7, {dataType, data: stokes});
+        const columnsData = new Map<number, any>([
+            [0, {dataType, data: imageNames}],
+            [1, {dataType, data: values}],
+            [2, {dataType, data: systems}],
+            [3, {dataType, data: worldCoords}],
+            [4, {dataType, data: imageCoords}],
+            [5, {dataType, data: zCoords}],
+            [6, {dataType, data: channels}],
+            [7, {dataType, data: stokes}]
+        ]);
 
         return (
             <div className="cursor-info-widget">
