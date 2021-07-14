@@ -5,7 +5,7 @@ export class Snippet {
     snippetVersion: number;
     frontendVersion: string;
     description?: string;
-    tags: string[];
+    tags?: string[];
     categories: string[];
     requires?: string[];
 

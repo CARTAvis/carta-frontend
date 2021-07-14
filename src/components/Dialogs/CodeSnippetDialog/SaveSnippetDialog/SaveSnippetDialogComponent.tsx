@@ -8,7 +8,7 @@ import "./SaveSnippetDialogComponent.scss";
 const KEYCODE_ENTER = 13;
 
 interface SaveSnippetDialogProps {
-    onSaveClicked: (layoutName: string, categories: string[], tags: string[]) => void;
+    onSaveClicked: (layoutName: string, categories: string[]) => void;
     onCancelClicked: () => void;
     isOpen: boolean;
 }
@@ -24,25 +24,6 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         SnippetStore.Instance.activeSnippetName = ev.currentTarget.value;
     };
 
-    @action private handleTagsAdded = (newTags?: string[]) => {
-        if (newTags) {
-            const existingTags = SnippetStore.Instance.activeSnippet.tags;
-            for (const tag of newTags) {
-                if (!existingTags.includes(tag)) {
-                    existingTags.push(tag);
-                }
-            }
-        }
-    };
-
-    @action private handleTagRemoved = (_value, index) => {
-        const snippet = SnippetStore.Instance.activeSnippet;
-        if (index >= 0 && index < snippet.tags.length) {
-            const tagToRemove = snippet.tags[index];
-            snippet.tags = snippet.tags.filter(t => t !== tagToRemove);
-        }
-    };
-
     @action private handleCategoriesAdded = (newCategories?: string[]) => {
         if (newCategories) {
             const existingCategories = SnippetStore.Instance.activeSnippet.categories;
@@ -55,8 +36,6 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
     };
 
     @action private handleCategoryRemoved = (_value, index) => {
-        console.log(_value);
-        console.log(index);
         const snippet = SnippetStore.Instance.activeSnippet;
         if (index >= 0 && index < snippet.categories.length) {
             const categoryToRemove = snippet.categories[index];
@@ -72,7 +51,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
 
     @computed get validInput() {
         const snippetStore = SnippetStore.Instance;
-        return snippetStore.activeSnippetName?.length > 0 && snippetStore.activeSnippet?.tags && snippetStore.activeSnippet?.categories;
+        return snippetStore.activeSnippetName?.length > 0 && snippetStore.activeSnippet?.categories;
     }
 
     saveSnippet = async () => {
@@ -84,7 +63,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
                 return;
             }
         }
-        this.props.onSaveClicked(snippetStore.activeSnippetName, snippetStore.activeSnippet.categories, snippetStore.activeSnippet.tags);
+        this.props.onSaveClicked(snippetStore.activeSnippetName, snippetStore.activeSnippet.categories);
     };
 
     render() {
@@ -110,18 +89,6 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Name" className="snippet-save-dialog-formgroup">
                         <InputGroup className="snippet-name-input" fill={true} placeholder="Enter snippet name" value={snippetStore.activeSnippetName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
-                    </FormGroup>
-                    <FormGroup inline={true} label="Tags" className="snippet-save-dialog-formgroup">
-                        <TagInput
-                            intent={Intent.PRIMARY}
-                            fill={true}
-                            placeholder="Enter tags as comma-separated list"
-                            addOnBlur={true}
-                            tagProps={{minimal: true}}
-                            values={snippet.tags}
-                            onAdd={this.handleTagsAdded}
-                            onRemove={this.handleTagRemoved}
-                        />
                     </FormGroup>
                     <FormGroup inline={true} label="Categories" className="snippet-save-dialog-formgroup">
                         <TagInput

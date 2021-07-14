@@ -48,13 +48,11 @@ export class CodeSnippetDialogComponent extends React.Component {
             .join("\n");
     };
 
-    handleSaveClicked = async (snippetName: string, categories: string[], tags: []) => {
-        console.log({snippetName, categories, tags});
+    handleSaveClicked = async (snippetName: string, categories: string[]) => {
         const snippetStore = SnippetStore.Instance;
         const snippet: Snippet = {
             code: snippetStore.activeSnippet?.code,
             categories,
-            tags,
             snippetVersion: Snippet.SnippetVersion,
             frontendVersion: Snippet.FrontendVersion
         };
@@ -86,8 +84,12 @@ export class CodeSnippetDialogComponent extends React.Component {
         }
     };
 
-    handleNewClicked = () => {
-        SnippetStore.Instance.clearActiveSnippet();
+    handleNewClicked = async () => {
+        const appStore = AppStore.Instance;
+        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to clear the current snippet?");
+        if (confirmed) {
+            appStore.snippetStore.clearActiveSnippet();
+        }
     };
 
     private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {

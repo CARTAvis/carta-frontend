@@ -104,14 +104,10 @@ export class SnippetStore {
         if (!this.activeSnippet.categories) {
             this.activeSnippet.categories = [];
         }
-        if (!this.activeSnippet.tags) {
-            this.activeSnippet.tags = [];
-        }
 
-        this.activeSnippet.tags = this.activeSnippet.tags.filter(t => t !== "previous");
         this.activeSnippet.categories = this.activeSnippet.categories.filter(c => c !== "hidden");
 
-        if (snippet.tags.includes("example")) {
+        if (snippet.tags?.includes("example")) {
             this.activeSnippetName = "";
         } else {
             this.activeSnippetName = name;
@@ -123,7 +119,6 @@ export class SnippetStore {
             code: "",
             frontendVersion: Snippet.FrontendVersion,
             snippetVersion: Snippet.FrontendVersion,
-            tags: [],
             categories: []
         };
         this.activeSnippetName = "";
