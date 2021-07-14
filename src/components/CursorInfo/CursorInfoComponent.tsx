@@ -24,6 +24,8 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         };
     }
 
+    private columnWidths: number[] = [90, 95, 50, 95, 95, 128, 70, 70];
+
     @observable width: number = 0;
     @observable height: number = 0;
 
@@ -35,6 +37,13 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
     @action private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
+    };
+
+    private onColumnWidthChanged = (index: number, size: number) => {
+        if (!Number.isInteger(index) || index < 0 || index >= this.columnWidths.length || size <= 0) {
+            return;
+        }
+        this.columnWidths[index] = size;
     };
 
     private genZCoordString = (frame: FrameStore): Array<any> => {
@@ -68,7 +77,6 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             );
         }
 
-        const columnWidths = [90, 95, 50, 95, 95, 128, 70, 70];
         const columnNames = ["Image", "Value", "WCS", "XY (World)", "XY (Image)", "Z", "Channel", "Stokes"];
         const dataType = CARTA.ColumnType.String;
         const columnHeaders = columnNames.map((name, index) => new CARTA.CatalogHeader({name: name, dataType, columnIndex: index}));
@@ -132,7 +140,16 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         return (
             <div className="cursor-info-widget">
                 {this.width > 0 && ( // prevent row index header not rendering
-                    <SimpleTableComponent dataset={columnsData} columnHeaders={columnHeaders} numVisibleRows={appStore.frames.length} defaultColumnWidths={columnWidths} enableGhostCells={false} defaultRowHeight={40} isIndexZero={true} />
+                    <SimpleTableComponent
+                        dataset={columnsData}
+                        columnHeaders={columnHeaders}
+                        numVisibleRows={appStore.frames.length}
+                        columnWidths={this.columnWidths}
+                        onColumnWidthChanged={this.onColumnWidthChanged}
+                        enableGhostCells={false}
+                        defaultRowHeight={40}
+                        isIndexZero={true}
+                    />
                 )}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
             </div>

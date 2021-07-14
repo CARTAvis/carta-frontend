@@ -7,7 +7,8 @@ export class SimpleTableComponentProps {
     dataset: Map<number, any>;
     columnHeaders: Array<CARTA.CatalogHeader>;
     numVisibleRows: number;
-    defaultColumnWidths?: Array<number>;
+    columnWidths?: Array<number>;
+    onColumnWidthChanged?: (index: number, size: number) => void;
     defaultRowHeight?: number;
     enableGhostCells?: boolean;
     isIndexZero?: boolean;
@@ -16,15 +17,6 @@ export class SimpleTableComponentProps {
 
 @observer
 export class SimpleTableComponent extends React.Component<SimpleTableComponentProps> {
-    private widths: number[] = this.props.defaultColumnWidths;
-
-    private onColumnWidthChanged = (index: number, size: number) => {
-        if (!Number.isInteger(index) || index < 0 || index >= this.widths.length || size <= 0) {
-            return;
-        }
-        this.widths[index] = size;
-    };
-
     private renderRowHeaderCell = (rowIndex: number) => {
         return <RowHeaderCell name={rowIndex.toString()} />;
     };
@@ -66,8 +58,8 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 defaultRowHeight={this.props.defaultRowHeight}
                 rowHeaderCellRenderer={this.props.isIndexZero ? this.renderRowHeaderCell : null}
                 enableRowResizing={false}
-                columnWidths={this.widths}
-                onColumnWidthChanged={this.onColumnWidthChanged}
+                columnWidths={this.props.columnWidths}
+                onColumnWidthChanged={this.props.onColumnWidthChanged}
             >
                 {tableColumns}
             </Table>
