@@ -2078,7 +2078,7 @@ export class AppStore {
 
     // endregion
 
-    public resetRegionSpectralProfileProgress = (regionId: number) => {
+    public resetRegionSpectralProfileProgress = (regionId: RegionId) => {
         const regionProfileStoreMaps = Array.from(this.spectralProfiles?.values());
         regionProfileStoreMaps?.forEach(regionProfileStoreMap => {
             regionProfileStoreMap.get(regionId)?.resetProfilesProgress();
