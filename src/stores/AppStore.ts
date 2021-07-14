@@ -37,7 +37,7 @@ import {
 } from ".";
 import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {FileId, FrameView, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -86,7 +86,7 @@ export class AppStore {
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
-    @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
+    @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>;
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
@@ -1116,7 +1116,7 @@ export class AppStore {
         this.astReady = false;
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
-        this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
+        this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
         this.regionHistograms = new Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
