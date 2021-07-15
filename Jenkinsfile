@@ -23,7 +23,7 @@ pipeline {
                     sh "npm run build-libs-docker"
                     sh "pwd"
                     sh "ls -sort"
-                    stash includes: "wasm_libs", name: "built_wasm_libs"
+                    stash name: "built_wasm_libs", includes: "wasm_libs/"
                 }
             }
         }
@@ -35,7 +35,7 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     unstash 'built_wasm_libs'
                     sh 'rm -rf node_modules'
-                    sh 'bash && . /home/acdc/.nvm/nvm.sh'
+                    sh 'bash && nvm --version'
                     sh 'nvm install 12 && nvm use 12'
                     sh 'node -v'
                     sh 'npm install'
