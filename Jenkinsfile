@@ -21,6 +21,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     sh "git submodule update --init --recursive"
                     sh "npm run build-libs-docker"
+                    sh "pwd"
+                    sh "ls -sort"
                     stash includes: "wasm_libs", name: "built_wasm_libs"
                 }
             }
@@ -32,6 +34,8 @@ pipeline {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     unstash "built_wasm_libs"
+                    sh "pwd"
+                    sh "ls -sort"
                     sh "rm -rf node_modules"
                     sh "export NVM_DIR=/Users/acdc/.nvm && nvm install 12 && nvm use 12"
                     sh "node -v"
