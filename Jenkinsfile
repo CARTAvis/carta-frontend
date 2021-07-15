@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Format check') {
             agent {
-                label "macos-1"
+                label "ubuntu-1"
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -15,7 +15,7 @@ pipeline {
         }
         stage('WebAssembly compilation') {
             agent {
-                label "macos-1"
+                label "ubuntu-1"
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -29,15 +29,15 @@ pipeline {
         }
         stage('node v12') {
             agent {
-                label "macos-1"
+                label "ubuntu-1"
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     unstash 'built_wasm_libs'
                     sh 'rm -rf node_modules'
-                    sh 'export NVM_DIR=/Users/acdc/.nvm'
-                    sh '[ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"'
-                    sh '[ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"'
+                    sh 'export NVM_DIR="/home/acdc/.nvm"'
+                    sh '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'
+                    sh '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"'
                     sh 'nvm install 12 && nvm use 12'
                     sh 'node -v'
                     sh 'npm install'
