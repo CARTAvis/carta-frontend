@@ -90,7 +90,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const padding = appStore.overlayStore.padding;
-        // console.log(this.props.docked, appStore.activeLayer)
         let className = "catalog-div";
         if (this.props.docked) {
             className += " docked";
@@ -183,7 +182,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 let pointSize = catalogWidgetStore.catalogSize + shape.diameterBase;
                 this.gl.uniform1f(shaderUniforms.LineThickness, lineThickness);
                 this.gl.uniform1i(shaderUniforms.ShowSelectedSource, catalogWidgetStore.showSelectedData ? 1.0 : 0.0);
-                //FrameView
+                // frameView
                 let sourceFrame = frame;
                 if (!isActive) {
                     sourceFrame = destinationFrame;
@@ -229,9 +228,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const sizeTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Size);
                 if (!catalogWidgetStore.disableSizeMap && sizeTexture) {
                     this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 1);
-                    this.gl.activeTexture(GL2.TEXTURE3);
+                    this.gl.activeTexture(GL2.TEXTURE4);
                     this.gl.bindTexture(GL2.TEXTURE_2D, sizeTexture);
-                    this.gl.uniform1i(shaderUniforms.SizeTexture, 3);
+                    this.gl.uniform1i(shaderUniforms.SizeTexture, 4);
                 }
 
                 // color
@@ -240,9 +239,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 if (!catalogWidgetStore.disableColorMap && colorTexture) {
                     this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
                     this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
-                    this.gl.activeTexture(GL2.TEXTURE4);
+                    this.gl.activeTexture(GL2.TEXTURE5);
                     this.gl.bindTexture(GL2.TEXTURE_2D, colorTexture);
-                    this.gl.uniform1i(shaderUniforms.ColorTexture, 4);
+                    this.gl.uniform1i(shaderUniforms.ColorTexture, 5);
                 }
 
                 this.gl.uniform1f(shaderUniforms.FeatherWidth, featherWidth);
@@ -252,17 +251,17 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const orientationTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Orientation);
                 if (!catalogWidgetStore.disableOrientationMap && orientationTexture) {
                     this.gl.uniform1i(shaderUniforms.OmapEnabled, 1);
-                    this.gl.activeTexture(GL2.TEXTURE5);
+                    this.gl.activeTexture(GL2.TEXTURE6);
                     this.gl.bindTexture(GL2.TEXTURE_2D, orientationTexture);
-                    this.gl.uniform1i(shaderUniforms.OrientationTexture, 5);
+                    this.gl.uniform1i(shaderUniforms.OrientationTexture, 6);
                 }
 
                 // selected source
                 const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource);
                 if (selectedSource) {
-                    this.gl.activeTexture(GL2.TEXTURE6);
+                    this.gl.activeTexture(GL2.TEXTURE7);
                     this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
-                    this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 6);
+                    this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 7);
                 }
 
                 // size minor
@@ -271,39 +270,46 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const sizeMinorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SizeMinor);
                 if (!catalogWidgetStore.disableSizeMinorMap && sizeMinorTexture && catalogWidgetStore.catalogShape === CatalogOverlayShape.ELLIPSE_LINED) {
                     this.gl.uniform1i(shaderUniforms.SizeMinorMapEnabled, 1);
-                    this.gl.activeTexture(GL2.TEXTURE7);
+                    this.gl.activeTexture(GL2.TEXTURE8);
                     this.gl.bindTexture(GL2.TEXTURE_2D, sizeMinorTexture);
-                    this.gl.uniform1i(shaderUniforms.SizeMinorTexture, 7);
+                    this.gl.uniform1i(shaderUniforms.SizeMinorTexture, 8);
                 }
 
                 // position
+                if (isActive) {
+                    this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 0);
+                    this.gl.uniform1i(shaderUniforms.ControlMapTexture, 0);
+                } else {
+                    const controlMap = frame.getCatalogControlMap(appStore.activeFrame);
+                    if (controlMap) {
+                        controlMap.updateCatalogBoundary();
+                        this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 1);
+                        this.gl.uniform2f(shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
+                        this.gl.uniform2f(shaderUniforms.ControlMapMax, controlMap.maxPoint.x, controlMap.maxPoint.y);
+                        this.gl.uniform2f(shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
+                    } else {
+                        console.error("Could not generate control map for contours");
+                    }
+                    this.gl.activeTexture(GL2.TEXTURE1);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, controlMap.getTextureX(this.gl));
+                    this.gl.uniform1i(shaderUniforms.ControlMapTexture, 1);
+                }
+
                 if (catalog.x?.length && catalog?.y.length) {
                     this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                     this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
                     this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
                     this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio);
 
-                    if (!isActive) {
-                        const imageMapId = `${frame.frameInfo.fileId}-${destinationFrame.frameInfo.fileId}`;
-                        const positionTexture = this.catalogWebGLService.getSpatialMatchedTexture(imageMapId, fileId);
-                        this.gl.activeTexture(GL2.TEXTURE8);
-                        this.gl.bindTexture(GL2.TEXTURE_2D, positionTexture.x);
-                        this.gl.uniform1i(shaderUniforms.XTexture, 8);
+                    const x = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.X);
+                    const y = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Y);
+                    this.gl.activeTexture(GL2.TEXTURE2);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, x);
+                    this.gl.uniform1i(shaderUniforms.XTexture, 2);
 
-                        this.gl.activeTexture(GL2.TEXTURE9);
-                        this.gl.bindTexture(GL2.TEXTURE_2D, positionTexture.y);
-                        this.gl.uniform1i(shaderUniforms.YTexture, 9);
-                    } else {
-                        const x = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.X);
-                        const y = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Y);
-                        this.gl.activeTexture(GL2.TEXTURE1);
-                        this.gl.bindTexture(GL2.TEXTURE_2D, x);
-                        this.gl.uniform1i(shaderUniforms.XTexture, 1);
-
-                        this.gl.activeTexture(GL2.TEXTURE2);
-                        this.gl.bindTexture(GL2.TEXTURE_2D, y);
-                        this.gl.uniform1i(shaderUniforms.YTexture, 2);
-                    }
+                    this.gl.activeTexture(GL2.TEXTURE3);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, y);
+                    this.gl.uniform1i(shaderUniforms.YTexture, 3);
 
                     this.gl.drawArrays(GL2.POINTS, 0, catalog.x.length);
                     this.gl.finish();

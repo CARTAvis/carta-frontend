@@ -227,11 +227,11 @@
                 }
             }
 
-            .catalog-xaxis {
+            .catalog-axis {
                 margin-left: 10px;
                 width: 140px;
-                .catalog-xaxis-select {
-                    .catalog-xaxis-button {
+                .catalog-axis-select {
+                    .catalog-axis-button {
                         width: 100px;
                         height: 30px;
                         margin-left: 0px;
@@ -239,23 +239,7 @@
 
                         .bp3-button-text {
                             overflow: hidden;
-                        }
-                    }
-                }
-            }
-
-            .catalog-yaxis {
-                margin-left: 10px;
-                width: 140px;
-                .catalog-yaxis-select {
-                    .catalog-yaxis-button {
-                        width: 100px;
-                        height: 30px;
-                        margin-left: 0px;
-                        justify-content: space-between;
-
-                        .bp3-button-text {
-                            overflow: hidden;
+                            white-space: nowrap;
                         }
                     }
                 }

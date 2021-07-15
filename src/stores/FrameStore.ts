@@ -5,6 +5,7 @@ import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, DistanceMeasuringStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
 import {
     ChannelInfo,
+    CatalogControlMap,
     ControlMap,
     CursorInfo,
     FrameView,
@@ -28,7 +29,7 @@ import {
     ZoomPoint
 } from "models";
 import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
-import {BackendService, ContourWebGLService, TILE_SIZE} from "services";
+import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";
 
@@ -57,6 +58,7 @@ export class FrameStore {
 
     private readonly spectralFrame: AST.SpecFrame;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
+    private readonly catalogControlMaps: Map<FrameStore, CatalogControlMap>;
     private readonly framePixelRatio: number;
     private readonly backendService: BackendService;
     private readonly overlayStore: OverlayStore;
@@ -241,7 +243,7 @@ export class FrameStore {
                 y: -this.spatialTransform.translation.y / this.spatialTransform.scale
             };
             adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
-            if (this.cachedTransformedWcsInfo >= 0) {
+            if (this.cachedTransformedWcsInfo > 0) {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
@@ -767,7 +769,9 @@ export class FrameStore {
         this.zooming = false;
         this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
         this.overlayBeamSettings = new OverlayBeamStore();
+        this.spatialReference = null;
         this.spatialTransformAST = null;
+        this.catalogControlMaps = new Map<FrameStore, CatalogControlMap>();
         this.controlMaps = new Map<FrameStore, ControlMap>();
         this.secondarySpatialImages = [];
         this.secondarySpectralImages = [];
@@ -1238,6 +1242,31 @@ export class FrameStore {
             gl.deleteTexture(texture);
         }
         this.controlMaps.delete(frame);
+    }
+
+    public getCatalogControlMap(frame: FrameStore) {
+        const preferenceStore = PreferenceStore.Instance;
+        let controlMap = this.catalogControlMaps.get(frame);
+        if (!controlMap) {
+            const tStart = performance.now();
+            controlMap = new CatalogControlMap(this, frame, -1, preferenceStore.contourControlMapWidth, preferenceStore.contourControlMapWidth);
+            this.catalogControlMaps.set(frame, controlMap);
+            const tEnd = performance.now();
+            const dt = tEnd - tStart;
+            console.log(`Created ${preferenceStore.contourControlMapWidth}x${preferenceStore.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
+        }
+        
+        return controlMap;
+    }
+
+    public removeCatalogControlMap(frame: FrameStore) {
+        const gl2 = CatalogWebGLService.Instance.gl;
+        const controlMap = this.catalogControlMaps.get(frame);
+        if (controlMap && gl2 && controlMap.hasTextureForContext(gl2)) {
+            const texture = controlMap.getTextureX(gl2);
+            gl2.deleteTexture(texture);
+        }
+        this.catalogControlMaps.delete(frame);
     }
 
     public getWcsSizeInArcsec(size: Point2D): Point2D {
@@ -1716,8 +1745,8 @@ export class FrameStore {
             this.spatialReference = null;
             return false;
         }
-        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
         this.spatialReference = frame;
+        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
         const copySrc = AST.copy(this.wcsInfo);
         const copyDest = AST.copy(frame.wcsInfo);
@@ -1731,15 +1760,16 @@ export class FrameStore {
             this.spatialReference = null;
             return false;
         }
-        this.spatialReference = frame;
         const currentTransform = this.spatialTransform;
         if (
+            !currentTransform ||
             !isFinite(currentTransform.rotation) ||
             !isFinite(currentTransform.scale) ||
             !isFinite(currentTransform.translation.x) ||
             !isFinite(currentTransform.translation.y) ||
             !isFinite(currentTransform.origin.x) ||
-            !isFinite(currentTransform.origin.y)
+            !isFinite(currentTransform.origin.y) ||
+            !this.transformedWcsInfo
         ) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;
@@ -1761,9 +1791,6 @@ export class FrameStore {
         for (const region of this.frameRegionSet.regions) {
             this.frameRegionSet.deleteRegion(region);
         }
-
-        AppStore.Instance.catalogStore.convertSpatialMatchedData();
-
         return true;
     };
 
@@ -1794,6 +1821,20 @@ export class FrameStore {
             this.removeControlMap(frame);
         });
         this.controlMaps.clear();
+        // clear catalog control map
+        const gl2 = CatalogWebGLService.Instance.gl;
+        if (gl2) {
+            this.catalogControlMaps.forEach(controlMap => {
+                if (controlMap.hasTextureForContext(gl)) {
+                    const texture = controlMap.getTextureX(gl2);
+                    gl2.deleteTexture(texture);
+                }
+            });
+        }
+        this.catalogControlMaps.forEach((controlMap, frame) => {
+            this.removeCatalogControlMap(frame);
+        });
+        this.catalogControlMaps.clear();
     };
 
     @action addSecondarySpatialImage = (frame: FrameStore) => {

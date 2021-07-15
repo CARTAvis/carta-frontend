@@ -133,7 +133,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @computed get enablePlotButton(): boolean {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        const enable = !profileStore.loadingData && !profileStore.updatingDataStream && catalogWidgetStore.xAxis !== CatalogOverlay.NONE && profileStore.get1DPlotData(catalogWidgetStore.xAxis)?.wcsData?.length > 0;
+        const enable = !profileStore.loadingData && !profileStore.updatingDataStream && catalogWidgetStore.xAxis !== CatalogOverlay.NONE;
         if (catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram) {
             return enable;
         } else {
@@ -401,7 +401,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     userFilters.push(filter);
                 } else {
                     const result = CatalogOverlayComponent.GetComparisonOperatorAndValue(value.filter);
-                    if (result.operator !== -1 && result.values.length > 0) {
+                    if (result.operator !== undefined && result.values.length > 0) {
                         filter.comparisonOperator = result.operator;
                         if (result.values.length > 1) {
                             filter.value = Math.min(result.values[0], result.values[1]);
@@ -423,7 +423,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private static GetComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
         const filter = filterString.replace(/\s/g, "");
-        let result = {operator: -1, values: []};
+        let result = {operator: undefined, values: []};
         // order matters, since ... and .. both include .. (same for < and <=, > and >=)
         for (const key of Object.keys(ComparisonOperator)) {
             const operator = ComparisonOperator[key];
@@ -566,11 +566,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     catalogStore.updateCatalogData(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, profileStore.catalogCoordinateSystem.system);
                     profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
                     catalogWidgetStore.setCatalogTableAutoScroll(false);
-
-                    if (frame !== appStore.activeFrame) {
-                        const imageMapId = `${frame.frameInfo.fileId}-${appStore.activeFrame.frameInfo.fileId}`;
-                        catalogStore.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
-                    }
                 }
                 if (profileStore.shouldUpdateData) {
                     profileStore.setUpdatingDataStream(true);
@@ -841,9 +836,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 <Button className="bp3" text={catalogWidgetStore.catalogPlotType} rightIcon="double-caret-vertical" />
                             </Select>
 
-                            <FormGroup className="catalog-xaxis" inline={true} label={this.xAxisLable} disabled={disable}>
+                            <FormGroup className="catalog-axis" inline={true} label={this.xAxisLable} disabled={disable}>
                                 <Select
-                                    className="catalog-xaxis-select"
+                                    className="catalog-axis-select"
                                     items={this.axisOption}
                                     activeItem={null}
                                     onItemSelect={columnName => catalogWidgetStore.setxAxis(columnName)}
@@ -855,13 +850,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemPredicate={this.filterColumn}
                                     resetOnSelect={true}
                                 >
-                                    <Button className="catalog-xaxis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" />
+                                    <Button className="catalog-axis-button" text={catalogWidgetStore.xAxis} disabled={disable} rightIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
 
-                            <FormGroup className="catalog-yaxis" inline={true} label={this.yAxisLable} disabled={isHistogram || disable}>
+                            <FormGroup className="catalog-axis" inline={true} label={this.yAxisLable} disabled={isHistogram || disable}>
                                 <Select
-                                    className="catalog-yaxis-select"
+                                    className="catalog-axis-select"
                                     items={this.axisOption}
                                     activeItem={null}
                                     onItemSelect={columnName => catalogWidgetStore.setyAxis(columnName)}
@@ -873,7 +868,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                     itemPredicate={this.filterColumn}
                                     resetOnSelect={true}
                                 >
-                                    <Button className="catalog-yaxis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" />
+                                    <Button className="catalog-axis-button" text={catalogWidgetStore.yAxis} disabled={isHistogram || disable} rightIcon="double-caret-vertical" />
                                 </Select>
                             </FormGroup>
 
