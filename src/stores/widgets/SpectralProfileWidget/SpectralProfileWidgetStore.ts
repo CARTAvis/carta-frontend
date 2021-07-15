@@ -358,34 +358,33 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 labels.push(profile.label);
                 comments.push(profile.comments);
 
+                const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, profile.data, wantMeanRms);
                 if (profiles.length > 1 && profile.data?.progress === 0) { // Ignore unarrived profiles to avoid showing old data
                     data.push([]);
                     smoothedData.push([]);
                 } else {
-                    const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, profile.data, wantMeanRms);
                     data.push(pointsAndProperties?.points ?? []);
                     smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
-                    if (pointsAndProperties) {
-                        if (wantMeanRms) {
-                            yMean = pointsAndProperties.yMean;
-                            yRms = pointsAndProperties.yRms;
-                        }
-
-                        if (xBound.xMin > pointsAndProperties.xBound.xMin) {
-                            xBound.xMin = pointsAndProperties.xBound.xMin;
-                        }
-                        if (xBound.xMax < pointsAndProperties.xBound.xMax) {
-                            xBound.xMax = pointsAndProperties.xBound.xMax;
-                        }
-                        if (yBound.yMin > pointsAndProperties.yBound.yMin) {
-                            yBound.yMin = pointsAndProperties.yBound.yMin;
-                        }
-                        if (yBound.yMax < pointsAndProperties.yBound.yMax) {
-                            yBound.yMax = pointsAndProperties.yBound.yMax;
-                        }
-                        progressSum = progressSum + profile.data.progress;
-                        startEndIndexes.push({startIndex: pointsAndProperties.startIndex, endIndex: pointsAndProperties.endIndex});
+                }
+                if (pointsAndProperties) {
+                    if (wantMeanRms) {
+                        yMean = pointsAndProperties.yMean;
+                        yRms = pointsAndProperties.yRms;
                     }
+                    if (xBound.xMin > pointsAndProperties.xBound.xMin) {
+                        xBound.xMin = pointsAndProperties.xBound.xMin;
+                    }
+                    if (xBound.xMax < pointsAndProperties.xBound.xMax) {
+                        xBound.xMax = pointsAndProperties.xBound.xMax;
+                    }
+                    if (yBound.yMin > pointsAndProperties.yBound.yMin) {
+                        yBound.yMin = pointsAndProperties.yBound.yMin;
+                    }
+                    if (yBound.yMax < pointsAndProperties.yBound.yMax) {
+                        yBound.yMax = pointsAndProperties.yBound.yMax;
+                    }
+                    progressSum = progressSum + profile.data.progress;
+                    startEndIndexes.push({startIndex: pointsAndProperties.startIndex, endIndex: pointsAndProperties.endIndex});
                 }
             }
         });
