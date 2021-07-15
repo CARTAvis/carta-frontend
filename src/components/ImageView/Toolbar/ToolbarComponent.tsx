@@ -126,6 +126,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const regionMenu = (
             <Menu>
                 <MenuItem icon={"symbol-square"} text="Point" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} />
+                <MenuItem icon={"slash"} text="Line" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.LINE)} />
                 <MenuItem icon={"square"} text="Rectangle" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} />
                 <MenuItem icon={"circle"} text="Ellipse" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} />
                 <MenuItem icon={"polygon-filter"} text="Polygon" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} />
@@ -226,7 +227,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             </span>
                         }
                     >
-                        <Popover2 content={regionMenu} position={Position.TOP} minimal={true}>
+                        <Popover2 popoverClassName="region-menu" content={regionMenu} position={Position.TOP} minimal={true}>
                             <AnchorButton icon={regionIcon} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
                         </Popover2>
                     </Tooltip2>
