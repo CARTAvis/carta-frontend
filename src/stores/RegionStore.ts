@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
+import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 import {FrameStore} from "stores";
 
 export const CURSOR_REGION_ID = 0;
@@ -49,6 +49,8 @@ export class RegionStore {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "Point";
+            case CARTA.RegionType.LINE:
+                return "Line";
             case CARTA.RegionType.RECTANGLE:
                 return "Rectangle";
             case CARTA.RegionType.ELLIPSE:
@@ -64,6 +66,8 @@ export class RegionStore {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "symbol-square";
+            case CARTA.RegionType.LINE:
+                return "slash";
             case CARTA.RegionType.RECTANGLE:
                 return "square";
             case CARTA.RegionType.ELLIPSE:
@@ -77,6 +81,7 @@ export class RegionStore {
 
     static readonly AVAILABLE_REGION_TYPES = new Map<CARTA.RegionType, string>([
         [CARTA.RegionType.POINT, "Point"],
+        [CARTA.RegionType.LINE, "Line"],
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
         [CARTA.RegionType.ELLIPSE, "Ellipse"],
         [CARTA.RegionType.POLYGON, "Polygon"]
@@ -110,6 +115,8 @@ export class RegionStore {
             case CARTA.RegionType.POLYGON:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
+            case CARTA.RegionType.LINE:
+                return midpoint2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: 0, y: 0};
         }
@@ -122,6 +129,8 @@ export class RegionStore {
                 return this.controlPoints[SIZE_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
                 return this.boundingBox;
+            case CARTA.RegionType.LINE:
+                return subtract2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: undefined, y: undefined};
         }
@@ -184,6 +193,8 @@ export class RegionStore {
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.POLYGON:
                 return this.controlPoints.length >= 1;
+            case CARTA.RegionType.LINE:
+                return this.controlPoints.length === 1 || this.controlPoints.length === 2;
             default:
                 return false;
         }
@@ -250,6 +261,14 @@ export class RegionStore {
         return approximatePoints;
     }
 
+    private getLineAngle = (start: Point2D, end: Point2D): number => {
+        let angle = (Math.atan((end.y - start.y) / (end.x - start.x)) * 180.0) / Math.PI;
+        if (end.x < start.x) {
+            angle += 180;
+        }
+        return angle;
+    };
+
     constructor(
         backendService: BackendService,
         fileId: number,
@@ -288,6 +307,9 @@ export class RegionStore {
 
         this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
+        if (this.regionType === CARTA.RegionType.LINE && controlPoints.length === 2) {
+            this.setRotation(this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0);
+        }
         this.modifiedTimestamp = performance.now();
     }
 
@@ -296,11 +318,26 @@ export class RegionStore {
     };
 
     @action setCenter = (p: Point2D, skipUpdate = false) => {
-        this.setControlPoint(CENTER_POINT_INDEX, p, skipUpdate);
+        if (this.regionType === CARTA.RegionType.LINE) {
+            const rotation = (this.rotation * Math.PI) / 180.0;
+            const dx = length2D(this.size) * Math.cos(rotation);
+            const dy = length2D(this.size) * Math.sin(rotation);
+            const newStart = {x: p.x - dx / 2, y: p.y - dy / 2};
+            const newEnd = {x: p.x + dx / 2, y: p.y + dy / 2};
+            this.setControlPoints([newStart, newEnd]);
+        } else {
+            this.setControlPoint(CENTER_POINT_INDEX, p, skipUpdate);
+        }
     };
 
     @action setSize = (p: Point2D, skipUpdate = false) => {
-        this.setControlPoint(SIZE_POINT_INDEX, p, skipUpdate);
+        if (this.regionType === CARTA.RegionType.LINE) {
+            const newStart = {x: this.center.x - p.x / 2, y: this.center.y - p.y / 2};
+            const newEnd = {x: this.center.x + p.x / 2, y: this.center.y + p.y / 2};
+            this.setControlPoints([newStart, newEnd]);
+        } else {
+            this.setControlPoint(SIZE_POINT_INDEX, p, skipUpdate);
+        }
     };
 
     @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
@@ -314,6 +351,10 @@ export class RegionStore {
             }
             if (this.regionType === CARTA.RegionType.POLYGON) {
                 this.simplePolygonTest(index);
+            }
+
+            if (this.regionType === CARTA.RegionType.LINE) {
+                this.setRotation(this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0);
             }
         }
     };
@@ -336,6 +377,11 @@ export class RegionStore {
         if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
             this.simplePolygonTest();
         }
+
+        if (this.regionType === CARTA.RegionType.LINE) {
+            this.setRotation(points.length === 2 ? this.getLineAngle(points[0], points[1]) : 0);
+        }
+
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
