@@ -33,7 +33,7 @@ export class SaveLayoutDialogComponent extends React.Component {
         }
     };
 
-    private saveLayout = () => {
+    private saveLayout = async () => {
         const appStore = AppStore.Instance;
 
         appStore.dialogStore.hideSaveLayoutDialog();
@@ -42,14 +42,13 @@ export class SaveLayoutDialogComponent extends React.Component {
             if (PresetLayout.isPreset(this.layoutName)) {
                 appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
             } else {
-                appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`, (confirmed: boolean) => {
-                    if (confirmed) {
-                        appStore.layoutStore.saveLayout();
-                    }
-                });
+                const confirmed = await appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
+                if (confirmed) {
+                    await appStore.layoutStore.saveLayout();
+                }
             }
         } else {
-            appStore.layoutStore.saveLayout();
+            await appStore.layoutStore.saveLayout();
         }
         this.clearInput();
     };

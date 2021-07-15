@@ -131,7 +131,7 @@ export class LayoutStore {
         return true;
     };
 
-    @action saveLayout = () => {
+    @action saveLayout = async () => {
         const appStore = AppStore.Instance;
         if (!this.layouts || !this.layoutNameToBeSaved || !this.dockedLayout) {
             appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
@@ -163,15 +163,15 @@ export class LayoutStore {
         // save layout to layouts[] & server/local storage
         this.layouts[this.layoutNameToBeSaved] = configToSave;
         if (!PresetLayout.isPreset(this.layoutNameToBeSaved)) {
-            appStore.apiService.setLayout(this.layoutNameToBeSaved, configToSave).then(
-                success => {
+            try {
+                const success = await appStore.apiService.setLayout(this.layoutNameToBeSaved, configToSave);
+                if (success) {
                     this.handleSaveResult(success);
-                },
-                err => {
-                    console.log(err);
-                    this.handleSaveResult(false);
                 }
-            );
+            } catch (err) {
+                console.log(err);
+                this.handleSaveResult(false);
+            }
         }
     };
 

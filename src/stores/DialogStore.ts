@@ -1,6 +1,8 @@
 import {action, observable, makeObservable} from "mobx";
 import {TabId} from "@blueprintjs/core";
-import {FileInfoType} from "../components";
+import {FileInfoType} from "components";
+import {SnippetStore} from "stores";
+import {Snippet} from "models";
 
 export class DialogStore {
     private static staticInstance: DialogStore;
@@ -99,13 +101,25 @@ export class DialogStore {
         this.contourDialogVisible = false;
     };
 
-    // Debug execution dialog
-    @observable debugExecutionDialogVisible: boolean = false;
-    @action showDebugExecutionDialog = () => {
-        this.debugExecutionDialogVisible = true;
+    // Code snippet dialog
+    @observable codeSnippetDialogVisible: boolean = false;
+    @action showExistingCodeSnippet = (snippet: Snippet, name: string) => {
+        if (snippet) {
+            SnippetStore.Instance.setActiveSnippet(snippet, name);
+        }
+        this.codeSnippetDialogVisible = true;
     };
-    @action hideDebugExecutionDialog = () => {
-        this.debugExecutionDialogVisible = false;
+
+    @action showNewCodeSnippet = () => {
+        SnippetStore.Instance.clearActiveSnippet();
+        this.codeSnippetDialogVisible = true;
+    };
+
+    @action showCodeSnippetDialog = () => {
+        this.codeSnippetDialogVisible = true;
+    };
+    @action hideCodeSnippetDialog = () => {
+        this.codeSnippetDialogVisible = false;
     };
 
     // External page dialog
