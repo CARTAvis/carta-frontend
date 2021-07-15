@@ -9,9 +9,12 @@ void setBuildStatus(String message, String state) {
 }
 
 pipeline {
-    agent "macos-1"
+    agent none
     stages {
         stage('Format check') {
+            agent {
+                label "macos-1"
+            }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE')
                 sh "git submodule update --init --recursive"
@@ -19,14 +22,21 @@ pipeline {
                 sh "npm run checkformat"
             }
         }
-        stage('WebAssembly compilation')
+        stage('WebAssembly compilation') {
+            agent {
+                label "macos-1"
+            }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE')
                 sh "git submodule update --init --recursive"
                 sh "npm run build-libs-docker"
                 stash includes: "carta_frontend", name: "carta_frontend_with_built_libs"
             }
+        }
         stage('node v12') {
+            agent {
+                label "macos-1"
+            }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE')
                 unstash "carta_frontend_with_built_libs"
@@ -38,6 +48,9 @@ pipeline {
             }
         }
         stage('node v14') {
+            agent {
+                label "macos-1"
+            }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE')
                 unstash "carta_frontend_with_built_libs"
@@ -49,6 +62,9 @@ pipeline {
             }
         }
         stage('node v16') {
+            agent {
+                label "macos-1"
+            }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE')
                 unstash "carta_frontend_with_built_libs"
