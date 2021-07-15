@@ -35,9 +35,7 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     unstash 'built_wasm_libs'
                     sh 'rm -rf node_modules'
-                    sh 'export NVM_DIR="/home/acdc/.nvm"'
-                    sh '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'
-                    sh '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"'
+                    sh 'bash && . /home/acdc/.nvm/nvm.sh'
                     sh 'nvm install 12 && nvm use 12'
                     sh 'node -v'
                     sh 'npm install'
