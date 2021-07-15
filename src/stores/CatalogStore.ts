@@ -1,8 +1,9 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed, makeObservable} from "mobx";
-import {AppStore, CatalogProfileStore, CatalogSystemType, CatalogOverlay, WidgetsStore} from "stores";
+import {AppStore, CatalogProfileStore, CatalogSystemType, WidgetsStore} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
+import {minMaxArray} from "utilities";
 
 type CatalogOverlayCoords = {
     x: Float32Array;
@@ -86,60 +87,6 @@ export class CatalogStore {
             CatalogWebGLService.Instance.updateDataTexture(fileId, xPoints, CatalogTextureType.X);
             CatalogWebGLService.Instance.updateDataTexture(fileId, yPoints, CatalogTextureType.Y);
         }
-    }
-
-    @action updateSpatialMatchedCatalog(imageMapId: string, catalogFileId: number) {
-        const activeFrame = AppStore.Instance.activeFrame;
-        const catalogWidgetStore = this.getCatalogWidgetStore(catalogFileId);
-        const xColumn = catalogWidgetStore.xAxis;
-        const yColumn = catalogWidgetStore.yAxis;
-        if (xColumn !== CatalogOverlay.NONE && yColumn !== CatalogOverlay.NONE) {
-            const catalogProfileStore = this.catalogProfileStores.get(catalogFileId);
-            const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogProfileStore.catalogData);
-            const wcs = activeFrame.validWcs ? activeFrame.wcsInfo : 0;
-            let xPoints = new Float32Array(coords.wcsX.length);
-            let yPoints = new Float32Array(coords.wcsX.length);
-            const catalogSystem = catalogProfileStore.catalogCoordinateSystem.system;
-            switch (catalogSystem) {
-                case CatalogSystemType.Pixel0:
-                    for (let i = 0; i < coords.wcsX.length; i++) {
-                        xPoints[i] = coords.wcsX[i];
-                        yPoints[i] = coords.wcsY[i];
-                    }
-                    break;
-                case CatalogSystemType.Pixel1:
-                    for (let i = 0; i < coords.wcsX.length; i++) {
-                        xPoints[i] = coords.wcsX[i] - 1;
-                        yPoints[i] = coords.wcsY[i] - 1;
-                    }
-                    break;
-                default:
-                    const pixelData = CatalogStore.TransformCatalogData(coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogSystem);
-                    for (let i = 0; i < pixelData.xImageCoords.length; i++) {
-                        xPoints[i] = pixelData.xImageCoords[i];
-                        yPoints[i] = pixelData.yImageCoords[i];
-                    }
-                    break;
-            }
-            CatalogWebGLService.Instance.updateSpatialMatchedTexture(imageMapId, catalogFileId, xPoints, yPoints);
-        }
-    }
-
-    // only recalculate position when source image and destination image have different projection types
-    // takes about 3s to recalculate and update 1M points
-    // TODO: use control maps to perform approximate transformation on the GPU
-    convertSpatialMatchedData() {
-        const activeFrame = AppStore.Instance.activeFrame;
-        const destinationFrameId = activeFrame?.frameInfo?.fileId;
-        activeFrame.spatialSiblings?.forEach(frame => {
-            const sourceFrameId = frame.frameInfo.fileId;
-            if (sourceFrameId !== destinationFrameId) {
-                const imageMapId = `${sourceFrameId}-${destinationFrameId}`;
-                this.imageAssociatedCatalogId.get(sourceFrameId)?.forEach(catalogFileId => {
-                    this.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
-                });
-            }
-        });
     }
 
     @action clearImageCoordsData(fileId: number) {
@@ -370,5 +317,32 @@ export class CatalogStore {
             return {xImageCoords: results.x, yImageCoords: results.y};
         }
         return {xImageCoords: new Float64Array(0), yImageCoords: new Float64Array(0)};
+    }
+
+    getFrameMinMaxPoints(frameId: number): {minX: number, maxX: number, minY: number, maxY: number} {
+        let minMax = {minX: Number.MAX_VALUE, maxX: -Number.MAX_VALUE, minY: Number.MAX_VALUE, maxY: -Number.MAX_VALUE};
+        this.imageAssociatedCatalogId.get(frameId)?.forEach(catalogId => {
+            const coords = this.catalogGLData.get(catalogId);
+            if (coords?.x && coords?.y) {
+                const minMaxX = minMaxArray(coords.x);
+                const minMaxY = minMaxArray(coords.y);
+                if (minMaxX.minVal < minMax.minX ) {
+                    minMax.minX = minMaxX.minVal;
+                }
+
+                if (minMaxX.maxVal > minMax.maxX ) {
+                    minMax.maxX = minMaxX.maxVal;
+                }
+
+                if (minMaxY.minVal < minMax.minY ) {
+                    minMax.minY = minMaxY.minVal;
+                }
+
+                if (minMaxY.maxVal > minMax.maxY ) {
+                    minMax.maxY = minMaxY.maxVal;
+                }
+            }
+        });
+        return minMax;
     }
 }
