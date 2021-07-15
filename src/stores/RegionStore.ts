@@ -208,9 +208,9 @@ export class RegionStore {
             case CARTA.RegionType.POINT:
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox[[${center}], ` + `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` + `${toFixed(this.rotation, 6)}deg]`;
+                return `rotbox[[${center}], [${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse[[${center}], ` + `[${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ` + `${toFixed(this.rotation, 6)}deg]`;
+                return `ellipse[[${center}], [${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
                 let polygonProperties = "poly[";
                 this.controlPoints.forEach((point, index) => {

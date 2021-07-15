@@ -69,7 +69,7 @@ export function numericFiltering(columnData: Array<number>, dataIndexes: number[
     }
 
     const filter = getComparisonOperatorAndValue(filterString);
-    if (filter?.operator === -1 || filter?.values.length <= 0) {
+    if (filter?.operator === undefined || filter?.values.length <= 0) {
         return [];
     }
 
