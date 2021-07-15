@@ -33,14 +33,15 @@ pipeline {
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    unstash "built_wasm_libs"
-                    sh "pwd"
-                    sh "ls -sort"
-                    sh "rm -rf node_modules"
-                    sh "export NVM_DIR=/Users/acdc/.nvm && nvm install 12 && nvm use 12"
-                    sh "node -v"
-                    sh "npm install"
-                    sh "npm run build-docker"
+                    unstash 'built_wasm_libs'
+                    sh 'rm -rf node_modules'
+                    sh 'export NVM_DIR=/Users/acdc/.nvm'
+                    sh '[ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"'
+                    sh '[ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"'
+                    sh 'nvm install 12 && nvm use 12'
+                    sh 'node -v'
+                    sh 'npm install'
+                    sh 'npm run build-docker'
                 }
             }
         }
