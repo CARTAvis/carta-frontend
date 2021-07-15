@@ -442,12 +442,12 @@ export class RegionStore {
     // Update the region with the backend
     private updateRegion = async () => {
         if (this.isValid) {
-            // Reset spectral profile progress right after region is updated to avoid showing old data in spectral profiler
-            AppStore.Instance.resetRegionSpectralProfileProgress(this.regionId);
             if (this.regionId === CURSOR_REGION_ID) {
+                AppStore.Instance.resetCursorRegionSpectralProfileProgress(this.fileId);
                 this.backendService.setCursor(this.fileId, this.center.x, this.center.y);
             } else {
                 try {
+                    AppStore.Instance.resetRegionSpectralProfileProgress(this.regionId);
                     await this.backendService.setRegion(this.fileId, this.regionId, this);
                     console.log("Region updated");
                 } catch (err) {

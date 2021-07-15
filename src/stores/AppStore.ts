@@ -33,7 +33,8 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    CURSOR_REGION_ID
 } from ".";
 import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
@@ -2077,6 +2078,12 @@ export class AppStore {
     }
 
     // endregion
+
+    // Reset spectral profile's progress to 0 instead of cleaning the entire out-dated profile to avoid flashy effect in spectral profiler.
+    // Flashy effect: render empty profile and then render the coming profile, repeatedly.
+    public resetCursorRegionSpectralProfileProgress = (fileId: FileId) => {
+        this.spectralProfiles.get(fileId)?.get(CURSOR_REGION_ID)?.resetProfilesProgress();
+    };
 
     public resetRegionSpectralProfileProgress = (regionId: RegionId) => {
         const regionProfileStoreMaps = Array.from(this.spectralProfiles?.values());

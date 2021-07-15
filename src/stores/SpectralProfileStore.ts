@@ -32,10 +32,6 @@ export class SpectralProfileStore {
         })});
     };
 
-    @action clearProfiles = () => {
-        this.profiles = new Map<string, ObservableMap<CARTA.StatsType, ProcessedSpectralProfile>>();
-    };
-
     @action setProfile = (profile: ProcessedSpectralProfile) => {
         let coordinateMap = this.profiles.get(profile.coordinate);
         if (!coordinateMap) {
