@@ -33,7 +33,7 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     unstash "built_wasm_libs"
                     sh "rm -rf node_modules"
-                    sh "export NVM_DIR="/Users/acdc/.nvm" && nvm install 12 && nvm use 12"
+                    sh "export NVM_DIR=/Users/acdc/.nvm && nvm install 12 && nvm use 12"
                     sh "node -v"
                     sh "npm install"
                     sh "npm run build-docker"
