@@ -5,7 +5,6 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
 import * as _ from "lodash";
 import {BackendService} from "services";
-import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData, ProtobufProcessing} from "models";
 import {booleanFiltering, numericFiltering, stringFiltering, wavelengthToFrequency, SPEED_OF_LIGHT} from "utilities";
 
@@ -129,7 +128,7 @@ const RESOLVED_QN_COLUMN_INDEX = 7;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
 
-export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
+export class SpectralLineQueryWidgetStore {
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
@@ -551,7 +550,6 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
     };
 
     constructor() {
-        super(RegionsType.CLOSED);
         makeObservable(this);
         this.queryRangeType = SpectralLineQueryRangeType.Range;
         this.queryRange = [0, 0];

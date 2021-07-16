@@ -7,6 +7,7 @@ export class SpatialProfileStore {
     readonly fileId: number;
     @observable stokes: number;
     @observable channel: number;
+    @observable value: number;
     @observable x: number;
     @observable y: number;
     @observable profiles: Map<string, ProcessedSpatialProfile>;
@@ -28,6 +29,7 @@ export class SpatialProfileStore {
             // Otherwise create a new profile set
             this.channel = spatialProfileData.channel;
             this.stokes = spatialProfileData.stokes;
+            this.value = spatialProfileData.value;
             this.x = spatialProfileData.x;
             this.y = spatialProfileData.y;
             const newProfilesMap = new Map<string, ProcessedSpatialProfile>();
