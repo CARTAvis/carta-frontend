@@ -359,13 +359,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 comments.push(profile.comments);
 
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, profile.data, wantMeanRms);
-                if (profiles.length > 1 && profile.data?.progress === 0) { // Ignore unarrived profiles to avoid showing old data
-                    data.push([]);
-                    smoothedData.push([]);
-                } else {
-                    data.push(pointsAndProperties?.points ?? []);
-                    smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
-                }
+                data.push(pointsAndProperties?.points ?? []);
+                smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
                 if (pointsAndProperties) {
                     if (wantMeanRms) {
                         yMean = pointsAndProperties.yMean;
