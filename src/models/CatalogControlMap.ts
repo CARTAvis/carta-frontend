@@ -72,10 +72,10 @@ export class CatalogControlMap {
             this.minPoint = {x: minX - paddingX, y: minY - paddingY};
             this.maxPoint = {x: maxX + paddingX, y: maxY + paddingY};
             this.grid = AST.getTransformGrid(astTransform, this.minPoint.x, this.maxPoint.x, this.width, this.minPoint.y, this.maxPoint.y, this.height, true);
-            
+
             AST.deleteObject(astTransform);
         }
-    }
+    };
 
     getTextureX = (gl2: WebGL2RenderingContext) => {
         if (gl2 !== this.gl2 || !this.texture || this.boundaryUpdated) {
