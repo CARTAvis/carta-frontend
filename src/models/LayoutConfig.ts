@@ -133,6 +133,15 @@ const COMPONENT_CONFIG = new Map<string, any>([
             title: "Spectral Line Query",
             id: "spectral-line-query"
         }
+    ],
+    [
+        "cursor-info",
+        {
+            type: "react-component",
+            component: "cursor-info",
+            title: "Cursor Info",
+            id: "cursor-info"
+        }
     ]
 ]);
 

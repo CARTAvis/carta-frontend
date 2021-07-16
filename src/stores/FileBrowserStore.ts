@@ -512,8 +512,6 @@ export class FileBrowserStore {
     }
 
     @computed get catalogHeaderDataset(): {columnHeaders: Array<CARTA.CatalogHeader>; columnsData: Map<number, ProcessedColumnData>} {
-        let columnsData = new Map<number, ProcessedColumnData>();
-
         const nameData = [];
         const unitData = [];
         const typeData = [];
@@ -528,12 +526,14 @@ export class FileBrowserStore {
         }
 
         const dataType = CARTA.ColumnType.String;
-        columnsData.set(0, {dataType, data: nameData});
-        columnsData.set(1, {dataType, data: unitData});
-        columnsData.set(2, {dataType, data: typeData});
-        columnsData.set(3, {dataType, data: descriptionData});
+        const columnsData = new Map<number, ProcessedColumnData>([
+            [0, {dataType, data: nameData}],
+            [1, {dataType, data: unitData}],
+            [2, {dataType, data: typeData}],
+            [3, {dataType, data: descriptionData}]
+        ]);
 
-        let columnHeaders = [
+        const columnHeaders = [
             new CARTA.CatalogHeader({name: "Name", dataType, columnIndex: 0}),
             new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1}),
             new CARTA.CatalogHeader({name: "Data Type", dataType, columnIndex: 2}),
