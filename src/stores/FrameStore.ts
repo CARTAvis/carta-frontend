@@ -1258,7 +1258,7 @@ export class FrameStore {
             const dt = tEnd - tStart;
             console.log(`Created ${preferenceStore.contourControlMapWidth}x${preferenceStore.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
         }
-        
+
         return controlMap;
     }
 
