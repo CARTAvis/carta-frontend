@@ -541,6 +541,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                                         const frame = widgetStore.effectiveFrame;
                                         frame?.setChannels(frame.requiredChannel, parseInt(ev.currentTarget.value), true);
                                     }}
+                                    disabled={appStore.animatorStore.animationActive}
                                 />
                             </FormGroup>
                         }
