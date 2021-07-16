@@ -36,7 +36,7 @@ export class RegionSetStore {
     public updateCursorRegionPosition = (pos: Point2D) => {
         if (pos && this.regions.length > 0) {
             const cursorRegion = this.regions[0];
-            // Need to avoid redundant update (position not changed)
+            // Need to avoid redundant update (position not changed), backend may not reply to redundant requests.
             if (cursorRegion?.regionId === CURSOR_REGION_ID && (cursorRegion.center?.x !== pos.x || cursorRegion.center?.y !== pos.y)) {
                 cursorRegion.setCenter(pos);
             }
