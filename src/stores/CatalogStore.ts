@@ -319,26 +319,26 @@ export class CatalogStore {
         return {xImageCoords: new Float64Array(0), yImageCoords: new Float64Array(0)};
     }
 
-    getFrameMinMaxPoints(frameId: number): {minX: number, maxX: number, minY: number, maxY: number} {
+    getFrameMinMaxPoints(frameId: number): {minX: number; maxX: number; minY: number; maxY: number} {
         let minMax = {minX: Number.MAX_VALUE, maxX: -Number.MAX_VALUE, minY: Number.MAX_VALUE, maxY: -Number.MAX_VALUE};
         this.imageAssociatedCatalogId.get(frameId)?.forEach(catalogId => {
             const coords = this.catalogGLData.get(catalogId);
             if (coords?.x && coords?.y) {
                 const minMaxX = minMaxArray(coords.x);
                 const minMaxY = minMaxArray(coords.y);
-                if (minMaxX.minVal < minMax.minX ) {
+                if (minMaxX.minVal < minMax.minX) {
                     minMax.minX = minMaxX.minVal;
                 }
 
-                if (minMaxX.maxVal > minMax.maxX ) {
+                if (minMaxX.maxVal > minMax.maxX) {
                     minMax.maxX = minMaxX.maxVal;
                 }
 
-                if (minMaxY.minVal < minMax.minY ) {
+                if (minMaxY.minVal < minMax.minY) {
                     minMax.minY = minMaxY.minVal;
                 }
 
-                if (minMaxY.maxVal > minMax.maxY ) {
+                if (minMaxY.maxVal > minMax.maxY) {
                     minMax.maxY = minMaxY.maxVal;
                 }
             }
