@@ -31,8 +31,7 @@ pipeline {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     sh 'rm -rf node_modules'
-                    sh 'bash && nvm --version'
-                    sh 'nvm install 12 && nvm use 12'
+                    sh 'n 12'
                     sh 'node -v'
                     sh 'npm install'
                     sh 'npm run build-docker'
