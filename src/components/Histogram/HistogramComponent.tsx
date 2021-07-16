@@ -53,6 +53,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             let regionId = this.widgetStore.effectiveRegionId;
+            let coordinate = this.widgetStore.coordinate;
 
             // // Image histograms handled slightly differently
             // if (regionId === -1) {
@@ -66,10 +67,17 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             if (!frameMap) {
                 return null;
             }
-            const data = frameMap.get(regionId);
-            if (data && data.histograms && data.histograms.length) {
-                return data.histograms[0];
+            const regionMap = frameMap.get(regionId);
+            if (!regionMap) {
+                return null;
             }
+            const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes === coordinate.slice(0, 1));
+            const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
+            // const regionHistogramData = regionMap.get(coordinate);
+            if (!regionHistogramData) {
+                return null;
+            }
+            return regionHistogramData.histograms;
         }
         return null;
     }

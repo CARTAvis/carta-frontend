@@ -1,3 +1,5 @@
+@import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
 .spectral-profiler-toolbar {
     overflow: hidden;
     display: flex;
@@ -10,5 +12,19 @@
         &:first-of-type {
             margin-left: 5px;
         }
+    }
+
+    .unlinked-to-selected {
+        border: 1px solid transparent;
+    }
+
+    .linked-to-selected-stokes {
+        border: 1px solid $blue2;
+
+        &.dark-theme {
+            border: 1px solid $blue4;
+        }
+
+        transition: border 250ms linear;
     }
 }
