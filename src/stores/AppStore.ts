@@ -1062,7 +1062,7 @@ export class AppStore {
     private histogramRequirements: Map<number, Array<number>>;
     private pendingChannelHistograms: Map<string, CARTA.IRegionHistogramData>;
 
-    public updateChannels = (updates: { frame: FrameStore; channel: number; stokes: number }[]) => {
+    public updateChannels = (updates: {frame: FrameStore; channel: number; stokes: number}[]) => {
         if (!updates || !updates.length) {
             return;
         }
