@@ -25,3 +25,4 @@ export * from "./MomentDefinition";
 export * from "./StatisticsDefinition";
 export * from "./TypeDefinition";
 export * from "./Snippet";
+export * from "./CatalogControlMap";

@@ -401,7 +401,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     userFilters.push(filter);
                 } else {
                     const result = CatalogOverlayComponent.GetComparisonOperatorAndValue(value.filter);
-                    if (result.operator !== -1 && result.values.length > 0) {
+                    if (result.operator !== undefined && result.values.length > 0) {
                         filter.comparisonOperator = result.operator;
                         if (result.values.length > 1) {
                             filter.value = Math.min(result.values[0], result.values[1]);
@@ -423,7 +423,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private static GetComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
         const filter = filterString.replace(/\s/g, "");
-        let result = {operator: -1, values: []};
+        let result = {operator: undefined, values: []};
         // order matters, since ... and .. both include .. (same for < and <=, > and >=)
         for (const key of Object.keys(ComparisonOperator)) {
             const operator = ComparisonOperator[key];
@@ -566,11 +566,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     catalogStore.updateCatalogData(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, profileStore.catalogCoordinateSystem.system);
                     profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
                     catalogWidgetStore.setCatalogTableAutoScroll(false);
-
-                    if (frame !== appStore.activeFrame) {
-                        const imageMapId = `${frame.frameInfo.fileId}-${appStore.activeFrame.frameInfo.fileId}`;
-                        catalogStore.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
-                    }
                 }
                 if (profileStore.shouldUpdateData) {
                     profileStore.setUpdatingDataStream(true);
