@@ -1,4 +1,4 @@
-@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+@import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .splash-screen {
     user-select: none;
@@ -12,7 +12,9 @@
     margin-top: -200px;
     padding: 15px 0 15px 0;
     background: $light-gray5;
-
+    box-shadow: 0 0 0 1px rgba(16, 22, 26, 0.1), 0 4px 8px rgba(16, 22, 26, 0.1), 0 18px 46px 6px rgba(16, 22, 26, 0.1);
+    border-radius: 6px;
+    border: 2px solid #5480b7;
     display: flex;
     flex-direction: column;
     align-items: center;
