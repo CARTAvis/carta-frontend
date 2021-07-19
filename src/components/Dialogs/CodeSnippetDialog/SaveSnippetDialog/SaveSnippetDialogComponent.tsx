@@ -70,7 +70,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
         const snippet = snippetStore.activeSnippet;
-        let className = "preference-dialog";
+        let className = "snippet-save-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
         }
@@ -84,6 +84,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
                 isOpen={this.props.isOpen}
                 onClose={this.props.onCancelClicked}
                 canEscapeKeyClose={true}
+                portalClassName="save-dialog-portal"
                 title="Save Code Snippet"
             >
                 <div className={Classes.DIALOG_BODY}>

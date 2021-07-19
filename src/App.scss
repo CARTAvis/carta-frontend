@@ -53,6 +53,10 @@ body {
     z-index: 999 !important;
 }
 
+.dialog-portal {
+    z-index: 990 !important;
+}
+
 // Workaround for BlueprintJS bug
 .bp3-dark .bp3-button-group:not(.bp3-minimal) > .bp3-popover-wrapper:not(:last-child) .bp3-button,
 .bp3-dark .bp3-button-group:not(.bp3-minimal) > .bp3-button:not(:last-child) {
