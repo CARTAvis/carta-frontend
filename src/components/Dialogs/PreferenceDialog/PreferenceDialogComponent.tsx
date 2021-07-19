@@ -540,7 +540,7 @@ export class PreferenceDialogComponent extends React.Component {
                         </option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Contour Control Map Resolution">
+                <FormGroup inline={true} label="Control Map Resolution">
                     <HTMLSelect value={preference.contourControlMapWidth} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, parseInt(ev.currentTarget.value))}>
                         <option key={0} value={128}>
                             128&times;128 (128 KB)

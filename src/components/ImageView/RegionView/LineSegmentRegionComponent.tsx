@@ -1,21 +1,23 @@
 import * as React from "react";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Group, Line, Rect} from "react-konva";
+import {Circle, Group, Line, Rect} from "react-konva";
 import Konva from "konva";
+import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D} from "utilities";
+import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D, angle2D, length2D} from "utilities";
 import {canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 
-export interface PolygonRegionComponentProps {
+export interface LineSegmentRegionComponentProps {
     region: RegionStore;
     frame: FrameStore;
     layerWidth: number;
     layerHeight: number;
     listening: boolean;
     selected: boolean;
+    isRegionCornerMode: boolean;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
@@ -25,7 +27,7 @@ const NEW_ANCHOR_MAX_DISTANCE = 16;
 const INVALID_POLYGON_COLOR = Colors.ROSE4;
 
 @observer
-export class PolygonRegionComponent extends React.Component<PolygonRegionComponentProps> {
+export class LineSegmentRegionComponent extends React.Component<LineSegmentRegionComponentProps> {
     @observable hoverIndex: number;
     @observable hoverIntersection: Point2D;
 
@@ -59,7 +61,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             }
 
             // Add a new control point to the region between two existing control points
-            if (this.hoverIntersection && this.hoverIndex >= 0 && this.hoverIndex < region.controlPoints.length) {
+            if (region.regionType !== CARTA.RegionType.LINE && this.hoverIntersection && this.hoverIndex >= 0 && this.hoverIndex < region.controlPoints.length) {
                 const currentControlPoints = region.controlPoints.slice(0);
                 currentControlPoints.splice(this.hoverIndex + 1, 0, this.hoverIntersection);
                 // Skip SET_REGION update, since the new control point lies on the line between two existing points
@@ -86,13 +88,41 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             const region = this.props.region;
             const frame = this.props.frame;
             const index = node.index;
-            if (index >= 0 && index < region.controlPoints.length) {
+            const anchor = node.id();
+            const evt = konvaEvent.evt;
+            const offsetPoint = {x: evt.offsetX, y: evt.offsetY};
+            if (anchor.includes("rotator")) {
+                // Calculate rotation from anchor position
+                let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
+                if (frame.spatialReference) {
+                    newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
+                }
+                const delta = subtract2D(newAnchorPoint, region.center);
+                const topAnchorPosition = rotate2D({x: 0, y: 1}, (region.rotation * Math.PI) / 180.0);
+                const angle = (angle2D(topAnchorPosition, delta) * 180.0) / Math.PI;
+                const newRotation = (((region.rotation + angle + 360) % 360) * Math.PI) / 180.0;
+                const dx = length2D(region.size) * Math.cos(newRotation);
+                const dy = length2D(region.size) * Math.sin(newRotation);
+                const newStart = {x: region.center.x - dx / 2, y: region.center.y - dy / 2};
+                const newEnd = {x: region.center.x + dx / 2, y: region.center.y + dy / 2};
+                region.setControlPoints([newStart, newEnd]);
+            } else if (index >= 0 && index < region.controlPoints.length) {
                 let positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
                 if (frame.spatialReference) {
                     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
-                region.setControlPoint(index, positionImageSpace);
-                this.hoverIntersection = null;
+                const isCtrlPressed = evt.ctrlKey || evt.metaKey;
+                if (region.regionType !== CARTA.RegionType.LINE || (this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
+                    region.setControlPoint(index, positionImageSpace);
+                    this.hoverIntersection = null;
+                } else {
+                    if (index === 0) {
+                        region.setControlPoints([positionImageSpace, {x: region.center.x * 2 - positionImageSpace.x, y: region.center.y * 2 - positionImageSpace.y}]);
+                    } else {
+                        region.setControlPoints([{x: region.center.x * 2 - positionImageSpace.x, y: region.center.y * 2 - positionImageSpace.y}, positionImageSpace]);
+                    }
+                    this.hoverIntersection = null;
+                }
             }
         }
     };
@@ -231,7 +261,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         return pointArray;
     }
 
-    private anchorNode(x: number, y: number, rotation: number = 0, key: number = undefined, editableAnchor: boolean = false) {
+    private anchorNode(x: number, y: number, rotation: number = 0, key: number = undefined, editableAnchor: boolean = false, rotator: boolean = false) {
         let anchorProps: any = {
             x: x,
             y: y,
@@ -242,7 +272,8 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             fill: "white",
             strokeWidth: 1,
             stroke: "black",
-            rotation: rotation
+            rotation: rotation,
+            id: rotator ? "rotator" : ""
         };
         if (editableAnchor) {
             anchorProps = {
@@ -254,20 +285,25 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 onDragStart: this.handleAnchorDragStart,
                 onDragEnd: this.handleAnchorDragEnd,
                 onDragMove: this.handleAnchorDrag,
-                onDblClick: this.handleAnchorDoubleClick
+                onDblClick: this.props.region.regionType === CARTA.RegionType.LINE ? null : this.handleAnchorDoubleClick
             };
         } else {
             anchorProps.opacity = 0.5;
             anchorProps.listening = false;
         }
-        return <Rect {...anchorProps} />;
+        if (rotator) {
+            const radius = ANCHOR_WIDTH / Math.sqrt(2);
+            return <Circle {...anchorProps} radius={radius} offsetX={0} offsetY={0} dragBoundFunc={() => ({x, y})} />;
+        } else {
+            return <Rect {...anchorProps} />;
+        }
     }
 
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        let rotation = 0.0;
+        let rotation = -region.rotation;
 
         let controlPoints = region.controlPoints;
         let centerPointCanvasSpace: Point2D;
@@ -295,6 +331,12 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                     const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
                     return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i, true);
                 });
+
+                if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
+                    const rotatorOffset = 15;
+                    const rotatorAngle = (rotation * Math.PI) / 180.0;
+                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, true));
+                }
             }
 
             if (this.hoverIntersection && !region.locked) {
@@ -305,7 +347,6 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
 
             rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
-            rotation = 0;
             controlPoints = controlPoints.map(p => imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform));
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
@@ -313,6 +354,12 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 anchors = new Array<React.ReactNode>(controlPoints.length);
                 for (let i = 0; i < controlPoints.length; i++) {
                     anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, true);
+                }
+
+                if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
+                    const rotatorOffset = 15;
+                    const rotatorAngle = (rotation * Math.PI) / 180.0;
+                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, true));
                 }
             }
 
@@ -337,14 +384,14 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                     strokeWidth={region.lineWidth}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     dash={[region.dashLength]}
-                    closed={!region.creating}
+                    closed={!region.creating && region.regionType === CARTA.RegionType.POLYGON}
                     listening={this.props.listening && !region.locked}
                     onClick={this.handleClick}
                     onDblClick={this.handleDoubleClick}
                     onContextMenu={this.handleContextMenu}
-                    onMouseEnter={this.handleStrokeMouseEnter}
-                    onMouseLeave={this.handleStrokeMouseLeave}
-                    onMouseMove={this.handleMouseMove}
+                    onMouseEnter={region.regionType === CARTA.RegionType.LINE ? null : this.handleStrokeMouseEnter}
+                    onMouseLeave={region.regionType === CARTA.RegionType.LINE ? null : this.handleStrokeMouseLeave}
+                    onMouseMove={region.regionType === CARTA.RegionType.LINE ? null : this.handleMouseMove}
                     onDragStart={this.handleDragStart}
                     onDragEnd={this.handleDragEnd}
                     onDragMove={this.handleDrag}

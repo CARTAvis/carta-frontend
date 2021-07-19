@@ -224,10 +224,10 @@ export class ApiService {
             const valid = ApiService.PreferenceValidator(preferences);
             if (!valid) {
                 for (const error of ApiService.PreferenceValidator.errors) {
-                    if (error.dataPath) {
-                        console.log(`Removing invalid preference ${error.dataPath}`);
+                    if (error.instancePath) {
+                        console.log(`Removing invalid preference ${error.instancePath}`);
                         // Trim the leading "." from the path
-                        delete preferences[error.dataPath.substring(1)];
+                        delete preferences[error.instancePath.substring(1)];
                     }
                 }
             }
