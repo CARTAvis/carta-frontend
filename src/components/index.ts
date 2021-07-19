@@ -1,4 +1,5 @@
 export * from "./Animator/AnimatorComponent";
+export * from "./CursorInfo/CursorInfoComponent";
 export * from "./FloatingWidget/FloatingWidgetComponent";
 export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";
 export * from "./ImageView/ImageViewComponent";
