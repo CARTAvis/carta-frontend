@@ -6,7 +6,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent} from "components/Shared";
 import {formattedExponential, toFixed} from "utilities";
-import {AppStore, DefaultWidgetConfig, FrameStore, WidgetProps} from "stores";
+import {AppStore, DefaultWidgetConfig, FrameStore, HelpType, WidgetProps} from "stores";
 import "./CursorInfoComponent.scss";
 
 @observer
@@ -20,7 +20,8 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             defaultWidth: 650,
             defaultHeight: 180,
             title: "Cursor Info",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.PLACEHOLDER
         };
     }
 
