@@ -31,7 +31,7 @@ export class SpectralLineQuerySplashScreenComponent extends React.Component<{spl
                         </ButtonGroup>
                     }
                     <div className={"loadingInfo-div"}>
-                        <p>{this.props.splataloguePingStatus === SplataloguePingStatus.Checking ? "Checking Splatalogue status..." : "Connecting to Splatalogue failed! Please try again."}</p>
+                        <p>{this.props.splataloguePingStatus === SplataloguePingStatus.Checking ? "Checking Splatalogue status..." : "Connecting to Splatalogue failed! The service might be offline or your internet connection is interrupted. Please check and try again."}</p>
                     </div>
                 </div>
             </div>
