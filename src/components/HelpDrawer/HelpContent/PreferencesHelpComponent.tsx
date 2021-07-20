@@ -52,7 +52,7 @@ export class PreferencesHelpComponent extends React.Component {
                 <h3 id="overlay-configuration">Overlay configuration</h3>
                 <p>This section provides customization of the image overlay in the image viewer.</p>
                 <ul>
-                    <li>Color: the default color theme of the grid layers including the coordinate bound box</li>
+                    <li>Color: the default color of the grid layers including the coordinate bound box</li>
                     <li>WCS grid visible: grid line rendering</li>
                     <li>Label visible: grid x and y labels rendering</li>
                     <li>WCS format: show world coordinates in degrees or sexagesimal or auto-formatted</li>
