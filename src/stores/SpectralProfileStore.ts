@@ -25,11 +25,13 @@ export class SpectralProfileStore {
     };
 
     public resetProfilesProgress = () => {
-        this.profiles.forEach(statsProfilesMap => {statsProfilesMap?.forEach(processedSpectralProfile => {
-            if (processedSpectralProfile) {
-                processedSpectralProfile.progress = 0;
-            }
-        })});
+        this.profiles.forEach(statsProfilesMap => {
+            statsProfilesMap?.forEach(processedSpectralProfile => {
+                if (processedSpectralProfile) {
+                    processedSpectralProfile.progress = 0;
+                }
+            });
+        });
     };
 
     @action setProfile = (profile: ProcessedSpectralProfile) => {
