@@ -40,7 +40,7 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
             className += " bp3-dark";
         }
         return (
-            <Dialog className={className} icon={"time"} canEscapeKeyClose={false} canOutsideClickClose={false} isCloseButtonShown={false} title={titleText} isOpen={this.props.isOpen}>
+            <Dialog portalClassName="dialog-portal" className={className} icon={"time"} canEscapeKeyClose={false} canOutsideClickClose={false} isCloseButtonShown={false} title={titleText} isOpen={this.props.isOpen}>
                 <div className={Classes.DIALOG_BODY}>
                     <ProgressBar value={this.props.progress} animate={!isFinite(this.props.progress)} stripes={!isFinite(this.props.progress)} intent={"primary"} />
                     <>{this.props.contentText}</>
