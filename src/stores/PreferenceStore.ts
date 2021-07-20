@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
-import {CompressionQuality, CursorPosition, Event, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService} from "services";
 
@@ -54,6 +54,7 @@ export enum PreferenceKeys {
     WCS_OVERLAY_BEAM_COLOR = "beamColor",
     WCS_OVERLAY_BEAM_TYPE = "beamType",
     WCS_OVERLAY_BEAM_WIDTH = "beamWidth",
+    WCS_OVERLAY_CURSOR_INFO = "cursorInfoVisible",
 
     REGION_COLOR = "regionColor",
     REGION_LINE_WIDTH = "regionLineWidth",
@@ -73,6 +74,7 @@ export enum PreferenceKeys {
     PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING = "streamContoursWhileZooming",
     PERFORMANCE_LOW_BAND_WIDTH_MODE = "lowBandwidthMode",
     PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES = "stopAnimationPlaybackMinutes",
+    PERFORMANCE_LIMIT_OVERLAY_REDRAW = "limitOverlayRedraw",
 
     LOG_EVENT = "logEventList",
 
@@ -137,7 +139,8 @@ const DEFAULTS = {
         beamVisible: true,
         beamColor: "auto-gray",
         beamType: BeamType.Open,
-        beamWidth: 1
+        beamWidth: 1,
+        cursorInfoVisible: CursorInfoVisibility.ActiveImage
     },
     REGION: {
         regionColor: "#2EE6D6",
@@ -158,7 +161,8 @@ const DEFAULTS = {
         contourControlMapWidth: 256,
         streamContoursWhileZooming: false,
         lowBandwidthMode: false,
-        stopAnimationPlaybackMinutes: 5
+        stopAnimationPlaybackMinutes: 5,
+        limitOverlayRedraw: true
     },
     LOG_EVENT: {
         eventLoggingEnabled: []
@@ -370,6 +374,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? DEFAULTS.WCS_OVERLAY.beamWidth;
     }
 
+    @computed get cursorInfoVisible(): string {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO) ?? DEFAULTS.WCS_OVERLAY.cursorInfoVisible;
+    }
+
     // getters for region
     @computed get regionColor(): string {
         return this.preferences.get(PreferenceKeys.REGION_COLOR) ?? DEFAULTS.REGION.regionColor;
@@ -479,6 +487,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PIXEL_GRID_COLOR) ?? DEFAULTS.SILENT.pixelGridColor;
     }
 
+    @computed get limitOverlayRedraw(): boolean {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
+    }
+
     @action setPreference = async (key: PreferenceKeys, value: any) => {
         if (!key) {
             return false;
@@ -576,7 +588,8 @@ export class PreferenceStore {
             PreferenceKeys.WCS_OVERLAY_BEAM_TYPE,
             PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
             PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
-            PreferenceKeys.WCS_OVERLAY_WCS_TYPE
+            PreferenceKeys.WCS_OVERLAY_WCS_TYPE,
+            PreferenceKeys.WCS_OVERLAY_CURSOR_INFO
         ]);
     };
 
@@ -596,7 +609,8 @@ export class PreferenceStore {
             PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE,
             PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
             PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
-            PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE
+            PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE,
+            PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW
         ]);
     };
 
@@ -657,7 +671,8 @@ export class PreferenceStore {
                 PreferenceKeys.REGION_CREATION_MODE,
                 PreferenceKeys.WCS_OVERLAY_AST_COLOR,
                 PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION,
-                PreferenceKeys.PIXEL_GRID_COLOR
+                PreferenceKeys.PIXEL_GRID_COLOR,
+                PreferenceKeys.WCS_OVERLAY_CURSOR_INFO
             ];
 
             const intKeys = [
