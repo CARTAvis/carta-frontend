@@ -44,7 +44,7 @@ export class DistanceMeasuringStore {
     };
 
     @action updateTransformedPos = (spatialTransform: Transform2D) => {
-        if (this.start?.x != null && this.start?.y != null && this.finish?.x != null && this.finish?.y != null) {        
+        if (this.start?.x != null && this.start?.y != null && this.finish?.x != null && this.finish?.y != null) {
             this.transformedStart = spatialTransform ? spatialTransform.transformCoordinate(this.start) : this.start;
             this.transformedFinish = spatialTransform ? spatialTransform.transformCoordinate(this.finish) : this.finish;
         }

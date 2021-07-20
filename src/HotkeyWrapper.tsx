@@ -63,7 +63,7 @@ export class HotkeyContainer extends React.Component {
     static ToggleCreateMode = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
-            appStore.updateActiveLayer(ImageViewLayer.RegionCreating)
+            appStore.updateActiveLayer(ImageViewLayer.RegionCreating);
             appStore.activeFrame.regionSet.toggleMode();
         }
     };

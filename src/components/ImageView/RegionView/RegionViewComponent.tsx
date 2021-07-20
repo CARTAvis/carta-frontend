@@ -379,7 +379,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
-            const imagePos =  this.getDistanceMeasureImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
+            const imagePos = this.getDistanceMeasureImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
             const wcsPos = transformPoint(frame.wcsInfo, imagePos);
             if (!isAstBadPoint(wcsPos)) {
                 const dist = frame.distanceMeasuring;
