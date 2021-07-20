@@ -530,7 +530,8 @@ export class PreferenceStore {
             PreferenceKeys.GLOBAL_DRAG_PANNING,
             PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE,
             PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
-            PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND
+            PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
+            PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED
         ]);
     };
 
