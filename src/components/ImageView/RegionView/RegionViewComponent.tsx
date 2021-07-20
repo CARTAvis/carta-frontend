@@ -66,13 +66,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     updateDistanceMeasureFinishPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        const spatialTransform = frame.spatialReference?.spatialTransform ?? frame.spatialTransform;
-        let imagePos = canvasToImagePos(x, y, frameView, this.props.width, this.props.height, spatialTransform);
-        if (frame.spatialReference) {
-            imagePos = frame.spatialTransform.transformCoordinate(imagePos, false);
-        }
-        frame.distanceMeasuring.finish = imagePos;
+        frame.distanceMeasuring.finish = this.getDistanceMeasureImagePos(x, y);
         frame.distanceMeasuring.updateTransformedPos(frame.spatialTransform);
     }, 100);
 
@@ -96,6 +90,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
         }
         return cursorPosImageSpace;
+    };
+
+    private getDistanceMeasureImagePos = (offsetX: number, offsetY: number): Point2D => {
+        const frame = this.props.frame;
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        const spatialTransform = frame.spatialReference?.spatialTransform ?? frame.spatialTransform;
+        let imagePos = canvasToImagePos(offsetX, offsetY, frameView, this.props.width, this.props.height, spatialTransform);
+        if (frame.spatialReference) {
+            imagePos = frame.spatialTransform.transformCoordinate(imagePos, false);
+        }
+        return imagePos;
     };
 
     @action private regionCreationStart = (mouseEvent: MouseEvent) => {
@@ -374,12 +379,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
-            const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-            const spatialTransform = frame.spatialReference?.spatialTransform ?? frame.spatialTransform;
-            let imagePos = canvasToImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frameView, this.props.width, this.props.height, spatialTransform);
-            if (frame.spatialReference) {
-                imagePos = frame.spatialTransform.transformCoordinate(imagePos, false);
-            }
+            const imagePos =  this.getDistanceMeasureImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
             const wcsPos = transformPoint(frame.wcsInfo, imagePos);
             if (!isAstBadPoint(wcsPos)) {
                 const dist = frame.distanceMeasuring;

@@ -267,13 +267,13 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     astGrid(plot);
 
     if (showCurve)
-    {   
+    {
         const double x[] = {curveX1, curveX2};
         const double y[] = {curveY1, curveY2};
         double xtran[2];
         double ytran[2];
         astTran2(wcsinfo, 2, x, y, 1, xtran, ytran);
-
+        
         double in[2][4] = {{xtran[0], xtran[1], xtran[1], xtran[0]}, {ytran[0], ytran[1], ytran[0], ytran[0]}};
         const double* inPtr = in[0];
         astPolyCurve(plot, 4, 2, 4, inPtr);

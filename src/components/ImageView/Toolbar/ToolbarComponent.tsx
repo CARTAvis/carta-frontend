@@ -71,7 +71,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         } else {
             AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
         }
-        AppStore.Instance.activeFrame.distanceMeasuring.resetPos();
+        if (layer !== ImageViewLayer.DistanceMeasuring) {
+            AppStore.Instance.activeFrame.distanceMeasuring.resetPos();
+        }
     };
 
     exportImageTooltip = () => {
