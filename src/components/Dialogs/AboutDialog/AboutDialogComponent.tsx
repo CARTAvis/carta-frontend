@@ -5,7 +5,6 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogStore} from "stores";
 import {CARTA_INFO} from "models";
 import "./AboutDialogComponent.scss";
-import logoPng from "static/carta_logo.png";
 
 @observer
 export class AboutDialogComponent extends React.Component {
@@ -28,7 +27,7 @@ export class AboutDialogComponent extends React.Component {
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={700} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
-                        <img src={logoPng} width={80} />
+                        <img src="carta_logo.png" width={80} />
                         <h3>
                             {CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})
                         </h3>

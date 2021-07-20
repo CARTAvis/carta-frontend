@@ -59,9 +59,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === AppStore.Instance.activeFrameIndex ? "active-row-cell" : ""} />;
     };
 
-    private onFileSelected = (appStore: AppStore, frame: FrameStore) => {
-        const fileId = frame.frameInfo.fileId;
-        appStore.setActiveFrame(fileId);
+    private onFileSelected = (frame: FrameStore) => {
+        AppStore.Instance.setActiveFrame(frame);
     };
 
     private fileNameRenderer = (rowIndex: number) => {
@@ -75,7 +74,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
-                    <div className="name-cell" onClick={() => this.onFileSelected(appStore, frame)}>
+                    <div className="name-cell" onClick={() => this.onFileSelected(frame)}>
                         {frame.filename}
                     </div>
                 </React.Fragment>

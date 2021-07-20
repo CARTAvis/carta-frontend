@@ -20,6 +20,7 @@ export enum PreferenceKeys {
     GLOBAL_SPECTRAL_MATCHING_TYPE = "spectralMatchingType",
     GLOBAL_AUTO_WCS_MATCHING = "autoWCSMatching",
     GLOBAL_TRANSPARENT_IMAGE_BACKGROUND = "transparentImageBackground",
+    GLOBAL_CODE_SNIPPETS_ENABLED = "codeSnippetsEnabled",
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
@@ -99,7 +100,8 @@ const DEFAULTS = {
         dragPanning: true,
         spectralMatchingType: SpectralType.VRAD,
         autoWCSMatching: WCSMatchingType.NONE,
-        transparentImageBackground: false
+        transparentImageBackground: false,
+        codeSnippetsEnabled: false
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
@@ -227,6 +229,10 @@ export class PreferenceStore {
 
     @computed get transparentImageBackground(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
+    }
+
+    @computed get codeSnippetsEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
     }
 
     // getters for render config
@@ -524,7 +530,8 @@ export class PreferenceStore {
             PreferenceKeys.GLOBAL_DRAG_PANNING,
             PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE,
             PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
-            PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND
+            PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
+            PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED
         ]);
     };
 
