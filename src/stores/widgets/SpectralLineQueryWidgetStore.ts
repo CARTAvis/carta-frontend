@@ -12,7 +12,7 @@ import {booleanFiltering, numericFiltering, stringFiltering, wavelengthToFrequen
 export enum SplataloguePingStatus {
     Checking,
     Success,
-    Failure,
+    Failure
 }
 
 export enum SpectralLineQueryRangeType {

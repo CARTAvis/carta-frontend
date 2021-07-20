@@ -373,10 +373,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
 
         return (
             <div className={className}>
-                {widgetStore.splataloguePingStatus !== SplataloguePingStatus.Success &&
-                    <SpectralLineQuerySplashScreenComponent splataloguePingStatus={widgetStore.splataloguePingStatus} onReload={widgetStore.pingSplatalogue}/>
-                }
-                {widgetStore.splataloguePingStatus === SplataloguePingStatus.Success &&
+                {widgetStore.splataloguePingStatus !== SplataloguePingStatus.Success && <SpectralLineQuerySplashScreenComponent splataloguePingStatus={widgetStore.splataloguePingStatus} onReload={widgetStore.pingSplatalogue} />}
+                {widgetStore.splataloguePingStatus === SplataloguePingStatus.Success && (
                     <React.Fragment>
                         <div className="bp3-dialog-body">
                             {queryPanel}
@@ -403,7 +401,12 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                                     <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.handleResetFilter} />
                                 </Tooltip2>
                                 <Tooltip2 content={plotTip} position={Position.BOTTOM}>
-                                    <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit} onClick={this.handlePlot} />
+                                    <AnchorButton
+                                        text="Plot"
+                                        intent={Intent.PRIMARY}
+                                        disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
+                                        onClick={this.handlePlot}
+                                    />
                                 </Tooltip2>
                                 <Tooltip2 content="Clear plotted lines" position={Position.BOTTOM}>
                                     <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear} />
@@ -411,7 +414,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             </div>
                         </div>
                     </React.Fragment>
-                }
+                )}
                 <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={widgetStore.isQuerying} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
