@@ -7,11 +7,140 @@
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     <link rel="shortcut icon" href="%PUBLIC_URL%/carta_icon_128px.png">
     <title>CARTA</title>
+    <style>
+        .static-text {
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 0;
+            line-height: 1.28581;
+            text-transform: none;
+            color: #182026;
+            font-family: -apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16", sans-serif;
+        }
+
+        .static-pre {
+            color: #182026;
+            font-size: 14px;
+            white-space: pre-line;
+        }
+
+        .static-overlay {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
+            height: 400px;
+            width: 650px;
+        }
+
+        .loading-div {
+            width: 650px;
+            height: 400px;
+            background: #f5f8fa;
+            text-align: center;
+            padding: 15px;
+            box-shadow: 0 0 0 1px rgba(16, 22, 26, 0.1), 0 4px 8px rgba(16, 22, 26, 0.1), 0 18px 46px 6px rgba(16, 22, 26, 0.1);
+            border-radius: 6px;
+            border: 2px solid #5480b7;
+            box-sizing: border-box;
+        }
+
+        .static-spinner {
+            align-items: center;
+            display: flex;
+            justify-content: center;
+            vertical-align: middle;
+            margin: 20px;
+        }
+
+        .static-spinner-animation {
+            width: 30px;
+            height: 30px;
+            animation: static-spinner-animation .5s linear infinite;
+        }
+
+        @keyframes static-spinner-animation {
+            from {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            to {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+
+        .static-spinner-track {
+            fill-opacity: 0;
+            stroke: rgba(92, 112, 128, .2);
+            stroke-width: 8px;
+        }
+
+        .static-spinner-head {
+            fill-opacity: 0;
+            stroke: rgba(43, 149, 214, .8);
+            stroke-width: 13px;
+        }
+
+        .loading-text {
+            animation: cssAnimation 5s forwards;
+            opacity: 0;
+        }
+
+        @keyframes cssAnimation {
+            0% {
+                opacity: 0;
+            }
+            90% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
 </head>
 <body>
 <noscript>
     You need to enable JavaScript to run this app.
 </noscript>
-<div id="root"></div>
+<div id="root">
+    <div class="static-overlay">
+        <div class="loading-div">
+            <img src="carta_logo.png" width="150" height="175" alt="CARTA">
+            <div class="static-spinner">
+                <div class="static-spinner-animation">
+                    <svg width="30" height="30" viewBox="-1.67 -1.67 103.33 103.33">
+                        <path
+                                class="static-spinner-track"
+                                d="M 50,50 m 0,-45 a 45,45 0 1 1 0,90 a 45,45 0 1 1 0,-90"
+                        />
+                        <path
+                                class="static-spinner-head"
+                                d="M 50,50 m 0,-45 a 45,45 0 1 1 0,90 a 45,45 0 1 1 0,-90"
+                                pathLength="280"
+                                stroke-dasharray="280 280"
+                                stroke-dashoffset="210"
+                        />
+                    </svg>
+                </div>
+            </div>
+            <div class="loading-text">
+                <p class="static-text">
+                    Loading CARTA. If this message does not disappear, please
+                    <a href="https://refreshyourcache.com/en/cache/">hard-reload</a>
+                    this site in your browser using the shortcut below:
+                </p>
+                <pre class="static-pre">
+                MacOS: Cmd + R
+                Linux: Ctrl + Shift + R
+                Windows: Ctrl + F5
+            </pre>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
