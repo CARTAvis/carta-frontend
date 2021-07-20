@@ -30,16 +30,20 @@ export class RootMenuComponent extends React.Component {
     private genWidgetsMenu = () => {
         const regionListConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.Region);
         const imageListConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.ImageList);
+        const cursorInfoConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.CursorInfo);
         const logConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.Log);
         const spatialProfilerConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.SpatialProfiler);
         const spectralProfilerConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.SpectralProfiler);
-        const restWidgets = Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).filter(widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler].includes(widget));
+        const restWidgets = Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).filter(
+            widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.CursorInfo, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler].includes(widget)
+        );
 
         return (
             <Menu className="widgets-menu">
                 <Menu.Item text="Info Panels" icon={"panel-stats"}>
                     <Menu.Item text={WidgetType.Region} icon={<CustomIcon icon={regionListConfig.icon as CustomIconName} />} onClick={regionListConfig.onClick} />
                     <Menu.Item text={WidgetType.ImageList} icon={imageListConfig.icon as IconName} onClick={imageListConfig.onClick} />
+                    <Menu.Item text={WidgetType.CursorInfo} icon={<CustomIcon icon={cursorInfoConfig.icon as CustomIconName} />} onClick={cursorInfoConfig.onClick} />
                     <Menu.Item text={WidgetType.Log} icon={logConfig.icon as IconName} onClick={logConfig.onClick} />
                 </Menu.Item>
                 <Menu.Item text="Profiles" icon={"pulse"}>
