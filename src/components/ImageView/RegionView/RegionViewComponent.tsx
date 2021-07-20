@@ -66,9 +66,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     updateDistanceMeasureFinishPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
-        const imagePos = canvasToTransformedImagePos(x, y, frame.spatialReference ?? frame, this.props.width, this.props.height);
-        const wcsPos = transformPoint(frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo, imagePos);
-        frame.distanceMeasuring.setFinish(wcsPos);
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        const spatialTransform = frame.spatialReference?.spatialTransform ?? frame.spatialTransform;
+        let imagePos = canvasToImagePos(x, y, frameView, this.props.width, this.props.height, spatialTransform);
+        if (frame.spatialReference) {
+            imagePos = frame.spatialTransform.transformCoordinate(imagePos, false);
+        }
+        frame.distanceMeasuring.finish = imagePos;
+        frame.distanceMeasuring.updateTransformedPos(frame.spatialTransform);
     }, 100);
 
     private getCursorCanvasPos = (imageX: number, imageY: number): Point2D => {
@@ -369,19 +374,25 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
-            const imagePos = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame.spatialReference ?? frame, this.props.width, this.props.height);
-            const wcsPos = transformPoint(frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo, imagePos);
+            const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+            const spatialTransform = frame.spatialReference?.spatialTransform ?? frame.spatialTransform;
+            let imagePos = canvasToImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frameView, this.props.width, this.props.height, spatialTransform);
+            if (frame.spatialReference) {
+                imagePos = frame.spatialTransform.transformCoordinate(imagePos, false);
+            }
+            const wcsPos = transformPoint(frame.wcsInfo, imagePos);
             if (!isAstBadPoint(wcsPos)) {
                 const dist = frame.distanceMeasuring;
                 if (!dist.isCreating && !dist.showCurve) {
-                    dist.setStart(wcsPos);
+                    dist.start = imagePos;
                     dist.setIsCreating(true);
                 } else if (dist.isCreating) {
-                    dist.setFinish(wcsPos);
+                    dist.finish = imagePos;
+                    dist.updateTransformedPos(frame.spatialTransform);
                     dist.setIsCreating(false);
                 } else {
                     dist.resetPos();
-                    dist.setStart(wcsPos);
+                    dist.start = imagePos;
                     dist.setIsCreating(true);
                 }
             }

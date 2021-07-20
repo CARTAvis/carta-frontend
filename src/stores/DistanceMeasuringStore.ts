@@ -3,11 +3,14 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {ImageViewLayer} from "components";
 import {AppStore, AstColorsIndex, ASTSettingsString} from "stores";
 import {getColorForTheme} from "utilities";
-import {Point2D} from "models";
+import {Point2D, Transform2D} from "models";
 
 export class DistanceMeasuringStore {
-    @observable start: Point2D;
-    @observable finish: Point2D;
+    start: Point2D;
+    finish: Point2D;
+
+    @observable transformedStart: Point2D;
+    @observable transformedFinish: Point2D;
     @observable isCreating: boolean;
     @observable color: string;
 
@@ -17,14 +20,14 @@ export class DistanceMeasuringStore {
 
     constructor() {
         makeObservable(this);
-        this.start = {x: null, y: null};
-        this.finish = {x: null, y: null};
+        this.transformedStart = {x: null, y: null};
+        this.transformedFinish = {x: null, y: null};
         this.isCreating = false;
         this.color = DistanceMeasuringStore.DEFAULT_COLOR;
     }
 
     @computed get showCurve(): boolean {
-        return this.start.x != null && this.start.y != null && this.finish.x != null && this.finish.y != null && AppStore.Instance.activeLayer === ImageViewLayer.DistanceMeasuring;
+        return this.transformedStart.x != null && this.transformedStart.y != null && this.transformedFinish.x != null && this.transformedFinish.y != null && AppStore.Instance.activeLayer === ImageViewLayer.DistanceMeasuring;
     }
 
     @computed get styleString() {
@@ -40,17 +43,18 @@ export class DistanceMeasuringStore {
         this.isCreating = isCreating;
     };
 
-    @action setStart = (pos: Point2D) => {
-        this.start = pos;
-    };
-
-    @action setFinish = (pos: Point2D) => {
-        this.finish = pos;
+    @action updateTransformedPos = (spatialTransform: Transform2D) => {
+        if (this.start?.x != null && this.start?.y != null && this.finish?.x != null && this.finish?.y != null) {        
+            this.transformedStart = spatialTransform ? spatialTransform.transformCoordinate(this.start) : this.start;
+            this.transformedFinish = spatialTransform ? spatialTransform.transformCoordinate(this.finish) : this.finish;
+        }
     };
 
     @action resetPos = () => {
         this.start = {x: null, y: null};
         this.finish = {x: null, y: null};
+        this.transformedStart = {x: null, y: null};
+        this.transformedFinish = {x: null, y: null};
         this.isCreating = false;
     };
 
