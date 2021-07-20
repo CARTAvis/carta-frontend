@@ -6,7 +6,7 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
-import {toFixed, getFormattedWCSPoint, formattedArcsec} from "utilities";
+import {toFixed, getFormattedWCSPoint, formattedArcsec, length2D} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.scss";
 
@@ -143,21 +143,35 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 let sizeContent: React.ReactNode;
                 if (region.size) {
                     if (frame.validWcs) {
-                        sizeContent = (
-                            <React.Fragment>
-                                {formattedArcsec(region.wcsSize.x, WCS_PRECISION)}
-                                <br />
-                                {formattedArcsec(region.wcsSize.y, WCS_PRECISION)}
-                            </React.Fragment>
-                        );
+                        sizeContent =
+                            region.regionType === CARTA.RegionType.LINE ? (
+                                formattedArcsec(length2D(region.wcsSize), WCS_PRECISION)
+                            ) : (
+                                <React.Fragment>
+                                    {formattedArcsec(region.wcsSize.x, WCS_PRECISION)}
+                                    <br />
+                                    {formattedArcsec(region.wcsSize.y, WCS_PRECISION)}
+                                </React.Fragment>
+                            );
                     } else {
-                        sizeContent = `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
+                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(length2D(region.wcsSize), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
                     }
+                }
+                let tooltipContent = "";
+                switch (region.regionType) {
+                    case CARTA.RegionType.ELLIPSE:
+                        tooltipContent = "Semi-major and semi-minor axes";
+                        break;
+                    case CARTA.RegionType.LINE:
+                        tooltipContent = "Length";
+                        break;
+                    default:
+                        tooltipContent = "Width and height";
                 }
                 sizeEntry = (
                     <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {region.regionType !== CARTA.RegionType.POINT && (
-                            <Tooltip2 content={region.regionType === CARTA.RegionType.ELLIPSE ? "Semi-major and semi-minor axes" : "Width and height"} position={Position.BOTTOM}>
+                            <Tooltip2 content={tooltipContent} position={Position.BOTTOM}>
                                 {sizeContent}
                             </Tooltip2>
                         )}

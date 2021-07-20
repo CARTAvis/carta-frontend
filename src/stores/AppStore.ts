@@ -161,7 +161,18 @@ export class AppStore {
         }
 
         const folderSearchParam = url.searchParams.get("folder");
-        const fileSearchParam = url.searchParams.get("file");
+
+        let fileList: string[];
+        if (url.searchParams.has("files")) {
+            let filesString = url.searchParams.get("files");
+            // Strip the padding [] if it exists
+            if (filesString.startsWith("[") && filesString.endsWith("]")) {
+                filesString = filesString.slice(1, -1);
+            }
+            fileList = filesString.split(",")?.map(file => file.trim());
+        } else if (url.searchParams.has("file")) {
+            fileList = [url.searchParams.get("file")];
+        }
 
         try {
             await AST.onReady;
@@ -169,14 +180,16 @@ export class AppStore {
             const ack = await this.backendService.connect(wsURL);
             console.log(`Connected with session ID ${ack.sessionId}`);
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
-            if (fileSearchParam) {
-                await this.loadFile(folderSearchParam, fileSearchParam, "");
+            if (fileList?.length) {
+                for (const file of fileList) {
+                    await this.loadFile(folderSearchParam, file, "");
+                }
             }
-            if (this.preferenceStore.autoLaunch && !fileSearchParam) {
+            if (this.preferenceStore.autoLaunch && !fileList?.length) {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
     };
 
@@ -460,6 +473,17 @@ export class AppStore {
             if (lastDirSeparator >= 0) {
                 path = filename.substring(0, lastDirSeparator);
                 filename = filename.substring(lastDirSeparator + 1);
+            }
+        }
+
+        // Separate HDU and filename if no HDU is specified
+        if (!hdu?.length) {
+            const hduRegex = /^(.*)\[(\S+)]$/;
+            const matches = hduRegex.exec(filename);
+            // Three matching groups. Second is filename, third is HDU
+            if (matches?.length === 3) {
+                filename = matches[1];
+                hdu = matches[2];
             }
         }
 
@@ -1493,11 +1517,6 @@ export class AppStore {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     this.catalogStore.updateCatalogData(catalogFileId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogProfileStore.catalogCoordinateSystem.system);
-
-                    if (frame !== this.activeFrame) {
-                        const imageMapId = `${frame.frameInfo.fileId}-${this.activeFrame.frameInfo.fileId}`;
-                        this.catalogStore.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
-                    }
                 }
             }
         }
