@@ -90,7 +90,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                         }}
                         onResizeStop={this.onResizeStop}
                     >
-                        <Dialog hasBackdrop={false} usePortal={false} enforceFocus={false} autoFocus={true} {...this.props.dialogProps} children={this.props.children} />
+                        <Dialog portalClassName="dialog-portal" hasBackdrop={false} usePortal={false} enforceFocus={false} autoFocus={true} {...this.props.dialogProps} children={this.props.children} />
                     </Rnd>
                 )}
             </div>

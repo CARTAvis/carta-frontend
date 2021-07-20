@@ -107,6 +107,9 @@ export class PreferenceDialogComponent extends React.Component {
                         <option value={Theme.DARK}>Dark</option>
                     </HTMLSelect>
                 </FormGroup>
+                <FormGroup inline={true} label="Enable Code Snippets">
+                    <Switch checked={preference.codeSnippetsEnabled} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED, ev.currentTarget.checked)} />
+                </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
                     <Switch checked={preference.autoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
                 </FormGroup>
@@ -537,7 +540,7 @@ export class PreferenceDialogComponent extends React.Component {
                         </option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Contour Control Map Resolution">
+                <FormGroup inline={true} label="Control Map Resolution">
                     <HTMLSelect value={preference.contourControlMapWidth} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, parseInt(ev.currentTarget.value))}>
                         <option key={0} value={128}>
                             128&times;128 (128 KB)

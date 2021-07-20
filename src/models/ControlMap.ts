@@ -38,6 +38,7 @@ export class ControlMap {
         this.minPoint = {x: -paddingX, y: -paddingY};
         this.maxPoint = {x: paddingX + src.frameInfo.fileInfoExtended.width, y: paddingY + src.frameInfo.fileInfoExtended.height};
         this.grid = AST.getTransformGrid(astTransform, this.minPoint.x, this.maxPoint.x, width, this.minPoint.y, this.maxPoint.y, height, true);
+
         if (cleanUpTransform) {
             AST.deleteObject(astTransform);
         }

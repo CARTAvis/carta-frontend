@@ -161,7 +161,18 @@ export class AppStore {
         }
 
         const folderSearchParam = url.searchParams.get("folder");
-        const fileSearchParam = url.searchParams.get("file");
+
+        let fileList: string[];
+        if (url.searchParams.has("files")) {
+            let filesString = url.searchParams.get("files");
+            // Strip the padding [] if it exists
+            if (filesString.startsWith("[") && filesString.endsWith("]")) {
+                filesString = filesString.slice(1, -1);
+            }
+            fileList = filesString.split(",")?.map(file => file.trim());
+        } else if (url.searchParams.has("file")) {
+            fileList = [url.searchParams.get("file")];
+        }
 
         try {
             await AST.onReady;
@@ -169,14 +180,16 @@ export class AppStore {
             const ack = await this.backendService.connect(wsURL);
             console.log(`Connected with session ID ${ack.sessionId}`);
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
-            if (fileSearchParam) {
-                await this.loadFile(folderSearchParam, fileSearchParam, "");
+            if (fileList?.length) {
+                for (const file of fileList) {
+                    await this.loadFile(folderSearchParam, file, "");
+                }
             }
-            if (this.preferenceStore.autoLaunch && !fileSearchParam) {
+            if (this.preferenceStore.autoLaunch && !fileList?.length) {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
     };
 
@@ -419,10 +432,9 @@ export class AppStore {
             this.setSpectralReference(newFrame);
         }
 
-        const imageFileId = newFrame.frameInfo.fileId;
-        this.setActiveFrame(imageFileId);
+        this.setActiveFrame(newFrame);
         // init image associated catalog
-        this.catalogStore.updateImageAssociatedCatalogId(imageFileId, []);
+        this.catalogStore.updateImageAssociatedCatalogId(newFrame.frameInfo.fileId, []);
 
         // Set animation mode to frame if the new image is 2D, or to channel if the image is 3D and there are no other frames
         if (newFrame.frameInfo.fileInfoExtended.depth <= 1 && newFrame.frameInfo.fileInfoExtended.stokes <= 1) {
@@ -463,6 +475,17 @@ export class AppStore {
             }
         }
 
+        // Separate HDU and filename if no HDU is specified
+        if (!hdu?.length) {
+            const hduRegex = /^(.*)\[(\S+)]$/;
+            const matches = hduRegex.exec(filename);
+            // Three matching groups. Second is filename, third is HDU
+            if (matches?.length === 3) {
+                filename = matches[1];
+                hdu = matches[2];
+            }
+        }
+
         try {
             const ack = await this.backendService.loadFile(path, filename, hdu, this.fileCounter, CARTA.RenderMode.RASTER);
             this.fileCounter++;
@@ -474,7 +497,7 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
-            return ack.fileId;
+            return this.getFrame(ack.fileId);
         } catch (err) {
             this.alertStore.showAlert(`Error loading file: ${err}`);
             this.endFileLoading();
@@ -525,7 +548,7 @@ export class AppStore {
      * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
      * @return {Promise<number>} [async] the file ID of the opened file
      */
-    @action appendFile = (path: string, filename: string, hdu: string) => {
+    @action appendFile = async (path: string, filename: string, hdu: string) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
         return this.loadFile(path, filename, hdu);
@@ -563,19 +586,19 @@ export class AppStore {
         }
     };
 
-    @action closeFile = (frame: FrameStore, confirmClose: boolean = true) => {
+    @action closeFile = async (frame: FrameStore, confirmClose: boolean = true) => {
         if (!frame) {
             return;
         }
         // Display confirmation if image has secondary images
         const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
         const numSecondaries = secondaries.length;
+
         if (confirmClose && numSecondaries) {
-            this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`, confirmed => {
-                if (confirmed) {
-                    this.removeFrame(frame);
-                }
-            });
+            const confirmed = await this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`);
+            if (confirmed) {
+                this.removeFrame(frame);
+            }
         } else {
             this.removeFrame(frame);
         }
@@ -718,7 +741,7 @@ export class AppStore {
             const frameIds = this.frames.map(f => f.frameInfo.fileId);
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
-            this.setActiveFrame(frameIds[requiredIndex]);
+            this.setActiveFrameByIndex(requiredIndex);
         }
     };
 
@@ -1093,6 +1116,7 @@ export class AppStore {
         makeObservable(this);
         AppStore.staticInstance = this;
         window["app"] = this;
+        window["carta"] = this;
         // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
@@ -1183,10 +1207,9 @@ export class AppStore {
                 case ConnectionStatus.CLOSED:
                     if (this.previousConnectionStatus === ConnectionStatus.ACTIVE || this.previousConnectionStatus === ConnectionStatus.PENDING) {
                         AppToaster.show(ErrorToast("Disconnected from server"));
-                        this.alertStore.showRetryAlert(
-                            "You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.",
-                            this.onReconnectAlertClosed
-                        );
+                        this.alertStore
+                            .showRetryAlert("You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.")
+                            .then(this.onReconnectAlertClosed);
                     }
                     break;
                 default:
@@ -1504,11 +1527,6 @@ export class AppStore {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     this.catalogStore.updateCatalogData(catalogFileId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogProfileStore.catalogCoordinateSystem.system);
-
-                    if (frame !== this.activeFrame) {
-                        const imageMapId = `${frame.frameInfo.fileId}-${this.activeFrame.frameInfo.fileId}`;
-                        this.catalogStore.updateSpatialMatchedCatalog(imageMapId, catalogFileId);
-                    }
                 }
             }
         }
@@ -1662,31 +1680,36 @@ export class AppStore {
         return this.tileService && this.tileService.workersReady;
     }
 
-    @action setActiveFrame(fileId: number) {
+    @action setActiveFrame(frame: FrameStore) {
+        if (!frame) {
+            return;
+        }
+
         // Ignore changes when animating
         if (this.animatorStore.serverAnimationActive) {
             return;
         }
+
         // Disable rendering of old frame
-        if (this.activeFrame && this.activeFrame.frameInfo.fileId !== fileId) {
+        if (this.activeFrame && this.activeFrame !== frame) {
             this.activeFrame.renderType = RasterRenderType.NONE;
         }
 
+        this.changeActiveFrame(frame);
+    }
+
+    @action setActiveFrameById(fileId: number) {
         const requiredFrame = this.getFrame(fileId);
         if (requiredFrame) {
-            this.changeActiveFrame(requiredFrame);
+            this.setActiveFrame(requiredFrame);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
     }
 
     @action setActiveFrameByIndex(index: number) {
-        // Ignore changes when animating
-        if (this.animatorStore.serverAnimationActive) {
-            return;
-        }
         if (index >= 0 && this.frames.length > index) {
-            this.changeActiveFrame(this.frames[index]);
+            this.setActiveFrame(this.frames[index]);
         } else {
             console.log(`Invalid frame index ${index}`);
         }
@@ -1708,7 +1731,7 @@ export class AppStore {
     @action setContourDataSource = (frame: FrameStore) => {
         this.contourDataSource = frame;
         if (this.syncFrameToContour) {
-            this.setActiveFrame(frame.frameInfo.fileId);
+            this.setActiveFrame(frame);
         }
     };
 

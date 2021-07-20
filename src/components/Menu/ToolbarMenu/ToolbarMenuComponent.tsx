@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {AppStore, RegionMode, WidgetsStore} from "stores";
+import {AppStore, RegionMode, RegionStore, WidgetsStore} from "stores";
 import {ImageViewLayer} from "components";
 import {RegionCreationMode} from "models";
 import {IconName} from "@blueprintjs/icons";
@@ -19,22 +19,49 @@ export class ToolbarMenuComponent extends React.Component {
         appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
 
-    regionTooltip = (shape: string) => {
+    regionTooltip = (type: CARTA.RegionType) => {
         const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
-        return (
-            <span>
-                <br />
-                <i>
+        let tooltip = null;
+        switch (type) {
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.LINE:
+                tooltip = (
                     <small>
                         Click-and-drag to define a region ({regionModeIsCenter ? "center to corner" : "corner to corner"}).
                         <br />
-                        Hold Ctrl to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).
+                        Hold Ctrl/Cmd to define a region ({regionModeIsCenter ? "corner to corner" : "center to corner"}).
                         <br />
                         Change the default creation mode in Preferences.
                         <br />
-                        Hold shift key to create a {shape}.
+                        {type === CARTA.RegionType.LINE ? "" : `Hold shift key to create a ${type === CARTA.RegionType.RECTANGLE ? "square" : "circle"}.`}
                     </small>
-                </i>
+                );
+                break;
+            case CARTA.RegionType.POLYGON:
+                tooltip = (
+                    <small>
+                        Define control points with a series of clicks.
+                        <br />
+                        Double-click to close the loop and finish polygon creation.
+                        <br />
+                        Double-click on a control point to delete it.
+                        <br />
+                        Click on a side to create a new control point.
+                    </small>
+                );
+                break;
+            default:
+                break;
+        }
+
+        return (
+            <span>
+                {RegionStore.RegionTypeString(type)}
+                <span>
+                    <br />
+                    <i>{tooltip}</i>
+                </span>
             </span>
         );
     };
@@ -70,37 +97,19 @@ export class ToolbarMenuComponent extends React.Component {
         return (
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
-                    <Tooltip2 content={<span>Point</span>} position={Position.BOTTOM}>
+                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.POINT)} position={Position.BOTTOM}>
                         <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled} />
                     </Tooltip2>
-                    <Tooltip2 content={<span>Rectangle{this.regionTooltip("square")}</span>} position={Position.BOTTOM}>
+                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.LINE)} position={Position.BOTTOM}>
+                        <AnchorButton icon={"slash"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.LINE)} active={isRegionCreating && newRegionType === CARTA.RegionType.LINE} disabled={regionButtonsDisabled} />
+                    </Tooltip2>
+                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.RECTANGLE)} position={Position.BOTTOM}>
                         <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled} />
                     </Tooltip2>
-                    <Tooltip2 content={<span>Ellipse{this.regionTooltip("circle")}</span>} position={Position.BOTTOM}>
+                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.ELLIPSE)} position={Position.BOTTOM}>
                         <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled} />
                     </Tooltip2>
-                    <Tooltip2
-                        content={
-                            <span>
-                                Polygon
-                                <span>
-                                    <br />
-                                    <i>
-                                        <small>
-                                            Define control points with a series of clicks.
-                                            <br />
-                                            Double-click to close the loop and finish polygon creation.
-                                            <br />
-                                            Double-click on a control point to delete it.
-                                            <br />
-                                            Click on a side to create a new control point.
-                                        </small>
-                                    </i>
-                                </span>
-                            </span>
-                        }
-                        position={Position.BOTTOM}
-                    >
+                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.POLYGON)} position={Position.BOTTOM}>
                         <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled} />
                     </Tooltip2>
                 </ButtonGroup>
@@ -137,6 +146,30 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon={"contour"} />} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible} />
                     </Tooltip2>
+                    {appStore.preferenceStore.codeSnippetsEnabled && (
+                        <Tooltip2
+                            content={
+                                <span>
+                                    Code Snippets
+                                    <span>
+                                        <br />
+                                        <i>
+                                            <small>
+                                                Use to save, load or run small code snippets,
+                                                <br />
+                                                providing additional functionality to CARTA.
+                                                <br />
+                                                Warning: Use at own risk!
+                                            </small>
+                                        </i>
+                                    </span>
+                                </span>
+                            }
+                            position={Position.BOTTOM}
+                        >
+                            <AnchorButton icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} active={dialogStore.codeSnippetDialogVisible} />
+                        </Tooltip2>
+                    )}
                 </ButtonGroup>
             </React.Fragment>
         );

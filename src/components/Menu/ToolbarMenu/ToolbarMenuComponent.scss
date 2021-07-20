@@ -9,6 +9,11 @@
             color: $gray5;
         }
     }
+
+    // adjust for line region icon
+    .bp3-icon-slash {
+        transform: rotate(45deg) scaleY(1.6) rotate(-15deg);
+    }
 }
 
 .toolbar-menu {
