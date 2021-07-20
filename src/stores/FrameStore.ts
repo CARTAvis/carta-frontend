@@ -736,7 +736,9 @@ export class FrameStore {
     }
 
     @computed get stokesInfo(): string[] {
-        return this.stokesOptions?.map(option => {return option?.label;});
+        return this.stokesOptions?.map(option => {
+            return option?.label;
+        });
     }
 
     constructor(frameInfo: FrameInfo) {

@@ -532,7 +532,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 <div className="profile-container">
                     <div className="profile-toolbar">
                         <RegionSelectorComponent widgetStore={widgetStore} disableClosedRegion={true} />
-                        {widgetStore.effectiveFrame?.hasStokes &&
+                        {widgetStore.effectiveFrame?.hasStokes && (
                             <FormGroup label={"Stokes"} inline={true}>
                                 <HTMLSelect
                                     value={widgetStore.effectiveFrame?.requiredStokes}
@@ -544,7 +544,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                                     disabled={appStore.animatorStore.animationActive}
                                 />
                             </FormGroup>
-                        }
+                        )}
                     </div>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps} />
