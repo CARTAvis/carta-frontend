@@ -9,11 +9,11 @@ import {AppStore, FrameStore, OverlayStore, PreferenceStore, RegionMode, RegionS
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
+import {ImageViewLayer} from "../ImageViewComponent";
 import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D} from "models";
 import {average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
-import {ImageViewLayer} from "../ImageViewComponent";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
@@ -171,7 +171,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.creatingRegion = null;
 
         // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
-        setTimeout(() => this.props.frame.regionSet.setMode(RegionMode.MOVING), 1);
+        setTimeout(() => {
+            this.props.frame.regionSet.setMode(RegionMode.MOVING);
+            AppStore.Instance.updateActiveLayer(ImageViewLayer.RegionMoving);
+        }, 1);
     };
 
     @action private polygonRegionAddPoint = (mouseEvent: MouseEvent) => {
