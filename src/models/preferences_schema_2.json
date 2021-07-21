@@ -261,6 +261,15 @@
         },
         "codeSnippetsEnabled": {
             "type": "boolean"
+        },
+        "limitOverlayRedraw": {
+            "type": "boolean",
+            "default": true
+        },
+        "cursorInfoVisible": {
+            "type": "string",
+            "enum": ["always", "activeImage", "hideTiled", "never"],
+            "default": "activeImage"
         }
     }
 }
