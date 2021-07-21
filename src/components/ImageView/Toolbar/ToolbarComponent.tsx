@@ -65,14 +65,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     private handleActiveLayerClicked = (layer: ImageViewLayer) => {
+        if (AppStore.Instance.activeLayer !== ImageViewLayer.DistanceMeasuring && layer === ImageViewLayer.DistanceMeasuring) {
+            AppStore.Instance.frames.forEach(frame => frame.distanceMeasuring.resetPos());
+        }
         this.props.onActiveLayerChange(layer);
         if (layer === ImageViewLayer.RegionCreating) {
             AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.CREATING);
         } else {
             AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
-        }
-        if (layer !== ImageViewLayer.DistanceMeasuring) {
-            AppStore.Instance.activeFrame.distanceMeasuring.resetPos();
         }
     };
 
