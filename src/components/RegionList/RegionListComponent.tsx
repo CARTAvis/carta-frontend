@@ -125,7 +125,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
                 if (frame.validWcs) {
-                    centerContent = <RegionWcsCenter region={region} frame={frame} />;
+                    if (frame.spatialReference && frame.spatialReference.regionSet.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp)) {
+                        centerContent = <RegionWcsCenter region={region} frame={frame.spatialReference} />;
+                    } else {
+                        centerContent = <RegionWcsCenter region={region} frame={frame} />;
+                    }
                 } else {
                     centerContent = `(${toFixed(region.center.x, 1)}, ${toFixed(region.center.y, 1)})`;
                 }
