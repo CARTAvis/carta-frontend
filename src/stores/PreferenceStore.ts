@@ -671,8 +671,7 @@ export class PreferenceStore {
                 PreferenceKeys.REGION_CREATION_MODE,
                 PreferenceKeys.WCS_OVERLAY_AST_COLOR,
                 PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION,
-                PreferenceKeys.PIXEL_GRID_COLOR,
-                PreferenceKeys.WCS_OVERLAY_CURSOR_INFO
+                PreferenceKeys.PIXEL_GRID_COLOR
             ];
 
             const intKeys = [
