@@ -648,7 +648,7 @@ export class PreferenceStore {
 
     private upgradePreferences = async () => {
         if (!localStorage.getItem("preferences")) {
-            // perform localstorage upgrade
+            // perform localstorage upgrade by iterating over the old keys. This list consists of keys that were present when CARTA used a single localStorage entry per key
 
             // Strings
             const stringKeys = [
