@@ -14,7 +14,7 @@ import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {ContourViewComponent} from "./ContourView/ContourViewComponent";
 import {CatalogViewGLComponent} from "./CatalogView/CatalogViewGLComponent";
 import {AppStore, RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, Padding} from "stores";
-import {CursorInfo, Point2D} from "models";
+import {CursorInfo, CursorInfoVisibility, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.scss";
 
@@ -210,11 +210,13 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
+            // This will be expanded when using multi-panel view
+            const cursorInfoRequired = appStore.preferenceStore.cursorInfoVisible !== CursorInfoVisibility.Never;
 
             divContents = (
                 <React.Fragment>
                     {appStore.activeFrame.valid && <OverlayComponent frame={appStore.activeFrame} overlaySettings={overlayStore} docked={this.props.docked} />}
-                    {appStore.activeFrame.cursorInfo && (
+                    {cursorInfoRequired && appStore.activeFrame.cursorInfo && (
                         <CursorOverlayComponent
                             cursorInfo={appStore.activeFrame.cursorInfo}
                             cursorValue={appStore.activeFrame.cursorInfo.isInsideImage ? appStore.activeFrame.cursorValue.value : undefined}
