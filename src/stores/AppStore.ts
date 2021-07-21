@@ -1037,6 +1037,10 @@ export class AppStore {
         this.activeLayer = layer;
     };
 
+    @action toggleActiveLayer = () => {
+        this.activeLayer = this.activeLayer === ImageViewLayer.RegionCreating ? ImageViewLayer.RegionMoving : ImageViewLayer.RegionCreating;
+    };
+
     public static readonly DEFAULT_STATS_TYPES = [
         CARTA.StatsType.NumPixels,
         CARTA.StatsType.Sum,
