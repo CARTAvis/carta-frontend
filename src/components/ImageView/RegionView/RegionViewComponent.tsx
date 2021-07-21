@@ -511,7 +511,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             frame.regionSet.deleteRegion(this.creatingRegion);
             this.creatingRegion = null;
             frame.regionSet.setMode(RegionMode.MOVING);
-            AppStore.Instance.updateActiveLayer(ImageViewLayer.RegionMoving)
+            AppStore.Instance.updateActiveLayer(ImageViewLayer.RegionMoving);
         }
     };
 
