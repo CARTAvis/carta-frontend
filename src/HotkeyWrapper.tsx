@@ -17,7 +17,7 @@ export class HotkeyContainer extends React.Component {
         }
 
         return (
-            <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={className} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
+            <Dialog portalClassName="dialog-portal" isOpen={appStore.dialogStore.hotkeyDialogVisible} className={className} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
                 <div className={Classes.DIALOG_BODY}>{HotkeyContainer.RenderHotkeys()}</div>
             </Dialog>
         );
