@@ -85,7 +85,7 @@ export function formattedFrequency(freqGHz: number): string {
 
 // TODO: possibly move to region class since they are the only callers
 export function formattedArcsec(arcsec: number, decimals: number = -1): string {
-    if (!isFinite(arcsec)) {
+    if (!isFinite(arcsec) || !isFinite(decimals)) {
         return null;
     }
 
