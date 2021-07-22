@@ -1,4 +1,5 @@
 import * as React from "react";
+import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, RowHeaderCell} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
@@ -12,13 +13,19 @@ export class SimpleTableComponentProps {
     defaultRowHeight?: number;
     enableGhostCells?: boolean;
     isIndexZero?: boolean;
+    boldIndex?: number[];
     updateTableRef?: (ref: Table) => void;
 }
 
 @observer
 export class SimpleTableComponent extends React.Component<SimpleTableComponentProps> {
+    private getFontStyle = (rowIndex: number): CSSProperties => {
+        return this.props.boldIndex?.includes(rowIndex) ? {fontWeight: "bold"} : null;
+    };
+
     private renderRowHeaderCell = (rowIndex: number) => {
-        return <RowHeaderCell name={rowIndex.toString()} />;
+        const index = this.props.isIndexZero ? rowIndex : rowIndex + 1;
+        return <RowHeaderCell name={index.toString()}  style={this.getFontStyle(rowIndex)} />;
     };
 
     private renderDataColumn = (columnName: string, columnData: any) => {
@@ -27,7 +34,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)}>
                         {rowIndex < columnData?.length ? columnData[rowIndex] : undefined}
                     </Cell>
                 )}
@@ -56,7 +63,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 selectionModes={SelectionModes.NONE}
                 enableGhostCells={this.props.enableGhostCells ?? true}
                 defaultRowHeight={this.props.defaultRowHeight}
-                rowHeaderCellRenderer={this.props.isIndexZero ? this.renderRowHeaderCell : undefined}
+                rowHeaderCellRenderer={this.renderRowHeaderCell}
                 enableRowResizing={false}
                 columnWidths={this.props.columnWidths}
                 onColumnWidthChanged={this.props.onColumnWidthChanged}

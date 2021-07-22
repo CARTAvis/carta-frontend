@@ -1285,14 +1285,12 @@ export class AppStore {
         autorun(() => {
             if (this.activeFrame?.cursorInfo?.posImageSpace) {
                 const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
-                if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
-                    if (this.preferenceStore.lowBandwidthMode) {
-                        throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos);
-                    } else if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
-                        throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos);
-                    } else {
-                        throttledSetCursor(this.activeFrame.frameInfo.fileId, pos);
-                    }
+                if (this.preferenceStore.lowBandwidthMode) {
+                    throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos);
+                } else if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
+                    throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos);
+                } else {
+                    throttledSetCursor(this.activeFrame.frameInfo.fileId, pos);
                 }
             }
         });
@@ -1367,9 +1365,9 @@ export class AppStore {
             }
             profileStore.updateFromStream(spatialProfileData);
 
-            // Update cursor value from profile if it matches the file and is the cursor data
-            if (this.activeFrame && this.activeFrame.frameInfo.fileId === spatialProfileData.fileId && spatialProfileData.regionId === 0) {
-                this.activeFrame.setCursorValue({x: spatialProfileData.x, y: spatialProfileData.y}, spatialProfileData.channel, spatialProfileData.value);
+            // Update cursor value from profile if it is the cursor data
+            if (spatialProfileData.regionId === 0) {
+                this.getFrame(spatialProfileData.fileId).setCursorValue({x: spatialProfileData.x, y: spatialProfileData.y}, spatialProfileData.channel, spatialProfileData.value);
             }
         }
     };

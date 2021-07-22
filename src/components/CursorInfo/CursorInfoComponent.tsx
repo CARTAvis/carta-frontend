@@ -82,50 +82,57 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         const dataType = CARTA.ColumnType.String;
         const columnHeaders = columnNames.map((name, index) => new CARTA.CatalogHeader({name: name, dataType, columnIndex: index}));
 
-        const imageNames = appStore.frames.map(frame => frame.filename);
-        let values = Array(frameNum).fill("-");
-        let systems = Array(frameNum).fill("-");
-        let worldCoords = Array(frameNum).fill("-");
-        let imageCoords = Array(frameNum).fill("-");
-        const zCoords = appStore.frames.map(frame => this.genZCoordString(frame));
-        const channels = appStore.frames.map(frame => frame.requiredChannel);
-        const stokes = appStore.frames.map(frame => frame.requiredStokes);
-
-        const activeFrameIndex = appStore.activeFrameIndex;
-        if (frame.cursorInfo.isInsideImage && frame.cursorValue !== undefined) {
-            let valueString = formattedExponential(frame.cursorValue.value, 5, "", true, true);
-            if (isNaN(frame.cursorValue.value)) {
-                valueString = "NaN";
-            }
-            if (!frame.isCursorValueCurrent) {
-                valueString += "*";
-            }
-            values[activeFrameIndex] =
-                frame.unit === undefined || !frame.unit.length ? (
-                    valueString
-                ) : (
+        let imageNames: any = appStore.frames.map(frame => frame.filename);
+        let values: any = Array(frameNum).fill("-");
+        let systems: any = Array(frameNum).fill("-");
+        let worldCoords: any = Array(frameNum).fill("-");
+        let imageCoords: any = Array(frameNum).fill("-");
+        let zCoords: any = appStore.frames.map(frame => this.genZCoordString(frame));
+        let channels: any = appStore.frames.map(frame => frame.requiredChannel);
+        let stokes: any = appStore.frames.map(frame => frame.requiredStokes);
+        
+        const showFrames = frame.spatialReference ? [frame.spatialReference, ...frame.spatialReference.secondarySpatialImages] : [frame, ...frame.secondarySpatialImages];
+        const showFileIds = showFrames.map(frame => frame.frameInfo.fileId);
+        appStore.frames.forEach((frame, index) => {
+            if (showFileIds.includes(frame.frameInfo.fileId)) {
+                if (frame.cursorInfo.isInsideImage && frame.cursorValue !== undefined) {
+                    let valueString = formattedExponential(frame.cursorValue.value, 5, "", true, true);
+                    if (isNaN(frame.cursorValue.value)) {
+                        valueString = "NaN";
+                    }
+                    if (!frame.isCursorValueCurrent) {
+                        valueString += "*";
+                    }
+                    values[index] =
+                        frame.unit === undefined || !frame.unit.length ? (
+                            valueString
+                        ) : (
+                            <React.Fragment>
+                                {valueString}
+                                <br />
+                                {frame.unit}
+                            </React.Fragment>
+                        );
+                }
+                systems[index] = appStore.overlayStore.global.explicitSystem;
+                if (frame.cursorInfo?.infoWCS) {
+                    worldCoords[index] = (
+                        <React.Fragment>
+                            {frame.cursorInfo.infoWCS.x}
+                            <br />
+                            {frame.cursorInfo.infoWCS.y}
+                        </React.Fragment>
+                    );
+                }
+                imageCoords[index] = (
                     <React.Fragment>
-                        {valueString}
+                        {toFixed(frame.cursorInfo?.posImageSpace?.x, 3)}
                         <br />
-                        {frame.unit}
+                        {toFixed(frame.cursorInfo?.posImageSpace?.y, 3)}
                     </React.Fragment>
                 );
-        }
-        systems[activeFrameIndex] = appStore.overlayStore.global.explicitSystem;
-        worldCoords[activeFrameIndex] = (
-            <React.Fragment>
-                {frame.cursorInfo?.infoWCS?.x}
-                <br />
-                {frame.cursorInfo?.infoWCS?.y}
-            </React.Fragment>
-        );
-        imageCoords[activeFrameIndex] = (
-            <React.Fragment>
-                {toFixed(frame.cursorInfo?.posImageSpace?.x, 3)}
-                <br />
-                {toFixed(frame.cursorInfo?.posImageSpace?.y, 3)}
-            </React.Fragment>
-        );
+            }
+        });
 
         const columnsData = new Map<number, any>([
             [0, {dataType, data: imageNames}],
@@ -150,6 +157,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
                         enableGhostCells={false}
                         defaultRowHeight={40}
                         isIndexZero={true}
+                        boldIndex={[appStore.activeFrameIndex]}
                     />
                 )}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
