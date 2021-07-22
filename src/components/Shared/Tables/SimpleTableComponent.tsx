@@ -25,7 +25,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
     private renderRowHeaderCell = (rowIndex: number) => {
         const index = this.props.isIndexZero ? rowIndex : rowIndex + 1;
-        return <RowHeaderCell name={index.toString()}  style={this.getFontStyle(rowIndex)} />;
+        return <RowHeaderCell name={index.toString()} style={this.getFontStyle(rowIndex)} />;
     };
 
     private renderDataColumn = (columnName: string, columnData: any) => {

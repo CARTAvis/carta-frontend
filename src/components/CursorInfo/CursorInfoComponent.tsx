@@ -90,7 +90,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         let zCoords: any = appStore.frames.map(frame => this.genZCoordString(frame));
         let channels: any = appStore.frames.map(frame => frame.requiredChannel);
         let stokes: any = appStore.frames.map(frame => frame.requiredStokes);
-        
+
         const showFrames = frame.spatialReference ? [frame.spatialReference, ...frame.spatialReference.secondarySpatialImages] : [frame, ...frame.secondarySpatialImages];
         const showFileIds = showFrames.map(frame => frame.frameInfo.fileId);
         appStore.frames.forEach((frame, index) => {
