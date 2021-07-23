@@ -140,7 +140,7 @@ export class AppStore {
         this.username = username;
     };
 
-    connectToServer = async () => {
+    private connectToServer = async () => {
         // Remove query parameters, replace protocol and remove trailing /
         let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
         if (process.env.NODE_ENV === "development") {
@@ -1112,6 +1112,25 @@ export class AppStore {
         }
     };
 
+    private initCarta = async (isAstReady: boolean, isZfpReady: boolean, isCartaComputeReady: boolean, isApiServiceAuthenticated: boolean) => {
+        if (isAstReady && isZfpReady && isCartaComputeReady && isApiServiceAuthenticated) {
+            await this.connectToServer();
+            this.preferenceStore.fetchPreferences().then(() => {
+                this.layoutStore.fetchLayouts().then(() => {
+                    this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+                    if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
+                        AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                        this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                    }
+                    this.cursorFrozen = this.preferenceStore.isCursorFrozen;
+                });
+                this.snippetStore.fetchSnippets();
+                this.updateASTColors();
+            });
+        }
+    };
+
     private constructor() {
         makeObservable(this);
         AppStore.staticInstance = this;
@@ -1328,23 +1347,7 @@ export class AppStore {
         }
 
         autorun(() => {
-            if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
-                this.preferenceStore.fetchPreferences().then(() => {
-                    this.layoutStore.fetchLayouts().then(() => {
-                        // Attempt connection after authenticating
-                        this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                        if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                            AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
-                            this.layoutStore.applyLayout(PresetLayout.DEFAULT);
-                            this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                        }
-                        this.cursorFrozen = this.preferenceStore.isCursorFrozen;
-                        this.connectToServer();
-                    });
-                    this.snippetStore.fetchSnippets();
-                    this.updateASTColors();
-                });
-            }
+            this.initCarta(this.astReady, this.tileService?.zfpReady, this.cartaComputeReady, this.apiService?.authenticated);
         });
 
         autorun(() => {
@@ -1664,10 +1667,6 @@ export class AppStore {
         this.resumingSession = false;
         this.backendService.connectionDropped = false;
     };
-
-    @computed get zfpReady() {
-        return this.tileService && this.tileService.workersReady;
-    }
 
     @action setActiveFrame(frame: FrameStore) {
         if (!frame) {
