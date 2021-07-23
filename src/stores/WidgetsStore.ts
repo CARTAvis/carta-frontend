@@ -1109,11 +1109,8 @@ export class WidgetsStore {
     // endregion
 
     // region Spectral Line Query Widgets
-    createFloatingSpectralLineQueryWidget = (): string => {
-        const config = new WidgetConfig(this.addSpectralLineQueryWidget(), SpectralLineQueryComponent.WIDGET_CONFIG);
-        config.componentId = this.getNextComponentId(config);
-        this.addFloatingWidget(config);
-        return config.id;
+    createFloatingSpectralLineQueryWidget = () => {
+        this.addFloatingWidget(new WidgetConfig(this.addSpectralLineQueryWidget(), SpectralLineQueryComponent.WIDGET_CONFIG));
     };
 
     // add spectral line query widget store
