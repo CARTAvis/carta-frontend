@@ -24,7 +24,7 @@ export class SpectralProfileStore {
         return null;
     };
 
-    public resetProfilesProgress = () => {
+    @action resetProfilesProgress = () => {
         this.profiles.forEach(statsProfilesMap => {
             statsProfilesMap?.forEach(processedSpectralProfile => {
                 if (processedSpectralProfile) {
