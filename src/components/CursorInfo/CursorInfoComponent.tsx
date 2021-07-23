@@ -100,8 +100,8 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
     };
 
     private genZCoordContent = (frame: FrameStore): React.ReactNode => {
-        let zCoordString = [];
         if (frame?.spectralInfo?.spectralString) {
+            let zCoordString = [];
             zCoordString.push(frame.spectralInfo.spectralString.replace(/\w+\s\(/, "")?.replace(/\):\s/, "\u000A"));
             if (frame.spectralInfo.freqString) {
                 zCoordString.push(<br key={0} />);
@@ -111,14 +111,9 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
                 zCoordString.push(<br key={1} />);
                 zCoordString.push(frame.spectralInfo.velocityString.replace(/\w+:\s/, "\u000A"));
             }
-        } else {
-            zCoordString.push("NaN");
-        }
-        
-        if (zCoordString.length === 0) {
-            return "-";
-        } else {
             return <React.Fragment>{zCoordString}</React.Fragment>;
+        } else {
+            return "NaN";
         }
     };
 
