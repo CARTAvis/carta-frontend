@@ -557,7 +557,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         }
     };
 
-    public pingSplatalogue = async () => {
+    @action pingSplatalogue = async () => {
         try {
             this.splataloguePingStatus = SplataloguePingStatus.Checking;
             const ack = await BackendService.Instance.pingSplatalogue();
