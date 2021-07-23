@@ -107,7 +107,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
                 zCoordString.push(<br key={0} />);
                 zCoordString.push(frame.spectralInfo.freqString.replace(/\w+:\s/, "\u000A"));
             }
-            if (frame?.spectralInfo.velocityString) {
+            if (frame.spectralInfo.velocityString) {
                 zCoordString.push(<br key={1} />);
                 zCoordString.push(frame.spectralInfo.velocityString.replace(/\w+:\s/, "\u000A"));
             }
