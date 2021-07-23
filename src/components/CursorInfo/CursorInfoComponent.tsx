@@ -59,17 +59,15 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         if (!frame.isCursorValueCurrent) {
             valueString += "*";
         }
-        return (
-            frame.unit === undefined || !frame.unit.length ? (
-                valueString
-            ) : (
-                <React.Fragment>
-                    {valueString}
-                    <br />
-                    {frame.unit}
-                </React.Fragment>
-            )
-        );      
+        return frame.unit === undefined || !frame.unit.length ? (
+            valueString
+        ) : (
+            <React.Fragment>
+                {valueString}
+                <br />
+                {frame.unit}
+            </React.Fragment>
+        );
     };
 
     private genWorldCoordContent = (frame: FrameStore): React.ReactNode => {
@@ -116,14 +114,11 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         } else {
             zCoordString.push("NaN");
         }
+        
         if (zCoordString.length === 0) {
             return "-";
         } else {
-            return (
-                <React.Fragment>
-                    {zCoordString}
-                </React.Fragment>
-            );
+            return <React.Fragment>{zCoordString}</React.Fragment>;
         }
     };
 
