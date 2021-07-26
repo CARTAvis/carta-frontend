@@ -6,6 +6,7 @@ import {Point2D} from "models";
 import {BackendService} from "services";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 import {FrameStore} from "stores";
+import {CustomIconName} from "icons/CustomIcons";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -64,16 +65,30 @@ export class RegionStore {
         }
     }
 
-    public static RegionIconString(regionType: CARTA.RegionType): IconName {
+    public static IsRegionCustomIcon(regionType: CARTA.RegionType): boolean {
+        switch (regionType) {
+            case CARTA.RegionType.LINE:
+            case CARTA.RegionType.POLYLINE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static RegionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "symbol-square";
+            case CARTA.RegionType.LINE:
+                return "line";
             case CARTA.RegionType.RECTANGLE:
                 return "square";
             case CARTA.RegionType.ELLIPSE:
                 return "circle";
             case CARTA.RegionType.POLYGON:
                 return "polygon-filter";
+            case CARTA.RegionType.POLYLINE:
+                return "polyline";
             default:
                 return "error";
         }

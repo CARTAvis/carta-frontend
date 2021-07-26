@@ -7,7 +7,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, OverlayStore, RegionMode, RegionStore, SystemType} from "stores";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {toFixed} from "utilities";
-import {CustomIcon} from "icons/CustomIcons";
+import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
@@ -125,12 +125,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const regionMenu = (
             <Menu>
-                <MenuItem icon={"symbol-square"} text="Point" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} />
-                <MenuItem icon={<CustomIcon icon="line" />} text="Line" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.LINE)} />
-                <MenuItem icon={"square"} text="Rectangle" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} />
-                <MenuItem icon={"circle"} text="Ellipse" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} />
-                <MenuItem icon={"polygon-filter"} text="Polygon" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} />
-                <MenuItem icon={<CustomIcon icon="polyline" />} text="Polyline" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} />
+                {Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text]) => {
+                    const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
+                    const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : regionIconString as IconName;
+                    return (
+                        <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} />
+                    );
+                })}
             </Menu>
         );
 
@@ -147,7 +148,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        const regionIcon: IconName = RegionStore.RegionIconString(frame.regionSet.newRegionType);
+        const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(frame.regionSet.newRegionType);
+        const regionIcon = RegionStore.IsRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName}/> : regionIconString as IconName;
 
         const spatialMatchingEnabled = !!frame.spatialReference;
         const spectralMatchingEnabled = !!frame.spectralReference;

@@ -1,9 +1,10 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {autorun, computed, makeObservable} from "mobx";
-import {Checkbox, Icon} from "@blueprintjs/core";
+import {Checkbox, Icon, IconName} from "@blueprintjs/core";
 import {FileBrowserStore} from "stores";
 import "./RegionSelectComponent.scss";
+import { CustomIcon, CustomIconName } from "icons/CustomIcons";
 
 @observer
 export class RegionSelectComponent extends React.Component {
@@ -72,7 +73,7 @@ export class RegionSelectComponent extends React.Component {
                 checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
                 labelElement={
                     <React.Fragment>
-                        <Icon icon={item.icon} style={{opacity: 0.5}} />
+                        {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
                         <span>&ensp;</span>
                         {item.active ? <b>{item.label} (Active)</b> : item.label}
                     </React.Fragment>
