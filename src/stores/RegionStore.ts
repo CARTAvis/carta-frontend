@@ -57,6 +57,8 @@ export class RegionStore {
                 return "Ellipse";
             case CARTA.RegionType.POLYGON:
                 return "Polygon";
+            case CARTA.RegionType.POLYLINE:
+                return "Polyline";
             default:
                 return "Not Implemented";
         }
@@ -84,7 +86,8 @@ export class RegionStore {
         [CARTA.RegionType.LINE, "Line"],
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
         [CARTA.RegionType.ELLIPSE, "Ellipse"],
-        [CARTA.RegionType.POLYGON, "Polygon"]
+        [CARTA.RegionType.POLYGON, "Polygon"],
+        [CARTA.RegionType.POLYLINE, "Polyline"]
     ]);
 
     public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {

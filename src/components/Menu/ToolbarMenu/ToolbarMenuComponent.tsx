@@ -39,11 +39,12 @@ export class ToolbarMenuComponent extends React.Component {
                 );
                 break;
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 tooltip = (
                     <small>
                         Define control points with a series of clicks.
                         <br />
-                        Double-click to close the loop and finish polygon creation.
+                        Double-click to {type === CARTA.RegionType.POLYLINE ? "" : "close the loop and"} finish polygon creation.
                         <br />
                         Double-click on a control point to delete it.
                         <br />
@@ -111,6 +112,9 @@ export class ToolbarMenuComponent extends React.Component {
                     </Tooltip2>
                     <Tooltip2 content={this.regionTooltip(CARTA.RegionType.POLYGON)} position={Position.BOTTOM}>
                         <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled} />
+                    </Tooltip2>
+                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.POLYLINE)} position={Position.BOTTOM}>
+                        <AnchorButton icon={<CustomIcon icon="polyline" />} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled} />
                     </Tooltip2>
                 </ButtonGroup>
                 <ButtonGroup className={className}>

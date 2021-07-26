@@ -130,6 +130,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <MenuItem icon={"square"} text="Rectangle" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} />
                 <MenuItem icon={"circle"} text="Ellipse" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} />
                 <MenuItem icon={"polygon-filter"} text="Polygon" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} />
+                <MenuItem icon={<CustomIcon icon="polyline" />} text="Polyline" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} />
             </Menu>
         );
 
