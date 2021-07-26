@@ -2,7 +2,6 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {action, autorun, makeObservable, observable, runInAction} from "mobx";
 import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
-import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "../Overlay/OverlayComponent";
 import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
@@ -28,7 +27,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     private ratioIndicatorTimeoutHandle;
     private cachedImageSize: Point2D;
 
-    @observable showRatioIndicator: boolean;
+    @observable showRatioIndicator: boolean = false;
     @observable pixelHighlightValue: number = NaN;
     readonly activeLayer: ImageViewLayer;
 
@@ -61,12 +60,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             }
         });
     }
-
-    onResize = (width: number, height: number) => {
-        if (width > 0 && height > 0) {
-            AppStore.Instance.setImageViewDimensions(width, height);
-        }
-    };
 
     onClicked = (cursorInfo: CursorInfo) => {
         const frame = this.props.frame;
@@ -183,11 +176,10 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         }
 
         return (
-            <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+            <div className="image-panel-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} />
                 <ContourViewComponent frame={frame} docked={this.props.docked} />
                 {divContents}
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
             </div>
         );
     }

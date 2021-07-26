@@ -2,8 +2,9 @@ import "./ImageViewComponent.scss";
 import * as React from "react";
 import $ from "jquery";
 import {observer} from "mobx-react";
-import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
+import ReactResizeDetector from "react-resize-detector";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
+import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
 
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",
@@ -104,8 +105,18 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         };
     }
 
+    onResize = (width: number, height: number) => {
+        if (width > 0 && height > 0) {
+            AppStore.Instance.setImageViewDimensions(width, height);
+        }
+    };
+
     render() {
         const frame = AppStore.Instance.activeFrame;
-        return <ImagePanelComponent docked={this.props.docked} frame={frame} />;
+        return (
+            <div className="image-panel-div">
+                <ImagePanelComponent docked={this.props.docked} frame={frame} />;<ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
+            </div>
+        );
     }
 }
