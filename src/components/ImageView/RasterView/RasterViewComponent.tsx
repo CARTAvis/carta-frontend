@@ -36,6 +36,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateCanvas = () => {
         const frame = this.props.frame;
         const tileRenderService = TileWebGLService.Instance;
+        console.log(`Updating canvas for frame ${frame.frameInfo.fileId}, panel ${this.panelIndex}`);
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
             const histStokes = frame.renderConfig.stokes;
             const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histogram.channel : undefined;
@@ -106,12 +107,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private renderCanvas() {
         const frame = this.props.frame;
+        console.log(`Rendering canvas for frame ${frame.frameInfo.fileId}, panel ${this.panelIndex}`);
         // Only clear and render if we're in animation or tiled mode
         if (frame && frame.isRenderable && frame.renderType !== RasterRenderType.NONE) {
             this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
             this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
             this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
-
             // Skip rendering if frame is hidden
             if (!frame.renderConfig.visible) {
                 return;
@@ -217,12 +218,23 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
     }
 
+    private get panelIndex() {
+        const panelElement = this.canvas?.parentElement?.parentElement;
+        const viewElement = panelElement?.parentElement;
+        const numPanels = (viewElement?.children?.length ?? 0) - 1;
+        for (let i = 0; i < numPanels; i++) {
+            if (viewElement.children[i] === panelElement) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     private renderTile(tile: TileCoordinate, rasterTile: RasterTile, mip: number) {
         const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
+        const frame = this.props.frame;
         const shaderUniforms = TileWebGLService.Instance.shaderUniforms;
         const tileService = TileService.Instance;
-
         if (!rasterTile) {
             return;
         }

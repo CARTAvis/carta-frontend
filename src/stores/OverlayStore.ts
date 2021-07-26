@@ -1075,8 +1075,11 @@ export class OverlayStore {
     }
 
     // View size options
-    @observable viewWidth: number;
-    @observable viewHeight: number;
+    @observable fullViewWidth: number;
+    @observable fullViewHeight: number;
+
+    @observable numRows: number;
+    @observable numColumns: number;
 
     // Individual settings
     @observable global: OverlayGlobalSettings;
@@ -1102,8 +1105,11 @@ export class OverlayStore {
         this.ticks = new OverlayTickSettings();
         this.colorbar = new OverlayColorbarSettings();
         this.beam = new OverlayBeamSettings();
-        this.viewHeight = 1;
-        this.viewWidth = 1;
+        this.fullViewWidth = 1;
+        this.fullViewHeight = 1;
+
+        this.numRows = 2;
+        this.numColumns = 2;
 
         // if the system is manually selected, set new default formats & update active frame's wcs settings
         autorun(() => {
@@ -1136,8 +1142,16 @@ export class OverlayStore {
     }
 
     @action setViewDimension = (width: number, height: number) => {
-        this.viewWidth = width;
-        this.viewHeight = height;
+        this.fullViewWidth = width;
+        this.fullViewHeight = height;
+    };
+
+    @action setNumColumns = (cols: number) => {
+        this.numColumns = cols;
+    };
+
+    @action setNumRows = (rows: number) => {
+        this.numRows = rows;
     };
 
     @action setFormatsFromSystem() {
@@ -1280,6 +1294,14 @@ export class OverlayStore {
             top: this.paddingTop,
             bottom: this.paddingBottom
         };
+    }
+
+    @computed get viewWidth() {
+        return this.fullViewWidth / this.numColumns;
+    }
+
+    @computed get viewHeight() {
+        return this.fullViewHeight / this.numRows;
     }
 
     @computed get renderWidth() {

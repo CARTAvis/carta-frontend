@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
-import {AppStore, OverlayStore, RegionMode, RegionStore, SystemType} from "stores";
+import {AppStore, FrameStore, OverlayStore, RegionMode, RegionStore, SystemType} from "stores";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
@@ -14,6 +14,7 @@ export class ToolbarComponentProps {
     docked: boolean;
     visible: boolean;
     vertical: boolean;
+    frame: FrameStore;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
     activeLayer: ImageViewLayer;
 }
@@ -39,25 +40,22 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     ]);
 
     handleZoomToActualSizeClicked = () => {
-        AppStore.Instance.activeFrame.setZoom(1.0);
+        this.props.frame.setZoom(1.0);
     };
 
     handleZoomInClicked = () => {
-        const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame.spatialReference || appStore.activeFrame;
+        const frame = this.props.frame.spatialReference || this.props.frame;
         frame.setZoom(frame.zoomLevel * 2.0, true);
     };
 
     handleZoomOutClicked = () => {
-        const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame.spatialReference || appStore.activeFrame;
+        const frame = this.props.frame.spatialReference || this.props.frame;
         frame.setZoom(frame.zoomLevel / 2.0, true);
     };
 
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
-        const appStore = AppStore.Instance;
-        appStore.activeFrame.regionSet.setNewRegionType(type);
-        appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+        this.props.frame.regionSet.setNewRegionType(type);
+        this.props.frame.regionSet.setMode(RegionMode.CREATING);
     };
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
@@ -71,9 +69,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         }
         this.props.onActiveLayerChange(layer);
         if (layer === ImageViewLayer.RegionCreating) {
-            appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+            this.props.frame.regionSet.setMode(RegionMode.CREATING);
         } else {
-            appStore.activeFrame.regionSet.setMode(RegionMode.MOVING);
+            this.props.frame.regionSet.setMode(RegionMode.MOVING);
         }
     };
 
@@ -96,7 +94,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const appStore = AppStore.Instance;
         const preferenceStore = appStore.preferenceStore;
         const overlay = appStore.overlayStore;
-        const frame = appStore.activeFrame;
+        const frame = this.props.frame;
         const grid = overlay.grid;
 
         let styleProps: CSSProperties = {

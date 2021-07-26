@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, autorun, makeObservable, observable, runInAction} from "mobx";
-import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
+import {Tag} from "@blueprintjs/core";
 import {OverlayComponent} from "../Overlay/OverlayComponent";
 import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
@@ -106,7 +106,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     render() {
         const appStore = AppStore.Instance;
         const overlayStore = appStore.overlayStore;
-        let divContents;
 
         const frame = this.props.frame;
         if (frame && frame.isRenderable && appStore.astReady) {
@@ -116,8 +115,10 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             // This will be expanded when using multi-panel view
             const cursorInfoRequired = appStore.preferenceStore.cursorInfoVisible !== CursorInfoVisibility.Never;
 
-            divContents = (
-                <React.Fragment>
+            return (
+                <div className="image-panel-div" style={{width: overlayStore.viewWidth, height: overlayStore.viewHeight}} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+                    <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} />
+                    <ContourViewComponent frame={frame} docked={this.props.docked} />
                     {frame.valid && <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />}
                     {cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
@@ -161,26 +162,16 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                         />
                     )}
-                    <ToolbarComponent docked={this.props.docked} visible={appStore.imageToolbarVisible} vertical={false} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
+                    <ToolbarComponent docked={this.props.docked} visible={appStore.imageToolbarVisible} vertical={false} frame={frame} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
                     <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
                         <Tag large={true}>
                             {effectiveWidth} x {effectiveHeight} ({toFixed(effectiveWidth / effectiveHeight, 2)})
                         </Tag>
                     </div>
-                </React.Fragment>
+                </div>
             );
-        } else if (!appStore.astReady) {
-            divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
+            return null;
         }
-
-        return (
-            <div className="image-panel-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} />
-                <ContourViewComponent frame={frame} docked={this.props.docked} />
-                {divContents}
-            </div>
-        );
     }
 }

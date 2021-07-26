@@ -36,7 +36,7 @@ import {
     WidgetsStore,
     CURSOR_REGION_ID
 } from ".";
-import {clamp, distinct, divide2D, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
+import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FileId, FrameView, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -1971,8 +1971,8 @@ export class AppStore {
 
     @action setImageGridSize(columns: number, rows: number) {
         this.imageGridSize = {x: Math.max(1, columns), y: Math.max(1, rows)};
-        const perPanelDimensions = divide2D(this.imageViewDimensions, this.imageGridSize);
-        this.overlayStore.setViewDimension(perPanelDimensions.x, perPanelDimensions.y);
+        this.overlayStore.setNumColumns(this.imageGridSize.x);
+        this.overlayStore.setNumRows(this.imageGridSize.y);
     }
 
     @action setImagePage(page: number) {

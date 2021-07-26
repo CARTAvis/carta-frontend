@@ -3,8 +3,10 @@ import * as React from "react";
 import $ from "jquery";
 import {observer} from "mobx-react";
 import ReactResizeDetector from "react-resize-detector";
+import {NonIdealState, Spinner} from "@blueprintjs/core";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
+import {computed} from "mobx";
 
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",
@@ -111,11 +113,24 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
     };
 
+    @computed get panels() {
+        const visibleFrames = AppStore.Instance.visibleFrames;
+        return visibleFrames?.map(frame => <ImagePanelComponent key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} />) ?? [];
+    }
+
     render() {
-        const frame = AppStore.Instance.activeFrame;
+        const appStore = AppStore.Instance;
+
+        if (!this.panels.length) {
+            return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
+        } else if (!appStore.astReady) {
+            return <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
+        }
+
         return (
-            <div className="image-panel-div">
-                <ImagePanelComponent docked={this.props.docked} frame={frame} />;<ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
+            <div className="image-view-div">
+                {this.panels}
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
             </div>
         );
     }
