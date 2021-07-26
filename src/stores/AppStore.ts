@@ -33,11 +33,12 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    CURSOR_REGION_ID
 } from ".";
 import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {FileId, FrameView, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -86,7 +87,7 @@ export class AppStore {
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
-    @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
+    @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>;
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
@@ -1039,6 +1040,10 @@ export class AppStore {
         this.activeLayer = layer;
     };
 
+    @action toggleActiveLayer = () => {
+        this.activeLayer = this.activeLayer === ImageViewLayer.RegionCreating ? ImageViewLayer.RegionMoving : ImageViewLayer.RegionCreating;
+    };
+
     public static readonly DEFAULT_STATS_TYPES = [
         CARTA.StatsType.NumPixels,
         CARTA.StatsType.Sum,
@@ -1161,7 +1166,7 @@ export class AppStore {
         this.astReady = false;
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
-        this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
+        this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
         this.regionHistograms = new Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
@@ -2101,4 +2106,16 @@ export class AppStore {
     }
 
     // endregion
+
+    // Reset spectral profile's progress to 0 instead of cleaning the entire out-dated profile to avoid flashy effect in spectral profiler.
+    // Flashy effect: render empty profile and then render the coming profile, repeatedly.
+    public resetCursorRegionSpectralProfileProgress = (fileId: FileId) => {
+        this.spectralProfiles.get(fileId)?.get(CURSOR_REGION_ID)?.resetProfilesProgress();
+    };
+
+    public resetRegionSpectralProfileProgress = (regionId: RegionId) => {
+        this.spectralProfiles?.forEach(regionProfileStoreMap => {
+            regionProfileStoreMap.get(regionId)?.resetProfilesProgress();
+        });
+    };
 }
