@@ -36,7 +36,7 @@ import {
     WidgetsStore,
     CURSOR_REGION_ID
 } from ".";
-import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
+import {clamp, distinct, divide2D, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FileId, FrameView, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -99,6 +99,9 @@ export class AppStore {
     // ImageViewer
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
+    @observable imageGridSize: Point2D;
+    @observable currentImagePage: number;
+    private imageViewDimensions: Point2D;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
@@ -1171,6 +1174,9 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
+        this.imageGridSize = {x: 2, y: 2};
+        this.currentImagePage = 0;
+        this.imageViewDimensions = {x: 1, y: 1};
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
@@ -1953,6 +1959,41 @@ export class AppStore {
         this.setSpatialMatchingEnabled(this.activeFrame, spatial);
         this.setSpectralMatchingEnabled(this.activeFrame, spectral);
     };
+
+    @computed get numImagePages() {
+        if (this.imageGridSize.x <= 0 || this.imageGridSize.y <= 0 || !this.frames) {
+            return 0;
+        }
+
+        const imagesPerPage = this.imageGridSize.x * this.imageGridSize.y;
+        return Math.ceil(this.frames.length / imagesPerPage);
+    }
+
+    @action setImageGridSize(columns: number, rows: number) {
+        this.imageGridSize = {x: Math.max(1, columns), y: Math.max(1, rows)};
+        const perPanelDimensions = divide2D(this.imageViewDimensions, this.imageGridSize);
+        this.overlayStore.setViewDimension(perPanelDimensions.x, perPanelDimensions.y);
+    }
+
+    @action setImagePage(page: number) {
+        this.currentImagePage = clamp(page, 0, this.numImagePages);
+    }
+
+    @computed get visibleFrames(): FrameStore[] {
+        if (!this.frames?.length) {
+            return [];
+        }
+
+        const pageIndex = clamp(this.currentImagePage, 0, this.numImagePages);
+        const imagesPerPage = this.imageGridSize.x * this.imageGridSize.y;
+        const firstFrameIndex = pageIndex * imagesPerPage;
+        const indexUpperBound = Math.min(firstFrameIndex + imagesPerPage, this.frames.length);
+        const pageFrames = [];
+        for (let i = firstFrameIndex; i < indexUpperBound; i++) {
+            pageFrames.push(this.frames[i]);
+        }
+        return pageFrames;
+    }
 
     exportImage = (): boolean => {
         if (this.activeFrame) {
