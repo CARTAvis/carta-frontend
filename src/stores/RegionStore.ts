@@ -68,8 +68,6 @@ export class RegionStore {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "symbol-square";
-            case CARTA.RegionType.LINE:
-                return "slash";
             case CARTA.RegionType.RECTANGLE:
                 return "square";
             case CARTA.RegionType.ELLIPSE:

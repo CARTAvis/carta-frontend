@@ -102,7 +102,7 @@ export class ToolbarMenuComponent extends React.Component {
                         <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled} />
                     </Tooltip2>
                     <Tooltip2 content={this.regionTooltip(CARTA.RegionType.LINE)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"slash"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.LINE)} active={isRegionCreating && newRegionType === CARTA.RegionType.LINE} disabled={regionButtonsDisabled} />
+                        <AnchorButton icon={<CustomIcon icon="line" />} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.LINE)} active={isRegionCreating && newRegionType === CARTA.RegionType.LINE} disabled={regionButtonsDisabled} />
                     </Tooltip2>
                     <Tooltip2 content={this.regionTooltip(CARTA.RegionType.RECTANGLE)} position={Position.BOTTOM}>
                         <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled} />
