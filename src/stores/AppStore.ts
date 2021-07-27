@@ -101,7 +101,6 @@ export class AppStore {
     @observable cursorFrozen: boolean;
     @observable imageGridSize: Point2D;
     @observable currentImagePage: number;
-    private imageViewDimensions: Point2D;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
@@ -164,6 +163,19 @@ export class AppStore {
             console.log(`Connecting to default URL: ${wsURL}`);
         }
 
+        try {
+            await AST.onReady;
+            this.setAstReady(true);
+            const ack = await this.backendService.connect(wsURL);
+            console.log(`Connected with session ID ${ack.sessionId}`);
+            this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    private loadDefaultFiles = async () => {
+        const url = new URL(window.location.href);
         const folderSearchParam = url.searchParams.get("folder");
 
         let fileList: string[];
@@ -179,17 +191,11 @@ export class AppStore {
         }
 
         try {
-            await AST.onReady;
-            this.astReady = true;
-            const ack = await this.backendService.connect(wsURL);
-            console.log(`Connected with session ID ${ack.sessionId}`);
-            this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
             if (fileList?.length) {
                 for (const file of fileList) {
                     await this.loadFile(folderSearchParam, file, "");
                 }
-            }
-            if (this.preferenceStore.autoLaunch && !fileList?.length) {
+            } else if (this.preferenceStore.autoLaunch) {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         } catch (err) {
@@ -997,6 +1003,10 @@ export class AppStore {
         }
     };
 
+    @action setAstReady = (val: boolean) => {
+        this.astReady = val;
+    };
+
     @action setDarkTheme = () => {
         this.setTheme(Theme.DARK);
     };
@@ -1035,6 +1045,10 @@ export class AppStore {
 
     @action toggleCursorFrozen = () => {
         this.cursorFrozen = !this.cursorFrozen;
+    };
+
+    @action setCursorFrozen = (val: boolean) => {
+        this.cursorFrozen = val;
     };
 
     @action updateActiveLayer = (layer: ImageViewLayer) => {
@@ -1122,20 +1136,24 @@ export class AppStore {
 
     private initCarta = async (isAstReady: boolean, isZfpReady: boolean, isCartaComputeReady: boolean, isApiServiceAuthenticated: boolean) => {
         if (isAstReady && isZfpReady && isCartaComputeReady && isApiServiceAuthenticated) {
-            await this.connectToServer();
-            this.preferenceStore.fetchPreferences().then(() => {
-                this.layoutStore.fetchLayouts().then(() => {
-                    this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                    if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                        AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
-                        this.layoutStore.applyLayout(PresetLayout.DEFAULT);
-                        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                    }
-                    this.cursorFrozen = this.preferenceStore.isCursorFrozen;
-                });
-                this.snippetStore.fetchSnippets();
+            try {
+                await this.connectToServer();
+                await this.preferenceStore.fetchPreferences();
+                await this.layoutStore.fetchLayouts();
+                await this.snippetStore.fetchSnippets();
+
+                this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+                if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
+                    AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                    this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                    this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                }
+                await this.loadDefaultFiles();
+                this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
-            });
+            } catch (err) {
+                console.error(err);
+            }
         }
     };
 
@@ -1174,9 +1192,8 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
-        this.imageGridSize = {x: 2, y: 2};
+        this.imageGridSize = {x: 1, y: 1};
         this.currentImagePage = 0;
-        this.imageViewDimensions = {x: 1, y: 1};
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
@@ -1185,7 +1202,7 @@ export class AppStore {
 
         AST.onReady.then(
             action(() => {
-                this.astReady = true;
+                this.setAstReady(true);
                 this.logStore.addInfo("AST library loaded", ["ast"]);
             })
         );
@@ -1274,7 +1291,6 @@ export class AppStore {
                 const imageSize: Point2D = {x: this.activeFrame.frameInfo.fileInfoExtended.width, y: this.activeFrame.frameInfo.fileInfoExtended.height};
                 const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
                 const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-                // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                 throttledSetView(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords);
