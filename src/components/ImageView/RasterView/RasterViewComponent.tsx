@@ -107,7 +107,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private renderCanvas() {
         const frame = this.props.frame;
-        console.log(`Rendering canvas for frame ${frame.frameInfo.fileId}, panel ${this.panelIndex}`);
+        // console.log(`Rendering canvas for frame ${frame.frameInfo.fileId}, panel ${this.panelIndex}`);
         // Only clear and render if we're in animation or tiled mode
         if (frame && frame.isRenderable && frame.renderType !== RasterRenderType.NONE) {
             this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);

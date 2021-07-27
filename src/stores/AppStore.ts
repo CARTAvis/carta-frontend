@@ -1971,8 +1971,6 @@ export class AppStore {
 
     @action setImageGridSize(columns: number, rows: number) {
         this.imageGridSize = {x: Math.max(1, columns), y: Math.max(1, rows)};
-        this.overlayStore.setNumColumns(this.imageGridSize.x);
-        this.overlayStore.setNumRows(this.imageGridSize.y);
     }
 
     @action setImagePage(page: number) {
@@ -1993,6 +1991,16 @@ export class AppStore {
             pageFrames.push(this.frames[i]);
         }
         return pageFrames;
+    }
+
+    @computed get numColumns() {
+        const numImages = this.frames?.length ?? 1;
+        return Math.min(numImages, this.imageGridSize.x);
+    }
+
+    @computed get numRows() {
+        const numImages = this.frames?.length ?? 1;
+        return Math.min(Math.ceil(numImages / this.imageGridSize.x), this.imageGridSize.y);
     }
 
     exportImage = (): boolean => {
