@@ -100,7 +100,6 @@ export class AppStore {
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
     @observable imageGridSize: Point2D;
-    @observable currentImagePage: number;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
@@ -1193,7 +1192,6 @@ export class AppStore {
         this.frames = [];
         this.activeFrame = null;
         this.imageGridSize = {x: 1, y: 1};
-        this.currentImagePage = 0;
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
@@ -1989,8 +1987,14 @@ export class AppStore {
         this.imageGridSize = {x: Math.max(1, columns), y: Math.max(1, rows)};
     }
 
-    @action setImagePage(page: number) {
-        this.currentImagePage = clamp(page, 0, this.numImagePages);
+    @computed get currentImagePage() {
+        if (!this.frames?.length || !this.activeFrame) {
+            return 0;
+        }
+
+        const imagesPerPage = this.imageGridSize.x * this.imageGridSize.y;
+        const index = this.frames.indexOf(this.activeFrame);
+        return Math.floor(index / imagesPerPage);
     }
 
     @computed get visibleFrames(): FrameStore[] {
