@@ -1994,13 +1994,13 @@ export class AppStore {
     }
 
     @computed get numColumns() {
-        const numImages = this.frames?.length ?? 1;
-        return Math.min(numImages, this.imageGridSize.x);
+        const numImages = this.frames?.length ?? 0;
+        return clamp(numImages, 1, this.imageGridSize.x);
     }
 
     @computed get numRows() {
-        const numImages = this.frames?.length ?? 1;
-        return Math.min(Math.ceil(numImages / this.imageGridSize.x), this.imageGridSize.y);
+        const numImages = this.frames?.length ?? 0;
+        return clamp(Math.ceil(numImages / this.imageGridSize.x), 1, this.imageGridSize.y);
     }
 
     exportImage = (): boolean => {
