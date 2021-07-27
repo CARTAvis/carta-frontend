@@ -121,15 +121,18 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
 
+        let divContents: React.ReactNode | React.ReactNode[];
         if (!this.panels.length) {
-            return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
+            divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
         } else if (!appStore.astReady) {
-            return <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
+            divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
+        } else {
+            divContents = this.panels;
         }
 
         return (
             <div className="image-view-div" style={{gridTemplateColumns: `repeat(${appStore.numColumns}, auto)`}}>
-                {this.panels}
+                {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
             </div>
         );
