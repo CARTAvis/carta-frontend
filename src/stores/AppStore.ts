@@ -33,11 +33,12 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    CURSOR_REGION_ID
 } from ".";
 import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, PresetLayout, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {FileId, FrameView, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -86,7 +87,7 @@ export class AppStore {
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
-    @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
+    @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>;
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
@@ -140,7 +141,7 @@ export class AppStore {
         this.username = username;
     };
 
-    connectToServer = async () => {
+    private connectToServer = async () => {
         // Remove query parameters, replace protocol and remove trailing /
         let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
         if (process.env.NODE_ENV === "development") {
@@ -1037,6 +1038,10 @@ export class AppStore {
         this.activeLayer = layer;
     };
 
+    @action toggleActiveLayer = () => {
+        this.activeLayer = this.activeLayer === ImageViewLayer.RegionCreating ? ImageViewLayer.RegionMoving : ImageViewLayer.RegionCreating;
+    };
+
     public static readonly DEFAULT_STATS_TYPES = [
         CARTA.StatsType.NumPixels,
         CARTA.StatsType.Sum,
@@ -1112,6 +1117,25 @@ export class AppStore {
         }
     };
 
+    private initCarta = async (isAstReady: boolean, isZfpReady: boolean, isCartaComputeReady: boolean, isApiServiceAuthenticated: boolean) => {
+        if (isAstReady && isZfpReady && isCartaComputeReady && isApiServiceAuthenticated) {
+            await this.connectToServer();
+            this.preferenceStore.fetchPreferences().then(() => {
+                this.layoutStore.fetchLayouts().then(() => {
+                    this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+                    if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
+                        AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                        this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                    }
+                    this.cursorFrozen = this.preferenceStore.isCursorFrozen;
+                });
+                this.snippetStore.fetchSnippets();
+                this.updateASTColors();
+            });
+        }
+    };
+
     private constructor() {
         makeObservable(this);
         AppStore.staticInstance = this;
@@ -1140,7 +1164,7 @@ export class AppStore {
         this.astReady = false;
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
-        this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
+        this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
         this.regionHistograms = new Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
@@ -1326,23 +1350,7 @@ export class AppStore {
         }
 
         autorun(() => {
-            if (this.astReady && this.zfpReady && this.cartaComputeReady && this.apiService.authenticated) {
-                this.preferenceStore.fetchPreferences().then(() => {
-                    this.layoutStore.fetchLayouts().then(() => {
-                        // Attempt connection after authenticating
-                        this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                        if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                            AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
-                            this.layoutStore.applyLayout(PresetLayout.DEFAULT);
-                            this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                        }
-                        this.cursorFrozen = this.preferenceStore.isCursorFrozen;
-                        this.connectToServer();
-                    });
-                    this.snippetStore.fetchSnippets();
-                    this.updateASTColors();
-                });
-            }
+            this.initCarta(this.astReady, this.tileService?.zfpReady, this.cartaComputeReady, this.apiService?.authenticated);
         });
 
         autorun(() => {
@@ -1662,10 +1670,6 @@ export class AppStore {
         this.resumingSession = false;
         this.backendService.connectionDropped = false;
     };
-
-    @computed get zfpReady() {
-        return this.tileService && this.tileService.workersReady;
-    }
 
     @action setActiveFrame(frame: FrameStore) {
         if (!frame) {
@@ -2098,4 +2102,16 @@ export class AppStore {
     }
 
     // endregion
+
+    // Reset spectral profile's progress to 0 instead of cleaning the entire out-dated profile to avoid flashy effect in spectral profiler.
+    // Flashy effect: render empty profile and then render the coming profile, repeatedly.
+    public resetCursorRegionSpectralProfileProgress = (fileId: FileId) => {
+        this.spectralProfiles.get(fileId)?.get(CURSOR_REGION_ID)?.resetProfilesProgress();
+    };
+
+    public resetRegionSpectralProfileProgress = (regionId: RegionId) => {
+        this.spectralProfiles?.forEach(regionProfileStoreMap => {
+            regionProfileStoreMap.get(regionId)?.resetProfilesProgress();
+        });
+    };
 }

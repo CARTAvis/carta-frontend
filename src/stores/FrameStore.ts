@@ -954,6 +954,10 @@ export class FrameStore {
                 }
             }
         });
+
+        autorun(() => {
+            this.distanceMeasuring.updateTransformedPos(this.spatialTransform);
+        });
     }
 
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
@@ -1615,14 +1619,14 @@ export class FrameStore {
             this.spatialReference.updateCursorRegion(pointRefImage);
         } else {
             if (pos.x >= 0 && pos.x <= this.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.frameInfo.fileInfoExtended.height - 1) {
-                this.frameRegionSet.regions?.[0].setCenter(pos);
+                this.frameRegionSet.updateCursorRegionPosition(pos);
             }
         }
 
         for (const frame of this.secondarySpatialImages) {
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
             if (pointSecondaryImage.x >= 0 && pointSecondaryImage.x <= frame.frameInfo.fileInfoExtended.width - 1 && pointSecondaryImage.y >= 0 && pointSecondaryImage.y <= frame.frameInfo.fileInfoExtended.height - 1) {
-                frame.frameRegionSet.regions?.[0].setCenter(pointSecondaryImage);
+                frame.frameRegionSet.updateCursorRegionPosition(pointSecondaryImage);
             }
         }
     };

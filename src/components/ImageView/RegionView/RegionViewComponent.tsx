@@ -9,11 +9,11 @@ import {AppStore, FrameStore, OverlayStore, PreferenceStore, RegionMode, RegionS
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
+import {ImageViewLayer} from "../ImageViewComponent";
 import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D} from "models";
 import {average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
-import {ImageViewLayer} from "../ImageViewComponent";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
@@ -66,8 +66,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     updateDistanceMeasureFinishPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
-        const imagePos = canvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
-        frame.distanceMeasuring.setFinish(imagePos);
+        frame.distanceMeasuring.finish = this.getDistanceMeasureImagePos(x, y);
+        frame.distanceMeasuring.updateTransformedPos(frame.spatialTransform);
     }, 100);
 
     private getCursorCanvasPos = (imageX: number, imageY: number): Point2D => {
@@ -90,6 +90,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
         }
         return cursorPosImageSpace;
+    };
+
+    private getDistanceMeasureImagePos = (offsetX: number, offsetY: number): Point2D => {
+        const frame = this.props.frame;
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        const spatialTransform = frame.spatialReference?.spatialTransform ?? frame.spatialTransform;
+        let imagePos = canvasToImagePos(offsetX, offsetY, frameView, this.props.width, this.props.height, spatialTransform);
+        if (frame.spatialReference) {
+            imagePos = frame.spatialTransform.transformCoordinate(imagePos, false);
+        }
+        return imagePos;
     };
 
     @action private regionCreationStart = (mouseEvent: MouseEvent) => {
@@ -160,7 +171,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.creatingRegion = null;
 
         // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
-        setTimeout(() => this.props.frame.regionSet.setMode(RegionMode.MOVING), 1);
+        setTimeout(() => {
+            this.props.frame.regionSet.setMode(RegionMode.MOVING);
+            AppStore.Instance.updateActiveLayer(ImageViewLayer.RegionMoving);
+        }, 1);
     };
 
     @action private polygonRegionAddPoint = (mouseEvent: MouseEvent) => {
@@ -368,19 +382,20 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
-            const imagePos = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+            const imagePos = this.getDistanceMeasureImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
             const wcsPos = transformPoint(frame.wcsInfo, imagePos);
             if (!isAstBadPoint(wcsPos)) {
                 const dist = frame.distanceMeasuring;
                 if (!dist.isCreating && !dist.showCurve) {
-                    dist.setStart(imagePos);
+                    dist.start = imagePos;
                     dist.setIsCreating(true);
                 } else if (dist.isCreating) {
-                    dist.setFinish(imagePos);
+                    dist.finish = imagePos;
+                    dist.updateTransformedPos(frame.spatialTransform);
                     dist.setIsCreating(false);
                 } else {
                     dist.resetPos();
-                    dist.setStart(imagePos);
+                    dist.start = imagePos;
                     dist.setIsCreating(true);
                 }
             }
@@ -496,6 +511,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             frame.regionSet.deleteRegion(this.creatingRegion);
             this.creatingRegion = null;
             frame.regionSet.setMode(RegionMode.MOVING);
+            AppStore.Instance.updateActiveLayer(ImageViewLayer.RegionMoving);
         }
     };
 
