@@ -36,7 +36,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateCanvas = () => {
         const frame = this.props.frame;
         const tileRenderService = TileWebGLService.Instance;
-        console.log(`Updating canvas for frame ${frame.frameInfo.fileId}, panel ${this.panelIndex}`);
+        // console.log(`Updating canvas for frame ${frame.frameInfo.fileId}, panel ${this.panelIndex}`);
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
             const histStokes = frame.renderConfig.stokes;
             const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histogram.channel : undefined;

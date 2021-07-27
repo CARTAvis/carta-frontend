@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, autorun, makeObservable, observable, runInAction} from "mobx";
+import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {Tag} from "@blueprintjs/core";
 import {OverlayComponent} from "../Overlay/OverlayComponent";
 import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
@@ -103,6 +103,20 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         }
     };
 
+    @computed get cursorInfoRequired() {
+        const appStore = AppStore.Instance;
+        switch (appStore.preferenceStore.cursorInfoVisible) {
+            case CursorInfoVisibility.Always:
+                return true;
+            case CursorInfoVisibility.HideTiled:
+                return appStore.numRows * appStore.numColumns === 1;
+            case CursorInfoVisibility.ActiveImage:
+                return appStore.activeFrame === this.props.frame;
+            default:
+                return false;
+        }
+    }
+
     render() {
         const appStore = AppStore.Instance;
         const overlayStore = appStore.overlayStore;
@@ -112,15 +126,13 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             const effectiveWidth = frame.renderWidth * (frame.renderHiDPI ? devicePixelRatio : 1);
             const effectiveHeight = frame.renderHeight * (frame.renderHiDPI ? devicePixelRatio : 1);
             const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
-            // This will be expanded when using multi-panel view
-            const cursorInfoRequired = appStore.preferenceStore.cursorInfoVisible !== CursorInfoVisibility.Never;
 
             return (
                 <div className="image-panel-div" style={{width: overlayStore.viewWidth, height: overlayStore.viewHeight}} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                     <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} />
                     <ContourViewComponent frame={frame} docked={this.props.docked} />
                     {frame.valid && <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />}
-                    {cursorInfoRequired && frame.cursorInfo && (
+                    {this.cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
                             cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
