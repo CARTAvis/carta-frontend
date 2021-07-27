@@ -129,6 +129,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
                 return this.controlPoints[CENTER_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
             case CARTA.RegionType.LINE:
@@ -144,6 +145,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
                 return this.controlPoints[SIZE_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 return this.boundingBox;
             case CARTA.RegionType.LINE:
                 return subtract2D(this.controlPoints[0], this.controlPoints[1]);
@@ -170,6 +172,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
                 return scale2D(this.size, 2);
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 const boundingBox = minMax2D(this.controlPoints);
                 return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
             default:
@@ -208,6 +211,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 return this.controlPoints.length >= 1;
             case CARTA.RegionType.LINE:
                 return this.controlPoints.length === 1 || this.controlPoints.length === 2;

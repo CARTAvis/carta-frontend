@@ -170,7 +170,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             let closestIndex = -1;
             let closestPoint: Point2D = null;
             // Find closest point on each line segment, select the closest overall that actually lies on the line segment
-            for (let i = 0; i < region.controlPoints.length; i++) {
+            for (let i = 0; i < (region.regionType === CARTA.RegionType.POLYLINE ? region.controlPoints.length - 1 : region.controlPoints.length); i++) {
                 const pointCheck = closestPointOnLine(positionImageSpace, region.controlPoints[i], region.controlPoints[(i + 1) % region.controlPoints.length]);
                 if (pointCheck.bounded && pointCheck.distance < minDistance) {
                     minDistance = pointCheck.distance;
