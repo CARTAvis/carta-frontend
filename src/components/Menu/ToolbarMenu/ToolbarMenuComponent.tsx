@@ -44,7 +44,7 @@ export class ToolbarMenuComponent extends React.Component {
                     <small>
                         Define control points with a series of clicks.
                         <br />
-                        Double-click to {type === CARTA.RegionType.POLYLINE ? "" : "close the loop and"} finish polygon creation.
+                        Double-click to {type === CARTA.RegionType.POLYLINE ? "" : "close the loop and"} finish creation.
                         <br />
                         Double-click on a control point to delete it.
                         <br />

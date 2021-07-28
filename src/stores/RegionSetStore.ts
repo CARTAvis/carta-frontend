@@ -173,21 +173,30 @@ export class RegionSetStore {
                 let newControlPoints: Point2D[] = [];
                 let rotation: number = 0;
 
-                if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ELLIPSE) {
-                    const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
-                    if (!isAstBadPoint(centerNewFrame)) {
-                        const transform = new Transform2D(spatialTransformAST, centerNewFrame);
-                        const size = scale2D(region.size, forward ? transform.scale : 1.0 / transform.scale);
-                        rotation = region.rotation + ((forward ? 1 : -1) * transform.rotation * 180) / Math.PI;
-                        newControlPoints = [centerNewFrame, size];
-                    }
-                } else if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.LINE) {
-                    for (const point of region.controlPoints) {
-                        const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
-                        if (!isAstBadPoint(pointNewFrame)) {
-                            newControlPoints.push(pointNewFrame);
+                switch (region.regionType) {
+                    case CARTA.RegionType.RECTANGLE:
+                    case CARTA.RegionType.ELLIPSE:
+                        const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
+                        if (!isAstBadPoint(centerNewFrame)) {
+                            const transform = new Transform2D(spatialTransformAST, centerNewFrame);
+                            const size = scale2D(region.size, forward ? transform.scale : 1.0 / transform.scale);
+                            rotation = region.rotation + ((forward ? 1 : -1) * transform.rotation * 180) / Math.PI;
+                            newControlPoints = [centerNewFrame, size];
                         }
-                    }
+                        break;
+                    case CARTA.RegionType.POINT:
+                    case CARTA.RegionType.POLYGON:
+                    case CARTA.RegionType.LINE:
+                    case CARTA.RegionType.POLYLINE:
+                        for (const point of region.controlPoints) {
+                            const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
+                            if (!isAstBadPoint(pointNewFrame)) {
+                                newControlPoints.push(pointNewFrame);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
                 }
 
                 if (newControlPoints.length) {
