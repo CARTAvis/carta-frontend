@@ -7,6 +7,9 @@ import {AppStore, FrameStore, ProfileSmoothingStore} from "stores";
 import {PlotType, LineSettings} from "components/Shared";
 import {SpatialProfilerSettingsTabs} from "components";
 import {clamp, isAutoColor} from "utilities";
+import {LineOption} from "models";
+
+const DEFAULT_STOKES = "z";
 
 export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -17,6 +20,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable cursorX: number;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
+    @observable selectedStokes: string;
 
     // settings
     @observable wcsAxisVisible: boolean;
@@ -124,6 +128,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
+        this.selectedStokes = DEFAULT_STOKES;
     }
 
     @computed get isAutoScaledX() {
@@ -132,6 +137,14 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
 
     @computed get isAutoScaledY() {
         return this.minY === undefined || this.maxY === undefined;
+    }
+
+    @computed get stokesOptions(): LineOption[] {
+        let options = [{value: DEFAULT_STOKES, label: "Current"}];
+        if (this.effectiveFrame?.hasStokes) {
+            this.effectiveFrame.stokesInfo?.forEach(stokes => options.push({value: `${stokes}z`, label: stokes}));
+        }
+        return options;
     }
 
     private static GetSpatialConfig(frame: FrameStore, coordinate: string, isCursor: boolean): CARTA.SetSpatialRequirements.ISpatialConfig {
@@ -289,6 +302,10 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @action initXYBoundaries(minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
+
+    @action setSelectedStokes = (stokes: string) => {
+        this.selectedStokes = stokes;
+    };
 
     public init = (widgetSettings): void => {
         if (!widgetSettings) {

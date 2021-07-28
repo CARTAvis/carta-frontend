@@ -535,13 +535,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         {widgetStore.effectiveFrame?.hasStokes && (
                             <FormGroup label={"Stokes"} inline={true}>
                                 <HTMLSelect
-                                    value={widgetStore.effectiveFrame?.requiredStokes}
-                                    options={widgetStore.effectiveFrame?.stokesOptions}
-                                    onChange={ev => {
-                                        const frame = widgetStore.effectiveFrame;
-                                        frame?.setChannels(frame.requiredChannel, parseInt(ev.currentTarget.value), true);
-                                    }}
-                                    disabled={appStore.animatorStore.animationActive}
+                                    value={widgetStore.selectedStokes}
+                                    options={widgetStore.stokesOptions}
+                                    onChange={(ev) => widgetStore.setSelectedStokes(ev.currentTarget.value)}
                                 />
                             </FormGroup>
                         )}
