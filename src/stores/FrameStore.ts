@@ -735,6 +735,10 @@ export class FrameStore {
         return stokesOptions;
     }
 
+    @computed get requiredStokesName(): string {
+        return this.stokesOptions?.find(stokesOption => stokesOption.value === this.requiredStokes)?.label;
+    }
+
     @computed get stokesInfo(): string[] {
         return this.stokesOptions?.map(option => {
             return option?.label;

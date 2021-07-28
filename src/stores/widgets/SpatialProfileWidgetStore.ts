@@ -9,10 +9,11 @@ import {SpatialProfilerSettingsTabs} from "components";
 import {clamp, isAutoColor} from "utilities";
 import {LineOption} from "models";
 
-const DEFAULT_STOKES = "z";
+const DEFAULT_STOKES = "current";
 
 export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
+    @observable selectedStokes: string;
     @observable minX: number;
     @observable maxX: number;
     @observable minY: number;
@@ -20,7 +21,6 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable cursorX: number;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
-    @observable selectedStokes: string;
 
     // settings
     @observable wcsAxisVisible: boolean;
@@ -41,7 +41,6 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setCoordinate = (coordinate: string) => {
-        // Check coordinate validity
         if (SpatialProfileWidgetStore.ValidCoordinates.includes(coordinate)) {
             // Reset zoom when changing between coordinates
             this.clearXYBounds();
@@ -116,6 +115,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         makeObservable(this);
         // Describes which data is being visualised
         this.coordinate = coordinate;
+        this.selectedStokes = DEFAULT_STOKES;
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
@@ -128,7 +128,6 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
-        this.selectedStokes = DEFAULT_STOKES;
     }
 
     @computed get isAutoScaledX() {
@@ -142,7 +141,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @computed get stokesOptions(): LineOption[] {
         let options = [{value: DEFAULT_STOKES, label: "Current"}];
         if (this.effectiveFrame?.hasStokes) {
-            this.effectiveFrame.stokesInfo?.forEach(stokes => options.push({value: `${stokes}z`, label: stokes}));
+            this.effectiveFrame.stokesInfo?.forEach(stokes => options.push({value: `${stokes}`, label: stokes}));
         }
         return options;
     }
@@ -178,7 +177,11 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
             const frame = widgetStore.effectiveFrame;
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
-            const coordinate = widgetStore.coordinate;
+            let stokes = undefined;
+            if (frame?.hasStokes) {
+                stokes = widgetStore.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName : widgetStore.selectedStokes;
+            }
+            const coordinate = `${stokes ?? ""}${widgetStore.coordinate}`;
 
             if (!frame.regionSet) {
                 return;
