@@ -162,7 +162,7 @@ export class ScriptingService {
                 response = await entry.execute();
             }
 
-            // Adjust the response to just the specified field if it exists
+            // Adjust the response to just the specified path if it is non-empty
             if (typeof response === "object" && requestMessage.returnPath) {
                 response = _.get(response, requestMessage.returnPath);
             }
