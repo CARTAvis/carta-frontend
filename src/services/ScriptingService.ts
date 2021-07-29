@@ -163,8 +163,8 @@ export class ScriptingService {
             }
 
             // Adjust the response to just the specified field if it exists
-            if (typeof response === "object" && requestMessage.responseField) {
-                response = _.get(response, requestMessage.responseField);
+            if (typeof response === "object" && requestMessage.returnPath) {
+                response = _.get(response, requestMessage.returnPath);
             }
 
             return {
