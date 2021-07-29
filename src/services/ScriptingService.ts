@@ -1,3 +1,4 @@
+import {toJS} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 
@@ -162,7 +163,7 @@ export class ScriptingService {
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: true,
-                response: JSON.stringify(response)
+                response: JSON.stringify(toJS(response))
             };
         } catch (err) {
             return {
