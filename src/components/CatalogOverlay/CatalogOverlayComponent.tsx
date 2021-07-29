@@ -11,10 +11,10 @@ import SplitPane, {Pane} from "react-split-pane";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
-import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, CatalogUpdateMode, CatalogSystemType, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
+import {AppStore, CatalogStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
 import {ComparisonOperator, toFixed} from "utilities";
-import {ProcessedColumnData} from "models";
+import {CatalogOverlay, CatalogSystemType, ProcessedColumnData} from "models";
 import "./CatalogOverlayComponent.scss";
 
 enum HeaderTableColumnName {
@@ -70,7 +70,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
     }
 
-    @computed get profileStore(): CatalogProfileStore {
+    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore {
         return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 

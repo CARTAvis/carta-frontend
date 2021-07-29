@@ -9,7 +9,7 @@ import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
-import {CatalogUpdateMode, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig} from "stores";
+import {CatalogUpdateMode, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig, CatalogOnlineQueryProfileStore} from "stores";
 import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStoreProps, CatalogWidgetStore, CatalogPlotType} from "stores/widgets";
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
@@ -105,7 +105,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return widgetStore;
     }
 
-    @computed get profileStore(): CatalogProfileStore {
+    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore {
         return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 

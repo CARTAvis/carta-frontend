@@ -185,6 +185,7 @@ export class RootMenuComponent extends React.Component {
                 )}
                 <Menu.Item text="File header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
                 <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} onClick={appStore.dialogStore.showContourDialog} />
+                <Menu.Item text="Online Catalog Query" icon="geosearch" onClick={appStore.dialogStore.showCatalogQueryDialog} />
             </Menu>
         );
 

@@ -11,7 +11,8 @@ import {
     ContourDialogComponent,
     DebugExecutionDialogComponent,
     ExternalPageDialogComponent,
-    StokesDialogComponent
+    StokesDialogComponent,
+    CatalogQueryDialogComponent
 } from "components/Dialogs";
 
 @observer
@@ -32,6 +33,7 @@ export class UIControllerComponent extends React.Component {
                 <HelpDrawerComponent />
                 <StokesDialogComponent />
                 <SplashScreenComponent />
+                <CatalogQueryDialogComponent />
             </React.Fragment>
         );
     }
