@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import {toJS} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
@@ -160,10 +161,16 @@ export class ScriptingService {
             } else {
                 response = await entry.execute();
             }
+
+            // Adjust the response to just the specified field if it exists
+            if (typeof response === "object" && requestMessage.responseField) {
+                response = _.get(response, requestMessage.responseField);
+            }
+
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: true,
-                response: JSON.stringify(toJS(response))
+                response: toJS(response)
             };
         } catch (err) {
             return {
