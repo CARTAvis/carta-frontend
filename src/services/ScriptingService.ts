@@ -170,7 +170,7 @@ export class ScriptingService {
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: true,
-                response: toJS(response)
+                response: JSON.stringify(toJS(response))
             };
         } catch (err) {
             return {
