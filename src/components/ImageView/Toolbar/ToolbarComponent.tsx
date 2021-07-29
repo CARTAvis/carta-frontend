@@ -127,10 +127,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             <Menu>
                 {Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text]) => {
                     const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-                    const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : regionIconString as IconName;
-                    return (
-                        <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} />
-                    );
+                    const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+                    return <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} />;
                 })}
             </Menu>
         );
@@ -149,7 +147,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         );
 
         const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(frame.regionSet.newRegionType);
-        const regionIcon = RegionStore.IsRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName}/> : regionIconString as IconName;
+        const regionIcon = RegionStore.IsRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
 
         const spatialMatchingEnabled = !!frame.spatialReference;
         const spectralMatchingEnabled = !!frame.spectralReference;

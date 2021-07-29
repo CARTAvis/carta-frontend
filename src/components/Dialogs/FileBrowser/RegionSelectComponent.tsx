@@ -3,8 +3,8 @@ import {observer} from "mobx-react";
 import {autorun, computed, makeObservable} from "mobx";
 import {Checkbox, Icon, IconName} from "@blueprintjs/core";
 import {FileBrowserStore} from "stores";
+import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import "./RegionSelectComponent.scss";
-import { CustomIcon, CustomIconName } from "icons/CustomIcons";
 
 @observer
 export class RegionSelectComponent extends React.Component {

@@ -100,7 +100,7 @@ export class ToolbarMenuComponent extends React.Component {
                 <ButtonGroup className={actionsClassName}>
                     {Array.from(RegionStore.AVAILABLE_REGION_TYPES.keys()).map(type => {
                         const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-                        const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : regionIconString as IconName;
+                        const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                         return (
                             <Tooltip2 content={this.regionTooltip(type)} position={Position.BOTTOM}>
                                 <AnchorButton icon={regionIcon} onClick={() => this.handleRegionTypeClicked(type)} active={isRegionCreating && newRegionType === type} disabled={regionButtonsDisabled} />

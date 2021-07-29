@@ -156,7 +156,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         // Handle region completion
-        if (this.creatingRegion.isValid && ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE) || this.creatingRegion.controlPoints.length > 2) && (regionType !== CARTA.RegionType.LINE || this.creatingRegion.controlPoints.length === 2)) {
+        if (
+            this.creatingRegion.isValid &&
+            ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE) || this.creatingRegion.controlPoints.length > 2) &&
+            (regionType !== CARTA.RegionType.LINE || this.creatingRegion.controlPoints.length === 2)
+        ) {
             this.creatingRegion.endCreating();
             frame.regionSet.selectRegion(this.creatingRegion);
         } else {
