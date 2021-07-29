@@ -954,6 +954,10 @@ export class FrameStore {
                 }
             }
         });
+
+        autorun(() => {
+            this.distanceMeasuring.updateTransformedPos(this.spatialTransform);
+        });
     }
 
     // This function shifts the pixel axis by 1, so that it starts at 0, rather than 1
@@ -1614,12 +1618,12 @@ export class FrameStore {
             const pointRefImage = transformPoint(this.spatialTransformAST, pos, true);
             this.spatialReference.updateCursorRegion(pointRefImage);
         } else {
-            this.frameRegionSet.regions?.[0].setCenter(pos);
+            this.frameRegionSet.updateCursorRegionPosition(pos);
         }
 
         for (const frame of this.secondarySpatialImages) {
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
-            frame.frameRegionSet.regions?.[0].setCenter(pointSecondaryImage);
+            frame.frameRegionSet.updateCursorRegionPosition(pointSecondaryImage);
         }
     };
 
