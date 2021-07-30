@@ -98,11 +98,11 @@ export class ToolbarMenuComponent extends React.Component {
         return (
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
-                    {Array.from(RegionStore.AVAILABLE_REGION_TYPES.keys()).map(type => {
+                    {Array.from(RegionStore.AVAILABLE_REGION_TYPES.keys()).map((type, index) => {
                         const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
                         const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                         return (
-                            <Tooltip2 content={this.regionTooltip(type)} position={Position.BOTTOM}>
+                            <Tooltip2 content={this.regionTooltip(type)} position={Position.BOTTOM} key={index}>
                                 <AnchorButton icon={regionIcon} onClick={() => this.handleRegionTypeClicked(type)} active={isRegionCreating && newRegionType === type} disabled={regionButtonsDisabled} />
                             </Tooltip2>
                         );

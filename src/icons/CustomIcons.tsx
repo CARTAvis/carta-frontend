@@ -163,8 +163,8 @@ const cursorSvg = (
 const lineSvg = (
     <path
         transform="translate(2.5, -3.5) rotate(45, 8, 8) scale(1.0, 1.6) rotate(-15, 8, 8)"
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M10,2C9.54,2,9.15,2.31,9.04,2.73l-2.99,9.96C6.02,12.79,6,12.89,6,13 c0,0.55,0.45,1,1,1c0.46,0,0.85-0.31,0.96-0.73l2.99-9.96C10.98,3.21,11,3.11,11,3C11,2.45,10.55,2,10,2z"
     />
 );
