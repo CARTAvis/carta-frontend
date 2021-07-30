@@ -527,11 +527,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         <RegionSelectorComponent widgetStore={widgetStore} disableClosedRegion={true} />
                         {widgetStore.effectiveFrame?.hasStokes && (
                             <FormGroup label={"Stokes"} inline={true}>
-                                <HTMLSelect
-                                    value={widgetStore.selectedStokes}
-                                    options={widgetStore.stokesOptions}
-                                    onChange={(ev) => widgetStore.setSelectedStokes(ev.currentTarget.value)}
-                                />
+                                <HTMLSelect value={widgetStore.selectedStokes} options={widgetStore.stokesOptions} onChange={ev => widgetStore.setSelectedStokes(ev.currentTarget.value)} />
                             </FormGroup>
                         )}
                     </div>

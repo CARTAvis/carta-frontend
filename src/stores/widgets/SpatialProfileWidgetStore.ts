@@ -150,11 +150,12 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         return options;
     }
 
-    @computed get fullCoordinate(): string { // stokes(IQUV) + coordinate(x/y)
+    @computed get fullCoordinate(): string {
+        // stokes(IQUV) + coordinate(x/y)
         const frame = this.effectiveFrame;
         let stokes = undefined;
         if (frame?.hasStokes) {
-            stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName: this.selectedStokes;
+            stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName : this.selectedStokes;
         }
         return `${stokes ?? ""}${this.coordinate}`;
     }
