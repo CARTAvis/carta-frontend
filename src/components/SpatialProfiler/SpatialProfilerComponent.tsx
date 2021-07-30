@@ -77,7 +77,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         // Use accurate profiles from server-sent data
-        const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
+        const coordinateData = this.profileStore.getProfile(this.widgetStore.fullCoordinate);
         if (!(coordinateData && coordinateData.values && coordinateData.values.length)) {
             return null;
         } else {

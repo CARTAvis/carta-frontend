@@ -150,6 +150,15 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         return options;
     }
 
+    @computed get fullCoordinate(): string { // stokes(IQUV) + coordinate(x/y)
+        const frame = this.effectiveFrame;
+        let stokes = undefined;
+        if (frame?.hasStokes) {
+            stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName: this.selectedStokes;
+        }
+        return `${stokes ?? ""}${this.coordinate}`;
+    }
+
     private static GetSpatialConfig(frame: FrameStore, coordinate: string, isCursor: boolean): CARTA.SetSpatialRequirements.ISpatialConfig {
         if (frame.cursorMoving && !AppStore.Instance.cursorFrozen && isCursor) {
             if (coordinate.includes("x")) {
@@ -181,8 +190,6 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
             const frame = widgetStore.effectiveFrame;
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
-            const stokes = frame?.hasStokes && widgetStore.selectedStokes !== DEFAULT_STOKES ? widgetStore.selectedStokes : "";
-            const coordinate = `${stokes}${widgetStore.coordinate}`;
 
             if (!frame.regionSet) {
                 return;
@@ -206,11 +213,11 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                     regionRequirements.spatialProfiles = [];
                 }
 
-                const existingConfig = regionRequirements.spatialProfiles.find(c => c.coordinate === coordinate);
+                const existingConfig = regionRequirements.spatialProfiles.find(c => c.coordinate === widgetStore.fullCoordinate);
                 if (existingConfig) {
                     // TODO: Merge existing configs, rather than only allowing a single one
                 } else {
-                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, coordinate, regionId === RegionId.CURSOR));
+                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, widgetStore.fullCoordinate, regionId === RegionId.CURSOR));
                 }
             }
         });
