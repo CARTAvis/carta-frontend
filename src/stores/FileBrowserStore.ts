@@ -313,7 +313,7 @@ export class FileBrowserStore {
         } else if (fileList) {
             const currentDir = fileList.directory;
             let newFolder = folder;
-            if (currentDir.length && !(currentDir.length === 1 && currentDir[0] === "/")) {
+            if (currentDir?.length && !(currentDir.length === 1 && currentDir[0] === "/")) {
                 newFolder = `${currentDir}/${folder}`;
             }
             this.getFileList(newFolder);
