@@ -177,11 +177,8 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
             const frame = widgetStore.effectiveFrame;
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.effectiveRegionId;
-            let stokes = undefined;
-            if (frame?.hasStokes) {
-                stokes = widgetStore.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName : widgetStore.selectedStokes;
-            }
-            const coordinate = `${stokes ?? ""}${widgetStore.coordinate}`;
+            const stokes = frame?.hasStokes && widgetStore.selectedStokes !== DEFAULT_STOKES ? widgetStore.selectedStokes : "";
+            const coordinate = `${stokes}${widgetStore.coordinate}`;
 
             if (!frame.regionSet) {
                 return;
