@@ -130,6 +130,10 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
     }
 
+    @computed get isXProfile(): boolean {
+        return this.coordinate?.includes("x");
+    }
+
     @computed get isAutoScaledX() {
         return this.minX === undefined || this.maxX === undefined;
     }

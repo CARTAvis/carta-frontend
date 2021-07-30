@@ -72,7 +72,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get plotData(): {values: Array<Point2D>; smoothingValues: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number; yMean: number; yRms: number} {
-        const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
         if (!this.frame || !this.width || !this.profileStore) {
             return null;
         }
@@ -90,11 +89,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 xMax = this.autoScaleHorizontalMax;
             } else {
                 xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                if (isXProfile) {
-                    xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                } else {
-                    xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.height);
-                }
+                xMax = clamp(this.widgetStore.maxX, 0, this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height);
             }
 
             xMin = Math.floor(xMin);
@@ -235,11 +230,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
         autorun(
             () => {
-                const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
                 if (!this.frame || !this.width) {
                     return null;
                 }
-                if (isXProfile) {
+                if (this.widgetStore.isXProfile) {
                     this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
                 } else {
                     this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
@@ -266,12 +260,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         if (!this.frame || !this.profileStore || !this.widgetStore) {
             return;
         }
-        const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
 
         let astString = new ASTSettingsString();
         astString.add("System", OverlayStore.Instance.global.explicitSystem);
 
-        if (isXProfile) {
+        if (this.widgetStore.isXProfile) {
             for (let i = 0; i < values.length; i++) {
                 const pointWCS = transformPoint(this.frame.wcsInfo, {x: values[i], y: this.profileStore.y});
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
@@ -388,7 +381,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"} />;
         }
 
-        const isXProfile = widgetStore.coordinate.indexOf("x") >= 0;
+        const isXProfile = widgetStore.isXProfile;
         const imageName = appStore.activeFrame ? appStore.activeFrame.filename : undefined;
         const plotName = `${isXProfile ? "X" : "Y"} profile`;
         let linePlotProps: LinePlotComponentProps = {
