@@ -547,7 +547,7 @@ export class AppStore {
      * @param path - path to the parent directory of the file to open, or of the file itself
      * @param {string=} filename - filename of the file to open
      * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
-     * @return {Promise<number>} [async] the file ID of the opened file
+     * @return {Promise<FrameStore>} [async] the FrameStore the opened file
      */
     @action appendFile = async (path: string, filename: string, hdu: string) => {
         // Stop animations playing before loading a new frame
@@ -560,7 +560,7 @@ export class AppStore {
      * @param path - path to the parent directory of the file to open, or of the file itself
      * @param {string=} filename - filename of the file to open
      * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
-     * @return {Promise<number>} [async] the file ID of the opened file
+     * @return {Promise<FrameStore>} [async] the FrameStore of the opened file
      */
     @action openFile = (path: string, filename?: string, hdu?: string) => {
         this.removeAllFrames();
