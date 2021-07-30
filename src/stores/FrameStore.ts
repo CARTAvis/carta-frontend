@@ -1618,12 +1618,16 @@ export class FrameStore {
             const pointRefImage = transformPoint(this.spatialTransformAST, pos, true);
             this.spatialReference.updateCursorRegion(pointRefImage);
         } else {
-            this.frameRegionSet.updateCursorRegionPosition(pos);
+            if (pos.x >= 0 && pos.x <= this.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.frameInfo.fileInfoExtended.height - 1) {
+                this.frameRegionSet.updateCursorRegionPosition(pos);
+            }
         }
 
         for (const frame of this.secondarySpatialImages) {
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
-            frame.frameRegionSet.updateCursorRegionPosition(pointSecondaryImage);
+            if (pointSecondaryImage.x >= 0 && pointSecondaryImage.x <= frame.frameInfo.fileInfoExtended.width - 1 && pointSecondaryImage.y >= 0 && pointSecondaryImage.y <= frame.frameInfo.fileInfoExtended.height - 1) {
+                frame.frameRegionSet.updateCursorRegionPosition(pointSecondaryImage);
+            }
         }
     };
 
