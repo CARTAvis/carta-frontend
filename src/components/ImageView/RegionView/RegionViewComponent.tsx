@@ -104,7 +104,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     @action private regionCreationStart = (mouseEvent: MouseEvent) => {
-        console.log("create region start", Boolean(this.creatingRegion))
         if (this.creatingRegion) {
             return;
         }
@@ -180,7 +179,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE) {
             // avoid mouse up event triggering region creation start
-            setTimeout(() => {this.creatingRegion = null}, 1);
+            setTimeout(() => {
+                this.creatingRegion = null;
+            }, 1);
         } else {
             this.creatingRegion = null;
         }
@@ -517,7 +518,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
-        console.log("double click", Boolean(this.creatingRegion))
         if (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) {
             this.regionCreationEnd();
         }
