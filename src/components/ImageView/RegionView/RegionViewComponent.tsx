@@ -104,13 +104,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     @action private regionCreationStart = (mouseEvent: MouseEvent) => {
+        console.log("create region start", Boolean(this.creatingRegion))
         if (this.creatingRegion) {
             return;
         }
         const frame = this.props.frame;
         const regionType = frame.regionSet.newRegionType;
         const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
-
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 this.creatingRegion = frame.regionSet.addPointRegion(cursorPosImageSpace, false);
@@ -177,7 +177,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         } else {
             frame.regionSet.deleteRegion(this.creatingRegion);
         }
-        this.creatingRegion = null;
+
+        if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE) {
+            // avoid mouse up event triggering region creation start
+            setTimeout(() => {this.creatingRegion = null}, 1);
+        } else {
+            this.creatingRegion = null;
+        }
 
         // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
         setTimeout(() => {
@@ -511,6 +517,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
+        console.log("double click", Boolean(this.creatingRegion))
         if (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) {
             this.regionCreationEnd();
         }
