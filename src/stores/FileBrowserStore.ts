@@ -146,7 +146,7 @@ export class FileBrowserStore {
         this.catalogFileList = list;
     };
 
-    @action getFileList = async (directory: string) => {
+    @action getFileList = async (directory: string = "") => {
         const backendService = BackendService.Instance;
 
         this.loadingList = true;
