@@ -273,8 +273,10 @@ export class RegionStore {
                     add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation))
                 ];
                 approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
-            } else {
+            } else if (this.regionType === CARTA.RegionType.POLYGON) {
                 approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, !this.creating);
+            } else {
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, false);
             }
             this.regionApproximationMap.set(astTransform, approximatePoints);
         }
