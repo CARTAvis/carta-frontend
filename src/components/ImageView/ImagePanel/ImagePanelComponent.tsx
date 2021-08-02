@@ -42,6 +42,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         makeObservable(this);
 
         this.activeLayer = AppStore.Instance.activeLayer;
+        // TODO: this should be changed to show a single popup for the entire image view, rather than per-panel
         autorun(() => {
             const frame = props.frame;
             if (frame) {
@@ -94,6 +95,22 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         AppStore.Instance.hideImageToolbar();
     };
 
+    onMouseDown = ev => {
+        const appStore = AppStore.Instance;
+        if (this.props.frame !== appStore.activeFrame) {
+            appStore.setActiveFrame(this.props.frame);
+            ev.stopPropagation();
+        }
+    };
+
+    onMouseWheel = ev => {
+        const appStore = AppStore.Instance;
+        if (this.props.frame !== appStore.activeFrame) {
+            appStore.setActiveFrame(this.props.frame);
+            ev.stopPropagation();
+        }
+    };
+
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
         if (region) {
@@ -130,7 +147,14 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
 
             return (
-                <div className="image-panel-div" style={{width: overlayStore.viewWidth, height: overlayStore.viewHeight}} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+                <div
+                    className="image-panel-div"
+                    style={{width: overlayStore.viewWidth, height: overlayStore.viewHeight}}
+                    onWheel={this.onMouseWheel}
+                    onMouseDown={this.onMouseDown}
+                    onMouseOver={this.onMouseEnter}
+                    onMouseLeave={this.onMouseLeave}
+                >
                     <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
                     <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
                     {frame.valid && <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />}
