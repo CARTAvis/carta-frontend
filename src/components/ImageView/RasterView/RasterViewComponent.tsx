@@ -384,8 +384,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frame && frame.isRenderable ? frame.renderWidth || 1 : 1,
-                        height: frame && frame.isRenderable ? frame.renderHeight || 1 : 1
+                        width: frame?.isRenderable ? frame.renderWidth || 1 : 1,
+                        height: frame?.isRenderable ? frame.renderHeight || 1 : 1
                     }}
                 />
             </div>
