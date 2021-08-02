@@ -10,6 +10,7 @@ export class OverlayComponentProps {
     overlaySettings: OverlayStore;
     frame: FrameStore;
     docked: boolean;
+    highlightFrame: boolean;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
@@ -94,6 +95,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             if (frame.moving) {
                 const tolVal = Math.max((settings.global.tolerance * 2) / 100.0, 0.1);
                 currentStyleString += `, Tol=${tolVal}`;
+            }
+
+            // Double the border width to highlight this frame
+            if (this.props.highlightFrame && this.props.overlaySettings.border.visible) {
+                currentStyleString += `, Width(Border)=${this.props.overlaySettings.border.width * 2}`;
             }
 
             plot(currentStyleString);

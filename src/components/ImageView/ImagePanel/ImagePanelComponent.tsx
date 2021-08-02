@@ -145,6 +145,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             const effectiveWidth = frame.renderWidth * (frame.renderHiDPI ? devicePixelRatio : 1);
             const effectiveHeight = frame.renderHeight * (frame.renderHiDPI ? devicePixelRatio : 1);
             const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
+            const isActive = frame === appStore.activeFrame && appStore.numRows * appStore.numColumns > 1;
 
             return (
                 <div
@@ -157,7 +158,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                 >
                     <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
                     <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
-                    {frame.valid && <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />}
+                    {frame.valid && <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} highlightFrame={isActive} />}
                     {this.cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
