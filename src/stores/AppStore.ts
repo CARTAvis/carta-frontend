@@ -349,25 +349,25 @@ export class AppStore {
         return this.frames.map(frame => frame.requiredStokes);
     }
 
-    @computed get spatialGroup(): FrameStore[] {
+    private spatialGroup(baseFrame: FrameStore): FrameStore[] {
         if (!this.frames || !this.frames.length || !this.activeFrame) {
             return [];
         }
 
-        const activeGroupFrames = [];
+        const baseGroupFrames = [];
         for (const frame of this.frames) {
             const groupMember =
-                frame === this.activeFrame || // Frame is active
-                frame === this.activeFrame.spatialReference || // Frame is the active frame's reference
-                frame.spatialReference === this.activeFrame || // Frame is a secondary image of the active frame
-                (frame.spatialReference && frame.spatialReference === this.activeFrame.spatialReference); // Frame has the same reference as the active frame
+                frame === baseFrame || // Frame is the base
+                frame === baseFrame.spatialReference || // Frame is the active frame's reference
+                frame.spatialReference === baseFrame || // Frame is a secondary image of the active frame
+                (frame.spatialReference && frame.spatialReference === baseFrame.spatialReference); // Frame has the same reference as the base frame
 
             if (groupMember) {
-                activeGroupFrames.push(frame);
+                baseGroupFrames.push(frame);
             }
         }
 
-        return activeGroupFrames;
+        return baseGroupFrames;
     }
 
     @computed get spatialAndSpectalMatchedFileIds(): number[] {
@@ -390,8 +390,14 @@ export class AppStore {
         return matchedIds;
     }
 
-    @computed get contourFrames(): FrameStore[] {
-        return this.spatialGroup.filter(f => f.contourConfig.enabled && f.contourConfig.visible);
+    // Calculates which frames have a contour visible as a function of each visible frame
+    @computed get contourFrames(): Map<FrameStore, FrameStore[]> {
+        const frameMap = new Map<FrameStore, FrameStore[]>();
+        for (const frame of this.visibleFrames) {
+            const group = this.spatialGroup(frame).filter(f => f.contourConfig.enabled && f.contourConfig.visible);
+            frameMap.set(frame, group);
+        }
+        return frameMap;
     }
 
     @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string): boolean => {

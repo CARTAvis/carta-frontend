@@ -106,8 +106,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         const appStore = AppStore.Instance;
-        const requiredWidth = frame.renderWidth * devicePixelRatio;
-        const requiredHeight = frame.renderHeight * devicePixelRatio;
+        const requiredWidth = Math.max(1, frame.renderWidth * devicePixelRatio);
+        const requiredHeight = Math.max(1, frame.renderHeight * devicePixelRatio);
 
         const tileRenderService = TileWebGLService.Instance;
         // Resize and clear the canvas if needed
