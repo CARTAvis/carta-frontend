@@ -8,6 +8,9 @@ pipeline {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     sh "git submodule update --init --recursive"
+                    sh "n 12"
+                    sh "n 14"
+                    sh "n 16"
                     sh "n exec 14 npm install"
                     sh "n exec 14 npm run checkformat"
                 }
