@@ -25,22 +25,12 @@ export class SpatialProfileStore {
     };
 
     @action updateFromStream(spatialProfileData: CARTA.ISpatialProfileData) {
-        // If the profile store has the same coordinates as the incoming one, just add to the profiles
-        if (this.channel === spatialProfileData.channel && this.x === spatialProfileData.x && this.y === spatialProfileData.y) {
-            for (let profile of spatialProfileData.profiles) {
-                this.profiles.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
-            }
-        } else {
-            // Otherwise create a new profile set
+        if (spatialProfileData) {
             this.channel = spatialProfileData.channel;
             this.value = spatialProfileData.value;
             this.x = spatialProfileData.x;
             this.y = spatialProfileData.y;
-            const newProfilesMap = new Map<Coordinate, ProcessedSpatialProfile>();
-            for (let profile of spatialProfileData.profiles) {
-                newProfilesMap.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
-            }
-            this.profiles = newProfilesMap;
+            spatialProfileData.profiles?.forEach(profile => this.profiles.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile)));
         }
     }
 
