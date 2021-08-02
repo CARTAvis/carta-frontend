@@ -1,5 +1,5 @@
 import tinycolor from "tinycolor2";
-import {action, computed, observable, override, makeObservable} from "mobx";
+import {action, autorun, computed, observable, override, makeObservable} from "mobx";
 import * as _ from "lodash";
 import {RegionWidgetStore, RegionId, RegionsType} from "./RegionWidgetStore";
 import {CARTA} from "carta-protobuf";
@@ -128,6 +128,12 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
+
+        autorun(() => {
+            if (this.effectiveFrame) {
+                this.selectedStokes = DEFAULT_STOKES;
+            }
+        });
     }
 
     @computed get isXProfile(): boolean {
