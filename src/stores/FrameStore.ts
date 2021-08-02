@@ -736,6 +736,10 @@ export class FrameStore {
         return [];
     }
 
+    @computed get requiredStokesInfo(): string {
+        return this.requiredStokes >= 0 && this.requiredStokes < this.stokesInfo?.length ? this.stokesInfo[this.requiredStokes] : String(this.requiredStokes);
+    }
+
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
         this.overlayStore = OverlayStore.Instance;
