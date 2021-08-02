@@ -1191,7 +1191,7 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
-        this.imageGridSize = {x: 1, y: 1};
+        this.imageGridSize = {x: 2, y: 2};
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
@@ -1271,31 +1271,31 @@ export class AppStore {
         // Low-bandwidth mode
         const throttledSetCursorLowBandwidth = _.throttle(this.setCursor, AppStore.CursorThrottleTime * 2);
 
-        // Update frame view
+        // Update frame view for each visible frame
         autorun(() => {
-            if (this.activeFrame && (this.preferenceStore.streamContoursWhileZooming || !this.activeFrame.zooming)) {
-                // Trigger update raster view/title when switching layout
-                this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+            for (const frame of this.visibleFrames) {
+                if (this.preferenceStore.streamContoursWhileZooming || !frame.zooming) {
+                    const reqView = frame.requiredFrameView;
+                    let croppedReq: FrameView = {
+                        xMin: Math.max(0, reqView.xMin),
+                        xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                        yMin: Math.max(0, reqView.yMin),
+                        yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                        mip: reqView.mip
+                    };
 
-                const reqView = this.activeFrame.requiredFrameView;
-                let croppedReq: FrameView = {
-                    xMin: Math.max(0, reqView.xMin),
-                    xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
-                    yMin: Math.max(0, reqView.yMin),
-                    yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
-                    mip: reqView.mip
-                };
+                    const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+                    const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+                    const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+                    const tileSizeFullRes = reqView.mip * 256;
+                    const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+                    throttledSetView(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords);
+                }
 
-                const imageSize: Point2D = {x: this.activeFrame.frameInfo.fileInfoExtended.width, y: this.activeFrame.frameInfo.fileInfoExtended.height};
-                const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-                const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-                const tileSizeFullRes = reqView.mip * 256;
-                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                throttledSetView(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords);
-            }
-
-            if (!this.activeFrame) {
-                this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                // TODO: this should be separate
+                if (!this.activeFrame) {
+                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                }
             }
         });
 
@@ -1699,11 +1699,6 @@ export class AppStore {
         // Ignore changes when animating
         if (this.animatorStore.serverAnimationActive) {
             return;
-        }
-
-        // Disable rendering of old frame
-        if (this.activeFrame && this.activeFrame !== frame) {
-            this.activeFrame.renderType = RasterRenderType.NONE;
         }
 
         this.changeActiveFrame(frame);

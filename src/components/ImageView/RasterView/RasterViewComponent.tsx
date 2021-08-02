@@ -11,6 +11,8 @@ export class RasterViewComponentProps {
     docked: boolean;
     frame: FrameStore;
     pixelHighlightValue: number;
+    row: number;
+    column: number;
 }
 
 @observer
@@ -36,7 +38,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateCanvas = () => {
         const frame = this.props.frame;
         const tileRenderService = TileWebGLService.Instance;
-        // console.log(`Updating canvas for frame ${frame.frameInfo.fileId}, panel ${this.panelIndex}`);
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
             const histStokes = frame.renderConfig.stokes;
             const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histogram.channel : undefined;
@@ -47,8 +48,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             }
             // draw in 2d canvas
             const ctx = this.canvas.getContext("2d");
-            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            ctx.drawImage(this.gl.canvas, 0, 0, this.canvas.width, this.canvas.height);
+            const w = this.canvas.width;
+            const h = this.canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
         }
     };
 
@@ -96,23 +100,42 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private updateCanvasSize() {
         const frame = this.props.frame;
+
+        if (!frame) {
+            return;
+        }
+
+        const appStore = AppStore.Instance;
+        const requiredWidth = frame.renderWidth * devicePixelRatio;
+        const requiredHeight = frame.renderHeight * devicePixelRatio;
+
         const tileRenderService = TileWebGLService.Instance;
         // Resize and clear the canvas if needed
-        if (frame && frame.isRenderable && (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio)) {
-            this.canvas.width = frame.renderWidth * devicePixelRatio;
-            this.canvas.height = frame.renderHeight * devicePixelRatio;
-            tileRenderService.setCanvasSize(frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
+        if (frame && frame.isRenderable && (this.canvas.width !== requiredWidth || this.canvas.height !== requiredHeight)) {
+            this.canvas.width = requiredWidth;
+            this.canvas.height = requiredHeight;
         }
+        // Resize and clear the shared WebGL canvas if required
+        tileRenderService.setCanvasSize(requiredWidth * appStore.numColumns, requiredHeight * appStore.numRows);
     }
 
     private renderCanvas() {
         const frame = this.props.frame;
-        // console.log(`Rendering canvas for frame ${frame.frameInfo.fileId}, panel ${this.panelIndex}`);
         // Only clear and render if we're in animation or tiled mode
         if (frame && frame.isRenderable && frame.renderType !== RasterRenderType.NONE) {
-            this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
+            const appStore = AppStore.Instance;
+            const xOffset = this.props.column * frame.renderWidth * devicePixelRatio;
+            // y-axis is inverted
+            const yOffset = (appStore.numRows - 1 - this.props.row) * frame.renderHeight * devicePixelRatio;
+            this.gl.viewport(xOffset, yOffset, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
             this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
+
+            // Clear a scissored rectangle limited to the current frame
+            this.gl.enable(WebGLRenderingContext.SCISSOR_TEST);
+            this.gl.scissor(xOffset, yOffset, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
             this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
+            this.gl.disable(WebGLRenderingContext.SCISSOR_TEST);
+
             // Skip rendering if frame is hidden
             if (!frame.renderConfig.visible) {
                 return;

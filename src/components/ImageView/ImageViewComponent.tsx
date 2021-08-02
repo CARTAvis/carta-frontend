@@ -114,8 +114,17 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     };
 
     @computed get panels() {
-        const visibleFrames = AppStore.Instance.visibleFrames;
-        return visibleFrames?.map(frame => <ImagePanelComponent key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} />) ?? [];
+        const appStore = AppStore.Instance;
+        const visibleFrames = appStore.visibleFrames;
+        if (!visibleFrames) {
+            return [];
+        }
+        return visibleFrames.map((frame, index) => {
+            const column = index % appStore.numColumns;
+            const row = Math.floor(index / appStore.numColumns);
+
+            return <ImagePanelComponent key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} row={row} column={column} />;
+        });
     }
 
     render() {
