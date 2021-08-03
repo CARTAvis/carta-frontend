@@ -26,4 +26,4 @@ export * from "./StatisticsDefinition";
 export * from "./TypeDefinition";
 export * from "./Snippet";
 export * from "./CatalogControlMap";
-export * from "./ImageTileMode";
+export * from "./ImagePanelMode";

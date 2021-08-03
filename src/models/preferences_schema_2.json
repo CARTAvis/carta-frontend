@@ -276,21 +276,21 @@
             ],
             "default": "activeImage"
         },
-        "imageTileMode": {
+        "imagePanelMode": {
             "type": "string",
             "enum": [
-                "none",
+                "single",
                 "dynamic",
-                "static"
+                "fixed"
             ],
             "default": "none"
         },
-        "imageTileColumns": {
+        "imagePanelColumns": {
             "type": "number",
             "minimum": 1,
             "default": 2
         },
-        "imageTileRows": {
+        "imagePanelRows": {
             "type": "number",
             "minimum": 1,
             "default": 2

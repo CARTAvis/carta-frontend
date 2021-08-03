@@ -6,9 +6,9 @@ import {ItemRenderer, Select} from "@blueprintjs/select";
 import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
 import {AutoColorPickerComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
+import {ImagePanelMode} from "models";
 import {SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
-import {ImageTileMode} from "../../../models";
 
 enum ImageViewSettingsPanelTabs {
     GLOBAL = "Global",
@@ -143,18 +143,18 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const globalPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Image Tiling">
-                    <HTMLSelect
-                        options={Object.keys(ImageTileMode).map(key => ({label: key, value: ImageTileMode[key]}))}
-                        value={preferences.imageTileMode}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => preferences.setPreference(PreferenceKeys.IMAGE_TILE_MODE, event.currentTarget.value as ImageTileMode)}
-                    />
+                <FormGroup inline={true} label="Multi-panel mode">
+                    <HTMLSelect value={preferences.imagePanelMode} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
+                        <option value={ImagePanelMode.None}>Single panel only</option>
+                        <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
+                        <option value={ImagePanelMode.Fixed}>Fixed grid size</option>
+                    </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Tile Columns">
-                    <SafeNumericInput placeholder="Columns" min={1} value={preferences.imageTileColumns} stepSize={1} minorStepSize={null} onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_TILE_COLUMNS, value)} />
+                <FormGroup inline={true} label="Panel columns">
+                    <SafeNumericInput placeholder="Columns" min={1} value={preferences.imagePanelColumns} stepSize={1} minorStepSize={null} onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Tile Rows">
-                    <SafeNumericInput placeholder="Rows" min={1} value={preferences.imageTileRows} stepSize={1} minorStepSize={null} onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_TILE_ROWS, value)} />
+                <FormGroup inline={true} label="Panel rows">
+                    <SafeNumericInput placeholder="Rows" min={1} value={preferences.imagePanelRows} stepSize={1} minorStepSize={null} onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_ROWS, value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Overlay color">
                     <AutoColorPickerComponent color={global.color} presetColors={SWATCH_COLORS} setColor={global.setColor} disableAlpha={true} />

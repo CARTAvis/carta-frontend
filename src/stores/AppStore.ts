@@ -38,7 +38,7 @@ import {
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FileId, FrameView, ImageTileMode, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -2002,26 +2002,26 @@ export class AppStore {
     }
 
     @computed get numImageColumns() {
-        switch (this.preferenceStore.imageTileMode) {
-            case ImageTileMode.None:
+        switch (this.preferenceStore.imagePanelMode) {
+            case ImagePanelMode.None:
                 return 1;
-            case ImageTileMode.Static:
-                return Math.max(1, this.preferenceStore.imageTileColumns);
+            case ImagePanelMode.Fixed:
+                return Math.max(1, this.preferenceStore.imagePanelColumns);
             default:
                 const numImages = this.frames?.length ?? 0;
-                return clamp(numImages, 1, this.preferenceStore.imageTileColumns);
+                return clamp(numImages, 1, this.preferenceStore.imagePanelColumns);
         }
     }
 
     @computed get numImageRows() {
-        switch (this.preferenceStore.imageTileMode) {
-            case ImageTileMode.None:
+        switch (this.preferenceStore.imagePanelMode) {
+            case ImagePanelMode.None:
                 return 1;
-            case ImageTileMode.Static:
-                return Math.max(1, this.preferenceStore.imageTileRows);
+            case ImagePanelMode.Fixed:
+                return Math.max(1, this.preferenceStore.imagePanelRows);
             default:
                 const numImages = this.frames?.length ?? 0;
-                return clamp(Math.ceil(numImages / this.preferenceStore.imageTileColumns), 1, this.preferenceStore.imageTileRows);
+                return clamp(Math.ceil(numImages / this.preferenceStore.imagePanelColumns), 1, this.preferenceStore.imagePanelRows);
         }
     }
 
