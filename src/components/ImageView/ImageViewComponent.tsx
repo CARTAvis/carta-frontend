@@ -1,12 +1,15 @@
 import "./ImageViewComponent.scss";
 import * as React from "react";
 import $ from "jquery";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
-import {computed} from "mobx";
+import {Point2D} from "models";
+import {toFixed} from "utilities";
+import "./ImageViewComponent.scss";
 
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",
@@ -107,11 +110,43 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         };
     }
 
+    private ratioIndicatorTimeoutHandle;
+    private cachedImageSize: Point2D;
+    private cachedGridSize: Point2D;
+
+    @observable showRatioIndicator: boolean = false;
+
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
             AppStore.Instance.setImageViewDimensions(width, height);
         }
     };
+
+    @action setRatioIndicatorVisible = (val: boolean) => {
+        this.showRatioIndicator = val;
+    };
+
+    constructor(props: WidgetProps) {
+        super(props);
+        makeObservable(this);
+
+        const appStore = AppStore.Instance;
+
+        autorun(() => {
+            const imageSize = {x: appStore.overlayStore.renderWidth, y: appStore.overlayStore.renderHeight};
+            const imageGridSize = {x: appStore.numColumns, y: appStore.numRows};
+            // Compare to cached image size to prevent duplicate events when changing frames
+            const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
+            const gridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
+            if (imageSizeChanged || gridSizeChanged) {
+                this.cachedImageSize = imageSize;
+                this.cachedGridSize = imageGridSize;
+                clearTimeout(this.ratioIndicatorTimeoutHandle);
+                this.setRatioIndicatorVisible(true);
+                this.ratioIndicatorTimeoutHandle = setTimeout(() => this.setRatioIndicatorVisible(false), 1000);
+            }
+        });
+    }
 
     @computed get panels() {
         const appStore = AppStore.Instance;
@@ -139,9 +174,28 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             divContents = this.panels;
         }
 
+        const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
+        const ratio = effectiveImageSize.x / effectiveImageSize.y;
+        const gridSize = {x: appStore.numColumns, y: appStore.numRows};
+
+        let gridSizeNode: React.ReactNode;
+        if (gridSize.x * gridSize.y > 1) {
+            gridSizeNode = (
+                <p>
+                    {gridSize.x} &times; {gridSize.y}
+                </p>
+            );
+        }
+
         return (
             <div className="image-view-div" style={{gridTemplateColumns: `repeat(${appStore.numColumns}, auto)`}}>
                 {divContents}
+                <div style={{opacity: this.showRatioIndicator ? 1 : 0}} className={"image-ratio-popup"}>
+                    <p>
+                        {effectiveImageSize.x} &times; {effectiveImageSize.y} ({toFixed(ratio, 2)})
+                    </p>
+                    {gridSizeNode}
+                </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33} />
             </div>
         );

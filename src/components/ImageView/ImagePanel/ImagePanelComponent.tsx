@@ -1,7 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
-import {Tag} from "@blueprintjs/core";
+import {action, computed, makeObservable, observable} from "mobx";
 import {OverlayComponent} from "../Overlay/OverlayComponent";
 import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
@@ -13,8 +12,7 @@ import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {AppStore, RegionStore, FrameStore} from "stores";
-import {CursorInfo, CursorInfoVisibility, Point2D} from "models";
-import {toFixed} from "utilities";
+import {CursorInfo, CursorInfoVisibility} from "models";
 import "./ImagePanelComponent.scss";
 
 interface ImagePanelComponentProps {
@@ -26,10 +24,6 @@ interface ImagePanelComponentProps {
 
 @observer
 export class ImagePanelComponent extends React.Component<ImagePanelComponentProps> {
-    private ratioIndicatorTimeoutHandle;
-    private cachedImageSize: Point2D;
-
-    @observable showRatioIndicator: boolean = false;
     @observable pixelHighlightValue: number = NaN;
     readonly activeLayer: ImageViewLayer;
 
@@ -42,26 +36,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         makeObservable(this);
 
         this.activeLayer = AppStore.Instance.activeLayer;
-        // TODO: this should be changed to show a single popup for the entire image view, rather than per-panel
-        autorun(() => {
-            const frame = props.frame;
-            if (frame) {
-                const imageSize = {x: frame.renderWidth, y: frame.renderHeight};
-                // Compare to cached image size to prevent duplicate events when changing frames
-                if (!this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y) {
-                    this.cachedImageSize = imageSize;
-                    clearTimeout(this.ratioIndicatorTimeoutHandle);
-                    runInAction(() => (this.showRatioIndicator = true));
-                    this.ratioIndicatorTimeoutHandle = setTimeout(
-                        () =>
-                            runInAction(() => {
-                                this.showRatioIndicator = false;
-                            }),
-                        1000
-                    );
-                }
-            }
-        });
     }
 
     onClicked = (cursorInfo: CursorInfo) => {
@@ -142,9 +116,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
         const frame = this.props.frame;
         if (frame && frame.isRenderable && appStore.astReady) {
-            const effectiveWidth = frame.renderWidth * (frame.renderHiDPI ? devicePixelRatio : 1);
-            const effectiveHeight = frame.renderHeight * (frame.renderHiDPI ? devicePixelRatio : 1);
-            const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
             const isActive = frame === appStore.activeFrame && appStore.numRows * appStore.numColumns > 1;
 
             return (
@@ -202,11 +173,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         />
                     )}
                     <ToolbarComponent docked={this.props.docked} visible={appStore.imageToolbarVisible} vertical={false} frame={frame} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
-                    <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
-                        <Tag large={true}>
-                            {effectiveWidth} x {effectiveHeight} ({toFixed(effectiveWidth / effectiveHeight, 2)})
-                        </Tag>
-                    </div>
                 </div>
             );
         } else {
