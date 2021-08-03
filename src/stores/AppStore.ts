@@ -77,6 +77,8 @@ export class AppStore {
 
     // Hooks
     readonly activeImageChanged: EventHook<FrameStore>;
+    readonly imageOpened: EventHook<FrameStore>;
+    readonly imageClosed: EventHook<FrameStore>;
 
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -501,7 +503,9 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
-            return this.getFrame(ack.fileId);
+            const frame = this.getFrame(ack.fileId);
+            this.imageOpened.fire(frame);
+            return frame;
         } catch (err) {
             this.alertStore.showAlert(`Error loading file: ${err}`);
             this.endFileLoading();
@@ -606,6 +610,7 @@ export class AppStore {
         } else {
             this.removeFrame(frame);
         }
+        this.imageClosed.fire(frame);
     };
 
     /**
@@ -731,6 +736,7 @@ export class AppStore {
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
                 }
+                this.imageClosed.fire(frame);
             });
             this.frames = [];
             // adjust requirements for stores
@@ -1167,6 +1173,8 @@ export class AppStore {
 
         // Initialise hooks
         this.activeImageChanged = new EventHook<FrameStore>();
+        this.imageOpened = new EventHook<FrameStore>();
+        this.imageClosed = new EventHook<FrameStore>();
 
         this.astReady = false;
         this.cartaComputeReady = false;
