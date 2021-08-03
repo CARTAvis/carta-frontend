@@ -8,6 +8,7 @@ import {AutoColorPickerComponent, SafeNumericInput, SpectralSettingsComponent} f
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
+import {ImageTileMode} from "../../../models";
 
 enum ImageViewSettingsPanelTabs {
     GLOBAL = "Global",
@@ -142,7 +143,20 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const globalPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Color">
+                <FormGroup inline={true} label="Image Tiling">
+                    <HTMLSelect
+                        options={Object.keys(ImageTileMode).map(key => ({label: key, value: ImageTileMode[key]}))}
+                        value={preferences.imageTileMode}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => preferences.setPreference(PreferenceKeys.IMAGE_TILE_MODE, event.currentTarget.value as ImageTileMode)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Tile Columns">
+                    <SafeNumericInput placeholder="Columns" min={1} value={preferences.imageTileColumns} stepSize={1} minorStepSize={null} onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_TILE_COLUMNS, value)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Tile Rows">
+                    <SafeNumericInput placeholder="Rows" min={1} value={preferences.imageTileRows} stepSize={1} minorStepSize={null} onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_TILE_ROWS, value)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Overlay color">
                     <AutoColorPickerComponent color={global.color} presetColors={SWATCH_COLORS} setColor={global.setColor} disableAlpha={true} />
                 </FormGroup>
                 <FormGroup inline={true} label="Tolerance" labelInfo="(%)">

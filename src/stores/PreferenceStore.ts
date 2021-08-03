@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImageTileMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService} from "services";
 
@@ -82,7 +82,10 @@ export enum PreferenceKeys {
     CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
 
     PIXEL_GRID_VISIBLE = "pixelGridVisible",
-    PIXEL_GRID_COLOR = "pixelGridColor"
+    PIXEL_GRID_COLOR = "pixelGridColor",
+    IMAGE_TILE_MODE = "imageTileMode",
+    IMAGE_TILE_COLUMNS = "imageTileColumns",
+    IMAGE_TILE_ROWS = "imageTileRows"
 }
 
 const DEFAULTS = {
@@ -90,7 +93,10 @@ const DEFAULTS = {
         fileSortingString: "-date",
         fileFilteringType: FileFilteringType.Fuzzy,
         pixelGridVisible: false,
-        pixelGridColor: "#FFFFFF"
+        pixelGridColor: "#FFFFFF",
+        imageTileMode: ImageTileMode.None,
+        imageTileColumns: 2,
+        imageTileRows: 2
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -491,6 +497,18 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
     }
 
+    @computed get imageTileMode(): ImageTileMode {
+        return this.preferences.get(PreferenceKeys.IMAGE_TILE_MODE) ?? DEFAULTS.SILENT.imageTileMode;
+    }
+
+    @computed get imageTileColumns(): number {
+        return this.preferences.get(PreferenceKeys.IMAGE_TILE_COLUMNS) ?? DEFAULTS.SILENT.imageTileColumns;
+    }
+
+    @computed get imageTileRows(): number {
+        return this.preferences.get(PreferenceKeys.IMAGE_TILE_ROWS) ?? DEFAULTS.SILENT.imageTileRows;
+    }
+
     @action setPreference = async (key: PreferenceKeys, value: any) => {
         if (!key) {
             return false;
@@ -528,7 +546,15 @@ export class PreferenceStore {
 
     // reset functions
     @action resetSilentSettings = () => {
-        this.clearPreferences([PreferenceKeys.SILENT_FILE_SORTING_STRING, PreferenceKeys.SILENT_FILE_FILTERING_TYPE, PreferenceKeys.PIXEL_GRID_VISIBLE, PreferenceKeys.PIXEL_GRID_COLOR]);
+        this.clearPreferences([
+            PreferenceKeys.SILENT_FILE_SORTING_STRING,
+            PreferenceKeys.SILENT_FILE_FILTERING_TYPE,
+            PreferenceKeys.PIXEL_GRID_VISIBLE,
+            PreferenceKeys.PIXEL_GRID_COLOR,
+            PreferenceKeys.IMAGE_TILE_MODE,
+            PreferenceKeys.IMAGE_TILE_COLUMNS,
+            PreferenceKeys.IMAGE_TILE_ROWS
+        ]);
     };
 
     @action resetGlobalSettings = () => {

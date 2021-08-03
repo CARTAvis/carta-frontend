@@ -134,7 +134,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         autorun(() => {
             const imageSize = {x: appStore.overlayStore.renderWidth, y: appStore.overlayStore.renderHeight};
-            const imageGridSize = {x: appStore.numColumns, y: appStore.numRows};
+            const imageGridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
             // Compare to cached image size to prevent duplicate events when changing frames
             const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
             const gridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
@@ -155,8 +155,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             return [];
         }
         return visibleFrames.map((frame, index) => {
-            const column = index % appStore.numColumns;
-            const row = Math.floor(index / appStore.numColumns);
+            const column = index % appStore.numImageColumns;
+            const row = Math.floor(index / appStore.numImageColumns);
 
             return <ImagePanelComponent key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} row={row} column={column} />;
         });
@@ -176,7 +176,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
         const ratio = effectiveImageSize.x / effectiveImageSize.y;
-        const gridSize = {x: appStore.numColumns, y: appStore.numRows};
+        const gridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
 
         let gridSizeNode: React.ReactNode;
         if (gridSize.x * gridSize.y > 1) {
@@ -188,7 +188,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className="image-view-div" style={{gridTemplateColumns: `repeat(${appStore.numColumns}, auto)`}}>
+            <div className="image-view-div" style={{gridTemplateColumns: `repeat(${appStore.numImageColumns}, auto)`}}>
                 {divContents}
                 <div style={{opacity: this.showRatioIndicator ? 1 : 0}} className={"image-ratio-popup"}>
                     <p>

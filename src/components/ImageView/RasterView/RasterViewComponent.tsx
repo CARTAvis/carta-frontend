@@ -116,7 +116,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.canvas.height = requiredHeight;
         }
         // Resize and clear the shared WebGL canvas if required
-        tileRenderService.setCanvasSize(requiredWidth * appStore.numColumns, requiredHeight * appStore.numRows);
+        tileRenderService.setCanvasSize(requiredWidth * appStore.numImageColumns, requiredHeight * appStore.numImageRows);
     }
 
     private renderCanvas() {
@@ -126,7 +126,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const appStore = AppStore.Instance;
             const xOffset = this.props.column * frame.renderWidth * devicePixelRatio;
             // y-axis is inverted
-            const yOffset = (appStore.numRows - 1 - this.props.row) * frame.renderHeight * devicePixelRatio;
+            const yOffset = (appStore.numImageRows - 1 - this.props.row) * frame.renderHeight * devicePixelRatio;
             this.gl.viewport(xOffset, yOffset, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
             this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
 

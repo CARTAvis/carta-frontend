@@ -268,8 +268,32 @@
         },
         "cursorInfoVisible": {
             "type": "string",
-            "enum": ["always", "activeImage", "hideTiled", "never"],
+            "enum": [
+                "always",
+                "activeImage",
+                "hideTiled",
+                "never"
+            ],
             "default": "activeImage"
+        },
+        "imageTileMode": {
+            "type": "string",
+            "enum": [
+                "none",
+                "dynamic",
+                "static"
+            ],
+            "default": "none"
+        },
+        "imageTileColumns": {
+            "type": "number",
+            "minimum": 1,
+            "default": 2
+        },
+        "imageTileRows": {
+            "type": "number",
+            "minimum": 1,
+            "default": 2
         }
     }
 }

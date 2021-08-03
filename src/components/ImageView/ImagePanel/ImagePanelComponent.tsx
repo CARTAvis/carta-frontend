@@ -102,7 +102,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             case CursorInfoVisibility.Always:
                 return true;
             case CursorInfoVisibility.HideTiled:
-                return appStore.numRows * appStore.numColumns === 1;
+                return appStore.numImageRows * appStore.numImageColumns === 1;
             case CursorInfoVisibility.ActiveImage:
                 return appStore.activeFrame === this.props.frame;
             default:
@@ -116,7 +116,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
         const frame = this.props.frame;
         if (frame && frame.isRenderable && appStore.astReady) {
-            const isActive = frame === appStore.activeFrame && appStore.numRows * appStore.numColumns > 1;
+            const isActive = frame === appStore.activeFrame && appStore.numImageRows * appStore.numImageColumns > 1;
 
             return (
                 <div

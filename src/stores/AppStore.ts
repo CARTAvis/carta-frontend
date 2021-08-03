@@ -15,6 +15,7 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
+    CURSOR_REGION_ID,
     DialogStore,
     DistanceMeasuringStore,
     FileBrowserStore,
@@ -22,7 +23,6 @@ import {
     FrameStore,
     HelpStore,
     LayoutStore,
-    SnippetStore,
     LogEntry,
     LogStore,
     OverlayStore,
@@ -31,14 +31,14 @@ import {
     RasterRenderType,
     RegionFileType,
     RegionStore,
+    SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    CURSOR_REGION_ID
+    WidgetsStore
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FileId, FrameView, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {FileId, FrameView, ImageTileMode, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -99,7 +99,6 @@ export class AppStore {
     // ImageViewer
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
-    @observable imageGridSize: Point2D;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
@@ -1197,7 +1196,6 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
-        this.imageGridSize = {x: 2, y: 2};
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
@@ -1591,12 +1589,7 @@ export class AppStore {
 
     // endregion
 
-    onReconnectAlertClosed = async (confirmed: boolean) => {
-        if (!confirmed) {
-            // TODO: How do we handle the situation where the user does not want to resume?
-            return;
-        }
-
+    onReconnectAlertClosed = async () => {
         try {
             const ack = await this.backendService.connect(this.backendService.serverUrl);
             if (ack.sessionType === CARTA.SessionType.RESUMED) {
@@ -1974,16 +1967,12 @@ export class AppStore {
     };
 
     @computed get numImagePages() {
-        if (this.imageGridSize.x <= 0 || this.imageGridSize.y <= 0 || !this.frames) {
+        if (this.numImageColumns <= 0 || this.numImageRows <= 0 || !this.frames) {
             return 0;
         }
 
-        const imagesPerPage = this.imageGridSize.x * this.imageGridSize.y;
+        const imagesPerPage = this.numImageColumns * this.numImageRows;
         return Math.ceil(this.frames.length / imagesPerPage);
-    }
-
-    @action setImageGridSize(columns: number, rows: number) {
-        this.imageGridSize = {x: Math.max(1, columns), y: Math.max(1, rows)};
     }
 
     @computed get currentImagePage() {
@@ -1991,7 +1980,7 @@ export class AppStore {
             return 0;
         }
 
-        const imagesPerPage = this.imageGridSize.x * this.imageGridSize.y;
+        const imagesPerPage = this.numImageColumns * this.numImageRows;
         const index = this.frames.indexOf(this.activeFrame);
         return Math.floor(index / imagesPerPage);
     }
@@ -2002,7 +1991,7 @@ export class AppStore {
         }
 
         const pageIndex = clamp(this.currentImagePage, 0, this.numImagePages);
-        const imagesPerPage = this.imageGridSize.x * this.imageGridSize.y;
+        const imagesPerPage = this.numImageColumns * this.numImageRows;
         const firstFrameIndex = pageIndex * imagesPerPage;
         const indexUpperBound = Math.min(firstFrameIndex + imagesPerPage, this.frames.length);
         const pageFrames = [];
@@ -2012,14 +2001,28 @@ export class AppStore {
         return pageFrames;
     }
 
-    @computed get numColumns() {
-        const numImages = this.frames?.length ?? 0;
-        return clamp(numImages, 1, this.imageGridSize.x);
+    @computed get numImageColumns() {
+        switch (this.preferenceStore.imageTileMode) {
+            case ImageTileMode.None:
+                return 1;
+            case ImageTileMode.Static:
+                return Math.max(1, this.preferenceStore.imageTileColumns);
+            default:
+                const numImages = this.frames?.length ?? 0;
+                return clamp(numImages, 1, this.preferenceStore.imageTileColumns);
+        }
     }
 
-    @computed get numRows() {
-        const numImages = this.frames?.length ?? 0;
-        return clamp(Math.ceil(numImages / this.imageGridSize.x), 1, this.imageGridSize.y);
+    @computed get numImageRows() {
+        switch (this.preferenceStore.imageTileMode) {
+            case ImageTileMode.None:
+                return 1;
+            case ImageTileMode.Static:
+                return Math.max(1, this.preferenceStore.imageTileRows);
+            default:
+                const numImages = this.frames?.length ?? 0;
+                return clamp(Math.ceil(numImages / this.preferenceStore.imageTileColumns), 1, this.preferenceStore.imageTileRows);
+        }
     }
 
     exportImage = (): boolean => {
