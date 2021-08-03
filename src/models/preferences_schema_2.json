@@ -268,21 +268,12 @@
         },
         "cursorInfoVisible": {
             "type": "string",
-            "enum": [
-                "always",
-                "activeImage",
-                "hideTiled",
-                "never"
-            ],
+            "enum": ["always", "activeImage", "hideTiled", "never"],
             "default": "activeImage"
         },
         "imagePanelMode": {
             "type": "string",
-            "enum": [
-                "single",
-                "dynamic",
-                "fixed"
-            ],
+            "enum": ["single", "dynamic", "fixed"],
             "default": "none"
         },
         "imagePanelColumns": {
