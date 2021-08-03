@@ -38,7 +38,7 @@ import {
 } from ".";
 import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FileId, FrameView, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {EventHook, FileId, FrameView, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -74,6 +74,9 @@ export class AppStore {
     readonly overlayStore: OverlayStore;
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
+
+    // Hooks
+    readonly activeImageChanged: EventHook<FrameStore>;
 
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -666,6 +669,7 @@ export class AppStore {
                 // Clean up if frame is active
                 if (this.activeFrame.frameInfo.fileId === fileId) {
                     this.activeFrame = firstFrame;
+                    this.activeImageChanged.fire(firstFrame);
                 }
                 // Clean up if frame is contour data source
                 if (this.contourDataSource.frameInfo.fileId === fileId) {
@@ -1160,6 +1164,9 @@ export class AppStore {
         this.preferenceStore = PreferenceStore.Instance;
         this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
+
+        // Initialise hooks
+        this.activeImageChanged = new EventHook<FrameStore>();
 
         this.astReady = false;
         this.cartaComputeReady = false;
@@ -1712,6 +1719,7 @@ export class AppStore {
             this.overlayStore.setDefaultsFromAST(frame);
         }
         this.activeFrame = frame;
+        this.activeImageChanged.fire(frame);
         this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
         this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
         if (this.syncContourToFrame) {
