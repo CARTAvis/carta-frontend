@@ -102,6 +102,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString += `, Width(Border)=${this.props.overlaySettings.border.width * 2}`;
             }
 
+            if (!this.props.frame.validWcs) {
+                //Remove system and format entries
+                currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
+            }
+
             plot(currentStyleString);
 
             if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
