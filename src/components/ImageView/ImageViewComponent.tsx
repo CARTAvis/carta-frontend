@@ -171,33 +171,37 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            divContents = this.panels;
-        }
+            const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
+            const ratio = effectiveImageSize.x / effectiveImageSize.y;
+            const gridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
 
-        const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
-        const ratio = effectiveImageSize.x / effectiveImageSize.y;
-        const gridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
-
-        let gridSizeNode: React.ReactNode;
-        if (gridSize.x * gridSize.y > 1) {
-            gridSizeNode = (
-                <p>
-                    {gridSize.x} &times; {gridSize.y}
-                </p>
+            let gridSizeNode: React.ReactNode;
+            if (gridSize.x * gridSize.y > 1) {
+                gridSizeNode = (
+                    <p>
+                        {gridSize.x} &times; {gridSize.y}
+                    </p>
+                );
+            }
+            divContents = (
+                <React.Fragment>
+                    {this.panels}
+                    <div style={{opacity: this.showRatioIndicator ? 1 : 0}} className={"image-ratio-popup"}>
+                        <p>
+                            {effectiveImageSize.x} &times; {effectiveImageSize.y} ({toFixed(ratio, 2)})
+                        </p>
+                        {gridSizeNode}
+                    </div>
+                </React.Fragment>
             );
         }
 
         return (
-            <div className="image-view-div" style={{gridTemplateColumns: `repeat(${appStore.numImageColumns}, auto)`}}>
-                {divContents}
-                <div style={{opacity: this.showRatioIndicator ? 1 : 0}} className={"image-ratio-popup"}>
-                    <p>
-                        {effectiveImageSize.x} &times; {effectiveImageSize.y} ({toFixed(ratio, 2)})
-                    </p>
-                    {gridSizeNode}
+            <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                <div className="image-view-div" style={{gridTemplateColumns: `repeat(${appStore.numImageColumns}, auto)`}}>
+                    {divContents}
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33} />
-            </div>
+            </ReactResizeDetector>
         );
     }
 }
