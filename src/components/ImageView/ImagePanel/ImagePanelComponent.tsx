@@ -117,19 +117,34 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         const frame = this.props.frame;
         if (frame && frame.isRenderable && appStore.astReady) {
             const isActive = frame === appStore.activeFrame && appStore.numImageRows * appStore.numImageColumns > 1;
+            let className = "image-panel-div";
+            let style: React.CSSProperties = {width: overlayStore.viewWidth, height: overlayStore.viewHeight};
+            if (isActive) {
+                className += " active";
 
+                // Disable border radius rounding in inner corners
+                if (this.props.row !== 0) {
+                    style.borderTopLeftRadius = 0;
+                    style.borderTopRightRadius = 0;
+                }
+                if (this.props.column !== 0) {
+                    style.borderTopLeftRadius = 0;
+                    style.borderBottomLeftRadius = 0;
+                }
+                if (this.props.row !== appStore.numImageRows - 1) {
+                    style.borderBottomLeftRadius = 0;
+                    style.borderBottomRightRadius = 0;
+                }
+                if (this.props.column !== appStore.numImageColumns - 1) {
+                    style.borderTopRightRadius = 0;
+                    style.borderBottomRightRadius = 0;
+                }
+            }
             return (
-                <div
-                    className="image-panel-div"
-                    style={{width: overlayStore.viewWidth, height: overlayStore.viewHeight}}
-                    onWheel={this.onMouseWheel}
-                    onMouseDown={this.onMouseDown}
-                    onMouseOver={this.onMouseEnter}
-                    onMouseLeave={this.onMouseLeave}
-                >
+                <div className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                     <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
                     <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
-                    {frame.valid && <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} highlightFrame={isActive} />}
+                    {frame.valid && <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />}
                     {this.cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
