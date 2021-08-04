@@ -125,7 +125,6 @@ export class CatalogQueryDialogComponent extends React.Component {
                 </FormGroup>
                 <ClearableNumericInputComponent
                     label="Max Number of Objects"
-                    max={configStore.maxObject}
                     min={CatalogOnlineQueryConfigStore.MIN_OBJECTS}
                     integerOnly={true}
                     value={configStore.maxObject}

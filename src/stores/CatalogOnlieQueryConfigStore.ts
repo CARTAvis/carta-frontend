@@ -4,8 +4,6 @@ import {CatalogSystemType, Point2D} from "models";
 import {AppStore, OverlayStore, NumberFormatType, ASTSettingsString, SystemType} from "stores";
 import {AbstractCatalogProfileStore} from "models";
 import {transformPoint} from "utilities";
-// import {transformPoint} from "utilities";
-
 
 export enum CatalogDatabase {
     SIMBAD = "SIMBAD"
@@ -157,15 +155,10 @@ export class CatalogOnlineQueryConfigStore {
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
             const format = `${NumberFormatType.Degrees}.${precision}`; 
-            // const pointWCS = transformPoint(frame.wcsInfo, point);
-            // const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
-            
             let astString = new ASTSettingsString();
             astString.add("Format(1)",format);
             astString.add("Format(2)",format);
-            // console.log(OverlayStore.Instance.global.explicitSystem)
             astString.add("System", SystemType.ICRS);
-            // const a = AST.getWCSValueFromFormattedString(frame.wcsInfo, point);
             p = AST.getFormattedCoordinates(frame.wcsInfo, point.x, point.y, astString.toString(), true);
         }
         return p;

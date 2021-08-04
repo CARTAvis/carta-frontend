@@ -216,7 +216,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const val = changeEvent.target.checked;
         const header = profileStore.catalogControlHeader.get(columnName);
         profileStore.setHeaderDisplay(val, columnName);
-        if (val === true || (header.filter !== "" && val === false)) {
+        if ((val === true || (header.filter !== "" && val === false)) && profileStore.isFileBasedCatalog) {
             this.handleFilterRequest();
         }
         if (catalogWidgetStore.xAxis === columnName) {

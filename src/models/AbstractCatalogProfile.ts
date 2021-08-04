@@ -101,7 +101,6 @@ export abstract class AbstractCatalogProfileStore {
         this.updateTableView = false;
         this.filterDataSize = undefined;
         this.selectedPointIndices = [];
-        // remove this ???
         this.updateMode = CatalogUpdateMode.TableUpdate;
 
         this.sortingInfo = {columnName: null, sortingType: null};
@@ -149,14 +148,12 @@ export abstract class AbstractCatalogProfileStore {
 
     public static getCatalogSystem(system: string): CatalogSystemType {
         let catalogSystem = CatalogSystemType.ICRS;
-        console.log(system)
         const systemMap = AbstractCatalogProfileStore.CoordinateSystemName;
         systemMap.forEach((value, key) => {
             if (system.toUpperCase().includes(value.toUpperCase())) {
                 catalogSystem = key;
             }
         });
-        console.log(catalogSystem)
         return catalogSystem;
     }
 
@@ -272,7 +269,6 @@ export abstract class AbstractCatalogProfileStore {
         this.loadingData = val;
     }
 
-    // ????
     @action setUpdatingDataStream(val: boolean) {
         this.updatingDataStream = val;
     }
