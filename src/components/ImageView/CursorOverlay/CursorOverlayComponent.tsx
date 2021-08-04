@@ -64,7 +64,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             }
         }
         if (this.props.showStokes && this.props.currentStokes) {
-            infoStrings.push(`Stokes:\u00a0${this.props.currentStokes}`);
+            infoStrings.push(`Polarization:\u00a0${this.props.currentStokes}`);
         }
 
         const height = this.props.height !== undefined && this.props.height >= 0 ? this.props.height : 20;
