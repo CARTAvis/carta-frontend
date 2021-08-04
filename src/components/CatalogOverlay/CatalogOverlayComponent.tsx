@@ -489,7 +489,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
-        if (profileStore && appStore) {
+        if (profileStore && appStore && profileStore.isFileBasedCatalog) {
             profileStore.updateTableStatus(false);
             profileStore.resetFilterRequestControlParams();
             this.resetSelectedPointIndices();
@@ -509,7 +509,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType) => {
         const profileStore = this.profileStore;
         const appStore = AppStore.Instance;
-        if (profileStore && appStore) {
+        if (profileStore && appStore && profileStore.isFileBasedCatalog) {
             profileStore.resetFilterRequestControlParams();
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
@@ -543,7 +543,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             profileStore.resetCatalogFilterRequest();
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
-            appStore.sendCatalogFilter(profileStore.catalogFilterRequest);
+            if (profileStore.isFileBasedCatalog) {
+                appStore.sendCatalogFilter(profileStore.catalogFilterRequest);
+            }
             catalogWidgetStore.resetMaps();
         }
     };

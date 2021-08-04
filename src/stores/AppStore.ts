@@ -760,7 +760,7 @@ export class AppStore {
                                 this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
                                 this.catalogStore.addCatalog(fileId);
                                 this.fileBrowserStore.hideFileBrowser();
-                                const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
+                                const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
                                 this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
                                 resolve(fileId);
                             } else {

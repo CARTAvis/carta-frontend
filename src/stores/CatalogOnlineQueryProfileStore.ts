@@ -12,7 +12,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     @observable numVisibleRows: number;
     @observable loadingData: boolean;
 
-    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, dataSize: number, catalogType: CatalogType = CatalogType.FILE) {
+    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, dataSize: number, catalogType: CatalogType) {
         super(catalogType, catalogData);
         makeObservable(this);
         this.catalogInfo = catalogInfo;
