@@ -75,11 +75,11 @@ export abstract class AbstractCatalogProfileStore {
     @observable sortingInfo: {columnName: string; sortingType: CARTA.SortingType};
 
     private _catalogData: Map<number, ProcessedColumnData>;
-    public readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
+    public static readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
         [CatalogSystemType.FK5, "FK5"],
         [CatalogSystemType.FK4, "FK4"],
-        [CatalogSystemType.Galactic, "GAL"],
-        [CatalogSystemType.Ecliptic, "ECL"],
+        [CatalogSystemType.Galactic, "GALACTIC"],
+        [CatalogSystemType.Ecliptic, "ECLIPTIC"],
         [CatalogSystemType.ICRS, "ICRS"],
         [CatalogSystemType.Pixel0, "PIX0"],
         [CatalogSystemType.Pixel1, "PIX1"]
@@ -145,6 +145,19 @@ export abstract class AbstractCatalogProfileStore {
         } else {
             return {headerInfo};
         }
+    }
+
+    public static getCatalogSystem(system: string): CatalogSystemType {
+        let catalogSystem = CatalogSystemType.ICRS;
+        console.log(system)
+        const systemMap = AbstractCatalogProfileStore.CoordinateSystemName;
+        systemMap.forEach((value, key) => {
+            if (system.toUpperCase().includes(value.toUpperCase())) {
+                catalogSystem = key;
+            }
+        });
+        console.log(catalogSystem)
+        return catalogSystem;
     }
 
     @computed get catalogFileId(): number {

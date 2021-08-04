@@ -1,7 +1,7 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores";
-import {AbstractCatalogProfileStore, CatalogType, CatalogSystemType, CatalogInfo, ProcessedColumnData} from "models";
+import {AbstractCatalogProfileStore, CatalogType, CatalogInfo, ProcessedColumnData} from "models";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode"];
@@ -19,16 +19,18 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         this.catalogHeader = catalogHeader.sort((a, b) => {
             return a.columnIndex - b.columnIndex;
         });
-        // this._catalogData = catalogData;
+
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.numVisibleRows = dataSize;
         this.loadingData = false;
 
+        const coordinateSystem = catalogInfo.fileInfo.coosys[0];
+        const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem.system);
         this.catalogCoordinateSystem = {
-            system: CatalogSystemType.ICRS,
+            system: system,
             equinox: null,
             epoch: null,
-            coordinate: this.systemCoordinateMap.get(CatalogSystemType.ICRS)
+            coordinate: this.systemCoordinateMap.get(system)
         };
     }
 

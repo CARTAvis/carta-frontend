@@ -68,7 +68,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
 
         if (coordinateSystem) {
-            const system = this.getCatalogSystem(coordinateSystem.system);
+            const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem.system);
             this.catalogCoordinateSystem = {
                 system: system,
                 equinox: coordinateSystem.equinox,
@@ -320,16 +320,5 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
             }
         }
         return false;
-    }
-
-    private getCatalogSystem(system: string): CatalogSystemType {
-        let catalogSystem = CatalogSystemType.ICRS;
-        const systemMap = this.CoordinateSystemName;
-        systemMap.forEach((value, key) => {
-            if (system.toUpperCase().includes(value.toUpperCase())) {
-                catalogSystem = key;
-            }
-        });
-        return catalogSystem;
     }
 }

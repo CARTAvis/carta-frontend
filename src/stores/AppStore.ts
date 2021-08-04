@@ -34,7 +34,8 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    CatalogOnlineQueryConfigStore
 } from ".";
 import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
@@ -792,17 +793,18 @@ export class AppStore {
             axios.get(`${apiAddress}${query}`, {
                 cancelToken: cancelTokenSource.token
             }).then((response) => {
-                if (frame && response?.status === 200 && response?.data?.data) {
+                if (frame && response?.status === 200 && response?.data?.data?.length) {
                     console.log(response.data)
                     runInAction(() => {
+                        const configStore = CatalogOnlineQueryConfigStore.Instance;
                         const headers = APIProcessing.ProcessSimbadMetaData(response.data?.metadata);
                         const columnData = APIProcessing.ProcessSimbadData(response.data?.data, headers);
-                        console.log(headers, columnData)
-                        const coosy: CARTA.ICoosys = {system: "ICRS"};
+                        const coosy: CARTA.ICoosys = {system: configStore.coordsType};
+                        const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${configStore.centerCoord.x}_${configStore.centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
                         const catalogFileInfo: CARTA.ICatalogFileInfo = {
-                            name: "Online Catalog",
+                            name: fileName,
                             type: CARTA.CatalogFileType.VOTable,
-                            description: "Online Catalog Simbad",
+                            description: "Online Catalog",
                             coosys: [coosy]
                         }
                         let catalogInfo: CatalogInfo = {
@@ -824,6 +826,8 @@ export class AppStore {
                         }
                         
                     });
+                } else {
+                    reject();
                 }
             })
             .catch((error) => {

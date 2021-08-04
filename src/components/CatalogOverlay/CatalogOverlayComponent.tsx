@@ -14,7 +14,7 @@ import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumeri
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
 import {ComparisonOperator, toFixed} from "utilities";
-import {CatalogOverlay, CatalogSystemType, ProcessedColumnData} from "models";
+import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType, ProcessedColumnData} from "models";
 import "./CatalogOverlayComponent.scss";
 
 enum HeaderTableColumnName {
@@ -651,7 +651,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     };
 
     private renderSystemPopOver = (system: CatalogSystemType, itemProps: IItemRendererProps) => {
-        const menuItem = <MenuItem key={system} text={this.profileStore.CoordinateSystemName.get(system)} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        const menuItem = <MenuItem key={system} text={AbstractCatalogProfileStore.CoordinateSystemName.get(system)} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
         switch (system) {
             case CatalogSystemType.Pixel0:
                 return (
@@ -750,11 +750,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.catalogFileNames = CatalogStore.Instance.getCatalogFileNames(catalogFileIds);
 
         let systemOptions = [];
-        profileStore.CoordinateSystemName.forEach((value, key) => {
+        AbstractCatalogProfileStore.CoordinateSystemName.forEach((value, key) => {
             systemOptions.push(key);
         });
 
-        const activeSystem = profileStore.CoordinateSystemName.get(profileStore.catalogCoordinateSystem.system);
+        const activeSystem = AbstractCatalogProfileStore.CoordinateSystemName.get(profileStore.catalogCoordinateSystem.system);
         const isImageOverlay = catalogWidgetStore.catalogPlotType === CatalogPlotType.ImageOverlay;
         const isHistogram = catalogWidgetStore.catalogPlotType === CatalogPlotType.Histogram;
         const disable = profileStore.loadOntoImage;

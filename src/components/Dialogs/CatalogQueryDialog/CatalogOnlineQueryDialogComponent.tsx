@@ -1,19 +1,23 @@
 import * as React from "react";
 import axios, {CancelTokenSource} from "axios";
-// import {makeObservable} from "mobx";
 import {observer} from "mobx-react";
-// import axios from "axios";
-import {AnchorButton, Classes, IDialogProps, Intent, Overlay, Spinner} from "@blueprintjs/core";
-import {AppStore, CatalogOnlineQueryConfigStore, HelpType} from "stores";
+import {AnchorButton, Button, FormGroup, IDialogProps, Intent, MenuItem, NonIdealState, Overlay, PopoverPosition, Spinner} from "@blueprintjs/core";
+import {IItemRendererProps, Select} from "@blueprintjs/select";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogDatabase, HelpType, RadiusUnits} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
+import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
+import {CatalogSystemType} from "models";
+import "./CatalogOnlineQueryDialogComponent.scss";
 
 @observer
 export class CatalogQueryDialogComponent extends React.Component {
+    private static readonly DefaultWidth = 550;
+    private static readonly DefaultHeight = 500;
+
     private cancelTokenSource: CancelTokenSource;
 
     constructor(props: any) {
         super(props);
-        // makeObservable(this);
         this.cancelTokenSource = axios.CancelToken.source();
     }
 
@@ -37,20 +41,126 @@ export class CatalogQueryDialogComponent extends React.Component {
             title: "Online Catalog Query"
         };
 
+        if (!appStore || !appStore.activeFrame) {
+            return (
+                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.ONLINE_CATALOG_QUERY} defaultWidth={CatalogQueryDialogComponent.DefaultWidth} defaultHeight={CatalogQueryDialogComponent.DefaultHeight} enableResizing={true}>
+                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
+                </DraggableDialogComponent>
+            );
+        }
+
+        const disable = configStore.isQuerying;
+        // console.log(appStore.activeFrame.center, 
+        //     appStore.activeFrame.cursorInfo, 
+        //     configStore.radiusInDeg, 
+        //     OverlayStore.Instance.global.defaultSystem, 
+        //     OverlayStore.Instance.numbers.formatX,
+        //     configStore.coordsType)
+        const configBoard = (
+            <div className="online-catalog-config">
+                <FormGroup inline={false} label="Database" disabled={disable}>
+                    <Select
+                        items={Object.values(CatalogDatabase)}
+                        activeItem={null}
+                        onItemSelect={db => configStore.setCatalogDB(db)}
+                        itemRenderer={this.renderDBPopOver}
+                        disabled={disable}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        filterable={false}
+                        resetOnSelect={true}
+                    >
+                        <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
+                    </Select>
+                </FormGroup>
+                <FormGroup inline={false} label="Search Radius" disabled={disable}>
+                    <SafeNumericInput
+                        disabled={disable}
+                        min={0}
+                        clampValueOnBlur={true}
+                        value={configStore.searchRadius}
+                        stepSize={0.5}
+                        onValueChange={(value: number) => configStore.setSearchRadius(value)}
+                    />
+                    <Select
+                        items={Object.values(RadiusUnits)}
+                        activeItem={null}
+                        onItemSelect={units => configStore.setRadiusUnits(units)}
+                        itemRenderer={this.renderUnitsPopOver}
+                        disabled={disable}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        filterable={false}
+                        resetOnSelect={true}
+                    >
+                        <Button text={configStore.radiusUnits} disabled={disable} rightIcon="double-caret-vertical" />
+                    </Select>
+                </FormGroup>
+                <FormGroup inline={false} label="Center Coordinates" disabled={disable}>
+                    <Select
+                        items={Object.values(CatalogSystemType).filter(type => type!== CatalogSystemType.Pixel0 && type!== CatalogSystemType.Pixel1)}
+                        activeItem={null}
+                        onItemSelect={type => configStore.setCoordsType(type)}
+                        itemRenderer={this.renderSysTypePopOver}
+                        disabled={disable}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        filterable={false}
+                        resetOnSelect={true}
+                    >
+                        <Button text={configStore.coordsType} disabled={disable} rightIcon="double-caret-vertical" />
+                    </Select>
+                    <SafeNumericInput
+                        buttonPosition={"none"}
+                        placeholder="Ra"
+                        disabled={disable}
+                        value={configStore.centerCoord.x}
+                        onValueChange={(valueAsNumber: number ,valueAsString: string) => configStore.setCenterCoord(valueAsString, "X")}
+                    />
+                    <SafeNumericInput
+                        buttonPosition={"none"}
+                        placeholder="Dec"
+                        disabled={disable}
+                        value={configStore.centerCoord.y}
+                        onValueChange={(valueAsNumber: number ,valueAsString: string) => configStore.setCenterCoord(valueAsString, "Y")}
+                    />
+                    {/* <Button icon="locate" disabled={disable} onClick={() => configStore.setImageCenter()} /> */}
+                </FormGroup>
+                <ClearableNumericInputComponent
+                    label="Max Number of Objects"
+                    max={configStore.maxObject}
+                    min={CatalogOnlineQueryConfigStore.MIN_OBJECTS}
+                    integerOnly={true}
+                    value={configStore.maxObject}
+                    onValueChanged={val => configStore.setMaxObjects(val)}
+                    onValueCleared={() => configStore.resetMaxObjects()}
+                    displayExponential={false}
+                    disabled={disable}
+                    inline={false}
+                />
+            </div>
+        );
+
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.STOKES} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
+            <DraggableDialogComponent 
+                dialogProps={dialogProps} 
+                helpType={HelpType.ONLINE_CATALOG_QUERY} 
+                minWidth={CatalogQueryDialogComponent.DefaultWidth} 
+                minHeight={CatalogQueryDialogComponent.DefaultHeight} 
+                defaultWidth={CatalogQueryDialogComponent.DefaultWidth} 
+                defaultHeight={CatalogQueryDialogComponent.DefaultHeight} 
+                enableResizing={true}
+            >
                 <div className="bp3-dialog-body">
-                <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={configStore.isQuerying} usePortal={false}>
+                    {configBoard}
+                </div>
+                <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
                 </Overlay>
-                </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton
                             intent={Intent.SUCCESS}
-                            disabled={configStore.isQuerying}
+                            disabled={disable}
                             onClick={() => this.query()}
                             text={"Query"}
                         />
@@ -60,18 +170,6 @@ export class CatalogQueryDialogComponent extends React.Component {
                             onClick={() => this.cancelQuery()}
                             text={"Cancel"}
                         />
-                        {/* <AnchorButton
-                            intent={Intent.PRIMARY}
-                            // disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.noneType}
-                            // onClick={this.loadSelectedFiles}
-                            text={"Load"}
-                        />
-                         <AnchorButton
-                            intent={Intent.NONE}
-                            // disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                            onClick={AppStore.Instance.dialogStore?.hideCatalogQueryDialog}
-                            text={"Close"}
-                        /> */}
                     </div>
                 </div>
             </DraggableDialogComponent>
@@ -80,9 +178,9 @@ export class CatalogQueryDialogComponent extends React.Component {
 
     private query = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
+        // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system 
         const baseUrl = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=";
-        const query = "SELECT Top 10000 * FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',250.423475,36.4613194444444,10))=1 AND ra IS NOT NULL AND dec IS NOT NULL";
-        console.log("ooo", this.cancelTokenSource)
+        const query = `SELECT Top ${configStore.maxObject} * FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${configStore.centerCoord.x},${configStore.centerCoord.y},${configStore.radiusInDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL`;
         configStore.setQueryStatus(true);
         
         AppStore.Instance.appendOnlineCatalog(baseUrl, query, this.cancelTokenSource)
@@ -103,4 +201,16 @@ export class CatalogQueryDialogComponent extends React.Component {
     private cancelQuery = () => {
         this.cancelTokenSource.cancel("Query canceled");
     }
+
+    private renderDBPopOver = (catalogDB: CatalogDatabase, itemProps: IItemRendererProps) => {
+        return <MenuItem key={catalogDB} text={catalogDB} onClick={itemProps.handleClick} />;
+    };
+
+    private renderUnitsPopOver = (units: RadiusUnits, itemProps: IItemRendererProps) => {
+        return <MenuItem key={units} text={units} onClick={itemProps.handleClick} />;
+    };
+
+    private renderSysTypePopOver = (type: CatalogSystemType, itemProps: IItemRendererProps) => {
+        return <MenuItem key={type} text={type} onClick={itemProps.handleClick} />;
+    };
 }

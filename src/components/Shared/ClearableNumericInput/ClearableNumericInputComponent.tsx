@@ -16,6 +16,7 @@ export interface ClearableNumericInputProps extends INumericInputProps {
     onValueChanged: (val: number) => void;
     onValueCleared: () => void;
     displayExponential?: boolean;
+    inline?: boolean;
 }
 
 @observer
@@ -77,7 +78,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
     render() {
         let value = this.props.displayExponential && !this.isFocused ? toExponential(Number(this.props.value), 3) : this.props.value;
         return (
-            <FormGroup className={this.props.className} label={this.props.label} inline={true} disabled={this.props.disabled}>
+            <FormGroup className={this.props.className} label={this.props.label} inline={this.props.inline === undefined ? true : false} disabled={this.props.disabled}>
                 <NumericInput
                     asyncControl={true}
                     stepSize={this.props.stepSize}
