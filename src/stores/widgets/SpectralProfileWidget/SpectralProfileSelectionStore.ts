@@ -10,7 +10,7 @@ export enum MultiProfileCategory {
     IMAGE = "Image",
     REGION = "Region",
     STATISTIC = "Statistic",
-    STOKES = "Stokes"
+    STOKES = "Polarization"
 }
 
 interface ProfileConfig {
