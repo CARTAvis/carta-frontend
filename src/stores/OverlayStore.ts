@@ -1224,11 +1224,11 @@ export class OverlayStore {
     }
 
     @computed get viewWidth() {
-        return this.fullViewWidth / AppStore.Instance.numImageColumns;
+        return Math.floor(this.fullViewWidth / AppStore.Instance.numImageColumns);
     }
 
     @computed get viewHeight() {
-        return this.fullViewHeight / AppStore.Instance.numImageRows;
+        return Math.floor(this.fullViewHeight / AppStore.Instance.numImageRows);
     }
 
     @computed get renderWidth() {

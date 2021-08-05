@@ -51,8 +51,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const w = this.canvas.width;
             const h = this.canvas.height;
             ctx.clearRect(0, 0, w, h);
-
-            ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h + 1, w, h, 0, 0, w, h);
+            ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
         }
     };
 
