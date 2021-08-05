@@ -279,7 +279,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 0);
                     this.gl.uniform1i(shaderUniforms.ControlMapTexture, 0);
                 } else {
-                    const controlMap = frame.getCatalogControlMap(appStore.activeFrame);
+                    const controlMap = frame.getCatalogControlMap(destinationFrame);
                     if (controlMap) {
                         controlMap.updateCatalogBoundary();
                         this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 1);
