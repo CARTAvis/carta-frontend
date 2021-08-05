@@ -115,7 +115,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         const overlayStore = appStore.overlayStore;
 
         const frame = this.props.frame;
-        if (frame && frame.isRenderable && appStore.astReady) {
+        if (frame?.isRenderable && appStore.astReady) {
             const isActive = frame === appStore.activeFrame && appStore.numImageRows * appStore.numImageColumns > 1;
             let className = "image-panel-div";
             let style: React.CSSProperties = {width: overlayStore.viewWidth, height: overlayStore.viewHeight};

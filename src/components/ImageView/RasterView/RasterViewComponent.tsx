@@ -1,7 +1,7 @@
 import * as React from "react";
 import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
-import {AppStore, FrameStore, RasterRenderType} from "stores";
+import {AppStore, FrameStore} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
 import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D, smoothStep, getColorForTheme} from "utilities";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
@@ -111,7 +111,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         const tileRenderService = TileWebGLService.Instance;
         // Resize and clear the canvas if needed
-        if (frame && frame.isRenderable && (this.canvas.width !== requiredWidth || this.canvas.height !== requiredHeight)) {
+        if (frame?.isRenderable && (this.canvas.width !== requiredWidth || this.canvas.height !== requiredHeight)) {
             this.canvas.width = requiredWidth;
             this.canvas.height = requiredHeight;
         }
@@ -122,7 +122,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private renderCanvas() {
         const frame = this.props.frame;
         // Only clear and render if we're in animation or tiled mode
-        if (frame && frame.isRenderable && frame.renderType !== RasterRenderType.NONE) {
+        if (frame?.isRenderable) {
             const appStore = AppStore.Instance;
             const xOffset = this.props.column * frame.renderWidth * devicePixelRatio;
             // y-axis is inverted
@@ -137,10 +137,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.disable(WebGLRenderingContext.SCISSOR_TEST);
 
             // Skip rendering if frame is hidden
-            if (!frame.renderConfig.visible) {
-                return;
-            }
-            if (frame.renderType === RasterRenderType.TILED) {
+            if (frame.renderConfig.visible) {
                 this.renderTiledCanvas();
             }
         }
@@ -348,7 +345,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const spatialReference = frame.spatialReference || frame;
             const frameView = spatialReference.requiredFrameView;
             const currentView = spatialReference.currentFrameView;
-            const renderType = frame.renderType;
 
             const colorMapping = {
                 min: frame.renderConfig.scaleMinVal,
@@ -375,6 +371,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         if (this.props.docked) {
             className += " docked";
         }
+
         return (
             <div className={className}>
                 <canvas

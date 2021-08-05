@@ -41,7 +41,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const requiredHeight = Math.max(1, frame.renderHeight * devicePixelRatio);
 
         // Resize and clear the canvas if needed
-        if (frame && frame.isRenderable && (this.canvas.width !== requiredWidth || this.canvas.height !== requiredHeight)) {
+        if (frame?.isRenderable && (this.canvas.width !== requiredWidth || this.canvas.height !== requiredHeight)) {
             this.canvas.width = requiredWidth;
             this.canvas.height = requiredHeight;
         }

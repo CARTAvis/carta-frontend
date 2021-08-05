@@ -28,7 +28,6 @@ import {
     OverlayStore,
     PreferenceKeys,
     PreferenceStore,
-    RasterRenderType,
     RegionFileType,
     RegionStore,
     SnippetStore,
@@ -1493,11 +1492,6 @@ export class AppStore {
                 updatedFrame.stokes = tileStreamDetails.stokes;
             }
             this.pendingChannelHistograms.delete(key);
-        }
-
-        // Switch to tiled rendering. TODO: ensure that the correct frame gets set to tiled
-        if (this.activeFrame) {
-            this.activeFrame.renderType = RasterRenderType.TILED;
         }
     };
 

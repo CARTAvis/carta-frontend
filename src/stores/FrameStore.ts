@@ -44,11 +44,6 @@ export interface FrameInfo {
     beamTable: CARTA.IBeam[];
 }
 
-export enum RasterRenderType {
-    NONE,
-    TILED
-}
-
 export const WCS_PRECISION = 10;
 
 export class FrameStore {
@@ -99,7 +94,6 @@ export class FrameStore {
     @observable requiredStokes: number;
     @observable requiredChannel: number;
     @observable animationChannelRange: NumberRange;
-    @observable renderType: RasterRenderType;
     @observable currentFrameView: FrameView;
     @observable currentCompressionQuality: number;
     @observable renderConfig: RenderConfigStore;
@@ -763,7 +757,6 @@ export class FrameStore {
         this.renderConfig = new RenderConfigStore(preferenceStore, this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
-        this.renderType = RasterRenderType.NONE;
         this.moving = false;
         this.zooming = false;
         this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
@@ -1676,10 +1669,6 @@ export class FrameStore {
 
     @action setAnimationRange = (range: NumberRange) => {
         this.animationChannelRange = range;
-    };
-
-    @action setRasterRenderType = (renderType: RasterRenderType) => {
-        this.renderType = renderType;
     };
 
     @action startMoving = () => {
