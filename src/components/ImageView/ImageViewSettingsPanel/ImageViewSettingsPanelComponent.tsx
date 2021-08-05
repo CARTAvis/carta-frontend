@@ -150,11 +150,27 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         <option value={ImagePanelMode.Fixed}>Fixed grid size</option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Panel columns">
-                    <SafeNumericInput placeholder="Columns" min={1} value={preferences.imagePanelColumns} stepSize={1} minorStepSize={null} onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)} />
+                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={preferences.imagePanelMode === ImagePanelMode.None}>
+                    <SafeNumericInput
+                        placeholder="Columns"
+                        min={1}
+                        value={preferences.imagePanelColumns}
+                        disabled={preferences.imagePanelMode === ImagePanelMode.None}
+                        stepSize={1}
+                        minorStepSize={null}
+                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)}
+                    />
                 </FormGroup>
-                <FormGroup inline={true} label="Panel rows">
-                    <SafeNumericInput placeholder="Rows" min={1} value={preferences.imagePanelRows} stepSize={1} minorStepSize={null} onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_ROWS, value)} />
+                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={preferences.imagePanelMode === ImagePanelMode.None}>
+                    <SafeNumericInput
+                        placeholder="Rows"
+                        min={1}
+                        disabled={preferences.imagePanelMode === ImagePanelMode.None}
+                        value={preferences.imagePanelRows}
+                        stepSize={1}
+                        minorStepSize={null}
+                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_ROWS, value)}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Overlay color">
                     <AutoColorPickerComponent color={global.color} presetColors={SWATCH_COLORS} setColor={global.setColor} disableAlpha={true} />
