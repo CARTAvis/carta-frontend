@@ -9,6 +9,7 @@ import "./BeamProfileOverlayComponent.scss";
 
 interface BeamProfileOverlayComponentProps {
     docked: boolean;
+    frame: FrameStore;
     top: number;
     left: number;
     padding?: number;
@@ -104,8 +105,8 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         }
 
         const appStore = AppStore.Instance;
-        const baseFrame = appStore.activeFrame;
-        const contourFrames = appStore.contourFrames.get(baseFrame)?.filter(frame => frame.frameInfo.fileId !== appStore.activeFrame.frameInfo.fileId && frame.hasVisibleBeam);
+        const baseFrame = this.props.frame;
+        const contourFrames = appStore.contourFrames.get(baseFrame)?.filter(frame => frame !== baseFrame && frame.hasVisibleBeam);
 
         if (!baseFrame.hasVisibleBeam && !contourFrames.length) {
             return null;

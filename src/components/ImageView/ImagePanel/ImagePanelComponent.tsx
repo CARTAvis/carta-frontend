@@ -172,7 +172,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         />
                     )}
                     {frame && overlayStore.colorbar.visible && <ColorbarComponent onCursorHoverValueChanged={this.setPixelHighlightValue} />}
-                    {frame && <BeamProfileOverlayComponent top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
+                    {frame && <BeamProfileOverlayComponent frame={frame} top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
                     {frame && <CatalogViewGLComponent frame={frame} docked={this.props.docked} onZoomed={this.onZoomed} />}
                     {frame && (
                         <RegionViewComponent
