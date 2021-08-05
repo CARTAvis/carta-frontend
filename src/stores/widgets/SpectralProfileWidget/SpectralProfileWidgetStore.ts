@@ -366,14 +366,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                         yMean = pointsAndProperties.yMean;
                         yRms = pointsAndProperties.yRms;
                     }
-
                     if (xBound.xMin > pointsAndProperties.xBound.xMin) {
                         xBound.xMin = pointsAndProperties.xBound.xMin;
                     }
                     if (xBound.xMax < pointsAndProperties.xBound.xMax) {
                         xBound.xMax = pointsAndProperties.xBound.xMax;
                     }
-
                     if (yBound.yMin > pointsAndProperties.yBound.yMin) {
                         yBound.yMin = pointsAndProperties.yBound.yMin;
                     }

@@ -583,7 +583,7 @@ export class FrameStore {
     }
 
     @computed get nativeSpectralCoordinate(): string {
-        return this.spectralAxis ? `${this.spectralAxis.type.name} (${this.spectralAxis.type.unit})` : undefined;
+        return this.spectralAxis ? `${this.spectralAxis.type.name}${this.spectralAxis.type.unit ? ` (${this.spectralAxis.type.unit})` : ""}` : undefined;
     }
 
     @computed get spectralCoordinate(): string {
@@ -593,8 +593,8 @@ export class FrameStore {
     @computed get spectralLabel(): string {
         let label = undefined;
         if (this.spectralAxis) {
-            const spectralSystem = this.isSpectralSystemConvertible ? this.spectralSystem : `${this.spectralAxis.specsys}`;
-            label = `${spectralSystem && spectralSystem !== "" ? `[${spectralSystem}] ` : ""}${this.spectralCoordinate}`;
+            const spectralSystem = this.isSpectralSystemConvertible ? this.spectralSystem : this.spectralAxis.specsys;
+            label = `${spectralSystem ? `[${spectralSystem}] ` : ""}${this.spectralCoordinate ?? ""}`;
         }
         return label;
     }
@@ -953,6 +953,10 @@ export class FrameStore {
                     this.setChannelValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values));
                 }
             }
+        });
+
+        autorun(() => {
+            this.distanceMeasuring.updateTransformedPos(this.spatialTransform);
         });
     }
 
@@ -1343,16 +1347,16 @@ export class FrameStore {
 
         const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo?.infoWCS?.x}, ${this.cursorInfo?.infoWCS?.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
         const wcsSize = this.getWcsSizeInArcsec(region.size);
-        const size = wcsSize ? {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)} : null;
+        const size = {x: formattedArcsec(wcsSize?.x, WCS_PRECISION), y: formattedArcsec(wcsSize?.y, WCS_PRECISION)};
         const systemType = OverlayStore.Instance.global.explicitSystem;
 
         switch (region.regionType) {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x ?? ""}, ${size.y ?? ""}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
+                return `ellipse(wcs:${systemType})[[${center}], [${size.x ?? ""}, ${size.y ?? ""}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
                 let polygonWcsProperties = `poly(wcs:${systemType})[`;
                 region.controlPoints.forEach((point, index) => {
@@ -1614,12 +1618,16 @@ export class FrameStore {
             const pointRefImage = transformPoint(this.spatialTransformAST, pos, true);
             this.spatialReference.updateCursorRegion(pointRefImage);
         } else {
-            this.frameRegionSet.regions?.[0].setCenter(pos);
+            if (pos.x >= 0 && pos.x <= this.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.frameInfo.fileInfoExtended.height - 1) {
+                this.frameRegionSet.updateCursorRegionPosition(pos);
+            }
         }
 
         for (const frame of this.secondarySpatialImages) {
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
-            frame.frameRegionSet.regions?.[0].setCenter(pointSecondaryImage);
+            if (pointSecondaryImage.x >= 0 && pointSecondaryImage.x <= frame.frameInfo.fileInfoExtended.width - 1 && pointSecondaryImage.y >= 0 && pointSecondaryImage.y <= frame.frameInfo.fileInfoExtended.height - 1) {
+                frame.frameRegionSet.updateCursorRegionPosition(pointSecondaryImage);
+            }
         }
     };
 

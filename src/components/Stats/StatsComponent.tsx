@@ -222,7 +222,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         let stokesClassName = "unlinked-to-selected";
         const coordinateOptions = [{value: "z", label: "Current"}];
 
-        if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
+        if (widgetStore.effectiveFrame?.regionSet) {
             enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
             const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
             stokesInfo.forEach(stokes => coordinateOptions.push({value: `${stokes}z`, label: stokes}));

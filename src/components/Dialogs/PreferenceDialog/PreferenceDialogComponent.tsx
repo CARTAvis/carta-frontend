@@ -11,7 +11,7 @@ import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {ColormapComponent, ColorPickerComponent, AutoColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.scss";
@@ -304,14 +304,22 @@ export class PreferenceDialogComponent extends React.Component {
 
         const overlayConfigPanel = (
             <React.Fragment>
-                <FormGroup inline={true} label="AST Color">
+                <FormGroup inline={true} label="Color">
                     <AutoColorPickerComponent color={preference.astColor} presetColors={SWATCH_COLORS} setColor={(color: string) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, color)} disableAlpha={true} />
                 </FormGroup>
-                <FormGroup inline={true} label="AST Grid Visible">
+                <FormGroup inline={true} label="WCS Grid Visible">
                     <Switch checked={preference.astGridVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="AST Label Visible">
+                <FormGroup inline={true} label="Labels Visible">
                     <Switch checked={preference.astLabelsVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Cursor Info Visible">
+                    <HTMLSelect value={preference.cursorInfoVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO, ev.currentTarget.value)}>
+                        <option value={CursorInfoVisibility.Always}>Always</option>
+                        <option value={CursorInfoVisibility.ActiveImage}>Active image only</option>
+                        <option value={CursorInfoVisibility.HideTiled}>Hide when tiled</option>
+                        <option value={CursorInfoVisibility.Never}>Never</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="WCS Format">
                     <HTMLSelect
@@ -453,6 +461,9 @@ export class PreferenceDialogComponent extends React.Component {
             <React.Fragment>
                 <FormGroup inline={true} label="Low bandwidth mode">
                     <Switch checked={preference.lowBandwidthMode} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Limit overlay redraw">
+                    <Switch checked={preference.limitOverlayRedraw} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Compression Quality" labelInfo={"(Images)"}>
                     <SafeNumericInput

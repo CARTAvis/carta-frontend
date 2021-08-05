@@ -2,7 +2,7 @@ import * as React from "react";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
-import {AppStore, FrameStore, OverlayStore} from "stores";
+import {AppStore, FrameStore, OverlayStore, PreferenceStore} from "stores";
 import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
 import "./OverlayComponent.scss";
 
@@ -20,13 +20,19 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     componentDidMount() {
         if (this.canvas) {
-            this.renderCanvas();
+            if (PreferenceStore.Instance.limitOverlayRedraw) {
+                this.throttledRenderCanvas();
+            } else {
+                requestAnimationFrame(this.renderCanvas);
+            }
         }
     }
 
     componentDidUpdate() {
-        if (this.canvas) {
-            this.renderCanvas();
+        if (PreferenceStore.Instance.limitOverlayRedraw) {
+            this.throttledRenderCanvas();
+        } else {
+            requestAnimationFrame(this.renderCanvas);
         }
     }
 
@@ -35,7 +41,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio;
     }
 
-    renderCanvas = _.throttle(() => {
+    renderCanvas = () => {
         const settings = this.props.overlaySettings;
         const frame = this.props.frame;
         const pixelRatio = devicePixelRatio;
@@ -76,10 +82,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     styleString,
                     frame.distanceMeasuring.showCurve,
                     frame.isPVImage,
-                    frame.distanceMeasuring.start.x,
-                    frame.distanceMeasuring.start.y,
-                    frame.distanceMeasuring.finish.x,
-                    frame.distanceMeasuring.finish.y
+                    frame.distanceMeasuring.transformedStart.x,
+                    frame.distanceMeasuring.transformedStart.y,
+                    frame.distanceMeasuring.transformedFinish.x,
+                    frame.distanceMeasuring.transformedFinish.y
                 );
             };
 
@@ -100,7 +106,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             AST.deleteObject(tempWcsInfo);
             AST.clearLastErrorMessage();
         }
-    }, 50);
+    };
+
+    throttledRenderCanvas = _.throttle(this.renderCanvas, 50);
 
     render() {
         const styleString = this.props.overlaySettings.styleString;
@@ -127,8 +135,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const labelsColor = this.props.overlaySettings.labels.color;
         const darktheme = AppStore.Instance.darkTheme;
         const distanceMeasuringShowCurve = frame.distanceMeasuring.showCurve;
-        const distanceMeasuringStart = frame.distanceMeasuring.start;
-        const distanceMeasuringFinish = frame.distanceMeasuring.finish;
+        const distanceMeasuringStart = frame.distanceMeasuring.transformedStart;
+        const distanceMeasuringFinish = frame.distanceMeasuring.transformedFinish;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image
