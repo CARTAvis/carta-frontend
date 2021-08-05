@@ -2116,4 +2116,9 @@ export class AppStore {
             regionProfileStoreMap.get(regionId)?.resetProfilesProgress();
         });
     };
+
+    // helper function for getting the current devicePixelRatio value
+    get pixelRatio() {
+        return devicePixelRatio;
+    }
 }
