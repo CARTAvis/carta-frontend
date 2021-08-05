@@ -125,15 +125,6 @@ export class AppStore {
         this.overlayStore.setViewDimension(w, h);
     };
 
-    // Image toolbar
-    @observable imageToolbarVisible: boolean;
-    @action showImageToolbar = () => {
-        this.imageToolbarVisible = true;
-    };
-    @action hideImageToolbar = () => {
-        this.imageToolbarVisible = false;
-    };
-
     // Auth
     @observable username: string = "";
     @action setUsername = (username: string) => {

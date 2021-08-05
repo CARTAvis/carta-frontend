@@ -25,6 +25,7 @@ interface ImagePanelComponentProps {
 @observer
 export class ImagePanelComponent extends React.Component<ImagePanelComponentProps> {
     @observable pixelHighlightValue: number = NaN;
+    @observable imageToolbarVisible: boolean = false;
     readonly activeLayer: ImageViewLayer;
 
     @action setPixelHighlightValue = (val: number) => {
@@ -61,12 +62,12 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         }
     };
 
-    onMouseEnter = () => {
-        AppStore.Instance.showImageToolbar();
+    @action onMouseEnter = () => {
+        this.imageToolbarVisible = true;
     };
 
-    onMouseLeave = () => {
-        AppStore.Instance.hideImageToolbar();
+    @action onMouseLeave = () => {
+        this.imageToolbarVisible = false;
     };
 
     onMouseDown = ev => {
@@ -117,6 +118,10 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         const frame = this.props.frame;
         if (frame?.isRenderable && appStore.astReady) {
             const isActive = frame === appStore.activeFrame && appStore.numImageRows * appStore.numImageColumns > 1;
+
+            // Left-align toolbar if we have multiple columns and this panel is in the left-most
+            const leftAlignToolbar = this.props.column === 0 && appStore.numImageColumns > 1;
+
             let className = "image-panel-div";
             let style: React.CSSProperties = {width: overlayStore.viewWidth, height: overlayStore.viewHeight};
             if (isActive) {
@@ -187,7 +192,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                         />
                     )}
-                    <ToolbarComponent docked={this.props.docked} visible={appStore.imageToolbarVisible} vertical={false} frame={frame} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
+                    <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} leftAlign={leftAlignToolbar} frame={frame} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
                 </div>
             );
         } else {

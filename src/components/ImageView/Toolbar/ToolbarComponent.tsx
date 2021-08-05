@@ -13,7 +13,7 @@ import "./ToolbarComponent.scss";
 export class ToolbarComponentProps {
     docked: boolean;
     visible: boolean;
-    vertical: boolean;
+    leftAlign: boolean;
     frame: FrameStore;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
     activeLayer: ImageViewLayer;
@@ -97,11 +97,16 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const frame = this.props.frame;
         const grid = overlay.grid;
 
-        let styleProps: CSSProperties = {
+        const styleProps: CSSProperties = {
             bottom: overlay.padding.bottom,
-            right: overlay.padding.right,
             opacity: this.props.visible ? 1 : 0
         };
+
+        if (this.props.leftAlign) {
+            styleProps.left = overlay.padding.left;
+        } else {
+            styleProps.right = overlay.padding.right;
+        }
 
         let className = "image-toolbar";
 
@@ -122,7 +127,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 </i>
             </span>
         );
-        const tooltipPosition: PopoverPosition = this.props.vertical ? "left" : "top";
+        const tooltipPosition: PopoverPosition = "top";
 
         const regionMenu = (
             <Menu>
@@ -186,7 +191,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const catalogSelectionDisabled = appStore.catalogNum === 0;
 
         return (
-            <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
+            <ButtonGroup className={className} style={styleProps}>
                 <Tooltip2
                     position={tooltipPosition}
                     content={
