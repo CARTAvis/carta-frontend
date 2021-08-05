@@ -901,69 +901,6 @@ export class OverlayColorbarSettings {
         return this.height && tickNum > 1 ? tickNum : 1;
     }
 
-    private getOrder = (x: number): number => {
-        return x === 0 ? 0 : Math.log10(Math.abs(x));
-    };
-
-    private getPrecision = (x: number): number => {
-        return Math.floor(this.getOrder(x));
-    };
-
-    @computed get roundedNumbers(): {numbers: number[]; precision: number} {
-        const frame = AppStore.Instance?.activeFrame;
-        const scaleMinVal = frame?.renderConfig?.scaleMinVal;
-        const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
-        const tickNum = this.tickNum;
-        if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || scaleMinVal >= scaleMaxVal || !tickNum) {
-            return null;
-        } else {
-            let dy = (scaleMaxVal - scaleMinVal) / tickNum; // estimate the step
-            let precision = -this.getPrecision(dy); // estimate precision
-            const roundBase = Math.pow(10, precision);
-            const min = Math.round(scaleMinVal * roundBase) / roundBase;
-            dy = Math.ceil(dy * roundBase) / roundBase; // the exact step
-            precision = -this.getPrecision(dy); // the exact precision of the step
-
-            const indexArray = Array.from(Array(tickNum).keys());
-            let numbers = indexArray.map(x => min + dy * (x + (min <= scaleMinVal ? 1 : 0)));
-
-            const isOutofBound = (element: number) => element >= scaleMaxVal;
-            const outofBoundIndex = numbers.findIndex(isOutofBound);
-            if (outofBoundIndex !== -1) {
-                numbers = numbers.slice(0, outofBoundIndex);
-            }
-            return {numbers: numbers, precision: precision};
-        }
-    }
-
-    @computed get texts(): string[] {
-        if (!this.roundedNumbers) {
-            return [];
-        }
-        const orders = this.roundedNumbers.numbers.map(x => this.getOrder(x));
-        const maxOrder = Math.max(...orders);
-        const minOrder = Math.min(...orders);
-        if (maxOrder >= 5.0 || minOrder <= -5.0) {
-            return this.roundedNumbers.numbers.map(x => x.toExponential(this.numberCustomPrecision ? this.numberPrecision : x === 0 ? 0 : clamp(this.roundedNumbers.precision + this.getPrecision(x), 0, 50)));
-        } else {
-            return this.roundedNumbers.numbers.map(x => x.toFixed(this.numberCustomPrecision ? this.numberPrecision : clamp(this.roundedNumbers.precision, 0, 50)));
-        }
-    }
-
-    @computed get positions(): number[] {
-        const frame = AppStore.Instance?.activeFrame;
-        const scaleMinVal = frame?.renderConfig?.scaleMinVal;
-        const scaleMaxVal = frame?.renderConfig?.scaleMaxVal;
-        if (!this.roundedNumbers || !frame || !isFinite(this.yOffset)) {
-            return [];
-        }
-        if (this.position === "right") {
-            return this.roundedNumbers.numbers.map(x => this.yOffset + (this.height * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
-        } else {
-            return this.roundedNumbers.numbers.map(x => this.yOffset + (this.height * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
-        }
-    }
-
     @computed get rightBorderPos(): number {
         return this.position === "top" ? this.stageWidth - this.offset - this.width : this.offset + this.width;
     }
@@ -973,7 +910,11 @@ export class OverlayColorbarSettings {
     }
 
     @computed get numberWidth(): number {
-        const textWidth = Math.max(...this.texts.map(x => x.length)) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (!activeFrame) {
+            return 0;
+        }
+        const textWidth = Math.max(...activeFrame.colorbarStore.texts.map(x => x.length)) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
         return this.numberVisible ? this.numberFontSize * (this.numberRotation || this.position !== "right" ? 1 : textWidth) + this.textGap : 0;
     }
 

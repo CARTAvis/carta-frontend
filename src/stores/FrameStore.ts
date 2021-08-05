@@ -32,6 +32,7 @@ import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel,
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";
+import {ColorbarStore} from "./ColorbarStore";
 
 export interface FrameInfo {
     fileId: number;
@@ -68,6 +69,7 @@ export class FrameStore {
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
+    public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
@@ -755,6 +757,7 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preferenceStore, this);
+        this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
         this.moving = false;

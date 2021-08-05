@@ -3,14 +3,19 @@ import {observer} from "mobx-react";
 import {action, observable, makeObservable} from "mobx";
 import {Layer, Line, Rect, Stage, Text} from "react-konva";
 import {ProfilerInfoComponent} from "components/Shared";
-import {AppStore} from "stores";
+import {AppStore, FrameStore} from "stores";
 import {fonts} from "ast_wrapper";
 import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
 import {clamp, getColorForTheme} from "utilities";
 import "./ColorbarComponent.scss";
 
+export interface ColorbarComponentProps {
+    onCursorHoverValueChanged: (number) => void;
+    frame: FrameStore;
+}
+
 @observer
-export class ColorbarComponent extends React.Component<{onCursorHoverValueChanged: (number) => void}> {
+export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     @observable hoverInfoText: string = "";
     @observable isHovering: boolean = false;
     @observable cursorY: number = -1;
@@ -83,7 +88,7 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
 
     render() {
         const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
+        const frame = this.props.frame;
         const colorbarSettings = appStore.overlayStore.colorbar;
 
         let getColor = (customColor: boolean, color: string): string => {
@@ -155,8 +160,8 @@ export class ColorbarComponent extends React.Component<{onCursorHoverValueChange
         let ticks = [];
         let numbers = [];
         if (colorbarSettings.tickVisible || colorbarSettings.numberVisible) {
-            const texts = colorbarSettings.texts;
-            const positions = colorbarSettings.positions;
+            const texts = frame.colorbarStore.texts;
+            const positions = frame.colorbarStore.positions;
 
             for (let i = 0; i < positions.length; i++) {
                 if (colorbarSettings.tickVisible) {
