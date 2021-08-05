@@ -39,7 +39,7 @@ import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapTo
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
-import {getImageCanvas, ImageViewLayer} from "components";
+import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
@@ -2019,12 +2019,18 @@ export class AppStore {
 
     exportImage = (): boolean => {
         if (this.activeFrame) {
+            const index = this.visibleFrames.indexOf(this.activeFrame);
+            if (index === -1) {
+                return false;
+            }
             const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
-            const composedCanvas = getImageCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 composedCanvas.toBlob(blob => {
                     const link = document.createElement("a") as HTMLAnchorElement;
-                    link.download = `${this.activeFrame.filename}-image-${getTimestamp()}.png`;
+                    const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
+                    // Trim filename to 230 characters in total to prevent browser errors
+                    link.download = `${joinedNames}-image-${getTimestamp()}`.substring(0, 225) + ".png";
                     link.href = URL.createObjectURL(blob);
                     link.dispatchEvent(new MouseEvent("click"));
                 }, "image/png");
@@ -2036,7 +2042,7 @@ export class AppStore {
 
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
-            const composedCanvas = getImageCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 return composedCanvas.toDataURL();
             }

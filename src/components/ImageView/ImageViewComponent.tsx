@@ -18,34 +18,43 @@ export enum ImageViewLayer {
     DistanceMeasuring = "distanceMeasuring"
 }
 
-export const getImageCanvas = (padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
-    const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
-    const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
-    const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
-    const catalogCanvas = document.getElementById("catalog-canvas") as HTMLCanvasElement;
+export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
+    const appStore = AppStore.Instance;
+    const imageViewCanvas = document.createElement("canvas") as HTMLCanvasElement;
+    imageViewCanvas.width = appStore.overlayStore.fullViewWidth;
+    imageViewCanvas.height = appStore.overlayStore.fullViewHeight;
+    const ctx = imageViewCanvas.getContext("2d");
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
+    appStore.visibleFrames.forEach((frame, index) => {
+        const column = index % appStore.numImageColumns;
+        const row = Math.floor(index / appStore.numImageColumns);
+        const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
+        if (panelCanvas) {
+            ctx.drawImage(panelCanvas, appStore.overlayStore.viewWidth * column, appStore.overlayStore.viewHeight * row);
+        }
+    });
+
+    return imageViewCanvas;
+}
+
+export function getPanelCanvas(column: number, row: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
+    const panelElement = $(`#image-panel-${column}-${row}`)?.first();
+    if (!panelElement?.length) {
+        return null;
+    }
+    const rasterCanvas = panelElement.find(".raster-canvas")?.[0] as HTMLCanvasElement;
+    const contourCanvas = panelElement.find(".contour-canvas")?.[0] as HTMLCanvasElement;
+    const overlayCanvas = panelElement.find(".overlay-canvas")?.[0] as HTMLCanvasElement;
+    const catalogCanvas = panelElement.find(".catalog-canvas")?.[0] as HTMLCanvasElement;
 
     if (!rasterCanvas || !contourCanvas || !overlayCanvas) {
         return null;
     }
 
-    let colorbarCanvas: HTMLCanvasElement;
-    let regionCanvas: HTMLCanvasElement;
-    let beamProfileCanvas: HTMLCanvasElement;
-
-    const colorbarQuery = $(".colorbar-stage").children().children("canvas");
-    if (colorbarQuery && colorbarQuery.length) {
-        colorbarCanvas = colorbarQuery[0] as HTMLCanvasElement;
-    }
-
-    const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
-    if (beamProfileQuery && beamProfileQuery.length) {
-        beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
-    }
-
-    const regionQuery = $(".region-stage").children().children("canvas");
-    if (regionQuery && regionQuery.length) {
-        regionCanvas = regionQuery[0] as HTMLCanvasElement;
-    }
+    const colorbarCanvas = panelElement.find(".colorbar-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
+    const beamProfileCanvas = panelElement.find(".beam-profile-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
+    const regionCanvas = panelElement.find(".region-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
 
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
     composedCanvas.width = overlayCanvas.width;
@@ -92,7 +101,7 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
     }
 
     return composedCanvas;
-};
+}
 
 @observer
 export class ImageViewComponent extends React.Component<WidgetProps> {
