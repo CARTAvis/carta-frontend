@@ -47,6 +47,20 @@ interface FrameOption extends IOptionProps {
     hasZAxis: boolean;
 }
 
+interface ViewUpdate {
+    tiles: TileCoordinate[];
+    fileId: number;
+    channel: number;
+    stokes: number;
+    focusPoint: Point2D;
+}
+
+interface ChannelUpdate {
+    frame: FrameStore;
+    channel: number;
+    stokes: number;
+}
+
 export class AppStore {
     private static staticInstance: AppStore;
 
@@ -508,6 +522,8 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            // Ensure loading finishes before next file is added
+            await this.delay(10);
             return this.getFrame(ack.fileId);
         } catch (err) {
             this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -1084,7 +1100,7 @@ export class AppStore {
     private histogramRequirements: Map<number, Array<number>>;
     private pendingChannelHistograms: Map<string, CARTA.IRegionHistogramData>;
 
-    public updateChannels = (updates: {frame: FrameStore; channel: number; stokes: number}[]) => {
+    public updateChannels = (updates: ChannelUpdate[]) => {
         if (!updates || !updates.length) {
             return;
         }
@@ -1098,7 +1114,7 @@ export class AppStore {
             frame.channel = update.channel;
             frame.stokes = update.stokes;
 
-            if (frame === this.activeFrame) {
+            if (this.visibleFrames.includes(frame)) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = frame.requiredFrameView;
 
@@ -1120,6 +1136,12 @@ export class AppStore {
                 this.tileService.updateInactiveFileChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
         });
+    };
+
+    private updateViews = (updates: ViewUpdate[]) => {
+        for (const update of updates) {
+            this.updateView(update.tiles, update.fileId, update.channel, update.stokes, update.focusPoint);
+        }
     };
 
     private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
@@ -1265,7 +1287,7 @@ export class AppStore {
         });
 
         // Throttled functions for use in autoruns
-        const throttledSetView = _.throttle(this.updateView, AppStore.ImageThrottleTime);
+        const throttledSetViews = _.throttle(this.updateViews, AppStore.ImageThrottleTime);
         const throttledSetChannels = _.throttle(this.updateChannels, AppStore.ImageChannelThrottleTime);
         const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
         const throttledSetCursor = _.throttle(this.setCursor, AppStore.CursorThrottleTime);
@@ -1274,8 +1296,11 @@ export class AppStore {
 
         // Update frame view for each visible frame
         autorun(() => {
-            for (const frame of this.visibleFrames) {
-                if (this.preferenceStore.streamContoursWhileZooming || !frame.zooming) {
+            // Ignore view changes when zooming if preference not set
+            if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.streamContoursWhileZooming)) {
+                // Group all view updates for visible images into one throttled call
+                const viewUpdates: ViewUpdate[] = [];
+                for (const frame of this.visibleFrames) {
                     const reqView = frame.requiredFrameView;
                     let croppedReq: FrameView = {
                         xMin: Math.max(0, reqView.xMin),
@@ -1290,8 +1315,11 @@ export class AppStore {
                     const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
                     const tileSizeFullRes = reqView.mip * 256;
                     const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                    throttledSetView(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords);
+                    if (tiles.length) {
+                        viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords});
+                    }
                 }
+                throttledSetViews(viewUpdates);
 
                 // TODO: this should be separate
                 if (!this.activeFrame) {
@@ -1304,7 +1332,7 @@ export class AppStore {
         // Update channels when manually changed
         autorun(() => {
             if (this.activeFrame) {
-                const updates = [];
+                const updates: ChannelUpdate[] = [];
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
