@@ -270,6 +270,14 @@
             "type": "string",
             "enum": ["always", "activeImage", "hideTiled", "never"],
             "default": "activeImage"
+        },
+        "keepLastUsedFolder": {
+            "type": "boolean",
+            "default": false
+        },
+        "lastUsedFolder": {
+            "type": "string",
+            "default": ""
         }
     }
 }

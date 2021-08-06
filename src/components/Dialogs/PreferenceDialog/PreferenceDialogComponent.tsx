@@ -163,6 +163,9 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Transparent Image Background">
                     <Switch checked={preference.transparentImageBackground} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, ev.currentTarget.checked)} />
                 </FormGroup>
+                <FormGroup inline={true} label="Save last used directory">
+                    <Switch checked={preference.keepLastUsedFolder} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER, ev.currentTarget.checked)} />
+                </FormGroup>
             </React.Fragment>
         );
 
