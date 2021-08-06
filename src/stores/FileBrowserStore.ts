@@ -338,7 +338,8 @@ export class FileBrowserStore {
     }
 
     @action saveStartingDirectory(directory?: string) {
-        console.debug("coconut... previous last directory: " + PreferenceStore.Instance.lastUsedFolder);
+        const preferenceStore = PreferenceStore.Instance;
+        console.debug("coconut... previous last directory: " + preferenceStore.lastUsedFolder);
         if (directory !== undefined) {
             this.startingDirectory = directory;
         } else {
@@ -348,24 +349,25 @@ export class FileBrowserStore {
                 this.startingDirectory = this.fileList.directory;
             }
         }
-        if (PreferenceStore.Instance.keepLastUsedFolder) {
-            PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
+        if (preferenceStore.keepLastUsedFolder) {
+            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
             console.debug("coconut... saving last directory: " + this.startingDirectory);
-            console.debug("coconut... PreferenceStore.Instance.lastUsedFolder = " + PreferenceStore.Instance.lastUsedFolder);
+            console.debug("coconut... PreferenceStore.Instance.lastUsedFolder = " + preferenceStore.lastUsedFolder);
         } else {
-            PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
+            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
         }
     }
 
     setStartingDirectory() {
+        const preferenceStore = PreferenceStore.Instance;
         console.debug("coconut... setting the starting directory...");
-        if (PreferenceStore.Instance.keepLastUsedFolder) {
-            console.debug("coconut... PreferenceStore.Instance.lastUsedFolder = " + PreferenceStore.Instance.lastUsedFolder);
-            if (PreferenceStore.Instance.lastUsedFolder.length > 0) {
-                this.startingDirectory = PreferenceStore.Instance.lastUsedFolder;
+        if (preferenceStore.keepLastUsedFolder) {
+            console.debug("coconut... PreferenceStore.Instance.lastUsedFolder = " + preferenceStore.lastUsedFolder);
+            if (preferenceStore.lastUsedFolder?.length > 0) {
+                this.startingDirectory = preferenceStore.lastUsedFolder;
                 console.debug("coconut... using last used folder: " + this.startingDirectory);
             } else {
-                PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
+                preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
             }
         }
     }

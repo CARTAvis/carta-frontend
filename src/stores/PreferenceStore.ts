@@ -84,7 +84,7 @@ export enum PreferenceKeys {
     CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
 
     PIXEL_GRID_VISIBLE = "pixelGridVisible",
-    PIXEL_GRID_COLOR = "pixelGridColor",
+    PIXEL_GRID_COLOR = "pixelGridColor"
 }
 
 const DEFAULTS = {
