@@ -34,17 +34,21 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         this.hoverInfoText = text;
     };
 
+    @action setMouseHovering = (val: boolean) => {
+        this.isHovering = val;
+    };
+
     @action onMouseEnter = () => {
         if (this.mouseEnterHandle) {
             clearTimeout(this.mouseEnterHandle);
         }
         this.mouseEnterHandle = setTimeout(() => {
-            this.isHovering = true;
+            this.setMouseHovering(true);
         }, ColorbarComponent.HoverDelay);
     };
 
     @action onMouseLeave = () => {
-        this.isHovering = false;
+        this.setMouseHovering(false);
         if (this.mouseEnterHandle) {
             clearTimeout(this.mouseEnterHandle);
         }
