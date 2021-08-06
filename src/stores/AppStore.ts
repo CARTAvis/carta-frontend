@@ -1333,7 +1333,7 @@ export class AppStore {
         autorun(() => {
             if (this.activeFrame) {
                 const updates: ChannelUpdate[] = [];
-                // Calculate if new data is required
+                // Calculate if new data is required for the active channel
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
                 if (!this.animatorStore.animationActive && updateRequiredChannels) {
