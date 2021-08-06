@@ -1100,12 +1100,12 @@ export class AppStore {
     private histogramRequirements: Map<number, Array<number>>;
     private pendingChannelHistograms: Map<string, CARTA.IRegionHistogramData>;
 
-    public updateChannels = (updates: ChannelUpdate[]) => {
+    @action updateChannels = (updates: ChannelUpdate[]) => {
         if (!updates || !updates.length) {
             return;
         }
 
-        updates.forEach(update => {
+        for (const update of updates) {
             const frame = update.frame;
             if (!frame) {
                 return;
@@ -1135,7 +1135,7 @@ export class AppStore {
             } else {
                 this.tileService.updateInactiveFileChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
-        });
+        }
     };
 
     private updateViews = (updates: ViewUpdate[]) => {

@@ -280,7 +280,7 @@ export class TileService {
     }
 
     clearRequestQueue(fileId?: number) {
-        if (fileId === undefined) {
+        if (fileId !== undefined) {
             // Clear all requests with the given file ID
             const fileKey = `${fileId}`;
             this.pendingRequests.forEach((value, key) => {
@@ -421,6 +421,8 @@ export class TileService {
                     this.getCompressedCache(tileMessage.fileId).set(encodedCoordinate, {tile, compressionQuality: tileMessage.compressionQuality});
                     this.asyncDecompressTile(tileMessage.fileId, tileMessage.channel, tileMessage.stokes, tile, tileMessage.compressionQuality, encodedCoordinate);
                 }
+            } else {
+                console.warn(`No pending request for tile (${tile.x}, ${tile.y}, ${tile.layer}) and key=${key}`);
             }
         }
     };
