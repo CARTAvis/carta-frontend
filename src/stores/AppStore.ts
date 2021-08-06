@@ -1132,6 +1132,7 @@ export class AppStore {
                 });
                 this.snippetStore.fetchSnippets();
                 this.updateASTColors();
+                FileBrowserStore.Instance.setStartingDirectory();
             });
         }
     };
