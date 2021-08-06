@@ -399,6 +399,19 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 if (dataType === CARTA.ColumnType.String) {
                     filter.subString = value.filter;
                     userFilters.push(filter);
+                } else if (dataType === CARTA.ColumnType.Bool) {
+                    if (value.filter) {
+                        filter.comparisonOperator = CARTA.ComparisonOperator.Equal;
+                        const trueRegex = /^[tTyY1].*$/;
+                        const falseRegex = /^[fFnN0].*$/;
+                        if (value.filter.match(trueRegex)) {
+                            filter.value = 1;
+                            userFilters.push(filter);
+                        } else if (value.filter.match(falseRegex)) {
+                            filter.value = 0;
+                            userFilters.push(filter);
+                        }
+                    }
                 } else {
                     const result = CatalogOverlayComponent.GetComparisonOperatorAndValue(value.filter);
                     if (result.operator !== undefined && result.values.length > 0) {
