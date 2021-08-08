@@ -158,6 +158,7 @@ export class RenderConfigStore {
     @observable useCubeHistogramContours: boolean;
     @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number[];
+    @observable histChannel: number;
     @observable stokes: number;
     @observable scaleMin: number[];
     @observable scaleMax: number[];
@@ -277,6 +278,10 @@ export class RenderConfigStore {
     @computed get selectedPercentileVal() {
         return this.selectedPercentile[this.stokes];
     }
+
+    @action setHistChannel = (val: number) => {
+        this.histChannel = val;
+    };
 
     @action setStokes = (val: number) => {
         this.stokes = val;
