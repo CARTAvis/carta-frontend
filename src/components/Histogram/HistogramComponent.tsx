@@ -55,14 +55,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             let regionId = this.widgetStore.effectiveRegionId;
             let coordinate = this.widgetStore.coordinate;
 
-            // // Image histograms handled slightly differently
-            // if (regionId === -1) {
-            //     const frame = appStore.getFrame(fileId);
-            //     if (frame && frame.renderConfig && frame.renderConfig.channelHistogram) {
-            //
-            //     }
-            // }
-
             const frameMap = appStore.regionHistograms.get(fileId);
             if (!frameMap) {
                 return null;

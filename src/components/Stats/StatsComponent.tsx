@@ -128,7 +128,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             }
         });
 
-        // When frame is changed(coordinateOptions changes), coordinate stay unchanged if new frame also support it, otherwise to default('z')
+        // When frame is changed(coordinateOptions changes), coordinate stays unchanged if new frame also supports it, otherwise defaults to 'z'
         autorun(() => {
             if (this.widgetStore.effectiveFrame && (!this.widgetStore.effectiveFrame.stokesInfo.find(stokes => `${stokes}z` === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.stokesInfo)) {
                 this.widgetStore.setCoordinate("z");

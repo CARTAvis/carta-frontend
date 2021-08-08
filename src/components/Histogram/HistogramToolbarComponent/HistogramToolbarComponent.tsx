@@ -16,7 +16,7 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
     constructor(props: {widgetStore: HistogramWidgetStore}) {
         super(props);
         const widgetStore = this.props.widgetStore;
-        // When frame is changed(coordinateOptions changes), coordinate stay unchanged if new frame also support it, otherwise to default('z')
+        // When frame is changed(coordinateOptions changes), coordinate stays unchanged if new frame also supports it, otherwise defaults to 'z'
         autorun(() => {
             if (widgetStore.effectiveFrame && (!widgetStore.effectiveFrame.stokesInfo.find(stokes => `${stokes}z` === widgetStore.coordinate) || !widgetStore.effectiveFrame.stokesInfo)) {
                 widgetStore.setCoordinate("z");
