@@ -163,7 +163,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             docked={this.props.docked}
                             unit={frame.unit}
                             top={overlayStore.padding.top}
-                            currentStokes={frame.hasStokes ? frame.stokesInfo[frame.requiredStokes] : ""}
+                            currentStokes={appStore.activeFrame.requiredStokes >= 0 && appStore.activeFrame.requiredStokes < appStore.activeFrame.stokesInfo?.length ? appStore.activeFrame.requiredStokesInfo : ""}
                             showImage={true}
                             showWCS={true}
                             showValue={true}

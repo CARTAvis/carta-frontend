@@ -40,7 +40,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const tileRenderService = TileWebGLService.Instance;
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
             const histStokes = frame.renderConfig.stokes;
-            const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histogram.channel : undefined;
+            const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
             if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel) && frame.stokes === histStokes) {
                 this.updateCanvasSize();
                 this.updateUniforms();
