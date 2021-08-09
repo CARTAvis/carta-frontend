@@ -163,7 +163,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         if (frame?.hasStokes) {
             stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName : this.selectedStokes;
         }
-        return `${stokes ?? ""}${this.coordinate}`;
+        return `${stokes?.replace("Stokes ", "") ?? ""}${this.coordinate}`;
     }
 
     private static GetSpatialConfig(frame: FrameStore, coordinate: string, isCursor: boolean): CARTA.SetSpatialRequirements.ISpatialConfig {
