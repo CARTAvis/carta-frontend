@@ -10,7 +10,7 @@ export enum MultiProfileCategory {
     IMAGE = "Image",
     REGION = "Region",
     STATISTIC = "Statistic",
-    STOKES = "Stokes"
+    STOKES = "Polarization"
 }
 
 interface ProfileConfig {
@@ -334,7 +334,7 @@ export class SpectralProfileSelectionStore {
     @computed get coordinateOptions(): LineOption[] {
         let options = [{value: "z", label: "Current"}];
         if (this.selectedFrame?.hasStokes) {
-            this.selectedFrame.stokesInfo?.forEach(stokes => options.push({value: `${stokes}z`, label: stokes}));
+            this.selectedFrame.stokesInfo?.forEach(stokes => options.push({value: `${stokes.replace("Stokes ", "")}z`, label: stokes}));
         }
         return options;
     }

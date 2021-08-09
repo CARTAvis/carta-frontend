@@ -727,7 +727,7 @@ export class FrameStore {
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (stokesVal > 0 && STANDARD_POLARIZATIONS.has(stokesVal)) {
-                        stokesOptions.push({value: stokesVal - 1, label: STANDARD_POLARIZATIONS.get(stokesVal)});
+                        stokesOptions.push({value: stokesVal - 1, label: `${stokesVal > 0 ? "Stokes " : ""}${STANDARD_POLARIZATIONS.get(stokesVal)}`});
                     }
                 }
             }
@@ -743,6 +743,10 @@ export class FrameStore {
         return this.stokesOptions?.map(option => {
             return option?.label;
         });
+    }
+
+    @computed get requiredStokesInfo(): string {
+        return this.requiredStokes >= 0 && this.requiredStokes < this.stokesInfo?.length ? this.stokesInfo[this.requiredStokes] : String(this.requiredStokes);
     }
 
     constructor(frameInfo: FrameInfo) {

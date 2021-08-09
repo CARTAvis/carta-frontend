@@ -39,7 +39,7 @@ import {
 import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FileId, FrameView, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
-import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
+import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
@@ -88,8 +88,8 @@ export class AppStore {
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>;
-    @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
-    @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
+    @observable regionStats: Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>;
+    @observable regionHistograms: Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>;
 
     // Reference images
     @observable spatialReference: FrameStore;
@@ -1064,8 +1064,8 @@ export class AppStore {
 
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
     private spatialRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>;
-    private statsRequirements: Map<number, Array<number>>;
-    private histogramRequirements: Map<number, Array<number>>;
+    private statsRequirements: Map<number, Map<number, CARTA.SetStatsRequirements>>;
+    private histogramRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>;
     private pendingChannelHistograms: Map<string, CARTA.IRegionHistogramData>;
 
     public updateChannels = (updates: {frame: FrameStore; channel: number; stokes: number}[]) => {
@@ -1167,8 +1167,8 @@ export class AppStore {
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<FileId, ObservableMap<RegionId, SpectralProfileStore>>();
-        this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
-        this.regionHistograms = new Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
+        this.regionStats = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>>();
+        this.regionHistograms = new Map<number, ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>>();
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
 
         this.frames = [];
@@ -1408,25 +1408,29 @@ export class AppStore {
 
         let frameHistogramMap = this.regionHistograms.get(regionHistogramData.fileId);
         if (!frameHistogramMap) {
-            frameHistogramMap = new ObservableMap<number, CARTA.IRegionHistogramData>();
+            frameHistogramMap = new ObservableMap<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
             this.regionHistograms.set(regionHistogramData.fileId, frameHistogramMap);
         }
 
-        frameHistogramMap.set(regionHistogramData.regionId, regionHistogramData);
+        let regionHistogramMap = frameHistogramMap.get(regionHistogramData.regionId);
 
+        if (!regionHistogramMap) {
+            regionHistogramMap = new ObservableMap<number, CARTA.IRegionHistogramData>();
+            frameHistogramMap.set(regionHistogramData.regionId, regionHistogramMap);
+        }
+
+        regionHistogramMap.set(regionHistogramData.stokes, regionHistogramData);
         // TODO: update histograms directly if the image is not active!
 
         // Add histogram to pending histogram list
         if (regionHistogramData.regionId === -1) {
-            regionHistogramData.histograms.forEach(histogram => {
-                const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${histogram.channel}`;
-                this.pendingChannelHistograms.set(key, regionHistogramData);
-            });
+            const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
+            this.pendingChannelHistograms.set(key, regionHistogramData);
         } else if (regionHistogramData.regionId === -2) {
             // Update cube histogram if it is still required
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
             if (updatedFrame) {
-                const cubeHist = regionHistogramData.histograms[0];
+                const cubeHist = regionHistogramData.histograms;
                 if (cubeHist && (updatedFrame.renderConfig.useCubeHistogram || updatedFrame.renderConfig.useCubeHistogramContours)) {
                     updatedFrame.renderConfig.updateCubeHistogram(cubeHist, regionHistogramData.progress);
                     this.updateTaskProgress(regionHistogramData.progress);
@@ -1461,11 +1465,12 @@ export class AppStore {
         // Apply pending channel histogram
         const key = `${tileStreamDetails.fileId}_${tileStreamDetails.stokes}_${tileStreamDetails.channel}`;
         const pendingHistogram = this.pendingChannelHistograms.get(key);
-        if (pendingHistogram && pendingHistogram.histograms && pendingHistogram.histograms.length) {
+        if (pendingHistogram?.histograms) {
             const updatedFrame = this.getFrame(pendingHistogram.fileId);
-            const channelHist = pendingHistogram.histograms.find(hist => hist.channel === updatedFrame.channel);
+            const channelHist = pendingHistogram.histograms;
             if (updatedFrame && channelHist) {
                 updatedFrame.renderConfig.setStokes(pendingHistogram.stokes);
+                updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 updatedFrame.channel = tileStreamDetails.channel;
                 updatedFrame.stokes = tileStreamDetails.stokes;
@@ -1486,11 +1491,17 @@ export class AppStore {
 
         let frameStatsMap = this.regionStats.get(regionStatsData.fileId);
         if (!frameStatsMap) {
-            frameStatsMap = new ObservableMap<number, CARTA.RegionStatsData>();
+            frameStatsMap = new ObservableMap<number, ObservableMap<number, CARTA.RegionStatsData>>();
             this.regionStats.set(regionStatsData.fileId, frameStatsMap);
         }
 
-        frameStatsMap.set(regionStatsData.regionId, regionStatsData);
+        let regionStatsMap = frameStatsMap.get(regionStatsData.regionId);
+        if (!regionStatsMap) {
+            regionStatsMap = new ObservableMap<number, CARTA.RegionStatsData>();
+            frameStatsMap.set(regionStatsData.regionId, regionStatsMap);
+        }
+
+        regionStatsMap.set(regionStatsData.stokes, regionStatsData);
     };
 
     handleContourImageStream = (contourImageData: CARTA.ContourImageData) => {
@@ -2029,8 +2040,8 @@ export class AppStore {
     private initRequirements = () => {
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
-        this.statsRequirements = new Map<number, Array<number>>();
-        this.histogramRequirements = new Map<number, Array<number>>();
+        this.statsRequirements = new Map<number, Map<number, CARTA.SetStatsRequirements>>();
+        this.histogramRequirements = new Map<number, Map<number, CARTA.SetHistogramRequirements>>();
     };
 
     recalculateRequirements = () => {
@@ -2045,8 +2056,8 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.widgetsStore.statsWidgets);
-        const diffList = StatsWidgetStore.DiffRequirementsArray(this.statsRequirements, updatedRequirements);
+        const updatedRequirements = StatsWidgetStore.CalculateRequirementsMap(this.widgetsStore.statsWidgets);
+        const diffList = StatsWidgetStore.DiffStatsRequirements(this.statsRequirements, updatedRequirements);
         this.statsRequirements = updatedRequirements;
 
         if (diffList.length) {
@@ -2061,8 +2072,8 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.widgetsStore.histogramWidgets);
-        const diffList = HistogramWidgetStore.DiffRequirementsArray(this.histogramRequirements, updatedRequirements);
+        const updatedRequirements = HistogramWidgetStore.CalculateRequirementsMap(this.widgetsStore.histogramWidgets);
+        const diffList = HistogramWidgetStore.DiffHistoRequirements(this.histogramRequirements, updatedRequirements);
         this.histogramRequirements = updatedRequirements;
 
         if (diffList.length) {
