@@ -28,7 +28,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 0;
     @observable height: number = 0;
-    @observable columnWidths = [132, 70, 110, 75, 67];
+    @observable columnWidths = [132, 70, 110, 75, 95];
 
     constructor(props: any) {
         super(props);
@@ -95,7 +95,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell />;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredStokes}</Cell>;
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredStokesInfo}</Cell>;
     };
 
     private typeRenderer = (rowIndex: number) => {
@@ -288,7 +288,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 name = "Channel";
                 break;
             case 4:
-                name = "Stokes";
+                name = "Polarization";
                 break;
             default:
                 break;
