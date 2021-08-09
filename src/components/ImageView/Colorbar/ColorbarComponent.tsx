@@ -61,7 +61,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
 
     private handleMouseMove = event => {
         const appStore = AppStore.Instance;
-        const renderConfig = appStore?.activeFrame?.renderConfig;
+        const renderConfig = this.props.frame?.renderConfig;
         const colorbarSettings = appStore?.overlayStore?.colorbar;
         if (!renderConfig || !colorbarSettings) {
             return;
