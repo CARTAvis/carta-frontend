@@ -201,8 +201,14 @@ export class AppStore {
 
         try {
             if (fileList?.length) {
+                const frames: FrameStore[] = [];
                 for (const file of fileList) {
-                    await this.loadFile(folderSearchParam, file, "");
+                    frames.push(await this.loadFile(folderSearchParam, file, ""));
+                }
+
+                // Auto-fit loaded frames after panel configuration has been updated.
+                if (this.preferenceStore.zoomMode === Zoom.FIT) {
+                    this.autoFitImages(frames);
                 }
             } else if (this.preferenceStore.autoLaunch) {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
@@ -211,6 +217,15 @@ export class AppStore {
             console.error(err);
         }
     };
+
+    @action autoFitImages(frames: FrameStore[]) {
+        // Frames that have a spatial reference are not auto-fitted.
+        for (const frame of frames) {
+            if (frame && !frame.spatialReference) {
+                frame.fitZoom();
+            }
+        }
+    }
 
     @action handleThemeChange = (darkMode: boolean) => {
         this.systemTheme = darkMode ? "dark" : "light";
