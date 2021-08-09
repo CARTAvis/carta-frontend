@@ -25,7 +25,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private columnWidths: number[] = [90, 95, 50, 95, 95, 128, 70, 70];
+    private columnWidths: number[] = [90, 95, 50, 95, 95, 128, 70, 95];
 
     @observable width: number = 0;
     @observable height: number = 0;
@@ -130,7 +130,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             );
         }
 
-        const columnNames = ["Image", "Value", "WCS", "XY (World)", "XY (Image)", "Z", "Channel", "Stokes"];
+        const columnNames = ["Image", "Value", "WCS", "XY (World)", "XY (Image)", "Z", "Channel", "Polarization"];
         const dataType = CARTA.ColumnType.String;
         const columnHeaders = columnNames.map((name, index) => new CARTA.CatalogHeader({name: name, dataType, columnIndex: index}));
 
@@ -141,7 +141,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         let imageCoords = Array(frameNum).fill("-");
         const zCoords = appStore.frames.map(frame => this.genZCoordContent(frame));
         const channels = appStore.frames.map(frame => frame.requiredChannel);
-        const stokes = appStore.frames.map(frame => frame.requiredStokes);
+        const stokes = appStore.frames.map(frame => frame.requiredStokesInfo);
 
         const showFrames = frame.spatialReference ? [frame.spatialReference, ...frame.spatialReference.secondarySpatialImages] : [frame, ...frame.secondarySpatialImages];
         const showFileIds = showFrames.map(frame => frame.frameInfo.fileId);
