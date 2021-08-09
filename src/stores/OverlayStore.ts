@@ -910,11 +910,11 @@ export class OverlayColorbarSettings {
     }
 
     @computed get numberWidth(): number {
-        const activeFrame = AppStore.Instance.activeFrame;
-        if (!activeFrame) {
-            return 0;
+        let textWidth = 0;
+        for (const frame of AppStore.Instance.visibleFrames) {
+            const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x => x.length)) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
+            textWidth = Math.max(textWidth, frameTextWidth);
         }
-        const textWidth = Math.max(...activeFrame.colorbarStore.texts.map(x => x.length)) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
         return this.numberVisible ? this.numberFontSize * (this.numberRotation || this.position !== "right" ? 1 : textWidth) + this.textGap : 0;
     }
 
