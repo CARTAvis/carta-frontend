@@ -84,7 +84,7 @@ export class ImageSaveComponent extends React.Component {
     /// Generate options for stokes via string
     @computed get stokesOptions() {
         const activeFrame = AppStore.Instance.activeFrame;
-        const stokesInfo = activeFrame.stokesInfo;
+        const stokesInfo = activeFrame.stokesInfo.map(string => string.replace("Stokes ", ""));
         let options = [{value: 0, label: stokesInfo.join("")}];
         const optionsAddFourElements = () => {
             options.push({value: 4, label: stokesInfo[3]});
