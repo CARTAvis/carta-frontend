@@ -726,7 +726,7 @@ export class FrameStore {
                 const cdeltHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
-                    if (stokesVal > 0 && STANDARD_POLARIZATIONS.has(stokesVal)) {
+                    if (STANDARD_POLARIZATIONS.has(stokesVal)) {
                         stokesOptions.push({value: stokesVal - 1, label: `${stokesVal > 0 ? "Stokes " : ""}${STANDARD_POLARIZATIONS.get(stokesVal)}`});
                     }
                 }
