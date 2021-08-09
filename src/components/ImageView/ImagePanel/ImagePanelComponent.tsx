@@ -119,9 +119,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         if (frame?.isRenderable && appStore.astReady) {
             const isActive = frame === appStore.activeFrame && appStore.numImageRows * appStore.numImageColumns > 1;
 
-            // Left-align toolbar if we have multiple columns and this panel is in the left-most
-            const leftAlignToolbar = this.props.column === 0 && appStore.numImageColumns > 1;
-
             let className = "image-panel-div";
             let style: React.CSSProperties = {width: overlayStore.viewWidth, height: overlayStore.viewHeight};
             if (isActive) {
@@ -193,7 +190,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                         />
                     )}
-                    <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} leftAlign={leftAlignToolbar} frame={frame} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
+                    <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} frame={frame} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
                 </div>
             );
         } else {

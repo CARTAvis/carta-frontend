@@ -13,7 +13,6 @@ import "./ToolbarComponent.scss";
 export class ToolbarComponentProps {
     docked: boolean;
     visible: boolean;
-    leftAlign: boolean;
     frame: FrameStore;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
     activeLayer: ImageViewLayer;
@@ -99,14 +98,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const styleProps: CSSProperties = {
             bottom: overlay.padding.bottom,
+            right: overlay.padding.right,
             opacity: this.props.visible ? 1 : 0
         };
-
-        if (this.props.leftAlign) {
-            styleProps.left = overlay.padding.left;
-        } else {
-            styleProps.right = overlay.padding.right;
-        }
 
         let className = "image-toolbar";
 
