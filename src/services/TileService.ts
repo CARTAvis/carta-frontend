@@ -243,8 +243,9 @@ export class TileService {
         }
     }
 
-    updateInactiveFileChannel(fileId: number, channel: number, stokes: number) {
+    updateHiddenFileChannels(fileId: number, channel: number, stokes: number) {
         this.clearCompressedCache(fileId);
+        this.clearGPUCache(fileId);
         this.channelMap.set(fileId, {channel, stokes});
         this.backendService.setChannels(fileId, channel, stokes, {});
     }
