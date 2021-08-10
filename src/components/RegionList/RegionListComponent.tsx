@@ -148,9 +148,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 formattedArcsec(length2D(region.wcsSize), WCS_PRECISION)
                             ) : (
                                 <React.Fragment>
-                                    {formattedArcsec(region.wcsSize.x, WCS_PRECISION)}
+                                    {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
                                     <br />
-                                    {formattedArcsec(region.wcsSize.y, WCS_PRECISION)}
+                                    {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)}
                                 </React.Fragment>
                             );
                     } else {
