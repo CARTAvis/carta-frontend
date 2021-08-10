@@ -1179,6 +1179,7 @@ export class AppStore {
             try {
                 await this.connectToServer();
                 await this.preferenceStore.fetchPreferences();
+                await this.fileBrowserStore.setStartingDirectory();
                 await this.layoutStore.fetchLayouts();
                 await this.snippetStore.fetchSnippets();
 
