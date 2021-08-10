@@ -58,7 +58,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             if (!regionMap) {
                 return null;
             }
-            const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes === coordinate.slice(0, 1));
+            const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes.replace("Stokes ", "") === coordinate.slice(0, 1));
             return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
         }
         return null;
@@ -130,7 +130,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         // When frame is changed(coordinateOptions changes), coordinate stays unchanged if new frame also supports it, otherwise defaults to 'z'
         autorun(() => {
-            if (this.widgetStore.effectiveFrame && (!this.widgetStore.effectiveFrame.stokesInfo.find(stokes => `${stokes}z` === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.stokesInfo)) {
+            if (this.widgetStore.effectiveFrame && (!this.widgetStore.effectiveFrame.stokesInfo.find(stokes => `${stokes.replace("Stokes ", "")}z` === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.stokesInfo)) {
                 this.widgetStore.setCoordinate("z");
             }
         });
@@ -225,7 +225,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         if (widgetStore.effectiveFrame?.regionSet) {
             enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
             const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
-            stokesInfo.forEach(stokes => coordinateOptions.push({value: `${stokes}z`, label: stokes}));
+            stokesInfo.forEach(stokes => coordinateOptions.push({value: `${stokes.replace("Stokes ", "")}z`, label: stokes}));
 
             if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z") {
                 const linkedClass = "linked-to-selected-stokes";

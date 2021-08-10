@@ -18,7 +18,7 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
         const widgetStore = this.props.widgetStore;
         // When frame is changed(coordinateOptions changes), coordinate stays unchanged if new frame also supports it, otherwise defaults to 'z'
         autorun(() => {
-            if (widgetStore.effectiveFrame && (!widgetStore.effectiveFrame.stokesInfo.find(stokes => `${stokes}z` === widgetStore.coordinate) || !widgetStore.effectiveFrame.stokesInfo)) {
+            if (widgetStore.effectiveFrame && (!widgetStore.effectiveFrame.stokesInfo.find(stokes => `${stokes.replace("Stokes ", "")}z` === widgetStore.coordinate) || !widgetStore.effectiveFrame.stokesInfo)) {
                 widgetStore.setCoordinate("z");
             }
         });
@@ -34,7 +34,7 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
         if (widgetStore.effectiveFrame?.regionSet) {
             enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
             const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
-            stokesInfo.forEach(stokes => coordinateOptions.push({value: `${stokes}z`, label: stokes}));
+            stokesInfo.forEach(stokes => coordinateOptions.push({value: `${stokes.replace("Stokes ", "")}z`, label: stokes}));
 
             if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z") {
                 const linkedClass = "linked-to-selected-stokes";
