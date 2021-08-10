@@ -339,7 +339,6 @@ export class FileBrowserStore {
 
     @action saveStartingDirectory(directory?: string) {
         const preferenceStore = PreferenceStore.Instance;
-        console.debug("coconut... previous last directory: " + preferenceStore.lastUsedFolder);
         if (directory !== undefined) {
             this.startingDirectory = directory;
         } else {
@@ -351,8 +350,6 @@ export class FileBrowserStore {
         }
         if (preferenceStore.keepLastUsedFolder) {
             preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
-            console.debug("coconut... saving last directory: " + this.startingDirectory);
-            console.debug("coconut... PreferenceStore.Instance.lastUsedFolder = " + preferenceStore.lastUsedFolder);
         } else {
             preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
         }
@@ -360,12 +357,9 @@ export class FileBrowserStore {
 
     setStartingDirectory() {
         const preferenceStore = PreferenceStore.Instance;
-        console.debug("coconut... setting the starting directory...");
         if (preferenceStore.keepLastUsedFolder) {
-            console.debug("coconut... PreferenceStore.Instance.lastUsedFolder = " + preferenceStore.lastUsedFolder);
             if (preferenceStore.lastUsedFolder?.length > 0) {
                 this.startingDirectory = preferenceStore.lastUsedFolder;
-                console.debug("coconut... using last used folder: " + this.startingDirectory);
             } else {
                 preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
             }
