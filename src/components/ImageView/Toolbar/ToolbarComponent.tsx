@@ -329,7 +329,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     </React.Fragment>
                 )}
                 <Tooltip2 position={tooltipPosition} content={appStore.toolbarExpanded ? "Hide toolbar" : "Show toolbar"}>
-                    <AnchorButton icon={appStore.toolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} />
+                    <AnchorButton active={appStore.toolbarExpanded} icon={appStore.toolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} />
                 </Tooltip2>
             </ButtonGroup>
         );
