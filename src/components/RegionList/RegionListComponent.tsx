@@ -148,13 +148,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 formattedArcsec(length2D(region.wcsSize), WCS_PRECISION)
                             ) : (
                                 <React.Fragment>
-                                    {formattedArcsec(region.wcsSize.x, WCS_PRECISION)}
+                                    {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
                                     <br />
-                                    {formattedArcsec(region.wcsSize.y, WCS_PRECISION)}
+                                    {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)}
                                 </React.Fragment>
                             );
                     } else {
-                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(length2D(region.wcsSize), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
+                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(length2D(region.size), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
                     }
                 }
                 let tooltipContent = "";
