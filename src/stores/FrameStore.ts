@@ -106,6 +106,7 @@ export class FrameStore {
     @observable zooming: boolean;
 
     @observable colorbarLabelCustomText: string;
+    @observable titleCustomText: string;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
     @observable spectralReference: FrameStore;
@@ -776,6 +777,7 @@ export class FrameStore {
         this.moving = false;
         this.zooming = false;
         this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
+        this.titleCustomText = "";
         this.overlayBeamSettings = new OverlayBeamStore();
         this.spatialReference = null;
         this.spatialTransformAST = null;
@@ -1229,6 +1231,10 @@ export class FrameStore {
 
     @action setColorbarLabelCustomText = (text: string) => {
         this.colorbarLabelCustomText = text;
+    };
+
+    @action setTitleCustomText = (text: string) => {
+        this.titleCustomText = text;
     };
 
     public getControlMap(frame: FrameStore) {
