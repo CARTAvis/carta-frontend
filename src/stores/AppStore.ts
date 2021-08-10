@@ -15,6 +15,7 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
+    CURSOR_REGION_ID,
     DialogStore,
     DistanceMeasuringStore,
     FileBrowserStore,
@@ -22,30 +23,42 @@ import {
     FrameStore,
     HelpStore,
     LayoutStore,
-    SnippetStore,
     LogEntry,
     LogStore,
     OverlayStore,
     PreferenceKeys,
     PreferenceStore,
-    RasterRenderType,
     RegionFileType,
     RegionStore,
+    SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    CURSOR_REGION_ID
+    WidgetsStore
 } from ".";
-import {distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
+import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FileId, FrameView, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType} from "models";
+import {FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
-import {getImageCanvas, ImageViewLayer} from "components";
+import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import GitCommit from "../static/gitInfo";
 
 interface FrameOption extends IOptionProps {
     hasZAxis: boolean;
+}
+
+interface ViewUpdate {
+    tiles: TileCoordinate[];
+    fileId: number;
+    channel: number;
+    stokes: number;
+    focusPoint: Point2D;
+}
+
+interface ChannelUpdate {
+    frame: FrameStore;
+    channel: number;
+    stokes: number;
 }
 
 export class AppStore {
@@ -123,16 +136,14 @@ export class AppStore {
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
+        const requiresAutoFit = this.preferenceStore.zoomMode === Zoom.FIT && this.overlayStore.fullViewWidth <= 1 && this.overlayStore.fullViewHeight <= 1;
         this.overlayStore.setViewDimension(w, h);
-    };
 
-    // Image toolbar
-    @observable imageToolbarVisible: boolean;
-    @action showImageToolbar = () => {
-        this.imageToolbarVisible = true;
-    };
-    @action hideImageToolbar = () => {
-        this.imageToolbarVisible = false;
+        if (requiresAutoFit) {
+            for (const frame of this.frames) {
+                frame.fitZoom();
+            }
+        }
     };
 
     // Auth
@@ -161,6 +172,19 @@ export class AppStore {
             console.log(`Connecting to default URL: ${wsURL}`);
         }
 
+        try {
+            await AST.onReady;
+            this.setAstReady(true);
+            const ack = await this.backendService.connect(wsURL);
+            console.log(`Connected with session ID ${ack.sessionId}`);
+            this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    private loadDefaultFiles = async () => {
+        const url = new URL(window.location.href);
         const folderSearchParam = url.searchParams.get("folder");
 
         let fileList: string[];
@@ -176,23 +200,32 @@ export class AppStore {
         }
 
         try {
-            await AST.onReady;
-            this.astReady = true;
-            const ack = await this.backendService.connect(wsURL);
-            console.log(`Connected with session ID ${ack.sessionId}`);
-            this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
             if (fileList?.length) {
+                const frames: FrameStore[] = [];
                 for (const file of fileList) {
-                    await this.loadFile(folderSearchParam, file, "");
+                    frames.push(await this.loadFile(folderSearchParam, file, ""));
                 }
-            }
-            if (this.preferenceStore.autoLaunch && !fileList?.length) {
+
+                // Auto-fit loaded frames after panel configuration has been updated.
+                if (this.preferenceStore.zoomMode === Zoom.FIT) {
+                    this.autoFitImages(frames);
+                }
+            } else if (this.preferenceStore.autoLaunch) {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         } catch (err) {
             console.error(err);
         }
     };
+
+    @action autoFitImages(frames: FrameStore[]) {
+        // Frames that have a spatial reference are not auto-fitted.
+        for (const frame of frames) {
+            if (frame && !frame.spatialReference) {
+                frame.fitZoom();
+            }
+        }
+    }
 
     @action handleThemeChange = (darkMode: boolean) => {
         this.systemTheme = darkMode ? "dark" : "light";
@@ -341,25 +374,25 @@ export class AppStore {
         return this.frames.map(frame => frame.requiredStokes);
     }
 
-    @computed get spatialGroup(): FrameStore[] {
+    private spatialGroup(baseFrame: FrameStore): FrameStore[] {
         if (!this.frames || !this.frames.length || !this.activeFrame) {
             return [];
         }
 
-        const activeGroupFrames = [];
+        const baseGroupFrames = [];
         for (const frame of this.frames) {
             const groupMember =
-                frame === this.activeFrame || // Frame is active
-                frame === this.activeFrame.spatialReference || // Frame is the active frame's reference
-                frame.spatialReference === this.activeFrame || // Frame is a secondary image of the active frame
-                (frame.spatialReference && frame.spatialReference === this.activeFrame.spatialReference); // Frame has the same reference as the active frame
+                frame === baseFrame || // Frame is the base
+                frame === baseFrame.spatialReference || // Frame is the active frame's reference
+                frame.spatialReference === baseFrame || // Frame is a secondary image of the active frame
+                (frame.spatialReference && frame.spatialReference === baseFrame.spatialReference); // Frame has the same reference as the base frame
 
             if (groupMember) {
-                activeGroupFrames.push(frame);
+                baseGroupFrames.push(frame);
             }
         }
 
-        return activeGroupFrames;
+        return baseGroupFrames;
     }
 
     @computed get spatialAndSpectalMatchedFileIds(): number[] {
@@ -382,8 +415,14 @@ export class AppStore {
         return matchedIds;
     }
 
-    @computed get contourFrames(): FrameStore[] {
-        return this.spatialGroup.filter(f => f.contourConfig.enabled && f.contourConfig.visible);
+    // Calculates which frames have a contour visible as a function of each visible frame
+    @computed get contourFrames(): Map<FrameStore, FrameStore[]> {
+        const frameMap = new Map<FrameStore, FrameStore[]>();
+        for (const frame of this.visibleFrames) {
+            const group = this.spatialGroup(frame).filter(f => f.contourConfig.enabled && f.contourConfig.visible);
+            frameMap.set(frame, group);
+        }
+        return frameMap;
     }
 
     @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string): boolean => {
@@ -498,6 +537,8 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
+            // Ensure loading finishes before next file is added
+            await this.delay(10);
             return this.getFrame(ack.fileId);
         } catch (err) {
             this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -646,6 +687,7 @@ export class AppStore {
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
+            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spatialProfileWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId);
 
@@ -732,6 +774,7 @@ export class AppStore {
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets);
+            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets);
         }
@@ -994,6 +1037,10 @@ export class AppStore {
         }
     };
 
+    @action setAstReady = (val: boolean) => {
+        this.astReady = val;
+    };
+
     @action setDarkTheme = () => {
         this.setTheme(Theme.DARK);
     };
@@ -1034,6 +1081,10 @@ export class AppStore {
         this.cursorFrozen = !this.cursorFrozen;
     };
 
+    @action setCursorFrozen = (val: boolean) => {
+        this.cursorFrozen = val;
+    };
+
     @action updateActiveLayer = (layer: ImageViewLayer) => {
         this.activeLayer = layer;
     };
@@ -1066,12 +1117,12 @@ export class AppStore {
     private histogramRequirements: Map<number, Map<number, CARTA.SetHistogramRequirements>>;
     private pendingChannelHistograms: Map<string, CARTA.IRegionHistogramData>;
 
-    public updateChannels = (updates: {frame: FrameStore; channel: number; stokes: number}[]) => {
+    @action updateChannels = (updates: ChannelUpdate[]) => {
         if (!updates || !updates.length) {
             return;
         }
 
-        updates.forEach(update => {
+        for (const update of updates) {
             const frame = update.frame;
             if (!frame) {
                 return;
@@ -1080,7 +1131,7 @@ export class AppStore {
             frame.channel = update.channel;
             frame.stokes = update.stokes;
 
-            if (frame === this.activeFrame) {
+            if (this.visibleFrames.includes(frame)) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = frame.requiredFrameView;
 
@@ -1101,7 +1152,13 @@ export class AppStore {
             } else {
                 this.tileService.updateInactiveFileChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
-        });
+        }
+    };
+
+    private updateViews = (updates: ViewUpdate[]) => {
+        for (const update of updates) {
+            this.updateView(update.tiles, update.fileId, update.channel, update.stokes, update.focusPoint);
+        }
     };
 
     private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
@@ -1119,20 +1176,24 @@ export class AppStore {
 
     private initCarta = async (isAstReady: boolean, isZfpReady: boolean, isCartaComputeReady: boolean, isApiServiceAuthenticated: boolean) => {
         if (isAstReady && isZfpReady && isCartaComputeReady && isApiServiceAuthenticated) {
-            await this.connectToServer();
-            this.preferenceStore.fetchPreferences().then(() => {
-                this.layoutStore.fetchLayouts().then(() => {
-                    this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-                    if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
-                        AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
-                        this.layoutStore.applyLayout(PresetLayout.DEFAULT);
-                        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
-                    }
-                    this.cursorFrozen = this.preferenceStore.isCursorFrozen;
-                });
-                this.snippetStore.fetchSnippets();
+            try {
+                await this.connectToServer();
+                await this.preferenceStore.fetchPreferences();
+                await this.layoutStore.fetchLayouts();
+                await this.snippetStore.fetchSnippets();
+
+                this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+                if (!this.layoutStore.applyLayout(this.preferenceStore.layout)) {
+                    AlertStore.Instance.showAlert(`Applying preference layout "${this.preferenceStore.layout}" failed! Resetting preference layout to default.`);
+                    this.layoutStore.applyLayout(PresetLayout.DEFAULT);
+                    this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                }
+                await this.loadDefaultFiles();
+                this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
-            });
+            } catch (err) {
+                console.error(err);
+            }
         }
     };
 
@@ -1179,7 +1240,7 @@ export class AppStore {
 
         AST.onReady.then(
             action(() => {
-                this.astReady = true;
+                this.setAstReady(true);
                 this.logStore.addInfo("AST library loaded", ["ast"]);
             })
         );
@@ -1243,39 +1304,44 @@ export class AppStore {
         });
 
         // Throttled functions for use in autoruns
-        const throttledSetView = _.throttle(this.updateView, AppStore.ImageThrottleTime);
+        const throttledSetViews = _.throttle(this.updateViews, AppStore.ImageThrottleTime);
         const throttledSetChannels = _.throttle(this.updateChannels, AppStore.ImageChannelThrottleTime);
         const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
         const throttledSetCursor = _.throttle(this.setCursor, AppStore.CursorThrottleTime);
         // Low-bandwidth mode
         const throttledSetCursorLowBandwidth = _.throttle(this.setCursor, AppStore.CursorThrottleTime * 2);
 
-        // Update frame view
+        // Update frame view for each visible frame
         autorun(() => {
-            if (this.activeFrame && (this.preferenceStore.streamContoursWhileZooming || !this.activeFrame.zooming)) {
-                // Trigger update raster view/title when switching layout
-                this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+            // Ignore view changes when zooming if preference not set
+            if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.streamContoursWhileZooming)) {
+                // Group all view updates for visible images into one throttled call
+                const viewUpdates: ViewUpdate[] = [];
+                for (const frame of this.visibleFrames) {
+                    const reqView = frame.requiredFrameView;
+                    let croppedReq: FrameView = {
+                        xMin: Math.max(0, reqView.xMin),
+                        xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                        yMin: Math.max(0, reqView.yMin),
+                        yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                        mip: reqView.mip
+                    };
 
-                const reqView = this.activeFrame.requiredFrameView;
-                let croppedReq: FrameView = {
-                    xMin: Math.max(0, reqView.xMin),
-                    xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
-                    yMin: Math.max(0, reqView.yMin),
-                    yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
-                    mip: reqView.mip
-                };
+                    const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+                    const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+                    const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+                    const tileSizeFullRes = reqView.mip * 256;
+                    const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+                    if (tiles.length) {
+                        viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords});
+                    }
+                }
+                throttledSetViews(viewUpdates);
 
-                const imageSize: Point2D = {x: this.activeFrame.frameInfo.fileInfoExtended.width, y: this.activeFrame.frameInfo.fileInfoExtended.height};
-                const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-                const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-                // TODO: dynamic tile size
-                const tileSizeFullRes = reqView.mip * 256;
-                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                throttledSetView(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords);
-            }
-
-            if (!this.activeFrame) {
-                this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                // TODO: this should be separate
+                if (!this.activeFrame) {
+                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+                }
             }
         });
 
@@ -1283,8 +1349,8 @@ export class AppStore {
         // Update channels when manually changed
         autorun(() => {
             if (this.activeFrame) {
-                const updates = [];
-                // Calculate if new data is required
+                const updates: ChannelUpdate[] = [];
+                // Calculate if new data is required for the active channel
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
                 if (!this.animatorStore.animationActive && updateRequiredChannels) {
@@ -1475,11 +1541,6 @@ export class AppStore {
             }
             this.pendingChannelHistograms.delete(key);
         }
-
-        // Switch to tiled rendering. TODO: ensure that the correct frame gets set to tiled
-        if (this.activeFrame) {
-            this.activeFrame.renderType = RasterRenderType.TILED;
-        }
     };
 
     @action handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {
@@ -1576,12 +1637,7 @@ export class AppStore {
 
     // endregion
 
-    onReconnectAlertClosed = async (confirmed: boolean) => {
-        if (!confirmed) {
-            // TODO: How do we handle the situation where the user does not want to resume?
-            return;
-        }
-
+    onReconnectAlertClosed = async () => {
         try {
             const ack = await this.backendService.connect(this.backendService.serverUrl);
             if (ack.sessionType === CARTA.SessionType.RESUMED) {
@@ -1690,11 +1746,6 @@ export class AppStore {
         // Ignore changes when animating
         if (this.animatorStore.serverAnimationActive) {
             return;
-        }
-
-        // Disable rendering of old frame
-        if (this.activeFrame && this.activeFrame !== frame) {
-            this.activeFrame.renderType = RasterRenderType.NONE;
         }
 
         this.changeActiveFrame(frame);
@@ -1963,14 +2014,79 @@ export class AppStore {
         this.setSpectralMatchingEnabled(this.activeFrame, spectral);
     };
 
+    @computed get numImagePages() {
+        if (this.numImageColumns <= 0 || this.numImageRows <= 0 || !this.frames) {
+            return 0;
+        }
+
+        const imagesPerPage = this.numImageColumns * this.numImageRows;
+        return Math.ceil(this.frames.length / imagesPerPage);
+    }
+
+    @computed get currentImagePage() {
+        if (!this.frames?.length || !this.activeFrame) {
+            return 0;
+        }
+
+        const imagesPerPage = this.numImageColumns * this.numImageRows;
+        const index = this.frames.indexOf(this.activeFrame);
+        return Math.floor(index / imagesPerPage);
+    }
+
+    @computed get visibleFrames(): FrameStore[] {
+        if (!this.frames?.length) {
+            return [];
+        }
+
+        const pageIndex = clamp(this.currentImagePage, 0, this.numImagePages);
+        const imagesPerPage = this.numImageColumns * this.numImageRows;
+        const firstFrameIndex = pageIndex * imagesPerPage;
+        const indexUpperBound = Math.min(firstFrameIndex + imagesPerPage, this.frames.length);
+        const pageFrames = [];
+        for (let i = firstFrameIndex; i < indexUpperBound; i++) {
+            pageFrames.push(this.frames[i]);
+        }
+        return pageFrames;
+    }
+
+    @computed get numImageColumns() {
+        switch (this.preferenceStore.imagePanelMode) {
+            case ImagePanelMode.None:
+                return 1;
+            case ImagePanelMode.Fixed:
+                return Math.max(1, this.preferenceStore.imagePanelColumns);
+            default:
+                const numImages = this.frames?.length ?? 0;
+                return clamp(numImages, 1, this.preferenceStore.imagePanelColumns);
+        }
+    }
+
+    @computed get numImageRows() {
+        switch (this.preferenceStore.imagePanelMode) {
+            case ImagePanelMode.None:
+                return 1;
+            case ImagePanelMode.Fixed:
+                return Math.max(1, this.preferenceStore.imagePanelRows);
+            default:
+                const numImages = this.frames?.length ?? 0;
+                return clamp(Math.ceil(numImages / this.preferenceStore.imagePanelColumns), 1, this.preferenceStore.imagePanelRows);
+        }
+    }
+
     exportImage = (): boolean => {
         if (this.activeFrame) {
+            const index = this.visibleFrames.indexOf(this.activeFrame);
+            if (index === -1) {
+                return false;
+            }
             const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
-            const composedCanvas = getImageCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 composedCanvas.toBlob(blob => {
                     const link = document.createElement("a") as HTMLAnchorElement;
-                    link.download = `${this.activeFrame.filename}-image-${getTimestamp()}.png`;
+                    const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
+                    // Trim filename to 230 characters in total to prevent browser errors
+                    link.download = `${joinedNames}-image-${getTimestamp()}`.substring(0, 225) + ".png";
                     link.href = URL.createObjectURL(blob);
                     link.dispatchEvent(new MouseEvent("click"));
                 }, "image/png");
@@ -1982,7 +2098,7 @@ export class AppStore {
 
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
-            const composedCanvas = getImageCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
             if (composedCanvas) {
                 return composedCanvas.toDataURL();
             }
@@ -2103,7 +2219,7 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spatialProfileWidgets);
+        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.widgetsStore.spatialProfileWidgets);
         const diffList = SpatialProfileWidgetStore.DiffSpatialRequirements(this.spatialRequirements, updatedRequirements);
         this.spatialRequirements = updatedRequirements;
 

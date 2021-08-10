@@ -3,7 +3,7 @@ import {Icon} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import "./CustomIcons.scss";
 
-export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments" | "distanceMeasuring" | "cursor";
+export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments" | "distanceMeasuring" | "cursor" | "line" | "polyline";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number}> {
     static readonly SIZE_STANDARD = 16;
@@ -160,6 +160,22 @@ const cursorSvg = (
     />
 );
 
+const lineSvg = (
+    <path
+        transform="translate(2.5, -3.5) rotate(45, 8, 8) scale(1.0, 1.6) rotate(-15, 8, 8)"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M10,2C9.54,2,9.15,2.31,9.04,2.73l-2.99,9.96C6.02,12.79,6,12.89,6,13 c0,0.55,0.45,1,1,1c0.46,0,0.85-0.31,0.96-0.73l2.99-9.96C10.98,3.21,11,3.11,11,3C11,2.45,10.55,2,10,2z"
+    />
+);
+
+const polylineSvg = (
+    <path
+        transform="scale(0.75) translate(-1.5, -1) rotate(-5, 9, 9)"
+        d="M23,8c0,1.1-0.9,2-2,2c-0.18,0-0.35-0.02-0.51-0.07l-3.56,3.55C16.98,13.64,17,13.82,17,14c0,1.1-0.9,2-2,2s-2-0.9-2-2 c0-0.18,0.02-0.36,0.07-0.52l-2.55-2.55C10.36,10.98,10.18,11,10,11s-0.36-0.02-0.52-0.07l-4.55,4.56C4.98,15.65,5,15.82,5,16 c0,1.1-0.9,2-2,2s-2-0.9-2-2s0.9-2,2-2c0.18,0,0.35,0.02,0.51,0.07l4.56-4.55C8.02,9.36,8,9.18,8,9c0-1.1,0.9-2,2-2s2,0.9,2,2 c0,0.18-0.02,0.36-0.07,0.52l2.55,2.55C14.64,12.02,14.82,12,15,12s0.36,0.02,0.52,0.07l3.55-3.56C19.02,8.35,19,8.18,19,8 c0-1.1,0.9-2,2-2S23,6.9,23,8z"
+    />
+);
+
 const icons = {
     contour: contourSvg,
     center: centerSvg,
@@ -171,5 +187,7 @@ const icons = {
     smoothing: profileSmoothingSvg,
     moments: momentGeneratorSvg,
     distanceMeasuring: distanceMeasuringSvg,
-    cursor: cursorSvg
+    cursor: cursorSvg,
+    line: lineSvg,
+    polyline: polylineSvg
 };

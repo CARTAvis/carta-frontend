@@ -25,6 +25,7 @@ export interface LineSegmentRegionComponentProps {
 const ANCHOR_WIDTH = 7;
 const NEW_ANCHOR_MAX_DISTANCE = 16;
 const INVALID_POLYGON_COLOR = Colors.ROSE4;
+const DOUBLE_CLICK_THRESHOLD = 300;
 
 @observer
 export class LineSegmentRegionComponent extends React.Component<LineSegmentRegionComponentProps> {
@@ -32,6 +33,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     @observable hoverIntersection: Point2D;
 
     private previousCursorStyle: string;
+    private addControlPointTimer;
 
     constructor(props: any) {
         super(props);
@@ -44,6 +46,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     };
 
     private handleDoubleClick = () => {
+        clearTimeout(this.addControlPointTimer);
         if (this.props.onDoubleClick) {
             this.props.onDoubleClick(this.props.region);
         }
@@ -65,8 +68,11 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 const currentControlPoints = region.controlPoints.slice(0);
                 currentControlPoints.splice(this.hoverIndex + 1, 0, this.hoverIntersection);
                 // Skip SET_REGION update, since the new control point lies on the line between two existing points
-                region.setControlPoints(currentControlPoints, true, false);
-                this.hoverIntersection = null;
+                clearTimeout(this.addControlPointTimer);
+                this.addControlPointTimer = setTimeout(() => {
+                    region.setControlPoints(currentControlPoints, true, false);
+                    this.hoverIntersection = null;
+                }, DOUBLE_CLICK_THRESHOLD);
             }
         }
     };
@@ -170,7 +176,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             let closestIndex = -1;
             let closestPoint: Point2D = null;
             // Find closest point on each line segment, select the closest overall that actually lies on the line segment
-            for (let i = 0; i < region.controlPoints.length; i++) {
+            for (let i = 0; i < (region.regionType === CARTA.RegionType.POLYLINE ? region.controlPoints.length - 1 : region.controlPoints.length); i++) {
                 const pointCheck = closestPointOnLine(positionImageSpace, region.controlPoints[i], region.controlPoints[(i + 1) % region.controlPoints.length]);
                 if (pointCheck.bounded && pointCheck.distance < minDistance) {
                     minDistance = pointCheck.distance;

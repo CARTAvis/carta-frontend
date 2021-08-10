@@ -84,6 +84,7 @@ export class RegionDialogComponent extends React.Component {
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.POLYGON:
+                case CARTA.RegionType.POLYLINE:
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme} />

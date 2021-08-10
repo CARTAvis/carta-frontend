@@ -72,15 +72,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     onStokesChanged = (val: number) => {
         const frame = AppStore.Instance.activeFrame;
-        if (frame) {
-            if (val < 0) {
-                val += frame.frameInfo.fileInfoExtended.stokes;
-            }
-            if (val >= frame.frameInfo.fileInfoExtended.stokes) {
-                val = 0;
-            }
-            frame.setChannels(frame.requiredChannel, val, true);
-        }
+        frame?.setChannels(frame.requiredChannel, val, true);
     };
 
     onFrameChanged = (val: number) => {

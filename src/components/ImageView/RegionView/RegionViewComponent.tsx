@@ -110,7 +110,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const frame = this.props.frame;
         const regionType = frame.regionSet.newRegionType;
         const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
-
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 this.creatingRegion = frame.regionSet.addPointRegion(cursorPosImageSpace, false);
@@ -131,6 +130,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.LINE:
                 this.creatingRegion = frame.regionSet.addLineRegion([cursorPosImageSpace, cursorPosImageSpace], true);
                 this.regionStartPoint = cursorPosImageSpace;
+                break;
+            case CARTA.RegionType.POLYLINE:
+                this.creatingRegion = frame.regionSet.addPolylineRegion([cursorPosImageSpace], true);
+                this.polygonRegionCreating(mouseEvent);
                 break;
             default:
                 return;
@@ -156,19 +159,32 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 break;
             case CARTA.RegionType.POINT:
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 break;
             default:
                 return;
         }
 
         // Handle region completion
-        if (this.creatingRegion.isValid && (regionType !== CARTA.RegionType.POLYGON || this.creatingRegion.controlPoints.length > 2) && (regionType !== CARTA.RegionType.LINE || this.creatingRegion.controlPoints.length === 2)) {
+        if (
+            this.creatingRegion.isValid &&
+            ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE) || this.creatingRegion.controlPoints.length > 2) &&
+            (regionType !== CARTA.RegionType.LINE || this.creatingRegion.controlPoints.length === 2)
+        ) {
             this.creatingRegion.endCreating();
             frame.regionSet.selectRegion(this.creatingRegion);
         } else {
             frame.regionSet.deleteRegion(this.creatingRegion);
         }
-        this.creatingRegion = null;
+
+        if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE) {
+            // avoid mouse up event triggering region creation start
+            setTimeout(() => {
+                this.creatingRegion = null;
+            }, 1);
+        } else {
+            this.creatingRegion = null;
+        }
 
         // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
         setTimeout(() => {
@@ -448,6 +464,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 this.regionCreationEnd();
                 break;
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 if (!this.creatingRegion) {
                     this.regionCreationStart(konvaEvent.evt);
                 } else {
@@ -474,6 +491,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     this.RegionCreating(mouseEvent);
                     break;
                 case CARTA.RegionType.POLYGON:
+                case CARTA.RegionType.POLYLINE:
                     this.polygonRegionCreating(mouseEvent);
                     break;
                 default:
@@ -500,7 +518,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
-        if (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON) {
+        if (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) {
             this.regionCreationEnd();
         }
     };
@@ -530,7 +548,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 .filter(r => r.isValid && r.regionId !== 0)
                 .sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1))
                 .map(r => {
-                    if (r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE) {
+                    if (r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE) {
                         return (
                             <LineSegmentRegionComponent
                                 key={r.regionId}
@@ -606,7 +624,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         let creatingLine = null;
-        if (this.currentCursorPos && this.creatingRegion?.regionType === CARTA.RegionType.POLYGON && this.creatingRegion.isValid) {
+        if (this.currentCursorPos && (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) && this.creatingRegion.isValid) {
             let firstControlPoint = this.creatingRegion.controlPoints[0];
             let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
 
@@ -617,10 +635,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const lineStart = this.getCursorCanvasPos(firstControlPoint.x, firstControlPoint.y);
             const lineEnd = this.getCursorCanvasPos(lastControlPoint.x, lastControlPoint.y);
             let points: number[];
-            if (this.creatingRegion.controlPoints.length > 1) {
+            if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE) {
                 points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y, lineEnd.x, lineEnd.y];
             } else {
-                points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y];
+                points = [lineEnd.x, lineEnd.y, this.currentCursorPos.x, this.currentCursorPos.y];
             }
             creatingLine = <Line points={points} dash={[5]} stroke={this.creatingRegion.color} strokeWidth={this.creatingRegion.lineWidth} opacity={0.5} lineJoin={"round"} listening={false} perfectDrawEnabled={false} />;
         }

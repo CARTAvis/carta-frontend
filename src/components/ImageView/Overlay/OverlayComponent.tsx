@@ -96,6 +96,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString += `, Tol=${tolVal}`;
             }
 
+            if (!this.props.frame.validWcs) {
+                //Remove system and format entries
+                currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
+            }
+
             plot(currentStyleString);
 
             if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
@@ -154,6 +159,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (this.props.docked) {
             className += " docked";
         }
-        return <canvas className={className} id="overlay-canvas" key={styleString} ref={ref => (this.canvas = ref)} />;
+        return <canvas className={className} style={{width: w, height: h}} id="overlay-canvas" key={styleString} ref={ref => (this.canvas = ref)} />;
     }
 }
