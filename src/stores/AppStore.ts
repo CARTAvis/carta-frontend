@@ -112,6 +112,7 @@ export class AppStore {
     // ImageViewer
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
+    @observable toolbarExpanded: boolean;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
@@ -1085,6 +1086,14 @@ export class AppStore {
         this.cursorFrozen = val;
     };
 
+    @action toggleToolbarExpanded = () => {
+        this.toolbarExpanded = !this.toolbarExpanded;
+    };
+
+    @action setToolbarExpanded = (val: boolean) => {
+        this.toolbarExpanded = val;
+    };
+
     @action updateActiveLayer = (layer: ImageViewLayer) => {
         this.activeLayer = layer;
     };
@@ -1237,6 +1246,7 @@ export class AppStore {
         this.syncContourToFrame = true;
         this.initRequirements();
         this.activeLayer = ImageViewLayer.RegionMoving;
+        this.toolbarExpanded = true;
 
         AST.onReady.then(
             action(() => {
