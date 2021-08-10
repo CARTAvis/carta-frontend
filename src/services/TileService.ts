@@ -431,7 +431,7 @@ export class TileService {
         const compressedArray = tile.imageData;
         const workerIndex = this.compressionRequestCounter % this.workers.length;
         const nanEncodings32 = new Int32Array(tile.nanEncodings.slice(0).buffer);
-        let compressedView = new Uint8Array(compressedArray.byteLength > tile.width * tile.height * 4 ? compressedArray.byteLength : tile.width * tile.height * 4);
+        let compressedView = new Uint8Array(compressedArray.byteLength);
         compressedView.set(compressedArray);
 
         const key = `${fileId}_${stokes}_${channel}`;
