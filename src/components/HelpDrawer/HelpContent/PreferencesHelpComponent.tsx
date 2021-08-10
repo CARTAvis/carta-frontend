@@ -27,6 +27,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>WCS matching on append: trigger WCS matching automatically for newly appended images</li>
                     <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
                     <li>Transparent image background: when this is enabled, the exported png image will have a transparent background. When it is disabled (default), a white or a black background is added depending on the GUI theme.</li>
+                    <li>Save last used directory: when this is enabled, the file browser will start in the same folder the next session.</li>
                 </ul>
                 <h3 id="render-configuration">Render configuration</h3>
                 <p>This section provides customization of how a raster image is rendered by default.</p>

@@ -21,6 +21,8 @@ export enum PreferenceKeys {
     GLOBAL_AUTO_WCS_MATCHING = "autoWCSMatching",
     GLOBAL_TRANSPARENT_IMAGE_BACKGROUND = "transparentImageBackground",
     GLOBAL_CODE_SNIPPETS_ENABLED = "codeSnippetsEnabled",
+    GLOBAL_KEEP_LAST_USED_FOLDER = "keepLastUsedFolder",
+    GLOBAL_SAVED_LAST_FOLDER = "lastUsedFolder",
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
@@ -109,7 +111,9 @@ const DEFAULTS = {
         spectralMatchingType: SpectralType.VRAD,
         autoWCSMatching: WCSMatchingType.NONE,
         transparentImageBackground: false,
-        codeSnippetsEnabled: false
+        codeSnippetsEnabled: false,
+        keepLastUsedFolder: false,
+        lastUsedFolder: ""
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
@@ -243,6 +247,14 @@ export class PreferenceStore {
 
     @computed get codeSnippetsEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
+    }
+
+    @computed get keepLastUsedFolder(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER) ?? DEFAULTS.GLOBAL.keepLastUsedFolder;
+    }
+
+    @computed get lastUsedFolder(): string {
+        return this.preferences.get(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER) ?? DEFAULTS.GLOBAL.lastUsedFolder;
     }
 
     // getters for render config
@@ -569,7 +581,9 @@ export class PreferenceStore {
             PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE,
             PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
             PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
-            PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED
+            PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED,
+            PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER,
+            PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER
         ]);
     };
 
