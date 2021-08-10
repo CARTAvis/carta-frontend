@@ -6,6 +6,7 @@ import {ItemRenderer, Select} from "@blueprintjs/select";
 import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
 import {AutoColorPickerComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
+import {ImagePanelMode} from "models";
 import {SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
 
@@ -142,7 +143,36 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const globalPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Color">
+                <FormGroup inline={true} label="Multi-panel mode">
+                    <HTMLSelect value={preferences.imagePanelMode} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
+                        <option value={ImagePanelMode.None}>Single panel only</option>
+                        <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
+                        <option value={ImagePanelMode.Fixed}>Fixed grid size</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={preferences.imagePanelMode === ImagePanelMode.None}>
+                    <SafeNumericInput
+                        placeholder="Columns"
+                        min={1}
+                        value={preferences.imagePanelColumns}
+                        disabled={preferences.imagePanelMode === ImagePanelMode.None}
+                        stepSize={1}
+                        minorStepSize={null}
+                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={preferences.imagePanelMode === ImagePanelMode.None}>
+                    <SafeNumericInput
+                        placeholder="Rows"
+                        min={1}
+                        disabled={preferences.imagePanelMode === ImagePanelMode.None}
+                        value={preferences.imagePanelRows}
+                        stepSize={1}
+                        minorStepSize={null}
+                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_ROWS, value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Overlay color">
                     <AutoColorPickerComponent color={global.color} presetColors={SWATCH_COLORS} setColor={global.setColor} disableAlpha={true} />
                 </FormGroup>
                 <FormGroup inline={true} label="Tolerance" labelInfo="(%)">

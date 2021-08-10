@@ -44,8 +44,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         }
 
         const catalogStore = appStore.catalogStore;
-        // TODO: Render catalogs for current image, not active image
-        const catalogFileIds = catalogStore.activeCatalogFiles;
+        const catalogFileIds = catalogStore.visibleCatalogFiles.get(baseFrame);
         catalogStore.catalogGLData.forEach((catalog, fileId) => {
             const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
             const numVertices = catalog.x.length;
@@ -168,7 +167,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         let rotationAngle = 0.0;
         let scaleAdjustment = 1.0;
         const destinationFrame = this.props.frame;
-        catalogStore.activeCatalogFiles?.forEach(fileId => {
+        catalogStore.visibleCatalogFiles.get(destinationFrame)?.forEach(fileId => {
             const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
             const isActive = frame === destinationFrame;
             const catalog = catalogStore.catalogGLData.get(fileId);
@@ -280,7 +279,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 0);
                     this.gl.uniform1i(shaderUniforms.ControlMapTexture, 0);
                 } else {
-                    const controlMap = frame.getCatalogControlMap(appStore.activeFrame);
+                    const controlMap = frame.getCatalogControlMap(destinationFrame);
                     if (controlMap) {
                         controlMap.updateCatalogBoundary();
                         this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 1);

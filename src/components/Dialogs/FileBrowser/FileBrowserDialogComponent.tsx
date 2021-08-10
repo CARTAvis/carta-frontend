@@ -9,8 +9,9 @@ import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoCompo
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SimpleTableComponentProps} from "components/Shared";
-import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, FrameStore, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import "./FileBrowserDialogComponent.scss";
+import {Zoom} from "../../../models";
 
 @observer
 export class FileBrowserDialogComponent extends React.Component {
@@ -32,14 +33,23 @@ export class FileBrowserDialogComponent extends React.Component {
     };
 
     private loadSelectedFiles = async () => {
-        const fileBrowserStore = FileBrowserStore.Instance;
+        const appStore = AppStore.Instance;
+        const fileBrowserStore = appStore.fileBrowserStore;
         if (fileBrowserStore.selectedFiles.length > 1) {
+            const frames: FrameStore[] = [];
             for (let i = 0; i < fileBrowserStore.selectedFiles.length; i++) {
                 try {
-                    await this.loadFile(fileBrowserStore.selectedFiles[i], i > 0);
+                    const frame = await this.loadFile(fileBrowserStore.selectedFiles[i], i > 0);
+                    if (frame) {
+                        frames.push(frame);
+                    }
                 } catch (err) {
                     console.log(err);
                 }
+            }
+            // Auto-fit images after all have been loaded to account for multi-panel changes
+            if (appStore.preferenceStore.zoomMode === Zoom.FIT) {
+                appStore.autoFitImages(frames);
             }
         } else {
             await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
@@ -49,12 +59,13 @@ export class FileBrowserDialogComponent extends React.Component {
     private loadFile = async (file: ISelectedFile, forceAppend: boolean = false) => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
+        let frame: FrameStore;
 
         // Ignore load
         switch (fileBrowserStore.browserMode) {
             case BrowserMode.RegionExport:
             case BrowserMode.SaveFile:
-                return;
+                return undefined;
             default:
                 break;
         }
@@ -62,9 +73,9 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                await appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
+                frame = await appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             } else {
-                await appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
+                frame = await appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
             await appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, file.fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
@@ -73,6 +84,7 @@ export class FileBrowserDialogComponent extends React.Component {
         }
 
         fileBrowserStore.saveStartingDirectory();
+        return frame;
     };
 
     /// Prepare parameters for send saveFile

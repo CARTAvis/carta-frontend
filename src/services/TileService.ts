@@ -81,6 +81,12 @@ export class TileService {
         return this.workersReady && this.workersReady.every(v => v);
     }
 
+    @action setWorkerReady(index: number) {
+        if (index >= 0 && index < this.workersReady.length) {
+            this.workersReady[index] = true;
+        }
+    }
+
     public setAnimationEnabled = (val: boolean) => {
         this.animationEnabled = val;
     };
@@ -128,8 +134,7 @@ export class TileService {
             this.workers[i] = new ZFPWorker();
             this.workers[i].onmessage = (event: MessageEvent) => {
                 if (event.data[0] === "ready") {
-                    this.workersReady[i] = true;
-                    console.log(`Tile Worker ${i} ready`);
+                    this.setWorkerReady(i);
                 } else if (event.data[0] === "decompress") {
                     const buffer = event.data[1];
                     const eventArgs = event.data[2] as TileMessageArgs;
@@ -192,8 +197,8 @@ export class TileService {
             }
             const encodedCoordinate = tile.encode();
             const gpuCacheCoordinate = TileCoordinate.AddFileId(encodedCoordinate, fileId);
-            const pendingRequestsMap = this.pendingRequests.get(key);
-            const tileCached = !channelsChanged && this.cachedTiles.has(gpuCacheCoordinate);
+            const pendingRequestsMap = this.pendingRequests?.get(key);
+            const tileCached = !channelsChanged && this.cachedTiles?.has(gpuCacheCoordinate);
             if (!tileCached && !(pendingRequestsMap && pendingRequestsMap.has(encodedCoordinate))) {
                 const compressedTile = !channelsChanged && this.getCompressedCache(fileId).get(encodedCoordinate);
                 const pendingCompressionMap = this.pendingDecompressions.get(key);
@@ -275,7 +280,7 @@ export class TileService {
     }
 
     clearRequestQueue(fileId?: number) {
-        if (fileId === undefined) {
+        if (fileId !== undefined) {
             // Clear all requests with the given file ID
             const fileKey = `${fileId}`;
             this.pendingRequests.forEach((value, key) => {
@@ -416,6 +421,8 @@ export class TileService {
                     this.getCompressedCache(tileMessage.fileId).set(encodedCoordinate, {tile, compressionQuality: tileMessage.compressionQuality});
                     this.asyncDecompressTile(tileMessage.fileId, tileMessage.channel, tileMessage.stokes, tile, tileMessage.compressionQuality, encodedCoordinate);
                 }
+            } else {
+                console.warn(`No pending request for tile (${tile.x}, ${tile.y}, ${tile.layer}) and key=${key}`);
             }
         }
     };
