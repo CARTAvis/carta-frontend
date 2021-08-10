@@ -24,7 +24,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return {
             id: "spectral-profiler",
             type: "spectral-profiler",
-            minWidth: 870,
+            minWidth: 880,
             minHeight: 300,
             defaultWidth: 870,
             defaultHeight: 300,
@@ -164,7 +164,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             } else {
                 floatXStr = toFixed(nearest.point.x, 3);
             }
-            const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr} ${cursorXUnit}`;
+            const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
             cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
         }
         return `${label}: ${cursorInfoString ?? "---"}`;

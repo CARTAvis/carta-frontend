@@ -55,7 +55,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         }
     };
 
-    private getfilterSyntax = (dataType: CARTA.ColumnType) => {
+    private getFilterSyntax = (dataType: CARTA.ColumnType) => {
         const className = "column-popover-content";
         switch (dataType) {
             case CARTA.ColumnType.String:
@@ -95,8 +95,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     };
 
     private renderCheckboxColumnHeaderCell = (columnIndex: number, columnHeader: CARTA.CatalogHeader, columnData: any, selectionType: RowSelectionType) => {
-        const controlheader = this.props.filter?.get(columnHeader.name);
-        const filterSyntax = this.getfilterSyntax(columnHeader.dataType);
+        const controlHeader = this.props.filter?.get(columnHeader.name);
+        const filterSyntax = this.getFilterSyntax(columnHeader.dataType);
         return (
             <ColumnHeaderCell>
                 <ColumnHeaderCell>
@@ -117,13 +117,13 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                         }}
                     />
                 </ColumnHeaderCell>
-                <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
+                <ColumnHeaderCell isActive={controlHeader?.filter !== ""}>
                     <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
                             small={true}
                             placeholder="Click to filter"
-                            value={controlheader?.filter ?? ""}
+                            value={controlHeader?.filter ?? ""}
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, columnHeader.name)}
                         />
                     </Tooltip2>
@@ -155,7 +155,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderDataColumnWithFilter = (columnHeader: CARTA.CatalogHeader, columnData: any) => {
+    private renderDataColumnWithFilter = (columnHeader: CARTA.CatalogHeader, columnData: Array<any> | NodeJS.TypedArray) => {
         return (
             <Column
                 key={columnHeader.name}
@@ -166,18 +166,29 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCell = (rowIndex: number, columnIndex: number, columnData: any) => {
+    private renderCell = (rowIndex: number, columnIndex: number, columnData: Array<any> | NodeJS.TypedArray) => {
         const dataIndex = this.props.selectedDataIndex;
+
+        let contents: any;
+        if (rowIndex < columnData.length) {
+            contents = columnData[rowIndex];
+            if (typeof contents === "boolean") {
+                contents = contents.toString();
+            }
+        } else {
+            contents = "";
+        }
+
         if (dataIndex && dataIndex.includes(rowIndex) && !this.props.showSelectedData) {
             return (
                 <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={false}>
-                    {rowIndex < columnData.length ? columnData[rowIndex] : ""}
+                    {contents}
                 </Cell>
             );
         } else {
             return (
                 <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={false}>
-                    {rowIndex < columnData.length ? columnData[rowIndex] : ""}
+                    {contents}
                 </Cell>
             );
         }
@@ -200,7 +211,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             return null;
         }
         const controlheader = this.props.filter?.get(column.name);
-        const filterSyntax = this.getfilterSyntax(column.dataType);
+        const filterSyntax = this.getFilterSyntax(column.dataType);
         const sortingInfo = this.props.sortingInfo;
         const headerDescription = this.props.tableHeaders?.[controlheader?.dataIndex]?.description;
         const disableSort = this.props.disableSort;

@@ -2,6 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {
     AnimatorComponent,
+    CursorInfoComponent,
     FloatingWidgetComponent,
     HistogramComponent,
     ImageViewComponent,
@@ -80,6 +81,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <RegionListComponent id={widgetConfig.id} docked={false} />;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return <StokesAnalysisComponent id={widgetConfig.id} docked={false} />;
+            case CursorInfoComponent.WIDGET_CONFIG.type:
+                return <CursorInfoComponent id={widgetConfig.id} docked={false} />;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 return <CatalogOverlayComponent id={widgetConfig.componentId} docked={false} />;
             case CatalogPlotComponent.WIDGET_CONFIG.type:

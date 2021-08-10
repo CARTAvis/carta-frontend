@@ -47,15 +47,15 @@ export class ContourStore {
             // Flush the queue
             this.clearData();
             while (this.dataQueue.size) {
-                this.addGeneratedContourData(this.dataQueue.dequeue(), 1.0)
+                this.addGeneratedContourData(this.dataQueue.dequeue(), 1.0);
             }
         }
-    }
+    };
 
     @action clearQueue = () => {
         this.progress = 1.0;
         this.dataQueue.clear();
-    }
+    };
 
     // @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {
     //     // Clear existing data to remove data buffers

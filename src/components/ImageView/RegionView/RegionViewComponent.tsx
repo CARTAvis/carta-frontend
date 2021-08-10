@@ -7,13 +7,13 @@ import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, OverlayStore, PreferenceStore, RegionMode, RegionStore} from "stores";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
-import {PolygonRegionComponent} from "./PolygonRegionComponent";
+import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
+import {ImageViewLayer} from "../ImageViewComponent";
 import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D} from "models";
 import {average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
-import {ImageViewLayer} from "../ImageViewComponent";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
@@ -66,11 +66,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     updateDistanceMeasureFinishPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
-        const imagePos = canvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
-        frame.distanceMeasuring.setFinish(imagePos);
+        frame.distanceMeasuring.finish = this.getDistanceMeasureImagePos(x, y);
+        frame.distanceMeasuring.updateTransformedPos(frame.spatialTransform);
     }, 100);
 
-    private getCursorCanvasPos(imageX: number, imageY: number): Point2D {
+    private getCursorCanvasPos = (imageX: number, imageY: number): Point2D => {
         const frame = this.props.frame;
         const posCanvasSpace = transformedImageToCanvasPos(imageX, imageY, frame, this.props.width, this.props.height);
 
@@ -81,55 +81,196 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return null;
         }
         return posCanvasSpace;
-    }
+    };
 
-    @action regionCreationStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (this.creatingRegion) {
-            return;
-        }
-
-        const mouseEvent = konvaEvent.evt as MouseEvent;
+    private getCursorPosImageSpace = (offsetX: number, offsetY: number): Point2D => {
         const frame = this.props.frame;
-        const regionType = frame.regionSet.newRegionType;
-        let cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+        let cursorPosImageSpace = canvasToTransformedImagePos(offsetX, offsetY, frame, this.props.width, this.props.height);
         if (frame.spatialReference) {
             cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
         }
+        return cursorPosImageSpace;
+    };
 
+    private getDistanceMeasureImagePos = (offsetX: number, offsetY: number): Point2D => {
+        const frame = this.props.frame;
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        const spatialTransform = frame.spatialReference?.spatialTransform ?? frame.spatialTransform;
+        let imagePos = canvasToImagePos(offsetX, offsetY, frameView, this.props.width, this.props.height, spatialTransform);
+        if (frame.spatialReference) {
+            imagePos = frame.spatialTransform.transformCoordinate(imagePos, false);
+        }
+        return imagePos;
+    };
+
+    @action private regionCreationStart = (mouseEvent: MouseEvent) => {
+        if (this.creatingRegion) {
+            return;
+        }
+        const frame = this.props.frame;
+        const regionType = frame.regionSet.newRegionType;
+        const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 this.creatingRegion = frame.regionSet.addPointRegion(cursorPosImageSpace, false);
+                this.regionStartPoint = cursorPosImageSpace;
                 break;
             case CARTA.RegionType.RECTANGLE:
                 this.creatingRegion = frame.regionSet.addRectangularRegion(cursorPosImageSpace, 0, 0, true);
+                this.regionStartPoint = cursorPosImageSpace;
                 break;
             case CARTA.RegionType.ELLIPSE:
                 this.creatingRegion = frame.regionSet.addEllipticalRegion(cursorPosImageSpace, 0, 0, true);
+                this.regionStartPoint = cursorPosImageSpace;
+                break;
+            case CARTA.RegionType.POLYGON:
+                this.creatingRegion = frame.regionSet.addPolygonalRegion([cursorPosImageSpace], true);
+                this.polygonRegionCreating(mouseEvent);
+                break;
+            case CARTA.RegionType.LINE:
+                this.creatingRegion = frame.regionSet.addLineRegion([cursorPosImageSpace, cursorPosImageSpace], true);
+                this.regionStartPoint = cursorPosImageSpace;
+                break;
+            case CARTA.RegionType.POLYLINE:
+                this.creatingRegion = frame.regionSet.addPolylineRegion([cursorPosImageSpace], true);
+                this.polygonRegionCreating(mouseEvent);
                 break;
             default:
                 return;
         }
-        this.regionStartPoint = cursorPosImageSpace;
         this.creatingRegion.beginCreating();
     };
 
-    regionCreationEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        this.dragPanning = false;
-        const frame = this.props.frame;
-        const regionType = frame.regionSet.newRegionType;
-
+    @action private regionCreationEnd = (mouseEvent?: MouseEvent) => {
+        let frame = this.props.frame;
+        if (!this.creatingRegion || frame.regionSet.mode !== RegionMode.CREATING) {
+            return;
+        }
+        const regionType = this.props.frame.regionSet.newRegionType;
         switch (regionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
-            case CARTA.RegionType.POINT:
-                this.handleMouseUpRegularRegion();
+            case CARTA.RegionType.LINE:
+                frame = this.props.frame.spatialReference || this.props.frame;
+                if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.size) === 0) {
+                    const scaleFactor = (PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5)) / frame.zoomLevel;
+                    this.creatingRegion.setSize(scale2D(this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1}, scaleFactor));
+                }
                 break;
+            case CARTA.RegionType.POINT:
             case CARTA.RegionType.POLYGON:
-                this.handleMouseUpPolygonRegion(konvaEvent.evt);
+            case CARTA.RegionType.POLYLINE:
                 break;
             default:
-                break;
+                return;
         }
+
+        // Handle region completion
+        if (
+            this.creatingRegion.isValid &&
+            ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE) || this.creatingRegion.controlPoints.length > 2) &&
+            (regionType !== CARTA.RegionType.LINE || this.creatingRegion.controlPoints.length === 2)
+        ) {
+            this.creatingRegion.endCreating();
+            frame.regionSet.selectRegion(this.creatingRegion);
+        } else {
+            frame.regionSet.deleteRegion(this.creatingRegion);
+        }
+
+        if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE) {
+            // avoid mouse up event triggering region creation start
+            setTimeout(() => {
+                this.creatingRegion = null;
+            }, 1);
+        } else {
+            this.creatingRegion = null;
+        }
+
+        // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
+        setTimeout(() => {
+            this.props.frame.regionSet.setMode(RegionMode.MOVING);
+            AppStore.Instance.updateActiveLayer(ImageViewLayer.RegionMoving);
+        }, 1);
+    };
+
+    @action private polygonRegionAddPoint = (mouseEvent: MouseEvent) => {
+        if (!this.creatingRegion) {
+            return;
+        }
+        const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
+
+        if (this.creatingRegion.controlPoints.length) {
+            const previousPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
+            // prevent duplicate points
+            if (Math.abs(previousPoint.x - cursorPosImageSpace.x) > DUPLICATE_POINT_THRESHOLD || Math.abs(previousPoint.y - cursorPosImageSpace.y) > DUPLICATE_POINT_THRESHOLD) {
+                this.creatingRegion.setControlPoints([...this.creatingRegion.controlPoints, cursorPosImageSpace]);
+            }
+        }
+
+        this.polygonRegionCreating(mouseEvent);
+    };
+
+    private RegionCreating(mouseEvent: MouseEvent) {
+        if (!this.creatingRegion) {
+            return;
+        }
+        const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
+
+        let dx = cursorPosImageSpace.x - this.regionStartPoint.x;
+        let dy = cursorPosImageSpace.y - this.regionStartPoint.y;
+        if (mouseEvent.shiftKey && this.creatingRegion.regionType !== CARTA.RegionType.LINE) {
+            const maxDiff = Math.max(Math.abs(dx), Math.abs(dy));
+            dx = Math.sign(dx) * maxDiff;
+            dy = Math.sign(dy) * maxDiff;
+        }
+        const isCtrlPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
+        if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
+            // corner-to-corner region creation
+            const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
+            const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
+            switch (this.creatingRegion.regionType) {
+                case CARTA.RegionType.RECTANGLE:
+                    this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
+                    break;
+                case CARTA.RegionType.ELLIPSE:
+                    this.creatingRegion.setControlPoints([center, {y: Math.abs(dx) / 2.0, x: Math.abs(dy) / 2.0}]);
+                    break;
+                case CARTA.RegionType.LINE:
+                    const start = this.regionStartPoint;
+                    if (start.x < cursorPosImageSpace.x) {
+                        this.creatingRegion.setControlPoints([start, cursorPosImageSpace]);
+                    } else {
+                        this.creatingRegion.setControlPoints([cursorPosImageSpace, start]);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            // center-to-corner region creation
+            switch (this.creatingRegion.regionType) {
+                case CARTA.RegionType.RECTANGLE:
+                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);
+                    break;
+                case CARTA.RegionType.ELLIPSE:
+                    this.creatingRegion.setControlPoints([this.regionStartPoint, {y: Math.abs(dx), x: Math.abs(dy)}]);
+                    break;
+                case CARTA.RegionType.LINE:
+                    const start = {x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy};
+                    if (start.x < cursorPosImageSpace.x) {
+                        this.creatingRegion.setControlPoints([start, cursorPosImageSpace]);
+                    } else {
+                        this.creatingRegion.setControlPoints([cursorPosImageSpace, start]);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    @action private polygonRegionCreating = (mouseEvent: MouseEvent) => {
+        this.currentCursorPos = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
     };
 
     handleDragStart = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
@@ -236,47 +377,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    @action private handleMouseUpRegularRegion() {
-        const frame = this.props.frame.spatialReference || this.props.frame;
-
-        if (this.creatingRegion) {
-            if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.size) === 0) {
-                const scaleFactor = (PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5)) / frame.zoomLevel;
-                this.creatingRegion.setSize(scale2D({x: 1, y: 1}, scaleFactor));
-            }
-            if (this.creatingRegion.isValid) {
-                this.creatingRegion.endCreating();
-                frame.regionSet.selectRegion(this.creatingRegion);
-            } else {
-                frame.regionSet.deleteRegion(this.creatingRegion);
-            }
-            this.creatingRegion = null;
-        }
-        // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
-        setTimeout(() => this.props.frame.regionSet.setMode(RegionMode.MOVING), 1);
-    }
-
-    @action private handleMouseUpPolygonRegion = (mouseEvent: MouseEvent) => {
-        const frame = this.props.frame;
-        let cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
-        if (frame.spatialReference) {
-            cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
-        }
-        if (this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
-            if (this.creatingRegion.controlPoints.length) {
-                const previousPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
-                // prevent duplicate points
-                if (Math.abs(previousPoint.x - cursorPosImageSpace.x) > DUPLICATE_POINT_THRESHOLD || Math.abs(previousPoint.y - cursorPosImageSpace.y) > DUPLICATE_POINT_THRESHOLD) {
-                    this.creatingRegion.setControlPoints([...this.creatingRegion.controlPoints, cursorPosImageSpace]);
-                }
-            }
-        } else {
-            this.creatingRegion = frame.regionSet.addPolygonalRegion([cursorPosImageSpace], true);
-            this.creatingRegion.beginCreating();
-        }
-        this.handlePolygonRegionMouseMove(mouseEvent);
-    };
-
     handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
         const frame = this.props.frame;
@@ -298,19 +398,20 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
-            const imagePos = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+            const imagePos = this.getDistanceMeasureImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
             const wcsPos = transformPoint(frame.wcsInfo, imagePos);
             if (!isAstBadPoint(wcsPos)) {
                 const dist = frame.distanceMeasuring;
                 if (!dist.isCreating && !dist.showCurve) {
-                    dist.setStart(imagePos);
+                    dist.start = imagePos;
                     dist.setIsCreating(true);
                 } else if (dist.isCreating) {
-                    dist.setFinish(imagePos);
+                    dist.finish = imagePos;
+                    dist.updateTransformedPos(frame.spatialTransform);
                     dist.setIsCreating(false);
                 } else {
                     dist.resetPos();
-                    dist.setStart(imagePos);
+                    dist.start = imagePos;
                     dist.setIsCreating(true);
                 }
             }
@@ -338,6 +439,43 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    private handleMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        switch (this.props.frame.regionSet.newRegionType) {
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.LINE:
+                this.regionCreationStart(konvaEvent.evt);
+                break;
+            case CARTA.RegionType.POINT:
+                this.regionCreationStart(konvaEvent.evt);
+                this.regionCreationEnd();
+                break;
+            default:
+                break;
+        }
+    };
+
+    private handleMouseUp = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        this.dragPanning = false;
+        switch (this.props.frame.regionSet.newRegionType) {
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.LINE:
+                this.regionCreationEnd();
+                break;
+            case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
+                if (!this.creatingRegion) {
+                    this.regionCreationStart(konvaEvent.evt);
+                } else {
+                    this.polygonRegionAddPoint(konvaEvent.evt);
+                }
+                break;
+            default:
+                break;
+        }
+    };
+
     handleMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
         if (this.props.dragPanningEnabled && this.dragPanning) {
@@ -349,10 +487,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             switch (this.creatingRegion.regionType) {
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ELLIPSE:
-                    this.handleRegularRegionMouseMove(mouseEvent);
+                case CARTA.RegionType.LINE:
+                    this.RegionCreating(mouseEvent);
                     break;
                 case CARTA.RegionType.POLYGON:
-                    this.handlePolygonRegionMouseMove(mouseEvent);
+                case CARTA.RegionType.POLYLINE:
+                    this.polygonRegionCreating(mouseEvent);
                     break;
                 default:
                     break;
@@ -367,53 +507,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    private handleRegularRegionMouseMove(mouseEvent: MouseEvent) {
-        const frame = this.props.frame;
-        let cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
-        if (frame.spatialReference) {
-            cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
-        }
-        let dx = cursorPosImageSpace.x - this.regionStartPoint.x;
-        let dy = cursorPosImageSpace.y - this.regionStartPoint.y;
-        if (mouseEvent.shiftKey) {
-            const maxDiff = Math.max(Math.abs(dx), Math.abs(dy));
-            dx = Math.sign(dx) * maxDiff;
-            dy = Math.sign(dy) * maxDiff;
-        }
-        const isCtrlPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
-        if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
-            // corner-to-corner region creation
-            const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
-            const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
-            switch (this.creatingRegion.regionType) {
-                case CARTA.RegionType.RECTANGLE:
-                    this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
-                    break;
-                case CARTA.RegionType.ELLIPSE:
-                    this.creatingRegion.setControlPoints([center, {y: Math.abs(dx) / 2.0, x: Math.abs(dy) / 2.0}]);
-                    break;
-                default:
-                    break;
-            }
-        } else {
-            // center-to-corner region creation
-            switch (this.creatingRegion.regionType) {
-                case CARTA.RegionType.RECTANGLE:
-                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);
-                    break;
-                case CARTA.RegionType.ELLIPSE:
-                    this.creatingRegion.setControlPoints([this.regionStartPoint, {y: Math.abs(dx), x: Math.abs(dy)}]);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    @action private handlePolygonRegionMouseMove = (mouseEvent: MouseEvent) => {
-        this.currentCursorPos = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
-    };
-
     private handleRegionDoubleClick = (region: RegionStore) => {
         if (this.props.onRegionDoubleClicked) {
             this.props.onRegionDoubleClicked(region);
@@ -421,23 +514,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     @action private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        const frame = this.props.frame;
         if (this.mouseClickDistance > DOUBLE_CLICK_DISTANCE * DOUBLE_CLICK_DISTANCE) {
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
-        if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
-            // Handle region completion
-            if (this.creatingRegion.isValid && this.creatingRegion.controlPoints.length > 2) {
-                this.creatingRegion.endCreating();
-                frame.regionSet.selectRegion(this.creatingRegion);
-                this.creatingRegion = null;
-            } else {
-                frame.regionSet.deleteRegion(this.creatingRegion);
-                this.creatingRegion = null;
-            }
-            // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
-            setTimeout(() => this.props.frame.regionSet.setMode(RegionMode.MOVING), 1);
+        if (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) {
+            this.regionCreationEnd();
         }
     };
 
@@ -447,6 +529,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             frame.regionSet.deleteRegion(this.creatingRegion);
             this.creatingRegion = null;
             frame.regionSet.setMode(RegionMode.MOVING);
+            AppStore.Instance.updateActiveLayer(ImageViewLayer.RegionMoving);
         }
     };
 
@@ -465,9 +548,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 .filter(r => r.isValid && r.regionId !== 0)
                 .sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1))
                 .map(r => {
-                    if (r.regionType === CARTA.RegionType.POLYGON) {
+                    if (r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE) {
                         return (
-                            <PolygonRegionComponent
+                            <LineSegmentRegionComponent
                                 key={r.regionId}
                                 region={r}
                                 frame={frame}
@@ -477,6 +560,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                                 onSelect={regionSet.selectRegion}
                                 onDoubleClick={this.handleRegionDoubleClick}
                                 listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
+                                isRegionCornerMode={this.props.isRegionCornerMode}
                             />
                         );
                     } else if (r.regionType === CARTA.RegionType.POINT) {
@@ -539,8 +623,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
         }
 
-        let polygonCreatingLine = null;
-        if (this.currentCursorPos && this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON && this.creatingRegion.isValid) {
+        let creatingLine = null;
+        if (this.currentCursorPos && (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) && this.creatingRegion.isValid) {
             let firstControlPoint = this.creatingRegion.controlPoints[0];
             let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
 
@@ -551,20 +635,19 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const lineStart = this.getCursorCanvasPos(firstControlPoint.x, firstControlPoint.y);
             const lineEnd = this.getCursorCanvasPos(lastControlPoint.x, lastControlPoint.y);
             let points: number[];
-
-            if (this.creatingRegion.controlPoints.length > 1) {
+            if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE) {
                 points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y, lineEnd.x, lineEnd.y];
             } else {
-                points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y];
+                points = [lineEnd.x, lineEnd.y, this.currentCursorPos.x, this.currentCursorPos.y];
             }
-            polygonCreatingLine = <Line points={points} dash={[5]} stroke={this.creatingRegion.color} strokeWidth={this.creatingRegion.lineWidth} opacity={0.5} lineJoin={"round"} listening={false} perfectDrawEnabled={false} />;
+            creatingLine = <Line points={points} dash={[5]} stroke={this.creatingRegion.color} strokeWidth={this.creatingRegion.lineWidth} opacity={0.5} lineJoin={"round"} listening={false} perfectDrawEnabled={false} />;
         }
 
         let cursor: string;
 
-        if (frame.regionSet.mode === RegionMode.CREATING || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
+        if (regionSet.mode === RegionMode.CREATING || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
             cursor = "crosshair";
-        } else if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.editing) {
+        } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
             cursor = "move";
         }
 
@@ -579,8 +662,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     onWheel={this.handleWheel}
                     onMouseMove={this.handleMove}
                     onDblClick={this.handleStageDoubleClick}
-                    onMouseDown={regionSet.mode === RegionMode.CREATING ? this.regionCreationStart : null}
-                    onMouseUp={regionSet.mode === RegionMode.CREATING ? this.regionCreationEnd : null}
+                    onMouseDown={regionSet.mode === RegionMode.CREATING ? this.handleMouseDown : null}
+                    onMouseUp={regionSet.mode === RegionMode.CREATING ? this.handleMouseUp : null}
                     draggable={regionSet.mode !== RegionMode.CREATING && this.props.dragPanningEnabled}
                     onDragStart={this.handleDragStart}
                     onDragMove={this.handleDragMove}
@@ -590,7 +673,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 >
                     <Layer>
                         {regionComponents}
-                        {polygonCreatingLine}
+                        {creatingLine}
                         {cursorMarker}
                     </Layer>
                 </Stage>

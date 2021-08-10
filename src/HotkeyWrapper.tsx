@@ -2,6 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Classes, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {AppStore, BrowserMode, RegionMode} from "./stores";
+import {ImageViewLayer} from "components";
 
 // There are some issues with the Blueprint hotkey target decorator, so this rather hacky workaround is needed for now
 // Once the issues are fixed, the decorator can be used and the functions can be made non-static
@@ -16,7 +17,7 @@ export class HotkeyContainer extends React.Component {
         }
 
         return (
-            <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={className} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
+            <Dialog portalClassName="dialog-portal" isOpen={appStore.dialogStore.hotkeyDialogVisible} className={className} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
                 <div className={Classes.DIALOG_BODY}>{HotkeyContainer.RenderHotkeys()}</div>
             </Dialog>
         );
@@ -62,6 +63,7 @@ export class HotkeyContainer extends React.Component {
     static ToggleCreateMode = () => {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame) {
+            appStore.toggleActiveLayer();
             appStore.activeFrame.regionSet.toggleMode();
         }
     };
@@ -94,6 +96,7 @@ export class HotkeyContainer extends React.Component {
                 regionSet.deselectRegion();
             } else if (regionSet.mode === RegionMode.CREATING) {
                 regionSet.setMode(RegionMode.MOVING);
+                appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
             }
         }
     };

@@ -11,7 +11,7 @@ import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {ColormapComponent, ColorPickerComponent, AutoColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.scss";
@@ -106,6 +106,9 @@ export class PreferenceDialogComponent extends React.Component {
                         <option value={Theme.LIGHT}>Light</option>
                         <option value={Theme.DARK}>Dark</option>
                     </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Enable Code Snippets">
+                    <Switch checked={preference.codeSnippetsEnabled} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
                     <Switch checked={preference.autoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
@@ -301,14 +304,22 @@ export class PreferenceDialogComponent extends React.Component {
 
         const overlayConfigPanel = (
             <React.Fragment>
-                <FormGroup inline={true} label="AST Color">
+                <FormGroup inline={true} label="Color">
                     <AutoColorPickerComponent color={preference.astColor} presetColors={SWATCH_COLORS} setColor={(color: string) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, color)} disableAlpha={true} />
                 </FormGroup>
-                <FormGroup inline={true} label="AST Grid Visible">
+                <FormGroup inline={true} label="WCS Grid Visible">
                     <Switch checked={preference.astGridVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, ev.currentTarget.checked)} />
                 </FormGroup>
-                <FormGroup inline={true} label="AST Label Visible">
+                <FormGroup inline={true} label="Labels Visible">
                     <Switch checked={preference.astLabelsVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Cursor Info Visible">
+                    <HTMLSelect value={preference.cursorInfoVisible} onChange={ev => preference.setPreference(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO, ev.currentTarget.value)}>
+                        <option value={CursorInfoVisibility.Always}>Always</option>
+                        <option value={CursorInfoVisibility.ActiveImage}>Active image only</option>
+                        <option value={CursorInfoVisibility.HideTiled}>Hide when tiled</option>
+                        <option value={CursorInfoVisibility.Never}>Never</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="WCS Format">
                     <HTMLSelect
@@ -451,6 +462,9 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Low bandwidth mode">
                     <Switch checked={preference.lowBandwidthMode} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, ev.currentTarget.checked)} />
                 </FormGroup>
+                <FormGroup inline={true} label="Limit overlay redraw">
+                    <Switch checked={preference.limitOverlayRedraw} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW, ev.currentTarget.checked)} />
+                </FormGroup>
                 <FormGroup inline={true} label="Compression Quality" labelInfo={"(Images)"}>
                     <SafeNumericInput
                         placeholder="Compression Quality"
@@ -537,7 +551,7 @@ export class PreferenceDialogComponent extends React.Component {
                         </option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Contour Control Map Resolution">
+                <FormGroup inline={true} label="Control Map Resolution">
                     <HTMLSelect value={preference.contourControlMapWidth} onChange={ev => preference.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, parseInt(ev.currentTarget.value))}>
                         <option key={0} value={128}>
                             128&times;128 (128 KB)

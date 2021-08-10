@@ -28,7 +28,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 0;
     @observable height: number = 0;
-    @observable columnWidths = [132, 70, 110, 75, 67];
+    @observable columnWidths = [132, 70, 110, 75, 95];
 
     constructor(props: any) {
         super(props);
@@ -59,12 +59,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === AppStore.Instance.activeFrameIndex ? "active-row-cell" : ""} />;
     };
 
-    private onFileSelected = (appStore: AppStore, frame: FrameStore) => {
-        const fileId = frame.frameInfo.fileId;
-        appStore.setActiveFrame(fileId);
-        if (frame.secondarySpatialImages?.length || frame.spatialReference) {
-            appStore.catalogStore.convertSpatialMatchedData();
-        }
+    private onFileSelected = (frame: FrameStore) => {
+        AppStore.Instance.setActiveFrame(frame);
     };
 
     private fileNameRenderer = (rowIndex: number) => {
@@ -78,7 +74,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
-                    <div className="name-cell" onClick={() => this.onFileSelected(appStore, frame)}>
+                    <div className="name-cell" onClick={() => this.onFileSelected(frame)}>
                         {frame.filename}
                     </div>
                 </React.Fragment>
@@ -99,7 +95,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell />;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredStokes}</Cell>;
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredStokesInfo}</Cell>;
     };
 
     private typeRenderer = (rowIndex: number) => {
@@ -292,7 +288,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 name = "Channel";
                 break;
             case 4:
-                name = "Stokes";
+                name = "Polarization";
                 break;
             default:
                 break;

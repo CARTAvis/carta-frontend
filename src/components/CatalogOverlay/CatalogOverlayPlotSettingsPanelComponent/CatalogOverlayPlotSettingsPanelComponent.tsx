@@ -291,26 +291,32 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const sizeMap = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Size" labelInfo="(px)" disabled={disabledOverlayPanel}>
-                    <SafeNumericInput
-                        placeholder="Size"
-                        disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
-                        min={CatalogWidgetStore.MinOverlaySize}
-                        max={CatalogWidgetStore.MaxOverlaySize}
-                        value={widgetStore.catalogSize}
-                        stepSize={0.5}
-                        onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
-                    />
+                    <Tooltip2 disabled={disabledOverlayPanel || !widgetStore.disableSizeMap} content={`${CatalogWidgetStore.MinOverlaySize} ~ ${CatalogWidgetStore.MaxOverlaySize}`}>
+                        <SafeNumericInput
+                            placeholder="Size"
+                            disabled={disabledOverlayPanel || !widgetStore.disableSizeMap}
+                            min={CatalogWidgetStore.MinOverlaySize}
+                            max={CatalogWidgetStore.MaxOverlaySize}
+                            clampValueOnBlur={true}
+                            value={widgetStore.catalogSize}
+                            stepSize={0.5}
+                            onValueChange={(value: number) => widgetStore.setCatalogSize(value)}
+                        />
+                    </Tooltip2>
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness" disabled={disabledOverlayPanel}>
-                    <SafeNumericInput
-                        placeholder="Thickness"
-                        disabled={disabledOverlayPanel}
-                        min={CatalogWidgetStore.MinThickness}
-                        max={CatalogWidgetStore.MaxThickness}
-                        value={widgetStore.thickness}
-                        stepSize={0.5}
-                        onValueChange={(value: number) => widgetStore.setThickness(value)}
-                    />
+                    <Tooltip2 disabled={disabledOverlayPanel} content={`${CatalogWidgetStore.MinThickness} ~ ${CatalogWidgetStore.MaxThickness}`}>
+                        <SafeNumericInput
+                            placeholder="Thickness"
+                            disabled={disabledOverlayPanel}
+                            min={CatalogWidgetStore.MinThickness}
+                            max={CatalogWidgetStore.MaxThickness}
+                            clampValueOnBlur={true}
+                            value={widgetStore.thickness}
+                            stepSize={0.5}
+                            onValueChange={(value: number) => widgetStore.setThickness(value)}
+                        />
+                    </Tooltip2>
                 </FormGroup>
                 <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.sizeAxisTabId} onChange={tabId => this.handleSelectedAxisTabChanged(tabId)}>
                     <Tab id={CatalogSettingsTabs.SIZE_MAJOR} title="Major" panel={sizeMajor} />

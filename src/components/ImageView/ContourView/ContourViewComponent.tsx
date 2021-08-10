@@ -8,6 +8,8 @@ import "./ContourViewComponent.scss";
 export interface ContourViewComponentProps {
     docked: boolean;
     frame: FrameStore;
+    row: number;
+    column: number;
 }
 
 @observer
@@ -34,36 +36,55 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             return;
         }
 
-        const reqWidth = Math.round(Math.max(1, frame.renderWidth * devicePixelRatio));
-        const reqHeight = Math.round(Math.max(1, frame.renderHeight * devicePixelRatio));
+        const appStore = AppStore.Instance;
+        const requiredWidth = Math.max(1, frame.renderWidth * devicePixelRatio);
+        const requiredHeight = Math.max(1, frame.renderHeight * devicePixelRatio);
+
+        // Resize and clear the canvas if needed
+        if (frame?.isRenderable && (this.canvas.width !== requiredWidth || this.canvas.height !== requiredHeight)) {
+            this.canvas.width = requiredWidth;
+            this.canvas.height = requiredHeight;
+        }
+        // Resize and clear the shared WebGL canvas if required
+        this.contourWebGLService.setCanvasSize(requiredWidth * appStore.numImageColumns, requiredHeight * appStore.numImageRows);
+
         // Resize canvas if necessary
-        if (this.canvas.width !== reqWidth || this.canvas.height !== reqHeight) {
-            this.canvas.width = reqWidth;
-            this.canvas.height = reqHeight;
-            this.contourWebGLService.setCanvasSize(reqWidth, reqHeight);
+        if (this.canvas.width !== requiredWidth || this.canvas.height !== requiredHeight) {
+            this.canvas.width = requiredWidth;
+            this.canvas.height = requiredHeight;
         }
         // Otherwise just clear it
+        const xOffset = this.props.column * frame.renderWidth * devicePixelRatio;
+        // y-axis is inverted
+        const yOffset = (appStore.numImageRows - 1 - this.props.row) * frame.renderHeight * devicePixelRatio;
+        this.gl.viewport(xOffset, yOffset, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
         this.gl.clearColor(0, 0, 0, 0);
+        // Clear a scissored rectangle limited to the current frame
+        this.gl.enable(WebGLRenderingContext.SCISSOR_TEST);
+        this.gl.scissor(xOffset, yOffset, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
         const clearMask = WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT | WebGLRenderingContext.STENCIL_BUFFER_BIT;
         this.gl.clear(clearMask);
+        this.gl.disable(WebGLRenderingContext.SCISSOR_TEST);
     }
 
     private updateCanvas = () => {
         const appStore = AppStore.Instance;
         const baseFrame = this.props.frame;
-        // TODO: Get contour frames for the current frame, rather than the active one
-        const contourFrames = appStore.contourFrames;
         if (baseFrame && this.canvas && this.gl && this.contourWebGLService.shaderUniforms) {
+            const contourFrames = appStore.contourFrames.get(baseFrame);
             this.resizeAndClearCanvas();
-
-            // Render back-to-front to preserve ordering
-            for (let i = contourFrames.length - 1; i >= 0; --i) {
-                this.renderFrameContours(contourFrames[i], baseFrame);
+            if (contourFrames) {
+                // Render back-to-front to preserve ordering
+                for (let i = contourFrames.length - 1; i >= 0; --i) {
+                    this.renderFrameContours(contourFrames[i], baseFrame);
+                }
             }
             // draw in 2d canvas
             const ctx = this.canvas.getContext("2d");
-            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            ctx.drawImage(this.gl.canvas, 0, 0, this.canvas.width, this.canvas.height);
+            const w = this.canvas.width;
+            const h = this.canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
         }
     };
 
@@ -195,21 +216,23 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const view = baseFrame.requiredFrameView;
         }
 
-        const contourFrames = appStore.contourFrames;
-        for (const frame of contourFrames) {
-            const config = frame.contourConfig;
-            const thickness = config.thickness;
-            const color = config.colormapEnabled ? config.colormap : config.color;
-            const dashMode = config.dashMode;
-            const bias = config.colormapBias;
-            const contrast = config.colormapContrast;
-            for (const [_level, contourStore] of frame.contourStores) {
-                if (!contourStore.numGeneratedVertices) {
-                    continue;
-                }
-                let numVertices = 0;
-                for (const n of contourStore.numGeneratedVertices) {
-                    numVertices += n;
+        const contourFrames = appStore.contourFrames.get(baseFrame);
+        if (contourFrames) {
+            for (const frame of contourFrames) {
+                const config = frame.contourConfig;
+                const thickness = config.thickness;
+                const color = config.colormapEnabled ? config.colormap : config.color;
+                const dashMode = config.dashMode;
+                const bias = config.colormapBias;
+                const contrast = config.colormapContrast;
+                for (const [_level, contourStore] of frame.contourStores) {
+                    if (!contourStore.numGeneratedVertices) {
+                        continue;
+                    }
+                    let numVertices = 0;
+                    for (const n of contourStore.numGeneratedVertices) {
+                        numVertices += n;
+                    }
                 }
             }
         }

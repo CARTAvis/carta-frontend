@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
-import {CompressionQuality, CursorPosition, Event, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService} from "services";
 
@@ -20,6 +20,7 @@ export enum PreferenceKeys {
     GLOBAL_SPECTRAL_MATCHING_TYPE = "spectralMatchingType",
     GLOBAL_AUTO_WCS_MATCHING = "autoWCSMatching",
     GLOBAL_TRANSPARENT_IMAGE_BACKGROUND = "transparentImageBackground",
+    GLOBAL_CODE_SNIPPETS_ENABLED = "codeSnippetsEnabled",
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
@@ -53,6 +54,7 @@ export enum PreferenceKeys {
     WCS_OVERLAY_BEAM_COLOR = "beamColor",
     WCS_OVERLAY_BEAM_TYPE = "beamType",
     WCS_OVERLAY_BEAM_WIDTH = "beamWidth",
+    WCS_OVERLAY_CURSOR_INFO = "cursorInfoVisible",
 
     REGION_COLOR = "regionColor",
     REGION_LINE_WIDTH = "regionLineWidth",
@@ -72,6 +74,7 @@ export enum PreferenceKeys {
     PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING = "streamContoursWhileZooming",
     PERFORMANCE_LOW_BAND_WIDTH_MODE = "lowBandwidthMode",
     PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES = "stopAnimationPlaybackMinutes",
+    PERFORMANCE_LIMIT_OVERLAY_REDRAW = "limitOverlayRedraw",
 
     LOG_EVENT = "logEventList",
 
@@ -79,7 +82,10 @@ export enum PreferenceKeys {
     CATALOG_TABLE_SEPARATOR_POSITION = "catalogTableSeparatorPosition",
 
     PIXEL_GRID_VISIBLE = "pixelGridVisible",
-    PIXEL_GRID_COLOR = "pixelGridColor"
+    PIXEL_GRID_COLOR = "pixelGridColor",
+    IMAGE_PANEL_MODE = "imagePanelMode",
+    IMAGE_PANEL_COLUMNS = "imagePanelColumns",
+    IMAGE_PANEL_ROWS = "imagePanelRows"
 }
 
 const DEFAULTS = {
@@ -87,7 +93,10 @@ const DEFAULTS = {
         fileSortingString: "-date",
         fileFilteringType: FileFilteringType.Fuzzy,
         pixelGridVisible: false,
-        pixelGridColor: "#FFFFFF"
+        pixelGridColor: "#FFFFFF",
+        imagePanelMode: ImagePanelMode.None,
+        imagePanelColumns: 2,
+        imagePanelRows: 2
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -99,7 +108,8 @@ const DEFAULTS = {
         dragPanning: true,
         spectralMatchingType: SpectralType.VRAD,
         autoWCSMatching: WCSMatchingType.NONE,
-        transparentImageBackground: false
+        transparentImageBackground: false,
+        codeSnippetsEnabled: false
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
@@ -135,7 +145,8 @@ const DEFAULTS = {
         beamVisible: true,
         beamColor: "auto-gray",
         beamType: BeamType.Open,
-        beamWidth: 1
+        beamWidth: 1,
+        cursorInfoVisible: CursorInfoVisibility.ActiveImage
     },
     REGION: {
         regionColor: "#2EE6D6",
@@ -156,7 +167,8 @@ const DEFAULTS = {
         contourControlMapWidth: 256,
         streamContoursWhileZooming: false,
         lowBandwidthMode: false,
-        stopAnimationPlaybackMinutes: 5
+        stopAnimationPlaybackMinutes: 5,
+        limitOverlayRedraw: true
     },
     LOG_EVENT: {
         eventLoggingEnabled: []
@@ -227,6 +239,10 @@ export class PreferenceStore {
 
     @computed get transparentImageBackground(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND) ?? DEFAULTS.GLOBAL.transparentImageBackground;
+    }
+
+    @computed get codeSnippetsEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED) ?? DEFAULTS.GLOBAL.codeSnippetsEnabled;
     }
 
     // getters for render config
@@ -364,6 +380,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH) ?? DEFAULTS.WCS_OVERLAY.beamWidth;
     }
 
+    @computed get cursorInfoVisible(): string {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_CURSOR_INFO) ?? DEFAULTS.WCS_OVERLAY.cursorInfoVisible;
+    }
+
     // getters for region
     @computed get regionColor(): string {
         return this.preferences.get(PreferenceKeys.REGION_COLOR) ?? DEFAULTS.REGION.regionColor;
@@ -473,6 +493,22 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PIXEL_GRID_COLOR) ?? DEFAULTS.SILENT.pixelGridColor;
     }
 
+    @computed get limitOverlayRedraw(): boolean {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
+    }
+
+    @computed get imagePanelMode(): ImagePanelMode {
+        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_MODE) ?? DEFAULTS.SILENT.imagePanelMode;
+    }
+
+    @computed get imagePanelColumns(): number {
+        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_COLUMNS) ?? DEFAULTS.SILENT.imagePanelColumns;
+    }
+
+    @computed get imagePanelRows(): number {
+        return this.preferences.get(PreferenceKeys.IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
+    }
+
     @action setPreference = async (key: PreferenceKeys, value: any) => {
         if (!key) {
             return false;
@@ -510,7 +546,15 @@ export class PreferenceStore {
 
     // reset functions
     @action resetSilentSettings = () => {
-        this.clearPreferences([PreferenceKeys.SILENT_FILE_SORTING_STRING, PreferenceKeys.SILENT_FILE_FILTERING_TYPE, PreferenceKeys.PIXEL_GRID_VISIBLE, PreferenceKeys.PIXEL_GRID_COLOR]);
+        this.clearPreferences([
+            PreferenceKeys.SILENT_FILE_SORTING_STRING,
+            PreferenceKeys.SILENT_FILE_FILTERING_TYPE,
+            PreferenceKeys.PIXEL_GRID_VISIBLE,
+            PreferenceKeys.PIXEL_GRID_COLOR,
+            PreferenceKeys.IMAGE_PANEL_MODE,
+            PreferenceKeys.IMAGE_PANEL_COLUMNS,
+            PreferenceKeys.IMAGE_PANEL_ROWS
+        ]);
     };
 
     @action resetGlobalSettings = () => {
@@ -524,7 +568,8 @@ export class PreferenceStore {
             PreferenceKeys.GLOBAL_DRAG_PANNING,
             PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE,
             PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
-            PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND
+            PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
+            PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED
         ]);
     };
 
@@ -569,7 +614,8 @@ export class PreferenceStore {
             PreferenceKeys.WCS_OVERLAY_BEAM_TYPE,
             PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE,
             PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
-            PreferenceKeys.WCS_OVERLAY_WCS_TYPE
+            PreferenceKeys.WCS_OVERLAY_WCS_TYPE,
+            PreferenceKeys.WCS_OVERLAY_CURSOR_INFO
         ]);
     };
 
@@ -589,7 +635,8 @@ export class PreferenceStore {
             PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE,
             PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
             PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
-            PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE
+            PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE,
+            PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW
         ]);
     };
 
@@ -627,7 +674,7 @@ export class PreferenceStore {
 
     private upgradePreferences = async () => {
         if (!localStorage.getItem("preferences")) {
-            // perform localstorage upgrade
+            // perform localstorage upgrade by iterating over the old keys. This list consists of keys that were present when CARTA used a single localStorage entry per key
 
             // Strings
             const stringKeys = [

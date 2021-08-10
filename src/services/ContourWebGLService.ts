@@ -46,12 +46,12 @@ export class ContourWebGLService {
     }
 
     public setCanvasSize = (width: number, height: number) => {
-        if (!this.gl) {
+        // Skip if no update needed
+        if (!this.gl || (this.gl.canvas.width === width && this.gl.canvas.height === height)) {
             return;
         }
         this.gl.canvas.width = width;
         this.gl.canvas.height = height;
-        this.gl.viewport(0, 0, width, height);
     };
 
     private initShaders() {

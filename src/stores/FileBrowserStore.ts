@@ -146,7 +146,7 @@ export class FileBrowserStore {
         this.catalogFileList = list;
     };
 
-    @action getFileList = async (directory: string) => {
+    @action getFileList = async (directory: string = "") => {
         const backendService = BackendService.Instance;
 
         this.loadingList = true;
@@ -313,7 +313,7 @@ export class FileBrowserStore {
         } else if (fileList) {
             const currentDir = fileList.directory;
             let newFolder = folder;
-            if (currentDir.length && !(currentDir.length === 1 && currentDir[0] === "/")) {
+            if (currentDir?.length && !(currentDir.length === 1 && currentDir[0] === "/")) {
                 newFolder = `${currentDir}/${folder}`;
             }
             this.getFileList(newFolder);
@@ -512,8 +512,6 @@ export class FileBrowserStore {
     }
 
     @computed get catalogHeaderDataset(): {columnHeaders: Array<CARTA.CatalogHeader>; columnsData: Map<number, ProcessedColumnData>} {
-        let columnsData = new Map<number, ProcessedColumnData>();
-
         const nameData = [];
         const unitData = [];
         const typeData = [];
@@ -528,12 +526,14 @@ export class FileBrowserStore {
         }
 
         const dataType = CARTA.ColumnType.String;
-        columnsData.set(0, {dataType, data: nameData});
-        columnsData.set(1, {dataType, data: unitData});
-        columnsData.set(2, {dataType, data: typeData});
-        columnsData.set(3, {dataType, data: descriptionData});
+        const columnsData = new Map<number, ProcessedColumnData>([
+            [0, {dataType, data: nameData}],
+            [1, {dataType, data: unitData}],
+            [2, {dataType, data: typeData}],
+            [3, {dataType, data: descriptionData}]
+        ]);
 
-        let columnHeaders = [
+        const columnHeaders = [
             new CARTA.CatalogHeader({name: "Name", dataType, columnIndex: 0}),
             new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1}),
             new CARTA.CatalogHeader({name: "Data Type", dataType, columnIndex: 2}),
@@ -579,7 +579,8 @@ export class FileBrowserStore {
                         value: index,
                         label: region.nameString,
                         active: region.regionId === activeRegionId,
-                        icon: RegionStore.RegionIconString(region.regionType)
+                        icon: RegionStore.RegionIconString(region.regionType),
+                        isCustomIcon: RegionStore.IsRegionCustomIcon(region.regionType)
                     });
                 }
             });

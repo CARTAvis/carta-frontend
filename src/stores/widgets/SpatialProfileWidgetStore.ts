@@ -1,16 +1,19 @@
 import tinycolor from "tinycolor2";
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, autorun, computed, observable, override, makeObservable} from "mobx";
 import * as _ from "lodash";
+import {RegionWidgetStore, RegionId, RegionsType} from "./RegionWidgetStore";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, ProfileSmoothingStore} from "stores";
 import {PlotType, LineSettings} from "components/Shared";
 import {SpatialProfilerSettingsTabs} from "components";
 import {clamp, isAutoColor} from "utilities";
+import {LineOption} from "models";
 
-export class SpatialProfileWidgetStore {
-    @observable fileId: number;
-    @observable regionId: number;
+const DEFAULT_STOKES = "current";
+
+export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
+    @observable selectedStokes: string;
     @observable minX: number;
     @observable maxX: number;
     @observable minY: number;
@@ -32,20 +35,12 @@ export class SpatialProfileWidgetStore {
 
     private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vy"];
 
-    @action setFileId = (fileId: number) => {
-        // Reset zoom when changing between files
+    @override setRegionId = (fileId: number, regionId: number) => {
+        this.regionIdMap.set(fileId, regionId);
         this.clearXYBounds();
-        this.fileId = fileId;
-    };
-
-    @action setRegionId = (regionId: number) => {
-        // Reset zoom when changing between regions
-        this.clearXYBounds();
-        this.regionId = regionId;
     };
 
     @action setCoordinate = (coordinate: string) => {
-        // Check coordinate validity
         if (SpatialProfileWidgetStore.ValidCoordinates.includes(coordinate)) {
             // Reset zoom when changing between coordinates
             this.clearXYBounds();
@@ -115,12 +110,12 @@ export class SpatialProfileWidgetStore {
         this.settingsTabId = val;
     };
 
-    constructor(coordinate: string = "x", fileId: number = -1, regionId: number = 0) {
+    constructor(coordinate: string = "x") {
+        super(RegionsType.CLOSED_AND_POINT);
         makeObservable(this);
         // Describes which data is being visualised
         this.coordinate = coordinate;
-        this.fileId = fileId;
-        this.regionId = regionId;
+        this.selectedStokes = DEFAULT_STOKES;
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
@@ -133,6 +128,16 @@ export class SpatialProfileWidgetStore {
         this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
         this.smoothingStore = new ProfileSmoothingStore();
         this.settingsTabId = SpatialProfilerSettingsTabs.STYLING;
+
+        autorun(() => {
+            if (this.effectiveFrame) {
+                this.selectedStokes = DEFAULT_STOKES;
+            }
+        });
+    }
+
+    @computed get isXProfile(): boolean {
+        return this.coordinate?.includes("x");
     }
 
     @computed get isAutoScaledX() {
@@ -143,8 +148,26 @@ export class SpatialProfileWidgetStore {
         return this.minY === undefined || this.maxY === undefined;
     }
 
-    private static GetCursorSpatialConfig(frame: FrameStore, coordinate: string): CARTA.SetSpatialRequirements.ISpatialConfig {
-        if (frame.cursorMoving && !AppStore.Instance.cursorFrozen) {
+    @computed get stokesOptions(): LineOption[] {
+        let options = [{value: DEFAULT_STOKES, label: "Current"}];
+        if (this.effectiveFrame?.hasStokes) {
+            this.effectiveFrame.stokesInfo?.forEach(stokes => options.push({value: `${stokes}`, label: stokes}));
+        }
+        return options;
+    }
+
+    @computed get fullCoordinate(): string {
+        // stokes(IQUV) + coordinate(x/y)
+        const frame = this.effectiveFrame;
+        let stokes = undefined;
+        if (frame?.hasStokes) {
+            stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName : this.selectedStokes;
+        }
+        return `${stokes?.replace("Stokes ", "") ?? ""}${this.coordinate}`;
+    }
+
+    private static GetSpatialConfig(frame: FrameStore, coordinate: string, isCursor: boolean): CARTA.SetSpatialRequirements.ISpatialConfig {
+        if (frame.cursorMoving && !AppStore.Instance.cursorFrozen && isCursor) {
             if (coordinate.includes("x")) {
                 return {
                     coordinate,
@@ -168,19 +191,17 @@ export class SpatialProfileWidgetStore {
         }
     }
 
-    public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpatialProfileWidgetStore>) {
+    public static CalculateRequirementsMap(widgetsMap: Map<string, SpatialProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
         widgetsMap.forEach(widgetStore => {
+            const frame = widgetStore.effectiveFrame;
             const fileId = frame.frameInfo.fileId;
-            // Cursor region only for now
-            const regionId = 0;
-            const coordinate = widgetStore.coordinate;
+            const regionId = widgetStore.effectiveRegionId;
 
             if (!frame.regionSet) {
                 return;
             }
 
-            const spatialConfig = SpatialProfileWidgetStore.GetCursorSpatialConfig(frame, coordinate);
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
                 let frameRequirements = updatedRequirements.get(fileId);
@@ -199,11 +220,11 @@ export class SpatialProfileWidgetStore {
                     regionRequirements.spatialProfiles = [];
                 }
 
-                const existingConfig = regionRequirements.spatialProfiles.find(c => c.coordinate === coordinate);
+                const existingConfig = regionRequirements.spatialProfiles.find(c => c.coordinate === widgetStore.fullCoordinate);
                 if (existingConfig) {
                     // TODO: Merge existing configs, rather than only allowing a single one
                 } else {
-                    regionRequirements.spatialProfiles.push(spatialConfig);
+                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, widgetStore.fullCoordinate, regionId === RegionId.CURSOR));
                 }
             }
         });
@@ -212,9 +233,9 @@ export class SpatialProfileWidgetStore {
 
     // This function diffs the updated requirements map with the existing requirements map, and reacts to changes
     // Three diff cases are checked:
-    // 1. The old map has an entry, but the new one does not => send an "empty" SetSpectralRequirements message
-    // 2. The old and new maps both have entries, but they are different => send the new SetSpectralRequirements message
-    // 3. The new map has an entry, but the old one does not => send the new SetSpectralRequirements message
+    // 1. The old map has an entry, but the new one does not => send an "empty" SetSpatialRequirements message
+    // 2. The old and new maps both have entries, but they are different => send the new SetSpatialRequirements message
+    // 3. The new map has an entry, but the old one does not => send the new SetSpatialRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
     public static DiffSpatialRequirements(originalRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>, updatedRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>) {
         const diffList: CARTA.SetSpatialRequirements[] = [];
@@ -299,6 +320,10 @@ export class SpatialProfileWidgetStore {
     @action initXYBoundaries(minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
+
+    @action setSelectedStokes = (stokes: string) => {
+        this.selectedStokes = stokes;
+    };
 
     public init = (widgetSettings): void => {
         if (!widgetSettings) {

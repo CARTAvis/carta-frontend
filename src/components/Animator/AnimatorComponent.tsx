@@ -72,15 +72,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     onStokesChanged = (val: number) => {
         const frame = AppStore.Instance.activeFrame;
-        if (frame) {
-            if (val < 0) {
-                val += frame.frameInfo.fileInfoExtended.stokes;
-            }
-            if (val >= frame.frameInfo.fileInfoExtended.stokes) {
-                val = 0;
-            }
-            frame.setChannels(frame.requiredChannel, val, true);
-        }
+        frame?.setChannels(frame.requiredChannel, val, true);
     };
 
     onFrameChanged = (val: number) => {
@@ -305,7 +297,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 showTrackFill={false}
                                 max={activeFrame.frameInfo.fileInfoExtended.stokes - 1}
                                 labelRenderer={(val: number) => {
-                                    return isFinite(val) && val >= 0 && val < activeFrame?.stokesInfo?.length ? `Stokes ${activeFrame.stokesInfo[val]}` : `${val}`;
+                                    return isFinite(val) && val >= 0 && val < activeFrame?.stokesInfo?.length ? activeFrame.stokesInfo[val] : `${val}`;
                                 }}
                                 onChange={this.onStokesChanged}
                                 disabled={appStore.animatorStore.animationActive}
