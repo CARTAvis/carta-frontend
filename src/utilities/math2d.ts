@@ -26,6 +26,14 @@ export function scale2D(a: Point2D, s: number): Point2D {
     return {x: a.x * s, y: a.y * s};
 }
 
+export function multiply2D(a: Point2D, b: Point2D): Point2D {
+    return {x: a.x * b.x, y: a.y * b.y};
+}
+
+export function divide2D(a: Point2D, b: Point2D): Point2D {
+    return {x: a.x / b.x, y: a.y / b.y};
+}
+
 export function normal2D(a: Point2D, b: Point2D): Point2D {
     const delta = normalize2D(subtract2D(a, b));
     return perpVector2D(delta);

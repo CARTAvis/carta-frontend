@@ -32,6 +32,7 @@ import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel,
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";
+import {ColorbarStore} from "./ColorbarStore";
 
 export interface FrameInfo {
     fileId: number;
@@ -42,11 +43,6 @@ export interface FrameInfo {
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
     beamTable: CARTA.IBeam[];
-}
-
-export enum RasterRenderType {
-    NONE,
-    TILED
 }
 
 export const WCS_PRECISION = 10;
@@ -73,6 +69,7 @@ export class FrameStore {
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
+    public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
@@ -99,7 +96,6 @@ export class FrameStore {
     @observable requiredStokes: number;
     @observable requiredChannel: number;
     @observable animationChannelRange: NumberRange;
-    @observable renderType: RasterRenderType;
     @observable currentFrameView: FrameView;
     @observable currentCompressionQuality: number;
     @observable renderConfig: RenderConfigStore;
@@ -211,7 +207,6 @@ export class FrameStore {
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
             const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
-
             return {
                 xMin: this.center.x - imageWidth / 2.0,
                 xMax: this.center.x + imageWidth / 2.0,
@@ -766,9 +761,9 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preferenceStore, this);
+        this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
-        this.renderType = RasterRenderType.NONE;
         this.moving = false;
         this.zooming = false;
         this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
@@ -1681,10 +1676,6 @@ export class FrameStore {
 
     @action setAnimationRange = (range: NumberRange) => {
         this.animationChannelRange = range;
-    };
-
-    @action setRasterRenderType = (renderType: RasterRenderType) => {
-        this.renderType = renderType;
     };
 
     @action startMoving = () => {

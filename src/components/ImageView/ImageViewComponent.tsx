@@ -1,51 +1,60 @@
+import "./ImageViewComponent.scss";
 import * as React from "react";
 import $ from "jquery";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {action, autorun, makeObservable, observable, runInAction} from "mobx";
-import {NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {OverlayComponent} from "./Overlay/OverlayComponent";
-import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
-import {ColorbarComponent} from "./Colorbar/ColorbarComponent";
-import {RasterViewComponent} from "./RasterView/RasterViewComponent";
-import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
-import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
-import {RegionViewComponent} from "./RegionView/RegionViewComponent";
-import {ContourViewComponent} from "./ContourView/ContourViewComponent";
-import {CatalogViewGLComponent} from "./CatalogView/CatalogViewGLComponent";
-import {AppStore, RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, Padding} from "stores";
-import {CursorInfo, CursorInfoVisibility, Point2D} from "models";
+import {NonIdealState, Spinner} from "@blueprintjs/core";
+import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
+import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
+import {Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.scss";
 
-export const getImageCanvas = (padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)"): HTMLCanvasElement => {
-    const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
-    const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
-    const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
-    const catalogCanvas = document.getElementById("catalog-canvas") as HTMLCanvasElement;
+export enum ImageViewLayer {
+    RegionCreating = "regionCreating",
+    Catalog = "catalog",
+    RegionMoving = "regionMoving",
+    DistanceMeasuring = "distanceMeasuring"
+}
+
+export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
+    const appStore = AppStore.Instance;
+    const imageViewCanvas = document.createElement("canvas") as HTMLCanvasElement;
+    imageViewCanvas.width = appStore.overlayStore.fullViewWidth * devicePixelRatio;
+    imageViewCanvas.height = appStore.overlayStore.fullViewHeight * devicePixelRatio;
+    const ctx = imageViewCanvas.getContext("2d");
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
+    appStore.visibleFrames.forEach((frame, index) => {
+        const column = index % appStore.numImageColumns;
+        const row = Math.floor(index / appStore.numImageColumns);
+        const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
+        if (panelCanvas) {
+            ctx.drawImage(panelCanvas, appStore.overlayStore.viewWidth * column * devicePixelRatio, appStore.overlayStore.viewHeight * row * devicePixelRatio);
+        }
+    });
+
+    return imageViewCanvas;
+}
+
+export function getPanelCanvas(column: number, row: number, padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
+    const panelElement = $(`#image-panel-${column}-${row}`)?.first();
+    if (!panelElement?.length) {
+        return null;
+    }
+    const rasterCanvas = panelElement.find(".raster-canvas")?.[0] as HTMLCanvasElement;
+    const contourCanvas = panelElement.find(".contour-canvas")?.[0] as HTMLCanvasElement;
+    const overlayCanvas = panelElement.find(".overlay-canvas")?.[0] as HTMLCanvasElement;
+    const catalogCanvas = panelElement.find(".catalog-canvas")?.[0] as HTMLCanvasElement;
 
     if (!rasterCanvas || !contourCanvas || !overlayCanvas) {
         return null;
     }
 
-    let colorbarCanvas: HTMLCanvasElement;
-    let regionCanvas: HTMLCanvasElement;
-    let beamProfileCanvas: HTMLCanvasElement;
-
-    const colorbarQuery = $(".colorbar-stage").children().children("canvas");
-    if (colorbarQuery && colorbarQuery.length) {
-        colorbarCanvas = colorbarQuery[0] as HTMLCanvasElement;
-    }
-
-    const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
-    if (beamProfileQuery && beamProfileQuery.length) {
-        beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
-    }
-
-    const regionQuery = $(".region-stage").children().children("canvas");
-    if (regionQuery && regionQuery.length) {
-        regionCanvas = regionQuery[0] as HTMLCanvasElement;
-    }
+    const colorbarCanvas = panelElement.find(".colorbar-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
+    const beamProfileCanvas = panelElement.find(".beam-profile-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
+    const regionCanvas = panelElement.find(".region-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
 
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
     composedCanvas.width = overlayCanvas.width;
@@ -92,24 +101,10 @@ export const getImageCanvas = (padding: Padding, colorbarPosition: string, backg
     }
 
     return composedCanvas;
-};
-
-export enum ImageViewLayer {
-    RegionCreating = "regionCreating",
-    Catalog = "catalog",
-    RegionMoving = "regionMoving",
-    DistanceMeasuring = "distanceMeasuring"
 }
 
 @observer
 export class ImageViewComponent extends React.Component<WidgetProps> {
-    private ratioIndicatorTimeoutHandle;
-    private cachedImageSize: Point2D;
-
-    @observable showRatioIndicator: boolean;
-    @observable pixelHighlightValue: number = NaN;
-    readonly activeLayer: ImageViewLayer;
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "image-view",
@@ -124,35 +119,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         };
     }
 
-    @action setPixelHighlightValue = (val: number) => {
-        this.pixelHighlightValue = val;
-    };
+    private ratioIndicatorTimeoutHandle;
+    private cachedImageSize: Point2D;
+    private cachedGridSize: Point2D;
 
-    constructor(props: WidgetProps) {
-        super(props);
-        makeObservable(this);
-
-        this.activeLayer = AppStore.Instance.activeLayer;
-        autorun(() => {
-            const frame = AppStore.Instance.activeFrame;
-            if (frame) {
-                const imageSize = {x: frame.renderWidth, y: frame.renderHeight};
-                // Compare to cached image size to prevent duplicate events when changing frames
-                if (!this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y) {
-                    this.cachedImageSize = imageSize;
-                    clearTimeout(this.ratioIndicatorTimeoutHandle);
-                    runInAction(() => (this.showRatioIndicator = true));
-                    this.ratioIndicatorTimeoutHandle = setTimeout(
-                        () =>
-                            runInAction(() => {
-                                this.showRatioIndicator = false;
-                            }),
-                        1000
-                    );
-                }
-            }
-        });
-    }
+    @observable showRatioIndicator: boolean = false;
 
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
@@ -160,125 +131,86 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
     };
 
-    onClicked = (cursorInfo: CursorInfo) => {
-        const frame = AppStore.Instance.activeFrame;
-        if (frame) {
-            frame.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
-        }
+    @action setRatioIndicatorVisible = (val: boolean) => {
+        this.showRatioIndicator = val;
     };
 
-    onZoomed = (cursorInfo: CursorInfo, delta: number) => {
-        const frame = AppStore.Instance.activeFrame;
-        if (frame) {
-            const zoomSpeed = 1 + Math.abs(delta / 750.0);
+    constructor(props: WidgetProps) {
+        super(props);
+        makeObservable(this);
 
-            // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
-            if (frame.spatialReference) {
-                const newZoom = frame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-                frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
-            } else {
-                const newZoom = frame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-                frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
-            }
-        }
-    };
-
-    onMouseEnter = () => {
-        AppStore.Instance.showImageToolbar();
-    };
-
-    onMouseLeave = () => {
-        AppStore.Instance.hideImageToolbar();
-    };
-
-    private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
-        if (region) {
-            const frame = appStore.getFrame(region.fileId);
-            if (frame) {
-                frame.regionSet.selectRegion(region);
-                appStore.dialogStore.showRegionDialog();
+
+        autorun(() => {
+            const imageSize = {x: appStore.overlayStore.renderWidth, y: appStore.overlayStore.renderHeight};
+            const imageGridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
+            // Compare to cached image size to prevent duplicate events when changing frames
+            const imageSizeChanged = !this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y;
+            const gridSizeChanged = !this.cachedGridSize || this.cachedGridSize.x !== imageGridSize.x || this.cachedGridSize.y !== imageGridSize.y;
+            if (imageSizeChanged || gridSizeChanged) {
+                this.cachedImageSize = imageSize;
+                this.cachedGridSize = imageGridSize;
+                clearTimeout(this.ratioIndicatorTimeoutHandle);
+                this.setRatioIndicatorVisible(true);
+                this.ratioIndicatorTimeoutHandle = setTimeout(() => this.setRatioIndicatorVisible(false), 1000);
             }
+        });
+    }
+
+    @computed get panels() {
+        const appStore = AppStore.Instance;
+        const visibleFrames = appStore.visibleFrames;
+        if (!visibleFrames) {
+            return [];
         }
-    };
+        return visibleFrames.map((frame, index) => {
+            const column = index % appStore.numImageColumns;
+            const row = Math.floor(index / appStore.numImageColumns);
+
+            return <ImagePanelComponent key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} row={row} column={column} />;
+        });
+    }
 
     render() {
         const appStore = AppStore.Instance;
-        const overlayStore = appStore.overlayStore;
-        let divContents;
-        if (appStore.activeFrame && appStore.activeFrame.isRenderable && appStore.astReady) {
-            const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
-            const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
-            const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
-            // This will be expanded when using multi-panel view
-            const cursorInfoRequired = appStore.preferenceStore.cursorInfoVisible !== CursorInfoVisibility.Never;
 
-            divContents = (
-                <React.Fragment>
-                    {appStore.activeFrame.valid && <OverlayComponent frame={appStore.activeFrame} overlaySettings={overlayStore} docked={this.props.docked} />}
-                    {cursorInfoRequired && appStore.activeFrame.cursorInfo && (
-                        <CursorOverlayComponent
-                            cursorInfo={appStore.activeFrame.cursorInfo}
-                            cursorValue={appStore.activeFrame.cursorInfo.isInsideImage ? appStore.activeFrame.cursorValue.value : undefined}
-                            isValueCurrent={appStore.activeFrame.isCursorValueCurrent}
-                            spectralInfo={appStore.activeFrame.spectralInfo}
-                            width={overlayStore.viewWidth}
-                            left={overlayStore.padding.left}
-                            right={overlayStore.padding.right}
-                            docked={this.props.docked}
-                            unit={appStore.activeFrame.unit}
-                            top={overlayStore.padding.top}
-                            currentStokes={appStore.activeFrame.requiredStokes >= 0 && appStore.activeFrame.requiredStokes < appStore.activeFrame.stokesInfo?.length ? appStore.activeFrame.requiredStokesInfo : ""}
-                            showImage={true}
-                            showWCS={true}
-                            showValue={true}
-                            showChannel={false}
-                            showSpectral={true}
-                            showStokes={true}
-                        />
-                    )}
-                    {appStore.activeFrame && overlayStore.colorbar.visible && <ColorbarComponent onCursorHoverValueChanged={this.setPixelHighlightValue} />}
-                    {appStore.activeFrame && <BeamProfileOverlayComponent top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
-                    {appStore.activeFrame && <CatalogViewGLComponent frame={appStore.activeFrame} docked={this.props.docked} onZoomed={this.onZoomed} />}
-                    {appStore.activeFrame && (
-                        <RegionViewComponent
-                            frame={appStore.activeFrame}
-                            width={appStore.activeFrame.renderWidth}
-                            height={appStore.activeFrame.renderHeight}
-                            top={overlayStore.padding.top}
-                            left={overlayStore.padding.left}
-                            onClicked={this.onClicked}
-                            onRegionDoubleClicked={this.handleRegionDoubleClicked}
-                            onZoomed={this.onZoomed}
-                            overlaySettings={overlayStore}
-                            isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
-                            dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                            cursorFrozen={appStore.cursorFrozen}
-                            cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
-                            docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
-                        />
-                    )}
-                    <ToolbarComponent docked={this.props.docked} visible={appStore.imageToolbarVisible} vertical={false} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
-                    <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
-                        <Tag large={true}>
-                            {effectiveWidth} x {effectiveHeight} ({toFixed(effectiveWidth / effectiveHeight, 2)})
-                        </Tag>
-                    </div>
-                </React.Fragment>
-            );
+        let divContents: React.ReactNode | React.ReactNode[];
+        if (!this.panels.length) {
+            divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner" />} title={"Loading AST Library"} />;
         } else {
-            divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
+            const effectiveImageSize = {x: Math.floor(appStore.overlayStore.renderWidth), y: Math.floor(appStore.overlayStore.renderHeight)};
+            const ratio = effectiveImageSize.x / effectiveImageSize.y;
+            const gridSize = {x: appStore.numImageColumns, y: appStore.numImageRows};
+
+            let gridSizeNode: React.ReactNode;
+            if (gridSize.x * gridSize.y > 1) {
+                gridSizeNode = (
+                    <p>
+                        {gridSize.x} &times; {gridSize.y}
+                    </p>
+                );
+            }
+            divContents = (
+                <React.Fragment>
+                    {this.panels}
+                    <div style={{opacity: this.showRatioIndicator ? 1 : 0}} className={"image-ratio-popup"}>
+                        <p>
+                            {effectiveImageSize.x} &times; {effectiveImageSize.y} ({toFixed(ratio, 2)})
+                        </p>
+                        {gridSizeNode}
+                    </div>
+                </React.Fragment>
+            );
         }
 
         return (
-            <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                <RasterViewComponent frame={appStore.activeFrame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} />
-                <ContourViewComponent frame={appStore.activeFrame} docked={this.props.docked} />
-                {divContents}
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-            </div>
+            <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
+                <div className="image-view-div" style={{gridTemplateColumns: `repeat(${appStore.numImageColumns}, auto)`}}>
+                    {divContents}
+                </div>
+            </ReactResizeDetector>
         );
     }
 }
