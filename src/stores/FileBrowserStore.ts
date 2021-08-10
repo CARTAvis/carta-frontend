@@ -602,7 +602,8 @@ export class FileBrowserStore {
                         value: index,
                         label: region.nameString,
                         active: region.regionId === activeRegionId,
-                        icon: RegionStore.RegionIconString(region.regionType)
+                        icon: RegionStore.RegionIconString(region.regionType),
+                        isCustomIcon: RegionStore.IsRegionCustomIcon(region.regionType)
                     });
                 }
             });

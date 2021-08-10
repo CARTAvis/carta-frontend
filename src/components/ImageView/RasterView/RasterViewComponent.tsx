@@ -1,7 +1,7 @@
 import * as React from "react";
 import tinycolor from "tinycolor2";
 import {observer} from "mobx-react";
-import {AppStore, FrameStore, RasterRenderType} from "stores";
+import {AppStore, FrameStore} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
 import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D, smoothStep, getColorForTheme} from "utilities";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
@@ -11,6 +11,8 @@ export class RasterViewComponentProps {
     docked: boolean;
     frame: FrameStore;
     pixelHighlightValue: number;
+    row: number;
+    column: number;
 }
 
 @observer
@@ -38,7 +40,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const tileRenderService = TileWebGLService.Instance;
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
             const histStokes = frame.renderConfig.stokes;
-            const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histogram.channel : undefined;
+            const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
             if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel) && frame.stokes === histStokes) {
                 this.updateCanvasSize();
                 this.updateUniforms();
@@ -46,8 +48,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             }
             // draw in 2d canvas
             const ctx = this.canvas.getContext("2d");
-            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            ctx.drawImage(this.gl.canvas, 0, 0, this.canvas.width, this.canvas.height);
+            const w = this.canvas.width;
+            const h = this.canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            ctx.drawImage(this.gl.canvas, this.props.column * w, this.props.row * h, w, h, 0, 0, w, h);
         }
     };
 
@@ -95,28 +99,44 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private updateCanvasSize() {
         const frame = this.props.frame;
+
+        if (!frame) {
+            return;
+        }
+
+        const appStore = AppStore.Instance;
+        const requiredWidth = Math.max(1, frame.renderWidth * devicePixelRatio);
+        const requiredHeight = Math.max(1, frame.renderHeight * devicePixelRatio);
+
         const tileRenderService = TileWebGLService.Instance;
         // Resize and clear the canvas if needed
-        if (frame && frame.isRenderable && (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio)) {
-            this.canvas.width = frame.renderWidth * devicePixelRatio;
-            this.canvas.height = frame.renderHeight * devicePixelRatio;
-            tileRenderService.setCanvasSize(frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
+        if (frame?.isRenderable && (this.canvas.width !== requiredWidth || this.canvas.height !== requiredHeight)) {
+            this.canvas.width = requiredWidth;
+            this.canvas.height = requiredHeight;
         }
+        // Resize and clear the shared WebGL canvas if required
+        tileRenderService.setCanvasSize(requiredWidth * appStore.numImageColumns, requiredHeight * appStore.numImageRows);
     }
 
     private renderCanvas() {
         const frame = this.props.frame;
         // Only clear and render if we're in animation or tiled mode
-        if (frame && frame.isRenderable && frame.renderType !== RasterRenderType.NONE) {
-            this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
+        if (frame?.isRenderable) {
+            const appStore = AppStore.Instance;
+            const xOffset = this.props.column * frame.renderWidth * devicePixelRatio;
+            // y-axis is inverted
+            const yOffset = (appStore.numImageRows - 1 - this.props.row) * frame.renderHeight * devicePixelRatio;
+            this.gl.viewport(xOffset, yOffset, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
             this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
+
+            // Clear a scissored rectangle limited to the current frame
+            this.gl.enable(WebGLRenderingContext.SCISSOR_TEST);
+            this.gl.scissor(xOffset, yOffset, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
             this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
+            this.gl.disable(WebGLRenderingContext.SCISSOR_TEST);
 
             // Skip rendering if frame is hidden
-            if (!frame.renderConfig.visible) {
-                return;
-            }
-            if (frame.renderType === RasterRenderType.TILED) {
+            if (frame.renderConfig.visible) {
                 this.renderTiledCanvas();
             }
         }
@@ -217,12 +237,23 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
     }
 
+    private get panelIndex() {
+        const panelElement = this.canvas?.parentElement?.parentElement;
+        const viewElement = panelElement?.parentElement;
+        const numPanels = (viewElement?.children?.length ?? 0) - 1;
+        for (let i = 0; i < numPanels; i++) {
+            if (viewElement.children[i] === panelElement) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     private renderTile(tile: TileCoordinate, rasterTile: RasterTile, mip: number) {
         const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
+        const frame = this.props.frame;
         const shaderUniforms = TileWebGLService.Instance.shaderUniforms;
         const tileService = TileService.Instance;
-
         if (!rasterTile) {
             return;
         }
@@ -313,7 +344,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const spatialReference = frame.spatialReference || frame;
             const frameView = spatialReference.requiredFrameView;
             const currentView = spatialReference.currentFrameView;
-            const renderType = frame.renderType;
 
             const colorMapping = {
                 min: frame.renderConfig.scaleMinVal,
@@ -340,6 +370,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         if (this.props.docked) {
             className += " docked";
         }
+
         return (
             <div className={className}>
                 <canvas
@@ -349,8 +380,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frame && frame.isRenderable ? frame.renderWidth || 1 : 1,
-                        height: frame && frame.isRenderable ? frame.renderHeight || 1 : 1
+                        width: frame?.isRenderable ? frame.renderWidth || 1 : 1,
+                        height: frame?.isRenderable ? frame.renderHeight || 1 : 1
                     }}
                 />
             </div>

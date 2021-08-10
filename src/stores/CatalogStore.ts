@@ -1,6 +1,6 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed, makeObservable} from "mobx";
-import {AppStore, CatalogProfileStore, CatalogSystemType, WidgetsStore} from "stores";
+import {AppStore, CatalogProfileStore, CatalogSystemType, FrameStore, WidgetsStore} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 import {minMaxArray} from "utilities";
@@ -211,18 +211,32 @@ export class CatalogStore {
     @computed get activeCatalogFiles() {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame) {
-            const imageId = activeFrame.frameInfo.fileId;
-            let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
-            activeFrame.spatialSiblings?.forEach(frame => {
-                const catalogs = [...this.imageAssociatedCatalogId.get(frame.frameInfo.fileId)];
-                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, catalogs]))].filter(catalogFileId => {
-                    return this.catalogGLData.get(catalogFileId) !== undefined;
-                });
-            });
-            return associatedCatalogIds.sort((a, b) => a - b);
+            return this.visibleCatalogFiles.get(activeFrame) ?? [];
         } else {
             return [];
         }
+    }
+
+    @computed get visibleCatalogFiles(): Map<FrameStore, number[]> {
+        const appStore = AppStore.Instance;
+        const visibleCatalogMap = new Map<FrameStore, number[]>();
+
+        /// TODO: this should be cleaned up a bit
+        for (const frame of appStore.visibleFrames) {
+            const imageId = frame.frameInfo.fileId;
+            let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
+            frame.spatialSiblings?.forEach(frame => {
+                const catalogs = [...this.imageAssociatedCatalogId.get(frame.frameInfo.fileId)];
+                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, catalogs]))].filter(catalogFileId => {
+                    return this.catalogGLData.has(catalogFileId);
+                });
+            });
+            visibleCatalogMap.set(
+                frame,
+                associatedCatalogIds.sort((a, b) => a - b)
+            );
+        }
+        return visibleCatalogMap;
     }
 
     getFrameIdByCatalogId(catalogId: number): number {

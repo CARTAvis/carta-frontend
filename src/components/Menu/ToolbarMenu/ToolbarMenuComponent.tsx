@@ -39,11 +39,12 @@ export class ToolbarMenuComponent extends React.Component {
                 );
                 break;
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 tooltip = (
                     <small>
                         Define control points with a series of clicks.
                         <br />
-                        Double-click to close the loop and finish polygon creation.
+                        Double-click to {type === CARTA.RegionType.POLYLINE ? "" : "close the loop and"} finish creation.
                         <br />
                         Double-click on a control point to delete it.
                         <br />
@@ -97,21 +98,15 @@ export class ToolbarMenuComponent extends React.Component {
         return (
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
-                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.POINT)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled} />
-                    </Tooltip2>
-                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.LINE)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"slash"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.LINE)} active={isRegionCreating && newRegionType === CARTA.RegionType.LINE} disabled={regionButtonsDisabled} />
-                    </Tooltip2>
-                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.RECTANGLE)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled} />
-                    </Tooltip2>
-                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.ELLIPSE)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled} />
-                    </Tooltip2>
-                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.POLYGON)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled} />
-                    </Tooltip2>
+                    {Array.from(RegionStore.AVAILABLE_REGION_TYPES.keys()).map((type, index) => {
+                        const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
+                        const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+                        return (
+                            <Tooltip2 content={this.regionTooltip(type)} position={Position.BOTTOM} key={index}>
+                                <AnchorButton icon={regionIcon} onClick={() => this.handleRegionTypeClicked(type)} active={isRegionCreating && newRegionType === type} disabled={regionButtonsDisabled} />
+                            </Tooltip2>
+                        );
+                    })}
                 </ButtonGroup>
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {

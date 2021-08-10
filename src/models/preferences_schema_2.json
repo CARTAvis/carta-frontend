@@ -278,6 +278,21 @@
         "lastUsedFolder": {
             "type": "string",
             "default": ""
+        },
+        "imagePanelMode": {
+            "type": "string",
+            "enum": ["single", "dynamic", "fixed"],
+            "default": "none"
+        },
+        "imagePanelColumns": {
+            "type": "number",
+            "minimum": 1,
+            "default": 2
+        },
+        "imagePanelRows": {
+            "type": "number",
+            "minimum": 1,
+            "default": 2
         }
     }
 }

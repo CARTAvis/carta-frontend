@@ -1,14 +1,15 @@
 import * as React from "react";
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
+import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, NonIdealState} from "@blueprintjs/core";
+import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AppStore, ASTSettingsString, DefaultWidgetConfig, FrameStore, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
-import {SpatialProfileWidgetStore} from "stores/widgets";
+import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme} from "utilities";
 import "./SpatialProfilerComponent.scss";
@@ -23,9 +24,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             id: "spatial-profiler",
             type: "spatial-profiler",
             minWidth: 250,
-            minHeight: 225,
+            minHeight: 250,
             defaultWidth: 650,
-            defaultHeight: 225,
+            defaultHeight: 250,
             title: "X Profile: Cursor",
             isCloseable: true,
             helpType: HelpType.SPATIAL_PROFILER
@@ -54,15 +55,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get profileStore(): SpatialProfileStore {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
-            let keyStruct = {fileId: this.widgetStore.fileId, regionId: this.widgetStore.regionId};
-            // Replace "current file" fileId with active frame's fileId
-            if (this.widgetStore.fileId === -1) {
-                keyStruct.fileId = appStore.activeFrame.frameInfo.fileId;
-            }
-            const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
-            return appStore.spatialProfiles.get(key);
+        const widgetStore = this.widgetStore;
+        if (widgetStore.effectiveFrame) {
+            const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
+            return AppStore.Instance.spatialProfiles.get(profileKey);
         }
         return undefined;
     }
@@ -76,13 +72,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get plotData(): {values: Array<Point2D>; smoothingValues: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number; yMean: number; yRms: number} {
-        const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
         if (!this.frame || !this.width || !this.profileStore) {
             return null;
         }
 
         // Use accurate profiles from server-sent data
-        const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
+        const coordinateData = this.profileStore.getProfile(this.widgetStore.fullCoordinate);
         if (!(coordinateData && coordinateData.values && coordinateData.values.length)) {
             return null;
         } else {
@@ -94,11 +89,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 xMax = this.autoScaleHorizontalMax;
             } else {
                 xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                if (isXProfile) {
-                    xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                } else {
-                    xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.height);
-                }
+                xMax = clamp(this.widgetStore.maxX, 0, this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height);
             }
 
             xMin = Math.floor(xMin);
@@ -226,7 +217,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const currentData = this.plotData;
                 if (appStore && coordinate) {
                     const coordinateString = `${coordinate.toUpperCase()} Profile`;
-                    const regionString = this.widgetStore.regionId === 0 ? "Cursor" : `Region #${this.widgetStore.regionId}`;
+                    const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
                     appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
                 }
                 if (currentData) {
@@ -239,11 +230,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
         autorun(
             () => {
-                const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
                 if (!this.frame || !this.width) {
                     return null;
                 }
-                if (isXProfile) {
+                if (this.widgetStore.isXProfile) {
                     this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width), clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width));
                 } else {
                     this.setAutoScaleBounds(clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height), clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height));
@@ -270,12 +260,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         if (!this.frame || !this.profileStore || !this.widgetStore) {
             return;
         }
-        const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
 
         let astString = new ASTSettingsString();
         astString.add("System", OverlayStore.Instance.global.explicitSystem);
 
-        if (isXProfile) {
+        if (this.widgetStore.isXProfile) {
             for (let i = 0; i < values.length; i++) {
                 const pointWCS = transformPoint(this.frame.wcsInfo, {x: values[i], y: this.profileStore.y});
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
@@ -364,14 +353,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
                     profilerInfo.push("Cursor: (" + wcsLabel + imageLabel + valueLabel + ")");
                 }
-            } else {
-                // get value directly from frame when cursor is in image viewer
-                const cursorInfo = this.frame.cursorInfo;
-                const cursorValue = this.frame.cursorValue?.value;
-                if (cursorInfo?.posImageSpace) {
-                    const wcsLabel = cursorInfo?.infoWCS ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
-                    const imageLabel = `Image: ${toFixed(isXCoordinate ? cursorInfo.posImageSpace.x : cursorInfo.posImageSpace.y)} px, `;
-                    const valueLabel = `${cursorValue !== undefined ? formattedExponential(cursorValue, 5) : ""}`;
+            } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
+                // get value directly from point region
+                const pointRegionInfo = this.frame.getCursorInfo(this.widgetStore.effectiveRegion.center);
+                if (pointRegionInfo?.posImageSpace) {
+                    const wcsLabel = pointRegionInfo?.infoWCS ? `WCS: ${isXCoordinate ? pointRegionInfo.infoWCS.x : pointRegionInfo.infoWCS.y}, ` : "";
+                    const imageLabel = `Image: ${toFixed(isXCoordinate ? pointRegionInfo.posImageSpace.x : pointRegionInfo.posImageSpace.y)} px, `;
+                    const valueLabel = `${this.profileStore?.value !== undefined ? formattedExponential(this.profileStore.value, 5) : ""}`;
                     profilerInfo.push("Data: (" + wcsLabel + imageLabel + valueLabel + ")");
                 }
             }
@@ -388,11 +376,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        if (!this.widgetStore) {
+        const widgetStore = this.widgetStore;
+        if (!widgetStore) {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"} />;
         }
 
-        const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
+        const isXProfile = widgetStore.isXProfile;
         const imageName = appStore.activeFrame ? appStore.activeFrame.filename : undefined;
         const plotName = `${isXProfile ? "X" : "Y"} profile`;
         let linePlotProps: LinePlotComponentProps = {
@@ -401,18 +390,18 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: plotName,
-            plotType: this.widgetStore.plotType,
+            plotType: widgetStore.plotType,
             tickTypeY: TickType.Scientific,
-            graphZoomedX: this.widgetStore.setXBounds,
-            graphZoomedY: this.widgetStore.setYBounds,
-            graphZoomedXY: this.widgetStore.setXYBounds,
-            graphZoomReset: this.widgetStore.clearXYBounds,
+            graphZoomedX: widgetStore.setXBounds,
+            graphZoomedY: widgetStore.setYBounds,
+            graphZoomedXY: widgetStore.setXYBounds,
+            graphZoomReset: widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
-            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
+            mouseEntered: widgetStore.setMouseMoveIntoLinePlots,
             zeroLineWidth: 2,
-            borderWidth: this.widgetStore.lineWidth,
-            pointRadius: this.widgetStore.linePlotPointSize,
+            borderWidth: widgetStore.lineWidth,
+            pointRadius: widgetStore.linePlotPointSize,
             multiPlotPropsMap: new Map<string, MultiPlotProps>(),
             order: 1
         };
@@ -423,7 +412,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.yLabel = `Value (${this.frame.unit})`;
                 }
 
-                if (this.frame.validWcs && this.widgetStore.wcsAxisVisible) {
+                if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
                     linePlotProps.showTopAxis = true;
                     linePlotProps.topAxisTickFormatter = this.formatProfileAst;
                 } else {
@@ -435,9 +424,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.data = currentPlotData.values;
 
                     // set line color
-                    let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+                    let primaryLineColor = getColorForTheme(widgetStore.primaryLineColor);
                     linePlotProps.lineColor = primaryLineColor;
-                    const smoothingStore = this.widgetStore.smoothingStore;
+                    const smoothingStore = widgetStore.smoothingStore;
                     if (smoothingStore.type !== SmoothingType.NONE && currentPlotData?.smoothingValues) {
                         if (!smoothingStore.isOverlayOn) {
                             linePlotProps.lineColor = "#00000000";
@@ -458,20 +447,20 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     }
 
                     // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
-                    if (this.widgetStore.isAutoScaledX) {
+                    if (widgetStore.isAutoScaledX) {
                         linePlotProps.xMin = currentPlotData.xMin;
                         linePlotProps.xMax = currentPlotData.xMax;
                     } else {
-                        linePlotProps.xMin = this.widgetStore.minX;
-                        linePlotProps.xMax = this.widgetStore.maxX;
+                        linePlotProps.xMin = widgetStore.minX;
+                        linePlotProps.xMax = widgetStore.maxX;
                     }
 
-                    if (this.widgetStore.isAutoScaledY) {
+                    if (widgetStore.isAutoScaledY) {
                         linePlotProps.yMin = currentPlotData.yMin;
                         linePlotProps.yMax = currentPlotData.yMax;
                     } else {
-                        linePlotProps.yMin = this.widgetStore.minY;
-                        linePlotProps.yMax = this.widgetStore.maxY;
+                        linePlotProps.yMin = widgetStore.minY;
+                        linePlotProps.yMax = widgetStore.maxY;
                     }
 
                     // Use interpolated lines when decimating data to speed up rendering
@@ -481,7 +470,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 const cursorX = {
-                    profiler: this.widgetStore.cursorX,
+                    profiler: widgetStore.cursorX,
                     image: isXProfile ? this.profileStore.x : this.profileStore.y,
                     unit: "px"
                 };
@@ -503,7 +492,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     isMouseMove: true
                 });
 
-                if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+                if (widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.markers.push({
                         value: currentPlotData.yMean,
                         id: "marker-mean",
@@ -534,10 +523,20 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return (
             <div className={"spatial-profiler-widget"}>
                 <div className="profile-container">
+                    <div className="profile-toolbar">
+                        <RegionSelectorComponent widgetStore={widgetStore} disableClosedRegion={true} />
+                        {widgetStore.effectiveFrame?.hasStokes && (
+                            <FormGroup label={"Polarization"} inline={true}>
+                                <HTMLSelect value={widgetStore.selectedStokes} options={widgetStore.stokesOptions} onChange={ev => widgetStore.setSelectedStokes(ev.currentTarget.value)} />
+                            </FormGroup>
+                        )}
+                    </div>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps} />
                     </div>
-                    <ProfilerInfoComponent info={this.genProfilerInfo()} />
+                    <div className="profile-info">
+                        <ProfilerInfoComponent info={this.genProfilerInfo()} />
+                    </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
             </div>
