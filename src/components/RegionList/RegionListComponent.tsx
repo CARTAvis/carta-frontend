@@ -154,7 +154,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 </React.Fragment>
                             );
                     } else {
-                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(length2D(region.wcsSize), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
+                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(length2D(region.size), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
                     }
                 }
                 let tooltipContent = "";
