@@ -687,6 +687,7 @@ export class AppStore {
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
+            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spatialProfileWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId);
 
@@ -773,6 +774,7 @@ export class AppStore {
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets);
+            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spatialProfileWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets);
         }
@@ -2217,7 +2219,7 @@ export class AppStore {
             return;
         }
 
-        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spatialProfileWidgets);
+        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.widgetsStore.spatialProfileWidgets);
         const diffList = SpatialProfileWidgetStore.DiffSpatialRequirements(this.spatialRequirements, updatedRequirements);
         this.spatialRequirements = updatedRequirements;
 
