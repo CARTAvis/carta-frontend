@@ -209,8 +209,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={title.customText} disabled={!title.visible} onChange={ev => title.setCustomText(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={title.customText}>
-                    <FormGroup inline={true} label="Title Text" disabled={!title.visible}>
-                        <InputGroup disabled={!title.visible} value={title.customTitleString} placeholder="Enter title text" onChange={ev => title.setCustomTitleString(ev.currentTarget.value)} />
+                    <FormGroup inline={true} label="Text" labelInfo="(Current image only)" disabled={!title.visible}>
+                        <InputGroup disabled={!title.visible} value={appStore.activeFrame.titleCustomText} placeholder="Enter title text" onChange={ev => appStore.activeFrame.setTitleCustomText(ev.currentTarget.value)} />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom color" disabled={!title.visible}>

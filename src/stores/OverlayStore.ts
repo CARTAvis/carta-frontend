@@ -164,7 +164,6 @@ export class OverlayTitleSettings {
     @observable color: string;
     @observable hidden: boolean;
     @observable customText: boolean;
-    @observable customTitleString: string;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
@@ -172,7 +171,6 @@ export class OverlayTitleSettings {
         astString.add("Font(Title)", this.font);
         astString.add("Size(Title)", this.fontSize);
         astString.add("Color(Title)", AstColorsIndex.TITLE, this.customColor);
-        astString.add("Title", this.customTitleString, this.customText);
         return astString.toString();
     }
 
@@ -185,7 +183,6 @@ export class OverlayTitleSettings {
         this.font = 2;
         this.fontSize = 18;
         this.customText = false;
-        this.customTitleString = "";
     }
 
     @computed get show() {
@@ -219,10 +216,6 @@ export class OverlayTitleSettings {
 
     @action setCustomText = (customTitle: boolean) => {
         this.customText = customTitle;
-    };
-
-    @action setCustomTitleString = (customTitleString: string) => {
-        this.customTitleString = customTitleString;
     };
 }
 

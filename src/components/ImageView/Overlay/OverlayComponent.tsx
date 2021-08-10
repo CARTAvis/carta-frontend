@@ -101,6 +101,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
             }
 
+            if (settings.title.customText && frame.titleCustomText?.length) {
+                currentStyleString += `, Title=${frame.titleCustomText}`;
+            }
+
             plot(currentStyleString);
 
             if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
@@ -142,6 +146,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringShowCurve = frame.distanceMeasuring.showCurve;
         const distanceMeasuringStart = frame.distanceMeasuring.transformedStart;
         const distanceMeasuringFinish = frame.distanceMeasuring.transformedFinish;
+        const title = frame.titleCustomText;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image
