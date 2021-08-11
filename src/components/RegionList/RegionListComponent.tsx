@@ -5,7 +5,7 @@ import {HTMLTable, Icon, NonIdealState, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
+import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION, FileBrowserStore, BrowserMode} from "stores";
 import {toFixed, getFormattedWCSPoint, formattedArcsec, length2D} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.scss";
@@ -65,6 +65,15 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         ev.stopPropagation();
     };
 
+    private handleRegionExportClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
+        FileBrowserStore.Instance.showFileBrowser(BrowserMode.RegionExport, false);
+        ev.stopPropagation();
+    };
+
+    private handleRegionImportClicked = () => {
+        FileBrowserStore.Instance.showFileBrowser(BrowserMode.RegionImport, false);
+    };
+
     private handleRegionListDoubleClick = () => {
         DialogStore.Instance.showRegionDialog();
     };
@@ -89,7 +98,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         let nameWidth = RegionListComponent.NAME_COLUMN_DEFAULT_WIDTH;
         const availableWidth = this.width - 2 * padding;
         let fixedWidth =
-            RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2 +
+            RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3 +
             RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH +
             RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH +
             RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH +
@@ -192,7 +201,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 );
             } else {
                 lockEntry = (
-                    <td colSpan={2} style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2}}>
+                    <td colSpan={3} style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                        <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
                     </td>
@@ -208,10 +218,20 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 );
             }
 
+            let exportEntry: React.ReactNode;
+            if (region.regionId) {
+                exportEntry = (
+                    <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionExportClicked(ev, region)}>
+                        <Icon icon="export" />
+                    </td>
+                );
+            }
+
             return (
                 <tr className={selectedRegion && selectedRegion.regionId === region.regionId ? "selected" : ""} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)}>
                     {lockEntry}
                     {focusEntry}
+                    {exportEntry}
                     <td style={{width: nameWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {region.nameString}
                     </td>
@@ -234,8 +254,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <HTMLTable style={{height: tableHeight}}>
                     <thead className={appStore.darkTheme ? "dark-theme" : ""}>
                         <tr>
-                            <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2}}>
+                            <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}} onClick={this.handleRegionImportClicked}>
                                 <Icon icon={"blank"} />
+                                <Icon icon={"import"} />
                                 <Icon icon={"blank"} />
                             </th>
                             <th style={{width: nameWidth}}>Name</th>
