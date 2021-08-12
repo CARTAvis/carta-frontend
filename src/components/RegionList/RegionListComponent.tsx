@@ -66,8 +66,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionExportClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
-        FileBrowserStore.Instance.showFileBrowser(BrowserMode.RegionExport, false);
-        ev.stopPropagation();
+        FileBrowserStore.Instance.showExportRegions(region.regionId);
     };
 
     private handleRegionImportClicked = () => {
@@ -222,7 +221,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (region.regionId) {
                 exportEntry = (
                     <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionExportClicked(ev, region)}>
-                        <Icon icon="export" />
+                        <Tooltip2 content="Export region" position={Position.BOTTOM}>
+                            <Icon icon="export" />
+                        </Tooltip2>
                     </td>
                 );
             }
@@ -255,9 +256,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <thead className={appStore.darkTheme ? "dark-theme" : ""}>
                         <tr>
                             <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}} onClick={this.handleRegionImportClicked}>
-                                <Icon icon={"blank"} />
-                                <Icon icon={"import"} />
-                                <Icon icon={"blank"} />
+                                <Tooltip2 content="Import regions" position={Position.BOTTOM}>
+                                    <Icon icon={"import"} style={{marginLeft: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH, cursor: "pointer"}} />
+                                </Tooltip2>
                             </th>
                             <th style={{width: nameWidth}}>Name</th>
                             <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
