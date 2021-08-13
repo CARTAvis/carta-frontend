@@ -21,18 +21,17 @@ export class ColorbarStore {
         } else {
             let dy = (scaleMaxVal - scaleMinVal) / tickNum; // estimate the step
             let precision = -ColorbarStore.GetPrecision(dy); // estimate precision
-            const roundBase = Math.pow(10, precision);
-            const min = Math.round(scaleMinVal * roundBase) / roundBase;
-            dy = Math.ceil(dy * roundBase) / roundBase; // the exact step
+            let roundBase = Math.pow(10, precision);
+            dy = Math.round(dy * roundBase) / roundBase; // the exact step
             precision = -ColorbarStore.GetPrecision(dy); // the exact precision of the step
+            roundBase = Math.pow(10, precision);
+            const min = Math.round(scaleMinVal * roundBase) / roundBase;
 
-            const indexArray = Array.from(Array(tickNum).keys());
-            let numbers = indexArray.map(x => min + dy * (x + (min <= scaleMinVal ? 1 : 0)));
-
-            const isOutofBound = (element: number) => element >= scaleMaxVal;
-            const outofBoundIndex = numbers.findIndex(isOutofBound);
-            if (outofBoundIndex !== -1) {
-                numbers = numbers.slice(0, outofBoundIndex);
+            let numbers = [];
+            let val = min > scaleMinVal ? min : min + dy;
+            while (val < scaleMaxVal) {
+                numbers.push(val);
+                val += dy;
             }
             return {numbers: numbers, precision: precision};
         }

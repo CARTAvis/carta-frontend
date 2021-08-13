@@ -891,7 +891,7 @@ export class OverlayColorbarSettings {
 
     @computed get tickNum(): number {
         const tickNum = Math.round((this.height / 100.0) * this.tickDensity);
-        return this.height && tickNum > 1 ? tickNum : 1;
+        return this.height && tickNum > 3 ? tickNum : 3;
     }
 
     @computed get rightBorderPos(): number {
