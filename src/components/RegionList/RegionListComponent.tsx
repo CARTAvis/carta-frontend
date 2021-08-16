@@ -73,6 +73,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         FileBrowserStore.Instance.showFileBrowser(BrowserMode.RegionImport, false);
     };
 
+    private handleRegionExportAllClicked = () => {
+        FileBrowserStore.Instance.showExportRegions();
+    };
+
     private handleRegionListDoubleClick = () => {
         DialogStore.Instance.showRegionDialog();
     };
@@ -222,7 +226,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 exportEntry = (
                     <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionExportClicked(ev, region)}>
                         <Tooltip2 content="Export region" position={Position.BOTTOM}>
-                            <Icon icon="export" />
+                            <Icon icon="cloud-upload" />
                         </Tooltip2>
                     </td>
                 );
@@ -255,9 +259,15 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <HTMLTable style={{height: tableHeight}}>
                     <thead className={appStore.darkTheme ? "dark-theme" : ""}>
                         <tr>
-                            <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}} onClick={this.handleRegionImportClicked}>
+                            <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                                <Icon icon={"blank"} style={{width: 16}} />
                                 <Tooltip2 content="Import regions" position={Position.BOTTOM}>
-                                    <Icon icon={"import"} style={{marginLeft: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH, cursor: "pointer"}} />
+                                    <Icon icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
+                                </Tooltip2>
+                                <Icon icon={"blank"} style={{width: 5}} />
+                                <Tooltip2 content="Export all regions" position={Position.BOTTOM}>
+                                    {this.validRegions.length <= 1 && <Icon icon="cloud-upload" style={{opacity: 0.4}} />}
+                                    {this.validRegions.length > 1 && <Icon icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} />}
                                 </Tooltip2>
                             </th>
                             <th style={{width: nameWidth}}>Name</th>
