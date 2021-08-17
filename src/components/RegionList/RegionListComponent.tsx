@@ -266,8 +266,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 </Tooltip2>
                                 <Icon icon={"blank"} style={{width: 5}} />
                                 <Tooltip2 content="Export all regions" position={Position.BOTTOM}>
-                                    {this.validRegions.length <= 1 && <Icon icon="cloud-upload" style={{opacity: 0.4}} />}
-                                    {this.validRegions.length > 1 && <Icon icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} />}
+                                    {this.validRegions.length > 1 ? <Icon icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} /> : <Icon icon="cloud-upload" style={{opacity: 0.4}} />}
                                 </Tooltip2>
                             </th>
                             <th style={{width: nameWidth}}>Name</th>
