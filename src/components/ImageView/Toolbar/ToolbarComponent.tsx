@@ -197,7 +197,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     Measure distance
                                     <br />
                                     <i>
-                                        <small>Click to create geodesic curves.</small>
+                                        <small>
+                                            Click to create geodesic curves.
+                                            <br />
+                                            {AppStore.Instance.preferenceStore?.dragPanning ? "" : "Hold Ctrl/Cmd and click to pan the image."}
+                                        </small>
                                     </i>
                                 </span>
                             }
