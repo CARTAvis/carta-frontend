@@ -86,7 +86,7 @@ export class HelpDrawerComponent extends React.Component {
             }
         ],
         [
-            HelpType.FILE_Browser,
+            HelpType.FILE_BROWSER,
             {
                 title: "File Browser",
                 content: <FileBrowserHelpComponent />

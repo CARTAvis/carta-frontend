@@ -30,11 +30,11 @@ export class HelpStore {
     };
 }
 
-export enum HelpType {
+export enum HelpType { // TODO: replace useless key values to title
     // Dialogs
     CONTOUR = "contour",
     PREFERENCES = "preferences",
-    FILE_Browser = "file-browser",
+    FILE_BROWSER = "file-browser",
     FILE_INFO = "file-info",
     SAVE_LAYOUT = "save-layout",
     REGION_DIALOG = "region-dialog",
