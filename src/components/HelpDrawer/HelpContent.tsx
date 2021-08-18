@@ -1,53 +1,88 @@
 import * as React from "react";
 import {
-    headAnimatorButton, headAnimatorButton_d,
-    headCatalogueButton, headCatalogueButton_d,
-    demoCatalogueMarkerMapping, demoCatalogueMarkerMapping_d,
-    demoImageOverlayColorMapping, demoImageOverlayColorMapping_d,
-    demoImageOverlayOrientationMapping, demoImageOverlayOrientationMapping_d,
-    demoImageOverlaySizeMapping, demoImageOverlaySizeMapping_d,
-    headContourButton, headContourButton_d,
-    headFileinfoButton, headFileinfoButton_d,
-    headHistogramButton, headHistogramButton_d,
-    catalogSelectionButton, catalogSelectionButton_d,
-    contourButton, contourButton_d,
-    exportPNGButton, exportPNGButton_d,
-    imageInfoButton, imageInfoButton_d,
-    imageTools, imageTools_d,
-    regionButton, regionButton_d,
-    WCSMatchButton, WCSMatchButton_d,
-    zoomButton, zoomButton_d,
-    imageOverlayDemo, imageOverlayDemo_d,
-    headLayerButton, headLayerButton_d,
-    headLogButton, headLogButton_d,
+    headAnimatorButton,
+    headAnimatorButton_d,
+    headCatalogueButton,
+    headCatalogueButton_d,
+    demoCatalogueMarkerMapping,
+    demoCatalogueMarkerMapping_d,
+    demoImageOverlayColorMapping,
+    demoImageOverlayColorMapping_d,
+    demoImageOverlayOrientationMapping,
+    demoImageOverlayOrientationMapping_d,
+    demoImageOverlaySizeMapping,
+    demoImageOverlaySizeMapping_d,
+    headContourButton,
+    headContourButton_d,
+    headFileinfoButton,
+    headFileinfoButton_d,
+    headHistogramButton,
+    headHistogramButton_d,
+    catalogSelectionButton,
+    catalogSelectionButton_d,
+    contourButton,
+    contourButton_d,
+    exportPNGButton,
+    exportPNGButton_d,
+    imageInfoButton,
+    imageInfoButton_d,
+    imageTools,
+    imageTools_d,
+    regionButton,
+    regionButton_d,
+    WCSMatchButton,
+    WCSMatchButton_d,
+    zoomButton,
+    zoomButton_d,
+    imageOverlayDemo,
+    imageOverlayDemo_d,
+    headLayerButton,
+    headLayerButton_d,
+    headLogButton,
+    headLogButton_d,
     underConstruction,
-    headPreferenceButton, headPreferenceButton_d,
-    headRegionButton, headRegionButton_d,
-    headRenderconfigButton, headRenderconfigButton_d,
-    headSpatialButton, headSpatialButton_d,
-    smoothingBoxcar, smoothingBoxcar_d,
-    smoothingGaussian, smoothingGaussian_d,
-    smoothingHanning, smoothingHanning_d,
-    smoothingBinning, smoothingBinning_d,
-    smoothingSG, smoothingSG_d,
-    smoothingDecimation, smoothingDecimation_d,
-    headLineQueryButton, headLineQueryButton_d,
-    headSpectralButton, headSpectralButton_d,
-    headStatisticsButton, headStatisticsButton_d,
-    headStokesButton, headStokesButton_d
+    headPreferenceButton,
+    headPreferenceButton_d,
+    headRegionButton,
+    headRegionButton_d,
+    headRenderconfigButton,
+    headRenderconfigButton_d,
+    headSpatialButton,
+    headSpatialButton_d,
+    smoothingBoxcar,
+    smoothingBoxcar_d,
+    smoothingGaussian,
+    smoothingGaussian_d,
+    smoothingHanning,
+    smoothingHanning_d,
+    smoothingBinning,
+    smoothingBinning_d,
+    smoothingSG,
+    smoothingSG_d,
+    smoothingDecimation,
+    smoothingDecimation_d,
+    headLineQueryButton,
+    headLineQueryButton_d,
+    headSpectralButton,
+    headSpectralButton_d,
+    headStatisticsButton,
+    headStatisticsButton_d,
+    headStokesButton,
+    headStokesButton_d
 } from "static/help";
 import {HelpType} from "stores";
 import {ImageComponent} from "./ImageComponent";
 
 export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
-    [HelpType.ANIMATOR,
+    [
+        HelpType.ANIMATOR,
         <React.Fragment>
             <p>
                 <ImageComponent light={headAnimatorButton} dark={headAnimatorButton_d} width="90%" />
             </p>
             <p>
-                The animator widget controls which image, which channel (if it exists per image file), and which Stokes (if exists per image file) to view in the image viewer. You may also enable animation playback for image, channel,
-                or Stokes, via the <code>Play</code> button. The radio buttons control which one to animate. Playback mode includes
+                The animator widget controls which image, which channel (if it exists per image file), and which Stokes (if exists per image file) to view in the image viewer. You may also enable animation playback for image, channel, or
+                Stokes, via the <code>Play</code> button. The radio buttons control which one to animate. Playback mode includes
             </p>
             <ul>
                 <li>Forward: with index increasing</li>
@@ -66,24 +101,26 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.CATALOG_HISTOGRAM_PLOT,
+    [
+        HelpType.CATALOG_HISTOGRAM_PLOT,
         <React.Fragment>
             <p>
                 The catalog histogram plot widget shows a histogram of one numeric column of a catalog file. The available numeric columns are determined by the <code>Display</code> column of the upper table in the Catalog widget.
             </p>
             <p>
-                The data used for plotting the histogram is determined by the lower table in the Catalog widget. The table may not show all entries because of the dynamic loading feature. Thus, the histogram plot may not include all
-                entries (after filtering). The <code>Plot</code> button will request a full download of all entries and the histogram plot will then include all entries (after filtering). The number of bins and the scale of the y-axis
-                (linear or log) can be customized.
+                The data used for plotting the histogram is determined by the lower table in the Catalog widget. The table may not show all entries because of the dynamic loading feature. Thus, the histogram plot may not include all entries
+                (after filtering). The <code>Plot</code> button will request a full download of all entries and the histogram plot will then include all entries (after filtering). The number of bins and the scale of the y-axis (linear or
+                log) can be customized.
             </p>
             <p>
-                When you click on a specific histogram bin, source entries of that bin will be highlighted in the source catalog table, in the 2D scatter plot (if it exists), and in the image viewer (if the catalog overlay is enabled).
-                A certain histogram bin will be highlighted if source entries of that bin are selected in the source catalog table, in the 2D scatter plot (if exists), and in the image viewer (if the catalog overlay is enabled). The{" "}
+                When you click on a specific histogram bin, source entries of that bin will be highlighted in the source catalog table, in the 2D scatter plot (if it exists), and in the image viewer (if the catalog overlay is enabled). A
+                certain histogram bin will be highlighted if source entries of that bin are selected in the source catalog table, in the 2D scatter plot (if exists), and in the image viewer (if the catalog overlay is enabled). The{" "}
                 <code>Selected only</code> toggle will update the source catalog table to show only the selected sources.
             </p>
         </React.Fragment>
     ],
-    [HelpType.CATALOG_OVERLAY,
+    [
+        HelpType.CATALOG_OVERLAY,
         <React.Fragment>
             <p>
                 <ImageComponent light={headCatalogueButton} dark={headCatalogueButton_d} width="90%" />
@@ -92,8 +129,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
                 Source catalog files in VOTable or FITS format can be loaded in CARTA (via <code>File</code>-&gt; <code>Import catalog</code>) for visualization as an image overlay, or a 2D scatter plot, or a histogram.
             </p>
             <p>
-                Once a source catalog file is loaded, the information of each column will be shown in the upper table, while the actual catalog entries are displayed in the lower table. By default, only the first 10 columns are enabled
-                and displayed. You may configure it to show or hide certain columns to be displayed in the lower table.
+                Once a source catalog file is loaded, the information of each column will be shown in the upper table, while the actual catalog entries are displayed in the lower table. By default, only the first 10 columns are enabled and
+                displayed. You may configure it to show or hide certain columns to be displayed in the lower table.
             </p>
             <p>The source catalog table accepts sub-filters such as partial string match or value range. For numeric columns, supported operators are:</p>
             <ul>
@@ -142,49 +179,51 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
             <p>
                 Once filters are set, when the <code>Update</code> button is clicked, the filters will be applied and a filtered source catalog will be displayed up to a number of entries defined in the <code>Max Rows</code> text input
-                field. When the <code>Reset</code> button is clicked, all filters will be removed and the image overlay (if exists) will be removed too. For the histogram plot or the 2D scatter plot, the plot will be reset so that only
-                the first 50 entries are rendered.
+                field. When the <code>Reset</code> button is clicked, all filters will be removed and the image overlay (if exists) will be removed too. For the histogram plot or the 2D scatter plot, the plot will be reset so that only the
+                first 50 entries are rendered.
             </p>
             <p>
-                To visualize a source catalog, use the dropdown menu at the bottom of the widget to select a rendering type. CARTA supports three catalog rendering types including 1) image overlay, 2) 2D scatter plot, and 3) histogram
-                plot. For image overlay, you need to identify two columns as the coordinates. Two numeric columns are needed to render a 2D scatter plot, and one numeric column is required to compute a histogram.
+                To visualize a source catalog, use the dropdown menu at the bottom of the widget to select a rendering type. CARTA supports three catalog rendering types including 1) image overlay, 2) 2D scatter plot, and 3) histogram plot.
+                For image overlay, you need to identify two columns as the coordinates. Two numeric columns are needed to render a 2D scatter plot, and one numeric column is required to compute a histogram.
             </p>
             <p>
-                CARTA supports marker-based image overlay. You may render the marker with variable size, color, or orientation by mapping data columns to these rendering options. To set up the column mapping, please use the buttons at
-                the top-right corner of the widget to launch the dialog.
+                CARTA supports marker-based image overlay. You may render the marker with variable size, color, or orientation by mapping data columns to these rendering options. To set up the column mapping, please use the buttons at the
+                top-right corner of the widget to launch the dialog.
             </p>
             <p>
                 <ImageComponent light={demoCatalogueMarkerMapping} dark={demoCatalogueMarkerMapping_d} width="100%" />
             </p>
             <p>
-                The source catalog table, the image overlay, the 2D scatter plot, and the histogram plot are inter-linked or cross-referenced. This means, for example, selecting a source or a set of source in the catalog table will
-                trigger source highlight in other places. Or, selecting a source or a set of sources in the 2D scatter plot will trigger source highlight in other plots and in the catalog table.
+                The source catalog table, the image overlay, the 2D scatter plot, and the histogram plot are inter-linked or cross-referenced. This means, for example, selecting a source or a set of source in the catalog table will trigger
+                source highlight in other places. Or, selecting a source or a set of sources in the 2D scatter plot will trigger source highlight in other plots and in the catalog table.
             </p>
             <p>
                 Multiple catalog files can be loaded and you may use the <code>File</code> dropdown at the top of the widget to switch in between. Multiple catalog widgets may be launched to display different catalog files. The{" "}
-                <code>Close</code> button at the bottom of the widget will close the selected catalog file in the <code>File</code> dropdown. If there are spatially matched images, catalog image overlays are shared between matched
-                images with proper coordinate transformations.
+                <code>Close</code> button at the bottom of the widget will close the selected catalog file in the <code>File</code> dropdown. If there are spatially matched images, catalog image overlays are shared between matched images
+                with proper coordinate transformations.
             </p>
         </React.Fragment>
     ],
-    [HelpType.CATALOG_SCATTER_PLOT,
+    [
+        HelpType.CATALOG_SCATTER_PLOT,
         <React.Fragment>
             <p>
-                The Catalog 2D scatter plot widget shows a 2D scatter plot of two numeric columns of a catalog file. The available numeric columns in the dropdown menus at the bottom of the widget are determined by the{" "}
-                <code>Display</code> column of the upper table in the Catalog widget.
+                The Catalog 2D scatter plot widget shows a 2D scatter plot of two numeric columns of a catalog file. The available numeric columns in the dropdown menus at the bottom of the widget are determined by the <code>Display</code>{" "}
+                column of the upper table in the Catalog widget.
             </p>
             <p>
-                The data used for rendering a 2D scatter plot is determined by the lower table in the Catalog widget. The table may not show all entries because of the dynamic loading feature. Thus, the 2D scatter plot may not include
-                all entries (after filtering). The <code>Plot</code> button will request a full download of all entries and the 2D scatter plot will then include all entries (after filtering).
+                The data used for rendering a 2D scatter plot is determined by the lower table in the Catalog widget. The table may not show all entries because of the dynamic loading feature. Thus, the 2D scatter plot may not include all
+                entries (after filtering). The <code>Plot</code> button will request a full download of all entries and the 2D scatter plot will then include all entries (after filtering).
             </p>
             <p>
-                Click on a point or use the selection tools from the top-right corner of the plot to highlight selected sources in the source catalog table, in the histogram plot (if exists), and in the image viewer (if the catalog
-                overlay is enabled). Points on the plot will be highlighted if sources are selected in the source catalog table, in the histogram plot (if it exists), and in the image viewer (if the catalog overlay is enabled). The{" "}
+                Click on a point or use the selection tools from the top-right corner of the plot to highlight selected sources in the source catalog table, in the histogram plot (if exists), and in the image viewer (if the catalog overlay
+                is enabled). Points on the plot will be highlighted if sources are selected in the source catalog table, in the histogram plot (if it exists), and in the image viewer (if the catalog overlay is enabled). The{" "}
                 <code>Selected only</code> toggle will update the source catalog table to show only the selected sources.
             </p>
         </React.Fragment>
     ],
-    [HelpType.CATALOG_SETTINGS_COLOR,
+    [
+        HelpType.CATALOG_SETTINGS_COLOR,
         <React.Fragment>
             <h3>Marker color</h3>
             <p>
@@ -196,31 +235,34 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.CATALOG_SETTINGS_ORIENTATION,
+    [
+        HelpType.CATALOG_SETTINGS_ORIENTATION,
         <React.Fragment>
             <h3>Marker orientation</h3>
             <p>
-                This dialog provides options to set the orientation of source markers of an image overlay. If the <code>Column</code> dropdown menu is None, all markers are rendered without applying an additional rotation applied. You
-                may assign a numeric data column for orientation mapping. Different scaling, orientation range, or clip bounds can be applied.
+                This dialog provides options to set the orientation of source markers of an image overlay. If the <code>Column</code> dropdown menu is None, all markers are rendered without applying an additional rotation applied. You may
+                assign a numeric data column for orientation mapping. Different scaling, orientation range, or clip bounds can be applied.
             </p>
             <p>
                 <ImageComponent light={demoImageOverlayOrientationMapping} dark={demoImageOverlayOrientationMapping_d} width="100%" />
             </p>
         </React.Fragment>
     ],
-    [HelpType.CATALOG_SETTINGS_SIZE,
+    [
+        HelpType.CATALOG_SETTINGS_SIZE,
         <React.Fragment>
             <h3>Marker size</h3>
             <p>
-                This dialog provides options to set the size of source markers of an image overlay. If the <code>Column</code> dropdown menu is None, all markers are rendered with a uniform size as set with the <code>Size</code>{" "}
-                dropdown menu. You may assign a numeric data column for size mapping. Different scaling, size mode, size range, or clip bounds can be applied.
+                This dialog provides options to set the size of source markers of an image overlay. If the <code>Column</code> dropdown menu is None, all markers are rendered with a uniform size as set with the <code>Size</code> dropdown
+                menu. You may assign a numeric data column for size mapping. Different scaling, size mode, size range, or clip bounds can be applied.
             </p>
             <p>
                 <ImageComponent light={demoImageOverlaySizeMapping} dark={demoImageOverlaySizeMapping_d} width="100%" />
             </p>
         </React.Fragment>
     ],
-    [HelpType.CONTOUR,
+    [
+        HelpType.CONTOUR,
         <React.Fragment>
             <p>
                 <ImageComponent light={headContourButton} dark={headContourButton_d} width="90%" />
@@ -231,8 +273,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <ol>
                 <li>
                     <p>
-                        Select an image from the <code>Data source</code> dropdown. A per-channel histogram of the current channel and current Stokes as indicated in the animator will be displayed with visualization of mean (in dashed
-                        line) and mean +/- one standard deviation (in shaded area). Optionally, you can request per-cube histogram if necessary.
+                        Select an image from the <code>Data source</code> dropdown. A per-channel histogram of the current channel and current Stokes as indicated in the animator will be displayed with visualization of mean (in dashed line)
+                        and mean +/- one standard deviation (in shaded area). Optionally, you can request per-cube histogram if necessary.
                     </p>
                 </li>
                 <li>
@@ -289,7 +331,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.FILE_BROWSER,
+    [
+        HelpType.FILE_BROWSER,
         <React.Fragment>
             <p>File browser allows you to</p>
             <ul>
@@ -307,8 +350,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </ul>
             <h3 id="images">Images</h3>
             <p>
-                Images can be loaded as raster via <strong>File</strong> -&gt; <strong>Load image</strong>, or appended as raster via <strong>File</strong> -&gt; <strong>Append image</strong>. All loaded images will be closed if you
-                load an image with <strong>Load image</strong>. The image shown in the image viewer can be closed via <strong>File</strong> -&gt; <strong>Close image</strong>. Images or subimages can be saved in CASA or FITS format via{" "}
+                Images can be loaded as raster via <strong>File</strong> -&gt; <strong>Load image</strong>, or appended as raster via <strong>File</strong> -&gt; <strong>Append image</strong>. All loaded images will be closed if you load an
+                image with <strong>Load image</strong>. The image shown in the image viewer can be closed via <strong>File</strong> -&gt; <strong>Close image</strong>. Images or subimages can be saved in CASA or FITS format via{" "}
                 <strong>File</strong> -&gt; <strong>Save image</strong>. Note that images can only be saved if the appropriate write permissions are enabled on the server.
             </p>
             <p>
@@ -323,9 +366,9 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
             <h3 id="regions">Regions</h3>
             <p>
-                Region files can be imported via <strong>File</strong> -&gt; <strong>Import regions</strong>. When a region file is selected, its content is shown in the <code>Region Information</code> tab. Regions can be exported as
-                region text files via <strong>File</strong> -&gt; <strong>Export regions</strong>. CASA and ds9 region text file definitions in world or image coordinates are supported. Note that regions can only be exported if the
-                appropriate write permissions are enabled on the server.
+                Region files can be imported via <strong>File</strong> -&gt; <strong>Import regions</strong>. When a region file is selected, its content is shown in the <code>Region Information</code> tab. Regions can be exported as region
+                text files via <strong>File</strong> -&gt; <strong>Export regions</strong>. CASA and ds9 region text file definitions in world or image coordinates are supported. Note that regions can only be exported if the appropriate
+                write permissions are enabled on the server.
             </p>
             <p>
                 You can load multiple region files at once by selecting multiple region files with <code>ctrl/cmd+click</code> or <code>shift+click</code> from the file list, and then clicking the <code>Load Region</code> button.
@@ -340,18 +383,18 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.FILE_INFO,
+    [
+        HelpType.FILE_INFO,
         <React.Fragment>
             <p>
                 <ImageComponent light={headFileinfoButton} dark={headFileinfoButton_d} width="90%" />
             </p>
-            <p>
-                File header dialog provides full image header and a summary of the properties of the image in the current image view. To switch to other images, use the image slider in the animator widget, or use the image list widget.
-            </p>
+            <p>File header dialog provides full image header and a summary of the properties of the image in the current image view. To switch to other images, use the image slider in the animator widget, or use the image list widget.</p>
             <p>Search function is available in the header tab. The search button appears when you hover over the header context. Matches are case-insensitive, and partial words are matched.</p>
         </React.Fragment>
     ],
-    [HelpType.HISTOGRAM,
+    [
+        HelpType.HISTOGRAM,
         <React.Fragment>
             <p>
                 <ImageComponent light={headHistogramButton} dark={headHistogramButton_d} width="90%" />
@@ -405,7 +448,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>Multiple histogram widgets can be created to show histograms for different images with different regions.</p>
         </React.Fragment>
     ],
-    [HelpType.HISTOGRAM_SETTINGS,
+    [
+        HelpType.HISTOGRAM_SETTINGS,
         <React.Fragment>
             <p>Histogram settings dialog allows you to customize the appearance of the histogram plot, and set x and y ranges of the plot explicitly.</p>
             <p>Supported options are:</p>
@@ -418,15 +462,16 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </ul>
         </React.Fragment>
     ],
-    [HelpType.IMAGE_VIEW,
+    [
+        HelpType.IMAGE_VIEW,
         <React.Fragment>
             <p>
                 The image viewer widget serves as the core component of CARTA. It allows you to visualize images in rasters and in contours. Region of interests can be defined interactively with the image viewer and subsequent image
                 analysis can be performed with other widgets. Catalogue files can be loaded and visualized in the image viewer with the Catalogue widget.
             </p>
             <p>
-                Images can be loaded via <strong>File</strong> -&gt; <strong>Open image</strong> (will close all loaded image first). You may load multiple images via <strong>File</strong> -&gt; <strong>Append image</strong>. All images
-                are loaded as raster by default. Contour layers can be further generated via the contour configuration dialog.
+                Images can be loaded via <strong>File</strong> -&gt; <strong>Open image</strong> (will close all loaded image first). You may load multiple images via <strong>File</strong> -&gt; <strong>Append image</strong>. All images are
+                loaded as raster by default. Contour layers can be further generated via the contour configuration dialog.
             </p>
             <p>
                 Information of world coordinates and image coordinates at the cursor position is shown at the top of the image viewer. To freeze/unfreeze the cursor position, press <code>F</code> key.
@@ -447,15 +492,15 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
             <h3 id="zoom-and-pan">Zoom and pan</h3>
             <p>
-                Zoom actions can be triggered in different ways. The most common one is to use mouse and scroll wheel. By scrolling up, image is zoomed in, while by scrolling down, image is zoomed out. Alternatively, you may use the
-                tool buttons at the bottom-right corner of the image viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.
+                Zoom actions can be triggered in different ways. The most common one is to use mouse and scroll wheel. By scrolling up, image is zoomed in, while by scrolling down, image is zoomed out. Alternatively, you may use the tool
+                buttons at the bottom-right corner of the image viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.
             </p>
             <p>
                 <ImageComponent light={zoomButton} dark={zoomButton_d} width="70%" />
             </p>
             <p>
-                Panning is achieved by <code>drag-end-drop</code> as default. This default can be changed via the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong>). The
-                alternative mode is <code>click</code>, which causes the clicked pixel to be centered in the image viewer.
+                Panning is achieved by <code>drag-end-drop</code> as default. This default can be changed via the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong> -&gt; <strong>Global</strong>). The alternative
+                mode is <code>click</code>, which causes the clicked pixel to be centered in the image viewer.
             </p>
             <h3 id="matching-image-spatially-and-spectrally">Matching image spatially and spectrally</h3>
             <p>
@@ -472,9 +517,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
                 <li>Spatial and spectral: images are matched to the reference image both in the spatial domain and spectral domain.</li>
             </ul>
             <p>
-                Note that images are spatially matched through application of translation, rotation, and scaling. You may see prominent inconsistencies if you attempt to match wide field images or images with different projection
-                schemes. However, grid lines are still accurate per image. If contour layers exist, they will match the raster image in the current image view with high position accuracy. Spectral matching is performed with nearest
-                interpolation.
+                Note that images are spatially matched through application of translation, rotation, and scaling. You may see prominent inconsistencies if you attempt to match wide field images or images with different projection schemes.
+                However, grid lines are still accurate per image. If contour layers exist, they will match the raster image in the current image view with high position accuracy. Spectral matching is performed with nearest interpolation.
             </p>
             <h3 id="contour-layers">Contour layers</h3>
             <p>A contour layer can be generated via the contour configuration dialog. Contours of spatially matched image are re-projected precisely to other spatially matched raster images.</p>
@@ -521,7 +565,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.IMAGE_VIEW_SETTINGS,
+    [
+        HelpType.IMAGE_VIEW_SETTINGS,
         <React.Fragment>
             <p>The image view settings dialog allows you to customize coordinate grid related properties in the image viewer.</p>
             <h3 id="global">Global</h3>
@@ -571,8 +616,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>This section allows you to change the appearance of a beam overlay (color, type, and line width) and adjust its position in the image viewer.</p>
             <h3>Conversion</h3>
             <p>
-                This allows conversions of the spectral axis of a position-velocity image. For example, if the image header supports sufficient information, the axis labels can be displayed as offset v.s. velocity, offset v.s.
-                frequency, or offset v.s. wavelength, etc..
+                This allows conversions of the spectral axis of a position-velocity image. For example, if the image header supports sufficient information, the axis labels can be displayed as offset v.s. velocity, offset v.s. frequency, or
+                offset v.s. wavelength, etc..
             </p>
             <br />
             <h4>EXAMPLE</h4>
@@ -581,7 +626,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.LAYER_LIST,
+    [
+        HelpType.LAYER_LIST,
         <React.Fragment>
             <p>
                 <ImageComponent light={headLayerButton} dark={headLayerButton_d} width="90%" />
@@ -608,7 +654,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.LOG,
+    [
+        HelpType.LOG,
         <React.Fragment>
             <p>
                 <ImageComponent light={headLogButton} dark={headLogButton_d} width="90%" />
@@ -622,18 +669,19 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
                 <li>Critical</li>
             </ul>
             <p>
-                When you believe there is something wrong, please contact the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue on <a href="https://github.com/CARTAvis/carta/issues">Github</a>{" "}
-                (recommended).
+                When you believe there is something wrong, please contact the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue on <a href="https://github.com/CARTAvis/carta/issues">Github</a> (recommended).
             </p>
         </React.Fragment>
     ],
-    [HelpType.PLACEHOLDER,
+    [
+        HelpType.PLACEHOLDER,
         <React.Fragment>
             <p>To be added.</p>
             <img src={underConstruction} style={{width: "20%", height: "auto"}} />
         </React.Fragment>
     ],
-    [HelpType.PREFERENCES,
+    [
+        HelpType.PREFERENCES,
         <React.Fragment>
             <p>
                 <ImageComponent light={headPreferenceButton} dark={headPreferenceButton_d} width="90%" />
@@ -713,7 +761,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>This is for development and debugging purpose. General users should not enable anything here.</p>
         </React.Fragment>
     ],
-    [HelpType.REGION_DIALOG,
+    [
+        HelpType.REGION_DIALOG,
         <React.Fragment>
             <p>The region configuration dialog allows you to change the appearance of a region, such as</p>
             <ul>
@@ -727,8 +776,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
                 <li>region location and shape properties in image or world coordinate</li>
             </ul>
             <p>
-                Region properties can be defined in world coordinate. If the coordinate reference system is FK4, FK5, or ICRS, the coordinate format is sexagesimal. If the coordinate system is Galactic or Ecliptic, the coordinate format
-                is decimal degree. Region size can be defined in arcsecond with <code>&quot;</code>, in arcminute with <code>&apos;</code>, or in degree with <code>deg</code>.
+                Region properties can be defined in world coordinate. If the coordinate reference system is FK4, FK5, or ICRS, the coordinate format is sexagesimal. If the coordinate system is Galactic or Ecliptic, the coordinate format is
+                decimal degree. Region size can be defined in arcsecond with <code>&quot;</code>, in arcminute with <code>&apos;</code>, or in degree with <code>deg</code>.
             </p>
             <br />
             <h4 id="note">NOTE</h4>
@@ -742,7 +791,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.REGION_LIST,
+    [
+        HelpType.REGION_LIST,
         <React.Fragment>
             <p>
                 <ImageComponent light={headRegionButton} dark={headRegionButton_d} width="90%" />
@@ -763,7 +813,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.RENDER_CONFIG,
+    [
+        HelpType.RENDER_CONFIG,
         <React.Fragment>
             <p>
                 <ImageComponent light={headRenderconfigButton} dark={headRenderconfigButton_d} width="90%" />
@@ -779,8 +830,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
                 Different scaling functions and colormaps can be chosen via the <code>Scaling</code> and <code>Color map</code> dropdowns, respectively. A color map might be inverted via the <code>Invert color map</code> toggle.
             </p>
             <p>
-                Bias and contrast can be adjusted jointly via the 2D box (x as bias and y as contrast). The effective scaling function is visualized as a grey curve between the two red vertical lines. By default, smooth bias and
-                contrast functions are applied so that the resulting scaling function is a smooth curve. You may disable this feature with the <code>Render configuration</code> tab of the preferences dialog.
+                Bias and contrast can be adjusted jointly via the 2D box (x as bias and y as contrast). The effective scaling function is visualized as a grey curve between the two red vertical lines. By default, smooth bias and contrast
+                functions are applied so that the resulting scaling function is a smooth curve. You may disable this feature with the <code>Render configuration</code> tab of the preferences dialog.
             </p>
             <p>The appearance of the histogram plot can be configured through the render configuration settings dialog, including:</p>
             <ul>
@@ -817,7 +868,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>In addition, the x and y ranges can be explicitly set in the render configuration settings dialog.</p>
         </React.Fragment>
     ],
-    [HelpType.RENDER_CONFIG_SETTINGS,
+    [
+        HelpType.RENDER_CONFIG_SETTINGS,
         <React.Fragment>
             <p>The appearance of the histogram plot in the render configuration widget can be customized through this settings dialog, including:</p>
             <ul>
@@ -831,7 +883,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </ul>
         </React.Fragment>
     ],
-    [HelpType.SAVE_LAYOUT,
+    [
+        HelpType.SAVE_LAYOUT,
         <React.Fragment>
             <p>With this dialog, the current layout can be saved and re-used in the future. The widgets in a layout can be either docked or undocked.</p>
             <h3 id="layout-management">Layout management</h3>
@@ -846,24 +899,25 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.SPATIAL_PROFILER,
+    [
+        HelpType.SPATIAL_PROFILER,
         <React.Fragment>
             <p>
                 <ImageComponent light={headSpatialButton} dark={headSpatialButton_d} width="90%" />
             </p>
             <p>
-                Spatial profiler widget allows you to view a profile from a horizontal cut or a vertical cut at the cursor position in the image viewer. The cursor position may be fixed in the image viewer by pressing <code>F</code>{" "}
-                key. Pressing again will unfreeze the cursor.
+                Spatial profiler widget allows you to view a profile from a horizontal cut or a vertical cut at the cursor position in the image viewer. The cursor position may be fixed in the image viewer by pressing <code>F</code> key.
+                Pressing again will unfreeze the cursor.
             </p>
             <p>The cursor position in the image viewer is displayed as a red vertical line in the spatial profile plot.</p>
             <p>
-                When cursor is in the image viewer, the cursor position and pointed pixel value in image and world coordinates are reported at the bottom-left corner of the spatial profiler widget. When cursor moves into the spatial
-                profile plot, numerical values of the profile at the cursor position (displayed as a grey vertical line) will be reported instead.
+                When cursor is in the image viewer, the cursor position and pointed pixel value in image and world coordinates are reported at the bottom-left corner of the spatial profiler widget. When cursor moves into the spatial profile
+                plot, numerical values of the profile at the cursor position (displayed as a grey vertical line) will be reported instead.
             </p>
             <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
             <p>
-                As an option in the <code>Styling</code> tab of the spatial profiler settings dialog, mean and RMS values of the profile can be visualized as a green dashed line and a shaded area in the profile plot. Numerical values
-                are displayed at the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If zoom level changes, mean and RMS values will be updated too.
+                As an option in the <code>Styling</code> tab of the spatial profiler settings dialog, mean and RMS values of the profile can be visualized as a green dashed line and a shaded area in the profile plot. Numerical values are
+                displayed at the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If zoom level changes, mean and RMS values will be updated too.
             </p>
             <h3 id="profile-smoothing">Profile smoothing</h3>
             <p>
@@ -908,14 +962,15 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <br />
             <h4 id="note">NOTE</h4>
             <p>
-                For performance reasons, a profile is min-max decimated before rendering if the number of points of the profile is greater than the screen resolution of the spatial profiler widget. The kernel size of profile decimation
-                is dynamically adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless the setting in the spatial profiler
-                settings dialog. When no decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the <code>Styling</code>{" "}
-                tab of the settings dialog).
+                For performance reasons, a profile is min-max decimated before rendering if the number of points of the profile is greater than the screen resolution of the spatial profiler widget. The kernel size of profile decimation is
+                dynamically adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless the setting in the spatial profiler settings
+                dialog. When no decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the <code>Styling</code> tab of the
+                settings dialog).
             </p>
         </React.Fragment>
     ],
-    [HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING,
+    [
+        HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING,
         <React.Fragment>
             <h3>Smoothing</h3>
             <p>Smoothing may be applied to profiles to enhance signal-to-noise ratio. CARTA provides the following smoothing methods:</p>
@@ -968,12 +1023,13 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING,
+    [
+        HelpType.SPATIAL_PROFILER_SETTINGS_STYLING,
         <React.Fragment>
             <h3>Styling</h3>
             <p>
-                The Styling tab allows you to adjust the appearance of the profile plot, and set x and y ranges of the plot explicitly. In addition, users can select which cut (horizontal or vertical) at cursor to use to generate a
-                spatial profile. You may also enable visualization of mean and RMS values of the current profile in the plot.
+                The Styling tab allows you to adjust the appearance of the profile plot, and set x and y ranges of the plot explicitly. In addition, users can select which cut (horizontal or vertical) at cursor to use to generate a spatial
+                profile. You may also enable visualization of mean and RMS values of the current profile in the plot.
             </p>
             <p>Supported options for plot appearance are:</p>
             <ul>
@@ -985,15 +1041,16 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </ul>
         </React.Fragment>
     ],
-    [HelpType.SPECTRAL_LINE_QUERY,
+    [
+        HelpType.SPECTRAL_LINE_QUERY,
         <React.Fragment>
             <p>
                 <ImageComponent light={headLineQueryButton} dark={headLineQueryButton_d} width="90%" />
             </p>
             <h3>Spectral line query</h3>
             <p>
-                CARTA supports an initial implementation of spectral line ID overlay on a spectral profiler widget with line data from the Splatalogue service (https://splatalogue.online). The query is made using a spectral range
-                defined by defining in frequency or wavelength (rest frame) and optionally a lower limit of CDMS/JPL line intensity (log). The spectral range can be defined as from-to or center-width.
+                CARTA supports an initial implementation of spectral line ID overlay on a spectral profiler widget with line data from the Splatalogue service (https://splatalogue.online). The query is made using a spectral range defined by
+                defining in frequency or wavelength (rest frame) and optionally a lower limit of CDMS/JPL line intensity (log). The spectral range can be defined as from-to or center-width.
             </p>
             <h4>QUERY LIMITATION</h4>
             <ul>
@@ -1009,8 +1066,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
             <h3>Spectral line filtering</h3>
             <p>
-                Once a query is successfully made, the line catalogue will be displayed in the tables. The upper table shows the column information in the catalogue with options to show or hide a specific column. The actual line
-                catalogue is displayed in the lower table.
+                Once a query is successfully made, the line catalogue will be displayed in the tables. The upper table shows the column information in the catalogue with options to show or hide a specific column. The actual line catalogue
+                is displayed in the lower table.
             </p>
             <p>The spectral line catalogue table accepts sub-filters such as partial string match or value range. For numeric columns, supported operators are:</p>
             <ul>
@@ -1064,22 +1121,23 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>The &quot;Shifted Frequency&quot; column is computed based on the user input of a velocity or a redshift. This &quot;Shifted Frequency&quot; is adopted for line ID overlay on a spectral profiler widget.</p>
             <p>You can use the checkbox to select a set of lines to be overplotted in a spectral profiler widget. The maximum number of line ID overlays is 1000.</p>
             <p>
-                The text labels of the line ID overlay are shown dynamically based on the zoom level of a profile. Different line ID overlays (with different velocity shifts) can be created on different spectral profilers widgets via
-                the <code>Spectral Profiler</code> dropdown. By clicking the <code>Clear</code> button, the line ID overlay on the selected &quot;Spectral Profiler&quot; will be removed.
+                The text labels of the line ID overlay are shown dynamically based on the zoom level of a profile. Different line ID overlays (with different velocity shifts) can be created on different spectral profilers widgets via the{" "}
+                <code>Spectral Profiler</code> dropdown. By clicking the <code>Clear</code> button, the line ID overlay on the selected &quot;Spectral Profiler&quot; will be removed.
             </p>
             <br />
             <h4>NOTE</h4>
             <p>The sorting functions in the line table will be available in a future release.</p>
         </React.Fragment>
     ],
-    [HelpType.SPECTRAL_PROFILER,
+    [
+        HelpType.SPECTRAL_PROFILER,
         <React.Fragment>
             <p>
                 <ImageComponent light={headSpectralButton} dark={headSpectralButton_d} width="90%" />
             </p>
             <p>
-                The spectral profiler widget provides two different modes of viewing spectral profiles, depending on the states of the <code>Image</code> checkbox, the <code>Region</code> checkbox, the <code>Statistic</code> checkbox,
-                and the <code>Stokes</code> checkbox.{" "}
+                The spectral profiler widget provides two different modes of viewing spectral profiles, depending on the states of the <code>Image</code> checkbox, the <code>Region</code> checkbox, the <code>Statistic</code> checkbox, and
+                the <code>Stokes</code> checkbox.{" "}
             </p>
             <p>
                 When none of the checkboxes are selected, the spectral profiler widget displays one spectrum at a time only. You can view a region spectral profile (via the <code>Region</code> dropdown) of an image cube (via the{" "}
@@ -1087,18 +1145,18 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
                 multiple widgets to view spectra side by side.
             </p>
             <p>
-                When one of the checkboxes (Image/Region/Statistic/Stokes) is selected, the spectral profiler widget can display multiple spectra in one plot, depending on the selection in the dropdown menu of the selected checkbox. You
-                can compare different spectra with same x and y ranges directly.
+                When one of the checkboxes (Image/Region/Statistic/Stokes) is selected, the spectral profiler widget can display multiple spectra in one plot, depending on the selection in the dropdown menu of the selected checkbox. You can
+                compare different spectra with same x and y ranges directly.
             </p>
             <p>The spectral profiler widget supports four modes of multi-profile plot:</p>
             <ul>
                 <li>
-                    When the <code>Image</code> checkbox is selected: spectra from <em>different spatially and spectrally matched images</em>, from the selected region with the selected statistic, and the selected Stokes (if
-                    applicable), are displayed.
+                    When the <code>Image</code> checkbox is selected: spectra from <em>different spatially and spectrally matched images</em>, from the selected region with the selected statistic, and the selected Stokes (if applicable),
+                    are displayed.
                 </li>
                 <li>
-                    When the <code>Region</code> checkbox is selected: spectra from <em>different regions</em> of the selected image (and the selected Stokes if applicable) are displayed. The region spectra are computed with the
-                    selected statistic.
+                    When the <code>Region</code> checkbox is selected: spectra from <em>different regions</em> of the selected image (and the selected Stokes if applicable) are displayed. The region spectra are computed with the selected
+                    statistic.
                 </li>
                 <li>
                     When the <code>Statistic</code> checkbox is selected: spectra with <em>different statistic quantities</em> from the selected region of the selected image (and the selected Stokes if applicable) are displayed.
@@ -1111,20 +1169,19 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>The cursor information of each profile is displayed at the bottom-left corner. The cursor information box is resizible when necessary.</p>
             <h4>LIMITATION</h4>
             <p>
-                If the intensity units of different matched cubes are different (e.g., Jy/beam vs Kelvin), <em>no</em> unit conversion is applied in the multi-profile plot. Intensity unit conversion will be available in a future
-                release.
+                If the intensity units of different matched cubes are different (e.g., Jy/beam vs Kelvin), <em>no</em> unit conversion is applied in the multi-profile plot. Intensity unit conversion will be available in a future release.
             </p>
             <h3 id="images">Image dropdown menu</h3>
             <p>The image dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer. You may use the animator widget or the image list widget to change the active image.</p>
             <p>
-                When the image checkbox is selected and if there are spatially and spectrally matched images (apply matching via the image list widget), the dropdown menu will display an image list with information about the matching
-                state. You can select one of the images to view its spectral profile. If the selected image is matched to other images, spectra from those images will be displayed in the spectral profiler widget too, allowing a direct
-                comparison of spectra from different image cubes.
+                When the image checkbox is selected and if there are spatially and spectrally matched images (apply matching via the image list widget), the dropdown menu will display an image list with information about the matching state.
+                You can select one of the images to view its spectral profile. If the selected image is matched to other images, spectra from those images will be displayed in the spectral profiler widget too, allowing a direct comparison
+                of spectra from different image cubes.
             </p>
             <h3 id="regions">Region dropdown menu</h3>
             <p>
-                The region dropdown menu defaults to &quot;Active&quot; region which means the selected region in the image viewer. You can select an active region by clicking one on the image viewer, or by clicking a region entry in
-                the region list widget. The spectral profile plot of the selected active region will be updated accordingly. If no region is selected, the region defaults to cursor.
+                The region dropdown menu defaults to &quot;Active&quot; region which means the selected region in the image viewer. You can select an active region by clicking one on the image viewer, or by clicking a region entry in the
+                region list widget. The spectral profile plot of the selected active region will be updated accordingly. If no region is selected, the region defaults to cursor.
             </p>
             <p>When the region checkbox is selected, the dropdown menu allows multiple selection. You can select different regions for profile calculations. </p>
             <h3>Statistic dropdown menu</h3>
@@ -1134,8 +1191,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
             <h3>Stokes dropdown menu</h3>
             <p>
-                When the image in the view contains multiple Stokes parameters, you can use this dropdown menu to view profiles from different Stokes. The dropdown menu defaults to &quot;Current&quot;, meaning the selected Stokes via
-                the animator.
+                When the image in the view contains multiple Stokes parameters, you can use this dropdown menu to view profiles from different Stokes. The dropdown menu defaults to &quot;Current&quot;, meaning the selected Stokes via the
+                animator.
             </p>
             <p>When the Stokes checkbox is selected, the dropdown menu allows multiple selection. You can select different Stokes parameters for region spectral profile calculations.</p>
             <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
@@ -1160,29 +1217,28 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
             <h3 id="profile-smoothing">Profile smoothing</h3>
             <p>
-                The displayed profile can be smoothed via the <code>Smoothing</code> tab of the spectral profiler settings dialog (the cog icon). A shortcut button of the <code>Smoothing</code> tab can be found at the top-right corner
-                of the widget.
+                The displayed profile can be smoothed via the <code>Smoothing</code> tab of the spectral profiler settings dialog (the cog icon). A shortcut button of the <code>Smoothing</code> tab can be found at the top-right corner of
+                the widget.
             </p>
             <h3 id="moment-image-generator">Moment image generator</h3>
             <p>
-                Moment images can be generated via the <code>Moments</code> tab of the spectral profiler settings dialog (the cog icon). A shortcut button of the <code>Moments</code> tab can be found at the top-right corner of the
-                widget.
+                Moment images can be generated via the <code>Moments</code> tab of the spectral profiler settings dialog (the cog icon). A shortcut button of the <code>Moments</code> tab can be found at the top-right corner of the widget.
             </p>
             <h3>Profile fitting</h3>
             <p>
-                You can fit a profile to a spectrum in the view via the <code>Fitting</code> tab of the spectral profiler settings dialog (the cog icon). You can find a shortcut button to the <code>Fitting</code> tab at the top-right
-                corner of the widget. Note that profile fitting is not allowed when there are multiple profiles in the plot.
+                You can fit a profile to a spectrum in the view via the <code>Fitting</code> tab of the spectral profiler settings dialog (the cog icon). You can find a shortcut button to the <code>Fitting</code> tab at the top-right corner
+                of the widget. Note that profile fitting is not allowed when there are multiple profiles in the plot.
             </p>
             <h3 id="responsive-and-progressive-profile-update">Responsive and progressive profile update</h3>
             <p>
-                When a region spectral profile is requested, depending on the performance of the server, you may see profiles are updated piece by piece with a regular interval. This feature provides a visual progress update for better
-                user experience. In addition, if you move a region while its spectral profile is being updated, the old calculations will be terminated immediately and calculations of the new region spectral profile will start. You will
-                see a partial profile in seconds.
+                When a region spectral profile is requested, depending on the performance of the server, you may see profiles are updated piece by piece with a regular interval. This feature provides a visual progress update for better user
+                experience. In addition, if you move a region while its spectral profile is being updated, the old calculations will be terminated immediately and calculations of the new region spectral profile will start. You will see a
+                partial profile in seconds.
             </p>
             <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
             <p>
-                As an option in the <code>Styling</code> tab of the spectral profiler settings dialog, mean and RMS values of the profile can be visualized as a green dashed line and a shaded area in the profile plot. Numerical values
-                are displayed at the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If the zoom level changes, mean and RMS values will be updated too.
+                As an option in the <code>Styling</code> tab of the spectral profiler settings dialog, mean and RMS values of the profile can be visualized as a green dashed line and a shaded area in the profile plot. Numerical values are
+                displayed at the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If the zoom level changes, mean and RMS values will be updated too.
             </p>
             <h3 id="interactivity-zoom-pan-changing-channel">Interactivity: zoom, pan, changing channel</h3>
             <p>The x and y ranges of the spectral profile plot can be modified by</p>
@@ -1210,8 +1266,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
                 In addition, the x and y ranges can be explicitly set in the <code>Styling</code> tab of the spectral profile settings dialog.
             </p>
             <p>
-                You may click on the spectral profile plot to switch to a channel (as indicated by a red vertical line) and view the image in the image viewer. The red line is draggable and acts equivalently like the channel slider in
-                the animator widget.
+                You may click on the spectral profile plot to switch to a channel (as indicated by a red vertical line) and view the image in the image viewer. The red line is draggable and acts equivalently like the channel slider in the
+                animator widget.
             </p>
             <h3 id="exports">Profile export</h3>
             <p>The spectral profile plot can be exported as a png file or a text file in tsv format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
@@ -1230,12 +1286,13 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>
                 For performance concerns, a profile is decimated before rendering if the number of points of the profile is greater than the screen resolution of the spectral profiler widget. The kernel size of profile decimation is
                 dynamically adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless the setting in the spectral profiler settings
-                dialog. When no decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the <code>Styling</code> tab of
-                the settings dialog).
+                dialog. When no decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the <code>Styling</code> tab of the
+                settings dialog).
             </p>
         </React.Fragment>
     ],
-    [HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION,
+    [
+        HelpType.SPECTRAL_PROFILER_SETTINGS_CONVERSION,
         <React.Fragment>
             <h3>Conversion</h3>
             <p>
@@ -1259,7 +1316,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
         </React.Fragment>
     ],
-    [HelpType.SPECTRAL_PROFILER_SETTINGS_FITTING,
+    [
+        HelpType.SPECTRAL_PROFILER_SETTINGS_FITTING,
         <React.Fragment>
             <h3>Profile Fitting</h3>
             <p>
@@ -1278,31 +1336,32 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
                 <code>auto detect</code> button.
             </p>
             <p>
-                The auto-detect function will report how many components are found in the spectrum and visualize them as green boxes in the plot. Their numerical values are provided too. To see the initial values of different
-                components, please use the slider for navigation. New components may be added via the component spinbox. A component may be removed with the <code>delete</code> button.
+                The auto-detect function will report how many components are found in the spectrum and visualize them as green boxes in the plot. Their numerical values are provided too. To see the initial values of different components,
+                please use the slider for navigation. New components may be added via the component spinbox. A component may be removed with the <code>delete</code> button.
             </p>
             <p>
-                You may use the GUI to define the initial solution <em>manually</em> by entering the values with the text fields, or by using the mouse to draw a <em>box</em> on the plot. The height, width, and center position of the
-                box represent the amplitude, FWHM, and center of a model profile, respectively. The lock button can be used to lock a parameter so that the parameter is fixed during the fitting process. You can define the initial
-                solution of a continuum manually by entering the values with the text fields, or by using mouse to draw a <em>line</em> on the plot (recommended).
+                You may use the GUI to define the initial solution <em>manually</em> by entering the values with the text fields, or by using the mouse to draw a <em>box</em> on the plot. The height, width, and center position of the box
+                represent the amplitude, FWHM, and center of a model profile, respectively. The lock button can be used to lock a parameter so that the parameter is fixed during the fitting process. You can define the initial solution of a
+                continuum manually by entering the values with the text fields, or by using mouse to draw a <em>line</em> on the plot (recommended).
             </p>
             <h4>NOTE</h4>
             <p>
-                If the auto-detect function does not return a sensible solution (e.g., unexpected number of components), you can still edit it manually before clicking the <code>Fit</code> button. Please note that the initial solution
-                does not need to be set precisely with respect to the true solution. The profile fitting engine can tolerate errors to some extent.
+                If the auto-detect function does not return a sensible solution (e.g., unexpected number of components), you can still edit it manually before clicking the <code>Fit</code> button. Please note that the initial solution does
+                not need to be set precisely with respect to the true solution. The profile fitting engine can tolerate errors to some extent.
             </p>
             <h3>Trigger the fitting engine and view fitting results</h3>
             <p>
-                Once you have set up a good set of initial solution, you can trigger the fitting process by clicking the <code>Fit</code> button. If you would like to trigger the fitter right after set of initial solutions are found by
-                the auto-detect function, please enable the <code>auto fit</code> toggle. The fitting engine will include all the data in the current profile view. If you would like to exclude a certain feature in the fit, please try to
-                zoom or pan the profile so that only the feature in interest is in the view.
+                Once you have set up a good set of initial solution, you can trigger the fitting process by clicking the <code>Fit</code> button. If you would like to trigger the fitter right after set of initial solutions are found by the
+                auto-detect function, please enable the <code>auto fit</code> toggle. The fitting engine will include all the data in the current profile view. If you would like to exclude a certain feature in the fit, please try to zoom or
+                pan the profile so that only the feature in interest is in the view.
             </p>
             <p>
                 The fitting results are summarized in the <code>Fitting result</code> box. The best-fit model is visualized in the plot including the residual profle. The full log can be viewed with the <code>View log</code> button.
             </p>
         </React.Fragment>
     ],
-    [HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS,
+    [
+        HelpType.SPECTRAL_PROFILER_SETTINGS_MOMENTS,
         <React.Fragment>
             <h3>Moments</h3>
             <p>
@@ -1313,16 +1372,16 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
                     <b>Image</b>: the image file for moment calculations. &quot;Active&quot; refers to the image displayed in the image viewer.
                 </li>
                 <li>
-                    <b>Region</b>: a region can be selected so that moment calculations are limited inside the region. &quot;Active&quot; refers to the selected region in the image viewer. If no region is selected, full image is
-                    included in the moment calculations.
+                    <b>Region</b>: a region can be selected so that moment calculations are limited inside the region. &quot;Active&quot; refers to the selected region in the image viewer. If no region is selected, full image is included in
+                    the moment calculations.
                 </li>
                 <li>
-                    <b>Coordinate, System, and Range</b>: the spectral range (e.g., velocity range) used for moment calculations is defined with these options. The range can be defined either via the text input fields, or via the cursor
-                    by dragging horizontally in the spectral profiler widget.
+                    <b>Coordinate, System, and Range</b>: the spectral range (e.g., velocity range) used for moment calculations is defined with these options. The range can be defined either via the text input fields, or via the cursor by
+                    dragging horizontally in the spectral profiler widget.
                 </li>
                 <li>
-                    <b>Mask and Range</b>: these options define a pixel value range used for moment calculations. If mask is &quot;None&quot;, all pixels are included. If mask is &quot;Include&quot; or &quot;Exclude&quot;, the pixel
-                    value range defined in the text input fields is included or excluded, respectively. Alternatively, the pixel value range can be defined via the cursor by dragging vertically in the spectral profiler widget.
+                    <b>Mask and Range</b>: these options define a pixel value range used for moment calculations. If mask is &quot;None&quot;, all pixels are included. If mask is &quot;Include&quot; or &quot;Exclude&quot;, the pixel value
+                    range defined in the text input fields is included or excluded, respectively. Alternatively, the pixel value range can be defined via the cursor by dragging vertically in the spectral profiler widget.
                 </li>
                 <li>
                     <b>Moments</b>: which moment images to be calculated are defined here. Supported options are:
@@ -1344,19 +1403,20 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
                 </li>
             </ul>
             <p>
-                When all the parameters are defined, by clicking the <code>Generate</code> button moment calculations will begin. Depending on the file size, moment calculations may take a while. If that happens, you may consider to
-                cancel the calculations and re-define a proper region and/or spectral range.
+                When all the parameters are defined, by clicking the <code>Generate</code> button moment calculations will begin. Depending on the file size, moment calculations may take a while. If that happens, you may consider to cancel
+                the calculations and re-define a proper region and/or spectral range.
             </p>
             <p>
-                Once moment images are generated, they will be loaded and displayed in the image viewer. They are named as $image_filename.moment.$keyword. For example, if moment 0, 1 and 2 images are generated from the image M51.fits,
-                they will be named as M51.fits.moment.integrated, M51.fits.moment.weighted_coord, and M51.fits.moment.weighted_dispersion_coord, respectively. These images are kept in RAM per session and if there is a new request of
-                moment calculations, these images will be deleted first. Optionally, calculated moment images can be exported in CASA or FITS format via &quot;File&quot; -&gt; &quot;Save image&quot;.
+                Once moment images are generated, they will be loaded and displayed in the image viewer. They are named as $image_filename.moment.$keyword. For example, if moment 0, 1 and 2 images are generated from the image M51.fits, they
+                will be named as M51.fits.moment.integrated, M51.fits.moment.weighted_coord, and M51.fits.moment.weighted_dispersion_coord, respectively. These images are kept in RAM per session and if there is a new request of moment
+                calculations, these images will be deleted first. Optionally, calculated moment images can be exported in CASA or FITS format via &quot;File&quot; -&gt; &quot;Save image&quot;.
             </p>
             <h4>NOTE</h4>
             <p>Due to a CASA issue, image of &quot;Median coordinate&quot; cannot be generated. The request of &quot;Median coordinate&quot; is ignored automatically.</p>
         </React.Fragment>
     ],
-    [HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING,
+    [
+        HelpType.SPECTRAL_PROFILER_SETTINGS_SMOOTHING,
         <React.Fragment>
             <h3>Smoothing</h3>
             <p>Smoothing may be applied to profiles to enhance signal-to-noise ratio. CARTA provides the following smoothing methods:</p>
@@ -1409,7 +1469,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING,
+    [
+        HelpType.SPECTRAL_PROFILER_SETTINGS_STYLING,
         <React.Fragment>
             <h3>Styling</h3>
             <p>
@@ -1428,7 +1489,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.STATS,
+    [
+        HelpType.STATS,
         <React.Fragment>
             <p>
                 <ImageComponent light={headStatisticsButton} dark={headStatisticsButton_d} width="90%" />
@@ -1464,14 +1526,15 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>Multiple statistics widgets can be created to show statistics for different images and different regions.</p>
         </React.Fragment>
     ],
-    [HelpType.STOKES_ANALYSIS,
+    [
+        HelpType.STOKES_ANALYSIS,
         <React.Fragment>
             <p>
                 <ImageComponent light={headStokesButton} dark={headStokesButton_d} width="90%" />
             </p>
             <p>
-                The Stokes analysis widget is specifically made for efficient visualization of a cube with <em>multiple channels and multiple Stokes parameters (at least QU)</em>. If you have Stokes images as individual files, please
-                use the file browser to select them (multiple selection) in the file list first and click the <code>Load as hypercube</code> button to form a Stokes hypercube.
+                The Stokes analysis widget is specifically made for efficient visualization of a cube with <em>multiple channels and multiple Stokes parameters (at least QU)</em>. If you have Stokes images as individual files, please use
+                the file browser to select them (multiple selection) in the file list first and click the <code>Load as hypercube</code> button to form a Stokes hypercube.
             </p>
             <p>The widget includes plots, such as:</p>
             <ul>
@@ -1510,8 +1573,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
             <h3 id="data-smoothing">Data smoothing</h3>
             <p>
-                The displayed profiles and the scatter plot can be smoothed via the <code>Smoothing</code> tab of the Stokes analysis settings dialog (the cog icon). A shortcut button of the <code>Smoothing</code> tab can be found at
-                the top-right corner of the widget.
+                The displayed profiles and the scatter plot can be smoothed via the <code>Smoothing</code> tab of the Stokes analysis settings dialog (the cog icon). A shortcut button of the <code>Smoothing</code> tab can be found at the
+                top-right corner of the widget.
             </p>
             <h3 id="responsive-and-progressive-profile-update">Responsive and progressive profile update</h3>
             <p>
@@ -1568,7 +1631,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </ul>
         </React.Fragment>
     ],
-    [HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION,
+    [
+        HelpType.STOKES_ANALYSIS_SETTINGS_CONVERSION,
         <React.Fragment>
             <h3>Conversion</h3>
             <p>
@@ -1592,7 +1656,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
         </React.Fragment>
     ],
-    [HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING,
+    [
+        HelpType.STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING,
         <React.Fragment>
             <h3>Line Plot Styling</h3>
             <p>
@@ -1606,7 +1671,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </ul>
         </React.Fragment>
     ],
-    [HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING,
+    [
+        HelpType.STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING,
         <React.Fragment>
             <h3>Scatter Plot Styling</h3>
             <p>
@@ -1620,7 +1686,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </ul>
         </React.Fragment>
     ],
-    [HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING,
+    [
+        HelpType.STOKES_ANALYSIS_SETTINGS_SMOOTHING,
         <React.Fragment>
             <h3>Smoothing</h3>
             <p>Smoothing may be applied to profiles and the scatter plot to enhance signal-to-noise ratio. CARTA provides the following smoothing methods:</p>
@@ -1666,7 +1733,8 @@ export const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
             </p>
         </React.Fragment>
     ],
-    [HelpType.STOKES,
+    [
+        HelpType.STOKES,
         <React.Fragment>
             <h3>Form a Stokes hypercube</h3>
             <p>
