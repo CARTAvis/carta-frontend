@@ -13,6 +13,7 @@ import "./RegionListComponent.scss";
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly ACTION_COLUMN_DEFAULT_WIDTH = 25;
+    private static readonly ACTIONS_COLUMN_DEFAULT_WIDTH = 75;
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
     private static readonly NAME_COLUMN_DEFAULT_WIDTH = 150;
     private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 90;
@@ -101,7 +102,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         let nameWidth = RegionListComponent.NAME_COLUMN_DEFAULT_WIDTH;
         const availableWidth = this.width - 2 * padding;
         let fixedWidth =
-            RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3 +
+            RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH +
             RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH +
             RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH +
             RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH +
@@ -204,7 +205,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 );
             } else {
                 lockEntry = (
-                    <td colSpan={3} style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                    <td colSpan={3} style={{width: RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH}}>
                         <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
