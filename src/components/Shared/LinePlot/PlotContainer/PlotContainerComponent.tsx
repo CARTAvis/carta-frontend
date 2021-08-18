@@ -179,6 +179,15 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         return null;
     };
 
+    private filterYLogTicks = (_axis, ticks: number[]) => {
+        if (this.props.data?.length === 1) {
+            const newTicks = ticks.filter(tick => tick !== this.props.data[0].y);
+            return this.filterLogTicks(_axis, newTicks);
+        }
+
+        return this.filterLogTicks(_axis, ticks);
+    };
+
     private filterLinearTicks = (_axis, ticks: number[]) => {
         let removeFirstTick = false;
         let removeLastTick = false;
@@ -212,6 +221,15 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
         // Remove first and last ticks if they've been flagged
         return ticks.slice(removeFirstTick ? 1 : 0, removeLastTick ? -1 : undefined);
+    };
+
+    private filterYLinearTicks = (_axis, ticks: number[]) => {
+        if (this.props.data?.length === 1) {
+            const newTicks = ticks.filter(tick => tick !== this.props.data[0].y);
+            return this.filterLinearTicks(_axis, newTicks);
+        }
+
+        return this.filterLinearTicks(_axis, ticks);
     };
 
     private static FormatTicksScientific = (value: number, index: number, values: number[]) => {
@@ -425,10 +443,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
 
         if (this.props.logY) {
-            plotOptions.scales.yAxes[0].afterBuildTicks = this.filterLogTicks;
+            plotOptions.scales.yAxes[0].afterBuildTicks = this.filterYLogTicks;
             plotOptions.scales.yAxes[0].type = "logarithmic";
         } else {
-            plotOptions.scales.yAxes[0].afterBuildTicks = this.filterLinearTicks;
+            plotOptions.scales.yAxes[0].afterBuildTicks = this.filterYLinearTicks;
             plotOptions.scales.yAxes[0].type = "linear";
         }
 
