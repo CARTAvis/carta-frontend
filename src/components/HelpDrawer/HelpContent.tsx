@@ -1,76 +1,41 @@
 import * as React from "react";
-
-// TODO: named import
-import headAnimatorButton from "static/help/head_animator_button.png";
-import headAnimatorButton_d from "static/help/head_animator_button_d.png";
-import headCatalogueButton from "static/help/head_catalogue_button.png";
-import headCatalogueButton_d from "static/help/head_catalogue_button_d.png";
-import demoCatalogueMarkerMapping from "static/help/demo_catalog_marker_mapping.png";
-import demoCatalogueMarkerMapping_d from "static/help/demo_catalog_marker_mapping_d.png";
-import demoImageOverlayColorMapping from "static/help/demo_image_overlay_color_mapping.png";
-import demoImageOverlayColorMapping_d from "static/help/demo_image_overlay_color_mapping_d.png";
-import demoImageOverlayOrientationMapping from "static/help/demo_image_overlay_orientation_mapping.png";
-import demoImageOverlayOrientationMapping_d from "static/help/demo_image_overlay_orientation_mapping_d.png";
-import demoImageOverlaySizeMapping from "static/help/demo_image_overlay_Size_mapping.png";
-import demoImageOverlaySizeMapping_d from "static/help/demo_image_overlay_Size_mapping_d.png";
-import headContourButton from "static/help/head_contour_button.png";
-import headContourButton_d from "static/help/head_contour_button_d.png";
-import headFileinfoButton from "static/help/head_fileinfo_button.png";
-import headFileinfoButton_d from "static/help/head_fileinfo_button_d.png";
-import headHistogramButton from "static/help/head_histogram_button.png";
-import headHistogramButton_d from "static/help/head_histogram_button_d.png";
-import catalogSelectionButton from "static/help/catalogue_selection_button.png";
-import catalogSelectionButton_d from "static/help/catalogue_selection_button_d.png";
-import contourButton from "static/help/contour_button.png";
-import contourButton_d from "static/help/contour_button_d.png";
-import exportPNGButton from "static/help/export_png_button.png";
-import exportPNGButton_d from "static/help/export_png_button_d.png";
-import imageInfoButton from "static/help/image_info_button.png";
-import imageInfoButton_d from "static/help/image_info_button_d.png";
-import imageTools from "static/help/image_tools.png";
-import imageTools_d from "static/help/image_tools_d.png";
-import regionButton from "static/help/region_button.png";
-import regionButton_d from "static/help/region_button_d.png";
-import WCSMatchButton from "static/help/wcs_match_button.png";
-import WCSMatchButton_d from "static/help/wcs_match_button_d.png";
-import zoomButton from "static/help/zoom_button.png";
-import zoomButton_d from "static/help/zoom_button_d.png";
-import imageOverlayDemo from "static/help/image_overlay_demo.png";
-import imageOverlayDemo_d from "static/help/image_overlay_demo_d.png";
-import headLayerButton from "static/help/head_layer_button.png";
-import headLayerButton_d from "static/help/head_layer_button_d.png";
-import headLogButton from "static/help/head_log_button.png";
-import headLogButton_d from "static/help/head_log_button_d.png";
-import underConstruction from "static/help/under_construction.png";
-import headPreferenceButton from "static/help/head_preference_button.png";
-import headPreferenceButton_d from "static/help/head_preference_button_d.png";
-import headRegionButton from "static/help/head_region_button.png";
-import headRegionButton_d from "static/help/head_region_button_d.png";
-import headRenderconfigButton from "static/help/head_renderconfig_button.png";
-import headRenderconfigButton_d from "static/help/head_renderconfig_button_d.png";
-import headSpatialButton from "static/help/head_spatial_button.png";
-import headSpatialButton_d from "static/help/head_spatial_button_d.png";
-import smoothingBoxcar from "static/help/smoothing_boxcar.png";
-import smoothingGaussian from "static/help/smoothing_gaussian.png";
-import smoothingHanning from "static/help/smoothing_hanning.png";
-import smoothingBinning from "static/help/smoothing_binning.png";
-import smoothingSG from "static/help/smoothing_SG.png";
-import smoothingDecimation from "static/help/smoothing_decimation.png";
-import smoothingBoxcar_d from "static/help/smoothing_boxcar_d.png";
-import smoothingGaussian_d from "static/help/smoothing_gaussian_d.png";
-import smoothingHanning_d from "static/help/smoothing_hanning_d.png";
-import smoothingBinning_d from "static/help/smoothing_binning_d.png";
-import smoothingSG_d from "static/help/smoothing_SG_d.png";
-import smoothingDecimation_d from "static/help/smoothing_decimation_d.png";
-import headLineQueryButton from "static/help/head_linequery_button.png";
-import headLineQueryButton_d from "static/help/head_linequery_button_d.png";
-import headSpectralButton from "static/help/head_spectral_button.png";
-import headSpectralButton_d from "static/help/head_spectral_button_d.png";
-import headStatisticsButton from "static/help/head_statistics_button.png";
-import headStatisticsButton_d from "static/help/head_statistics_button_d.png";
-import headStokesButton from "static/help/head_stokes_button.png";
-import headStokesButton_d from "static/help/head_stokes_button_d.png";
-
+import {
+    headAnimatorButton, headAnimatorButton_d,
+    headCatalogueButton, headCatalogueButton_d,
+    demoCatalogueMarkerMapping, demoCatalogueMarkerMapping_d,
+    demoImageOverlayColorMapping, demoImageOverlayColorMapping_d,
+    demoImageOverlayOrientationMapping, demoImageOverlayOrientationMapping_d,
+    demoImageOverlaySizeMapping, demoImageOverlaySizeMapping_d,
+    headContourButton, headContourButton_d,
+    headFileinfoButton, headFileinfoButton_d,
+    headHistogramButton, headHistogramButton_d,
+    catalogSelectionButton, catalogSelectionButton_d,
+    contourButton, contourButton_d,
+    exportPNGButton, exportPNGButton_d,
+    imageInfoButton, imageInfoButton_d,
+    imageTools, imageTools_d,
+    regionButton, regionButton_d,
+    WCSMatchButton, WCSMatchButton_d,
+    zoomButton, zoomButton_d,
+    imageOverlayDemo, imageOverlayDemo_d,
+    headLayerButton, headLayerButton_d,
+    headLogButton, headLogButton_d,
+    underConstruction,
+    headPreferenceButton, headPreferenceButton_d,
+    headRegionButton, headRegionButton_d,
+    headRenderconfigButton, headRenderconfigButton_d,
+    headSpatialButton, headSpatialButton_d,
+    smoothingBoxcar, smoothingBoxcar_d,
+    smoothingGaussian, smoothingGaussian_d,
+    smoothingHanning, smoothingHanning_d,
+    smoothingBinning, smoothingBinning_d,
+    smoothingSG, smoothingSG_d,
+    smoothingDecimation, smoothingDecimation_d,
+    headLineQueryButton, headLineQueryButton_d,
+    headSpectralButton, headSpectralButton_d,
+    headStatisticsButton, headStatisticsButton_d,
+    headStokesButton, headStokesButton_d
+} from "static/help";
 import {HelpType} from "stores";
 import {ImageComponent} from "./ImageComponent";
 
