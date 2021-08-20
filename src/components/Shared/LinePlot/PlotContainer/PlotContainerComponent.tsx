@@ -236,7 +236,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             });
         }
         return newTicks;
-    }
+    };
 
     private static FormatTicksScientific = (value: number, index: number, values: number[]) => {
         return toExponential(value, 2);
