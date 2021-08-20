@@ -33,11 +33,12 @@ export class FilterableTableComponentProps {
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
     updateSelectedRow?: (dataIndex: number[]) => void;
-    updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType) => void;
+    updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => void;
     flipRowSelection?: (rowIndex: number) => void;
     sortingInfo?: {columnName: string; sortingType: CARTA.SortingType};
     disableSort?: boolean;
     tableHeaders?: Array<CARTA.ICatalogHeader>;
+    sortedIndexMap?: Array<number>;
 }
 
 @observer
@@ -166,9 +167,13 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCell = (rowIndex: number, columnIndex: number, columnData: any) => {
+    private renderCell = (index: number, columnIndex: number, columnData: any) => {
         const dataIndex = this.props.selectedDataIndex;
-        if (dataIndex && dataIndex.includes(rowIndex) && !this.props.showSelectedData) {
+        let rowIndex = index;
+        if (this.props.sortedIndexMap) {
+            rowIndex = this.props.sortedIndexMap[rowIndex];
+        }
+        if (dataIndex && dataIndex.includes(index) && !this.props.showSelectedData) {
             return (
                 <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={false}>
                     {rowIndex < columnData.length ? columnData[rowIndex] : ""}
@@ -204,7 +209,6 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const sortingInfo = this.props.sortingInfo;
         const headerDescription = this.props.tableHeaders?.[controlheader?.dataIndex]?.description;
         const disableSort = this.props.disableSort;
-
         const nameRenderer = () => {
             // sharing css with fileList table
             let sortIcon = "sort";
@@ -221,7 +225,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 }
             }
             return (
-                <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType))}>
+                <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType, column.columnIndex))}>
                     <Label disabled={disableSort} className="bp3-inline label">
                         <Icon className={iconClass} icon={sortIcon as IconName} />
                         <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp3-dark" : ""}>

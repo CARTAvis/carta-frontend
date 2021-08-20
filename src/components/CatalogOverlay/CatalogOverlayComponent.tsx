@@ -506,19 +506,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType) => {
+    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => {
         const profileStore = this.profileStore;
         const appStore = AppStore.Instance;
-        if (profileStore && appStore && profileStore.isFileBasedCatalog) {
-            profileStore.resetFilterRequestControlParams();
+        
+        if (profileStore && appStore) {
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
-
-            let filter = profileStore.updateRequestDataSize;
-            filter.sortColumn = columnName;
-            filter.sortingType = sortingType;
-            profileStore.setSortingInfo(columnName, sortingType);
-            appStore.sendCatalogFilter(filter);
+            if (profileStore.isFileBasedCatalog) {
+                profileStore.resetFilterRequestControlParams();
+                let filter = profileStore.updateRequestDataSize;
+                filter.sortColumn = columnName;
+                filter.sortingType = sortingType;
+                profileStore.setSortingInfo(columnName, sortingType);
+                appStore.sendCatalogFilter(filter);
+            } else {
+                profileStore.setSortingInfo(columnName, sortingType, columnIndex);
+            }
         }
     };
 
@@ -712,8 +716,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateSortRequest: this.updateSortRequest,
             sortingInfo: profileStore.sortingInfo,
             disableSort: profileStore.loadOntoImage,
-            tableHeaders: profileStore.catalogHeader
+            tableHeaders: profileStore.catalogHeader,
         };
+
+        if (!profileStore.isFileBasedCatalog) {
+            dataTableProps.sortedIndexMap = (profileStore as CatalogOnlineQueryProfileStore).sortedIndexMap;
+        }
 
         let startIndex = 0;
         if (profileStore.numVisibleRows) {

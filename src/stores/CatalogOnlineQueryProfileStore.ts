@@ -11,6 +11,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     @observable catalogControlHeader: Map<string, ControlHeader>;
     @observable numVisibleRows: number;
     @observable loadingData: boolean;
+    @observable sortedIndexMap: number[];
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, dataSize: number, catalogType: CatalogType) {
         super(catalogType, catalogData);
@@ -32,6 +33,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
             epoch: null,
             coordinate: this.systemCoordinateMap.get(system)
         };
+        this.initSortedIndexMap();
     }
 
     @computed get initCatalogControlHeader() {
@@ -70,6 +72,54 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         return this.numVisibleRows;
     }
 
+    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number) {
+        this.sortingInfo = {columnName, sortingType};
+        let direction = 0;
+        if (sortingType == 0) {
+            direction = 1;
+        } else if (sortingType == 1) {
+            direction = -1;
+        }
+        if (direction === 0) {
+            this.initSortedIndexMap();
+            return;
+        }
+        const catalogColumn = this.catalogData.get(columnIndex);
+        switch (catalogColumn.dataType) {
+            case CARTA.ColumnType.String:
+                this.sortedIndexMap.sort((a: number, b: number) => {
+                    const aString = catalogColumn.data[a] as string;
+                    const bString = catalogColumn.data[b] as string;
+                    if (!aString) {
+                        return direction * -1;
+                     }
+                 
+                     if (!bString) {
+                        return direction * 1;
+                     }
+                    return direction * aString.localeCompare(bString);
+                });
+                break;
+            case CARTA.ColumnType.UnsupportedType:
+                console.log("Data type is not supported");
+                break;
+            default:
+                this.sortedIndexMap.sort((a: number, b: number) => {
+                    const aNumber = catalogColumn.data[a] as number;
+                    const bNumber = catalogColumn.data[b] as number;
+                    return direction * (aNumber < bNumber ? -1 : 1);
+                });
+                break;
+        }
+    }
+
+    @action initSortedIndexMap() {
+        this.sortedIndexMap = new Array(this.numVisibleRows);
+        for (let index = 0; index < this.numVisibleRows; index++) {
+            this.sortedIndexMap[index] = index;
+        }
+    }
+
     @action resetFilterRequestControlParams() {
         console.log("reset clicked")
     }
@@ -85,4 +135,6 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
         console.log(catalogFilter, catalogData)
     }
+
+    private 
 }

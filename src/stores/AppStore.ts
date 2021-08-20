@@ -794,7 +794,6 @@ export class AppStore {
                 cancelToken: cancelTokenSource.token
             }).then((response) => {
                 if (frame && response?.status === 200 && response?.data?.data?.length) {
-                    console.log(response.data)
                     runInAction(() => {
                         const configStore = CatalogOnlineQueryConfigStore.Instance;
                         const headers = APIProcessing.ProcessSimbadMetaData(response.data?.metadata);
@@ -820,7 +819,7 @@ export class AppStore {
                             this.fileBrowserStore.hideFileBrowser();
                             const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, catalogInfo.dataSize, CatalogType.SIMBAD);
                             this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                            resolve(fileId);
+                            resolve(catalogInfo.dataSize);
                         } else {
                             reject();
                         }
@@ -832,9 +831,11 @@ export class AppStore {
             })
             .catch((error) => {
                 if (axios.isCancel(error)) {
-                    AppToaster.show(ErrorToast(error?.message));
+                    AppToaster.show(WarningToast(error?.message));
+                } else if (error?.message) {
+                    AppToaster.show(ErrorToast(error.message));
                 } else {
-                    AppToaster.show(ErrorToast(error));
+                    console.log("Append Catalog Error: " + error);
                 }
                 reject(error);
             });

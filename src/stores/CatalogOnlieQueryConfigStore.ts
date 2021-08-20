@@ -2,7 +2,6 @@ import * as AST from "ast_wrapper";
 import {action, observable, makeObservable, reaction, computed} from "mobx";
 import {CatalogSystemType, Point2D} from "models";
 import {AppStore, OverlayStore, NumberFormatType, ASTSettingsString, SystemType} from "stores";
-import {AbstractCatalogProfileStore} from "models";
 import {transformPoint} from "utilities";
 
 export enum CatalogDatabase {
@@ -42,23 +41,11 @@ export class CatalogOnlineQueryConfigStore {
         this.enablePointSelection = false;
         this.radiusUnits = RadiusUnits.DEGREES;
         this.coordsFormat = NumberFormatType.Degrees;
-
-        reaction(
-            () =>  OverlayStore.Instance.global.defaultSystem,
-            () => {
-                this.coordsType = AbstractCatalogProfileStore.getCatalogSystem(OverlayStore.Instance.global.defaultSystem);
-            }
-        );
         
         reaction(   
             () => AppStore.Instance.activeFrame,
             () => {
-                console.log(AppStore.Instance.activeFrame.center)
-                const frame = AppStore.Instance.activeFrame;
-                if(this.centerCoord.x === undefined && this.centerCoord.y === undefined && frame) {
-                    const pointWCS = transformPoint(frame.wcsInfo, frame.center);
-                    this.updateImageCenter(pointWCS);
-                }
+                this.setCenter();
             }
         );
 
@@ -66,10 +53,22 @@ export class CatalogOnlineQueryConfigStore {
             () => AppStore.Instance.cursorFrozen,
             cursorFrozen => {
                 const frame = AppStore.Instance.activeFrame;
-                console.log(cursorFrozen, frame?.cursorInfo)
                 if (cursorFrozen && frame?.cursorInfo?.posImageSpace) {
-                    this.updateImageCenter(frame.cursorInfo.posWCS);
+                    this.updateCenterCoord(frame.cursorInfo.posImageSpace);
                 }
+            }
+        )
+
+        reaction(
+            () =>  OverlayStore.Instance.global.explicitSystem,
+            syetem => {
+                const frame = AppStore.Instance.activeFrame;
+                console.log(frame?.cursorInfo?.posImageSpace.x, frame.center.x)
+                if (frame?.cursorInfo?.posImageSpace) {
+                    this.updateCenterCoord(frame.cursorInfo.posImageSpace);
+                } else if (frame?.center) {
+                    this.updateCenterCoord(frame.center);
+                } 
             }
         )
     }
@@ -79,6 +78,13 @@ export class CatalogOnlineQueryConfigStore {
             CatalogOnlineQueryConfigStore.staticInstance = new CatalogOnlineQueryConfigStore();
         }
         return CatalogOnlineQueryConfigStore.staticInstance;
+    }
+
+    public setCenter() {
+        const frame = AppStore.Instance.activeFrame;
+        if (frame?.center) {
+            this.updateCenterCoord(frame.center);
+        }
     }
 
     @action setQueryStatus(isQuerying: boolean) {
@@ -107,7 +113,7 @@ export class CatalogOnlineQueryConfigStore {
         this.centerCoord = coords;
     }
 
-    @action updateImageCenter(center: any) {
+    @action updateCenterCoord(center: Point2D) {
         const coord = this.convertToDeg(center);
         this.setCenterCoord(coord.x.toString(), "X");
         this.setCenterCoord(coord.y.toString(), "Y");
@@ -140,7 +146,7 @@ export class CatalogOnlineQueryConfigStore {
                 radiusIndeg = radiusIndeg * (1/60);
                 break;
             case RadiusUnits.ARCSECONDS:
-                radiusIndeg = radiusIndeg * (1/360);
+                radiusIndeg = radiusIndeg * (1/3600);
                 break;
             default:
                 break;
@@ -148,18 +154,23 @@ export class CatalogOnlineQueryConfigStore {
         return radiusIndeg;
     }
 
-    convertToDeg(point: Point2D) {
+    convertToDeg(pixelCoords: Point2D) {
         const frame = AppStore.Instance.activeFrame;
         const overlay = OverlayStore.Instance;
         let p: {x: string, y: string} = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
-            const format = `${NumberFormatType.Degrees}.${precision}`; 
+            const format = `${NumberFormatType.Degrees}.${precision}`;
+            const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
+            AST.set(wcsCopy, `System=${SystemType.ICRS}`);
             astString.add("Format(1)",format);
             astString.add("Format(2)",format);
             astString.add("System", SystemType.ICRS);
-            p = AST.getFormattedCoordinates(frame.wcsInfo, point.x, point.y, astString.toString(), true);
+            const pointWCS = transformPoint(wcsCopy, pixelCoords);
+            const normVals = AST.normalizeCoordinates(wcsCopy, pointWCS.x, pointWCS.y);
+            p = AST.getFormattedCoordinates(wcsCopy, normVals.x, normVals.y, astString.toString(), true);
+            AST.deleteObject(wcsCopy);
         }
         return p;
     }

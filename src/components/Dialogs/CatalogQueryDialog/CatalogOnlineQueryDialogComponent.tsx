@@ -1,5 +1,6 @@
 import * as React from "react";
 import axios, {CancelTokenSource} from "axios";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, FormGroup, IDialogProps, Intent, MenuItem, NonIdealState, Overlay, PopoverPosition, Spinner} from "@blueprintjs/core";
 import {IItemRendererProps, Select} from "@blueprintjs/select";
@@ -13,12 +14,37 @@ import "./CatalogOnlineQueryDialogComponent.scss";
 export class CatalogQueryDialogComponent extends React.Component {
     private static readonly DefaultWidth = 550;
     private static readonly DefaultHeight = 500;
-
+    private static readonly DBSystemMap = new Map<CatalogDatabase, CatalogSystemType[]>([
+        [CatalogDatabase.SIMBAD, [CatalogSystemType.ICRS]]
+    ]);
     private cancelTokenSource: CancelTokenSource;
+
+    @observable dataSize: number;
 
     constructor(props: any) {
         super(props);
+        makeObservable(this);
         this.cancelTokenSource = axios.CancelToken.source();
+        this.dataSize = undefined;
+    }
+
+    @action setDataSize(resultSize: number) {
+        this.dataSize = resultSize;
+    }
+
+    @computed get resultInfo(): string {
+        let resultStr = undefined;
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        if (configStore.isQuerying) {
+            resultStr = `Querying ${configStore.catalogDB}`;
+        } else if (this.dataSize === 0) {
+            resultStr = "No objects found";
+        } else if (this.dataSize === 1) {
+            resultStr = `Found ${this.dataSize} object`;
+        } else if (this.dataSize > 1) {
+            resultStr = `Found ${this.dataSize} objects`;
+        }
+        return resultStr;
     }
 
     public render() {
@@ -96,7 +122,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={false} label="Center Coordinates" disabled={disable}>
                     <Select
-                        items={Object.values(CatalogSystemType).filter(type => type!== CatalogSystemType.Pixel0 && type!== CatalogSystemType.Pixel1)}
+                        items={CatalogQueryDialogComponent.DBSystemMap.get(configStore.catalogDB)}
                         activeItem={null}
                         onItemSelect={type => configStore.setCoordsType(type)}
                         itemRenderer={this.renderSysTypePopOver}
@@ -121,7 +147,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                         value={configStore.centerCoord.y}
                         onValueChange={(valueAsNumber: number ,valueAsString: string) => configStore.setCenterCoord(valueAsString, "Y")}
                     />
-                    {/* <Button icon="locate" disabled={disable} onClick={() => configStore.setImageCenter()} /> */}
+                    <Button icon="locate" disabled={disable} onClick={() => configStore.setCenter()} />
                 </FormGroup>
                 <ClearableNumericInputComponent
                     label="Max Number of Objects"
@@ -135,6 +161,10 @@ export class CatalogQueryDialogComponent extends React.Component {
                     inline={false}
                 />
             </div>
+        );
+
+        const tableInfo = (
+            <pre>{this.resultInfo}</pre>
         );
 
         return (
@@ -156,6 +186,9 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </div>
                 </Overlay>
                 <div className="bp3-dialog-footer">
+                    <div className={"result-info"}>
+                        {tableInfo}
+                    </div>
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton
                             intent={Intent.SUCCESS}
@@ -183,16 +216,15 @@ export class CatalogQueryDialogComponent extends React.Component {
         configStore.setQueryStatus(true);
         
         AppStore.Instance.appendOnlineCatalog(baseUrl, query, this.cancelTokenSource)
-        .then(catalogFileId => {
-            console.log(catalogFileId)
+        .then(dataSize => {
             configStore.setQueryStatus(false);
+            this.setDataSize(dataSize);
         })
         .catch(error => {
             configStore.setQueryStatus(false);
+            this.setDataSize(0);
             if(axios.isCancel(error)){
                 this.cancelTokenSource = axios.CancelToken.source();
-            } else {
-                console.log(error);
             }
         });
     }

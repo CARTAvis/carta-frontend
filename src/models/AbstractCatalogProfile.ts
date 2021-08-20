@@ -62,6 +62,7 @@ export abstract class AbstractCatalogProfileStore {
     abstract resetCatalogFilterRequest(): void;
     abstract get loadOntoImage(): boolean;
     abstract setMaxRows(maxRows: number): void;
+    abstract setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number): void;
 
     @observable catalogType: CatalogType;
     @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
@@ -255,10 +256,6 @@ export abstract class AbstractCatalogProfileStore {
 
     @action setHeaderDisplay(val: boolean, columnName: string) {
         this.catalogControlHeader.get(columnName).display = val;
-    }
-
-    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
-        this.sortingInfo = {columnName, sortingType};
     }
 
     @action setUpdateMode(mode: CatalogUpdateMode) {
