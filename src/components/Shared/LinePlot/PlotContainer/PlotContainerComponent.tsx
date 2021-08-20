@@ -179,15 +179,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         return null;
     };
 
-    private filterYLogTicks = (_axis, ticks: number[]) => {
-        if (this.props.data?.length === 1) {
-            const newTicks = ticks.filter(tick => tick !== this.props.data[0].y);
-            return this.filterLogTicks(_axis, newTicks);
-        }
-
-        return this.filterLogTicks(_axis, ticks);
-    };
-
     private filterLinearTicks = (_axis, ticks: number[]) => {
         let removeFirstTick = false;
         let removeLastTick = false;
@@ -223,14 +214,29 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         return ticks.slice(removeFirstTick ? 1 : 0, removeLastTick ? -1 : undefined);
     };
 
-    private filterYLinearTicks = (_axis, ticks: number[]) => {
-        if (this.props.data?.length === 1) {
-            const newTicks = ticks.filter(tick => tick !== this.props.data[0].y);
-            return this.filterLinearTicks(_axis, newTicks);
-        }
-
-        return this.filterLinearTicks(_axis, ticks);
+    private filterYLogTicks = (_axis, ticks: number[]) => {
+        return this.filterLogTicks(_axis, this.removeAdditionalTicks(ticks));
     };
+
+    private filterYLinearTicks = (_axis, ticks: number[]) => {
+        return this.filterLinearTicks(_axis, this.removeAdditionalTicks(ticks));
+    };
+
+    // remove the additional ticks, which are equal to the data value, when there is only one data
+    // otherwise the additional ticks could overlap other ticks
+    private removeAdditionalTicks = (ticks: number[]) => {
+        let newTicks: number[] = ticks;
+        if (this.props.data?.length === 1 && !this.props.multiPlotPropsMap?.size) {
+            newTicks = ticks.slice(1, ticks.length - 1);
+        } else if (!this.props.data?.length && this.props.multiPlotPropsMap?.size === 1) {
+            this.props.multiPlotPropsMap.forEach(props => {
+                if (props.data?.length === 1) {
+                    newTicks = ticks.slice(1, ticks.length - 1);
+                }
+            });
+        }
+        return newTicks;
+    }
 
     private static FormatTicksScientific = (value: number, index: number, values: number[]) => {
         return toExponential(value, 2);
