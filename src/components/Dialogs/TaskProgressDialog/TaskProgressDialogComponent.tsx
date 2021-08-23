@@ -7,9 +7,9 @@ import {toFixed} from "utilities";
 
 interface TaskProgressDialogComponentProps {
     progress: number;
-    timeRemaining: number;
+    timeRemaining?: number;
     isOpen: boolean;
-    cancellable: boolean;
+    isSimplyClosable?: boolean;
     onCancel?: () => void;
     text: string;
     contentText?: string;
@@ -45,11 +45,11 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
                     <ProgressBar value={this.props.progress} animate={!isFinite(this.props.progress)} stripes={!isFinite(this.props.progress)} intent={"primary"} />
                     <>{this.props.contentText}</>
                 </div>
-                {this.props.cancellable && (
+                {this.props.onCancel && (
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                            <Tooltip2 content="Cancel the current task">
-                                <AnchorButton onClick={this.props.onCancel}>Cancel</AnchorButton>
+                            <Tooltip2 content={this.props.isSimplyClosable ? "Close progess bar" : "Cancel the current task"}>
+                                <AnchorButton onClick={this.props.onCancel}>{this.props.isSimplyClosable ? "Close" : "Cancel"}</AnchorButton>
                             </Tooltip2>
                         </div>
                     </div>

@@ -28,6 +28,7 @@ const HistogramSelect = Select.ofType<boolean>();
 @observer
 export class ContourDialogComponent extends React.Component {
     @observable showCubeHistogramAlert: boolean;
+    @observable showContourProgress: boolean;
     @observable currentTab: ContourDialogTabs = ContourDialogTabs.Levels;
     @observable levels: number[];
     @observable smoothingMode: CARTA.SmoothingMode;
@@ -43,6 +44,8 @@ export class ContourDialogComponent extends React.Component {
     constructor(props: {appStore: AppStore}) {
         super(props);
         makeObservable(this);
+
+        this.showContourProgress = false;
 
         this.widgetStore = new RenderConfigWidgetStore();
         this.setDefaultContourParameters();
@@ -65,6 +68,19 @@ export class ContourDialogComponent extends React.Component {
             }
         });
     }
+
+    @action private handleApplyContours = () => {
+        const dataSource = AppStore.Instance.contourDataSource;
+        if (dataSource) {
+            dataSource.contourConfig.setContourConfiguration(this.levels.slice(), this.smoothingMode, this.smoothingFactor);
+            dataSource.applyContours();
+            this.showContourProgress = true;
+        }
+    };
+
+    @action private handleContourProgressClose = () => {
+        this.showContourProgress = false;
+    };
 
     @action setDefaultContourParameters() {
         const appStore = AppStore.Instance;
@@ -197,14 +213,6 @@ export class ContourDialogComponent extends React.Component {
             dataSource.renderConfig.setUseCubeHistogramContours(false);
         }
         appStore.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
-    };
-
-    private handleApplyContours = () => {
-        const dataSource = AppStore.Instance.contourDataSource;
-        if (dataSource) {
-            dataSource.contourConfig.setContourConfiguration(this.levels.slice(), this.smoothingMode, this.smoothingFactor);
-            dataSource.applyContours();
-        }
     };
 
     private handleClearContours = () => {
@@ -498,9 +506,15 @@ export class ContourDialogComponent extends React.Component {
                     isOpen={dataSource.renderConfig.useCubeHistogramContours && dataSource.renderConfig.cubeHistogramProgress < 1.0}
                     progress={dataSource.renderConfig.cubeHistogramProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
-                    cancellable={true}
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
+                />
+                <TaskProgressDialogComponent
+                    isOpen={this.showContourProgress && dataSource.contourProgress >= 0 && dataSource.contourProgress < 1}
+                    progress={dataSource.contourProgress}
+                    isSimplyClosable={true}
+                    onCancel={this.handleContourProgressClose}
+                    text={"Calculating contours"}
                 />
             </DraggableDialogComponent>
         );

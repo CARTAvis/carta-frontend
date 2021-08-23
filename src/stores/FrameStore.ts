@@ -47,6 +47,8 @@ export interface FrameInfo {
 
 export const WCS_PRECISION = 10;
 
+type ContourLevel = number;
+
 export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
@@ -100,7 +102,7 @@ export class FrameStore {
     @observable currentCompressionQuality: number;
     @observable renderConfig: RenderConfigStore;
     @observable contourConfig: ContourConfigStore;
-    @observable contourStores: Map<number, ContourStore>;
+    @observable contourStores: Map<ContourLevel, ContourStore>;
     @observable valid: boolean;
     @observable moving: boolean;
     @observable zooming: boolean;
@@ -702,7 +704,7 @@ export class FrameStore {
 
         let totalProgress = 0;
         this.contourStores.forEach((contourStore, level) => {
-            if (this.contourConfig.levels.indexOf(level) !== -1) {
+            if (this.contourConfig.levels.includes(level)) {
                 totalProgress += contourStore.progress;
             }
         });
@@ -1534,9 +1536,9 @@ export class FrameStore {
             }
         }
 
-        // Clear up stale contour levels by checking against the config, and update total contour progress
+        // Clear up stale contour levels by checking against the config
         this.contourStores.forEach((contourStore, level) => {
-            if (this.contourConfig.levels.indexOf(level) === -1) {
+            if (!this.contourConfig.levels.includes(level)) {
                 this.contourStores.delete(level);
             }
         });

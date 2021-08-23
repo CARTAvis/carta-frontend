@@ -458,7 +458,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
                     progress={frame.renderConfig.cubeHistogramProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
-                    cancellable={true}
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
                 />

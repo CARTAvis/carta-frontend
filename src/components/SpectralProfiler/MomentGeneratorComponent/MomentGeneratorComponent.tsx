@@ -264,7 +264,6 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     isOpen={frame && frame.isRequestingMoments && frame.requestingMomentsProgress < 1}
                     progress={frame ? frame.requestingMomentsProgress : 0}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
-                    cancellable={true}
                     onCancel={this.handleRequestingMomentCancelled}
                     text={"Generating moments"}
                 />
