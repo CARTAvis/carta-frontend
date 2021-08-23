@@ -27,7 +27,7 @@ export const POLARIZATION_LABELS = new Map<string, string>([
     ["LR", "LR"],
     ["RL", "RL"],
     ["LL", "LL"],
-    ["RR", "RR"],
+    ["RR", "RR"]
 ]);
 
 export const VALID_COORDINATES: string[] = ["z", ...Array.from(STANDARD_POLARIZATIONS.values()).map(val => `${val}z`)];

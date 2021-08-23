@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {isAutoColor} from "utilities";
-import {VALID_COORDINATES} from "models"
+import {VALID_COORDINATES} from "models";
 import tinycolor from "tinycolor2";
 
 export class HistogramWidgetStore extends RegionWidgetStore {

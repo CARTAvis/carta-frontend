@@ -58,7 +58,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             if (!regionMap) {
                 return null;
             }
-            const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes.replace("Stokes ", "") === coordinate.slice(0, 1));
+            const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
             return regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
         }
         return null;
@@ -285,7 +285,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             <div className={className}>
                 <div className="stats-toolbar">
                     <RegionSelectorComponent widgetStore={this.widgetStore} />
-                    <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
+                    <FormGroup label={"Polarization"} inline={true} disabled={!enableStokesSelect}>
                         <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} />
                     </FormGroup>
                 </div>

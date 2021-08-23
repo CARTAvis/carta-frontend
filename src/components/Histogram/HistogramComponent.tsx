@@ -63,7 +63,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             if (!regionMap) {
                 return null;
             }
-            const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes.replace("Stokes ", "") === coordinate.slice(0, 1));
+            const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
             const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
             if (!regionHistogramData) {
                 return null;

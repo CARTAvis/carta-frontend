@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "stores/widgets";
 import {action, observable, makeObservable} from "mobx";
-import {VALID_COORDINATES} from "models"
+import {VALID_COORDINATES} from "models";
 
 export class StatsWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
