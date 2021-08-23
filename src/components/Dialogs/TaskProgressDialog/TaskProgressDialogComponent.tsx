@@ -7,7 +7,7 @@ import {toFixed} from "utilities";
 
 interface TaskProgressDialogComponentProps {
     progress: number;
-    timeRemaining?: number;
+    timeRemaining: number;
     isOpen: boolean;
     isSimplyClosable?: boolean;
     onCancel?: () => void;

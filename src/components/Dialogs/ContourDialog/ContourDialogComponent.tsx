@@ -69,7 +69,9 @@ export class ContourDialogComponent extends React.Component {
         });
 
         autorun(() => runInAction(() => {
-            if (AppStore.Instance.contourDataSource?.contourProgress === 1) {
+            const contourProgress = AppStore.Instance.contourDataSource?.contourProgress;
+            AppStore.Instance.updateTaskProgress(contourProgress);
+            if (contourProgress === 1) {
                 this.showContourProgress = false;
             }
         }));
@@ -80,6 +82,7 @@ export class ContourDialogComponent extends React.Component {
         if (dataSource) {
             dataSource.contourConfig.setContourConfiguration(this.levels.slice(), this.smoothingMode, this.smoothingFactor);
             dataSource.applyContours();
+            AppStore.Instance.restartTaskProgress();
             this.showContourProgress = true;
         }
     };
@@ -518,6 +521,7 @@ export class ContourDialogComponent extends React.Component {
                 <TaskProgressDialogComponent
                     isOpen={this.showContourProgress && dataSource.contourProgress >= 0 && dataSource.contourProgress < 1}
                     progress={dataSource.contourProgress}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
                     isSimplyClosable={true}
                     onCancel={this.handleContourProgressClose}
                     text={"Calculating contours"}
