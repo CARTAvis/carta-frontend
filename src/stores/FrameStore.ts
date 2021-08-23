@@ -26,7 +26,8 @@ import {
     STANDARD_SPECTRAL_TYPE_SETS,
     STANDARD_POLARIZATIONS,
     Transform2D,
-    ZoomPoint
+    ZoomPoint,
+    POLARIZATION_LABELS
 } from "models";
 import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
@@ -723,7 +724,7 @@ export class FrameStore {
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (STANDARD_POLARIZATIONS.has(stokesVal)) {
-                        stokesOptions.push({value: stokesVal - 1, label: `${stokesVal > 0 ? "Stokes " : ""}${STANDARD_POLARIZATIONS.get(stokesVal)}`});
+                        stokesOptions.push({value: stokesVal - 1, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
                     }
                 }
             }
