@@ -68,13 +68,15 @@ export class ContourDialogComponent extends React.Component {
             }
         });
 
-        autorun(() => runInAction(() => {
-            const contourProgress = AppStore.Instance.contourDataSource?.contourProgress;
-            AppStore.Instance.updateTaskProgress(contourProgress);
-            if (contourProgress === 1) {
-                this.showContourProgress = false;
-            }
-        }));
+        autorun(() =>
+            runInAction(() => {
+                const contourProgress = AppStore.Instance.contourDataSource?.contourProgress;
+                AppStore.Instance.updateTaskProgress(contourProgress);
+                if (contourProgress === 1) {
+                    this.showContourProgress = false;
+                }
+            })
+        );
     }
 
     @action private handleApplyContours = () => {
