@@ -1570,6 +1570,7 @@ export class AppStore {
             regionStatsMap = new ObservableMap<number, CARTA.RegionStatsData>();
             frameStatsMap.set(regionStatsData.regionId, regionStatsMap);
         }
+
         regionStatsMap.set(regionStatsData.stokes, regionStatsData);
     };
 
