@@ -724,7 +724,7 @@ export class FrameStore {
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (STANDARD_POLARIZATIONS.has(stokesVal)) {
-                        stokesOptions.push({value: stokesVal - 1, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
+                        stokesOptions.push({value: i, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
                     }
                 }
             }

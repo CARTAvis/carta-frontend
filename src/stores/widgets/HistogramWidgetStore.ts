@@ -115,8 +115,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                     regionRequirements.histograms = [];
                 }
 
-                let hitogramConfig = regionRequirements.histograms.find(config => config.coordinate === coordinate);
-                if (!hitogramConfig) {
+                let histogramConfig = regionRequirements.histograms.find(config => config.coordinate === coordinate);
+                if (!histogramConfig) {
                     regionRequirements.histograms.push({coordinate: coordinate, channel: -1, numBins: -1});
                 }
             }

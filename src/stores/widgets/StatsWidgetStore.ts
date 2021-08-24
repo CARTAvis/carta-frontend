@@ -49,8 +49,8 @@ export class StatsWidgetStore extends RegionWidgetStore {
                     regionRequirements.statsConfigs = [];
                 }
 
-                let hitogramConfig = regionRequirements.statsConfigs.find(config => config.coordinate === coordinate);
-                if (!hitogramConfig) {
+                let histogramConfig = regionRequirements.statsConfigs.find(config => config.coordinate === coordinate);
+                if (!histogramConfig) {
                     regionRequirements.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
                 }
             }
