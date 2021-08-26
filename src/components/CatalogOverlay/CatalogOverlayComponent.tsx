@@ -13,7 +13,7 @@ import {CARTA} from "carta-protobuf";
 import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
-import {ComparisonOperator, toFixed} from "utilities";
+import {toFixed} from "utilities";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType, ProcessedColumnData} from "models";
 import "./CatalogOverlayComponent.scss";
 
@@ -89,25 +89,27 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     // overwrite scrollToRegion to avoid crush when viewportRect is undefined (unpin action with goldenLayout)
     // https://github.com/palantir/blueprint/blob/841b2e12fec1970704b754f7794c683c735d0439/packages/table/src/table.tsx#L761
     scrollToRegion = (ref, region) => {
-        const state = ref.state;
-        const numFrozenColumns = state?.numFrozenColumnsClamped;
-        const numFrozenRows = state?.numFrozenRowsClamped;
-        let viewportRect = ref.state.viewportRect;
-        if (!viewportRect) {
-            viewportRect = ref.locator.getViewportRect();
+        if (ref) {
+            const state = ref.state;
+            const numFrozenColumns = state?.numFrozenColumnsClamped;
+            const numFrozenRows = state?.numFrozenRowsClamped;
+            let viewportRect = ref.state.viewportRect;
+            if (!viewportRect) {
+                viewportRect = ref.locator.getViewportRect();
+            }
+            const currScrollLeft = viewportRect?.left;
+            const currScrollTop = viewportRect?.top;
+            const {scrollLeft, scrollTop} = ScrollUtils.getScrollPositionForRegion(region, currScrollLeft, currScrollTop, ref.grid.getCumulativeWidthBefore, ref.grid.getCumulativeHeightBefore, numFrozenRows, numFrozenColumns);
+            const correctedScrollLeft = ref.shouldDisableHorizontalScroll() ? 0 : scrollLeft;
+            const correctedScrollTop = ref.shouldDisableVerticalScroll() ? 0 : scrollTop;
+            ref.quadrantStackInstance.scrollToPosition(correctedScrollLeft, correctedScrollTop);
         }
-        const currScrollLeft = viewportRect?.left;
-        const currScrollTop = viewportRect?.top;
-        const {scrollLeft, scrollTop} = ScrollUtils.getScrollPositionForRegion(region, currScrollLeft, currScrollTop, ref.grid.getCumulativeWidthBefore, ref.grid.getCumulativeHeightBefore, numFrozenRows, numFrozenColumns);
-        const correctedScrollLeft = ref.shouldDisableHorizontalScroll() ? 0 : scrollLeft;
-        const correctedScrollTop = ref.shouldDisableVerticalScroll() ? 0 : scrollTop;
-        ref.quadrantStackInstance.scrollToPosition(correctedScrollLeft, correctedScrollTop);
     };
 
     @computed get catalogDataInfo(): {dataset: Map<number, ProcessedColumnData>; numVisibleRows: number} {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
-        let dataset;
+        let dataset: Map<number, ProcessedColumnData>;
         let numVisibleRows = 0;
         if (profileStore && catalogWidgetStore) {
             dataset = profileStore.catalogData;
@@ -117,11 +119,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     dataset = profileStore.selectedData;
                     numVisibleRows = profileStore.regionSelected;
                     // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
-                    if (this.catalogTableRef) {
-                        this.scrollToRegion(this.catalogTableRef, Regions.row(0));
-                    }
+                    this.scrollToRegion(this.catalogTableRef, Regions.row(0));
                 } else {
-                    if (this.catalogTableRef && catalogWidgetStore.catalogTableAutoScroll) {
+                    if (catalogWidgetStore.catalogTableAutoScroll) {
                         this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
                     }
                 }
@@ -388,95 +388,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private getUserFilters(): CARTA.FilterConfig[] {
-        let userFilters: CARTA.FilterConfig[] = [];
-        const filters = this.profileStore.catalogControlHeader;
-        filters.forEach((value, key) => {
-            if (value.filter !== undefined && value.display) {
-                let filter = new CARTA.FilterConfig();
-                const dataType = this.profileStore.catalogHeader[value.dataIndex].dataType;
-                filter.columnName = key;
-                if (dataType === CARTA.ColumnType.String) {
-                    filter.subString = value.filter;
-                    userFilters.push(filter);
-                } else {
-                    const result = CatalogOverlayComponent.GetComparisonOperatorAndValue(value.filter);
-                    if (result.operator !== undefined && result.values.length > 0) {
-                        filter.comparisonOperator = result.operator;
-                        if (result.values.length > 1) {
-                            filter.value = Math.min(result.values[0], result.values[1]);
-                            filter.secondaryValue = Math.max(result.values[0], result.values[1]);
-                        } else {
-                            filter.value = result.values[0];
-                        }
-                        userFilters.push(filter);
-                    }
-                }
-            }
-        });
-        return userFilters;
-    }
-
-    private static GetNumberFromFilter(filterString: string): number {
-        return Number(filterString.replace(/[^0-9.+-.]+/g, ""));
-    }
-
-    private static GetComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
-        const filter = filterString.replace(/\s/g, "");
-        let result = {operator: undefined, values: []};
-        // order matters, since ... and .. both include .. (same for < and <=, > and >=)
-        for (const key of Object.keys(ComparisonOperator)) {
-            const operator = ComparisonOperator[key];
-            const found = filter.includes(operator);
-            if (found) {
-                if (operator === ComparisonOperator.Equal) {
-                    const equalTo = CatalogOverlayComponent.GetNumberFromFilter(filter);
-                    result.operator = CARTA.ComparisonOperator.Equal;
-                    result.values.push(equalTo);
-                    return result;
-                } else if (operator === ComparisonOperator.NotEqual) {
-                    const notEqualTo = CatalogOverlayComponent.GetNumberFromFilter(filter);
-                    result.operator = CARTA.ComparisonOperator.NotEqual;
-                    result.values.push(notEqualTo);
-                    return result;
-                } else if (operator === ComparisonOperator.Lesser) {
-                    const lessThan = CatalogOverlayComponent.GetNumberFromFilter(filter);
-                    result.operator = CARTA.ComparisonOperator.Lesser;
-                    result.values.push(lessThan);
-                    return result;
-                } else if (operator === ComparisonOperator.LessorOrEqual) {
-                    const lessThanOrEqualTo = CatalogOverlayComponent.GetNumberFromFilter(filter);
-                    result.values.push(lessThanOrEqualTo);
-                    result.operator = CARTA.ComparisonOperator.LessorOrEqual;
-                    return result;
-                } else if (operator === ComparisonOperator.Greater) {
-                    const greaterThan = CatalogOverlayComponent.GetNumberFromFilter(filter);
-                    result.operator = CARTA.ComparisonOperator.Greater;
-                    result.values.push(greaterThan);
-                    return result;
-                } else if (operator === ComparisonOperator.GreaterOrEqual) {
-                    const greaterThanOrEqualTo = CatalogOverlayComponent.GetNumberFromFilter(filter);
-                    result.values.push(greaterThanOrEqualTo);
-                    result.operator = CARTA.ComparisonOperator.GreaterOrEqual;
-                    return result;
-                } else if (operator === ComparisonOperator.RangeOpen) {
-                    const fromTo = filter.split(ComparisonOperator.RangeOpen, 2);
-                    result.values.push(Number(fromTo[0]));
-                    result.values.push(Number(fromTo[1]));
-                    result.operator = CARTA.ComparisonOperator.RangeOpen;
-                    return result;
-                } else if (operator === ComparisonOperator.RangeClosed) {
-                    const betweenAnd = filter.split(ComparisonOperator.RangeClosed, 2);
-                    result.values.push(Number(betweenAnd[0]));
-                    result.values.push(Number(betweenAnd[1]));
-                    result.operator = CARTA.ComparisonOperator.RangeClosed;
-                    return result;
-                }
-            }
-        }
-        return result;
-    }
-
     private resetSelectedPointIndices = () => {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
@@ -489,20 +400,22 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
-        if (profileStore && appStore && profileStore.isFileBasedCatalog) {
-            profileStore.updateTableStatus(false);
-            profileStore.resetFilterRequestControlParams();
+        if (profileStore && appStore) {
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
-
-            let filter = profileStore.updateRequestDataSize;
-            filter.imageBounds.xColumnName = catalogWidgetStore.xAxis;
-            filter.imageBounds.yColumnName = catalogWidgetStore.yAxis;
-
-            filter.fileId = profileStore.catalogInfo.fileId;
-            filter.filterConfigs = this.getUserFilters();
-            filter.columnIndices = profileStore.displayedColumnHeaders.map(v => v.columnIndex);
-            appStore.sendCatalogFilter(filter);
+            if (profileStore.isFileBasedCatalog) {
+                profileStore.updateTableStatus(false);
+                profileStore.resetFilterRequest();
+                let filter = profileStore.updateRequestDataSize;
+                filter.imageBounds.xColumnName = catalogWidgetStore.xAxis;
+                filter.imageBounds.yColumnName = catalogWidgetStore.yAxis;
+                filter.fileId = profileStore.catalogInfo.fileId;
+                filter.filterConfigs = profileStore.getUserFilters();
+                filter.columnIndices = profileStore.displayedColumnHeaders.map(v => v.columnIndex);
+                appStore.sendCatalogFilter(filter);
+            } else {
+                profileStore.resetFilterRequest(profileStore.getUserFilters());
+            }
         }
     };
 
@@ -514,7 +427,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
             if (profileStore.isFileBasedCatalog) {
-                profileStore.resetFilterRequestControlParams();
+                profileStore.resetFilterRequest();
                 let filter = profileStore.updateRequestDataSize;
                 filter.sortColumn = columnName;
                 filter.sortingType = sortingType;
@@ -720,7 +633,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         };
 
         if (!profileStore.isFileBasedCatalog) {
-            dataTableProps.sortedIndexMap = (profileStore as CatalogOnlineQueryProfileStore).sortedIndexMap;
+            const store = profileStore as CatalogOnlineQueryProfileStore;
+            dataTableProps.indexMap = store.indexMap;
         }
 
         let startIndex = 0;
@@ -889,13 +803,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                                 onValueChanged={val => profileStore.setMaxRows(val)}
                                 onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}
                                 displayExponential={false}
-                                disabled={disable}
+                                disabled={disable || !profileStore.isFileBasedCatalog}
                             />
                         </div>
                     </div>
                     <div className="bp3-dialog-footer">
                         <div className="bp3-dialog-footer-actions">
-                            <AnchorButton intent={Intent.PRIMARY} text="Update" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView} />
+                            <AnchorButton intent={Intent.PRIMARY} text="Filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView} />
                             <AnchorButton intent={Intent.PRIMARY} text="Reset" onClick={this.handleResetClick} disabled={disable} />
                             <AnchorButton intent={Intent.PRIMARY} text="Close" onClick={this.handleFileCloseClick} disabled={disable} />
                             <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} />

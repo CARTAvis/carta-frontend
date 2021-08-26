@@ -63,7 +63,6 @@ export class CatalogOnlineQueryConfigStore {
             () =>  OverlayStore.Instance.global.explicitSystem,
             syetem => {
                 const frame = AppStore.Instance.activeFrame;
-                console.log(frame?.cursorInfo?.posImageSpace.x, frame.center.x)
                 if (frame?.cursorInfo?.posImageSpace) {
                     this.updateCenterCoord(frame.cursorInfo.posImageSpace);
                 } else if (frame?.center) {

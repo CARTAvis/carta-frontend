@@ -4,7 +4,7 @@ import {Regions, IRegion} from "@blueprintjs/table";
 import {ProcessedColumnData, TypedArray} from "models";
 import {AppStore, CatalogStore, ControlHeader, CatalogUpdateMode} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
-import {filterProcessedColumnData, minMaxArray, transformPoint} from "utilities";
+import {ComparisonOperator, filterProcessedColumnData, minMaxArray, transformPoint} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
@@ -56,7 +56,7 @@ export abstract class AbstractCatalogProfileStore {
     abstract loadingData: boolean;
 
     abstract get initCatalogControlHeader(): Map<string, ControlHeader>;
-    abstract resetFilterRequestControlParams(): void;
+    abstract resetFilterRequest(filterConfigs?: CARTA.FilterConfig[]): void;
     abstract get updateRequestDataSize(): any;
     abstract get shouldUpdateData(): boolean;
     abstract resetCatalogFilterRequest(): void;
@@ -74,6 +74,7 @@ export abstract class AbstractCatalogProfileStore {
     @observable updateMode: CatalogUpdateMode;
     @observable selectedPointIndices: number[];
     @observable sortingInfo: {columnName: string; sortingType: CARTA.SortingType};
+    @observable indexMap: number[];
 
     private _catalogData: Map<number, ProcessedColumnData>;
     public static readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
@@ -103,8 +104,8 @@ export abstract class AbstractCatalogProfileStore {
         this.filterDataSize = undefined;
         this.selectedPointIndices = [];
         this.updateMode = CatalogUpdateMode.TableUpdate;
-
         this.sortingInfo = {columnName: null, sortingType: null};
+        this.indexMap = [];
     }
 
     get catalogData(): Map<number, ProcessedColumnData> {
@@ -113,6 +114,21 @@ export abstract class AbstractCatalogProfileStore {
 
     get systemCoordinateMap(): Map<CatalogSystemType, {x: CatalogOverlay; y: CatalogOverlay}> {
         return this._systemCoordinateMap;
+    }
+
+    clearData() {
+        this.catalogData.clear();
+    }
+
+    public static getCatalogSystem(system: string): CatalogSystemType {
+        let catalogSystem = CatalogSystemType.ICRS;
+        const systemMap = AbstractCatalogProfileStore.CoordinateSystemName;
+        systemMap.forEach((value, key) => {
+            if (system.toUpperCase().includes(value.toUpperCase())) {
+                catalogSystem = key;
+            }
+        });
+        return catalogSystem;
     }
 
     public get2DPlotData(xColumnName: string, yColumnName: string, columnsData: Map<number, ProcessedColumnData>): {wcsX?: Array<number>; wcsY?: Array<number>; xHeaderInfo: CARTA.ICatalogHeader; yHeaderInfo: CARTA.ICatalogHeader} {
@@ -126,8 +142,16 @@ export abstract class AbstractCatalogProfileStore {
         const yColumn = columnsData.get(yHeaderInfo.columnIndex);
 
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool && yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
-            const wcsX = xColumn.data as Array<number>;
-            const wcsY = yColumn.data as Array<number>;
+            let wcsX = xColumn.data as Array<number>;
+            let wcsY = yColumn.data as Array<number>;
+            if (!this.isFileBasedCatalog) {
+                wcsX = wcsX.filter((value, i) => {
+                    return this.indexMap.includes(i);
+                });
+                wcsY = wcsY.filter((value, i) => {
+                    return this.indexMap.includes(i);
+                });
+            }
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
         } else {
             return {xHeaderInfo, yHeaderInfo};
@@ -140,22 +164,47 @@ export abstract class AbstractCatalogProfileStore {
         const headerInfo = this.catalogHeader[header.dataIndex];
         const xColumn = this.catalogData.get(headerInfo.columnIndex);
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
-            const wcsData = xColumn.data as TypedArray;
+            let wcsData = xColumn.data as TypedArray;
+            if (!this.isFileBasedCatalog) {
+                wcsData = wcsData.filter((value, i) => {
+                    return this.indexMap.includes(i);
+                });
+            }
             return {wcsData, headerInfo};
         } else {
             return {headerInfo};
         }
     }
 
-    public static getCatalogSystem(system: string): CatalogSystemType {
-        let catalogSystem = CatalogSystemType.ICRS;
-        const systemMap = AbstractCatalogProfileStore.CoordinateSystemName;
-        systemMap.forEach((value, key) => {
-            if (system.toUpperCase().includes(value.toUpperCase())) {
-                catalogSystem = key;
+    public getUserFilters(): CARTA.FilterConfig[] {
+        let userFilters: CARTA.FilterConfig[] = [];
+        const filters = this.catalogControlHeader;
+        filters.forEach((value, key) => {
+            if (value.filter !== undefined && value.display) {
+                let filter = new CARTA.FilterConfig();
+                const dataType = this.catalogHeader[value.dataIndex].dataType;
+                filter.columnName = key;
+                if (dataType === CARTA.ColumnType.String) {
+                    if(value.filter !== "") {
+                        filter.subString = value.filter;
+                        userFilters.push(filter);
+                    }
+                } else {
+                    const result = AbstractCatalogProfileStore.GetComparisonOperatorAndValue(value.filter);
+                    if (result.operator !== undefined && result.values.length > 0) {
+                        filter.comparisonOperator = result.operator;
+                        if (result.values.length > 1) {
+                            filter.value = Math.min(result.values[0], result.values[1]);
+                            filter.secondaryValue = Math.max(result.values[0], result.values[1]);
+                        } else {
+                            filter.value = result.values[0];
+                        }
+                        userFilters.push(filter);
+                    }
+                }
             }
         });
-        return catalogSystem;
+        return userFilters;
     }
 
     @computed get catalogFileId(): number {
@@ -330,6 +379,74 @@ export abstract class AbstractCatalogProfileStore {
                 }
             }
         }
+    }
+
+    @action resetUserFilters() {
+        const controlHeaders = this.catalogControlHeader;
+        controlHeaders.forEach((value, key) => {
+            value.filter = "";
+        });
+        this.filterDataSize = undefined;
+    }
+
+    private static GetNumberFromFilter(filterString: string): number {
+        return Number(filterString.replace(/[^0-9.+-.]+/g, ""));
+    }
+
+    private static GetComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
+        const filter = filterString.replace(/\s/g, "");
+        let result = {operator: undefined, values: []};
+        // order matters, since ... and .. both include .. (same for < and <=, > and >=)
+        for (const key of Object.keys(ComparisonOperator)) {
+            const operator = ComparisonOperator[key];
+            const found = filter.includes(operator);
+            if (found) {
+                if (operator === ComparisonOperator.Equal) {
+                    const equalTo = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
+                    result.operator = CARTA.ComparisonOperator.Equal;
+                    result.values.push(equalTo);
+                    return result;
+                } else if (operator === ComparisonOperator.NotEqual) {
+                    const notEqualTo = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
+                    result.operator = CARTA.ComparisonOperator.NotEqual;
+                    result.values.push(notEqualTo);
+                    return result;
+                } else if (operator === ComparisonOperator.Lesser) {
+                    const lessThan = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
+                    result.operator = CARTA.ComparisonOperator.Lesser;
+                    result.values.push(lessThan);
+                    return result;
+                } else if (operator === ComparisonOperator.LessorOrEqual) {
+                    const lessThanOrEqualTo = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
+                    result.values.push(lessThanOrEqualTo);
+                    result.operator = CARTA.ComparisonOperator.LessorOrEqual;
+                    return result;
+                } else if (operator === ComparisonOperator.Greater) {
+                    const greaterThan = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
+                    result.operator = CARTA.ComparisonOperator.Greater;
+                    result.values.push(greaterThan);
+                    return result;
+                } else if (operator === ComparisonOperator.GreaterOrEqual) {
+                    const greaterThanOrEqualTo = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
+                    result.values.push(greaterThanOrEqualTo);
+                    result.operator = CARTA.ComparisonOperator.GreaterOrEqual;
+                    return result;
+                } else if (operator === ComparisonOperator.RangeOpen) {
+                    const fromTo = filter.split(ComparisonOperator.RangeOpen, 2);
+                    result.values.push(Number(fromTo[0]));
+                    result.values.push(Number(fromTo[1]));
+                    result.operator = CARTA.ComparisonOperator.RangeOpen;
+                    return result;
+                } else if (operator === ComparisonOperator.RangeClosed) {
+                    const betweenAnd = filter.split(ComparisonOperator.RangeClosed, 2);
+                    result.values.push(Number(betweenAnd[0]));
+                    result.values.push(Number(betweenAnd[1]));
+                    result.operator = CARTA.ComparisonOperator.RangeClosed;
+                    return result;
+                }
+            }
+        }
+        return result;
     }
 
     private isInfinite(value: number) {

@@ -38,7 +38,7 @@ export class FilterableTableComponentProps {
     sortingInfo?: {columnName: string; sortingType: CARTA.SortingType};
     disableSort?: boolean;
     tableHeaders?: Array<CARTA.ICatalogHeader>;
-    sortedIndexMap?: Array<number>;
+    indexMap?: Array<number>;
 }
 
 @observer
@@ -170,8 +170,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     private renderCell = (index: number, columnIndex: number, columnData: any) => {
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
-        if (this.props.sortedIndexMap) {
-            rowIndex = this.props.sortedIndexMap[rowIndex];
+        if (this.props.indexMap) {
+            rowIndex = this.props.indexMap[rowIndex];
         }
         if (dataIndex && dataIndex.includes(index) && !this.props.showSelectedData) {
             return (

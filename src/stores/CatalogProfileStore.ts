@@ -162,10 +162,6 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         }
     }
 
-    clearData() {
-        this.catalogData.clear();
-    }
-
     @action.bound setNumVisibleRows(val: number) {
         this.numVisibleRows = val;
     }
@@ -175,7 +171,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     }
 
     @action resetCatalogFilterRequest = () => {
-        this.resetFilterRequestControlParams();
+        this.resetFilterRequest();
         this.resetUserFilters();
         this.loadingData = false;
         this.catalogFilterRequest = this.initCatalogFilterRequest;
@@ -185,7 +181,7 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.maxRows = this.catalogInfo.dataSize;
     };
 
-    @action resetFilterRequestControlParams() {
+    @action resetFilterRequest() {
         this.setUpdateMode(CatalogUpdateMode.TableUpdate);
         this.clearData();
         this.setNumVisibleRows(0);
@@ -217,14 +213,6 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
             }
         }
         return controlHeaders;
-    }
-
-    @action resetUserFilters() {
-        const controlHeaders = this.catalogControlHeader;
-        controlHeaders.forEach((value, key) => {
-            value.filter = "";
-        });
-        this.filterDataSize = undefined;
     }
 
     @action setMaxRows(maxRows: number) {

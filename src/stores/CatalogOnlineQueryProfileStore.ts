@@ -5,16 +5,17 @@ import {AbstractCatalogProfileStore, CatalogType, CatalogInfo, ProcessedColumnDa
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode"];
+    private readonly _dataSize;
 
     @observable catalogInfo: CatalogInfo;
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;
     @observable catalogControlHeader: Map<string, ControlHeader>;
     @observable numVisibleRows: number;
     @observable loadingData: boolean;
-    @observable sortedIndexMap: number[];
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, dataSize: number, catalogType: CatalogType) {
         super(catalogType, catalogData);
+        this._dataSize = dataSize;
         makeObservable(this);
         this.catalogInfo = catalogInfo;
         this.catalogHeader = catalogHeader.sort((a, b) => {
@@ -33,7 +34,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
             epoch: null,
             coordinate: this.systemCoordinateMap.get(system)
         };
-        this.initSortedIndexMap();
+        this.initIndexMap();
     }
 
     @computed get initCatalogControlHeader() {
@@ -53,8 +54,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         }
         return controlHeaders;
     }
-
-    // handel filter
+    
     @computed get updateRequestDataSize() {
         return this.catalogFilterRequest;
     }
@@ -74,20 +74,26 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
 
     @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number) {
         this.sortingInfo = {columnName, sortingType};
+        this.updateSortedIndexMap();
+    }
+
+    @action updateSortedIndexMap() {
         let direction = 0;
+        const dataIndex = this.catalogControlHeader.get(this.sortingInfo.columnName)?.dataIndex;
+        const sortingType = this.sortingInfo.sortingType;
         if (sortingType == 0) {
             direction = 1;
         } else if (sortingType == 1) {
             direction = -1;
         }
-        if (direction === 0) {
-            this.initSortedIndexMap();
+        if (direction === 0 && this.getUserFilters().length === 0) {
+            this.initIndexMap();
             return;
         }
-        const catalogColumn = this.catalogData.get(columnIndex);
-        switch (catalogColumn.dataType) {
+        const catalogColumn = this.catalogData.get(dataIndex);
+        switch (catalogColumn?.dataType) {
             case CARTA.ColumnType.String:
-                this.sortedIndexMap.sort((a: number, b: number) => {
+                this.indexMap.sort((a: number, b: number) => {
                     const aString = catalogColumn.data[a] as string;
                     const bString = catalogColumn.data[b] as string;
                     if (!aString) {
@@ -104,7 +110,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
                 console.log("Data type is not supported");
                 break;
             default:
-                this.sortedIndexMap.sort((a: number, b: number) => {
+                this.indexMap.sort((a: number, b: number) => {
                     const aNumber = catalogColumn.data[a] as number;
                     const bNumber = catalogColumn.data[b] as number;
                     return direction * (aNumber < bNumber ? -1 : 1);
@@ -113,19 +119,96 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         }
     }
 
-    @action initSortedIndexMap() {
-        this.sortedIndexMap = new Array(this.numVisibleRows);
-        for (let index = 0; index < this.numVisibleRows; index++) {
-            this.sortedIndexMap[index] = index;
+    @action initIndexMap() {
+        const currentMap = this.indexMap;
+        this.indexMap = [];
+        if (currentMap.length || this.numVisibleRows === 0) {
+            for (let index = 0; index < this._dataSize; index++) {
+                this.indexMap.push(index);
+            }
+            if (this.sortingInfo.columnName && this.sortingInfo.sortingType) {
+                this.updateSortedIndexMap();
+            }
+        } else {
+            for (let index = 0; index < this.numVisibleRows; index++) {
+                this.indexMap.push(index);
+            }
         }
     }
 
-    @action resetFilterRequestControlParams() {
-        console.log("reset clicked")
+    @action resetFilterRequest(filterConfigs?: CARTA.FilterConfig[]) {
+        this.initIndexMap();
+        filterConfigs.forEach(filterConfig => {
+            const header = this.catalogControlHeader.get(filterConfig.columnName);
+            const dataIndex = header.dataIndex;
+            if (dataIndex > -1 && header.display) {
+                const catalogColumn = this.catalogData.get(dataIndex);
+                switch (catalogColumn.dataType) {
+                    case CARTA.ColumnType.String:
+                        const columnDataString = catalogColumn.data as string[];
+                        if (filterConfig.subString !== "") {
+                            this.indexMap = this.indexMap.filter((i) => {
+                                return columnDataString[i].includes(filterConfig.subString); 
+                            });   
+                        }
+                        break;
+                
+                    default:
+                        const columnDataNumber = catalogColumn.data as [];
+                        this.indexMap = this.filterColumnData(columnDataNumber, filterConfig);
+                        break;
+                }
+            }
+        });
+        this.numVisibleRows = this.indexMap.length;
+    }
+
+    @action filterColumnData = (catalogColumn: [], filterConfig: CARTA.FilterConfig): number[] => {
+        switch (filterConfig.comparisonOperator) {
+            case CARTA.ComparisonOperator.Equal:
+                return this.indexMap.filter((i) => {
+                    return catalogColumn[i] === filterConfig.value; 
+                });
+            case CARTA.ComparisonOperator.NotEqual:
+                return this.indexMap.filter((i) => {
+                    return catalogColumn[i] !== filterConfig.value; 
+                });
+            case CARTA.ComparisonOperator.Lesser:
+                return this.indexMap.filter((i) => {
+                    return catalogColumn[i] < filterConfig.value; 
+                });
+            case CARTA.ComparisonOperator.LessorOrEqual:
+                return this.indexMap.filter((i) => {
+                    return catalogColumn[i] <= filterConfig.value; 
+                });
+            case CARTA.ComparisonOperator.Greater:
+                return this.indexMap.filter((i) => {
+                    return catalogColumn[i] > filterConfig.value; 
+                });
+            case CARTA.ComparisonOperator.GreaterOrEqual:
+                return this.indexMap.filter((i) => {
+                    return catalogColumn[i] >= filterConfig.value; 
+                });
+            case CARTA.ComparisonOperator.RangeOpen:
+                return this.indexMap.filter((i) => {
+                    return catalogColumn[i] > filterConfig.value && catalogColumn[i] < filterConfig.secondaryValue; 
+                });
+            case CARTA.ComparisonOperator.RangeClosed:
+                return this.indexMap.filter((i) => {
+                    return catalogColumn[i] >= filterConfig.value && catalogColumn[i] <= filterConfig.secondaryValue; 
+                });
+            default:
+                return [];
+        }
     }
 
     @action resetCatalogFilterRequest = () => {
-        this.resetFilterRequestControlParams();
+        this.numVisibleRows = this._dataSize;
+        this.initIndexMap();
+        this.resetUserFilters();
+        this.updatingDataStream = false;
+        this.sortingInfo.columnName = null;
+        this.sortingInfo.sortingType = null;
     };
 
     @action setMaxRows(maxRows: number) {
