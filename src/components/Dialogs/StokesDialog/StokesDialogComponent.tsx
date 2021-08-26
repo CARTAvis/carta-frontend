@@ -14,12 +14,12 @@ export class StokesDialogComponent extends React.Component {
     @observable stokes: Map<string, CARTA.IStokesFile>;
     @observable stokesHeader: Map<string, CARTA.IFileInfoExtended>;
 
-    @action updateStokesType = (fileName: string, type: CARTA.StokesType) => {
+    @action updateStokesType = (fileName: string, type: CARTA.PolarizationType) => {
         let currentStoke = this.stokes.get(fileName);
         if (currentStoke.stokesType !== type) {
             this.stokes.forEach((stokeFile, stokeFileName) => {
                 if (stokeFileName !== fileName && stokeFile.stokesType === type) {
-                    this.stokes.get(stokeFileName).stokesType = CARTA.StokesType.STOKES_TYPE_NONE;
+                    this.stokes.get(stokeFileName).stokesType = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
                 }
             });
             const stoke: CARTA.IStokesFile = {
@@ -55,7 +55,7 @@ export class StokesDialogComponent extends React.Component {
     @computed get noneType(): boolean {
         let load = true;
         this.stokes.forEach(file => {
-            if (file.stokesType === CARTA.StokesType.STOKES_TYPE_NONE) {
+            if (file.stokesType === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
                 load = false;
             }
         });
@@ -106,7 +106,7 @@ export class StokesDialogComponent extends React.Component {
             className += " bp3-dark";
         }
 
-        let stokeItems = [CARTA.StokesType.STOKES_TYPE_NONE, CARTA.StokesType.I, CARTA.StokesType.Q, CARTA.StokesType.U, CARTA.StokesType.V];
+        let stokeItems = [CARTA.PolarizationType.POLARIZATION_TYPE_NONE, CARTA.PolarizationType.I, CARTA.PolarizationType.Q, CARTA.PolarizationType.U, CARTA.PolarizationType.V];
 
         const files = this.fileNames;
 
@@ -228,7 +228,7 @@ export class StokesDialogComponent extends React.Component {
         fileBrowserStore.saveStartingDirectory();
     };
 
-    private getLabelFromValue = (value: CARTA.StokesType) => {
+    private getLabelFromValue = (value: CARTA.PolarizationType) => {
         switch (value) {
             case 1:
                 return "I";
@@ -243,22 +243,22 @@ export class StokesDialogComponent extends React.Component {
         }
     };
 
-    private renderPopOver = (stokesType: CARTA.StokesType, itemProps: IItemRendererProps) => {
+    private renderPopOver = (stokesType: CARTA.PolarizationType, itemProps: IItemRendererProps) => {
         const label = this.getLabelFromValue(stokesType);
         return <MenuItem key={`${stokesType}: ${label}`} text={label} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    private getStokeType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.StokesType => {
+    private getStokeType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
         let type = this.getTypeFromHeader(fileInfoExtended?.headerEntries);
-        if (type === CARTA.StokesType.STOKES_TYPE_NONE) {
+        if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
             type = this.getTypeFromName(file);
         }
         return type;
     };
 
-    private getTypeFromHeader(headers: CARTA.IHeaderEntry[]): CARTA.StokesType {
+    private getTypeFromHeader(headers: CARTA.IHeaderEntry[]): CARTA.PolarizationType {
         let CRVAL: CARTA.IHeaderEntry = {};
-        let type = CARTA.StokesType.STOKES_TYPE_NONE;
+        let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
         const CTYPE = headers?.find(obj => {
             return obj.value.toUpperCase() === "STOKES";
         });
@@ -285,16 +285,16 @@ export class StokesDialogComponent extends React.Component {
 
         switch (CRVAL?.numericValue) {
             case 1:
-                type = CARTA.StokesType.I;
+                type = CARTA.PolarizationType.I;
                 break;
             case 2:
-                type = CARTA.StokesType.Q;
+                type = CARTA.PolarizationType.Q;
                 break;
             case 3:
-                type = CARTA.StokesType.U;
+                type = CARTA.PolarizationType.U;
                 break;
             case 4:
-                type = CARTA.StokesType.V;
+                type = CARTA.PolarizationType.V;
                 break;
             default:
                 break;
@@ -302,24 +302,24 @@ export class StokesDialogComponent extends React.Component {
         return type;
     }
 
-    private getTypeFromName(fileName: string): CARTA.StokesType {
-        let type = CARTA.StokesType.STOKES_TYPE_NONE;
+    private getTypeFromName(fileName: string): CARTA.PolarizationType {
+        let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
         const separators = [".", "_"];
         separators.forEach(separator => {
             const words = fileName.split(separator);
             words.forEach(word => {
                 switch (word) {
                     case "I":
-                        type = CARTA.StokesType.I;
+                        type = CARTA.PolarizationType.I;
                         break;
                     case "Q":
-                        type = CARTA.StokesType.Q;
+                        type = CARTA.PolarizationType.Q;
                         break;
                     case "U":
-                        type = CARTA.StokesType.U;
+                        type = CARTA.PolarizationType.U;
                         break;
                     case "V":
-                        type = CARTA.StokesType.V;
+                        type = CARTA.PolarizationType.V;
                         break;
                     default:
                         break;
