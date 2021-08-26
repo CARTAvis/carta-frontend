@@ -34,7 +34,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
 
         if (appStore?.activeFrame?.stokesFiles?.length) {
             appStore.activeFrame.stokesFiles.forEach(file => {
-                if (file.stokesType === CARTA.PolarizationType.I) {
+                if (file.polarizationType === CARTA.PolarizationType.I) {
                     enableFractionalPol = true;
                 }
             });

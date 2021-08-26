@@ -16,17 +16,17 @@ export class StokesDialogComponent extends React.Component {
 
     @action updateStokesType = (fileName: string, type: CARTA.PolarizationType) => {
         let currentStoke = this.stokes.get(fileName);
-        if (currentStoke.stokesType !== type) {
+        if (currentStoke.polarizationType !== type) {
             this.stokes.forEach((stokeFile, stokeFileName) => {
-                if (stokeFileName !== fileName && stokeFile.stokesType === type) {
-                    this.stokes.get(stokeFileName).stokesType = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
+                if (stokeFileName !== fileName && stokeFile.polarizationType === type) {
+                    this.stokes.get(stokeFileName).polarizationType = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
                 }
             });
             const stoke: CARTA.IStokesFile = {
                 directory: currentStoke.directory,
                 file: currentStoke.file,
                 hdu: currentStoke.hdu,
-                stokesType: type
+                polarizationType: type
             };
             this.stokes.set(fileName, stoke);
         }
@@ -55,7 +55,7 @@ export class StokesDialogComponent extends React.Component {
     @computed get noneType(): boolean {
         let load = true;
         this.stokes.forEach(file => {
-            if (file.stokesType === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
+            if (file.polarizationType === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
                 load = false;
             }
         });
@@ -84,7 +84,7 @@ export class StokesDialogComponent extends React.Component {
                                     directory: fileBrowserStore.fileList.directory,
                                     file: file.fileInfo.name,
                                     hdu: file.hdu,
-                                    stokesType: this.getStokeType(response.info[k], response.file)
+                                    polarizationType: this.getStokeType(response.info[k], response.file)
                                 };
                                 this.setStokes(file.fileInfo.name, stoke);
                             })
@@ -133,12 +133,12 @@ export class StokesDialogComponent extends React.Component {
                             <Select
                                 filterable={false}
                                 items={stokeItems}
-                                activeItem={this.stokes.get(file).stokesType}
+                                activeItem={this.stokes.get(file).polarizationType}
                                 onItemSelect={type => this.updateStokesType(file, type)}
                                 itemRenderer={this.renderPopOver}
                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                             >
-                                <Button className="bp3-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).stokesType)} rightIcon="double-caret-vertical" />
+                                <Button className="bp3-minimal catalog-represent-as-select-button" text={this.getLabelFromValue(this.stokes.get(file).polarizationType)} rightIcon="double-caret-vertical" />
                             </Select>
                         </Cell>
                     );
