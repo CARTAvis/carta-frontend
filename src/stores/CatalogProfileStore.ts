@@ -62,7 +62,6 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.filterDataSize = undefined;
 
         // this.updateTableView = false;
-        this.sortingInfo = {columnName: null, sortingType: null};
         this.maxRows = catalogInfo.dataSize;
 
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];

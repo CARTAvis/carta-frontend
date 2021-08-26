@@ -54,7 +54,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         }
         return controlHeaders;
     }
-    
+
     @computed get updateRequestDataSize() {
         return this.catalogFilterRequest;
     }
@@ -126,13 +126,13 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
             for (let index = 0; index < this._dataSize; index++) {
                 this.indexMap.push(index);
             }
-            if (this.sortingInfo.columnName && this.sortingInfo.sortingType) {
-                this.updateSortedIndexMap();
-            }
         } else {
             for (let index = 0; index < this.numVisibleRows; index++) {
                 this.indexMap.push(index);
             }
+        }
+        if (this.sortingInfo.columnName !== null && this.sortingInfo.sortingType !== null) {
+            this.updateSortedIndexMap();
         }
     }
 
@@ -148,7 +148,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
                         const columnDataString = catalogColumn.data as string[];
                         if (filterConfig.subString !== "") {
                             this.indexMap = this.indexMap.filter((i) => {
-                                return columnDataString[i].includes(filterConfig.subString); 
+                                return columnDataString[i]?.includes(filterConfig.subString); 
                             });   
                         }
                         break;
