@@ -1384,8 +1384,8 @@ export class AppStore {
 
         // Update cursor profiles
         autorun(() => {
-            if (this.activeFrame?.cursorInfo?.posImageSpace) {
-                const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
+            const pos = this.activeFrame?.cursorInfo?.posImageSpace;
+            if (pos) {
                 if (this.preferenceStore.lowBandwidthMode) {
                     throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos);
                 } else if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
