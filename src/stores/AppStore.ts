@@ -94,6 +94,7 @@ export class AppStore {
     // Frames
     @observable frames: FrameStore[];
     @observable activeFrame: FrameStore;
+    @observable hoveredFrame: FrameStore;
     @observable contourDataSource: FrameStore;
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
@@ -1242,6 +1243,7 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
+        this.hoveredFrame = null;
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
@@ -1384,14 +1386,14 @@ export class AppStore {
 
         // Update cursor profiles
         autorun(() => {
-            const pos = this.activeFrame?.cursorInfo?.posImageSpace;
+            const pos = this.hoveredFrame?.cursorInfo?.posImageSpace;
             if (pos) {
                 if (this.preferenceStore.lowBandwidthMode) {
-                    throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos);
-                } else if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
-                    throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos);
+                    throttledSetCursorLowBandwidth(this.hoveredFrame.frameInfo.fileId, pos);
+                } else if (this.hoveredFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
+                    throttledSetCursorRotated(this.hoveredFrame.frameInfo.fileId, pos);
                 } else {
-                    throttledSetCursor(this.activeFrame.frameInfo.fileId, pos);
+                    throttledSetCursor(this.hoveredFrame.frameInfo.fileId, pos);
                 }
             }
         });
@@ -1790,6 +1792,13 @@ export class AppStore {
         if (this.syncContourToFrame) {
             this.contourDataSource = frame;
         }
+    }
+
+    @action setHoveredFrame(frame: FrameStore) {
+        if (!frame) {
+            return;
+        }
+        this.hoveredFrame = frame;
     }
 
     @action setContourDataSource = (frame: FrameStore) => {
