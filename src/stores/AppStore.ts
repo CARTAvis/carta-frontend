@@ -931,6 +931,7 @@ export class AppStore {
             if (frame && ack.success && ack.regions) {
                 const regionMap = new Map<string, CARTA.IRegionInfo>(Object.entries(ack.regions));
                 const regionStyles = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
+                let count = 0;
                 regionMap.forEach((regionInfo, regionIdString) => {
                     const styleInfo = regionStyles.get(regionIdString);
 
@@ -944,6 +945,8 @@ export class AppStore {
                         styleInfo?.lineWidth,
                         styleInfo?.dashList
                     );
+                    count++;
+                    this.fileBrowserStore.updateLoadingState(count/regionMap.size, count, regionMap.size);
                 });
             }
             this.fileBrowserStore.hideFileBrowser();
