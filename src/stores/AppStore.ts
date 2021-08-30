@@ -61,6 +61,8 @@ interface ChannelUpdate {
     stokes: number;
 }
 
+const IMPORT_REGION_BATCH_SIZE = 50;
+
 export class AppStore {
     private static staticInstance: AppStore;
 
@@ -929,30 +931,41 @@ export class AppStore {
         try {
             const ack = await this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
-                const regionMap = new Map<string, CARTA.IRegionInfo>(Object.entries(ack.regions));
-                const regionStyles = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
-                let count = 0;
-                regionMap.forEach((regionInfo, regionIdString) => {
-                    const styleInfo = regionStyles.get(regionIdString);
-
-                    frame.regionSet.addExistingRegion(
-                        regionInfo.controlPoints as Point2D[],
-                        regionInfo.rotation,
-                        regionInfo.regionType,
-                        parseInt(regionIdString),
-                        styleInfo?.name,
-                        styleInfo?.color,
-                        styleInfo?.lineWidth,
-                        styleInfo?.dashList
-                    );
-                    count++;
-                    this.fileBrowserStore.updateLoadingState(count/regionMap.size, count, regionMap.size);
-                });
+                const regions = Object.entries(ack.regions);
+                const regionStyleMap = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
+                this.addRegionsInBatch(regions, regionStyleMap, 0);
             }
-            this.fileBrowserStore.hideFileBrowser();
         } catch (err) {
             console.error(err);
             AppToaster.show(ErrorToast(err));
+        }
+    };
+
+    addRegionsInBatch = (regions, regionStyleMap, count: number) => {
+        const frame = this.activeFrame;
+        const currentBatchLimit = Math.min(count + IMPORT_REGION_BATCH_SIZE, regions.length);
+        for (; count < currentBatchLimit; count++) {
+            const [regionIdString, regionInfo] = regions[count];
+            const styleInfo = regionStyleMap.get(regionIdString);
+            frame.regionSet.addExistingRegion(
+                regionInfo.controlPoints as Point2D[],
+                regionInfo.rotation,
+                regionInfo.regionType,
+                parseInt(regionIdString),
+                styleInfo?.name,
+                styleInfo?.color,
+                styleInfo?.lineWidth,
+                styleInfo?.dashList
+            );
+        }
+        this.fileBrowserStore.updateLoadingState(count/regions.length, count, regions.length);
+
+        if (count < regions.length) {
+            setTimeout(this.addRegionsInBatch, 0, regions, regionStyleMap, count);
+        } else {
+            this.fileBrowserStore.setImportingRegions(false);
+            this.fileBrowserStore.resetLoadingStates();
+            this.fileBrowserStore.hideFileBrowser();
         }
     };
 
