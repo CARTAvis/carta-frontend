@@ -143,4 +143,13 @@ export class DialogStore {
     @action hideStokesDialog = () => {
         this.stokesDialogVisible = false;
     };
+
+    // Velocity reference
+    @observable velocityReferenceDialogVisible: boolean = false;
+    @action showVelocityReferenceDialog = () => {
+        this.velocityReferenceDialogVisible = true;
+    };
+    @action hideVelocityReferenceDialog = () => {
+        this.velocityReferenceDialogVisible = false;
+    };
 }

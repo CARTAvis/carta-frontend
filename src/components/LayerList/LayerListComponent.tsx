@@ -315,6 +315,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
                         <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
                         <MenuDivider />
+                        <MenuItem text="Set velocity reference" onClick={() => appStore.dialogStore.showVelocityReferenceDialog()} />
+                        <MenuDivider />
                         <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)} />
                         <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />
                         <MenuItem text="Close all images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(null, false)} />
