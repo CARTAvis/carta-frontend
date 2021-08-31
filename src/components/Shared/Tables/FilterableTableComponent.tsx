@@ -162,30 +162,30 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 key={columnHeader.name}
                 name={columnHeader.name}
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnHeader)}
-                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData) : undefined}
+                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData, columnHeader) : undefined}
             />
         );
     };
 
-    private renderCell = (index: number, columnIndex: number, columnData: any) => {
+    private renderCell = (index: number, columnIndex: number, columnData: any, columnHeader: CARTA.CatalogHeader) => {
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.indexMap) {
             rowIndex = this.props.indexMap[rowIndex];
         }
-        if (dataIndex && dataIndex.includes(index) && !this.props.showSelectedData) {
-            return (
-                <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={false}>
-                    {rowIndex < columnData.length ? columnData[rowIndex] : ""}
-                </Cell>
-            );
-        } else {
-            return (
-                <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={false}>
-                    {rowIndex < columnData.length ? columnData[rowIndex] : ""}
-                </Cell>
-            );
-        }
+        const cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
+        const showHyperLinke = columnHeader.name?.toLocaleLowerCase().includes("coo_bibcode");
+        const cell = (
+            showHyperLinke ? <a href={`https://ui.adsabs.harvard.edu/abs/${cellContext}`} target="_blank" rel="noopener noreferrer">{cellContext}</a> : cellContext
+        );
+        const selected = dataIndex && dataIndex.includes(index) && !this.props.showSelectedData;
+        return (
+            <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={selected ? "danger" : "none"} loading={this.isLoading(rowIndex)} interactive={false}>
+                <React.Fragment>
+                    {cell}
+                </React.Fragment>
+            </Cell>
+        );
     };
 
     private getNextSortingType = () => {

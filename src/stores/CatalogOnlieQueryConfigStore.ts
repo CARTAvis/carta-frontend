@@ -29,6 +29,8 @@ export class CatalogOnlineQueryConfigStore {
     @observable enablePointSelection: boolean
     @observable radiusUnits: RadiusUnits;
     @observable coordType: NumberFormatType;
+    @observable objectName: string;
+    @observable isObjectQuerying: boolean;
 
     constructor() {
         makeObservable(this);
@@ -41,11 +43,13 @@ export class CatalogOnlineQueryConfigStore {
         this.enablePointSelection = false;
         this.radiusUnits = RadiusUnits.DEGREES;
         this.coordsFormat = NumberFormatType.Degrees;
+        this.objectName = "";
+        this.isObjectQuerying = false;
         
         reaction(   
             () => AppStore.Instance.activeFrame,
             () => {
-                this.setCenter();
+                this.setFrameCenter();
             }
         );
 
@@ -79,7 +83,7 @@ export class CatalogOnlineQueryConfigStore {
         return CatalogOnlineQueryConfigStore.staticInstance;
     }
 
-    public setCenter() {
+    public setFrameCenter() {
         const frame = AppStore.Instance.activeFrame;
         if (frame?.center) {
             this.updateCenterCoord(frame.center);
@@ -138,6 +142,14 @@ export class CatalogOnlineQueryConfigStore {
         this.coordsFormat = format;
     }
 
+    @action setObjectName(object: string) {
+        this.objectName = object;
+    }
+
+    @action setObjectQueryStatus(isQuerying: boolean) {
+        this.isObjectQuerying = isQuerying;
+    }
+
     @computed get radiusInDeg(): number {
         let radiusIndeg = this.searchRadius;
         switch (this.radiusUnits) {
@@ -151,6 +163,10 @@ export class CatalogOnlineQueryConfigStore {
                 break;
         }
         return radiusIndeg;
+    }
+
+    @computed get disableObjectSearch(): boolean {
+        return this.objectName === "";
     }
 
     convertToDeg(pixelCoords: Point2D) {

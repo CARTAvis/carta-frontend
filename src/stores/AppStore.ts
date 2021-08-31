@@ -790,9 +790,7 @@ export class AppStore {
 
             const frame = this.activeFrame;
             const fileId = this.catalogNextFileId;
-            axios.get(`${apiAddress}${query}`, {
-                cancelToken: cancelTokenSource.token
-            }).then((response) => {
+            ApiService.Instance.getSimbad(apiAddress, query, cancelTokenSource).then((response) => {
                 if (frame && response?.status === 200 && response?.data?.data?.length) {
                     runInAction(() => {
                         const configStore = CatalogOnlineQueryConfigStore.Instance;

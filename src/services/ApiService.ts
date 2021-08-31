@@ -1,4 +1,4 @@
-import axios, {AxiosInstance} from "axios";
+import axios, {AxiosInstance, AxiosResponse, CancelTokenSource} from "axios";
 import Ajv from "ajv";
 import {action, computed, observable, makeObservable} from "mobx";
 import {AppToaster} from "components/Shared";
@@ -505,4 +505,13 @@ export class ApiService {
             }
         }
     };
+
+    public getSimbad = (apiAddress: string, query: string, cancelTokenSource?: CancelTokenSource): Promise<AxiosResponse<any>> => {
+        if (cancelTokenSource) {
+            return axios.get(`${apiAddress}${query}`, {
+                cancelToken: cancelTokenSource.token
+            })   
+        }
+        return axios.get(`${apiAddress}${query}`);
+    }
 }

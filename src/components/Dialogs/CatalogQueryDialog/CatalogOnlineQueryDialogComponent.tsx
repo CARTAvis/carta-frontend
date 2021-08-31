@@ -2,47 +2,57 @@ import * as React from "react";
 import axios, {CancelTokenSource} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, FormGroup, IDialogProps, Intent, MenuItem, NonIdealState, Overlay, PopoverPosition, Spinner} from "@blueprintjs/core";
+import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, PopoverPosition, Spinner} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {IItemRendererProps, Select} from "@blueprintjs/select";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogDatabase, HelpType, RadiusUnits} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CatalogSystemType} from "models";
 import "./CatalogOnlineQueryDialogComponent.scss";
+import {ApiService} from "services";
 
 @observer
 export class CatalogQueryDialogComponent extends React.Component {
     private static readonly DefaultWidth = 550;
     private static readonly DefaultHeight = 500;
-    private static readonly DBSystemMap = new Map<CatalogDatabase, CatalogSystemType[]>([
-        [CatalogDatabase.SIMBAD, [CatalogSystemType.ICRS]]
+    private static readonly DBMap = new Map<CatalogDatabase, {type: CatalogSystemType[], prefix: string}>([
+        [CatalogDatabase.SIMBAD, {type: [CatalogSystemType.ICRS], prefix: "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query="}]
     ]);
     private cancelTokenSource: CancelTokenSource;
 
-    @observable dataSize: number;
+    @observable resultSize: number;
+    @observable objectSize: number;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
         this.cancelTokenSource = axios.CancelToken.source();
-        this.dataSize = undefined;
+        this.resultSize = undefined;
+        this.objectSize = undefined;
     }
 
-    @action setDataSize(resultSize: number) {
-        this.dataSize = resultSize;
+    @action setResultSize(resultSize: number) {
+        this.resultSize = resultSize;
+    }
+
+    @action setObjectSize(objectSize: number) {
+        this.objectSize = objectSize;
     }
 
     @computed get resultInfo(): string {
         let resultStr = undefined;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        if (configStore.isQuerying) {
+        if (configStore.isQuerying || configStore.isObjectQuerying) {
             resultStr = `Querying ${configStore.catalogDB}`;
-        } else if (this.dataSize === 0) {
+        } else if (this.resultSize === 0) {
             resultStr = "No objects found";
-        } else if (this.dataSize === 1) {
-            resultStr = `Found ${this.dataSize} object`;
-        } else if (this.dataSize > 1) {
-            resultStr = `Found ${this.dataSize} objects`;
+        } else if (this.resultSize >= 1) {
+            resultStr = `Found ${this.resultSize} object(s)`;
+        } else if (this.objectSize === 0) {
+            resultStr = `Object ${configStore.objectName} not found`;
+        } else if (this.objectSize >= 1) {
+            resultStr = `Updated Center Coordinates according ${configStore.objectName}`;
         }
         return resultStr;
     }
@@ -50,7 +60,6 @@ export class CatalogQueryDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-
         let className = "catalog-query-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -76,12 +85,18 @@ export class CatalogQueryDialogComponent extends React.Component {
         }
 
         const disable = configStore.isQuerying;
-        // console.log(appStore.activeFrame.center, 
-        //     appStore.activeFrame.cursorInfo, 
-        //     configStore.radiusInDeg, 
-        //     OverlayStore.Instance.global.defaultSystem, 
-        //     OverlayStore.Instance.numbers.formatX,
-        //     configStore.coordsType)
+        const objectButton = (
+            <Tooltip2 content="Reset center coordinates by object" disabled={disable}>
+                <Button
+                    disabled={disable || configStore.disableObjectSearch}
+                    icon={"bring-data"}
+                    intent={Intent.NONE}
+                    minimal={true}
+                    onClick={this.handleObjectUpdate}
+                />
+            </Tooltip2>
+
+        );
         const configBoard = (
             <div className="online-catalog-config">
                 <FormGroup inline={false} label="Database" disabled={disable}>
@@ -97,6 +112,15 @@ export class CatalogQueryDialogComponent extends React.Component {
                     >
                         <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
+                </FormGroup>
+                <FormGroup inline={false} label="Object" disabled={disable}>
+                    <InputGroup
+                        asyncControl={false}
+                        disabled={disable}
+                        rightElement={objectButton}
+                        onChange={(event) => this.updateObjectName(event.target.value)}
+                        value={configStore.objectName}
+                    />
                 </FormGroup>
                 <FormGroup inline={false} label="Search Radius" disabled={disable}>
                     <SafeNumericInput
@@ -122,7 +146,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={false} label="Center Coordinates" disabled={disable}>
                     <Select
-                        items={CatalogQueryDialogComponent.DBSystemMap.get(configStore.catalogDB)}
+                        items={CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).type}
                         activeItem={null}
                         onItemSelect={type => configStore.setCoordsType(type)}
                         itemRenderer={this.renderSysTypePopOver}
@@ -147,7 +171,9 @@ export class CatalogQueryDialogComponent extends React.Component {
                         value={configStore.centerCoord.y}
                         onValueChange={(valueAsNumber: number ,valueAsString: string) => configStore.setCenterCoord(valueAsString, "Y")}
                     />
-                    <Button icon="locate" disabled={disable} onClick={() => configStore.setCenter()} />
+                    <Tooltip2 content="Reset to current view center" disabled={disable}>
+                        <Button icon="locate" disabled={disable} onClick={() => configStore.setFrameCenter()} />
+                    </Tooltip2>
                 </FormGroup>
                 <ClearableNumericInputComponent
                     label="Max Number of Objects"
@@ -211,18 +237,17 @@ export class CatalogQueryDialogComponent extends React.Component {
     private query = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system 
-        const baseUrl = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=";
+        const baseUrl = CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).prefix;
         const query = `SELECT Top ${configStore.maxObject} * FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${configStore.centerCoord.x},${configStore.centerCoord.y},${configStore.radiusInDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL`;
         configStore.setQueryStatus(true);
-        
         AppStore.Instance.appendOnlineCatalog(baseUrl, query, this.cancelTokenSource)
         .then(dataSize => {
             configStore.setQueryStatus(false);
-            this.setDataSize(dataSize);
+            this.setResultSize(dataSize);
         })
         .catch(error => {
             configStore.setQueryStatus(false);
-            this.setDataSize(0);
+            this.setResultSize(0);
             if(axios.isCancel(error)){
                 this.cancelTokenSource = axios.CancelToken.source();
             }
@@ -231,6 +256,53 @@ export class CatalogQueryDialogComponent extends React.Component {
 
     private cancelQuery = () => {
         this.cancelTokenSource.cancel("Query canceled");
+    }
+
+    private handleObjectUpdate = () => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const baseUrl = CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).prefix;
+        const query = `SELECT basic.* FROM ident JOIN basic ON ident.oidref = basic.oid WHERE id = '${configStore.objectName}'`;
+        configStore.setObjectQueryStatus(true);
+        
+        ApiService.Instance.getSimbad(baseUrl, query, this.cancelTokenSource)
+        .then(response => {
+            configStore.setObjectQueryStatus(false);
+            const size = response.data?.data?.length;
+            this.setObjectSize(size);
+            if (response.status === 200 && size) {
+                const i = this.getDataIndex("ra", response.data?.metadata);
+                const j = this.getDataIndex("dec", response.data?.metadata);
+                if (i && j && size) {
+                    configStore.setCenterCoord(response.data?.data[0][i], "X");
+                    configStore.setCenterCoord(response.data?.data[0][j], "Y");
+                }
+            }
+        })
+        .catch(error => {
+            this.setObjectSize(0);
+            configStore.setObjectQueryStatus(false);
+            console.log(`Object search error ${error}`);
+        });
+    }
+
+    private getDataIndex = (column: string, metaData: []): number | undefined => {
+        for (let index = 0; index < metaData.length; index++) {
+            const element = metaData[index];
+            if (element["name"] === column) {
+                return index;
+            }
+        }
+        return undefined;
+    }
+
+    private updateObjectName(val: string) {
+        this.initTextInfo();
+        CatalogOnlineQueryConfigStore.Instance.setObjectName(val);
+    }
+
+    private initTextInfo() {
+        this.setObjectSize(undefined);
+        this.setResultSize(undefined);
     }
 
     private renderDBPopOver = (catalogDB: CatalogDatabase, itemProps: IItemRendererProps) => {
