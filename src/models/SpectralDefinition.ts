@@ -59,6 +59,13 @@ export enum SpectralUnit {
     ANGSTROM = "Angstrom"
 }
 
+export enum FrequencyUnit {
+    GHZ = "GHz",
+    MHZ = "MHz",
+    KHZ = "kHz",
+    HZ = "Hz"
+}
+
 export const IsSpectralUnitSupported = (unit: string): boolean => {
     return unit && Object.values(SpectralUnit).includes(unit as SpectralUnit);
 };

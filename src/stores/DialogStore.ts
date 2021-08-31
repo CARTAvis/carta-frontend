@@ -144,12 +144,14 @@ export class DialogStore {
         this.stokesDialogVisible = false;
     };
 
-    // Velocity reference
-    @observable velocityReferenceDialogVisible: boolean = false;
-    @action showVelocityReferenceDialog = () => {
-        this.velocityReferenceDialogVisible = true;
+    // Rest frequency
+    @observable restFreqDialogVisible: boolean = false;
+    @observable restFreqDialogFileId: number;
+    @action showRestFreqDialog = (fileId: number) => {
+        this.restFreqDialogVisible = true;
+        this.restFreqDialogFileId = fileId;
     };
-    @action hideVelocityReferenceDialog = () => {
-        this.velocityReferenceDialogVisible = false;
+    @action hideRestFreqDialog = () => {
+        this.restFreqDialogVisible = false;
     };
 }

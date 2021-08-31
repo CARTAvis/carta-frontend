@@ -12,7 +12,7 @@ import {
     CodeSnippetDialogComponent,
     ExternalPageDialogComponent,
     StokesDialogComponent,
-    VelocityReferenceDialogComponent
+    RestFreqDialogComponent
 } from "components/Dialogs";
 
 @observer
@@ -33,7 +33,7 @@ export class UIControllerComponent extends React.Component {
                 <HelpDrawerComponent />
                 <StokesDialogComponent />
                 <SplashScreenComponent />
-                <VelocityReferenceDialogComponent />
+                <RestFreqDialogComponent />
             </React.Fragment>
         );
     }
