@@ -942,9 +942,13 @@ export class AppStore {
     };
 
     addRegionsInBatch = (regions: [string, CARTA.IRegionInfo][], regionStyleMap: Map<string, CARTA.IRegionStyle>, count: number) => {
+        if (!regions || !regionStyleMap || !isFinite(count)) {
+            return;
+        }
+
         const frame = this.activeFrame;
-        const currentBatchLimit = Math.min(count + IMPORT_REGION_BATCH_SIZE, regions.length);
-        for (; count < currentBatchLimit; count++) {
+        const batchEnd = Math.min(count + IMPORT_REGION_BATCH_SIZE, regions.length);
+        for (; count < batchEnd; count++) {
             const [regionIdString, regionInfo] = regions[count];
             const styleInfo = regionStyleMap.get(regionIdString);
             frame.regionSet.addExistingRegion(
