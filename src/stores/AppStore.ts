@@ -941,7 +941,7 @@ export class AppStore {
         }
     };
 
-    addRegionsInBatch = (regions, regionStyleMap, count: number) => {
+    addRegionsInBatch = (regions: [string, CARTA.IRegionInfo][], regionStyleMap: Map<string, CARTA.IRegionStyle>, count: number) => {
         const frame = this.activeFrame;
         const currentBatchLimit = Math.min(count + IMPORT_REGION_BATCH_SIZE, regions.length);
         for (; count < currentBatchLimit; count++) {
