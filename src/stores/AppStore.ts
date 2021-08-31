@@ -61,7 +61,7 @@ interface ChannelUpdate {
     stokes: number;
 }
 
-const IMPORT_REGION_BATCH_SIZE = 50;
+const IMPORT_REGION_BATCH_SIZE = 10;
 
 export class AppStore {
     private static staticInstance: AppStore;
