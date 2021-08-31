@@ -573,7 +573,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     contentText={`loading ${fileBrowserStore.loadingCheckedCount} / ${fileBrowserStore.loadingTotalCount}`}
                 />
                 <TaskProgressDialogComponent
-                    isOpen={fileBrowserStore.isImportingRegions /*&& fileBrowserStore.isLoadingDialogOpen/* && fileBrowserStore.loadingProgress < 1*/}
+                    isOpen={fileBrowserStore.isImportingRegions && fileBrowserStore.isLoadingDialogOpen && fileBrowserStore.loadingProgress < 1}
                     progress={fileBrowserStore.loadingProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={false}
