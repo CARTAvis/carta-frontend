@@ -70,6 +70,7 @@ export class FrameStore {
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
+    public readonly headerRestFreq: number;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
@@ -104,6 +105,7 @@ export class FrameStore {
     @observable valid: boolean;
     @observable moving: boolean;
     @observable zooming: boolean;
+    @observable customRestFreq: number;
 
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
@@ -941,6 +943,9 @@ export class FrameStore {
         this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
         this.cursorMoving = false;
 
+        this.headerRestFreq = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue;
+        this.setCustomRestFreq(this.headerRestFreq);
+
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing
             if (this.isRenderable && this.zoomLevel <= 0) {
@@ -948,12 +953,14 @@ export class FrameStore {
             }
         });
 
-        // if type/unit/specsys changes, trigger spectral conversion
+        // if type/unit/specsys/restFreq changes, trigger spectral conversion
         autorun(() => {
             const type = this.spectralType;
             const unit = this.spectralUnit;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
+            const restFreq = this.customRestFreq;
+            /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
                 if (!type && !unit) {
                     this.setChannelValues(this.channelInfo.values);
@@ -1137,6 +1144,23 @@ export class FrameStore {
                 }),
             FrameStore.ZoomInertiaDuration
         );
+    };
+
+    public updateCustomRestFreq = (restFreq: number) => {
+        AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
+        AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
+        this.setCustomRestFreq(restFreq);
+
+        if (this.spectralReference) {
+            const spectralReference = this.spectralReference;
+            this.clearSpectralReference();
+            this.setSpectralReference(spectralReference);
+        } else if (this.secondarySpectralImages.length > 0) {
+            for (const frame of this.secondarySpectralImages) {
+                frame.clearSpectralReference();
+                frame.setSpectralReference(this);
+            }
+        }
     };
 
     public getRegion = (regionId: number): RegionStore => {
@@ -1383,6 +1407,10 @@ export class FrameStore {
                 return "Not Implemented";
         }
     }
+
+    @action private setCustomRestFreq = (restFreq: number) => {
+        this.customRestFreq = restFreq;
+    };
 
     @action
     private setChannelValues(values: number[]) {
