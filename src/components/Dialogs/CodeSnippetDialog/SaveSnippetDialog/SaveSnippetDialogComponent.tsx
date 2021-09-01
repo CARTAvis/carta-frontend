@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {computed, makeObservable, action} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, InputGroup, Button, Intent, Classes, Dialog, TagInput, FormGroup} from "@blueprintjs/core";
@@ -70,10 +71,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
         const snippet = snippetStore.activeSnippet;
-        let className = "snippet-save-dialog";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("snippet-save-dialog", {"bp3-dark": appStore.darkTheme});
 
         return (
             <Dialog

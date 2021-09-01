@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
+import classNames from "classnames";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {NonIdealState} from "@blueprintjs/core";
@@ -260,10 +261,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             linePlotProps.comments = this.exportHeaders;
         }
 
-        let className = "histogram-widget";
-        if (appStore.darkTheme) {
-            className += " dark-theme";
-        }
+        const className = classNames("histogram-widget", {"bp3-dark": appStore.darkTheme});
 
         return (
             <div className={className}>

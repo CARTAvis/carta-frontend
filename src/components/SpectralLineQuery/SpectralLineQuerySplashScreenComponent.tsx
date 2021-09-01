@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, Intent, Position, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
@@ -12,10 +13,7 @@ export class SpectralLineQuerySplashScreenComponent extends React.Component<{spl
     public render() {
         const appStore = AppStore.Instance;
 
-        let className = "spectral-line-query-splash-screen";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("spectral-line-query-splash-screen", {"bp3-dark": appStore.darkTheme});
 
         return (
             <div className={className}>
