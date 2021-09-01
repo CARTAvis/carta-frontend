@@ -1,16 +1,15 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, observable, computed, makeObservable, autorun} from "mobx";
-import {FormGroup, IDialogProps, Button, Intent, Classes, Text, HTMLSelect} from "@blueprintjs/core";
+import {FormGroup, IDialogProps, Button, Intent, Classes, Text, HTMLSelect, NonIdealState} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, HelpType} from "stores";
 import {FrequencyUnit} from "models";
-import "./RestFreqDialogComponent.scss"
+import "./RestFreqDialogComponent.scss";
 
 @observer
 export class RestFreqDialogComponent extends React.Component {
-
     private defaultRestFreq: number;
     private defaultUnit: FrequencyUnit = FrequencyUnit.HZ;
 
@@ -47,7 +46,7 @@ export class RestFreqDialogComponent extends React.Component {
             const headerRestFreq = this.convertUnit(frame?.headerRestFreq);
             this.defaultRestFreq = headerRestFreq?.value;
             this.defaultUnit = headerRestFreq?.unit;
-            
+
             const customRestFreq = this.convertUnit(frame?.customRestFreq);
             this.setRestFreq(customRestFreq?.value);
             this.setUnit(customRestFreq?.unit);
@@ -73,6 +72,10 @@ export class RestFreqDialogComponent extends React.Component {
     private saveRestFreq = () => {
         const appStore = AppStore.Instance;
         const frame = appStore.getFrame(appStore.dialogStore.restFreqDialogFileId);
+        if (!frame) {
+            return;
+        }
+
         switch (this.unit) {
             case FrequencyUnit.GHZ:
                 frame.updateCustomRestFreq(this.restFreq * 1e9);
@@ -92,6 +95,7 @@ export class RestFreqDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
+        const frame = appStore.getFrame(appStore.dialogStore.restFreqDialogFileId);
 
         let className = "";
         if (appStore.darkTheme) {
@@ -111,29 +115,35 @@ export class RestFreqDialogComponent extends React.Component {
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.PLACEHOLDER} defaultWidth={400} defaultHeight={235} enableResizing={true}>
-                <div className={Classes.DIALOG_BODY + " freq-dialog"}>
-                    <FormGroup inline={true} label="Source" className="name-text">
-                        <Text ellipsize={true}>{this.filename}</Text>
-                    </FormGroup>
-                    <div className="freq-input">
-                        <ClearableNumericInputComponent
-                            label="Rest frequency"
-                            value={this.restFreq}
-                            placeholder="rest frequency"
-                            selectAllOnFocus={true}
-                            buttonPosition={"none"}
-                            onValueChanged={this.setRestFreq}
-                            onValueCleared={this.restoreDefaults}
-                        />
-                        <HTMLSelect options={Object.values(FrequencyUnit)} value={this.unit} onChange={ev => this.setUnit(ev.currentTarget.value as FrequencyUnit)} />
-                    </div>
-                </div>
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Button intent={Intent.PRIMARY} text="Save" disabled={this.inValidInput} onClick={this.saveRestFreq}/>
-                        <Button intent={Intent.NONE} text="Close" onClick={appStore.dialogStore.hideRestFreqDialog} />
-                    </div>
-                </div>
+                {!frame ? (
+                    <NonIdealState icon={"error"} title={"No image selected"} />
+                ) : (
+                    <React.Fragment>
+                        <div className={Classes.DIALOG_BODY + " freq-dialog"}>
+                            <FormGroup inline={true} label="Source" className="name-text">
+                                <Text ellipsize={true}>{this.filename}</Text>
+                            </FormGroup>
+                            <div className="freq-input">
+                                <ClearableNumericInputComponent
+                                    label="Rest frequency"
+                                    value={this.restFreq}
+                                    placeholder="rest frequency"
+                                    selectAllOnFocus={true}
+                                    buttonPosition={"none"}
+                                    onValueChanged={this.setRestFreq}
+                                    onValueCleared={this.restoreDefaults}
+                                />
+                                <HTMLSelect options={Object.values(FrequencyUnit)} value={this.unit} onChange={ev => this.setUnit(ev.currentTarget.value as FrequencyUnit)} />
+                            </div>
+                        </div>
+                        <div className={Classes.DIALOG_FOOTER}>
+                            <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                                <Button intent={Intent.PRIMARY} text="Save" disabled={this.inValidInput} onClick={this.saveRestFreq} />
+                                <Button intent={Intent.NONE} text="Close" onClick={appStore.dialogStore.hideRestFreqDialog} />
+                            </div>
+                        </div>
+                    </React.Fragment>
+                )}
             </DraggableDialogComponent>
         );
     }

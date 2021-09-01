@@ -1,12 +1,9 @@
 .freq-dialog {
-
     .bp3-label {
         width: 110px;
     }
 
     .name-text {
-        width: 100%;
-
         .bp3-form-content {
             display: inline-block;
             width: calc(100% - 120px);
@@ -19,10 +16,10 @@
 
     .freq-input {
         display: flex;
-    
+
         .bp3-form-group {
             margin-right: 10px;
-    
+
             .bp3-input-group {
                 width: 130px;
             }
