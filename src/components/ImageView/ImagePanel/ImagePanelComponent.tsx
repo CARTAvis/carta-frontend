@@ -161,12 +161,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             unit={frame.unit}
                             top={overlayStore.padding.top}
                             currentStokes={appStore.activeFrame.requiredStokes >= 0 && appStore.activeFrame.requiredStokes < appStore.activeFrame.stokesInfo?.length ? appStore.activeFrame.requiredStokesInfo : ""}
-                            showImage={true}
-                            showWCS={true}
-                            showValue={true}
-                            showChannel={false}
-                            showSpectral={true}
-                            showStokes={true}
                         />
                     )}
                     {overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
