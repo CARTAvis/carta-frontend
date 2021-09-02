@@ -440,7 +440,7 @@ export class FileInfoComponent extends React.Component<{
                 >
                     <Button icon="search-text"></Button>
                 </Popover2>
-                <Button icon="import" onClick={this.exportHeader}></Button>
+                <Button icon="th" onClick={this.exportHeader}></Button>
             </ButtonGroup>
         ) : null;
     };
