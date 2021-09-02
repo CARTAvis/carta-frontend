@@ -86,15 +86,17 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
     };
 
     private genImageCoordContent = (frame: FrameStore): React.ReactNode => {
-        if (!frame) {
+        const x = frame?.cursorInfo?.posImageSpace?.x;
+        const y = frame?.cursorInfo?.posImageSpace?.y;
+        if (!isFinite(x) || !isFinite(y) || (x === -Number.MAX_VALUE && y === -Number.MAX_VALUE)) {
             return "-";
         }
 
         return (
             <React.Fragment>
-                {toFixed(frame.cursorInfo?.posImageSpace?.x, 3)}
+                {toFixed(x, 3)}
                 <br />
-                {toFixed(frame.cursorInfo?.posImageSpace?.y, 3)}
+                {toFixed(y, 3)}
             </React.Fragment>
         );
     };
