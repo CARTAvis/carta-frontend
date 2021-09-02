@@ -951,18 +951,9 @@ export class AppStore {
         for (; count < batchEnd; count++) {
             const [regionIdString, regionInfo] = regions[count];
             const styleInfo = regionStyleMap.get(regionIdString);
-            frame.regionSet.addExistingRegion(
-                regionInfo.controlPoints as Point2D[],
-                regionInfo.rotation,
-                regionInfo.regionType,
-                parseInt(regionIdString),
-                styleInfo?.name,
-                styleInfo?.color,
-                styleInfo?.lineWidth,
-                styleInfo?.dashList
-            );
+            frame.regionSet.addExistingRegion(regionInfo.controlPoints as Point2D[], regionInfo.rotation, regionInfo.regionType, parseInt(regionIdString), styleInfo?.name, styleInfo?.color, styleInfo?.lineWidth, styleInfo?.dashList);
         }
-        this.fileBrowserStore.updateLoadingState(count/regions.length, count, regions.length);
+        this.fileBrowserStore.updateLoadingState(count / regions.length, count, regions.length);
 
         if (count < regions.length) {
             setTimeout(this.addRegionsInBatch, 0, regions, regionStyleMap, count);
