@@ -317,4 +317,18 @@ void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, floa
     }
 }
 
+void convertInt64Array(std::int64_t* source, size_t length) {
+    double* dest = (double*) source;
+    for (auto i = 0; i < length; i++) {
+        dest[i] = source[i];
+    }
+}
+
+void convertUint64Array(std::uint64_t* source, size_t length) {
+    double* dest = (double*) source;
+    for (auto i = 0; i < length; i++) {
+        dest[i] = source[i];
+    }
+}
+
 }

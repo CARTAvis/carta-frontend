@@ -309,20 +309,26 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private getDataType(type: CARTA.ColumnType) {
+    private static GetDataType(type: CARTA.ColumnType) {
         switch (type) {
             case CARTA.ColumnType.Bool:
                 return "bool";
             case CARTA.ColumnType.Int8:
+                return "byte";
             case CARTA.ColumnType.Int16:
+                return "short";
             case CARTA.ColumnType.Int32:
-            case CARTA.ColumnType.Int64:
                 return "int";
+            case CARTA.ColumnType.Int64:
+                return "long";
             case CARTA.ColumnType.Uint8:
+                return "unsigned byte";
             case CARTA.ColumnType.Uint16:
+                return "unsigned short";
             case CARTA.ColumnType.Uint32:
-            case CARTA.ColumnType.Uint64:
                 return "unsigned int";
+            case CARTA.ColumnType.Uint64:
+                return "unsigned long";
             case CARTA.ColumnType.Double:
                 return "double";
             case CARTA.ColumnType.Float:
@@ -347,7 +353,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             headerNames.push(header.name);
             headerDescriptions.push(header.description);
             units.push(header.units);
-            types.push(this.getDataType(header.dataType));
+            types.push(CatalogOverlayComponent.GetDataType(header.dataType));
         }
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
         tableColumns.push(columnName);
