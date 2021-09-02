@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {autorun, computed, makeObservable} from "mobx";
+import {computed, makeObservable} from "mobx";
 import {Checkbox, Icon, IconName} from "@blueprintjs/core";
 import {FileBrowserStore} from "stores";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
@@ -21,10 +21,6 @@ export class RegionSelectComponent extends React.Component {
     constructor(props: any) {
         super(props);
         makeObservable(this);
-
-        autorun(() => {
-            FileBrowserStore.Instance.resetExportRegionIndexes();
-        });
     }
 
     private handleSelectAllChanged = () => {
