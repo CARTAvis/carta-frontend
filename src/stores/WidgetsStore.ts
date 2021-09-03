@@ -44,6 +44,8 @@ import {
     ACTIVE_FILE_ID,
     CatalogPlotType
 } from "./widgets";
+import {PreferenceKeys, PreferenceStore} from "./PreferenceStore";
+import {ImagePanelMode} from "models";
 
 export enum WidgetType {
     Region = "Region List Widget",
@@ -670,6 +672,18 @@ export class WidgetsStore {
                         stackHeaderControlButtons.children[0].remove();
                     }
 
+                    if (component === "image-view") {
+                        const nextPageButton = $(`<li class="lm-multi-panel-forward" title="next page"><span class="bp3-icon-standard bp3-icon-step-forward" style/></li>`);
+                        nextPageButton.on("click", this.onNextPagePinedClick);
+                        stack.header.controlsContainer.prepend(nextPageButton);
+                        const multiPanelControlButton = $(`<li class="lm-multi-panel" title="switch multi-panel Mode"><span class="bp3-icon-standard bp3-icon-grid-view"/></li>`);
+                        multiPanelControlButton.on("click", this.onMultiPanelPinedClick);
+                        stack.header.controlsContainer.prepend(multiPanelControlButton);
+                        const previousPageButton = $(`<li class="lm-multi-panel-backward" title="previous page"><span class="bp3-icon-standard bp3-icon-step-backward" style/></li>`);
+                        previousPageButton.on("click", this.onPreviousPagePinedClick);
+                        stack.header.controlsContainer.prepend(previousPageButton);
+                    }
+
                     // disable unpin button when active tab is image-view
                     $(stackHeaderControlButtons)
                         ?.find("li.lm-pin")
@@ -803,6 +817,63 @@ export class WidgetsStore {
             if (catalogPlotWidgetStore) {
                 HelpStore.Instance.showHelpDrawer(catalogPlotWidgetStore.plotType === CatalogPlotType.Histogram ? HelpType.CATALOG_HISTOGRAM_PLOT : HelpType.CATALOG_SCATTER_PLOT, centerX);
             }
+        }
+    };
+
+    @action onMultiPanelPinedClick = () => {
+        const preferences = PreferenceStore.Instance;
+        switch (preferences.imagePanelMode) {
+            case ImagePanelMode.Dynamic:
+                preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, ImagePanelMode.Fixed);
+                $(".lm_goldenlayout")?.find("li.lm-multi-panel")?.attr("title", "to None");
+                break;
+            case ImagePanelMode.Fixed:
+                preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, ImagePanelMode.None);
+                $(".lm_goldenlayout")?.find("li.lm-multi-panel")?.attr("title", "to Dynamic");
+                break;
+            default:
+                preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, ImagePanelMode.Dynamic);
+                $(".lm_goldenlayout")?.find("li.lm-multi-panel")?.attr("title", "to Fixed");
+                break;
+        }
+        this.updateMultiPanelButtons();
+    };
+
+    @action onNextPagePinedClick = () => {
+        const appStore = AppStore.Instance;
+        appStore.setActiveFrameByIndex(appStore.activeFrameIndex + 1);
+        this.updateMultiPanelButtons();
+    };
+
+    @action onPreviousPagePinedClick = () => {
+        const appStore = AppStore.Instance;
+        appStore.setActiveFrameByIndex(appStore.activeFrameIndex - 1);
+        this.updateMultiPanelButtons();
+    };
+
+    @action updateMultiPanelButtons = () => {
+        const appStore = AppStore.Instance;
+        const activeFrameIndex = appStore.activeFrameIndex;
+        const framesNum = appStore.frames?.length;
+        const preferences = PreferenceStore.Instance;
+        switch (preferences.imagePanelMode) {
+            case ImagePanelMode.None:
+                $(".lm_goldenlayout")
+                    ?.find("li.lm-multi-panel-forward")
+                    ?.attr("style", activeFrameIndex === framesNum - 1 ? "cursor: not-allowed;" : "");
+                $(".lm_goldenlayout")
+                    ?.find("li.lm-multi-panel-backward")
+                    ?.attr("style", activeFrameIndex === 0 ? "cursor: not-allowed;" : "");
+                break;
+            default:
+                const imagesPerPage = preferences.imagePanelColumns * preferences.imagePanelRows;
+                $(".lm_goldenlayout")
+                    ?.find("li.lm-multi-panel-forward")
+                    ?.attr("style", activeFrameIndex >= Math.floor(framesNum / imagesPerPage) * imagesPerPage ? "cursor: not-allowed;" : "");
+                $(".lm_goldenlayout")
+                    ?.find("li.lm-multi-panel-backward")
+                    ?.attr("style", activeFrameIndex < imagesPerPage ? "cursor: not-allowed;" : "");
+                break;
         }
     };
 
