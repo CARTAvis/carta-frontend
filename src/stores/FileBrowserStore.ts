@@ -462,6 +462,20 @@ export class FileBrowserStore {
         }
     };
 
+    @action showExportRegions = (regionId?: number) => {
+        this.showFileBrowser(BrowserMode.RegionExport, false);
+        if (regionId) {
+            this.clearExportRegionIndexes();
+            const frame = AppStore.Instance.activeFrame;
+            if (frame?.regionSet?.regions) {
+                const regionIndex = frame.regionSet.regions.findIndex(region => region.regionId === regionId);
+                this.addExportRegionIndex(regionIndex);
+            }
+        } else {
+            this.resetExportRegionIndexes();
+        }
+    };
+
     @computed get HDUList(): IOptionProps[] {
         return this.HDUfileInfoExtended
             ? Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
