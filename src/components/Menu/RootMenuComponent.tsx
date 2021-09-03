@@ -194,7 +194,7 @@ export class RootMenuComponent extends React.Component {
                     <Menu.Item
                         text="Export regions"
                         disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
-                        onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
+                        onClick={() => appStore.fileBrowserStore.showExportRegions()}
                     />
                 </Tooltip2>
                 <Menu.Divider />

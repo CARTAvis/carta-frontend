@@ -36,7 +36,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
         if (this.props.showWCS && cursorInfo.infoWCS) {
             infoStrings.push(`WCS:\u00a0(${cursorInfo.infoWCS.x},\u00a0${cursorInfo.infoWCS.y})`);
         }
-        if (this.props.showImage) {
+        if (this.props.showImage && (cursorInfo.posImageSpace?.x !== -Number.MAX_VALUE || cursorInfo.posImageSpace?.y !== -Number.MAX_VALUE)) {
             infoStrings.push(`Image:\u00a0(${toFixed(cursorInfo.posImageSpace.x)},\u00a0${toFixed(cursorInfo.posImageSpace.y)})`);
         }
         if (this.props.showValue && this.props.cursorValue !== undefined) {
@@ -93,7 +93,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
         }
         return (
             <div className={className} style={styleProps}>
-                {infoStrings.join("; ")}
+                {infoStrings.length ? infoStrings.join("; ") : "\u00a0"}
             </div>
         );
     }
