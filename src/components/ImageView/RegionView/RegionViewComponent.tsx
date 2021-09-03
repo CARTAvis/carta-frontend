@@ -50,6 +50,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
+    private layerRef = React.createRef<any>();
+
 
     constructor(props: any) {
         super(props);
@@ -542,6 +544,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             className += " docked";
         }
 
+        const pixelRatio = devicePixelRatio * AppStore.Instance.exportImageRatio;
+        const canvas = this.layerRef?.current?.getCanvas();
+        if (canvas && canvas.pixelRatio !== pixelRatio) {
+            canvas.setPixelRatio(pixelRatio);
+        }
+
         let regionComponents = null;
         if (regionSet && regionSet.regions.length) {
             regionComponents = regionSet.regions
@@ -671,7 +679,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer>
+                    <Layer ref={this.layerRef}>
                         {regionComponents}
                         {creatingLine}
                         {cursorMarker}

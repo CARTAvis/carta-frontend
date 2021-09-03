@@ -20,6 +20,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
     @observable isHovering: boolean = false;
     @observable cursorY: number = -1;
     private mouseEnterHandle;
+    private layerRef = React.createRef<any>();
 
     private static readonly HoverDelay = 500;
 
@@ -95,12 +96,18 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const frame = this.props.frame;
         const colorbarSettings = appStore.overlayStore.colorbar;
 
+        const pixelRatio = devicePixelRatio * appStore.exportImageRatio;
+        const canvas = this.layerRef?.current?.getCanvas();
+        if (canvas && canvas.pixelRatio !== pixelRatio) {
+            canvas.setPixelRatio(pixelRatio);
+        }
+
         let getColor = (customColor: boolean, color: string): string => {
             return customColor ? getColorForTheme(color) : colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color);
         };
 
         // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary
-        const isOnePixBorder = colorbarSettings.borderWidth <= 1;
+        const isOnePixBorder = colorbarSettings.borderWidth * pixelRatio <= 1;
         let isIntPosition = (position: number): boolean => {
             return (position * devicePixelRatio) % 1 === 0;
         };
@@ -170,7 +177,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             for (let i = 0; i < positions.length; i++) {
                 if (colorbarSettings.tickVisible) {
                     // to avoid blurry ticks when width <= 1px, offset to .5 px position
-                    const position = positions[i] - (colorbarSettings.tickWidth <= 1 && positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio);
+                    const position = positions[i] - (colorbarSettings.tickWidth * pixelRatio <= 1 && positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio);
                     let tickPoints = [colorbarSettings.rightBorderPos - colorbarSettings.tickLen, position, colorbarSettings.rightBorderPos, position];
                     if (colorbarSettings.position !== "right") {
                         // rotate to horizontal by swapping
@@ -271,7 +278,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         return (
             <React.Fragment>
                 <Stage className={"colorbar-stage"} width={stageWidth} height={stageHeight} style={{left: stageLeft, top: stageTop}} onMouseEnter={this.onMouseEnter} onMouseMove={this.handleMouseMove} onMouseLeave={this.onMouseLeave}>
-                    <Layer>
+                    <Layer ref={this.layerRef}>
                         {colorbar}
                         {ticks}
                         {numbers}

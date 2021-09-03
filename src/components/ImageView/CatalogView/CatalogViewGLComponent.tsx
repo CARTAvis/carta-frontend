@@ -123,8 +123,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             return;
         }
 
-        const reqWidth = Math.round(Math.max(1, frame.renderWidth * devicePixelRatio));
-        const reqHeight = Math.round(Math.max(1, frame.renderHeight * devicePixelRatio));
+        const reqWidth = Math.round(Math.max(1, frame.renderWidth * devicePixelRatio * AppStore.Instance.exportImageRatio));
+        const reqHeight = Math.round(Math.max(1, frame.renderHeight * devicePixelRatio * AppStore.Instance.exportImageRatio));
         // Resize canvas if necessary
         if (this.canvas.width !== reqWidth || this.canvas.height !== reqHeight) {
             this.canvas.width = reqWidth;
@@ -174,8 +174,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             if (catalog) {
                 const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
                 const shape = catalogWidgetStore.shapeSettings;
-                const featherWidth = shape.featherWidth * devicePixelRatio;
-                const lineThickness = catalogWidgetStore.thickness * shape.thicknessBase * devicePixelRatio;
+                const featherWidth = shape.featherWidth * devicePixelRatio * AppStore.Instance.exportImageRatio;
+                const lineThickness = catalogWidgetStore.thickness * shape.thicknessBase * devicePixelRatio * AppStore.Instance.exportImageRatio;
                 let color = tinycolor(catalogWidgetStore.catalogColor).toRgb();
                 let selectedSourceColor = tinycolor(catalogWidgetStore.highlightColor).toRgb();
                 let pointSize = catalogWidgetStore.catalogSize + shape.diameterBase;
@@ -298,7 +298,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                     this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
                     this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
-                    this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio);
+                    this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio * AppStore.Instance.exportImageRatio);
 
                     const x = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.X);
                     const y = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Y);

@@ -29,6 +29,8 @@ interface BeamPlotProps {
 
 @observer
 export class BeamProfileOverlayComponent extends React.Component<BeamProfileOverlayComponentProps> {
+    private layerRef = React.createRef<any>();
+
     private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps => {
         if (!frame.hasVisibleBeam) {
             return null;
@@ -112,6 +114,12 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             return null;
         }
 
+        const pixelRatio = devicePixelRatio * appStore.exportImageRatio;
+        const canvas = this.layerRef?.current?.getCanvas();
+        if (canvas && canvas.pixelRatio !== pixelRatio) {
+            canvas.setPixelRatio(pixelRatio);
+        }
+
         let baseBeamPlotProps: BeamPlotProps;
         if (baseFrame.hasVisibleBeam) {
             baseBeamPlotProps = this.getPlotProps(baseFrame);
@@ -125,7 +133,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
 
         return (
             <Stage className={className} width={baseFrame.renderWidth} height={baseFrame.renderHeight} style={{left: this.props.left, top: this.props.top}}>
-                <Layer listening={false}>
+                <Layer listening={false} ref={this.layerRef}>
                     {this.plotBeam(baseBeamPlotProps)}
                     {contourBeams}
                 </Layer>

@@ -113,6 +113,7 @@ export class AppStore {
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
     @observable toolbarExpanded: boolean;
+    exportImageRatio: number = 2;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;

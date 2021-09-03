@@ -170,7 +170,7 @@ export class OverlayTitleSettings {
         let astString = new ASTSettingsString();
         astString.add("DrawTitle", this.show);
         astString.add("Font(Title)", this.font);
-        astString.add("Size(Title)", this.fontSize);
+        astString.add("Size(Title)", this.fontSize * AppStore.Instance.exportImageRatio);
         astString.add("Color(Title)", AstColorsIndex.TITLE, this.customColor);
         return astString.toString();
     }
@@ -233,9 +233,9 @@ export class OverlayGridSettings {
         let astString = new ASTSettingsString();
         astString.add("Grid", this.visible);
         astString.add("Color(Grid)", AstColorsIndex.GRID, this.customColor);
-        astString.add("Width(Grid)", this.width, this.width > 0);
-        astString.add("Gap(1)", this.gapX, this.customGap);
-        astString.add("Gap(2)", this.gapY, this.customGap);
+        astString.add("Width(Grid)", this.width * AppStore.Instance.exportImageRatio, this.width > 0);
+        astString.add("Gap(1)", this.gapX * AppStore.Instance.exportImageRatio, this.customGap);
+        astString.add("Gap(2)", this.gapY * AppStore.Instance.exportImageRatio, this.customGap);
         return astString.toString();
     }
 
@@ -290,7 +290,7 @@ export class OverlayBorderSettings {
         let astString = new ASTSettingsString();
         astString.add("Border", this.visible);
         astString.add("Color(Border)", AstColorsIndex.BORDER, this.customColor);
-        astString.add("Width(Border)", this.width, this.width > 0);
+        astString.add("Width(Border)", this.width * AppStore.Instance.exportImageRatio, this.width > 0);
         return astString.toString();
     }
 
@@ -337,9 +337,9 @@ export class OverlayTickSettings {
         astString.add("MinTick(1)", this.densityX, this.customDensity);
         astString.add("MinTick(2)", this.densityY, this.customDensity);
         astString.add("Color(Ticks)", AstColorsIndex.TICK, this.customColor);
-        astString.add("Width(Ticks)", this.width, this.width > 0);
-        astString.add("MinTickLen", toFixed(this.length / 100, 2)); // convert to fraction
-        astString.add("MajTickLen", toFixed(this.majorLength / 100, 2)); // convert to fraction
+        astString.add("Width(Ticks)", this.width * AppStore.Instance.exportImageRatio, this.width > 0);
+        astString.add("MinTickLen", toFixed(this.length * AppStore.Instance.exportImageRatio / 100, 2)); // convert to fraction
+        astString.add("MajTickLen", toFixed(this.majorLength * AppStore.Instance.exportImageRatio / 100, 2)); // convert to fraction
         return astString.toString();
     }
 
@@ -413,7 +413,7 @@ export class OverlayAxisSettings {
 
         astString.add("DrawAxes", this.visible);
         astString.add("Color(Axes)", AstColorsIndex.AXIS, this.customColor);
-        astString.add("Width(Axes)", this.width, this.width > 0);
+        astString.add("Width(Axes)", this.width * AppStore.Instance.exportImageRatio, this.width > 0);
 
         return astString.toString();
     }
@@ -529,7 +529,7 @@ export class OverlayNumberSettings {
 
         astString.add("NumLab", this.show);
         astString.add("Font(NumLab)", this.font);
-        astString.add("Size(NumLab)", this.fontSize);
+        astString.add("Size(NumLab)", this.fontSize * AppStore.Instance.exportImageRatio);
         astString.add("Color(NumLab)", AstColorsIndex.NUMBER, this.customColor);
 
         // Add settings for individual axes
@@ -630,7 +630,7 @@ export class OverlayLabelSettings {
 
         astString.add("TextLab", this.show);
         astString.add("Font(TextLab)", this.font);
-        astString.add("Size(TextLab)", this.fontSize);
+        astString.add("Size(TextLab)", this.fontSize * AppStore.Instance.exportImageRatio);
         astString.add("Color(TextLab)", AstColorsIndex.LABEL, this.customColor);
         astString.add("Label(1)", this.customLabelX, this.customText);
         astString.add("Label(2)", this.customLabelY, this.customText);
