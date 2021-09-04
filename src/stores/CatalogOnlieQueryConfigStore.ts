@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 import {action, observable, makeObservable, reaction, computed} from "mobx";
 import {CatalogSystemType, Point2D} from "models";
 import {AppStore, OverlayStore, NumberFormatType, ASTSettingsString, SystemType} from "stores";
-import {transformPoint} from "utilities";
+import {clamp, transformPoint} from "utilities";
 
 export enum CatalogDatabase {
     SIMBAD = "SIMBAD"
@@ -49,7 +49,7 @@ export class CatalogOnlineQueryConfigStore {
         reaction(   
             () => AppStore.Instance.activeFrame,
             () => {
-                this.setFrameCenter();
+                this.resetSearchRadius();
             }
         );
 
@@ -167,6 +167,29 @@ export class CatalogOnlineQueryConfigStore {
 
     @computed get disableObjectSearch(): boolean {
         return this.objectName === "";
+    }
+
+    @computed get searchRadiusInDegree(): number {
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (activeFrame) {
+            const requiredFrameView = activeFrame.requiredFrameView;
+            const max = this.convertToDeg({x: requiredFrameView.xMax, y: requiredFrameView.yMax});
+            const min = this.convertToDeg({x: requiredFrameView.xMin, y: requiredFrameView.yMin});
+            const x = Number(max.x) - Number(min.x);
+            const y = Number(max.y) - Number(min.y);
+            const diagonal = Math.sqrt((x * x) + (y * y));
+            if (isNaN(diagonal)) {
+                return 90;
+            }
+            return clamp(diagonal / 2, 0, 90);
+        }
+        return 90;
+    }
+    
+    @action resetSearchRadius() {
+        this.setSearchRadius(this.searchRadiusInDegree);
+        this.setRadiusUnits(RadiusUnits.DEGREES);
+        this.setFrameCenter();
     }
 
     convertToDeg(pixelCoords: Point2D) {

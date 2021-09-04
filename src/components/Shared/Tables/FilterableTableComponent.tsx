@@ -38,7 +38,7 @@ export class FilterableTableComponentProps {
     sortingInfo?: {columnName: string; sortingType: CARTA.SortingType};
     disableSort?: boolean;
     tableHeaders?: Array<CARTA.ICatalogHeader>;
-    indexMap?: Array<number>;
+    sortedIndexMap?: Array<number>;
 }
 
 @observer
@@ -170,8 +170,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
     private renderCell = (index: number, columnIndex: number, columnData: any, columnHeader: CARTA.CatalogHeader) => {
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
-        if (this.props.indexMap) {
-            rowIndex = this.props.indexMap[rowIndex];
+        if (this.props.sortedIndexMap) {
+            rowIndex = this.props.sortedIndexMap[rowIndex];
         }
         const cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
         const showHyperLinke = columnHeader.name?.toLocaleLowerCase().includes("coo_bibcode");

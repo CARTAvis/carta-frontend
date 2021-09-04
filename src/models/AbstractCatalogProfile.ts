@@ -4,7 +4,7 @@ import {Regions, IRegion} from "@blueprintjs/table";
 import {ProcessedColumnData, TypedArray} from "models";
 import {AppStore, CatalogStore, ControlHeader, CatalogUpdateMode} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
-import {ComparisonOperator, filterProcessedColumnData, minMaxArray, transformPoint} from "utilities";
+import {ComparisonOperator, filterProcessedColumnData, getComparisonOperatorAndValue, minMaxArray, transformPoint} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
@@ -74,7 +74,8 @@ export abstract class AbstractCatalogProfileStore {
     @observable updateMode: CatalogUpdateMode;
     @observable selectedPointIndices: number[];
     @observable sortingInfo: {columnName: string; sortingType: CARTA.SortingType};
-    @observable indexMap: number[];
+    @observable sortedIndexMap: number[];
+    @observable filterIndexMap: number[];
 
     private _catalogData: Map<number, ProcessedColumnData>;
     public static readonly CoordinateSystemName = new Map<CatalogSystemType, string>([
@@ -105,7 +106,8 @@ export abstract class AbstractCatalogProfileStore {
         this.selectedPointIndices = [];
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.sortingInfo = {columnName: null, sortingType: null};
-        this.indexMap = [];
+        this.sortedIndexMap = [];
+        this.filterIndexMap = [];
     }
 
     get catalogData(): Map<number, ProcessedColumnData> {
@@ -146,10 +148,10 @@ export abstract class AbstractCatalogProfileStore {
             let wcsY = yColumn.data as Array<number>;
             if (!this.isFileBasedCatalog) {
                 wcsX = wcsX.filter((value, i) => {
-                    return this.indexMap.includes(i);
+                    return this.filterIndexMap.includes(i);
                 });
                 wcsY = wcsY.filter((value, i) => {
-                    return this.indexMap.includes(i);
+                    return this.filterIndexMap.includes(i);
                 });
             }
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
@@ -167,7 +169,7 @@ export abstract class AbstractCatalogProfileStore {
             let wcsData = xColumn.data as TypedArray;
             if (!this.isFileBasedCatalog) {
                 wcsData = wcsData.filter((value, i) => {
-                    return this.indexMap.includes(i);
+                    return this.filterIndexMap.includes(i);
                 });
             }
             return {wcsData, headerInfo};
@@ -178,8 +180,7 @@ export abstract class AbstractCatalogProfileStore {
 
     public getUserFilters(): CARTA.FilterConfig[] {
         let userFilters: CARTA.FilterConfig[] = [];
-        const filters = this.catalogControlHeader;
-        filters.forEach((value, key) => {
+        this.catalogControlHeader.forEach((value, key) => {
             if (value.filter !== undefined && value.display) {
                 let filter = new CARTA.FilterConfig();
                 const dataType = this.catalogHeader[value.dataIndex].dataType;
@@ -272,13 +273,21 @@ export abstract class AbstractCatalogProfileStore {
     }
 
     @computed get hasFilter(): boolean {
-        let filters = [];
+        let hasfilter = false;
         this.catalogControlHeader.forEach((value, key) => {
-            if (value.filter) {
-                filters.push(value);
+            if (value.filter && value.display) {
+                const column = this.catalogData.get(value.dataIndex);
+                if (column.dataType === CARTA.ColumnType.String) {
+                    hasfilter = true;
+                } else {
+                    const {operator, values} = getComparisonOperatorAndValue(value.filter);
+                    if (operator !== -1 && values.length) {
+                        hasfilter = true;
+                    }
+                }
             }
         });
-        return filters.length > 0;
+        return hasfilter;
     }
 
     @action updateTableStatus(val: boolean) {
@@ -333,6 +342,35 @@ export abstract class AbstractCatalogProfileStore {
         this.progress = val;
     }
 
+    getSortedIndices(selectedPointIndices: number[]): number[] {
+        let indices = new Array(selectedPointIndices.length);
+        if (this.sortedIndexMap.length && selectedPointIndices.length && !this.isFileBasedCatalog) {
+            for (let index = 0; index < selectedPointIndices.length; index++) {
+                const i = selectedPointIndices[index];
+                indices[index] = this.sortedIndexMap[i];
+            }
+        } else {
+            return selectedPointIndices;
+        }
+        return indices;
+    }
+
+    getOriginIndices(selectedPointIndices: number[]): number[] {
+        let indices = new Array(selectedPointIndices.length);
+        if (this.sortedIndexMap.length && selectedPointIndices.length && !this.isFileBasedCatalog) {
+            for (let index = 0; index < selectedPointIndices.length; index++) {
+                const i = selectedPointIndices[index];
+                const j = this.sortedIndexMap.indexOf(i);
+                if (j > -1) {
+                    indices[index] = j;
+                }
+            }
+        } else {
+            return selectedPointIndices;
+        }
+        return indices;
+    }
+
     @action setSelectedPointIndices = (pointIndices: Array<number>, autoPanZoom: boolean) => {
         this.selectedPointIndices = pointIndices;
         const catalogStore = CatalogStore.Instance;
@@ -341,8 +379,9 @@ export abstract class AbstractCatalogProfileStore {
             let selectedX = [];
             let selectedY = [];
             const selectedData = new Uint8Array(coordsArray.x.length);
-            for (let index = 0; index < pointIndices.length; index++) {
-                const i = pointIndices[index];
+            let matchedIndices = this.getSortedIndices(pointIndices);
+            for (let index = 0; index < matchedIndices.length; index++) {
+                const i = matchedIndices[index];
                 const x = coordsArray.x[i];
                 const y = coordsArray.y[i];
 

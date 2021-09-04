@@ -22,6 +22,7 @@ export class UIControllerComponent extends React.Component {
             <React.Fragment>
                 <RootMenuComponent />
                 <RegionDialogComponent />
+                <CatalogQueryDialogComponent />
                 <ContourDialogComponent />
                 <FileInfoDialogComponent />
                 <FileBrowserDialogComponent />
@@ -33,7 +34,6 @@ export class UIControllerComponent extends React.Component {
                 <HelpDrawerComponent />
                 <StokesDialogComponent />
                 <SplashScreenComponent />
-                <CatalogQueryDialogComponent />
             </React.Fragment>
         );
     }

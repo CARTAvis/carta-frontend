@@ -13,7 +13,7 @@ import {CARTA} from "carta-protobuf";
 import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
-import {toFixed} from "utilities";
+import {filterProcessedColumnData, toFixed} from "utilities";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType, ProcessedColumnData} from "models";
 import "./CatalogOverlayComponent.scss";
 
@@ -114,10 +114,19 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (profileStore && catalogWidgetStore) {
             dataset = profileStore.catalogData;
             numVisibleRows = profileStore.numVisibleRows;
+            if (profileStore.regionSelected && catalogWidgetStore.showSelectedData) {
+                dataset = profileStore.selectedData;
+                numVisibleRows = profileStore.regionSelected;
+            }
+            if (!profileStore.isFileBasedCatalog) {
+                const filteredData = new Map<number, ProcessedColumnData>();
+                dataset.forEach((columnData, i) => {
+                    filteredData.set(i, filterProcessedColumnData(columnData, profileStore.filterIndexMap));
+                })
+                return {dataset: filteredData, numVisibleRows: numVisibleRows};
+            }
             if (profileStore.regionSelected) {
                 if (catalogWidgetStore.showSelectedData) {
-                    dataset = profileStore.selectedData;
-                    numVisibleRows = profileStore.regionSelected;
                     // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
                     this.scrollToRegion(this.catalogTableRef, Regions.row(0));
                 } else {
@@ -634,7 +643,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
         if (!profileStore.isFileBasedCatalog) {
             const store = profileStore as CatalogOnlineQueryProfileStore;
-            dataTableProps.indexMap = store.indexMap;
+            dataTableProps.sortedIndexMap = store.sortedIndexMap;
         }
 
         let startIndex = 0;

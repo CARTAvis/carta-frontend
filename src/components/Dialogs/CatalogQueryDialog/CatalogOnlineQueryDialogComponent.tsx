@@ -123,14 +123,17 @@ export class CatalogQueryDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={false} label="Search Radius" disabled={disable}>
-                    <SafeNumericInput
-                        disabled={disable}
-                        min={0}
-                        clampValueOnBlur={true}
-                        value={configStore.searchRadius}
-                        stepSize={0.5}
-                        onValueChange={(value: number) => configStore.setSearchRadius(value)}
-                    />
+                    <Tooltip2 content="0 - 90 degrees" disabled={disable}>
+                        <SafeNumericInput
+                            disabled={disable}
+                            min={0}
+                            max={90}
+                            clampValueOnBlur={true}
+                            value={configStore.searchRadius}
+                            stepSize={0.5}
+                            onValueChange={(value: number) => configStore.setSearchRadius(value)}
+                        />
+                    </Tooltip2>
                     <Select
                         items={Object.values(RadiusUnits)}
                         activeItem={null}
@@ -143,6 +146,9 @@ export class CatalogQueryDialogComponent extends React.Component {
                     >
                         <Button text={configStore.radiusUnits} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
+                    <Tooltip2 content="Reset Center Coordinates and Search Radius according current image viewer" disabled={disable}>
+                        <Button disabled={disable} onClick={() => configStore.resetSearchRadius()}>Set to Image</Button>
+                    </Tooltip2>
                 </FormGroup>
                 <FormGroup inline={false} label="Center Coordinates" disabled={disable}>
                     <Select

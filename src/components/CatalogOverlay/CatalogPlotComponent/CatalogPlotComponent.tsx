@@ -432,7 +432,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
 
             if (selectedPointIndices?.length) {
-                profileStore.setSelectedPointIndices(selectedPointIndices, true);
+                const matched = profileStore.getOriginIndices(selectedPointIndices);
+                profileStore.setSelectedPointIndices(matched, true);
                 catalogWidgetStore.setCatalogTableAutoScroll(true);
             }
         }
@@ -465,8 +466,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             } else if (this.widgetStore.plotType === CatalogPlotType.Histogram && selectedPoint.pointIndices.length) {
                 selectedPointIndex = selectedPoint.pointIndices;
             }
-
-            profileStore.setSelectedPointIndices(selectedPointIndex, true);
+            const matched = profileStore.getOriginIndices(selectedPointIndex);
+            profileStore.setSelectedPointIndices(matched, true);
             catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
     };
@@ -727,7 +728,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         }
 
-        const selectedPointIndices = profileStore.selectedPointIndices;
+        const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
         let scatterDataMarker = data[0].marker;
         if (selectedPointIndices.length > 0) {
             data[0]["selectedpoints"] = selectedPointIndices;
