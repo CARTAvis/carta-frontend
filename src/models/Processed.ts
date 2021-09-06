@@ -138,6 +138,12 @@ export class ProtobufProcessing {
             case CARTA.ColumnType.Double:
                 data = new Float64Array(column.binaryData.slice().buffer);
                 break;
+            case CARTA.ColumnType.Int64:
+                data = CARTACompute.ConvertInt64Array(column.binaryData, true);
+                break;
+            case CARTA.ColumnType.Uint64:
+                data = CARTACompute.ConvertInt64Array(column.binaryData, false);
+                break;
             case CARTA.ColumnType.Bool:
                 const array = new Uint8Array(column.binaryData.slice().buffer);
                 const boolData = new Array<boolean>(array.length);
