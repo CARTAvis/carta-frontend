@@ -572,6 +572,10 @@ export class FrameStore {
         return result;
     }
 
+    @computed get isRestFreqEditable(): boolean {
+        return this.frameInfo?.fileInfoExtended?.depth > 1 && (this.spectralType === SpectralType.FREQ || this.spectralType === SpectralType.WAVE || this.spectralType === SpectralType.AWAV);
+    }
+
     @computed get isCoordChannel(): boolean {
         return this.spectralType === SpectralType.CHANNEL;
     }
