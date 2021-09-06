@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, observable, computed, makeObservable, autorun} from "mobx";
 import {FormGroup, IDialogProps, Button, Intent, Classes, Text, HTMLSelect, NonIdealState} from "@blueprintjs/core";
@@ -97,10 +98,7 @@ export class RestFreqDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const frame = appStore.getFrame(appStore.dialogStore.restFreqDialogFileId);
 
-        let className = "";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("freq-dialog", {"bp3-dark": appStore.darkTheme});
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -119,7 +117,7 @@ export class RestFreqDialogComponent extends React.Component {
                     <NonIdealState icon={"error"} title={"No image selected"} />
                 ) : (
                     <React.Fragment>
-                        <div className={Classes.DIALOG_BODY + " freq-dialog"}>
+                        <div className={Classes.DIALOG_BODY}>
                             <FormGroup inline={true} label="Source" className="name-text">
                                 <Text ellipsize={true}>{this.filename}</Text>
                             </FormGroup>
