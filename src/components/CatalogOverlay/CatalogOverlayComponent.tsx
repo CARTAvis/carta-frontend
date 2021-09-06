@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, FormGroup, Intent, NonIdealState, Switch, MenuItem, PopoverPosition, Button} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
-import * as ScrollUtils from "../../../node_modules/@blueprintjs/table/lib/esm/common/internal/scrollUtils";
+import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
