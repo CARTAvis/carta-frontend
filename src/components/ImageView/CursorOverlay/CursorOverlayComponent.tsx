@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {CSSProperties} from "react";
 import {CursorInfo, SpectralInfo} from "models";
@@ -87,10 +88,8 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             styleProps.left = this.props.left;
         }
 
-        let className = "cursor-overlay-div";
-        if (this.props.docked) {
-            className += " docked";
-        }
+        const className = classNames("cursor-overlay-div", {docked: this.props.docked});
+
         return (
             <div className={className} style={styleProps}>
                 {infoStrings.length ? infoStrings.join("; ") : "\u00a0"}

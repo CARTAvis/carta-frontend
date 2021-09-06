@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {Classes, Intent, Overlay, Spinner} from "@blueprintjs/core";
 import {AppStore} from "stores";
@@ -9,11 +10,7 @@ import "./SplashScreenComponent.scss";
 export class SplashScreenComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
-
-        let className = "splash-screen";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("splash-screen", {"bp3-dark": appStore.darkTheme});
 
         return (
             <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible} usePortal={true}>
