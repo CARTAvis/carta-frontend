@@ -1,5 +1,6 @@
-import {observer} from "mobx-react";
 import * as React from "react";
+import classNames from "classnames";
+import {observer} from "mobx-react";
 import {AppStore, ContourDashMode, FrameStore, RenderConfigStore} from "stores";
 import {ceilToPower, GL, rotate2D, scale2D, subtract2D} from "utilities";
 import {ContourWebGLService} from "services";
@@ -237,10 +238,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const padding = appStore.overlayStore.padding;
-        let className = "contour-div";
-        if (this.props.docked) {
-            className += " docked";
-        }
+        const className = classNames("contour-div", {docked: this.props.docked});
+
         return (
             <div className={className}>
                 <canvas

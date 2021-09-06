@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
@@ -103,15 +104,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             opacity: this.props.visible ? 1 : 0
         };
 
-        let className = "image-toolbar";
-
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
-
-        if (this.props.docked) {
-            className += " docked";
-        }
+        const className = classNames("image-toolbar", {docked: this.props.docked, "bp3-dark": appStore.darkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const currentZoomSpan = (

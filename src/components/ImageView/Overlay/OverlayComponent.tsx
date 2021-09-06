@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AppStore, FrameStore, OverlayStore, PreferenceStore} from "stores";
 import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
@@ -164,10 +165,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             );
         }
 
-        let className = "overlay-canvas";
-        if (this.props.docked) {
-            className += " docked";
-        }
+        const className = classNames("overlay-canvas", {docked: this.props.docked});
         return <canvas className={className} style={{width: w, height: h}} id="overlay-canvas" key={styleString} ref={this.getRef} />;
     }
 }

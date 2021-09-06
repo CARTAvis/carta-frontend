@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {OverlayComponent} from "../Overlay/OverlayComponent";
@@ -118,12 +119,10 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         const frame = this.props.frame;
         if (frame?.isRenderable && appStore.astReady) {
             const isActive = frame === appStore.activeFrame && appStore.numImageRows * appStore.numImageColumns > 1;
+            const className = classNames("image-panel-div", {active: isActive});
 
-            let className = "image-panel-div";
             let style: React.CSSProperties = {width: overlayStore.viewWidth, height: overlayStore.viewHeight};
             if (isActive) {
-                className += " active";
-
                 // Disable border radius rounding in inner corners
                 if (this.props.row !== 0) {
                     style.borderTopLeftRadius = 0;

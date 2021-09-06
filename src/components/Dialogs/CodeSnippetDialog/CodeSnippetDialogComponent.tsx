@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as prism from "prismjs";
 import {observer} from "mobx-react";
+import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import Editor from "react-simple-code-editor";
@@ -105,10 +106,7 @@ export class CodeSnippetDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const snippetStore = appStore.snippetStore;
-        let className = "code-snippet-dialog";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("code-snippet-dialog", {"bp3-dark": appStore.darkTheme});
 
         const dialogProps: IDialogProps = {
             icon: "console",
