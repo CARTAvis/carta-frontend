@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AnchorButton, Classes, Dialog, ProgressBar} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
@@ -35,10 +36,8 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
             titleText = `${this.props.text} (${timeRemainingText} left)`;
         }
 
-        let className = "task-progress-dialog";
-        if (AppStore.Instance.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("task-progress-dialog", {"bp3-dark": AppStore.Instance.darkTheme});
+
         return (
             <Dialog portalClassName="dialog-portal" className={className} icon={"time"} canEscapeKeyClose={false} canOutsideClickClose={false} isCloseButtonShown={false} title={titleText} isOpen={this.props.isOpen}>
                 <div className={Classes.DIALOG_BODY}>

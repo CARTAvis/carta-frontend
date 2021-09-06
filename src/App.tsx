@@ -1,5 +1,5 @@
 import * as React from "react";
-
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Intent} from "@blueprintjs/core";
@@ -64,12 +64,8 @@ export class App extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        let className = "App";
-        let glClassName = "gl-container-app";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-            glClassName += " dark-theme";
-        }
+        const className = classNames("App", {"bp3-dark": appStore.darkTheme});
+        const glClassName = classNames("gl-container-app", {"dark-theme": appStore.darkTheme});
 
         const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.darkTheme);
 
