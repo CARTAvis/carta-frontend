@@ -186,7 +186,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
                             dragPanningEnabled={appStore.preferenceStore.dragPanning}
                             cursorFrozen={appStore.cursorFrozen}
-                            cursorPoint={frame.cursorInfo.posImageSpace}
                             docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                         />
                     )}
