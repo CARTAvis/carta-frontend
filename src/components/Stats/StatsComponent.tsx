@@ -276,7 +276,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={"Select a valid region from the dropdown"} />;
         }
 
-        const className = classNames("stats-widget", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("stats-widget", {"dark-theme": appStore.darkTheme});
 
         return (
             <div className={className}>
