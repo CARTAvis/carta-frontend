@@ -72,7 +72,7 @@ export class RestFreqDialogComponent extends React.Component {
     private saveRestFreq = () => {
         const appStore = AppStore.Instance;
         const frame = appStore.getFrame(appStore.dialogStore.restFreqDialogFileId);
-        if (!frame) {
+        if (!frame || this.inValidInput) {
             return;
         }
 

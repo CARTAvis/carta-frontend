@@ -921,6 +921,8 @@ export class FrameStore {
             }
         }
 
+        this.headerRestFreq = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue;
+        this.setCustomRestFreq(this.headerRestFreq);
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
@@ -942,9 +944,6 @@ export class FrameStore {
         this.cursorInfo = this.getCursorInfo(this.center);
         this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
         this.cursorMoving = false;
-
-        this.headerRestFreq = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue;
-        this.setCustomRestFreq(this.headerRestFreq);
 
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing
@@ -1147,8 +1146,16 @@ export class FrameStore {
     };
 
     public updateCustomRestFreq = (restFreq: number) => {
-        AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
-        AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
+        if (!isFinite(restFreq)) {
+            return;
+        }
+
+        if (this.wcsInfo3D) {
+            AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
+        }
+        if (this.spectralFrame) {
+            AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
+        }
         this.setCustomRestFreq(restFreq);
 
         if (this.spectralReference) {
@@ -1437,8 +1444,7 @@ export class FrameStore {
         const spectralType = this.spectralAxis.type.code;
         if (IsSpectralTypeSupported(spectralType)) {
             // check RESTFRQ
-            const restFrqHeader = entries.find(entry => entry.name.indexOf("RESTFRQ") !== -1);
-            if (restFrqHeader) {
+            if (isFinite(this.headerRestFreq)) {
                 this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
             } else {
                 this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>();
