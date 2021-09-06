@@ -229,8 +229,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             stokesInfo.forEach(stokes => coordinateOptions.push({value: `${stokes.replace("Stokes ", "")}z`, label: stokes}));
 
             if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z") {
-                const linkedClass = "linked-to-selected-stokes";
-                stokesClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+                stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.darkTheme});
             }
         }
 
