@@ -1146,7 +1146,7 @@ export class FrameStore {
     };
 
     public updateCustomRestFreq = (restFreq: number) => {
-        if (!isFinite(restFreq)) {
+        if (!isFinite(restFreq) || restFreq === this.customRestFreq) {
             return;
         }
 
