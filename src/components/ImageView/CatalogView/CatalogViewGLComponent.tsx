@@ -4,7 +4,6 @@ import tinycolor from "tinycolor2";
 import {AppStore, CatalogStore, FrameStore, RenderConfigStore, WidgetsStore} from "stores";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
-import {CursorInfo} from "models";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CatalogOverlayShape} from "stores/widgets";
 import {closestCatalogIndexToCursor, subtract2D, scale2D, rotate2D} from "utilities";
@@ -13,7 +12,6 @@ import "./CatalogViewGLComponent.scss";
 export interface CatalogViewGLComponentProps {
     docked: boolean;
     frame: FrameStore;
-    onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
 @observer
@@ -33,6 +31,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     componentDidUpdate() {
         requestAnimationFrame(this.updateCanvas);
     }
+
+    private getRef = ref => {
+        this.canvas = ref;
+    };
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
@@ -102,10 +104,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 <canvas
                     id="catalog-canvas"
                     className="catalog-canvas"
-                    ref={ref => (this.canvas = ref)}
+                    ref={this.getRef}
                     onClick={evn => this.onClick(evn)}
                     onDoubleClick={this.onDoubleClick}
-                    onWheel={this.onWheelCaptured}
                     style={{
                         top: padding.top,
                         left: padding.left,
@@ -316,19 +317,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             }
         });
     }
-
-    private onWheelCaptured = event => {
-        if (event && event.nativeEvent && event.nativeEvent.type === "wheel") {
-            const wheelEvent = event.nativeEvent;
-            const frame = this.props.frame;
-            const lineHeight = 15;
-            const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
-            if (frame.wcsInfo && this.props.onZoomed) {
-                const cursorPosImageSpace = canvasToTransformedImagePos(wheelEvent.offsetX, wheelEvent.offsetY, frame, frame.renderWidth, frame.renderHeight);
-                this.props.onZoomed(frame.getCursorInfo(cursorPosImageSpace), -delta);
-            }
-        }
-    };
 
     private onClick = event => {
         const clickEvent = event.nativeEvent;
