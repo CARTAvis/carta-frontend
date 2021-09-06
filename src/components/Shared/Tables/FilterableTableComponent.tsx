@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
 import {Checkbox, InputGroup, Icon, Label, Position} from "@blueprintjs/core";
@@ -308,10 +309,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             tableColumns.push(column);
         });
 
-        let className = "column-filter-table";
-        if (AppStore.Instance.darkTheme) {
-            className += " dark-theme";
-        }
+        const className = classNames("column-filter-table", {"bp3-dark": AppStore.Instance.darkTheme});
 
         return (
             <Table

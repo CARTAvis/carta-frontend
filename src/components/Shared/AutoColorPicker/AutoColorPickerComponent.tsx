@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import classNames from "classnames";
 import {computed} from "mobx";
 import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
@@ -8,8 +9,8 @@ import {Button, PopoverPosition, MenuItem} from "@blueprintjs/core";
 import {Popover2} from "@blueprintjs/popover2";
 import {Select} from "@blueprintjs/select";
 import {AUTO_COLOR_OPTIONS, getColorForTheme} from "utilities";
-import "./AutoColorPickerComponent.scss";
 import {AppStore} from "stores";
+import "./AutoColorPickerComponent.scss";
 
 interface AutoColorPickerComponentProps {
     color: string;
@@ -48,10 +49,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
 
     private renderColorSelectItem = (colorItem: string, {handleClick, modifiers}) => {
         if (colorItem === CUSTOM_COLOR_OPTION) {
-            let popoverClassName = "color-picker-popup";
-            if (AppStore.Instance.darkTheme) {
-                popoverClassName += " bp3-dark";
-            }
+            const popoverClassName = classNames("color-picker-popup", {"bp3-dark": AppStore.Instance.darkTheme});
 
             return (
                 <div key={"custom-color"} className={"custom-color"}>

@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {AnchorButton, Button, IDialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
@@ -100,14 +101,8 @@ export class StokesDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-
-        let className = "stokes-dialog";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
-
-        let stokeItems = [CARTA.StokesType.STOKES_TYPE_NONE, CARTA.StokesType.I, CARTA.StokesType.Q, CARTA.StokesType.U, CARTA.StokesType.V];
-
+        const className = classNames("stokes-dialog", {"bp3-dark": appStore.darkTheme});
+        const stokeItems = [CARTA.StokesType.STOKES_TYPE_NONE, CARTA.StokesType.I, CARTA.StokesType.Q, CARTA.StokesType.U, CARTA.StokesType.V];
         const files = this.fileNames;
 
         const fileName = (

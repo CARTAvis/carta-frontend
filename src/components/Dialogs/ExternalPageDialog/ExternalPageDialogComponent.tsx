@@ -1,7 +1,8 @@
 import * as React from "react";
+import Iframe from "react-iframe";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {IDialogProps} from "@blueprintjs/core";
-import Iframe from "react-iframe";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import "./ExternalPageDialogComponent.scss";
@@ -10,11 +11,7 @@ import "./ExternalPageDialogComponent.scss";
 export class ExternalPageDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
-
-        let className = "iframe-dialog";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("iframe-dialog", {"bp3-dark": appStore.darkTheme});
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
