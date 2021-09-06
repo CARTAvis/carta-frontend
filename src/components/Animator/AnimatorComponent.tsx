@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
 import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Position, Radio, RangeSlider, Slider} from "@blueprintjs/core";
@@ -309,15 +310,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             );
         }
 
-        let playbackClass = "animator-playback";
-        if (hideSliders) {
-            playbackClass += " wrap";
-        }
-
-        let playbackModeClass = "playback-mode";
-        if (AppStore.Instance.darkTheme) {
-            playbackModeClass += " bp3-dark";
-        }
+        const playbackClass = classNames("animator-playback", {wrap: hideSliders});
+        const playbackModeClass = classNames("playback-mode", {"bp3-dark": appStore.darkTheme});
 
         const playbackModeButton = (
             <Popover2

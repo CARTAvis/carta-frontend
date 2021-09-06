@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {IDialogProps} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -10,11 +11,7 @@ import "./FileInfoDialogComponent.scss";
 export class FileInfoDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
-
-        let className = "file-info-dialog";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("file-info-dialog", {"bp3-dark": appStore.darkTheme});
 
         const dialogProps: IDialogProps = {
             icon: "app-header",

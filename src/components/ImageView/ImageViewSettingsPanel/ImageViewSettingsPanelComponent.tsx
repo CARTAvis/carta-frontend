@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {ItemRenderer, Select} from "@blueprintjs/select";
@@ -684,10 +685,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
-        let className = "image-view-settings";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("image-view-settings", {"bp3-dark": appStore.darkTheme});
 
         return (
             <div className={className}>

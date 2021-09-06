@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {Classes, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {AppStore, BrowserMode, RegionMode} from "./stores";
@@ -11,10 +12,7 @@ import {ImageViewLayer} from "components";
 export class HotkeyContainer extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
-        let className = "bp3-hotkey-dialog";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("bp3-hotkey-dialog", {"bp3-dark": appStore.darkTheme});
 
         return (
             <Dialog portalClassName="dialog-portal" isOpen={appStore.dialogStore.hotkeyDialogVisible} className={className} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
