@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup} from "@blueprintjs/core";
@@ -34,12 +35,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         let styleProps: CSSProperties = {
             opacity: this.props.visible ? 1 : 0
         };
-
-        let className = "profiler-toolbar";
-
-        if (this.props.darkMode) {
-            className += " bp3-dark";
-        }
+        const className = classNames("profiler-toolbar", {"bp3-dark": this.props.darkMode});
 
         return (
             <ButtonGroup className={className} style={styleProps}>

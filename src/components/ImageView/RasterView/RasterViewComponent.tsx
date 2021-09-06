@@ -1,5 +1,6 @@
 import * as React from "react";
 import tinycolor from "tinycolor2";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AppStore, FrameStore} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
@@ -366,10 +367,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const padding = appStore.overlayStore.padding;
-        let className = "raster-div";
-        if (this.props.docked) {
-            className += " docked";
-        }
+        const className = classNames("raster-div", {docked: this.props.docked});
 
         return (
             <div className={className}>
