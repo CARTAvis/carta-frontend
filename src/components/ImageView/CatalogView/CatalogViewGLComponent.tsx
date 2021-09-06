@@ -34,6 +34,10 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         requestAnimationFrame(this.updateCanvas);
     }
 
+    private getRef = ref => {
+        this.canvas = ref;
+    };
+
     render() {
         // dummy values to trigger React's componentDidUpdate()
         /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -102,7 +106,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 <canvas
                     id="catalog-canvas"
                     className="catalog-canvas"
-                    ref={ref => (this.canvas = ref)}
+                    ref={this.getRef}
                     onClick={evn => this.onClick(evn)}
                     onDoubleClick={this.onDoubleClick}
                     onWheel={this.onWheelCaptured}

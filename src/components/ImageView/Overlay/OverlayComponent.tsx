@@ -119,6 +119,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     throttledRenderCanvas = _.throttle(this.renderCanvas, 50);
 
+    private getRef = ref => {
+        this.canvas = ref;
+    };
+
     render() {
         const styleString = this.props.overlaySettings.styleString;
 
@@ -164,6 +168,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (this.props.docked) {
             className += " docked";
         }
-        return <canvas className={className} style={{width: w, height: h}} id="overlay-canvas" key={styleString} ref={ref => (this.canvas = ref)} />;
+        return <canvas className={className} style={{width: w, height: h}} id="overlay-canvas" key={styleString} ref={this.getRef} />;
     }
 }
