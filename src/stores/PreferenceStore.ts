@@ -1,4 +1,4 @@
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, autorun, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
@@ -87,7 +87,10 @@ export enum PreferenceKeys {
     PIXEL_GRID_COLOR = "pixelGridColor",
     IMAGE_PANEL_MODE = "imagePanelMode",
     IMAGE_PANEL_COLUMNS = "imagePanelColumns",
-    IMAGE_PANEL_ROWS = "imagePanelRows"
+    IMAGE_PANEL_ROWS = "imagePanelRows",
+
+    STATS_PANEL_ENABLED = "statsPanelEnabled",
+    STATS_PANEL_MODE = "statsPanelMode"
 }
 
 const DEFAULTS = {
@@ -180,6 +183,10 @@ const DEFAULTS = {
     CATALOG: {
         catalogDisplayedColumnSize: 10,
         catalogTableSeparatorPosition: "60%"
+    },
+    STATS_PANEL: {
+        statsPanelEnabled: false,
+        statsPanelMode: 0
     }
 };
 
@@ -521,6 +528,14 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
     }
 
+    @computed get statsPanelEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.STATS_PANEL_ENABLED) ?? DEFAULTS.STATS_PANEL.statsPanelEnabled;
+    }
+
+    @computed get statsPanelMode(): number {
+        return this.preferences.get(PreferenceKeys.STATS_PANEL_MODE) ?? DEFAULTS.STATS_PANEL.statsPanelMode;
+    }
+
     @action setPreference = async (key: PreferenceKeys, value: any) => {
         if (!key) {
             return false;
@@ -826,8 +841,35 @@ export class PreferenceStore {
         }
     };
 
+    private activateStatsPanel = (statsPanelEnabled: boolean) => {
+        if (statsPanelEnabled) {
+            import("stats-js")
+                .then(({default: Stats}) => {
+                    const stats = new Stats();
+                    stats.showPanel(this.statsPanelMode); // 0: fps, 1: ms, 2: mb, 3+: custom
+                    document.body.appendChild(stats.dom);
+                    function animate() {
+                        stats.begin();
+                        // monitored code goes here
+                        stats.end();
+                        requestAnimationFrame(animate);
+                    }
+                    requestAnimationFrame(animate);
+                    stats.dom.style.right = "0";
+                    stats.dom.style.left = "initial";
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+    };
+
     private constructor() {
         makeObservable(this);
         this.preferences = new Map<PreferenceKeys, any>();
+
+        autorun(() => {
+            this.activateStatsPanel(this.statsPanelEnabled);
+        });
     }
 }
