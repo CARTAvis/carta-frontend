@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as GoldenLayout from "golden-layout";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {Rnd} from "react-rnd";
 import {Icon, Position} from "@blueprintjs/core";
@@ -106,19 +107,11 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     public render() {
         const headerHeight = 25;
         const appStore = AppStore.Instance;
-        let className = "floating-widget";
-        let floatingContentClassName = "floating-content";
-        let titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
-        let buttonClass = "floating-header-button";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-            titleClass += " bp3-dark";
-            buttonClass += " bp3-dark";
-        }
+        const className = classNames("floating-widget", {"bp3-dark": appStore.darkTheme});
+        const titleClass = classNames("floating-header", {selected: this.props.isSelected, "bp3-dark": appStore.darkTheme});
+        const buttonClass = classNames("floating-header-button", {"bp3-dark": appStore.darkTheme});
+        const floatingContentClassName = classNames("floating-content", {"bp3-dark": appStore.darkTheme, "floating-settings-content": !this.props.showPinButton});
 
-        if (!this.props.showPinButton) {
-            floatingContentClassName = "floating-settings-content";
-        }
         const widgetConfig = this.props.widgetConfig;
 
         return (

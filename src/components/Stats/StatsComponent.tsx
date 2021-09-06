@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {HTMLTable, NonIdealState, FormGroup, HTMLSelect} from "@blueprintjs/core";
@@ -228,8 +229,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             stokesInfo.forEach(stokes => coordinateOptions.push({value: `${stokes.replace("Stokes ", "")}z`, label: stokes}));
 
             if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z") {
-                const linkedClass = "linked-to-selected-stokes";
-                stokesClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
+                stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.darkTheme});
             }
         }
 
@@ -276,10 +276,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={"Select a valid region from the dropdown"} />;
         }
 
-        let className = "stats-widget";
-        if (appStore.darkTheme) {
-            className += " dark-theme";
-        }
+        const className = classNames("stats-widget", {"dark-theme": appStore.darkTheme});
 
         return (
             <div className={className}>

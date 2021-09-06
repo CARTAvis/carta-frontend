@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {AnchorButton, Button, IDialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
@@ -100,14 +101,8 @@ export class StokesDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-
-        let className = "stokes-dialog";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
-
-        let stokeItems = [CARTA.PolarizationType.POLARIZATION_TYPE_NONE, CARTA.PolarizationType.I, CARTA.PolarizationType.Q, CARTA.PolarizationType.U, CARTA.PolarizationType.V];
-
+        const className = classNames("stokes-dialog", {"bp3-dark": appStore.darkTheme});
+        const stokesItems = [CARTA.PolarizationType.POLARIZATION_TYPE_NONE, CARTA.PolarizationType.I, CARTA.PolarizationType.Q, CARTA.PolarizationType.U, CARTA.PolarizationType.V];
         const files = this.fileNames;
 
         const fileName = (
@@ -132,7 +127,7 @@ export class StokesDialogComponent extends React.Component {
                         <Cell className="cell-dropdown-menu" key={`cell_drop_down_${rowIndex}`} interactive={true}>
                             <Select
                                 filterable={false}
-                                items={stokeItems}
+                                items={stokesItems}
                                 activeItem={this.stokes.get(file).polarizationType}
                                 onItemSelect={type => this.updateStokesType(file, type)}
                                 itemRenderer={this.renderPopOver}
