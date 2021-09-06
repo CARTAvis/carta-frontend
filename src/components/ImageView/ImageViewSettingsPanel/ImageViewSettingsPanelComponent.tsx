@@ -144,7 +144,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Multi-panel mode">
-                    <HTMLSelect value={preferences.imagePanelMode} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
+                    <HTMLSelect value={preferences.imagePanelMode} onChange={event => appStore.widgetsStore.setImagePanelMode(event.currentTarget.value as ImagePanelMode)}>
                         <option value={ImagePanelMode.None}>Single panel only</option>
                         <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
                         <option value={ImagePanelMode.Fixed}>Fixed grid size</option>

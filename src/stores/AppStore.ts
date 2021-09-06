@@ -1403,6 +1403,13 @@ export class AppStore {
             }
         });
 
+        // Update image panel page buttons
+        autorun(() => {
+            if (this.activeFrame && this.numImageColumns && this.numImageRows) {
+                this.widgetsStore.updateImagePanelPageButtons();
+            }
+        });
+
         // Update requirements every 200 ms
         setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
 
