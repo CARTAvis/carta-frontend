@@ -182,6 +182,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     private filterLinearTicks = (_axis, ticks: number[]) => {
         let removeFirstTick = false;
         let removeLastTick = false;
+        let roundingDecimalDigits: number;
         // Get inter-tick distance
         if (ticks && ticks.length >= 4) {
             const interTickDist = Math.abs(ticks[2] - ticks[1]);
@@ -209,9 +210,16 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     break;
                 }
             }
+
+            // Round ticks by inter-tick distance.
+            // This is a workaround for the float number bug in Chart.js that the ticks could be like [45.451, 45.4520000001,45.4529999998] when users zoom in.
+            if (interTickDist < 1) {
+                roundingDecimalDigits = Math.abs(Math.floor(Math.log10(interTickDist)));
+            }
         }
         // Remove first and last ticks if they've been flagged
-        return ticks.slice(removeFirstTick ? 1 : 0, removeLastTick ? -1 : undefined);
+        const newticks = ticks.slice(removeFirstTick ? 1 : 0, removeLastTick ? -1 : undefined);
+        return roundingDecimalDigits ? newticks.map(tick => Number(tick.toFixed(roundingDecimalDigits))) : newticks;
     };
 
     private filterYLogTicks = (_axis, ticks: number[]) => {
