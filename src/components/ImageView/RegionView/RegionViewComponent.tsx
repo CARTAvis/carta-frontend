@@ -19,7 +19,6 @@ import "./RegionViewComponent.scss";
 export interface RegionViewComponentProps {
     frame: FrameStore;
     overlaySettings: OverlayStore;
-    isRegionCornerMode: boolean;
     dragPanningEnabled: boolean;
     docked: boolean;
     width: number;
@@ -28,7 +27,6 @@ export interface RegionViewComponentProps {
     top: number;
     cursorFrozen: boolean;
     onClicked?: (cursorInfo: CursorInfo) => void;
-    onRegionDoubleClicked?: (region: RegionStore) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
@@ -211,7 +209,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             dy = Math.sign(dy) * maxDiff;
         }
         const isCtrlPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
-        if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
+        if ((AppStore.Instance.preferenceStore.isRegionCornerMode && !isCtrlPressed) || (!AppStore.Instance.preferenceStore.isRegionCornerMode && isCtrlPressed)) {
             // corner-to-corner region creation
             const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
             const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
@@ -495,8 +493,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private handleRegionDoubleClick = (region: RegionStore) => {
-        if (this.props.onRegionDoubleClicked) {
-            this.props.onRegionDoubleClicked(region);
+        const appStore = AppStore.Instance;
+        if (region) {
+            const frame = appStore.getFrame(region.fileId);
+            if (frame) {
+                frame.regionSet.selectRegion(region);
+                appStore.dialogStore.showRegionDialog();
+            }
         }
     };
 
@@ -524,8 +527,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const frame = this.props.frame;
         const regionSet = frame.regionSet;
         const className = classNames("region-stage", {docked: this.props.docked});
-        let regionComponents = null;
 
+        let regionComponents = null;
         if (regionSet && regionSet.regions.length) {
             regionComponents = regionSet.regions
                 .filter(r => r.isValid && r.regionId !== 0)
@@ -543,7 +546,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                                 onSelect={regionSet.selectRegion}
                                 onDoubleClick={this.handleRegionDoubleClick}
                                 listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
-                                isRegionCornerMode={this.props.isRegionCornerMode}
+                                isRegionCornerMode={AppStore.Instance.preferenceStore.isRegionCornerMode}
                             />
                         );
                     } else if (r.regionType === CARTA.RegionType.POINT) {
@@ -571,7 +574,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                                 onSelect={regionSet.selectRegion}
                                 onDoubleClick={this.handleRegionDoubleClick}
                                 listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
-                                isRegionCornerMode={this.props.isRegionCornerMode}
+                                isRegionCornerMode={AppStore.Instance.preferenceStore.isRegionCornerMode}
                             />
                         );
                     }
@@ -626,6 +629,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     y={0}
                 >
                     <Layer>
+                        {/*<RegionComponents width={this.props.width} height={this.props.height} frame={frame} />*/}
                         {regionComponents}
                     </Layer>
                     <Layer>
@@ -637,6 +641,80 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         );
     }
 }
+
+/*
+const RegionComponents: React.FC<{frame: FrameStore; width: number; height: number}> = props => {
+    const frame = props.frame;
+    const width = props.width;
+    const height = props.height;
+
+    const handleRegionDoubleClicked = (region: RegionStore) => {
+        const appStore = AppStore.Instance;
+        if (region) {
+            const frame = appStore.getFrame(region.fileId);
+            if (frame) {
+                frame.regionSet.selectRegion(region);
+                appStore.dialogStore.showRegionDialog();
+            }
+        }
+    };
+
+    let regionComponents = null;
+    if (frame?.regionSet?.regions?.length) {
+        const regionSet = frame.regionSet;
+        regionComponents = regionSet.regions
+            .filter(r => r.isValid && r.regionId !== 0)
+            .sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1))
+            .map(r => {
+                if (r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE) {
+                    return (
+                        <LineSegmentRegionComponent
+                            key={r.regionId}
+                            region={r}
+                            frame={frame}
+                            layerWidth={width}
+                            layerHeight={height}
+                            selected={r === regionSet.selectedRegion}
+                            onSelect={regionSet.selectRegion}
+                            onDoubleClick={handleRegionDoubleClicked}
+                            listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
+                            isRegionCornerMode={AppStore.Instance.preferenceStore.isRegionCornerMode}
+                        />
+                    );
+                } else if (r.regionType === CARTA.RegionType.POINT) {
+                    return (
+                        <PointRegionComponent
+                            key={r.regionId}
+                            region={r}
+                            frame={frame}
+                            layerWidth={width}
+                            layerHeight={height}
+                            selected={r === regionSet.selectedRegion}
+                            onSelect={regionSet.selectRegion}
+                            onDoubleClick={handleRegionDoubleClicked}
+                        />
+                    );
+                } else {
+                    return (
+                        <SimpleShapeRegionComponent
+                            key={r.regionId}
+                            region={r}
+                            frame={frame}
+                            layerWidth={width}
+                            layerHeight={height}
+                            selected={r === regionSet.selectedRegion}
+                            onSelect={regionSet.selectRegion}
+                            onDoubleClick={handleRegionDoubleClicked}
+                            listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
+                            isRegionCornerMode={AppStore.Instance.preferenceStore.isRegionCornerMode}
+                        />
+                    );
+                }
+            });
+    }
+    return <React.Fragment>{regionComponents}</React.Fragment>;;
+};
+*/
 
 const CursorLayerComponent: React.FC<{width: number; height: number; frame: FrameStore; cursorPoint: Point2D}> = props => {
     const frame = props.frame;
@@ -667,4 +745,4 @@ const CursorLayerComponent: React.FC<{width: number; height: number; frame: Fram
         }
     }
     return null;
-}
+};
