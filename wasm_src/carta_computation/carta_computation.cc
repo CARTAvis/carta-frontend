@@ -10,7 +10,6 @@
 
 extern size_t ZSTD_decompress(void* dst, size_t dstCapacity, const void* src, size_t srcSize);
 
-
 union Block {
     int intValues[4];
     char byteValues[16];
@@ -50,7 +49,7 @@ void decodeArray(char* dst, size_t dstCapacity, int decimationFactor) {
     int v = 0;
 
     Block block;
-    
+
     // Un-shuffle data and convert from int to float based on decimation factor
     for (v = 0; v < blockedLength; v += 4) {
         const int i = 4 * v;
@@ -243,8 +242,7 @@ void generateVertexData(void* dst, size_t dstCapacity, float* srcVertices, int n
 }
 
 float clamp(float d, float min, float max) {
-    if (d!=d)
-    {
+    if (d != d) {
         return min;
     }
     const double t = d < min ? min : d;
@@ -252,68 +250,76 @@ float clamp(float d, float min, float max) {
 }
 
 float scaleValue(float x, int scaling, float alpha, float gamma) {
-    switch (scaling)
-    {
-    case SQUARE:
-        return x * x;
-    case SQRT:
-        return sqrt(x);
-    case LOG:
-        return clamp(log(alpha * x + 1.0) / log(alpha), 0.0, 1.0);
-    case POWER:
-        return (pow(alpha, x) - 1.0) / alpha;
-    case GAMMA:
-        return pow(x, gamma);
-    default:
-        return x;
+    switch (scaling) {
+        case SQUARE:
+            return x * x;
+        case SQRT:
+            return sqrt(x);
+        case LOG:
+            return clamp(log(alpha * x + 1.0) / log(alpha), 0.0, 1.0);
+        case POWER:
+            return (pow(alpha, x) - 1.0) / alpha;
+        case GAMMA:
+            return pow(x, gamma);
+        default:
+            return x;
     }
 }
 
-void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, float dataMax, int clipMin, int clipMax, int scaling, float alpha, float gamma, int devicePixelRatio, bool invert) {
+void calculateCatalogMap(int mapType, float* data, size_t N, float dataMin, float dataMax, int clipMin, int clipMax, int scaling, float alpha, float gamma, int devicePixelRatio,
+                         bool invert) {
     float columnMin = scaleValue(dataMin, scaling, alpha, gamma);
     float columnMax = scaleValue(dataMax, scaling, alpha, gamma);
     float range = columnMax - columnMin;
 
-    switch (mapType)
-    {
-    case SIZE_DIAMETER:
-        for (size_t i = 0; i < N; i++)
-        {
-            float v = clamp(data[i], dataMin, dataMax);
-            float value = scaleValue(v, scaling, alpha, gamma);
-            data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin) * devicePixelRatio;
-        }
-        break;
-    case SIZE_AREA:
-        for (size_t i = 0; i < N; i++)
-        {
-            float v = clamp(data[i], dataMin, dataMax);
-            float value = scaleValue(v, scaling, alpha, gamma);
-            data[i] = (sqrt((value - columnMin) / range) * (clipMax - clipMin) + clipMin) * devicePixelRatio;
-        }
-        break;
-    case COLOR:
-        for (size_t i = 0; i < N; i++)
-        {
-            float v = clamp(data[i], dataMin, dataMax);
-            float value = (scaleValue(v, scaling, alpha, gamma) - columnMin) / range;
-            if (invert)
-            {
-                value = 1 - value;
+    switch (mapType) {
+        case SIZE_DIAMETER:
+            for (size_t i = 0; i < N; i++) {
+                float v = clamp(data[i], dataMin, dataMax);
+                float value = scaleValue(v, scaling, alpha, gamma);
+                data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin) * devicePixelRatio;
             }
-            data[i] = value;
-        }
-        break;
-    case ORIENTATION:
-        for (size_t i = 0; i < N; i++)
-        {
-            float v = clamp(data[i], dataMin, dataMax);
-            float value = scaleValue(v, scaling, alpha, gamma);
-            data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin);
-        }
-        break;
-    default:
-        break;
+            break;
+        case SIZE_AREA:
+            for (size_t i = 0; i < N; i++) {
+                float v = clamp(data[i], dataMin, dataMax);
+                float value = scaleValue(v, scaling, alpha, gamma);
+                data[i] = (sqrt((value - columnMin) / range) * (clipMax - clipMin) + clipMin) * devicePixelRatio;
+            }
+            break;
+        case COLOR:
+            for (size_t i = 0; i < N; i++) {
+                float v = clamp(data[i], dataMin, dataMax);
+                float value = (scaleValue(v, scaling, alpha, gamma) - columnMin) / range;
+                if (invert) {
+                    value = 1 - value;
+                }
+                data[i] = value;
+            }
+            break;
+        case ORIENTATION:
+            for (size_t i = 0; i < N; i++) {
+                float v = clamp(data[i], dataMin, dataMax);
+                float value = scaleValue(v, scaling, alpha, gamma);
+                data[i] = ((value - columnMin) / range * (clipMax - clipMin) + clipMin);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+void convertInt64Array(std::int64_t* source, size_t length) {
+    double* dest = (double*) source;
+    for (auto i = 0; i < length; i++) {
+        dest[i] = source[i];
+    }
+}
+
+void convertUint64Array(std::uint64_t* source, size_t length) {
+    double* dest = (double*) source;
+    for (auto i = 0; i < length; i++) {
+        dest[i] = source[i];
     }
 }
 

@@ -6,4 +6,5 @@ export const Decode: (src: Uint8Array, destSize: number, decimationFactor: numbe
 export const GenerateVertexData: (sourceVertices: Float32Array, indexOffsets: Int32Array) => Float32Array;
 export const CalculateCatalogSize: (data: Float32Array, min: number, max: number, sizeMin: number, sizeMax: number, scaling: number, area: boolean, devicePixelRatio: number, alpha?: number, gamma?: number) => Float32Array;
 export const CalculateCatalogColor: (data: Float32Array, invert: boolean, min: number, max: number, scaling: number, alpha?: number, gamma?: number) => Float32Array;
-export const CalculateCatalogOrientation: (data: Float32Array, min: number, max: number, angleMin: number, angleMax: number, scaling: number, alpha?: number, gamma?: number)=> Float32Array; 
+export const CalculateCatalogOrientation: (data: Float32Array, min: number, max: number, angleMin: number, angleMax: number, scaling: number, alpha?: number, gamma?: number)=> Float32Array;
+export const ConvertInt64Array: (data: Uint8Array, signed: boolean) => Float64Array;

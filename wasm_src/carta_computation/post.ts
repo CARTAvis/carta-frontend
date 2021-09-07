@@ -7,6 +7,8 @@ const decompress = Module.cwrap("ZSTD_decompress", "number", ["number", "number"
 const decodeArray = Module.cwrap("decodeArray", "number", ["number", "number", "number"]);
 const generateVertexData = Module.cwrap("generateVertexData", "number", ["number", "number", "number", "number", "number", "number"]);
 const calculateCatalogMap = Module.cwrap("calculateCatalogMap", null, ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+const convertInt64Array = Module.cwrap("convertInt64Array", null, ["number", "number"]);
+const convertUint64Array = Module.cwrap("convertUint64Array", null, ["number", "number"]);
 const VertexDataElements = 8;
 
 Module.srcAllocated = 0;
@@ -145,6 +147,22 @@ Module.CalculateCatalogOrientation = (data: Float32Array, min: number, max: numb
     const float32 = new Float32Array(Module.HEAPF32.buffer, dataOnWasmHeap, N);
     Module._free(dataOnWasmHeap);
     return float32.slice();
+}
+
+Module.ConvertInt64Array = (data: Uint8Array, signed: boolean): Float64Array => {
+    const N = data.byteLength / 8;
+    const srcPtr = Module._malloc(data.byteLength);
+    const srcHeap = new Uint8Array(Module.HEAPU8.buffer, srcPtr, data.byteLength);
+    srcHeap.set(data);
+    if (signed) {
+        convertInt64Array(srcPtr, N);
+    } else {
+        convertUint64Array(srcPtr, N);
+    }
+    const destHeap = new Float64Array(Module.HEAPF64.buffer, srcPtr, N);
+    const result = destHeap.slice();
+    Module._free(srcPtr);
+    return result;
 }
 
 module.exports = Module;

@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Position, Spinner, Switch} from "@blueprintjs/core";
@@ -351,12 +352,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             tableHeaders: widgetStore.columnHeaders
         };
 
-        let className = "spectral-line-query-widget";
-        if (appStore.darkTheme) {
-            className += " dark-theme";
-        }
-
+        const className = classNames("spectral-line-query-widget", {"bp3-dark": appStore.darkTheme});
         const isSelectedLinesUnderLimit = widgetStore.numSelectedLines <= PLOT_LINES_LIMIT;
+
         const hint = (
             <span>
                 <br />

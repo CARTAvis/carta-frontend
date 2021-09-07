@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
+import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
@@ -628,10 +629,7 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
-        let className = "preference-dialog";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
 
         const dialogProps: IDialogProps = {
             icon: "wrench",

@@ -1,13 +1,14 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import tinycolor from "tinycolor2";
+import classNames from "classnames";
 import {AppStore, CatalogStore, FrameStore, RenderConfigStore, WidgetsStore} from "stores";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CursorInfo} from "models";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CatalogOverlayShape} from "stores/widgets";
-import {closestCatalogIndexToCursor, subtract2D, scale2D, rotate2D} from "utilities";
+import {closestCatalogIndexToCursor, rotate2D, scale2D, subtract2D} from "utilities";
 import "./CatalogViewGLComponent.scss";
 
 export interface CatalogViewGLComponentProps {
@@ -89,14 +90,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const padding = appStore.overlayStore.padding;
-        let className = "catalog-div";
-        if (this.props.docked) {
-            className += " docked";
-        }
+        const className = classNames("catalog-div", {docked: this.props.docked, active: appStore.activeLayer === ImageViewLayer.Catalog});
 
-        if (appStore.activeLayer === ImageViewLayer.Catalog) {
-            className += " actived";
-        }
         return (
             <div className={className}>
                 <canvas
