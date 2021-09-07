@@ -640,9 +640,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
 const CursorLayerComponent: React.FC<{width: number; height: number; frame: FrameStore; cursorPoint: Point2D}> = props => {
     const frame = props.frame;
+    const width = props.width;
+    const height = props.height;
+
     if (frame) {
-        const cursorPosPixelSpace = transformedImageToCanvasPos(props.cursorPoint.x, props.cursorPoint.y, frame, props.width, props.height);
-        if (cursorPosPixelSpace.x >= 0 && cursorPosPixelSpace.x <= props.width && cursorPosPixelSpace.y >= 0 && cursorPosPixelSpace.y <= props.height) {
+        const cursorPosPixelSpace = transformedImageToCanvasPos(props.cursorPoint.x, props.cursorPoint.y, frame, width, height);
+        if (cursorPosPixelSpace?.x >= 0 && cursorPosPixelSpace?.x <= width && cursorPosPixelSpace?.y >= 0 && cursorPosPixelSpace?.y <= height) {
             const crosshairLength = 20;
             const crosshairThicknessWide = 3;
             const crosshairThicknessNarrow = 1;
