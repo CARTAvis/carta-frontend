@@ -21,8 +21,9 @@ export enum ImageViewLayer {
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
     const imageViewCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    imageViewCanvas.width = appStore.overlayStore.fullViewWidth * devicePixelRatio * AppStore.Instance.exportImageRatio;
-    imageViewCanvas.height = appStore.overlayStore.fullViewHeight * devicePixelRatio * AppStore.Instance.exportImageRatio;
+    const pixelRatio = devicePixelRatio * appStore.exportImageRatio;
+    imageViewCanvas.width = appStore.overlayStore.fullViewWidth * pixelRatio;
+    imageViewCanvas.height = appStore.overlayStore.fullViewHeight * pixelRatio;
     const ctx = imageViewCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, imageViewCanvas.width, imageViewCanvas.height);
@@ -31,7 +32,7 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         const row = Math.floor(index / appStore.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
         if (panelCanvas) {
-            ctx.drawImage(panelCanvas, appStore.overlayStore.viewWidth * column * devicePixelRatio, appStore.overlayStore.viewHeight * row * devicePixelRatio);
+            ctx.drawImage(panelCanvas, appStore.overlayStore.viewWidth * column * pixelRatio, appStore.overlayStore.viewHeight * row * pixelRatio);
         }
     });
 

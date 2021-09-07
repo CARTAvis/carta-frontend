@@ -52,10 +52,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialPinchDistance: number;
     private layerRef = React.createRef<any>();
 
-
     constructor(props: any) {
         super(props);
         makeObservable(this);
+    }
+
+    componentDidMount() {
+        const pixelRatio = devicePixelRatio * AppStore.Instance.exportImageRatio;
+        const canvas = this.layerRef?.current?.getCanvas();
+        if (canvas && canvas.pixelRatio !== pixelRatio) {
+            canvas.setPixelRatio(pixelRatio);
+        }
     }
 
     updateCursorPos = _.throttle((x: number, y: number) => {
@@ -542,12 +549,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let className = "region-stage";
         if (this.props.docked) {
             className += " docked";
-        }
-
-        const pixelRatio = devicePixelRatio * AppStore.Instance.exportImageRatio;
-        const canvas = this.layerRef?.current?.getCanvas();
-        if (canvas && canvas.pixelRatio !== pixelRatio) {
-            canvas.setPixelRatio(pixelRatio);
         }
 
         let regionComponents = null;
