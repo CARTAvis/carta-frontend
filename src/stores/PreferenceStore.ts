@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable, makeObservable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
@@ -841,35 +841,8 @@ export class PreferenceStore {
         }
     };
 
-    private activateStatsPanel = (statsPanelEnabled: boolean) => {
-        if (statsPanelEnabled) {
-            import("stats-js")
-                .then(({default: Stats}) => {
-                    const stats = new Stats();
-                    stats.showPanel(this.statsPanelMode); // 0: fps, 1: ms, 2: mb, 3+: custom
-                    document.body.appendChild(stats.dom);
-                    function animate() {
-                        stats.begin();
-                        // monitored code goes here
-                        stats.end();
-                        requestAnimationFrame(animate);
-                    }
-                    requestAnimationFrame(animate);
-                    stats.dom.style.right = "0";
-                    stats.dom.style.left = "initial";
-                })
-                .catch(err => {
-                    console.log(err);
-                });
-        }
-    };
-
     private constructor() {
         makeObservable(this);
         this.preferences = new Map<PreferenceKeys, any>();
-
-        autorun(() => {
-            this.activateStatsPanel(this.statsPanelEnabled);
-        });
     }
 }

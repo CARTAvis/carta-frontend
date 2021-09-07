@@ -1448,6 +1448,10 @@ export class AppStore {
                 this.showSplashScreen();
             }
         });
+
+        autorun(() => {
+            this.activateStatsPanel(this.preferenceStore.statsPanelEnabled);
+        });
     }
 
     // region Subscription handlers
@@ -2251,6 +2255,29 @@ export class AppStore {
     }
 
     // endregion
+
+    private activateStatsPanel = (statsPanelEnabled: boolean) => {
+        if (statsPanelEnabled) {
+            import("stats-js")
+                .then(({default: Stats}) => {
+                    const stats = new Stats();
+                    stats.showPanel(this.preferenceStore.statsPanelMode); // 0: fps, 1: ms, 2: mb, 3+: custom
+                    document.body.appendChild(stats.dom);
+                    function animate() {
+                        stats.begin();
+                        // monitored code goes here
+                        stats.end();
+                        requestAnimationFrame(animate);
+                    }
+                    requestAnimationFrame(animate);
+                    stats.dom.style.right = "0";
+                    stats.dom.style.left = "initial";
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+    };
 
     // Reset spectral profile's progress to 0 instead of cleaning the entire out-dated profile to avoid flashy effect in spectral profiler.
     // Flashy effect: render empty profile and then render the coming profile, repeatedly.
