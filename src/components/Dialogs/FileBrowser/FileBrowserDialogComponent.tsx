@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable, runInAction} from "mobx";
 import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
@@ -10,8 +11,8 @@ import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, FrameStore, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {Zoom} from "models";
 import "./FileBrowserDialogComponent.scss";
-import {Zoom} from "../../../models";
 
 @observer
 export class FileBrowserDialogComponent extends React.Component {
@@ -441,11 +442,7 @@ export class FileBrowserDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-
-        let className = "file-browser-dialog";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("file-browser-dialog", {"bp3-dark": appStore.darkTheme});
 
         const dialogProps: IDialogProps = {
             icon: "folder-open",
