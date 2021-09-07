@@ -633,7 +633,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                         {regionComponents}
                     </Layer>
                     <Layer>
-                        {this.props.cursorFrozen && <CursorLayerComponent frame={frame} width={this.props.width} height={this.props.height} cursorPoint={frame.cursorInfo.posImageSpace}/>}
+                        {this.props.cursorFrozen && <CursorLayerComponent width={this.props.width} height={this.props.height} frame={frame} cursorPoint={frame.cursorInfo.posImageSpace}/>}
                         {/*creatingLine*/}
                     </Layer>
                 </Stage>
@@ -642,14 +642,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 }
 
-class CursorLayerComponent extends React.Component<{frame: FrameStore; cursorPoint: Point2D; width: number; height: number}> {
-    private getCursorCanvasPos = (imageX: number, imageY: number): Point2D => {
-        const frame = this.props.frame;
-        if (frame) {
-            const posCanvasSpace = transformedImageToCanvasPos(imageX, imageY, frame, this.props.width, this.props.height);
+const CursorLayerComponent: React.FC<{width: number; height: number; frame: FrameStore; cursorPoint: Point2D}> = props => {
+    const frame = props.frame;
 
-            const width = this.props.width;
-            const height = this.props.height;
+    const getCursorCanvasPos = (imageX: number, imageY: number): Point2D => {
+        if (frame) {
+            const posCanvasSpace = transformedImageToCanvasPos(imageX, imageY, frame, props.width, props.height);
+
+            const width = props.width;
+            const height = props.height;
 
             if (posCanvasSpace.x < 0 || posCanvasSpace.x > width || posCanvasSpace.y < 0 || posCanvasSpace.y > height) {
                 return null;
@@ -659,33 +660,28 @@ class CursorLayerComponent extends React.Component<{frame: FrameStore; cursorPoi
         return null;
     };
 
-    public render() {
-        const frame = this.props.frame;
-        if (frame) {
-            const cursorPosPixelSpace = this.getCursorCanvasPos(this.props.cursorPoint.x, this.props.cursorPoint.y);
+    if (frame) {
+        const cursorPosPixelSpace = getCursorCanvasPos(props.cursorPoint.x, props.cursorPoint.y);
+        if (cursorPosPixelSpace) {
+            const crosshairLength = 20;
+            const crosshairThicknessWide = 3;
+            const crosshairThicknessNarrow = 1;
+            const crosshairGap = 7;
             const rotation = frame.spatialReference ? (frame.spatialTransform.rotation * 180.0) / Math.PI : 0.0;
-
-            if (cursorPosPixelSpace) {
-                const crosshairLength = 20;
-                const crosshairThicknessWide = 3;
-                const crosshairThicknessNarrow = 1;
-                const crosshairGap = 7;
-                return (
-                    <Group x={Math.floor(cursorPosPixelSpace.x) + 0.5} y={Math.floor(cursorPosPixelSpace.y) + 0.5} rotation={-rotation}>
-                        <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black" />
-                        <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black" />
-                        <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessWide} stroke="black" />
-                        <Line listening={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2]} strokeWidth={crosshairThicknessWide} stroke="black" />
-                        <Rect listening={false} width={crosshairGap - 1} height={crosshairGap - 1} offsetX={crosshairGap / 2 - 0.5} offsetY={crosshairGap / 2 - 0.5} strokeWidth={1} stroke="black" />
-                        <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
-                        <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
-                        <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
-                        <Line listening={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
-                    </Group>
-                );
-            }
+            return (
+                <Group x={Math.floor(cursorPosPixelSpace.x) + 0.5} y={Math.floor(cursorPosPixelSpace.y) + 0.5} rotation={-rotation}>
+                    <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black" />
+                    <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black" />
+                    <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessWide} stroke="black" />
+                    <Line listening={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2]} strokeWidth={crosshairThicknessWide} stroke="black" />
+                    <Rect listening={false} width={crosshairGap - 1} height={crosshairGap - 1} offsetX={crosshairGap / 2 - 0.5} offsetY={crosshairGap / 2 - 0.5} strokeWidth={1} stroke="black" />
+                    <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
+                    <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
+                    <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
+                    <Line listening={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white" />
+                </Group>
+            );
         }
-
-        return null;
     }
+    return null;
 }
