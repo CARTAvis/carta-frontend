@@ -578,9 +578,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 });
         }
 
-        /* TODO: move to CursorLayerComponent
         let creatingLine = null;
-
         if (this.currentCursorPos && (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) && this.creatingRegion.isValid) {
             let firstControlPoint = this.creatingRegion.controlPoints[0];
             let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
@@ -589,8 +587,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 firstControlPoint = transformPoint(frame.spatialTransformAST, firstControlPoint, false);
                 lastControlPoint = transformPoint(frame.spatialTransformAST, lastControlPoint, false);
             }
-            const lineStart = this.getCursorCanvasPos(firstControlPoint.x, firstControlPoint.y);
-            const lineEnd = this.getCursorCanvasPos(lastControlPoint.x, lastControlPoint.y);
+            const lineStart = transformedImageToCanvasPos(firstControlPoint.x, firstControlPoint.y, frame, this.props.width, this.props.height);
+            const lineEnd = transformedImageToCanvasPos(lastControlPoint.x, lastControlPoint.y, frame, this.props.width, this.props.height);
             let points: number[];
             if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE) {
                 points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y, lineEnd.x, lineEnd.y];
@@ -599,10 +597,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
             creatingLine = <Line points={points} dash={[5]} stroke={this.creatingRegion.color} strokeWidth={this.creatingRegion.lineWidth} opacity={0.5} lineJoin={"round"} listening={false} perfectDrawEnabled={false} />;
         }
-        */
 
         let cursor: string;
-
         if (regionSet.mode === RegionMode.CREATING || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
             cursor = "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
@@ -634,7 +630,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     </Layer>
                     <Layer>
                         {this.props.cursorFrozen && <CursorLayerComponent width={this.props.width} height={this.props.height} frame={frame} cursorPoint={frame.cursorInfo.posImageSpace}/>}
-                        {/*creatingLine*/}
+                        {creatingLine}
                     </Layer>
                 </Stage>
             </div>
@@ -644,25 +640,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
 const CursorLayerComponent: React.FC<{width: number; height: number; frame: FrameStore; cursorPoint: Point2D}> = props => {
     const frame = props.frame;
-
-    const getCursorCanvasPos = (imageX: number, imageY: number): Point2D => {
-        if (frame) {
-            const posCanvasSpace = transformedImageToCanvasPos(imageX, imageY, frame, props.width, props.height);
-
-            const width = props.width;
-            const height = props.height;
-
-            if (posCanvasSpace.x < 0 || posCanvasSpace.x > width || posCanvasSpace.y < 0 || posCanvasSpace.y > height) {
-                return null;
-            }
-            return posCanvasSpace;
-        }
-        return null;
-    };
-
     if (frame) {
-        const cursorPosPixelSpace = getCursorCanvasPos(props.cursorPoint.x, props.cursorPoint.y);
-        if (cursorPosPixelSpace) {
+        const cursorPosPixelSpace = transformedImageToCanvasPos(props.cursorPoint.x, props.cursorPoint.y, frame, props.width, props.height);
+        if (cursorPosPixelSpace.x >= 0 && cursorPosPixelSpace.x <= props.width && cursorPosPixelSpace.y >= 0 && cursorPosPixelSpace.y <= props.height) {
             const crosshairLength = 20;
             const crosshairThicknessWide = 3;
             const crosshairThicknessNarrow = 1;
