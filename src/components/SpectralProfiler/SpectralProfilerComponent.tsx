@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import classNames from "classnames";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
@@ -492,14 +493,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
 
-        let className = "spectral-profiler-widget";
-        if (this.widgetStore.isHighlighted) {
-            className += " linked-to-widget-highlighted";
-        }
-
-        if (appStore.darkTheme) {
-            className += " dark-theme";
-        }
+        const className = classNames("spectral-profiler-widget", {"bp3-dark": appStore.darkTheme, "linked-to-widget-highlighted": this.widgetStore.isHighlighted});
 
         return (
             <div className={className}>
