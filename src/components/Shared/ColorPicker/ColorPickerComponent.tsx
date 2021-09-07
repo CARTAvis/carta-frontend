@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import classNames from "classnames";
 import {action} from "mobx";
 import {observer} from "mobx-react";
 import {makeObservable, observable} from "mobx";
@@ -43,11 +44,9 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
     }, ColorPickerComponent.CHANGE_DELAY);
 
     public render() {
-        let popoverClassName = "color-picker-popup";
-        if (this.props.darkTheme) {
-            popoverClassName += " bp3-dark";
-        }
+        let popoverClassName = classNames("color-picker-popup", {"bp3-dark": this.props.darkTheme});
         const buttonColor = tinycolor(this.props.color).toString();
+
         return (
             <Popover2
                 isOpen={this.displayColorPicker}

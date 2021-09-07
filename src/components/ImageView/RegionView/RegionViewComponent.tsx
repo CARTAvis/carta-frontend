@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
@@ -539,13 +540,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     render() {
         const frame = this.props.frame;
         const regionSet = frame.regionSet;
-
-        let className = "region-stage";
-        if (this.props.docked) {
-            className += " docked";
-        }
-
+        const className = classNames("region-stage", {docked: this.props.docked});
         let regionComponents = null;
+
         if (regionSet && regionSet.regions.length) {
             regionComponents = regionSet.regions
                 .filter(r => r.isValid && r.regionId !== 0)
