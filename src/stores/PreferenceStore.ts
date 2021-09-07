@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
-import {ApiService} from "services";
+import {ApiService, TelemetryMode} from "services";
 
 export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
@@ -87,7 +87,12 @@ export enum PreferenceKeys {
     PIXEL_GRID_COLOR = "pixelGridColor",
     IMAGE_PANEL_MODE = "imagePanelMode",
     IMAGE_PANEL_COLUMNS = "imagePanelColumns",
-    IMAGE_PANEL_ROWS = "imagePanelRows"
+    IMAGE_PANEL_ROWS = "imagePanelRows",
+
+    TELEMETRY_UUID = "telemetryUuid",
+    TELEMETRY_MODE = "telemetryMode",
+    TELEMETRY_CONSENT_SHOWN = "telemetryConsentShown",
+    TELEMETRY_LOGGING = "telemetryLogging"
 }
 
 const DEFAULTS = {
@@ -180,6 +185,12 @@ const DEFAULTS = {
     CATALOG: {
         catalogDisplayedColumnSize: 10,
         catalogTableSeparatorPosition: "60%"
+    },
+    TELEMETRY: {
+        telemetryConsentShown: false,
+        telemetryMode: TelemetryMode.Usage,
+        // TODO: set this to false when merging into dev
+        telemetryLogging: true
     }
 };
 
@@ -521,6 +532,23 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
     }
 
+    // getters for telemetry
+    @computed get telemetryConsentShown(): boolean {
+        return this.preferences.get(PreferenceKeys.TELEMETRY_CONSENT_SHOWN) ?? DEFAULTS.TELEMETRY.telemetryConsentShown;
+    }
+
+    @computed get telemetryMode(): TelemetryMode {
+        return this.preferences.get(PreferenceKeys.TELEMETRY_MODE) ?? DEFAULTS.TELEMETRY.telemetryMode;
+    }
+
+    @computed get telemetryLogging(): boolean {
+        return this.preferences.get(PreferenceKeys.TELEMETRY_LOGGING) ?? DEFAULTS.TELEMETRY.telemetryLogging;
+    }
+
+    @computed get telemetryUuid(): string {
+        return this.preferences.get(PreferenceKeys.TELEMETRY_UUID);
+    }
+
     @action setPreference = async (key: PreferenceKeys, value: any) => {
         if (!key) {
             return false;
@@ -668,6 +696,10 @@ export class PreferenceStore {
 
     @action resetCatalogSettings = () => {
         this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
+    };
+
+    @action resetTelemetrySettings = () => {
+        this.clearPreferences([PreferenceKeys.TELEMETRY_CONSENT_SHOWN, PreferenceKeys.TELEMETRY_MODE, PreferenceKeys.TELEMETRY_UUID, PreferenceKeys.TELEMETRY_LOGGING]);
     };
 
     @action fetchPreferences = async () => {

@@ -1,9 +1,10 @@
-import {action, observable, makeObservable, runInAction} from "mobx";
+import {action, makeObservable, observable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
 import {mapToObject} from "utilities";
 import {ApiService} from "./ApiService";
+import {TelemetryAction, TelemetryService} from "./TelemetryService";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -819,6 +820,7 @@ export class BackendService {
         this.serverFeatureFlags = ack.serverFeatureFlags;
         this.grpcPort = ack.grpcPort;
 
+        TelemetryService.Instance.addTelemetryEntry(TelemetryAction.Connection, {serverFeatureFlags: ack.serverFeatureFlags});
         this.onDeferredResponse(eventId, ack);
     }
 
