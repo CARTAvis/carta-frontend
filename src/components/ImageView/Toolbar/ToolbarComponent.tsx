@@ -101,7 +101,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             bottom: overlay.padding.bottom,
             right: overlay.padding.right,
             left: overlay.padding.left,
-            opacity: this.props.visible ? 1 : 0
+            opacity: this.props.visible ? 1 : 0,
+            backgroundColor: 'transparent'
         };
 
         const className = classNames("image-toolbar", {docked: this.props.docked, "bp3-dark": appStore.darkTheme});
