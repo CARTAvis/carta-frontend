@@ -178,15 +178,17 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         }
         const cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
         const showHyperLinke = columnHeader.name?.toLocaleLowerCase().includes("coo_bibcode");
-        const cell = (
-            showHyperLinke ? <a href={`https://ui.adsabs.harvard.edu/abs/${cellContext}`} target="_blank" rel="noopener noreferrer">{cellContext}</a> : cellContext
+        const cell = showHyperLinke ? (
+            <a href={`https://ui.adsabs.harvard.edu/abs/${cellContext}`} target="_blank" rel="noopener noreferrer">
+                {cellContext}
+            </a>
+        ) : (
+            cellContext
         );
         const selected = dataIndex && dataIndex.includes(index) && !this.props.showSelectedData;
         return (
             <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={selected ? "danger" : "none"} loading={this.isLoading(rowIndex)} interactive={false}>
-                <React.Fragment>
-                    {cell}
-                </React.Fragment>
+                <React.Fragment>{cell}</React.Fragment>
             </Cell>
         );
     };

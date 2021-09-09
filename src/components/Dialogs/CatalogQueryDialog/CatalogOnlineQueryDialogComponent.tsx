@@ -16,7 +16,7 @@ import {ApiService} from "services";
 export class CatalogQueryDialogComponent extends React.Component {
     private static readonly DefaultWidth = 550;
     private static readonly DefaultHeight = 500;
-    private static readonly DBMap = new Map<CatalogDatabase, {type: CatalogSystemType[], prefix: string}>([
+    private static readonly DBMap = new Map<CatalogDatabase, {type: CatalogSystemType[]; prefix: string}>([
         [CatalogDatabase.SIMBAD, {type: [CatalogSystemType.ICRS], prefix: "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query="}]
     ]);
     private cancelTokenSource: CancelTokenSource;
@@ -78,7 +78,13 @@ export class CatalogQueryDialogComponent extends React.Component {
 
         if (!appStore || !appStore.activeFrame) {
             return (
-                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.ONLINE_CATALOG_QUERY} defaultWidth={CatalogQueryDialogComponent.DefaultWidth} defaultHeight={CatalogQueryDialogComponent.DefaultHeight} enableResizing={true}>
+                <DraggableDialogComponent
+                    dialogProps={dialogProps}
+                    helpType={HelpType.ONLINE_CATALOG_QUERY}
+                    defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
+                    defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
+                    enableResizing={true}
+                >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
             );
@@ -87,15 +93,8 @@ export class CatalogQueryDialogComponent extends React.Component {
         const disable = configStore.isQuerying || configStore.isObjectQuerying;
         const objectButton = (
             <Tooltip2 content="Reset center coordinates by object" disabled={disable}>
-                <Button
-                    disabled={disable || configStore.disableObjectSearch}
-                    icon={"bring-data"}
-                    intent={Intent.NONE}
-                    minimal={true}
-                    onClick={this.handleObjectUpdate}
-                />
+                <Button disabled={disable || configStore.disableObjectSearch} icon={"bring-data"} intent={Intent.NONE} minimal={true} onClick={this.handleObjectUpdate} />
             </Tooltip2>
-
         );
         const configBoard = (
             <div className="online-catalog-config">
@@ -114,16 +113,10 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </Select>
                 </FormGroup>
                 <FormGroup inline={false} label="Object" disabled={disable}>
-                    <InputGroup
-                        asyncControl={false}
-                        disabled={disable}
-                        rightElement={objectButton}
-                        onChange={(event) => this.updateObjectName(event.target.value)}
-                        value={configStore.objectName}
-                    />
+                    <InputGroup asyncControl={false} disabled={disable} rightElement={objectButton} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
                 </FormGroup>
                 <FormGroup inline={false} label="Search Radius" disabled={disable}>
-                    <Tooltip2 content= {`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable}>
+                    <Tooltip2 content={`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable}>
                         <SafeNumericInput
                             disabled={disable}
                             min={0}
@@ -147,7 +140,9 @@ export class CatalogQueryDialogComponent extends React.Component {
                         <Button text={configStore.radiusUnits} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
                     <Tooltip2 content="Reset Center Coordinates and Search Radius according current image viewer" disabled={disable}>
-                        <Button disabled={disable} onClick={() => configStore.resetSearchRadius()}>Set to Image</Button>
+                        <Button disabled={disable} onClick={() => configStore.resetSearchRadius()}>
+                            Set to Image
+                        </Button>
                     </Tooltip2>
                 </FormGroup>
                 <FormGroup inline={false} label="Center Coordinates" disabled={disable}>
@@ -168,14 +163,14 @@ export class CatalogQueryDialogComponent extends React.Component {
                         placeholder="Ra"
                         disabled={disable}
                         value={configStore.centerCoord.x}
-                        onValueChange={(valueAsNumber: number ,valueAsString: string) => configStore.setCenterCoord(valueAsString, "X")}
+                        onValueChange={(valueAsNumber: number, valueAsString: string) => configStore.setCenterCoord(valueAsString, "X")}
                     />
                     <SafeNumericInput
                         buttonPosition={"none"}
                         placeholder="Dec"
                         disabled={disable}
                         value={configStore.centerCoord.y}
-                        onValueChange={(valueAsNumber: number ,valueAsString: string) => configStore.setCenterCoord(valueAsString, "Y")}
+                        onValueChange={(valueAsNumber: number, valueAsString: string) => configStore.setCenterCoord(valueAsString, "Y")}
                     />
                     <Tooltip2 content="Reset to current view center" disabled={disable}>
                         <Button icon="locate" disabled={disable} onClick={() => configStore.setFrameCenter()} />
@@ -184,6 +179,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 <ClearableNumericInputComponent
                     label="Max Number of Objects"
                     min={CatalogOnlineQueryConfigStore.MIN_OBJECTS}
+                    max={CatalogOnlineQueryConfigStore.MAX_OBJECTS}
                     integerOnly={true}
                     value={configStore.maxObject}
                     onValueChanged={val => configStore.setMaxObjects(val)}
@@ -195,45 +191,29 @@ export class CatalogQueryDialogComponent extends React.Component {
             </div>
         );
 
-        const tableInfo = (
-            <pre>{this.resultInfo}</pre>
-        );
+        const tableInfo = <pre>{this.resultInfo}</pre>;
 
         return (
-            <DraggableDialogComponent 
-                dialogProps={dialogProps} 
-                helpType={HelpType.ONLINE_CATALOG_QUERY} 
-                minWidth={CatalogQueryDialogComponent.DefaultWidth} 
-                minHeight={CatalogQueryDialogComponent.DefaultHeight} 
-                defaultWidth={CatalogQueryDialogComponent.DefaultWidth} 
-                defaultHeight={CatalogQueryDialogComponent.DefaultHeight} 
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.ONLINE_CATALOG_QUERY}
+                minWidth={CatalogQueryDialogComponent.DefaultWidth}
+                minHeight={CatalogQueryDialogComponent.DefaultHeight}
+                defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
+                defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
                 enableResizing={true}
             >
-                <div className="bp3-dialog-body">
-                    {configBoard}
-                </div>
+                <div className="bp3-dialog-body">{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
                 </Overlay>
                 <div className="bp3-dialog-footer">
-                    <div className={"result-info"}>
-                        {tableInfo}
-                    </div>
+                    <div className={"result-info"}>{tableInfo}</div>
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton
-                            intent={Intent.SUCCESS}
-                            disabled={disable}
-                            onClick={() => this.query()}
-                            text={"Query"}
-                        />
-                        <AnchorButton
-                            intent={Intent.WARNING}
-                            disabled={!configStore.isQuerying}
-                            onClick={() => this.cancelQuery()}
-                            text={"Cancel"}
-                        />
+                        <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
+                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => this.cancelQuery()} text={"Cancel"} />
                     </div>
                 </div>
             </DraggableDialogComponent>
@@ -242,54 +222,54 @@ export class CatalogQueryDialogComponent extends React.Component {
 
     private query = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system 
+        // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
         const baseUrl = CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).prefix;
         const query = `SELECT Top ${configStore.maxObject} * FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${configStore.centerCoord.x},${configStore.centerCoord.y},${configStore.radiusInDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL`;
         configStore.setQueryStatus(true);
         AppStore.Instance.appendOnlineCatalog(baseUrl, query, this.cancelTokenSource)
-        .then(dataSize => {
-            configStore.setQueryStatus(false);
-            this.setResultSize(dataSize);
-        })
-        .catch(error => {
-            configStore.setQueryStatus(false);
-            this.setResultSize(0);
-            if(axios.isCancel(error)){
-                this.cancelTokenSource = axios.CancelToken.source();
-            }
-        });
-    }
+            .then(dataSize => {
+                configStore.setQueryStatus(false);
+                this.setResultSize(dataSize);
+            })
+            .catch(error => {
+                configStore.setQueryStatus(false);
+                this.setResultSize(0);
+                if (axios.isCancel(error)) {
+                    this.cancelTokenSource = axios.CancelToken.source();
+                }
+            });
+    };
 
     private cancelQuery = () => {
         this.cancelTokenSource.cancel("Query canceled");
-    }
+    };
 
     private handleObjectUpdate = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const baseUrl = CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).prefix;
         const query = `SELECT basic.* FROM ident JOIN basic ON ident.oidref = basic.oid WHERE id = '${configStore.objectName}'`;
         configStore.setObjectQueryStatus(true);
-        
+
         ApiService.Instance.getSimbad(baseUrl, query, this.cancelTokenSource)
-        .then(response => {
-            configStore.setObjectQueryStatus(false);
-            const size = response.data?.data?.length;
-            this.setObjectSize(size);
-            if (response.status === 200 && size) {
-                const i = this.getDataIndex("ra", response.data?.metadata);
-                const j = this.getDataIndex("dec", response.data?.metadata);
-                if (i && j && size) {
-                    configStore.setCenterCoord(response.data?.data[0][i], "X");
-                    configStore.setCenterCoord(response.data?.data[0][j], "Y");
+            .then(response => {
+                configStore.setObjectQueryStatus(false);
+                const size = response.data?.data?.length;
+                this.setObjectSize(size);
+                if (response.status === 200 && size) {
+                    const i = this.getDataIndex("ra", response.data?.metadata);
+                    const j = this.getDataIndex("dec", response.data?.metadata);
+                    if (i && j && size) {
+                        configStore.setCenterCoord(response.data?.data[0][i], "X");
+                        configStore.setCenterCoord(response.data?.data[0][j], "Y");
+                    }
                 }
-            }
-        })
-        .catch(error => {
-            this.setObjectSize(0);
-            configStore.setObjectQueryStatus(false);
-            console.log(`Object search error ${error}`);
-        });
-    }
+            })
+            .catch(error => {
+                this.setObjectSize(0);
+                configStore.setObjectQueryStatus(false);
+                console.log(`Object search error ${error}`);
+            });
+    };
 
     private getDataIndex = (column: string, metaData: []): number | undefined => {
         for (let index = 0; index < metaData.length; index++) {
@@ -299,7 +279,7 @@ export class CatalogQueryDialogComponent extends React.Component {
             }
         }
         return undefined;
-    }
+    };
 
     private updateObjectName(val: string) {
         this.initTextInfo();

@@ -858,54 +858,54 @@ export class AppStore {
 
             const frame = this.activeFrame;
             const fileId = this.catalogNextFileId;
-            ApiService.Instance.getSimbad(apiAddress, query, cancelTokenSource).then((response) => {
-                if (frame && response?.status === 200 && response?.data?.data?.length) {
-                    runInAction(() => {
-                        const configStore = CatalogOnlineQueryConfigStore.Instance;
-                        const headers = APIProcessing.ProcessSimbadMetaData(response.data?.metadata);
-                        const columnData = APIProcessing.ProcessSimbadData(response.data?.data, headers);
-                        const coosy: CARTA.ICoosys = {system: configStore.coordsType};
-                        const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${configStore.centerCoord.x}_${configStore.centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
-                        const catalogFileInfo: CARTA.ICatalogFileInfo = {
-                            name: fileName,
-                            type: CARTA.CatalogFileType.VOTable,
-                            description: "Online Catalog",
-                            coosys: [coosy]
-                        }
-                        let catalogInfo: CatalogInfo = {
-                            fileId, 
-                            fileInfo: catalogFileInfo, 
-                            dataSize: response.data?.data?.length,
-                            directory: ""
-                        };
-                        let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
-                        if (catalogWidgetId) {
-                            this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                            this.catalogStore.addCatalog(fileId);
-                            this.fileBrowserStore.hideFileBrowser();
-                            const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, CatalogType.SIMBAD);
-                            this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                            this.dialogStore.hideCatalogQueryDialog();
-                            resolve(catalogInfo.dataSize);
-                        } else {
-                            reject();
-                        }
-                        
-                    });
-                } else {
-                    reject();
-                }
-            })
-            .catch((error) => {
-                if (axios.isCancel(error)) {
-                    AppToaster.show(WarningToast(error?.message));
-                } else if (error?.message) {
-                    AppToaster.show(ErrorToast(error.message));
-                } else {
-                    console.log("Append Catalog Error: " + error);
-                }
-                reject(error);
-            });
+            ApiService.Instance.getSimbad(apiAddress, query, cancelTokenSource)
+                .then(response => {
+                    if (frame && response?.status === 200 && response?.data?.data?.length) {
+                        runInAction(() => {
+                            const configStore = CatalogOnlineQueryConfigStore.Instance;
+                            const headers = APIProcessing.ProcessSimbadMetaData(response.data?.metadata);
+                            const columnData = APIProcessing.ProcessSimbadData(response.data?.data, headers);
+                            const coosy: CARTA.ICoosys = {system: configStore.coordsType};
+                            const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${configStore.centerCoord.x}_${configStore.centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
+                            const catalogFileInfo: CARTA.ICatalogFileInfo = {
+                                name: fileName,
+                                type: CARTA.CatalogFileType.VOTable,
+                                description: "Online Catalog",
+                                coosys: [coosy]
+                            };
+                            let catalogInfo: CatalogInfo = {
+                                fileId,
+                                fileInfo: catalogFileInfo,
+                                dataSize: response.data?.data?.length,
+                                directory: ""
+                            };
+                            let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
+                            if (catalogWidgetId) {
+                                this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
+                                this.catalogStore.addCatalog(fileId);
+                                this.fileBrowserStore.hideFileBrowser();
+                                const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, CatalogType.SIMBAD);
+                                this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                                this.dialogStore.hideCatalogQueryDialog();
+                                resolve(catalogInfo.dataSize);
+                            } else {
+                                reject();
+                            }
+                        });
+                    } else {
+                        reject();
+                    }
+                })
+                .catch(error => {
+                    if (axios.isCancel(error)) {
+                        AppToaster.show(WarningToast(error?.message));
+                    } else if (error?.message) {
+                        AppToaster.show(ErrorToast(error.message));
+                    } else {
+                        console.log("Append Catalog Error: " + error);
+                    }
+                    reject(error);
+                });
         });
     };
 
@@ -937,7 +937,7 @@ export class AppStore {
             catalogStore.catalogProfiles.set(key, fileId);
         }
         return catalogWidgetId;
-    }
+    };
 
     @action removeCatalog(fileId: number, catalogWidgetId: string, catalogComponentId?: string) {
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {

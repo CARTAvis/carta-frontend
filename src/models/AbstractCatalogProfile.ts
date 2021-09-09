@@ -45,7 +45,6 @@ export enum CatalogOverlay {
 }
 
 export abstract class AbstractCatalogProfileStore {
-
     private static readonly NEGATIVE_INFINITY = -1.7976931348623157e308;
     private static readonly POSITIVE_INFINITY = 1.7976931348623157e308;
 
@@ -116,7 +115,7 @@ export abstract class AbstractCatalogProfileStore {
             const filteredData = new Map<number, ProcessedColumnData>();
             this._catalogData.forEach((columnData, i) => {
                 filteredData.set(i, filterProcessedColumnData(columnData, this.filterIndexMap));
-            })
+            });
             return filteredData;
         }
         return this._catalogData;
@@ -185,7 +184,7 @@ export abstract class AbstractCatalogProfileStore {
                 const dataType = this.catalogHeader[value.dataIndex].dataType;
                 filter.columnName = key;
                 if (dataType === CARTA.ColumnType.String) {
-                    if(value.filter !== "") {
+                    if (value.filter !== "") {
                         filter.subString = value.filter;
                         userFilters.push(filter);
                     }
@@ -310,7 +309,6 @@ export abstract class AbstractCatalogProfileStore {
         this.catalogControlHeader.get(columnName).columnWidth = width;
     }
 
-
     @action setHeaderDisplay(val: boolean, columnName: string) {
         this.catalogControlHeader.get(columnName).display = val;
     }
@@ -417,7 +415,7 @@ export abstract class AbstractCatalogProfileStore {
                 }
             }
         }
-    }
+    };
 
     @action resetUserFilters() {
         const controlHeaders = this.catalogControlHeader;
@@ -430,5 +428,4 @@ export abstract class AbstractCatalogProfileStore {
     private isInfinite(value: number) {
         return !isFinite(value) || value === AbstractCatalogProfileStore.NEGATIVE_INFINITY || value === AbstractCatalogProfileStore.POSITIVE_INFINITY;
     }
-
 }

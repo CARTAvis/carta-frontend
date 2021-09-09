@@ -510,8 +510,8 @@ export class ApiService {
         if (cancelTokenSource) {
             return axios.get(`${apiAddress}${query}`, {
                 cancelToken: cancelTokenSource.token
-            })   
+            });
         }
         return axios.get(`${apiAddress}${query}`);
-    }
+    };
 }

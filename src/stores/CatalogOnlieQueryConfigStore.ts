@@ -17,16 +17,17 @@ export enum RadiusUnits {
 export class CatalogOnlineQueryConfigStore {
     private static staticInstance: CatalogOnlineQueryConfigStore;
     public static readonly MIN_OBJECTS = 1;
-    public static readonly MAX_OBJECTS = 1000;
+    public static readonly MAX_OBJECTS = 50000;
+    public static readonly OBJECT_SIZE = 1000;
 
     @observable isQuerying: boolean;
     @observable catalogDB: CatalogDatabase;
     @observable searchRadius: number;
     @observable coordsType: CatalogSystemType;
-    @observable coordsFormat: NumberFormatType
-    @observable centerCoord: {x: string, y: string};
+    @observable coordsFormat: NumberFormatType;
+    @observable centerCoord: {x: string; y: string};
     @observable maxObject: number;
-    @observable enablePointSelection: boolean
+    @observable enablePointSelection: boolean;
     @observable radiusUnits: RadiusUnits;
     @observable objectName: string;
     @observable isObjectQuerying: boolean;
@@ -38,14 +39,14 @@ export class CatalogOnlineQueryConfigStore {
         this.searchRadius = 1;
         this.coordsType = CatalogSystemType.ICRS;
         this.centerCoord = {x: undefined, y: undefined};
-        this.maxObject = 1000;
+        this.maxObject = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
         this.enablePointSelection = false;
         this.radiusUnits = RadiusUnits.DEGREES;
         this.coordsFormat = NumberFormatType.Degrees;
         this.objectName = "";
         this.isObjectQuerying = false;
-        
-        reaction(   
+
+        reaction(
             () => AppStore.Instance.activeFrame,
             () => {
                 this.resetSearchRadius();
@@ -60,19 +61,19 @@ export class CatalogOnlineQueryConfigStore {
                     this.updateCenterCoord(frame.cursorInfo.posImageSpace);
                 }
             }
-        )
+        );
 
         reaction(
-            () =>  OverlayStore.Instance.global.explicitSystem,
+            () => OverlayStore.Instance.global.explicitSystem,
             syetem => {
                 const frame = AppStore.Instance.activeFrame;
                 if (frame?.cursorInfo?.posImageSpace) {
                     this.updateCenterCoord(frame.cursorInfo.posImageSpace);
                 } else if (frame?.center) {
                     this.updateCenterCoord(frame.center);
-                } 
+                }
             }
-        )
+        );
     }
 
     static get Instance() {
@@ -108,9 +109,9 @@ export class CatalogOnlineQueryConfigStore {
     @action setCenterCoord(val: string, type: "X" | "Y") {
         const coords = this.centerCoord;
         if (type === "X") {
-            coords.x = val;   
+            coords.x = val;
         } else {
-            coords.y = val; 
+            coords.y = val;
         }
         this.centerCoord = coords;
     }
@@ -126,7 +127,7 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     @action resetMaxObjects() {
-        this.maxObject = CatalogOnlineQueryConfigStore.MAX_OBJECTS;
+        this.maxObject = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
     }
 
     @action setPointSelection() {
@@ -153,10 +154,10 @@ export class CatalogOnlineQueryConfigStore {
         let radiusIndeg = this.searchRadius;
         switch (this.radiusUnits) {
             case RadiusUnits.ARCMINUTES:
-                radiusIndeg = radiusIndeg * (1/60);
+                radiusIndeg = radiusIndeg * (1 / 60);
                 break;
             case RadiusUnits.ARCSECONDS:
-                radiusIndeg = radiusIndeg * (1/3600);
+                radiusIndeg = radiusIndeg * (1 / 3600);
                 break;
             default:
                 break;
@@ -188,7 +189,7 @@ export class CatalogOnlineQueryConfigStore {
             const min = this.convertToDeg({x: requiredFrameView.xMin, y: requiredFrameView.yMin});
             const x = Number(max.x) - Number(min.x);
             const y = Number(max.y) - Number(min.y);
-            const diagonal = Math.sqrt((x * x) + (y * y));
+            const diagonal = Math.sqrt(x * x + y * y);
             if (isNaN(diagonal)) {
                 return 90;
             }
@@ -196,7 +197,7 @@ export class CatalogOnlineQueryConfigStore {
         }
         return 90;
     }
-    
+
     @action resetSearchRadius() {
         this.setSearchRadius(this.searchRadiusInDegree);
         this.setRadiusUnits(RadiusUnits.DEGREES);
@@ -206,15 +207,15 @@ export class CatalogOnlineQueryConfigStore {
     convertToDeg(pixelCoords: Point2D) {
         const frame = AppStore.Instance.activeFrame;
         const overlay = OverlayStore.Instance;
-        let p: {x: string, y: string} = {x: undefined, y: undefined};
+        let p: {x: string; y: string} = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
             const format = `${NumberFormatType.Degrees}.${precision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
             AST.set(wcsCopy, `System=${SystemType.ICRS}`);
-            astString.add("Format(1)",format);
-            astString.add("Format(2)",format);
+            astString.add("Format(1)", format);
+            astString.add("Format(2)", format);
             astString.add("System", SystemType.ICRS);
             const pointWCS = transformPoint(wcsCopy, pixelCoords);
             const normVals = AST.normalizeCoordinates(wcsCopy, pointWCS.x, pointWCS.y);

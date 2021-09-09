@@ -10,7 +10,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;
     @observable catalogControlHeader: Map<string, ControlHeader>;
     @observable numVisibleRows: number;
-    
+
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, catalogType: CatalogType) {
         super(catalogType, catalogData);
         makeObservable(this);
@@ -99,7 +99,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
                         if (!aString) {
                             return direction * -1;
                         }
-                    
+
                         if (!bString) {
                             return direction * 1;
                         }
@@ -145,12 +145,12 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
                     case CARTA.ColumnType.String:
                         const columnDataString = catalogColumn.data as string[];
                         if (filterConfig.subString !== "") {
-                            this.filterIndexMap = this.filterIndexMap.filter((i) => {
-                                return columnDataString[i]?.includes(filterConfig.subString); 
-                            });   
+                            this.filterIndexMap = this.filterIndexMap.filter(i => {
+                                return columnDataString[i]?.includes(filterConfig.subString);
+                            });
                         }
                         break;
-                
+
                     default:
                         const columnDataNumber = catalogColumn.data as [];
                         this.filterIndexMap = this.filterColumnData(columnDataNumber, filterConfig);
@@ -167,41 +167,41 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     @action filterColumnData = (catalogColumn: [], filterConfig: CARTA.FilterConfig): number[] => {
         switch (filterConfig.comparisonOperator) {
             case CARTA.ComparisonOperator.Equal:
-                return this.filterIndexMap.filter((i) => {
-                    return catalogColumn[i] === filterConfig.value; 
+                return this.filterIndexMap.filter(i => {
+                    return catalogColumn[i] === filterConfig.value;
                 });
             case CARTA.ComparisonOperator.NotEqual:
-                return this.filterIndexMap.filter((i) => {
-                    return catalogColumn[i] !== filterConfig.value; 
+                return this.filterIndexMap.filter(i => {
+                    return catalogColumn[i] !== filterConfig.value;
                 });
             case CARTA.ComparisonOperator.Lesser:
-                return this.filterIndexMap.filter((i) => {
-                    return catalogColumn[i] < filterConfig.value; 
+                return this.filterIndexMap.filter(i => {
+                    return catalogColumn[i] < filterConfig.value;
                 });
             case CARTA.ComparisonOperator.LessorOrEqual:
-                return this.filterIndexMap.filter((i) => {
-                    return catalogColumn[i] <= filterConfig.value; 
+                return this.filterIndexMap.filter(i => {
+                    return catalogColumn[i] <= filterConfig.value;
                 });
             case CARTA.ComparisonOperator.Greater:
-                return this.filterIndexMap.filter((i) => {
-                    return catalogColumn[i] > filterConfig.value; 
+                return this.filterIndexMap.filter(i => {
+                    return catalogColumn[i] > filterConfig.value;
                 });
             case CARTA.ComparisonOperator.GreaterOrEqual:
-                return this.filterIndexMap.filter((i) => {
-                    return catalogColumn[i] >= filterConfig.value; 
+                return this.filterIndexMap.filter(i => {
+                    return catalogColumn[i] >= filterConfig.value;
                 });
             case CARTA.ComparisonOperator.RangeOpen:
-                return this.filterIndexMap.filter((i) => {
-                    return catalogColumn[i] > filterConfig.value && catalogColumn[i] < filterConfig.secondaryValue; 
+                return this.filterIndexMap.filter(i => {
+                    return catalogColumn[i] > filterConfig.value && catalogColumn[i] < filterConfig.secondaryValue;
                 });
             case CARTA.ComparisonOperator.RangeClosed:
-                return this.filterIndexMap.filter((i) => {
-                    return catalogColumn[i] >= filterConfig.value && catalogColumn[i] <= filterConfig.secondaryValue; 
+                return this.filterIndexMap.filter(i => {
+                    return catalogColumn[i] >= filterConfig.value && catalogColumn[i] <= filterConfig.secondaryValue;
                 });
             default:
                 return [];
         }
-    }
+    };
 
     @action resetCatalogFilterRequest = () => {
         this.numVisibleRows = this.catalogInfo.dataSize;
@@ -217,6 +217,6 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     }
 
     updateCatalogData(catalogFilter: CARTA.CatalogFilterResponse, catalogData: Map<number, ProcessedColumnData>) {
-        console.log(catalogFilter, catalogData)
+        console.log(catalogFilter, catalogData);
     }
 }

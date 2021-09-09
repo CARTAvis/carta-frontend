@@ -116,7 +116,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             numVisibleRows = profileStore.numVisibleRows;
             if (profileStore.regionSelected && catalogWidgetStore.showSelectedData) {
                 if (profileStore.isFileBasedCatalog) {
-                    dataset = profileStore.selectedData;   
+                    dataset = profileStore.selectedData;
                 }
                 numVisibleRows = profileStore.regionSelected;
             }
@@ -421,7 +421,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => {
         const profileStore = this.profileStore;
         const appStore = AppStore.Instance;
-        
+
         if (profileStore && appStore) {
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
@@ -605,7 +605,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
             }
         }
-    }
+    };
 
     public render() {
         const catalogWidgetStore = this.widgetStore;
@@ -645,7 +645,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (!profileStore.isFileBasedCatalog) {
             const store = profileStore as CatalogOnlineQueryProfileStore;
             dataTableProps.sortedIndexMap = store.sortedIndexMap;
-            const selected = profileStore.selectedPointIndices.slice().sort((a, b) => {return a - b;});
+            const selected = profileStore.selectedPointIndices.slice().sort((a, b) => {
+                return a - b;
+            });
             dataTableProps.sortedIndices = profileStore.getSortedIndices(selected);
         }
 
