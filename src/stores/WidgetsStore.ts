@@ -841,7 +841,7 @@ export class WidgetsStore {
         this.updateImagePanelPageButtons();
     };
 
-    @action getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
+    getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
         switch (imagePanelMode) {
             case ImagePanelMode.Dynamic:
                 return "to fixed grid";
@@ -866,7 +866,7 @@ export class WidgetsStore {
         }
     };
 
-    @action updateImagePanelPageButtons = () => {
+    updateImagePanelPageButtons = () => {
         const appStore = AppStore.Instance;
         $(".lm_goldenlayout")
             ?.find("li.lm-image-panel-next")
