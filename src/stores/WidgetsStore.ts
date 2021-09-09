@@ -674,13 +674,14 @@ export class WidgetsStore {
 
                     // add image panel control buttons when tab is image-view
                     if (component === "image-view") {
-                        const nextPageButton = $(`<li class="lm-image-panel-next" title="next page"><span class="bp3-icon-standard bp3-icon-step-forward" style/></li>`);
+                        const imagePanelMode = PreferenceStore.Instance.imagePanelMode;
+                        const nextPageButton = $(`<li class="lm-image-panel-next" title="next ${imagePanelMode === ImagePanelMode.None ? "image" : "page"}"><span class="bp3-icon-standard bp3-icon-step-forward" style/></li>`);
                         nextPageButton.on("click", this.onNextPageClick);
                         stack.header.controlsContainer.prepend(nextPageButton);
-                        const imagePanelButton = $(`<li class="lm-image-panel" title="${this.getImagePanelButtonTooltip(PreferenceStore.Instance.imagePanelMode)}"><span class="bp3-icon-standard bp3-icon-grid-view"/></li>`);
+                        const imagePanelButton = $(`<li class="lm-image-panel" title="${this.getImagePanelButtonTooltip(imagePanelMode)}"><span class="bp3-icon-standard ${this.getImagePanelButtonIcon(imagePanelMode)}"/></li>`);
                         imagePanelButton.on("click", this.onImagePanelButtonClick);
                         stack.header.controlsContainer.prepend(imagePanelButton);
-                        const previousPageButton = $(`<li class="lm-image-panel-previous" title="previous page"><span class="bp3-icon-standard bp3-icon-step-backward" style/></li>`);
+                        const previousPageButton = $(`<li class="lm-image-panel-previous" title="previous ${imagePanelMode === ImagePanelMode.None ? "image" : "page"}"><span class="bp3-icon-standard bp3-icon-step-backward" style/></li>`);
                         previousPageButton.on("click", this.onPreviousPageClick);
                         stack.header.controlsContainer.prepend(previousPageButton);
                     }
@@ -837,11 +838,15 @@ export class WidgetsStore {
 
     @action setImagePanelMode = (imagePanelMode: ImagePanelMode) => {
         PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, imagePanelMode);
-        $(".lm_goldenlayout")?.find("li.lm-image-panel")?.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
+        const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel");
+        if (imagePanelButton) {
+            imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
+            imagePanelButton.find(".bp3-icon-standard")?.attr("class", `bp3-icon-standard ${this.getImagePanelButtonIcon(imagePanelMode)}`);
+        }
         this.updateImagePanelPageButtons();
     };
 
-    getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
+    private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
         switch (imagePanelMode) {
             case ImagePanelMode.Dynamic:
                 return "to fixed grid";
@@ -852,28 +857,47 @@ export class WidgetsStore {
         }
     };
 
+    private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {
+        switch (imagePanelMode) {
+            case ImagePanelMode.Dynamic:
+                return "bp3-icon-grid-view";
+            case ImagePanelMode.Fixed:
+                return "bp3-icon-square";
+            default:
+                return "bp3-icon-new-grid-item";
+        }
+    };
+
     @action onNextPageClick = () => {
         const appStore = AppStore.Instance;
-        if (appStore.frames?.length > (appStore.currentImagePage + 1) * appStore.numImageColumns * appStore.numImageRows) {
-            appStore.setActiveFrameByIndex((appStore.currentImagePage + 1) * appStore.numImageColumns * appStore.numImageRows);
+        const firstIndexInNextPage = (appStore.currentImagePage + 1) * appStore.imagesPerPage;
+        if (appStore.frames?.length > firstIndexInNextPage) {
+            appStore.setActiveFrameByIndex(firstIndexInNextPage);
         }
     };
 
     @action onPreviousPageClick = () => {
         const appStore = AppStore.Instance;
         if (appStore.currentImagePage > 0) {
-            appStore.setActiveFrameByIndex((appStore.currentImagePage - 1) * appStore.numImageColumns * appStore.numImageRows);
+            const firstIndexInPreviousPage = (appStore.currentImagePage - 1) * appStore.imagesPerPage;
+            appStore.setActiveFrameByIndex(firstIndexInPreviousPage);
         }
     };
 
     updateImagePanelPageButtons = () => {
         const appStore = AppStore.Instance;
-        $(".lm_goldenlayout")
-            ?.find("li.lm-image-panel-next")
-            ?.attr("style", appStore.frames?.length > (appStore.currentImagePage + 1) * appStore.numImageColumns * appStore.numImageRows ? "" : "cursor: not-allowed; opacity: 0.2");
-        $(".lm_goldenlayout")
-            ?.find("li.lm-image-panel-previous")
-            ?.attr("style", appStore.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
+        const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next");
+        if (nextPageButton) {
+            const firstIndexInNextPage = (appStore.currentImagePage + 1) * appStore.imagesPerPage;
+            nextPageButton.attr("style", appStore.frames?.length > firstIndexInNextPage ? "" : "cursor: not-allowed; opacity: 0.2");
+            nextPageButton.attr("title", appStore.preferenceStore.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
+        }
+
+        const previousPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-previous");
+        if (previousPageButton) {
+            previousPageButton.attr("style", appStore.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
+            previousPageButton.attr("title", appStore.preferenceStore.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
+        }
     };
 
     @action handleItemCreation = (item: GoldenLayout.ContentItem) => {

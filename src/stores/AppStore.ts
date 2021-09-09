@@ -2037,8 +2037,7 @@ export class AppStore {
             return 0;
         }
 
-        const imagesPerPage = this.numImageColumns * this.numImageRows;
-        return Math.ceil(this.frames.length / imagesPerPage);
+        return Math.ceil(this.frames.length / this.imagesPerPage);
     }
 
     @computed get currentImagePage() {
@@ -2046,9 +2045,8 @@ export class AppStore {
             return 0;
         }
 
-        const imagesPerPage = this.numImageColumns * this.numImageRows;
         const index = this.frames.indexOf(this.activeFrame);
-        return Math.floor(index / imagesPerPage);
+        return Math.floor(index / this.imagesPerPage);
     }
 
     @computed get visibleFrames(): FrameStore[] {
@@ -2057,9 +2055,8 @@ export class AppStore {
         }
 
         const pageIndex = clamp(this.currentImagePage, 0, this.numImagePages);
-        const imagesPerPage = this.numImageColumns * this.numImageRows;
-        const firstFrameIndex = pageIndex * imagesPerPage;
-        const indexUpperBound = Math.min(firstFrameIndex + imagesPerPage, this.frames.length);
+        const firstFrameIndex = pageIndex * this.imagesPerPage;
+        const indexUpperBound = Math.min(firstFrameIndex + this.imagesPerPage, this.frames.length);
         const pageFrames = [];
         for (let i = firstFrameIndex; i < indexUpperBound; i++) {
             pageFrames.push(this.frames[i]);
@@ -2089,6 +2086,10 @@ export class AppStore {
                 const numImages = this.frames?.length ?? 0;
                 return clamp(Math.ceil(numImages / this.preferenceStore.imagePanelColumns), 1, this.preferenceStore.imagePanelRows);
         }
+    }
+
+    @computed get imagesPerPage() {
+        return this.numImageColumns * this.numImageRows;
     }
 
     exportImage = (): boolean => {
