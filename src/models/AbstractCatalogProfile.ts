@@ -279,7 +279,7 @@ export abstract class AbstractCatalogProfileStore {
                     hasfilter = true;
                 } else {
                     const {operator, values} = getComparisonOperatorAndValue(value.filter);
-                    if (operator !== -1 && values.length) {
+                    if (operator >= 0 && values.length) {
                         hasfilter = true;
                     }
                 }

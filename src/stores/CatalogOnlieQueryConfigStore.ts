@@ -62,18 +62,6 @@ export class CatalogOnlineQueryConfigStore {
                 }
             }
         );
-
-        reaction(
-            () => OverlayStore.Instance.global.explicitSystem,
-            syetem => {
-                const frame = AppStore.Instance.activeFrame;
-                if (frame?.cursorInfo?.posImageSpace) {
-                    this.updateCenterCoord(frame.cursorInfo.posImageSpace);
-                } else if (frame?.center) {
-                    this.updateCenterCoord(frame.center);
-                }
-            }
-        );
     }
 
     static get Instance() {
