@@ -885,6 +885,7 @@ export class AppStore {
                             this.fileBrowserStore.hideFileBrowser();
                             const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, CatalogType.SIMBAD);
                             this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                            this.dialogStore.hideCatalogQueryDialog();
                             resolve(catalogInfo.dataSize);
                         } else {
                             reject();
