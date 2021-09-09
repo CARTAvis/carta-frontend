@@ -4,7 +4,7 @@ import {Regions, IRegion} from "@blueprintjs/table";
 import {ProcessedColumnData, TypedArray} from "models";
 import {AppStore, CatalogStore, ControlHeader, CatalogUpdateMode} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
-import {ComparisonOperator, filterProcessedColumnData, getComparisonOperatorAndValue, minMaxArray, transformPoint} from "utilities";
+import {filterProcessedColumnData, getComparisonOperatorAndValue, minMaxArray, transformPoint} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
@@ -190,7 +190,7 @@ export abstract class AbstractCatalogProfileStore {
                         userFilters.push(filter);
                     }
                 } else {
-                    const result = AbstractCatalogProfileStore.GetComparisonOperatorAndValue(value.filter);
+                    const result = getComparisonOperatorAndValue(value.filter);
                     if (result.operator !== undefined && result.values.length > 0) {
                         filter.comparisonOperator = result.operator;
                         if (result.values.length > 1) {
@@ -425,66 +425,6 @@ export abstract class AbstractCatalogProfileStore {
             value.filter = "";
         });
         this.filterDataSize = undefined;
-    }
-
-    private static GetNumberFromFilter(filterString: string): number {
-        return Number(filterString.replace(/[^0-9.+-.]+/g, ""));
-    }
-
-    private static GetComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
-        const filter = filterString.replace(/\s/g, "");
-        let result = {operator: undefined, values: []};
-        // order matters, since ... and .. both include .. (same for < and <=, > and >=)
-        for (const key of Object.keys(ComparisonOperator)) {
-            const operator = ComparisonOperator[key];
-            const found = filter.includes(operator);
-            if (found) {
-                if (operator === ComparisonOperator.Equal) {
-                    const equalTo = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
-                    result.operator = CARTA.ComparisonOperator.Equal;
-                    result.values.push(equalTo);
-                    return result;
-                } else if (operator === ComparisonOperator.NotEqual) {
-                    const notEqualTo = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
-                    result.operator = CARTA.ComparisonOperator.NotEqual;
-                    result.values.push(notEqualTo);
-                    return result;
-                } else if (operator === ComparisonOperator.Lesser) {
-                    const lessThan = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
-                    result.operator = CARTA.ComparisonOperator.Lesser;
-                    result.values.push(lessThan);
-                    return result;
-                } else if (operator === ComparisonOperator.LessorOrEqual) {
-                    const lessThanOrEqualTo = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
-                    result.values.push(lessThanOrEqualTo);
-                    result.operator = CARTA.ComparisonOperator.LessorOrEqual;
-                    return result;
-                } else if (operator === ComparisonOperator.Greater) {
-                    const greaterThan = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
-                    result.operator = CARTA.ComparisonOperator.Greater;
-                    result.values.push(greaterThan);
-                    return result;
-                } else if (operator === ComparisonOperator.GreaterOrEqual) {
-                    const greaterThanOrEqualTo = AbstractCatalogProfileStore.GetNumberFromFilter(filter);
-                    result.values.push(greaterThanOrEqualTo);
-                    result.operator = CARTA.ComparisonOperator.GreaterOrEqual;
-                    return result;
-                } else if (operator === ComparisonOperator.RangeOpen) {
-                    const fromTo = filter.split(ComparisonOperator.RangeOpen, 2);
-                    result.values.push(Number(fromTo[0]));
-                    result.values.push(Number(fromTo[1]));
-                    result.operator = CARTA.ComparisonOperator.RangeOpen;
-                    return result;
-                } else if (operator === ComparisonOperator.RangeClosed) {
-                    const betweenAnd = filter.split(ComparisonOperator.RangeClosed, 2);
-                    result.values.push(Number(betweenAnd[0]));
-                    result.values.push(Number(betweenAnd[1]));
-                    result.operator = CARTA.ComparisonOperator.RangeClosed;
-                    return result;
-                }
-            }
-        }
-        return result;
     }
 
     private isInfinite(value: number) {

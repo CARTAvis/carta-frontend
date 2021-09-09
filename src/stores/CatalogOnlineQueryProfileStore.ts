@@ -208,7 +208,6 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         this.initSortedIndexMap();
         this.initFilterIndexMap();
         this.resetUserFilters();
-        this.updatingDataStream = false;
         this.sortingInfo.columnName = null;
         this.sortingInfo.sortingType = null;
     };

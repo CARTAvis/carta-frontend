@@ -84,7 +84,7 @@ export class CatalogQueryDialogComponent extends React.Component {
             );
         }
 
-        const disable = configStore.isQuerying;
+        const disable = configStore.isQuerying || configStore.isObjectQuerying;
         const objectButton = (
             <Tooltip2 content="Reset center coordinates by object" disabled={disable}>
                 <Button

@@ -26,22 +26,12 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     private readonly InitialedExcludeColumnsKeyWords = ["PROPER MOTION", "SIGMA"];
     private InitialedRAColumnsKeyWords = ["RIGHT ASCENSION", "RA", "R.A"];
     private InitialedDECColumnsKeyWords = ["DECLINATION", "DEC", "Dec."];
-    // private _catalogData: Map<number, ProcessedColumnData>;
 
-    // @observable progress: number;
     @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;
     @observable numVisibleRows: number;
     @observable subsetEndIndex: number;
-    // @observable updatingDataStream: boolean;
-    // @observable updateMode: CatalogUpdateMode;
-    // @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
-    // @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string; epoch: string; coordinate: {x: CatalogOverlay; y: CatalogOverlay}};
-    // @observable selectedPointIndices: number[];
-    // @observable filterDataSize: number;
-    // @observable updateTableView: boolean;
-    // @observable sortingInfo: {columnName: string; sortingType: CARTA.SortingType};
     @observable maxRows: number;
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, catalogType: CatalogType = CatalogType.FILE) {
@@ -51,15 +41,12 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         this.catalogHeader = catalogHeader.sort((a, b) => {
             return a.columnIndex - b.columnIndex;
         });
-        // this._catalogData = catalogData;
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.catalogFilterRequest = this.initCatalogFilterRequest;
         this.updatingDataStream = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.selectedPointIndices = [];
         this.filterDataSize = undefined;
-
-        // this.updateTableView = false;
         this.maxRows = catalogInfo.dataSize;
 
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];

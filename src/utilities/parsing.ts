@@ -89,7 +89,6 @@ export function getComparisonOperatorAndValue(filterString: string): {operator: 
                     result.operator = CARTA.ComparisonOperator.NotEqual;
                     result.values.push(notEqualTo);  
                 }
-                
                 return result;
             } else if (operator === ComparisonOperator.Lesser) {
                 const lessThan = getNumberFromFilterString(filter);
