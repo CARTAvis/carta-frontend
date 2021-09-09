@@ -53,7 +53,6 @@ export abstract class AbstractCatalogProfileStore {
     abstract catalogHeader: Array<CARTA.ICatalogHeader>;
     abstract catalogControlHeader: Map<string, ControlHeader>;
     abstract numVisibleRows: number;
-    abstract loadingData: boolean;
 
     abstract get initCatalogControlHeader(): Map<string, ControlHeader>;
     abstract resetFilterRequest(filterConfigs?: CARTA.FilterConfig[]): void;
@@ -64,6 +63,7 @@ export abstract class AbstractCatalogProfileStore {
     abstract setMaxRows(maxRows: number): void;
     abstract setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number): void;
 
+    @observable loadingData: boolean;
     @observable catalogType: CatalogType;
     @observable catalogFilterRequest: CARTA.CatalogFilterRequest;
     @observable catalogCoordinateSystem: {system: CatalogSystemType; equinox: string; epoch: string; coordinate: {x: CatalogOverlay; y: CatalogOverlay}};
@@ -108,9 +108,21 @@ export abstract class AbstractCatalogProfileStore {
         this.sortingInfo = {columnName: null, sortingType: null};
         this.sortedIndexMap = [];
         this.filterIndexMap = [];
+        this.loadingData = false;
     }
 
     get catalogData(): Map<number, ProcessedColumnData> {
+        if (!this.isFileBasedCatalog && this.filterIndexMap.length !== this.catalogInfo.dataSize) {
+            const filteredData = new Map<number, ProcessedColumnData>();
+            this._catalogData.forEach((columnData, i) => {
+                filteredData.set(i, filterProcessedColumnData(columnData, this.filterIndexMap));
+            })
+            return filteredData;
+        }
+        return this._catalogData;
+    }
+
+    get catalogOriginalData(): Map<number, ProcessedColumnData> {
         return this._catalogData;
     }
 
@@ -146,14 +158,6 @@ export abstract class AbstractCatalogProfileStore {
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool && yColumn && yColumn.dataType !== CARTA.ColumnType.String && yColumn.dataType !== CARTA.ColumnType.Bool) {
             let wcsX = xColumn.data as Array<number>;
             let wcsY = yColumn.data as Array<number>;
-            if (!this.isFileBasedCatalog) {
-                wcsX = wcsX.filter((value, i) => {
-                    return this.filterIndexMap.includes(i);
-                });
-                wcsY = wcsY.filter((value, i) => {
-                    return this.filterIndexMap.includes(i);
-                });
-            }
             return {wcsX, wcsY, xHeaderInfo, yHeaderInfo};
         } else {
             return {xHeaderInfo, yHeaderInfo};
@@ -167,11 +171,6 @@ export abstract class AbstractCatalogProfileStore {
         const xColumn = this.catalogData.get(headerInfo.columnIndex);
         if (xColumn && xColumn.dataType !== CARTA.ColumnType.String && xColumn.dataType !== CARTA.ColumnType.Bool) {
             let wcsData = xColumn.data as TypedArray;
-            if (!this.isFileBasedCatalog) {
-                wcsData = wcsData.filter((value, i) => {
-                    return this.filterIndexMap.includes(i);
-                });
-            }
             return {wcsData, headerInfo};
         } else {
             return {headerInfo};
@@ -253,7 +252,7 @@ export abstract class AbstractCatalogProfileStore {
     @computed get autoScrollRowNumber(): IRegion {
         let singleRowRegion: IRegion = Regions.row(0);
         if (this.selectedPointIndices.length > 0) {
-            singleRowRegion = Regions.row(this.selectedPointIndices[0]);
+            singleRowRegion = Regions.row(minMaxArray(this.selectedPointIndices).minVal);
         }
         return singleRowRegion;
     }

@@ -28,7 +28,6 @@ export class CatalogOnlineQueryConfigStore {
     @observable maxObject: number;
     @observable enablePointSelection: boolean
     @observable radiusUnits: RadiusUnits;
-    @observable coordType: NumberFormatType;
     @observable objectName: string;
     @observable isObjectQuerying: boolean;
 
@@ -163,6 +162,18 @@ export class CatalogOnlineQueryConfigStore {
                 break;
         }
         return radiusIndeg;
+    }
+
+    // SIMBAD radius range 0 - 90 degrees
+    @computed get maxRadius(): number {
+        switch (this.radiusUnits) {
+            case RadiusUnits.ARCMINUTES:
+                return 90 * 60;
+            case RadiusUnits.ARCSECONDS:
+                return 90 * 3600;
+            default:
+                return 90;
+        }
     }
 
     @computed get disableObjectSearch(): boolean {

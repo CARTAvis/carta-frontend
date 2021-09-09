@@ -123,11 +123,11 @@ export class CatalogQueryDialogComponent extends React.Component {
                     />
                 </FormGroup>
                 <FormGroup inline={false} label="Search Radius" disabled={disable}>
-                    <Tooltip2 content="0 - 90 degrees" disabled={disable}>
+                    <Tooltip2 content= {`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable}>
                         <SafeNumericInput
                             disabled={disable}
                             min={0}
-                            max={90}
+                            max={configStore.maxRadius}
                             clampValueOnBlur={true}
                             value={configStore.searchRadius}
                             stepSize={0.5}

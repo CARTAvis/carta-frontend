@@ -815,7 +815,7 @@ export class AppStore {
                             this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
                             this.catalogStore.addCatalog(fileId);
                             this.fileBrowserStore.hideFileBrowser();
-                            const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, catalogInfo.dataSize, CatalogType.SIMBAD);
+                            const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, CatalogType.SIMBAD);
                             this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
                             resolve(catalogInfo.dataSize);
                         } else {

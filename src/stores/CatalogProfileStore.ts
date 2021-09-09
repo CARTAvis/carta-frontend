@@ -32,7 +32,6 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
     @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;
-    @observable loadingData: boolean;
     @observable numVisibleRows: number;
     @observable subsetEndIndex: number;
     // @observable updatingDataStream: boolean;
@@ -54,7 +53,6 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         });
         // this._catalogData = catalogData;
         this.catalogControlHeader = this.initCatalogControlHeader;
-        // this.loadingData = false;
         this.catalogFilterRequest = this.initCatalogFilterRequest;
         this.updatingDataStream = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;

@@ -13,7 +13,7 @@ import {CARTA} from "carta-protobuf";
 import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
-import {filterProcessedColumnData, toFixed} from "utilities";
+import {toFixed} from "utilities";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType, ProcessedColumnData} from "models";
 import "./CatalogOverlayComponent.scss";
 
@@ -27,10 +27,6 @@ enum HeaderTableColumnName {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
-    @computed get catalogFileId() {
-        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
-    }
-
     @observable catalogTableRef: Table = undefined;
     @observable height: number;
     @observable width: number;
@@ -63,6 +59,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             helpType: HelpType.CATALOG_OVERLAY,
             componentId: "catalog-overlay-component"
         };
+    }
+
+    @computed get catalogFileId() {
+        return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
     }
 
     @computed get widgetStore(): CatalogWidgetStore {
@@ -115,25 +115,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             dataset = profileStore.catalogData;
             numVisibleRows = profileStore.numVisibleRows;
             if (profileStore.regionSelected && catalogWidgetStore.showSelectedData) {
-                dataset = profileStore.selectedData;
-                numVisibleRows = profileStore.regionSelected;
-            }
-            if (!profileStore.isFileBasedCatalog) {
-                const filteredData = new Map<number, ProcessedColumnData>();
-                dataset.forEach((columnData, i) => {
-                    filteredData.set(i, filterProcessedColumnData(columnData, profileStore.filterIndexMap));
-                })
-                return {dataset: filteredData, numVisibleRows: numVisibleRows};
-            }
-            if (profileStore.regionSelected) {
-                if (catalogWidgetStore.showSelectedData) {
-                    // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
-                    this.scrollToRegion(this.catalogTableRef, Regions.row(0));
-                } else {
-                    if (catalogWidgetStore.catalogTableAutoScroll) {
-                        this.scrollToRegion(this.catalogTableRef, profileStore.autoScrollRowNumber);
-                    }
+                if (profileStore.isFileBasedCatalog) {
+                    dataset = profileStore.selectedData;   
                 }
+                numVisibleRows = profileStore.regionSelected;
             }
         }
         return {dataset, numVisibleRows};
@@ -401,7 +386,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         profileStore.setSelectedPointIndices([], false);
-        catalogWidgetStore.setCatalogTableAutoScroll(false);
         catalogWidgetStore.setShowSelectedData(false);
     };
 
@@ -493,7 +477,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     catalogStore.clearImageCoordsData(catalogFileId);
                     catalogStore.updateCatalogData(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, profileStore.catalogCoordinateSystem.system);
                     profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
-                    catalogWidgetStore.setCatalogTableAutoScroll(false);
                 }
                 if (profileStore.shouldUpdateData) {
                     profileStore.setUpdatingDataStream(true);
@@ -540,14 +523,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
                 if (!highlighted) {
                     profileStore.setSelectedPointIndices(selectedDataIndices, true);
-                    catalogWidgetStore.setCatalogTableAutoScroll(false);
                 } else {
                     profileStore.setSelectedPointIndices([], false);
-                    catalogWidgetStore.setCatalogTableAutoScroll(false);
                 }
             } else {
                 profileStore.setSelectedPointIndices(selectedDataIndices, true);
-                catalogWidgetStore.setCatalogTableAutoScroll(false);
             }
         }
     };
@@ -607,6 +587,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         AppStore.Instance.widgetsStore.createFloatingSettingsWidget(CatalogOverlayComponent.WIDGET_CONFIG.title, this.props.id, CatalogOverlayComponent.WIDGET_CONFIG.type);
     };
 
+    private onCompleteRender = () => {
+        if (this.profileStore.regionSelected) {
+            if (this.widgetStore.showSelectedData) {
+                // if the length of selected source is 4, only the 4th row displayed. Auto scroll to top fixed it (bug related to blueprintjs table).
+                this.scrollToRegion(this.catalogTableRef, Regions.row(0));
+            } else {
+                if (this.widgetStore.catalogTableAutoScroll) {
+                    this.scrollToRegion(this.catalogTableRef, this.profileStore.autoScrollRowNumber);
+                    this.widgetStore.setCatalogTableAutoScroll(false);
+                }
+            }
+        }
+    }
+
     public render() {
         const catalogWidgetStore = this.widgetStore;
         const profileStore = this.profileStore;
@@ -639,11 +633,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             sortingInfo: profileStore.sortingInfo,
             disableSort: profileStore.loadOntoImage,
             tableHeaders: profileStore.catalogHeader,
+            onCompleteRender: this.onCompleteRender
         };
 
         if (!profileStore.isFileBasedCatalog) {
             const store = profileStore as CatalogOnlineQueryProfileStore;
             dataTableProps.sortedIndexMap = store.sortedIndexMap;
+            const selected = profileStore.selectedPointIndices.slice().sort((a, b) => {return a - b;});
+            dataTableProps.sortedIndices = profileStore.getSortedIndices(selected);
         }
 
         let startIndex = 0;
@@ -818,7 +815,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className="bp3-dialog-footer">
                         <div className="bp3-dialog-footer-actions">
-                            <AnchorButton intent={Intent.PRIMARY} text="Filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView} />
+                            <AnchorButton intent={Intent.PRIMARY} text="Filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} />
                             <AnchorButton intent={Intent.PRIMARY} text="Reset" onClick={this.handleResetClick} disabled={disable} />
                             <AnchorButton intent={Intent.PRIMARY} text="Close" onClick={this.handleFileCloseClick} disabled={disable} />
                             <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} />

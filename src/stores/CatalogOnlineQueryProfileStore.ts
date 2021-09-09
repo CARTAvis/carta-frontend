@@ -2,30 +2,24 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader} from "stores";
 import {AbstractCatalogProfileStore, CatalogType, CatalogInfo, ProcessedColumnData} from "models";
-import {filterProcessedColumnData} from "utilities";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode"];
-    private readonly _dataSize;
 
     @observable catalogInfo: CatalogInfo;
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;
     @observable catalogControlHeader: Map<string, ControlHeader>;
     @observable numVisibleRows: number;
-    @observable loadingData: boolean;
-
-    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, dataSize: number, catalogType: CatalogType) {
+    
+    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: Map<number, ProcessedColumnData>, catalogType: CatalogType) {
         super(catalogType, catalogData);
-        this._dataSize = dataSize;
         makeObservable(this);
         this.catalogInfo = catalogInfo;
         this.catalogHeader = catalogHeader.sort((a, b) => {
             return a.columnIndex - b.columnIndex;
         });
-
         this.catalogControlHeader = this.initCatalogControlHeader;
-        this.numVisibleRows = dataSize;
-        this.loadingData = false;
+        this.numVisibleRows = catalogInfo.dataSize;
 
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
         const system = AbstractCatalogProfileStore.getCatalogSystem(coordinateSystem.system);
@@ -96,9 +90,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
             let catalogColumn = this.catalogData.get(dataIndex);
             if (this.hasFilter) {
                 this.initSortedIndexMap();
-                catalogColumn = filterProcessedColumnData(catalogColumn, this.filterIndexMap);
             }
-            // console.log(catalogColumn)
             switch (catalogColumn?.dataType) {
                 case CARTA.ColumnType.String:
                     this.sortedIndexMap.sort((a: number, b: number) => {
@@ -125,7 +117,6 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
                     });
                     break;
             }
-            // console.log(this.indexMap)
         }
     }
 
@@ -138,7 +129,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
 
     @action initFilterIndexMap() {
         this.filterIndexMap = [];
-        for (let index = 0; index < this._dataSize; index++) {
+        for (let index = 0; index < this.catalogInfo.dataSize; index++) {
             this.filterIndexMap.push(index);
         }
     }
@@ -149,7 +140,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
             const header = this.catalogControlHeader.get(filterConfig.columnName);
             const dataIndex = header.dataIndex;
             if (dataIndex > -1 && header.display) {
-                const catalogColumn = this.catalogData.get(dataIndex);
+                const catalogColumn = this.catalogOriginalData.get(dataIndex);
                 switch (catalogColumn.dataType) {
                     case CARTA.ColumnType.String:
                         const columnDataString = catalogColumn.data as string[];
@@ -213,7 +204,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
     }
 
     @action resetCatalogFilterRequest = () => {
-        this.numVisibleRows = this._dataSize;
+        this.numVisibleRows = this.catalogInfo.dataSize;
         this.initSortedIndexMap();
         this.initFilterIndexMap();
         this.resetUserFilters();

@@ -39,6 +39,8 @@ export class FilterableTableComponentProps {
     disableSort?: boolean;
     tableHeaders?: Array<CARTA.ICatalogHeader>;
     sortedIndexMap?: Array<number>;
+    sortedIndices?: Array<number>;
+    onCompleteRender?: () => void;
 }
 
 @observer
@@ -171,7 +173,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.sortedIndexMap) {
-            rowIndex = this.props.sortedIndexMap[rowIndex];
+            rowIndex = this.props.showSelectedData ? this.props.sortedIndices[rowIndex] : this.props.sortedIndexMap[rowIndex];
         }
         const cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
         const showHyperLinke = columnHeader.name?.toLocaleLowerCase().includes("coo_bibcode");
@@ -293,7 +295,6 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
-
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
@@ -321,6 +322,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 enableMultipleSelection={true}
                 enableRowResizing={false}
                 columnWidths={table.columnWidths}
+                onCompleteRender={table.onCompleteRender}
             >
                 {tableColumns}
             </Table>

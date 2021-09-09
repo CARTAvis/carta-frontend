@@ -210,6 +210,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @computed get scatterData() {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
+        // dummy values to trigger update, since profileStore.catalogData is not observable
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const numVisibleRows = profileStore.numVisibleRows;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
         let scatterDatasets: Plotly.Data[] = [];
         let data: Partial<Plotly.PlotData> = {};
@@ -222,7 +226,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         };
         data.hoverinfo = "none";
         data.x = coords.wcsX?.slice(0);
-        data.y = coords.wcsY?.slice(0);
+        data.y = coords.wcsY;
         scatterDatasets.push(data);
 
         const border = this.getScatterBorder(coords.wcsX, coords.wcsY);
@@ -232,6 +236,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @computed get histogramData() {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
+        // dummy values to trigger update, since profileStore.catalogData is not observable
+        /* eslint-disable @typescript-eslint/no-unused-vars */
+        const numVisibleRows = profileStore.numVisibleRows;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
         let histogramDatasets: Plotly.Data[] = [];
         let data: Partial<Plotly.PlotData> = {};
@@ -318,6 +326,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const val = changeEvent.target.checked;
         if (widgetsStore && catalogWidgetStore) {
             catalogWidgetStore.setShowSelectedData(val);
+            catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
     };
 
@@ -445,7 +454,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.catalogWidgetStore;
         catalogStore.updateCatalogProfiles(this.catalogFileId);
         profileStore.setSelectedPointIndices([], false);
-        catalogWidgetStore.setCatalogTableAutoScroll(false);
         catalogWidgetStore.setShowSelectedData(false);
     };
 
