@@ -240,7 +240,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                     options={appStore.frames.map(frame => {
                                         return {label: frame.filename, value: frame.frameInfo.fileId};
                                     })}
-                                    onChange={ev => appStore.setActiveFrame(parseInt(ev.target.value))}
+                                    onChange={ev => appStore.setActiveFrameById(parseInt(ev.target.value))}
                                     disabled={disabled}
                                 />
                             </FormGroup>
@@ -407,7 +407,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                             <Text className="fitting-result-text">{fittingStore.resultString}</Text>
                                         </Pre>
                                     </div>
-                                    {this.isShowingResultButton ? <Button icon="import" onClick={this.saveLog} className="fitting-result-hover-button" /> : <div style={{height: "30px"}} />}
+                                    {this.isShowingResultButton ? <Button icon="th" onClick={this.saveLog} className="fitting-result-hover-button" /> : <div style={{height: "30px"}} />}
                                 </div>
                             </FormGroup>
                         </div>

@@ -258,6 +258,41 @@
         },
         "pixelGridColor": {
             "type": "string"
+        },
+        "codeSnippetsEnabled": {
+            "type": "boolean"
+        },
+        "limitOverlayRedraw": {
+            "type": "boolean",
+            "default": true
+        },
+        "cursorInfoVisible": {
+            "type": "string",
+            "enum": ["always", "activeImage", "hideTiled", "never"],
+            "default": "activeImage"
+        },
+        "keepLastUsedFolder": {
+            "type": "boolean",
+            "default": false
+        },
+        "lastUsedFolder": {
+            "type": "string",
+            "default": ""
+        },
+        "imagePanelMode": {
+            "type": "string",
+            "enum": ["single", "dynamic", "fixed"],
+            "default": "none"
+        },
+        "imagePanelColumns": {
+            "type": "number",
+            "minimum": 1,
+            "default": 2
+        },
+        "imagePanelRows": {
+            "type": "number",
+            "minimum": 1,
+            "default": 2
         }
     }
 }

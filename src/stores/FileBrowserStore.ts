@@ -146,7 +146,7 @@ export class FileBrowserStore {
         this.catalogFileList = list;
     };
 
-    @action getFileList = async (directory: string) => {
+    @action getFileList = async (directory: string = "") => {
         const backendService = BackendService.Instance;
 
         this.loadingList = true;
@@ -313,7 +313,7 @@ export class FileBrowserStore {
         } else if (fileList) {
             const currentDir = fileList.directory;
             let newFolder = folder;
-            if (currentDir.length && !(currentDir.length === 1 && currentDir[0] === "/")) {
+            if (currentDir?.length && !(currentDir.length === 1 && currentDir[0] === "/")) {
                 newFolder = `${currentDir}/${folder}`;
             }
             this.getFileList(newFolder);
@@ -338,6 +338,7 @@ export class FileBrowserStore {
     }
 
     @action saveStartingDirectory(directory?: string) {
+        const preferenceStore = PreferenceStore.Instance;
         if (directory !== undefined) {
             this.startingDirectory = directory;
         } else {
@@ -345,6 +346,22 @@ export class FileBrowserStore {
                 this.startingDirectory = this.catalogFileList.directory;
             } else {
                 this.startingDirectory = this.fileList.directory;
+            }
+        }
+        if (preferenceStore.keepLastUsedFolder) {
+            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
+        } else {
+            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
+        }
+    }
+
+    setStartingDirectory() {
+        const preferenceStore = PreferenceStore.Instance;
+        if (preferenceStore.keepLastUsedFolder) {
+            if (preferenceStore.lastUsedFolder?.length > 0) {
+                this.startingDirectory = preferenceStore.lastUsedFolder;
+            } else {
+                preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
             }
         }
     }
@@ -445,6 +462,20 @@ export class FileBrowserStore {
         }
     };
 
+    @action showExportRegions = (regionId?: number) => {
+        this.showFileBrowser(BrowserMode.RegionExport, false);
+        if (regionId) {
+            this.clearExportRegionIndexes();
+            const frame = AppStore.Instance.activeFrame;
+            if (frame?.regionSet?.regions) {
+                const regionIndex = frame.regionSet.regions.findIndex(region => region.regionId === regionId);
+                this.addExportRegionIndex(regionIndex);
+            }
+        } else {
+            this.resetExportRegionIndexes();
+        }
+    };
+
     @computed get HDUList(): IOptionProps[] {
         return this.HDUfileInfoExtended
             ? Object.keys(this.HDUfileInfoExtended)?.map(hdu => {
@@ -512,8 +543,6 @@ export class FileBrowserStore {
     }
 
     @computed get catalogHeaderDataset(): {columnHeaders: Array<CARTA.CatalogHeader>; columnsData: Map<number, ProcessedColumnData>} {
-        let columnsData = new Map<number, ProcessedColumnData>();
-
         const nameData = [];
         const unitData = [];
         const typeData = [];
@@ -528,12 +557,14 @@ export class FileBrowserStore {
         }
 
         const dataType = CARTA.ColumnType.String;
-        columnsData.set(0, {dataType, data: nameData});
-        columnsData.set(1, {dataType, data: unitData});
-        columnsData.set(2, {dataType, data: typeData});
-        columnsData.set(3, {dataType, data: descriptionData});
+        const columnsData = new Map<number, ProcessedColumnData>([
+            [0, {dataType, data: nameData}],
+            [1, {dataType, data: unitData}],
+            [2, {dataType, data: typeData}],
+            [3, {dataType, data: descriptionData}]
+        ]);
 
-        let columnHeaders = [
+        const columnHeaders = [
             new CARTA.CatalogHeader({name: "Name", dataType, columnIndex: 0}),
             new CARTA.CatalogHeader({name: "Unit", dataType, columnIndex: 1}),
             new CARTA.CatalogHeader({name: "Data Type", dataType, columnIndex: 2}),
@@ -579,7 +610,8 @@ export class FileBrowserStore {
                         value: index,
                         label: region.nameString,
                         active: region.regionId === activeRegionId,
-                        icon: RegionStore.RegionIconString(region.regionType)
+                        icon: RegionStore.RegionIconString(region.regionType),
+                        isCustomIcon: RegionStore.IsRegionCustomIcon(region.regionType)
                     });
                 }
             });

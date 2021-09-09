@@ -1,4 +1,4 @@
-@import "../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+@import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .bp3-dark {
     background-color: $dark-gray4;
@@ -38,15 +38,23 @@ body {
 }
 
 .bp3-overlay {
-    z-index: 999 !important;
+    z-index: 995 !important;
 }
 
 .bp3-popover {
-    z-index: 999 !important;
+    z-index: 995 !important;
 }
 
 .bp3-transition-container {
+    z-index: 995 !important;
+}
+
+.bp3-dialog.bp3-alert {
     z-index: 999 !important;
+}
+
+.dialog-portal {
+    z-index: 990 !important;
 }
 
 // Workaround for BlueprintJS bug

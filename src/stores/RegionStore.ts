@@ -5,7 +5,8 @@ import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
-import {FrameStore} from "stores";
+import {AppStore, FrameStore} from "stores";
+import {CustomIconName} from "icons/CustomIcons";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -57,23 +58,37 @@ export class RegionStore {
                 return "Ellipse";
             case CARTA.RegionType.POLYGON:
                 return "Polygon";
+            case CARTA.RegionType.POLYLINE:
+                return "Polyline";
             default:
                 return "Not Implemented";
         }
     }
 
-    public static RegionIconString(regionType: CARTA.RegionType): IconName {
+    public static IsRegionCustomIcon(regionType: CARTA.RegionType): boolean {
+        switch (regionType) {
+            case CARTA.RegionType.LINE:
+            case CARTA.RegionType.POLYLINE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static RegionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "symbol-square";
             case CARTA.RegionType.LINE:
-                return "slash";
+                return "line";
             case CARTA.RegionType.RECTANGLE:
                 return "square";
             case CARTA.RegionType.ELLIPSE:
                 return "circle";
             case CARTA.RegionType.POLYGON:
                 return "polygon-filter";
+            case CARTA.RegionType.POLYLINE:
+                return "polyline";
             default:
                 return "error";
         }
@@ -84,7 +99,8 @@ export class RegionStore {
         [CARTA.RegionType.LINE, "Line"],
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
         [CARTA.RegionType.ELLIPSE, "Ellipse"],
-        [CARTA.RegionType.POLYGON, "Polygon"]
+        [CARTA.RegionType.POLYGON, "Polygon"],
+        [CARTA.RegionType.POLYLINE, "Polyline"]
     ]);
 
     public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
@@ -113,6 +129,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
                 return this.controlPoints[CENTER_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
             case CARTA.RegionType.LINE:
@@ -128,6 +145,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
                 return this.controlPoints[SIZE_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 return this.boundingBox;
             case CARTA.RegionType.LINE:
                 return subtract2D(this.controlPoints[0], this.controlPoints[1]);
@@ -154,6 +172,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
                 return scale2D(this.size, 2);
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 const boundingBox = minMax2D(this.controlPoints);
                 return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
             default:
@@ -192,6 +211,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 return this.controlPoints.length >= 1;
             case CARTA.RegionType.LINE:
                 return this.controlPoints.length === 1 || this.controlPoints.length === 2;
@@ -253,8 +273,10 @@ export class RegionStore {
                     add2D(this.center, rotate2D({x: -halfWidth, y: +halfHeight}, rotation))
                 ];
                 approximatePoints = getApproximatePolygonPoints(astTransform, points, RegionStore.TARGET_VERTEX_COUNT);
-            } else {
+            } else if (this.regionType === CARTA.RegionType.POLYGON) {
                 approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, !this.creating);
+            } else {
+                approximatePoints = getApproximatePolygonPoints(astTransform, this.controlPoints, RegionStore.TARGET_VERTEX_COUNT, false);
             }
             this.regionApproximationMap.set(astTransform, approximatePoints);
         }
@@ -488,10 +510,12 @@ export class RegionStore {
     // Update the region with the backend
     private updateRegion = async () => {
         if (this.isValid) {
-            if (this.regionId === CURSOR_REGION_ID && this.regionType === CARTA.RegionType.POINT) {
+            if (this.regionId === CURSOR_REGION_ID) {
+                AppStore.Instance.resetCursorRegionSpectralProfileProgress(this.fileId);
                 this.backendService.setCursor(this.fileId, this.center.x, this.center.y);
             } else {
                 try {
+                    AppStore.Instance.resetRegionSpectralProfileProgress(this.regionId);
                     await this.backendService.setRegion(this.fileId, this.regionId, this);
                     console.log("Region updated");
                 } catch (err) {

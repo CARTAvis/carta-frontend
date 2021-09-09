@@ -9,7 +9,7 @@ import {
     SaveLayoutDialogComponent,
     FileInfoDialogComponent,
     ContourDialogComponent,
-    DebugExecutionDialogComponent,
+    CodeSnippetDialogComponent,
     ExternalPageDialogComponent,
     StokesDialogComponent,
     CatalogQueryDialogComponent
@@ -28,7 +28,7 @@ export class UIControllerComponent extends React.Component {
                 <FileBrowserDialogComponent />
                 <PreferenceDialogComponent />
                 <SaveLayoutDialogComponent />
-                <DebugExecutionDialogComponent />
+                <CodeSnippetDialogComponent />
                 <AboutDialogComponent />
                 <ExternalPageDialogComponent />
                 <HelpDrawerComponent />

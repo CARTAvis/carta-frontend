@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
@@ -9,6 +10,7 @@ import "./BeamProfileOverlayComponent.scss";
 
 interface BeamProfileOverlayComponentProps {
     docked: boolean;
+    frame: FrameStore;
     top: number;
     left: number;
     padding?: number;
@@ -98,14 +100,9 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
     }
 
     render() {
-        let className = "beam-profile-stage";
-        if (this.props.docked) {
-            className += " docked";
-        }
-
         const appStore = AppStore.Instance;
-        const baseFrame = appStore.activeFrame;
-        const contourFrames = appStore.contourFrames.filter(frame => frame.frameInfo.fileId !== appStore.activeFrame.frameInfo.fileId && frame.hasVisibleBeam);
+        const baseFrame = this.props.frame;
+        const contourFrames = appStore.contourFrames.get(baseFrame)?.filter(frame => frame !== baseFrame && frame.hasVisibleBeam);
 
         if (!baseFrame.hasVisibleBeam && !contourFrames.length) {
             return null;
@@ -121,6 +118,8 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             const plotProps = this.getPlotProps(contourFrame, baseBeamPlotProps ? baseBeamPlotProps.position : null);
             contourBeams.push(this.plotBeam(plotProps));
         });
+
+        const className = classNames("beam-profile-stage", {docked: this.props.docked});
 
         return (
             <Stage className={className} width={baseFrame.renderWidth} height={baseFrame.renderHeight} style={{left: this.props.left, top: this.props.top}}>

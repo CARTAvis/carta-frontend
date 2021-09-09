@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observable, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, FormGroup, InputGroup, IDialogProps, Button, Intent, Classes} from "@blueprintjs/core";
@@ -33,7 +34,7 @@ export class SaveLayoutDialogComponent extends React.Component {
         }
     };
 
-    private saveLayout = () => {
+    private saveLayout = async () => {
         const appStore = AppStore.Instance;
 
         appStore.dialogStore.hideSaveLayoutDialog();
@@ -42,14 +43,13 @@ export class SaveLayoutDialogComponent extends React.Component {
             if (PresetLayout.isPreset(this.layoutName)) {
                 appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
             } else {
-                appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`, (confirmed: boolean) => {
-                    if (confirmed) {
-                        appStore.layoutStore.saveLayout();
-                    }
-                });
+                const confirmed = await appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
+                if (confirmed) {
+                    await appStore.layoutStore.saveLayout();
+                }
             }
         } else {
-            appStore.layoutStore.saveLayout();
+            await appStore.layoutStore.saveLayout();
         }
         this.clearInput();
     };
@@ -60,11 +60,7 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-
-        let className = "preference-dialog";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
 
         const dialogProps: IDialogProps = {
             icon: "layout-grid",

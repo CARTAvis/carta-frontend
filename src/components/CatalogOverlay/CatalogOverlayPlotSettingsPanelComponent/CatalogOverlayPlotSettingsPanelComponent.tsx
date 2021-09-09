@@ -2,6 +2,7 @@ import {observer} from "mobx-react";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
 import * as React from "react";
+import classNames from "classnames";
 import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
@@ -491,11 +492,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 />
             </div>
         );
-
-        let className = "catalog-settings";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("catalog-settings", {"bp3-dark": appStore.darkTheme});
 
         return (
             <div className={className}>

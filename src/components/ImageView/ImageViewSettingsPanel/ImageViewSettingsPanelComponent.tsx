@@ -1,11 +1,13 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {ItemRenderer, Select} from "@blueprintjs/select";
 import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
 import {AutoColorPickerComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
+import {ImagePanelMode} from "models";
 import {SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
 
@@ -142,7 +144,36 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const globalPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Color">
+                <FormGroup inline={true} label="Multi-panel mode">
+                    <HTMLSelect value={preferences.imagePanelMode} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
+                        <option value={ImagePanelMode.None}>Single panel only</option>
+                        <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
+                        <option value={ImagePanelMode.Fixed}>Fixed grid size</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={preferences.imagePanelMode === ImagePanelMode.None}>
+                    <SafeNumericInput
+                        placeholder="Columns"
+                        min={1}
+                        value={preferences.imagePanelColumns}
+                        disabled={preferences.imagePanelMode === ImagePanelMode.None}
+                        stepSize={1}
+                        minorStepSize={null}
+                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={preferences.imagePanelMode === ImagePanelMode.None}>
+                    <SafeNumericInput
+                        placeholder="Rows"
+                        min={1}
+                        disabled={preferences.imagePanelMode === ImagePanelMode.None}
+                        value={preferences.imagePanelRows}
+                        stepSize={1}
+                        minorStepSize={null}
+                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_ROWS, value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Overlay color">
                     <AutoColorPickerComponent color={global.color} presetColors={SWATCH_COLORS} setColor={global.setColor} disableAlpha={true} />
                 </FormGroup>
                 <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
@@ -179,8 +210,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={title.customText} disabled={!title.visible} onChange={ev => title.setCustomText(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={title.customText}>
-                    <FormGroup inline={true} label="Title Text" disabled={!title.visible}>
-                        <InputGroup disabled={!title.visible} value={title.customTitleString} placeholder="Enter title text" onChange={ev => title.setCustomTitleString(ev.currentTarget.value)} />
+                    <FormGroup inline={true} label="Text" labelInfo="(Current image only)" disabled={!title.visible}>
+                        <InputGroup disabled={!title.visible} value={appStore.activeFrame.titleCustomText} placeholder="Enter title text" onChange={ev => appStore.activeFrame.setTitleCustomText(ev.currentTarget.value)} />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom color" disabled={!title.visible}>
@@ -654,10 +685,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
-        let className = "image-view-settings";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
+        const className = classNames("image-view-settings", {"bp3-dark": appStore.darkTheme});
 
         return (
             <div className={className}>

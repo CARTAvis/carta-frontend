@@ -1,19 +1,17 @@
 import * as React from "react";
+import classNames from "classnames";
 import {Icon} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import "./CustomIcons.scss";
 
-export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments" | "distanceMeasuring";
+export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments" | "distanceMeasuring" | "cursor" | "line" | "polyline";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number}> {
     static readonly SIZE_STANDARD = 16;
     static readonly SIZE_LARGE = 20;
 
     public render() {
-        let className = "custom-icon bp3-icon";
-        if (AppStore.Instance.darkTheme) {
-            className += " dark-theme";
-        }
+        const className = classNames("custom-icon", "bp3-icon", {"dark-theme": AppStore.Instance.darkTheme});
         const size = (this.props.size ? this.props.size : CustomIcon.SIZE_STANDARD) + "px";
         const content = (
             <span className={className}>
@@ -153,6 +151,29 @@ const distanceMeasuringSvg = (
     />
 );
 
+const cursorSvg = (
+    <path
+        transform="scale(0.9) translate(-1, -1)"
+        d="M17.09,18.5l-3.47-3.47L12.5,18L10,10l8,2.5l-2.97,1.11l3.47,3.47L17.09,18.5z M10,3.5c-3.58,0-6.5,2.92-6.5,6.5 s2.92,6.5,6.5,6.5c0.15,0,0.3-0.01,0.45-0.02l0.46,1.46C10.61,17.98,10.31,18,10,18c-4.42,0-8-3.58-8-8s3.58-8,8-8l0,0 c4.42,0,8,3.58,8,8c0,0.31-0.02,0.61-0.05,0.91l-1.46-0.46c0.01-0.15,0.02-0.3,0.02-0.45C16.5,6.42,13.58,3.5,10,3.5 M10,6.5 c-1.93,0-3.5,1.57-3.5,3.5c0,1.76,1.31,3.23,3.01,3.47L10,15c0,0-0.01,0-0.01,0C7.23,15,5,12.76,5,10c0-2.76,2.24-5,5-5l0,0 c2.76,0,5,2.23,5,4.99c0,0,0,0.01,0,0.01l-1.53-0.49C13.23,7.81,11.76,6.5,10,6.5"
+    />
+);
+
+const lineSvg = (
+    <path
+        transform="translate(2.5, -3.5) rotate(45, 8, 8) scale(1.0, 1.6) rotate(-15, 8, 8)"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M10,2C9.54,2,9.15,2.31,9.04,2.73l-2.99,9.96C6.02,12.79,6,12.89,6,13 c0,0.55,0.45,1,1,1c0.46,0,0.85-0.31,0.96-0.73l2.99-9.96C10.98,3.21,11,3.11,11,3C11,2.45,10.55,2,10,2z"
+    />
+);
+
+const polylineSvg = (
+    <path
+        transform="scale(0.75) translate(-1.5, -1) rotate(-5, 9, 9)"
+        d="M23,8c0,1.1-0.9,2-2,2c-0.18,0-0.35-0.02-0.51-0.07l-3.56,3.55C16.98,13.64,17,13.82,17,14c0,1.1-0.9,2-2,2s-2-0.9-2-2 c0-0.18,0.02-0.36,0.07-0.52l-2.55-2.55C10.36,10.98,10.18,11,10,11s-0.36-0.02-0.52-0.07l-4.55,4.56C4.98,15.65,5,15.82,5,16 c0,1.1-0.9,2-2,2s-2-0.9-2-2s0.9-2,2-2c0.18,0,0.35,0.02,0.51,0.07l4.56-4.55C8.02,9.36,8,9.18,8,9c0-1.1,0.9-2,2-2s2,0.9,2,2 c0,0.18-0.02,0.36-0.07,0.52l2.55,2.55C14.64,12.02,14.82,12,15,12s0.36,0.02,0.52,0.07l3.55-3.56C19.02,8.35,19,8.18,19,8 c0-1.1,0.9-2,2-2S23,6.9,23,8z"
+    />
+);
+
 const icons = {
     contour: contourSvg,
     center: centerSvg,
@@ -163,5 +184,8 @@ const icons = {
     spectralLineQuery: spectralLineQuerySvg,
     smoothing: profileSmoothingSvg,
     moments: momentGeneratorSvg,
-    distanceMeasuring: distanceMeasuringSvg
+    distanceMeasuring: distanceMeasuringSvg,
+    cursor: cursorSvg,
+    line: lineSvg,
+    polyline: polylineSvg
 };

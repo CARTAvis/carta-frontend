@@ -1,3 +1,5 @@
+import * as _ from "lodash";
+import {toJS} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 
@@ -159,10 +161,16 @@ export class ScriptingService {
             } else {
                 response = await entry.execute();
             }
+
+            // Adjust the response to just the specified path if it is non-empty
+            if (typeof response === "object" && requestMessage.returnPath) {
+                response = _.get(response, requestMessage.returnPath);
+            }
+
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: true,
-                response: JSON.stringify(response)
+                response: JSON.stringify(toJS(response))
             };
         } catch (err) {
             return {

@@ -27,6 +27,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>WCS matching on append: trigger WCS matching automatically for newly appended images</li>
                     <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
                     <li>Transparent image background: when this is enabled, the exported png image will have a transparent background. When it is disabled (default), a white or a black background is added depending on the GUI theme.</li>
+                    <li>Save last used directory: when this is enabled, the file browser will start in the same folder the next session.</li>
                 </ul>
                 <h3 id="render-configuration">Render configuration</h3>
                 <p>This section provides customization of how a raster image is rendered by default.</p>
@@ -52,9 +53,9 @@ export class PreferencesHelpComponent extends React.Component {
                 <h3 id="overlay-configuration">Overlay configuration</h3>
                 <p>This section provides customization of the image overlay in the image viewer.</p>
                 <ul>
-                    <li>AST color: the default color theme of the grid layers including the coordinate bound box</li>
-                    <li>AST grid visible: grid line rendering</li>
-                    <li>AST label visible: grid x and y labels rendering</li>
+                    <li>Color: the default color of the grid layers including the coordinate bound box</li>
+                    <li>WCS grid visible: grid line rendering</li>
+                    <li>Label visible: grid x and y labels rendering</li>
                     <li>WCS format: show world coordinates in degrees or sexagesimal or auto-formatted</li>
                     <li>Beam visible: beam rendering at the bottom-left corner of the image viewer</li>
                     <li>Beam color: the color to render a beam element</li>

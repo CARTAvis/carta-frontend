@@ -1,19 +1,20 @@
 import * as React from "react";
+import classNames from "classnames";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
-import {AppStore, OverlayStore, RegionMode, RegionStore, SystemType} from "stores";
+import {AppStore, FrameStore, OverlayStore, RegionMode, RegionStore, SystemType} from "stores";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {toFixed} from "utilities";
-import {CustomIcon} from "icons/CustomIcons";
+import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
     docked: boolean;
     visible: boolean;
-    vertical: boolean;
+    frame: FrameStore;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
     activeLayer: ImageViewLayer;
 }
@@ -39,25 +40,22 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     ]);
 
     handleZoomToActualSizeClicked = () => {
-        AppStore.Instance.activeFrame.setZoom(1.0);
+        this.props.frame.setZoom(1.0);
     };
 
     handleZoomInClicked = () => {
-        const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame.spatialReference || appStore.activeFrame;
+        const frame = this.props.frame.spatialReference || this.props.frame;
         frame.setZoom(frame.zoomLevel * 2.0, true);
     };
 
     handleZoomOutClicked = () => {
-        const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame.spatialReference || appStore.activeFrame;
+        const frame = this.props.frame.spatialReference || this.props.frame;
         frame.setZoom(frame.zoomLevel / 2.0, true);
     };
 
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
-        const appStore = AppStore.Instance;
-        appStore.activeFrame.regionSet.setNewRegionType(type);
-        appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+        this.props.frame.regionSet.setNewRegionType(type);
+        this.props.frame.regionSet.setMode(RegionMode.CREATING);
     };
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
@@ -65,13 +63,16 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     private handleActiveLayerClicked = (layer: ImageViewLayer) => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeLayer !== ImageViewLayer.DistanceMeasuring && layer === ImageViewLayer.DistanceMeasuring) {
+            appStore.frames.forEach(frame => frame.distanceMeasuring.resetPos());
+        }
         this.props.onActiveLayerChange(layer);
         if (layer === ImageViewLayer.RegionCreating) {
-            AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.CREATING);
+            this.props.frame.regionSet.setMode(RegionMode.CREATING);
         } else {
-            AppStore.Instance.activeFrame.regionSet.setMode(RegionMode.MOVING);
+            this.props.frame.regionSet.setMode(RegionMode.MOVING);
         }
-        AppStore.Instance.activeFrame.distanceMeasuring.resetPos();
     };
 
     exportImageTooltip = () => {
@@ -93,24 +94,18 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const appStore = AppStore.Instance;
         const preferenceStore = appStore.preferenceStore;
         const overlay = appStore.overlayStore;
-        const frame = appStore.activeFrame;
+        const frame = this.props.frame;
         const grid = overlay.grid;
 
-        let styleProps: CSSProperties = {
+        const styleProps: CSSProperties = {
             bottom: overlay.padding.bottom,
             right: overlay.padding.right,
-            opacity: this.props.visible ? 1 : 0
+            left: overlay.padding.left,
+            opacity: this.props.visible ? 1 : 0,
+            backgroundColor: "transparent"
         };
 
-        let className = "image-toolbar";
-
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-        }
-
-        if (this.props.docked) {
-            className += " docked";
-        }
+        const className = classNames("image-toolbar", {docked: this.props.docked, "bp3-dark": appStore.darkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const currentZoomSpan = (
@@ -121,15 +116,15 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 </i>
             </span>
         );
-        const tooltipPosition: PopoverPosition = this.props.vertical ? "left" : "top";
+        const tooltipPosition: PopoverPosition = "top";
 
         const regionMenu = (
             <Menu>
-                <MenuItem icon={"symbol-square"} text="Point" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} />
-                <MenuItem icon={"slash"} text="Line" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.LINE)} />
-                <MenuItem icon={"square"} text="Rectangle" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} />
-                <MenuItem icon={"circle"} text="Ellipse" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} />
-                <MenuItem icon={"polygon-filter"} text="Polygon" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} />
+                {Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text], index) => {
+                    const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
+                    const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+                    return <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
+                })}
             </Menu>
         );
 
@@ -146,7 +141,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        const regionIcon: IconName = RegionStore.RegionIconString(frame.regionSet.newRegionType);
+        const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(frame.regionSet.newRegionType);
+        const regionIcon = RegionStore.IsRegionCustomIcon(frame.regionSet.newRegionType) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
 
         const spatialMatchingEnabled = !!frame.spatialReference;
         const spectralMatchingEnabled = !!frame.spectralReference;
@@ -185,138 +181,149 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const catalogSelectionDisabled = appStore.catalogNum === 0;
 
         return (
-            <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
-                <Tooltip2
-                    position={tooltipPosition}
-                    content={
-                        <span>
-                            Measure distance
-                            <br />
-                            <i>
-                                <small>Click to create geodesic curves.</small>
-                            </i>
-                        </span>
-                    }
-                >
-                    <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring)} />
-                </Tooltip2>
-                <Tooltip2
-                    position={tooltipPosition}
-                    content={
-                        <span>
-                            Catalog selection
-                            <br />
-                            <i>
-                                <small>Click to select single catalog source</small>
-                            </i>
-                        </span>
-                    }
-                >
-                    <AnchorButton icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled} />
-                </Tooltip2>
-                {frame.regionSet.mode === RegionMode.CREATING && (
-                    <Tooltip2
-                        position={tooltipPosition}
-                        content={
-                            <span>
-                                Create region
-                                <br />
-                                <i>
-                                    <small>Click to select region type</small>
-                                </i>
-                            </span>
-                        }
-                    >
-                        <Popover2 popoverClassName="region-menu" content={regionMenu} position={Position.TOP} minimal={true}>
-                            <AnchorButton icon={regionIcon} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
-                        </Popover2>
-                    </Tooltip2>
-                )}
-                {frame.regionSet.mode === RegionMode.MOVING && (
-                    <Tooltip2
-                        position={tooltipPosition}
-                        content={
-                            <span>
-                                Create region
-                                <br />
-                                <i>
-                                    <small>
-                                        Double-click to select region type.
+            <ButtonGroup className={className} style={styleProps}>
+                {appStore.toolbarExpanded && (
+                    <React.Fragment>
+                        <Tooltip2
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Measure distance
+                                    <br />
+                                    <i>
+                                        <small>Click to create geodesic curves.</small>
+                                    </i>
+                                </span>
+                            }
+                        >
+                            <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring)} />
+                        </Tooltip2>
+                        <Tooltip2
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Catalog selection
+                                    <br />
+                                    <i>
+                                        <small>Click to select single catalog source</small>
+                                    </i>
+                                </span>
+                            }
+                        >
+                            <AnchorButton icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled} />
+                        </Tooltip2>
+                        {frame.regionSet.mode === RegionMode.CREATING && (
+                            <Tooltip2
+                                position={tooltipPosition}
+                                content={
+                                    <span>
+                                        Create region
                                         <br />
-                                        Press C to enter creation mode.
+                                        <i>
+                                            <small>Click to select region type</small>
+                                        </i>
+                                    </span>
+                                }
+                            >
+                                <Popover2 popoverClassName="region-menu" content={regionMenu} position={Position.TOP} minimal={true}>
+                                    <AnchorButton icon={regionIcon} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                                </Popover2>
+                            </Tooltip2>
+                        )}
+                        {frame.regionSet.mode === RegionMode.MOVING && (
+                            <Tooltip2
+                                position={tooltipPosition}
+                                content={
+                                    <span>
+                                        Create region
+                                        <br />
+                                        <i>
+                                            <small>
+                                                Double-click to select region type.
+                                                <br />
+                                                Press C to enter creation mode.
+                                            </small>
+                                        </i>
+                                    </span>
+                                }
+                            >
+                                <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                            </Tooltip2>
+                        )}
+                        <Tooltip2 position={tooltipPosition} content="Select and pan mode">
+                            <AnchorButton
+                                icon={"hand"}
+                                onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
+                                active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
+                            />
+                        </Tooltip2>
+                        <Tooltip2 position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
+                            <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} />
+                        </Tooltip2>
+                        <Tooltip2 position={tooltipPosition} content={<span>Zoom out (Scroll wheel down){currentZoomSpan}</span>}>
+                            <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked} />
+                        </Tooltip2>
+                        <Tooltip2 position={tooltipPosition} content={<span>Zoom to 1.0x{currentZoomSpan}</span>}>
+                            <AnchorButton className={"full-zoom-button"} onClick={this.handleZoomToActualSizeClicked}>
+                                1.0x
+                            </AnchorButton>
+                        </Tooltip2>
+                        <Tooltip2 position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
+                            <AnchorButton icon="zoom-to-fit" onClick={frame.fitZoom} />
+                        </Tooltip2>
+                        <Tooltip2
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    WCS Matching <br />
+                                    <small>
+                                        <i>Current: {wcsButtonTooltip}</i>
                                     </small>
-                                </i>
-                            </span>
-                        }
-                    >
-                        <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
-                    </Tooltip2>
+                                </span>
+                            }
+                        >
+                            <Popover2 content={wcsMatchingMenu} position={Position.TOP} minimal={true}>
+                                <AnchorButton icon="link" className="link-button">
+                                    {wcsButtonSuperscript}
+                                </AnchorButton>
+                            </Popover2>
+                        </Tooltip2>
+                        <Tooltip2
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Overlay Coordinate <br />
+                                    <small>
+                                        <i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i>
+                                    </small>
+                                </span>
+                            }
+                        >
+                            <Popover2 content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
+                                <AnchorButton disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} />
+                            </Popover2>
+                        </Tooltip2>
+                        <Tooltip2 position={tooltipPosition} content="Toggle grid">
+                            <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} />
+                        </Tooltip2>
+                        <Tooltip2 position={tooltipPosition} content="Toggle labels">
+                            <AnchorButton icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels} />
+                        </Tooltip2>
+                        <Tooltip2
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    {`Export image (${appStore.modifierString}E)`}
+                                    {this.exportImageTooltip()}
+                                </span>
+                            }
+                        >
+                            <AnchorButton icon="floppy-disk" onClick={appStore.exportImage} />
+                        </Tooltip2>
+                    </React.Fragment>
                 )}
-                <Tooltip2 position={tooltipPosition} content="Select and pan mode">
-                    <AnchorButton icon={"hand"} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)} active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving} />
-                </Tooltip2>
-                <Tooltip2 position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
-                    <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} />
-                </Tooltip2>
-                <Tooltip2 position={tooltipPosition} content={<span>Zoom out (Scroll wheel down){currentZoomSpan}</span>}>
-                    <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked} />
-                </Tooltip2>
-                <Tooltip2 position={tooltipPosition} content={<span>Zoom to 1.0x{currentZoomSpan}</span>}>
-                    <AnchorButton className={"full-zoom-button"} onClick={this.handleZoomToActualSizeClicked}>
-                        1.0x
-                    </AnchorButton>
-                </Tooltip2>
-                <Tooltip2 position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
-                    <AnchorButton icon="zoom-to-fit" onClick={frame.fitZoom} />
-                </Tooltip2>
-                <Tooltip2
-                    position={tooltipPosition}
-                    content={
-                        <span>
-                            WCS Matching <br />
-                            <small>
-                                <i>Current: {wcsButtonTooltip}</i>
-                            </small>
-                        </span>
-                    }
-                >
-                    <Popover2 content={wcsMatchingMenu} position={Position.TOP} minimal={true}>
-                        <AnchorButton icon="link" className="link-button">
-                            {wcsButtonSuperscript}
-                        </AnchorButton>
-                    </Popover2>
-                </Tooltip2>
-                <Tooltip2
-                    position={tooltipPosition}
-                    content={
-                        <span>
-                            Overlay Coordinate <br />
-                            <small>
-                                <i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i>
-                            </small>
-                        </span>
-                    }
-                >
-                    <Popover2 content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
-                        <AnchorButton disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} />
-                    </Popover2>
-                </Tooltip2>
-                <Tooltip2 position={tooltipPosition} content="Toggle grid">
-                    <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} />
-                </Tooltip2>
-                <Tooltip2 position={tooltipPosition} content="Toggle labels">
-                    <AnchorButton icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels} />
-                </Tooltip2>
-                <Tooltip2
-                    position={tooltipPosition}
-                    content={
-                        <span>
-                            {`Export image (${appStore.modifierString}E)`}
-                            {this.exportImageTooltip()}
-                        </span>
-                    }
-                >
-                    <AnchorButton icon="floppy-disk" onClick={appStore.exportImage} />
+                <Tooltip2 position={tooltipPosition} content={appStore.toolbarExpanded ? "Hide toolbar" : "Show toolbar"}>
+                    <AnchorButton active={appStore.toolbarExpanded} icon={appStore.toolbarExpanded ? "double-chevron-right" : "double-chevron-left"} onClick={appStore.toggleToolbarExpanded} />
                 </Tooltip2>
             </ButtonGroup>
         );

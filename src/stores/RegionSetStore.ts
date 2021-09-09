@@ -33,6 +33,16 @@ export class RegionSetStore {
         this.selectedRegion = this.regions[0];
     }
 
+    public updateCursorRegionPosition = (pos: Point2D) => {
+        if (pos && this.regions.length > 0) {
+            const cursorRegion = this.regions[0];
+            // Need to avoid redundant update (position not changed), backend may not reply to redundant requests.
+            if (cursorRegion?.regionId === CURSOR_REGION_ID && (cursorRegion.center?.x !== pos.x || cursorRegion.center?.y !== pos.y)) {
+                cursorRegion.setCenter(pos);
+            }
+        }
+    };
+
     // temporary region IDs are < 0 and used
     private getTempRegionId = () => {
         let regionId = -1;
@@ -61,6 +71,10 @@ export class RegionSetStore {
 
     @action addLineRegion = (points: Point2D[], temporary: boolean = false) => {
         return this.addRegion(points, 0, CARTA.RegionType.LINE, temporary);
+    };
+
+    @action addPolylineRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.POLYLINE, temporary);
     };
 
     @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[]) => {
@@ -169,21 +183,30 @@ export class RegionSetStore {
                 let newControlPoints: Point2D[] = [];
                 let rotation: number = 0;
 
-                if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ELLIPSE) {
-                    const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
-                    if (!isAstBadPoint(centerNewFrame)) {
-                        const transform = new Transform2D(spatialTransformAST, centerNewFrame);
-                        const size = scale2D(region.size, forward ? transform.scale : 1.0 / transform.scale);
-                        rotation = region.rotation + ((forward ? 1 : -1) * transform.rotation * 180) / Math.PI;
-                        newControlPoints = [centerNewFrame, size];
-                    }
-                } else if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.LINE) {
-                    for (const point of region.controlPoints) {
-                        const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
-                        if (!isAstBadPoint(pointNewFrame)) {
-                            newControlPoints.push(pointNewFrame);
+                switch (region.regionType) {
+                    case CARTA.RegionType.RECTANGLE:
+                    case CARTA.RegionType.ELLIPSE:
+                        const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
+                        if (!isAstBadPoint(centerNewFrame)) {
+                            const transform = new Transform2D(spatialTransformAST, centerNewFrame);
+                            const size = scale2D(region.size, forward ? transform.scale : 1.0 / transform.scale);
+                            rotation = region.rotation + ((forward ? 1 : -1) * transform.rotation * 180) / Math.PI;
+                            newControlPoints = [centerNewFrame, size];
                         }
-                    }
+                        break;
+                    case CARTA.RegionType.POINT:
+                    case CARTA.RegionType.POLYGON:
+                    case CARTA.RegionType.LINE:
+                    case CARTA.RegionType.POLYLINE:
+                        for (const point of region.controlPoints) {
+                            const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
+                            if (!isAstBadPoint(pointNewFrame)) {
+                                newControlPoints.push(pointNewFrame);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
                 }
 
                 if (newControlPoints.length) {

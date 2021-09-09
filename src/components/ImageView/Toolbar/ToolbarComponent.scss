@@ -1,9 +1,16 @@
-@import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+@import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .image-toolbar {
     position: absolute;
     margin: 5px;
     transition: opacity 400ms;
+
+    flex-wrap: wrap;
+    justify-content: flex-end;
+
+    .bp3-popover2-target {
+        flex: none !important;
+    }
 
     &.docked {
         z-index: 4;
@@ -48,17 +55,5 @@
                 color: $gray5;
             }
         }
-    }
-
-    // adjust for line region icon
-    .bp3-icon-slash {
-        transform: rotate(45deg) scaleY(1.6) rotate(-15deg);
-    }
-}
-
-// adjust for line region icon
-.region-menu {
-    .bp3-icon-slash {
-        transform: rotate(45deg) scaleY(1.6) rotate(-15deg);
     }
 }

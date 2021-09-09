@@ -1,5 +1,5 @@
 import {action, autorun, computed, observable, makeObservable, runInAction} from "mobx";
-import {NumberRange} from "@blueprintjs/core";
+import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, DistanceMeasuringStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
@@ -32,6 +32,7 @@ import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel,
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";
+import {ColorbarStore} from "./ColorbarStore";
 
 export interface FrameInfo {
     fileId: number;
@@ -42,11 +43,6 @@ export interface FrameInfo {
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
     beamTable: CARTA.IBeam[];
-}
-
-export enum RasterRenderType {
-    NONE,
-    TILED
 }
 
 export const WCS_PRECISION = 10;
@@ -73,6 +69,7 @@ export class FrameStore {
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
+    public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
@@ -99,7 +96,6 @@ export class FrameStore {
     @observable requiredStokes: number;
     @observable requiredChannel: number;
     @observable animationChannelRange: NumberRange;
-    @observable renderType: RasterRenderType;
     @observable currentFrameView: FrameView;
     @observable currentCompressionQuality: number;
     @observable renderConfig: RenderConfigStore;
@@ -110,6 +106,7 @@ export class FrameStore {
     @observable zooming: boolean;
 
     @observable colorbarLabelCustomText: string;
+    @observable titleCustomText: string;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
     @observable spectralReference: FrameStore;
@@ -128,7 +125,7 @@ export class FrameStore {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
         const extName =
             this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ? `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
-        return this.frameInfo?.hdu !== "" && this.frameInfo?.hdu !== "0" ? `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` : this.frameInfo.fileInfo.name;
+        return this.frameInfo.hdu && this.frameInfo.hdu !== "" && this.frameInfo.hdu !== "0" ? `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` : this.frameInfo.fileInfo.name;
     }
 
     @computed get regionSet(): RegionSetStore {
@@ -211,7 +208,6 @@ export class FrameStore {
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
             const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
-
             return {
                 xMin: this.center.x - imageWidth / 2.0,
                 xMax: this.center.x + imageWidth / 2.0,
@@ -425,7 +421,7 @@ export class FrameStore {
             const channelInfo = this.channelInfo;
             const spectralType = this.spectralAxis?.type;
             if (spectralType) {
-                spectralInfo.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys}): ${toFixed(channelInfo.values[this.channel], 4)} ${spectralType.unit}`;
+                spectralInfo.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys ?? ""}): ${toFixed(channelInfo.values[this.channel], 4)} ${spectralType.unit ?? ""}`;
                 if (spectralType.code === "FREQ") {
                     const freqVal = channelInfo.rawValues[this.channel];
                     // convert frequency value to unit in GHz
@@ -583,7 +579,7 @@ export class FrameStore {
     }
 
     @computed get nativeSpectralCoordinate(): string {
-        return this.spectralAxis ? `${this.spectralAxis.type.name} (${this.spectralAxis.type.unit})` : undefined;
+        return this.spectralAxis ? `${this.spectralAxis.type.name}${this.spectralAxis.type.unit ? ` (${this.spectralAxis.type.unit})` : ""}` : undefined;
     }
 
     @computed get spectralCoordinate(): string {
@@ -593,8 +589,8 @@ export class FrameStore {
     @computed get spectralLabel(): string {
         let label = undefined;
         if (this.spectralAxis) {
-            const spectralSystem = this.isSpectralSystemConvertible ? this.spectralSystem : `${this.spectralAxis.specsys}`;
-            label = `${spectralSystem && spectralSystem !== "" ? `[${spectralSystem}] ` : ""}${this.spectralCoordinate}`;
+            const spectralSystem = this.isSpectralSystemConvertible ? this.spectralSystem : this.spectralAxis.specsys;
+            label = `${spectralSystem ? `[${spectralSystem}] ` : ""}${this.spectralCoordinate ?? ""}`;
         }
         return label;
     }
@@ -714,7 +710,8 @@ export class FrameStore {
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
     }
 
-    @computed get stokesInfo(): string[] {
+    @computed get stokesOptions(): IOptionProps[] {
+        let stokesOptions = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
             const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value.toUpperCase() === "STOKES");
             if (ctype && ctype.name.indexOf("CTYPE") !== -1) {
@@ -723,17 +720,29 @@ export class FrameStore {
                 const crpixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${index}`) !== -1);
                 const crvalHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${index}`) !== -1);
                 const cdeltHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
-                let stokesInfo = [];
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
-                    if (stokesVal > 0 && STANDARD_POLARIZATIONS.has(stokesVal)) {
-                        stokesInfo.push(STANDARD_POLARIZATIONS.get(stokesVal));
+                    if (STANDARD_POLARIZATIONS.has(stokesVal)) {
+                        stokesOptions.push({value: stokesVal - 1, label: `${stokesVal > 0 ? "Stokes " : ""}${STANDARD_POLARIZATIONS.get(stokesVal)}`});
                     }
                 }
-                return stokesInfo;
             }
         }
-        return [];
+        return stokesOptions;
+    }
+
+    @computed get requiredStokesName(): string {
+        return this.stokesOptions?.find(stokesOption => stokesOption.value === this.requiredStokes)?.label;
+    }
+
+    @computed get stokesInfo(): string[] {
+        return this.stokesOptions?.map(option => {
+            return option?.label;
+        });
+    }
+
+    @computed get requiredStokesInfo(): string {
+        return this.requiredStokes >= 0 && this.requiredStokes < this.stokesInfo?.length ? this.stokesInfo[this.requiredStokes] : String(this.requiredStokes);
     }
 
     constructor(frameInfo: FrameInfo) {
@@ -762,12 +771,13 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preferenceStore, this);
+        this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
-        this.renderType = RasterRenderType.NONE;
         this.moving = false;
         this.zooming = false;
         this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
+        this.titleCustomText = "";
         this.overlayBeamSettings = new OverlayBeamStore();
         this.spatialReference = null;
         this.spatialTransformAST = null;
@@ -953,6 +963,10 @@ export class FrameStore {
                     this.setChannelValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values));
                 }
             }
+        });
+
+        autorun(() => {
+            this.distanceMeasuring.updateTransformedPos(this.spatialTransform);
         });
     }
 
@@ -1219,6 +1233,10 @@ export class FrameStore {
         this.colorbarLabelCustomText = text;
     };
 
+    @action setTitleCustomText = (text: string) => {
+        this.titleCustomText = text;
+    };
+
     public getControlMap(frame: FrameStore) {
         const preferenceStore = PreferenceStore.Instance;
         let controlMap = this.controlMaps.get(frame);
@@ -1255,7 +1273,7 @@ export class FrameStore {
             const dt = tEnd - tStart;
             console.log(`Created ${preferenceStore.contourControlMapWidth}x${preferenceStore.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
         }
-        
+
         return controlMap;
     }
 
@@ -1343,16 +1361,16 @@ export class FrameStore {
 
         const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo?.infoWCS?.x}, ${this.cursorInfo?.infoWCS?.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
         const wcsSize = this.getWcsSizeInArcsec(region.size);
-        const size = wcsSize ? {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)} : null;
+        const size = {x: formattedArcsec(wcsSize?.x, WCS_PRECISION), y: formattedArcsec(wcsSize?.y, WCS_PRECISION)};
         const systemType = OverlayStore.Instance.global.explicitSystem;
 
         switch (region.regionType) {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
+                return `rotbox(wcs:${systemType})[[${center}], [${size.x ?? ""}, ${size.y ?? ""}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${size.x}, ${size.y}], ${toFixed(region.rotation, 6)}deg]`;
+                return `ellipse(wcs:${systemType})[[${center}], [${size.x ?? ""}, ${size.y ?? ""}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
                 let polygonWcsProperties = `poly(wcs:${systemType})[`;
                 region.controlPoints.forEach((point, index) => {
@@ -1525,8 +1543,14 @@ export class FrameStore {
     }
 
     @action setChannels(channel: number, stokes: number, recursive: boolean) {
-        const sanitizedChannel = this.sanitizeChannelNumber(channel);
+        if (stokes < 0) {
+            stokes += this.frameInfo.fileInfoExtended.stokes;
+        }
+        if (stokes >= this.frameInfo.fileInfoExtended.stokes) {
+            stokes = 0;
+        }
 
+        const sanitizedChannel = this.sanitizeChannelNumber(channel);
         // Automatically switch to per-channel histograms when Stokes parameter changes
         if (this.requiredStokes !== stokes) {
             this.renderConfig.setUseCubeHistogram(false);
@@ -1614,12 +1638,16 @@ export class FrameStore {
             const pointRefImage = transformPoint(this.spatialTransformAST, pos, true);
             this.spatialReference.updateCursorRegion(pointRefImage);
         } else {
-            this.frameRegionSet.regions?.[0].setCenter(pos);
+            if (pos.x >= 0 && pos.x <= this.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.frameInfo.fileInfoExtended.height - 1) {
+                this.frameRegionSet.updateCursorRegionPosition(pos);
+            }
         }
 
         for (const frame of this.secondarySpatialImages) {
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
-            frame.frameRegionSet.regions?.[0].setCenter(pointSecondaryImage);
+            if (pointSecondaryImage.x >= 0 && pointSecondaryImage.x <= frame.frameInfo.fileInfoExtended.width - 1 && pointSecondaryImage.y >= 0 && pointSecondaryImage.y <= frame.frameInfo.fileInfoExtended.height - 1) {
+                frame.frameRegionSet.updateCursorRegionPosition(pointSecondaryImage);
+            }
         }
     };
 
@@ -1669,10 +1697,6 @@ export class FrameStore {
 
     @action setAnimationRange = (range: NumberRange) => {
         this.animationChannelRange = range;
-    };
-
-    @action setRasterRenderType = (renderType: RasterRenderType) => {
-        this.renderType = renderType;
     };
 
     @action startMoving = () => {

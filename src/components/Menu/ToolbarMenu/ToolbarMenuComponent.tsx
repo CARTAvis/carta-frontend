@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
@@ -39,11 +40,12 @@ export class ToolbarMenuComponent extends React.Component {
                 );
                 break;
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.POLYLINE:
                 tooltip = (
                     <small>
                         Define control points with a series of clicks.
                         <br />
-                        Double-click to close the loop and finish polygon creation.
+                        Double-click to {type === CARTA.RegionType.POLYLINE ? "" : "close the loop and"} finish creation.
                         <br />
                         Double-click on a control point to delete it.
                         <br />
@@ -70,14 +72,9 @@ export class ToolbarMenuComponent extends React.Component {
         const appStore = AppStore.Instance;
         const dialogStore = appStore.dialogStore;
 
-        let className = "toolbar-menu";
-        let dialogClassName = "dialog-toolbar-menu";
-        let actionsClassName = "actions-toolbar-menu";
-        if (appStore.darkTheme) {
-            className += " bp3-dark";
-            dialogClassName += " bp3-dark";
-            actionsClassName += " bp3-dark";
-        }
+        const className = classNames("toolbar-menu", {"bp3-dark": appStore.darkTheme});
+        const dialogClassName = classNames("dialog-toolbar-menu", {"bp3-dark": appStore.darkTheme});
+        const actionsClassName = classNames("actions-toolbar-menu", {"bp3-dark": appStore.darkTheme});
         const isRegionCreating = appStore.activeFrame ? appStore.activeFrame.regionSet.mode === RegionMode.CREATING : false;
         const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
         const regionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;
@@ -97,21 +94,15 @@ export class ToolbarMenuComponent extends React.Component {
         return (
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
-                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.POINT)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"symbol-square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)} active={isRegionCreating && newRegionType === CARTA.RegionType.POINT} disabled={regionButtonsDisabled} />
-                    </Tooltip2>
-                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.LINE)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"slash"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.LINE)} active={isRegionCreating && newRegionType === CARTA.RegionType.LINE} disabled={regionButtonsDisabled} />
-                    </Tooltip2>
-                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.RECTANGLE)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"square"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)} active={isRegionCreating && newRegionType === CARTA.RegionType.RECTANGLE} disabled={regionButtonsDisabled} />
-                    </Tooltip2>
-                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.ELLIPSE)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"circle"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)} active={isRegionCreating && newRegionType === CARTA.RegionType.ELLIPSE} disabled={regionButtonsDisabled} />
-                    </Tooltip2>
-                    <Tooltip2 content={this.regionTooltip(CARTA.RegionType.POLYGON)} position={Position.BOTTOM}>
-                        <AnchorButton icon={"polygon-filter"} onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)} active={isRegionCreating && newRegionType === CARTA.RegionType.POLYGON} disabled={regionButtonsDisabled} />
-                    </Tooltip2>
+                    {Array.from(RegionStore.AVAILABLE_REGION_TYPES.keys()).map((type, index) => {
+                        const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
+                        const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+                        return (
+                            <Tooltip2 content={this.regionTooltip(type)} position={Position.BOTTOM} key={index}>
+                                <AnchorButton icon={regionIcon} onClick={() => this.handleRegionTypeClicked(type)} active={isRegionCreating && newRegionType === type} disabled={regionButtonsDisabled} />
+                            </Tooltip2>
+                        );
+                    })}
                 </ButtonGroup>
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
@@ -149,6 +140,30 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip2 content={<span>Online Catalog Query</span>} position={Position.BOTTOM}>
                         <AnchorButton icon="geosearch" onClick={dialogStore.showCatalogQueryDialog} active={dialogStore.catalogQueryDialogVisible} />
                     </Tooltip2>
+                    {appStore.preferenceStore.codeSnippetsEnabled && (
+                        <Tooltip2
+                            content={
+                                <span>
+                                    Code Snippets
+                                    <span>
+                                        <br />
+                                        <i>
+                                            <small>
+                                                Use to save, load or run small code snippets,
+                                                <br />
+                                                providing additional functionality to CARTA.
+                                                <br />
+                                                Warning: Use at own risk!
+                                            </small>
+                                        </i>
+                                    </span>
+                                </span>
+                            }
+                            position={Position.BOTTOM}
+                        >
+                            <AnchorButton icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} active={dialogStore.codeSnippetDialogVisible} />
+                        </Tooltip2>
+                    )}
                 </ButtonGroup>
             </React.Fragment>
         );

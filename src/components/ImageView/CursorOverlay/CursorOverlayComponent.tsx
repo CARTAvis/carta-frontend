@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {observer} from "mobx-react";
 import {CSSProperties} from "react";
 import {CursorInfo, SpectralInfo} from "models";
@@ -36,7 +37,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
         if (this.props.showWCS && cursorInfo.infoWCS) {
             infoStrings.push(`WCS:\u00a0(${cursorInfo.infoWCS.x},\u00a0${cursorInfo.infoWCS.y})`);
         }
-        if (this.props.showImage) {
+        if (this.props.showImage && (cursorInfo.posImageSpace?.x !== -Number.MAX_VALUE || cursorInfo.posImageSpace?.y !== -Number.MAX_VALUE)) {
             infoStrings.push(`Image:\u00a0(${toFixed(cursorInfo.posImageSpace.x)},\u00a0${toFixed(cursorInfo.posImageSpace.y)})`);
         }
         if (this.props.showValue && this.props.cursorValue !== undefined) {
@@ -64,7 +65,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             }
         }
         if (this.props.showStokes && this.props.currentStokes) {
-            infoStrings.push(`Stokes:\u00a0${this.props.currentStokes}`);
+            infoStrings.push(`Polarization:\u00a0${this.props.currentStokes}`);
         }
 
         const height = this.props.height !== undefined && this.props.height >= 0 ? this.props.height : 20;
@@ -87,13 +88,11 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             styleProps.left = this.props.left;
         }
 
-        let className = "cursor-overlay-div";
-        if (this.props.docked) {
-            className += " docked";
-        }
+        const className = classNames("cursor-overlay-div", {docked: this.props.docked});
+
         return (
             <div className={className} style={styleProps}>
-                {infoStrings.join("; ")}
+                {infoStrings.length ? infoStrings.join("; ") : "\u00a0"}
             </div>
         );
     }

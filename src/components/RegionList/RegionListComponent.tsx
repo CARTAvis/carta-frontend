@@ -5,7 +5,7 @@ import {HTMLTable, Icon, NonIdealState, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION} from "stores";
+import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION, FileBrowserStore, BrowserMode} from "stores";
 import {toFixed, getFormattedWCSPoint, formattedArcsec, length2D} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.scss";
@@ -13,6 +13,7 @@ import "./RegionListComponent.scss";
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly ACTION_COLUMN_DEFAULT_WIDTH = 25;
+    private static readonly ACTIONS_COLUMN_DEFAULT_WIDTH = 75;
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
     private static readonly NAME_COLUMN_DEFAULT_WIDTH = 150;
     private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 90;
@@ -65,6 +66,18 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         ev.stopPropagation();
     };
 
+    private handleRegionExportClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
+        FileBrowserStore.Instance.showExportRegions(region.regionId);
+    };
+
+    private handleRegionImportClicked = () => {
+        FileBrowserStore.Instance.showFileBrowser(BrowserMode.RegionImport, false);
+    };
+
+    private handleRegionExportAllClicked = () => {
+        FileBrowserStore.Instance.showExportRegions();
+    };
+
     private handleRegionListDoubleClick = () => {
         DialogStore.Instance.showRegionDialog();
     };
@@ -89,7 +102,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         let nameWidth = RegionListComponent.NAME_COLUMN_DEFAULT_WIDTH;
         const availableWidth = this.width - 2 * padding;
         let fixedWidth =
-            RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2 +
+            RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH +
             RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH +
             RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH +
             RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH +
@@ -125,7 +138,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
                 if (frame.validWcs) {
-                    centerContent = <RegionWcsCenter region={region} frame={frame} />;
+                    if (frame.spatialReference?.regionSet.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp)) {
+                        centerContent = <RegionWcsCenter region={region} frame={frame.spatialReference} />;
+                    } else {
+                        centerContent = <RegionWcsCenter region={region} frame={frame} />;
+                    }
                 } else {
                     centerContent = `(${toFixed(region.center.x, 1)}, ${toFixed(region.center.y, 1)})`;
                 }
@@ -145,16 +162,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     if (frame.validWcs) {
                         sizeContent =
                             region.regionType === CARTA.RegionType.LINE ? (
-                                formattedArcsec(length2D(region.wcsSize), WCS_PRECISION)
+                                formattedArcsec(region.wcsSize ? length2D(region.wcsSize) : undefined, WCS_PRECISION)
                             ) : (
                                 <React.Fragment>
-                                    {formattedArcsec(region.wcsSize.x, WCS_PRECISION)}
+                                    {formattedArcsec(region.wcsSize?.x, WCS_PRECISION)}
                                     <br />
-                                    {formattedArcsec(region.wcsSize.y, WCS_PRECISION)}
+                                    {formattedArcsec(region.wcsSize?.y, WCS_PRECISION)}
                                 </React.Fragment>
                             );
                     } else {
-                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(length2D(region.wcsSize), 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
+                        sizeContent = region.regionType === CARTA.RegionType.LINE ? toFixed(region.size ? length2D(region.size) : undefined, 1) : `(${toFixed(region.size.x, 1)}, ${toFixed(region.size.y, 1)})`;
                     }
                 }
                 let tooltipContent = "";
@@ -188,7 +205,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 );
             } else {
                 lockEntry = (
-                    <td colSpan={2} style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2}}>
+                    <td colSpan={3} style={{width: RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH}}>
+                        <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
                     </td>
@@ -204,10 +222,22 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 );
             }
 
+            let exportEntry: React.ReactNode;
+            if (region.regionId) {
+                exportEntry = (
+                    <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionExportClicked(ev, region)}>
+                        <Tooltip2 content="Export region" position={Position.BOTTOM}>
+                            <Icon icon="cloud-upload" />
+                        </Tooltip2>
+                    </td>
+                );
+            }
+
             return (
                 <tr className={selectedRegion && selectedRegion.regionId === region.regionId ? "selected" : ""} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)}>
                     {lockEntry}
                     {focusEntry}
+                    {exportEntry}
                     <td style={{width: nameWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {region.nameString}
                     </td>
@@ -230,9 +260,15 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <HTMLTable style={{height: tableHeight}}>
                     <thead className={appStore.darkTheme ? "dark-theme" : ""}>
                         <tr>
-                            <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2}}>
-                                <Icon icon={"blank"} />
-                                <Icon icon={"blank"} />
+                            <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                                <Icon icon={"blank"} style={{width: 16}} />
+                                <Tooltip2 content="Import regions" position={Position.BOTTOM}>
+                                    <Icon icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
+                                </Tooltip2>
+                                <Icon icon={"blank"} style={{width: 5}} />
+                                <Tooltip2 content="Export all regions" position={Position.BOTTOM}>
+                                    {this.validRegions.length > 1 ? <Icon icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} /> : <Icon icon="cloud-upload" style={{opacity: 0.4}} />}
+                                </Tooltip2>
                             </th>
                             <th style={{width: nameWidth}}>Name</th>
                             <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>

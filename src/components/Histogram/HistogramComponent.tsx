@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
+import classNames from "classnames";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {NonIdealState} from "@blueprintjs/core";
@@ -53,23 +54,22 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             let regionId = this.widgetStore.effectiveRegionId;
-
-            // // Image histograms handled slightly differently
-            // if (regionId === -1) {
-            //     const frame = appStore.getFrame(fileId);
-            //     if (frame && frame.renderConfig && frame.renderConfig.channelHistogram) {
-            //
-            //     }
-            // }
+            let coordinate = this.widgetStore.coordinate;
 
             const frameMap = appStore.regionHistograms.get(fileId);
             if (!frameMap) {
                 return null;
             }
-            const data = frameMap.get(regionId);
-            if (data && data.histograms && data.histograms.length) {
-                return data.histograms[0];
+            const regionMap = frameMap.get(regionId);
+            if (!regionMap) {
+                return null;
             }
+            const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes.replace("Stokes ", "") === coordinate.slice(0, 1));
+            const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
+            if (!regionHistogramData) {
+                return null;
+            }
+            return regionHistogramData.histograms;
         }
         return null;
     }
@@ -261,10 +261,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             linePlotProps.comments = this.exportHeaders;
         }
 
-        let className = "histogram-widget";
-        if (appStore.darkTheme) {
-            className += " dark-theme";
-        }
+        const className = classNames("histogram-widget", {"bp3-dark": appStore.darkTheme});
 
         return (
             <div className={className}>

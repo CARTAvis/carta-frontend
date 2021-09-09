@@ -5,9 +5,14 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
 import * as _ from "lodash";
 import {BackendService} from "services";
-import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {ProcessedColumnData, ProtobufProcessing} from "models";
 import {booleanFiltering, numericFiltering, stringFiltering, wavelengthToFrequency, SPEED_OF_LIGHT} from "utilities";
+
+export enum SplataloguePingStatus {
+    Checking,
+    Success,
+    Failure
+}
 
 export enum SpectralLineQueryRangeType {
     Range = "Range",
@@ -129,7 +134,8 @@ const RESOLVED_QN_COLUMN_INDEX = 7;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
 
-export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
+export class SpectralLineQueryWidgetStore {
+    @observable splataloguePingStatus: SplataloguePingStatus;
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
@@ -550,9 +556,21 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action pingSplatalogue = async () => {
+        try {
+            this.splataloguePingStatus = SplataloguePingStatus.Checking;
+            const ack = await BackendService.Instance.pingSplatalogue();
+            this.splataloguePingStatus = ack?.success ? SplataloguePingStatus.Success : SplataloguePingStatus.Failure;
+        } catch (err) {
+            this.splataloguePingStatus = SplataloguePingStatus.Failure;
+            AppStore.Instance.alertStore.showAlert(`${err}`);
+            console.error(err);
+        }
+    };
+
     constructor() {
-        super(RegionsType.CLOSED);
         makeObservable(this);
+        this.splataloguePingStatus = SplataloguePingStatus.Checking;
         this.queryRangeType = SpectralLineQueryRangeType.Range;
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];
@@ -565,6 +583,7 @@ export class SpectralLineQueryWidgetStore extends RegionWidgetStore {
         this.queryResultTableRef = undefined;
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.resetQueryContents();
+        this.pingSplatalogue();
 
         // update selected spectral profiler when currently selected is closed
         autorun(() => {

@@ -1,17 +1,17 @@
 import * as React from "react";
-import {makeObservable, observable} from "mobx";
+import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Icon, Menu, Position, MenuDivider} from "@blueprintjs/core";
+import {Alert, Button, Icon, Menu, MenuDivider, Position} from "@blueprintjs/core";
+import {IconName} from "@blueprintjs/icons";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {CARTA} from "carta-protobuf";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
-import {PresetLayout} from "models";
-import {AppStore, BrowserMode, PreferenceKeys, WidgetsStore, WidgetType} from "stores";
+import {PresetLayout, Snippet} from "models";
+import {AppStore, BrowserMode, FrameStore, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
-import {IconName} from "@blueprintjs/icons";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import "./RootMenuComponent.scss";
-import {CARTA} from "carta-protobuf";
 
 @observer
 export class RootMenuComponent extends React.Component {
@@ -27,19 +27,31 @@ export class RootMenuComponent extends React.Component {
         window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank");
     };
 
+    private handleWidgetExecuteClicked = async (ev: React.MouseEvent<HTMLElement>, snippet: Snippet, name: string) => {
+        ev.stopPropagation();
+        const snippetStore = SnippetStore.Instance;
+        if (snippet?.code) {
+            snippetStore.setActiveSnippet(snippet, name);
+            await snippetStore.executeCurrentSnippet();
+        }
+    };
+
     private genWidgetsMenu = () => {
-        const regionListConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.Region);
-        const imageListConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.ImageList);
-        const logConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.Log);
-        const spatialProfilerConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.SpatialProfiler);
-        const spectralProfilerConfig = WidgetsStore.Instance.CARTAWidgets.get(WidgetType.SpectralProfiler);
-        const restWidgets = Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).filter(widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler].includes(widget));
+        const cartaWidgets = WidgetsStore.Instance.CARTAWidgets;
+        const regionListConfig = cartaWidgets.get(WidgetType.Region);
+        const imageListConfig = cartaWidgets.get(WidgetType.ImageList);
+        const cursorInfoConfig = cartaWidgets.get(WidgetType.CursorInfo);
+        const logConfig = cartaWidgets.get(WidgetType.Log);
+        const spatialProfilerConfig = cartaWidgets.get(WidgetType.SpatialProfiler);
+        const spectralProfilerConfig = cartaWidgets.get(WidgetType.SpectralProfiler);
+        const restWidgets = Array.from(cartaWidgets.keys()).filter(widget => ![WidgetType.Region, WidgetType.ImageList, WidgetType.CursorInfo, WidgetType.Log, WidgetType.SpatialProfiler, WidgetType.SpectralProfiler].includes(widget));
 
         return (
             <Menu className="widgets-menu">
                 <Menu.Item text="Info Panels" icon={"panel-stats"}>
                     <Menu.Item text={WidgetType.Region} icon={<CustomIcon icon={regionListConfig.icon as CustomIconName} />} onClick={regionListConfig.onClick} />
                     <Menu.Item text={WidgetType.ImageList} icon={imageListConfig.icon as IconName} onClick={imageListConfig.onClick} />
+                    <Menu.Item text={WidgetType.CursorInfo} icon={<CustomIcon icon={cursorInfoConfig.icon as CustomIconName} />} onClick={cursorInfoConfig.onClick} />
                     <Menu.Item text={WidgetType.Log} icon={logConfig.icon as IconName} onClick={logConfig.onClick} />
                 </Menu.Item>
                 <Menu.Item text="Profiles" icon={"pulse"}>
@@ -47,7 +59,7 @@ export class RootMenuComponent extends React.Component {
                     <Menu.Item text={WidgetType.SpectralProfiler} icon={<CustomIcon icon={spectralProfilerConfig.icon as CustomIconName} />} onClick={spectralProfilerConfig.onClick} />
                 </Menu.Item>
                 {restWidgets.map(widgetType => {
-                    const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
+                    const widgetConfig = cartaWidgets.get(widgetType);
                     const trimmedStr = widgetType.replace(/\s+/g, "");
                     return (
                         <Menu.Item key={`${trimmedStr}Menu`} text={widgetType} icon={widgetConfig.isCustomIcon ? <CustomIcon icon={widgetConfig.icon as CustomIconName} /> : (widgetConfig.icon as IconName)} onClick={widgetConfig.onClick} />
@@ -56,6 +68,80 @@ export class RootMenuComponent extends React.Component {
             </Menu>
         );
     };
+
+    private recurseSnippetMap(snippetMap: Map<string, any>): React.ReactNode[] {
+        let nodes = [];
+        for (const [name, node] of snippetMap) {
+            // Create menu and recurse
+            if (node instanceof Map) {
+                nodes.push(
+                    <Menu.Item key={name} text={name}>
+                        {this.recurseSnippetMap(node)}
+                    </Menu.Item>
+                );
+            } else {
+                nodes.push(node);
+            }
+        }
+        // Sort nodes as follows:
+        // - Folders first (sorted alphabetically)
+        // - Items sorted alphabetically
+        return nodes.sort((a, b) => {
+            const lengthA = a.props?.children?.length ?? 0;
+            const lengthB = b.props?.children?.length ?? 0;
+            if ((lengthA > 0 && lengthB > 0) || lengthA === lengthB) {
+                return a.key > b.key ? 1 : -1;
+            }
+            return Math.sign(lengthB - lengthA);
+        });
+    }
+
+    @computed get snippetsMenu() {
+        const appStore = AppStore.Instance;
+        if (!appStore.preferenceStore.codeSnippetsEnabled) {
+            return null;
+        }
+
+        const snippetObj = new Map<string, any>();
+
+        for (const [name, snippet] of appStore.snippetStore.snippets) {
+            // Skip hidden snippets
+            if (snippet?.categories?.includes("hidden")) {
+                continue;
+            }
+
+            const labelElement = (
+                <Button className="snippet-run-button" small={true} minimal={true} icon={"play"} intent="success" disabled={appStore.snippetStore.isExecuting} onClick={ev => this.handleWidgetExecuteClicked(ev, snippet, name)} />
+            );
+
+            const menuItem = <Menu.Item key={name} text={name} icon={labelElement} onClick={() => appStore.dialogStore.showExistingCodeSnippet(snippet, name)} />;
+
+            if (snippet.categories?.length) {
+                for (const category of snippet.categories) {
+                    const categoryParts = category.split("/");
+                    let menuRoot = snippetObj;
+                    for (const folder of categoryParts) {
+                        if (!menuRoot.has(folder)) {
+                            menuRoot.set(folder, new Map<string, any>());
+                        }
+                        menuRoot = menuRoot.get(folder);
+                    }
+                    menuRoot.set(name, menuItem);
+                }
+            } else {
+                snippetObj.set(name, menuItem);
+            }
+        }
+
+        const snippetEntries = this.recurseSnippetMap(snippetObj);
+        return (
+            <Menu>
+                {snippetEntries}
+                {snippetEntries.length > 0 && <Menu.Divider />}
+                <Menu.Item text="Create new snippet" icon="add" onClick={appStore.dialogStore.showNewCodeSnippet} />
+            </Menu>
+        );
+    }
 
     render() {
         const appStore = AppStore.Instance;
@@ -108,7 +194,7 @@ export class RootMenuComponent extends React.Component {
                     <Menu.Item
                         text="Export regions"
                         disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
-                        onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
+                        onClick={() => appStore.fileBrowserStore.showExportRegions()}
                     />
                 </Tooltip2>
                 <Menu.Divider />
@@ -121,14 +207,7 @@ export class RootMenuComponent extends React.Component {
         );
 
         let layerItems = appStore.frames.map(frame => {
-            return (
-                <Menu.Item
-                    text={frame.filename}
-                    active={appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === frame.frameInfo.fileId}
-                    key={frame.frameInfo.fileId}
-                    onClick={() => this.handleFrameSelect(frame.frameInfo.fileId)}
-                />
-            );
+            return <Menu.Item text={frame.filename} active={appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === frame.frameInfo.fileId} key={frame.frameInfo.fileId} onClick={() => this.handleFrameSelect(frame)} />;
         });
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
@@ -184,8 +263,9 @@ export class RootMenuComponent extends React.Component {
                     </Menu.Item>
                 )}
                 <Menu.Item text="File header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
-                <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} onClick={appStore.dialogStore.showContourDialog} />
-                <Menu.Item text="Online Catalog Query" icon="geosearch" onClick={appStore.dialogStore.showCatalogQueryDialog} />
+                <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showContourDialog} />
+                <Menu.Item text="Code snippets" icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} />
+                <Menu.Item text="Online Catalog Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showCatalogQueryDialog} />
             </Menu>
         );
 
@@ -193,7 +273,6 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 <Menu.Item text="Online Manual" icon={"manual"} onClick={this.handleDocumentationClicked} />
                 <Menu.Item text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog} />
-                <Menu.Item text="Debug Execution" icon={"console"} onClick={appStore.dialogStore.showDebugExecutionDialog} />
                 <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog} />
             </Menu>
         );
@@ -299,6 +378,13 @@ export class RootMenuComponent extends React.Component {
                         <Menu.Item text="Widgets" />
                     </Menu>
                 </Popover2>
+                {appStore.preferenceStore.codeSnippetsEnabled && (
+                    <Popover2 autoFocus={false} minimal={true} content={this.snippetsMenu} position={Position.BOTTOM_LEFT}>
+                        <Menu className="root-menu-entry">
+                            <Menu.Item text="Snippets" />
+                        </Menu>
+                    </Popover2>
+                )}
                 <Popover2 autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="Help" />
@@ -322,6 +408,11 @@ export class RootMenuComponent extends React.Component {
                         }
                     >
                         <Icon icon={"feed"} className="connectivity-icon warning" />
+                    </Tooltip2>
+                )}
+                {appStore.snippetStore.isExecuting && (
+                    <Tooltip2 content="CARTA is currently executing a code snippet.">
+                        <Icon icon={"console"} intent={"warning"} />
                     </Tooltip2>
                 )}
                 <Tooltip2 content={connectivityTooltip}>
@@ -349,12 +440,12 @@ export class RootMenuComponent extends React.Component {
         this.documentationAlertVisible = false;
     };
 
-    handleFrameSelect = (fileId: number) => {
+    handleFrameSelect = (frame: FrameStore) => {
         const appStore = AppStore.Instance;
-        if (appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === fileId) {
+        if (appStore.activeFrame && appStore.activeFrame === frame) {
             return;
         } else {
-            appStore.setActiveFrame(fileId);
+            appStore.setActiveFrame(frame);
         }
     };
 }

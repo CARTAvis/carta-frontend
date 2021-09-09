@@ -1,6 +1,6 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed, makeObservable} from "mobx";
-import {AppStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, WidgetsStore} from "stores";
+import {AppStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, FrameStore, WidgetsStore} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 import {CatalogSystemType} from "models";
 import {CatalogWidgetStore} from "stores/widgets";
@@ -212,18 +212,32 @@ export class CatalogStore {
     @computed get activeCatalogFiles() {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame) {
-            const imageId = activeFrame.frameInfo.fileId;
-            let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
-            activeFrame.spatialSiblings?.forEach(frame => {
-                const catalogs = [...this.imageAssociatedCatalogId.get(frame.frameInfo.fileId)];
-                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, catalogs]))].filter(catalogFileId => {
-                    return this.catalogGLData.get(catalogFileId) !== undefined;
-                });
-            });
-            return associatedCatalogIds.sort((a, b) => a - b);
+            return this.visibleCatalogFiles.get(activeFrame) ?? [];
         } else {
             return [];
         }
+    }
+
+    @computed get visibleCatalogFiles(): Map<FrameStore, number[]> {
+        const appStore = AppStore.Instance;
+        const visibleCatalogMap = new Map<FrameStore, number[]>();
+
+        /// TODO: this should be cleaned up a bit
+        for (const frame of appStore.visibleFrames) {
+            const imageId = frame.frameInfo.fileId;
+            let associatedCatalogIds = [...this.imageAssociatedCatalogId.get(imageId)];
+            frame.spatialSiblings?.forEach(frame => {
+                const catalogs = [...this.imageAssociatedCatalogId.get(frame.frameInfo.fileId)];
+                associatedCatalogIds = [...new Set([].concat(...[associatedCatalogIds, catalogs]))].filter(catalogFileId => {
+                    return this.catalogGLData.has(catalogFileId);
+                });
+            });
+            visibleCatalogMap.set(
+                frame,
+                associatedCatalogIds.sort((a, b) => a - b)
+            );
+        }
+        return visibleCatalogMap;
     }
 
     getFrameIdByCatalogId(catalogId: number): number {
@@ -320,26 +334,26 @@ export class CatalogStore {
         return {xImageCoords: new Float64Array(0), yImageCoords: new Float64Array(0)};
     }
 
-    getFrameMinMaxPoints(frameId: number): {minX: number, maxX: number, minY: number, maxY: number} {
+    getFrameMinMaxPoints(frameId: number): {minX: number; maxX: number; minY: number; maxY: number} {
         let minMax = {minX: Number.MAX_VALUE, maxX: -Number.MAX_VALUE, minY: Number.MAX_VALUE, maxY: -Number.MAX_VALUE};
         this.imageAssociatedCatalogId.get(frameId)?.forEach(catalogId => {
             const coords = this.catalogGLData.get(catalogId);
             if (coords?.x && coords?.y) {
                 const minMaxX = minMaxArray(coords.x);
                 const minMaxY = minMaxArray(coords.y);
-                if (minMaxX.minVal < minMax.minX ) {
+                if (minMaxX.minVal < minMax.minX) {
                     minMax.minX = minMaxX.minVal;
                 }
 
-                if (minMaxX.maxVal > minMax.maxX ) {
+                if (minMaxX.maxVal > minMax.maxX) {
                     minMax.maxX = minMaxX.maxVal;
                 }
 
-                if (minMaxY.minVal < minMax.minY ) {
+                if (minMaxY.minVal < minMax.minY) {
                     minMax.minY = minMaxY.minVal;
                 }
 
-                if (minMaxY.maxVal > minMax.maxY ) {
+                if (minMaxY.maxVal > minMax.maxY) {
                     minMax.maxY = minMaxY.maxVal;
                 }
             }
