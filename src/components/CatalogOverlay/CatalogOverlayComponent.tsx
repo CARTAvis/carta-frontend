@@ -639,7 +639,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             sortingInfo: profileStore.sortingInfo,
             disableSort: profileStore.loadOntoImage,
             tableHeaders: profileStore.catalogHeader,
-            onCompleteRender: this.onCompleteRender
+            onCompleteRender: this.onCompleteRender,
+            catalogType: profileStore.catalogType
         };
 
         if (!profileStore.isFileBasedCatalog) {

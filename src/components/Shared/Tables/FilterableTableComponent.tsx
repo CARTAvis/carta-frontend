@@ -9,7 +9,7 @@ import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
 import {SpectralLineHeaders} from "stores/widgets";
-import {ProcessedColumnData} from "models";
+import {CatalogType, ProcessedColumnData} from "models";
 import "./FilterableTableComponent.scss";
 
 export type ColumnFilter = {index: number; columnFilter: string};
@@ -42,6 +42,7 @@ export class FilterableTableComponentProps {
     sortedIndexMap?: Array<number>;
     sortedIndices?: Array<number>;
     onCompleteRender?: () => void;
+    catalogType: CatalogType
 }
 
 @observer
@@ -177,14 +178,24 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             rowIndex = this.props.showSelectedData ? this.props.sortedIndices[rowIndex] : this.props.sortedIndexMap[rowIndex];
         }
         const cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
-        const showHyperLinke = columnHeader.name?.toLocaleLowerCase().includes("coo_bibcode");
-        const cell = showHyperLinke ? (
-            <a href={`https://ui.adsabs.harvard.edu/abs/${cellContext}`} target="_blank" rel="noopener noreferrer">
-                {cellContext}
-            </a>
-        ) : (
-            cellContext
-        );
+        let cell = cellContext;
+        if (this.props.catalogType === CatalogType.SIMBAD) {
+            if (columnHeader.name?.toLocaleLowerCase().includes("coo_bibcode")) {
+                cell = (
+                    <a href={`https://ui.adsabs.harvard.edu/abs/${cellContext}`} target="_blank" rel="noopener noreferrer">
+                        {cellContext}
+                    </a>
+                );
+            }
+
+            if (columnHeader.name?.toLocaleLowerCase().includes("main_id")) {
+                cell = (
+                    <a href={`https://simbad.u-strasbg.fr/simbad/sim-id?Ident=${cellContext}`} target="_blank" rel="noopener noreferrer">
+                        {cellContext}
+                    </a>
+                );
+            }
+        }
         const selected = dataIndex && dataIndex.includes(index) && !this.props.showSelectedData;
         return (
             <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={selected ? "danger" : "none"} loading={this.isLoading(rowIndex)} interactive={false}>

@@ -78,9 +78,9 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         if (dataIndex) {
             let direction = 0;
             const sortingType = this.sortingInfo.sortingType;
-            if (sortingType == 0) {
+            if (sortingType === 0) {
                 direction = 1;
-            } else if (sortingType == 1) {
+            } else if (sortingType === 1) {
                 direction = -1;
             }
             if (direction === 0 && this.getUserFilters().length === 0) {
