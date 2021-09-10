@@ -837,7 +837,7 @@ export class WidgetsStore {
             imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
             imagePanelButton.find(".bp3-icon-standard")?.attr("class", `bp3-icon-standard ${this.getImagePanelButtonIcon(imagePanelMode)}`);
         }
-    }
+    };
 
     private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
         return imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to single panel";

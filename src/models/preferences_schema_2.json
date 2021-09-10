@@ -282,7 +282,8 @@
         "imageMultiPanelEnabled": {
             "type": "boolean",
             "default": false
-        },"imagePanelMode": {
+        },
+        "imagePanelMode": {
             "type": "string",
             "enum": ["dynamic", "fixed"],
             "default": "dynamic"
