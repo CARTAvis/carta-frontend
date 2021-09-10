@@ -674,7 +674,7 @@ export class WidgetsStore {
 
                     // add image panel control buttons when tab is image-view
                     if (component === "image-view") {
-                        const imagePanelMode = PreferenceStore.Instance.imagePanelMode;
+                        const imagePanelMode = AppStore.Instance.imagePanelMode;
                         const nextPageButton = $(`<li class="lm-image-panel-next" title="next ${imagePanelMode === ImagePanelMode.None ? "image" : "page"}"><span class="bp3-icon-standard bp3-icon-step-forward" style/></li>`);
                         nextPageButton.on("click", this.onNextPageClick);
                         stack.header.controlsContainer.prepend(nextPageButton);
@@ -823,49 +823,28 @@ export class WidgetsStore {
     };
 
     @action onImagePanelButtonClick = () => {
-        const preferences = PreferenceStore.Instance;
-        switch (preferences.imagePanelMode) {
-            case ImagePanelMode.Dynamic:
-                this.setImagePanelMode(ImagePanelMode.Fixed);
-                break;
-            case ImagePanelMode.Fixed:
-                this.setImagePanelMode(ImagePanelMode.None);
-                break;
-            default:
-                this.setImagePanelMode(ImagePanelMode.Dynamic);
-        }
+        this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
     };
 
-    @action setImagePanelMode = (imagePanelMode: ImagePanelMode) => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, imagePanelMode);
+    @action setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
+        PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
+        this.updateImagePanelButton(AppStore.Instance.imagePanelMode);
+    };
+
+    updateImagePanelButton = (imagePanelMode: ImagePanelMode) => {
         const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel");
         if (imagePanelButton) {
             imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
             imagePanelButton.find(".bp3-icon-standard")?.attr("class", `bp3-icon-standard ${this.getImagePanelButtonIcon(imagePanelMode)}`);
         }
-        this.updateImagePanelPageButtons();
-    };
+    }
 
     private getImagePanelButtonTooltip = (imagePanelMode: ImagePanelMode) => {
-        switch (imagePanelMode) {
-            case ImagePanelMode.Dynamic:
-                return "to fixed grid";
-            case ImagePanelMode.Fixed:
-                return "to single panel";
-            default:
-                return "to dynamic grid";
-        }
+        return imagePanelMode === ImagePanelMode.None ? "switch to multi-panel" : "switch to single panel";
     };
 
     private getImagePanelButtonIcon = (imagePanelMode: ImagePanelMode) => {
-        switch (imagePanelMode) {
-            case ImagePanelMode.Dynamic:
-                return "bp3-icon-grid-view";
-            case ImagePanelMode.Fixed:
-                return "bp3-icon-square";
-            default:
-                return "bp3-icon-new-grid-item";
-        }
+        return imagePanelMode === ImagePanelMode.None ? "bp3-icon-square" : "bp3-icon-grid-view";
     };
 
     @action onNextPageClick = () => {
@@ -890,13 +869,13 @@ export class WidgetsStore {
         if (nextPageButton) {
             const firstIndexInNextPage = (appStore.currentImagePage + 1) * appStore.imagesPerPage;
             nextPageButton.attr("style", appStore.frames?.length > firstIndexInNextPage ? "" : "cursor: not-allowed; opacity: 0.2");
-            nextPageButton.attr("title", appStore.preferenceStore.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
+            nextPageButton.attr("title", appStore.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
         }
 
         const previousPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-previous");
         if (previousPageButton) {
             previousPageButton.attr("style", appStore.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
-            previousPageButton.attr("title", appStore.preferenceStore.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
+            previousPageButton.attr("title", appStore.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");
         }
     };
 

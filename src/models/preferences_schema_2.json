@@ -279,10 +279,13 @@
             "type": "string",
             "default": ""
         },
-        "imagePanelMode": {
+        "imageMultiPanelEnabled": {
+            "type": "boolean",
+            "default": false
+        },"imagePanelMode": {
             "type": "string",
-            "enum": ["single", "dynamic", "fixed"],
-            "default": "none"
+            "enum": ["dynamic", "fixed"],
+            "default": "dynamic"
         },
         "imagePanelColumns": {
             "type": "number",

@@ -2065,7 +2065,7 @@ export class AppStore {
     }
 
     @computed get numImageColumns() {
-        switch (this.preferenceStore.imagePanelMode) {
+        switch (this.imagePanelMode) {
             case ImagePanelMode.None:
                 return 1;
             case ImagePanelMode.Fixed:
@@ -2077,7 +2077,7 @@ export class AppStore {
     }
 
     @computed get numImageRows() {
-        switch (this.preferenceStore.imagePanelMode) {
+        switch (this.imagePanelMode) {
             case ImagePanelMode.None:
                 return 1;
             case ImagePanelMode.Fixed:
@@ -2090,6 +2090,11 @@ export class AppStore {
 
     @computed get imagesPerPage() {
         return this.numImageColumns * this.numImageRows;
+    }
+
+    @computed get imagePanelMode() {
+        const preferenceStore = PreferenceStore.Instance;
+        return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
     }
 
     exportImage = (): boolean => {
