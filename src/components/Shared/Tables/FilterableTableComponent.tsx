@@ -42,7 +42,7 @@ export class FilterableTableComponentProps {
     sortedIndexMap?: Array<number>;
     sortedIndices?: Array<number>;
     onCompleteRender?: () => void;
-    catalogType: CatalogType
+    catalogType: CatalogType;
 }
 
 @observer
