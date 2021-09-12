@@ -659,8 +659,6 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
     };
 
     public render() {
-        console.log("render RegionComponents");
-
         const regions = this.props.regions;
         if (regions?.length) {
             const regionSet = this.props.frame?.regionSet;
