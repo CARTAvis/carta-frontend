@@ -492,6 +492,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    /*
     private handleRegionDoubleClick = (region: RegionStore) => {
         const appStore = AppStore.Instance;
         if (region) {
@@ -502,6 +503,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
         }
     };
+    */
 
     @action private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (this.mouseClickDistance > DOUBLE_CLICK_DISTANCE * DOUBLE_CLICK_DISTANCE) {
@@ -528,6 +530,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const regionSet = frame.regionSet;
         const className = classNames("region-stage", {docked: this.props.docked});
 
+        /*
         let regionComponents = null;
         if (regionSet && regionSet.regions.length) {
             regionComponents = regionSet.regions
@@ -580,6 +583,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     }
                 });
         }
+        */
 
         let creatingLine = null;
         if (this.currentCursorPos && (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) && this.creatingRegion.isValid) {
@@ -629,8 +633,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     y={0}
                 >
                     <Layer>
-                        {/*<RegionComponents width={this.props.width} height={this.props.height} frame={frame} />*/}
-                        {regionComponents}
+                        {<RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} />}
+                        {/*regionComponents*/}
                     </Layer>
                     <Layer>
                         {this.props.cursorFrozen && <CursorLayerComponent width={this.props.width} height={this.props.height} frame={frame} cursorPoint={frame.cursorInfo.posImageSpace}/>}
@@ -642,13 +646,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 }
 
-/*
-const RegionComponents: React.FC<{frame: FrameStore; width: number; height: number}> = props => {
-    const frame = props.frame;
-    const width = props.width;
-    const height = props.height;
-
-    const handleRegionDoubleClicked = (region: RegionStore) => {
+class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number}> {
+    private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
         if (region) {
             const frame = appStore.getFrame(region.fileId);
@@ -659,62 +658,40 @@ const RegionComponents: React.FC<{frame: FrameStore; width: number; height: numb
         }
     };
 
-    let regionComponents = null;
-    if (frame?.regionSet?.regions?.length) {
-        const regionSet = frame.regionSet;
-        regionComponents = regionSet.regions
-            .filter(r => r.isValid && r.regionId !== 0)
-            .sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1))
-            .map(r => {
-                if (r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE) {
-                    return (
-                        <LineSegmentRegionComponent
-                            key={r.regionId}
-                            region={r}
-                            frame={frame}
-                            layerWidth={width}
-                            layerHeight={height}
-                            selected={r === regionSet.selectedRegion}
-                            onSelect={regionSet.selectRegion}
-                            onDoubleClick={handleRegionDoubleClicked}
-                            listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
-                            isRegionCornerMode={AppStore.Instance.preferenceStore.isRegionCornerMode}
-                        />
-                    );
-                } else if (r.regionType === CARTA.RegionType.POINT) {
-                    return (
-                        <PointRegionComponent
-                            key={r.regionId}
-                            region={r}
-                            frame={frame}
-                            layerWidth={width}
-                            layerHeight={height}
-                            selected={r === regionSet.selectedRegion}
-                            onSelect={regionSet.selectRegion}
-                            onDoubleClick={handleRegionDoubleClicked}
-                        />
-                    );
+    public render() {
+        console.log("render RegionComponents");
+
+        const regions = this.props.regions;
+        if (regions?.length) {
+            const regionSet = this.props.frame?.regionSet;
+            return regions.map(r => {
+                const commonProps = {
+                    key: r.regionId,
+                    region: r,
+                    frame: this.props.frame,
+                    layerWidth: this.props.width,
+                    layerHeight: this.props.height,
+                    selected: r === regionSet.selectedRegion,
+                    onSelect: regionSet.selectRegion,
+                    onDoubleClick: this.handleRegionDoubleClicked
+                };
+
+                if (r.regionType === CARTA.RegionType.POINT) {
+                    return <PointRegionComponent {...commonProps} />;
                 } else {
-                    return (
-                        <SimpleShapeRegionComponent
-                            key={r.regionId}
-                            region={r}
-                            frame={frame}
-                            layerWidth={width}
-                            layerHeight={height}
-                            selected={r === regionSet.selectedRegion}
-                            onSelect={regionSet.selectRegion}
-                            onDoubleClick={handleRegionDoubleClicked}
-                            listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
-                            isRegionCornerMode={AppStore.Instance.preferenceStore.isRegionCornerMode}
-                        />
-                    );
+                    const otherProps = {
+                        listening: regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring,
+                        isRegionCornerMode: AppStore.Instance.preferenceStore.isRegionCornerMode
+                    };
+                    return r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE ?
+                        <LineSegmentRegionComponent {...commonProps} {...otherProps} /> :
+                        <SimpleShapeRegionComponent {...commonProps} {...otherProps} />;
                 }
             });
+        }
+        return null;
     }
-    return <React.Fragment>{regionComponents}</React.Fragment>;;
 };
-*/
 
 const CursorLayerComponent: React.FC<{width: number; height: number; frame: FrameStore; cursorPoint: Point2D}> = props => {
     const frame = props.frame;

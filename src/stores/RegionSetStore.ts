@@ -1,4 +1,4 @@
-import {action, observable, makeObservable} from "mobx";
+import {action, computed, observable, makeObservable} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {CURSOR_REGION_ID, FrameStore, PreferenceStore, RegionStore} from "stores";
@@ -52,6 +52,10 @@ export class RegionSetStore {
         }
         return regionId;
     };
+
+    @computed get regionsForRender(): RegionStore[] {
+        return this.regions?.filter(r => r.isValid && r.regionId !== 0)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
+    }
 
     @action addPointRegion = (center: Point2D, cursorRegion = false) => {
         return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
