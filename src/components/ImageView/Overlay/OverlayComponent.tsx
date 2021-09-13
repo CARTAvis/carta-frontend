@@ -157,6 +157,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 `${frame.spectralType ? `System(2)=${frame.spectralType},` : ""}` +
                     `${frame.spectralUnit ? `Unit(2)=${frame.spectralUnit},` : ""}` +
                     `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
+                    `${frame.customRestFreq ? `RestFreq=${frame.customRestFreq} Hz,` : ""}` +
                     `${frame.spectralType && frame.spectralSystem ? `Label(2)=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
         }
