@@ -3,6 +3,7 @@ import {v1 as uuidv1} from "uuid";
 import axios, {AxiosInstance} from "axios";
 import {openDB, DBSchema, IDBPDatabase} from "idb";
 import {PreferenceKeys, PreferenceStore} from "stores";
+import {CARTA_INFO} from "models";
 import {getUnixTimestamp} from "utilities";
 
 export enum TelemetryMode {
@@ -24,6 +25,7 @@ export interface TelemetryMessage {
     sessionId: string;
     usageEntry?: boolean;
     action: TelemetryAction;
+    version: string
     details?: any;
 }
 
@@ -92,8 +94,10 @@ export class TelemetryService {
         await preferences.setPreference(PreferenceKeys.TELEMETRY_CONSENT_SHOWN, true);
         await preferences.setPreference(PreferenceKeys.TELEMETRY_MODE, mode);
 
-        const entry = {
+        const entry: TelemetryMessage = {
             timestamp: getUnixTimestamp(),
+            sessionId: this.sessionId,
+            version: CARTA_INFO.version,
             action: TelemetryAction.OptIn
         };
         await this.axiosInstance.post("/submit", [entry]);
@@ -104,8 +108,10 @@ export class TelemetryService {
         await preferences.setPreference(PreferenceKeys.TELEMETRY_CONSENT_SHOWN, true);
         await preferences.setPreference(PreferenceKeys.TELEMETRY_MODE, TelemetryMode.None);
 
-        const entry = {
+        const entry: TelemetryMessage = {
             timestamp: getUnixTimestamp(),
+            sessionId: this.sessionId,
+            version: CARTA_INFO.version,
             action: TelemetryAction.OptOut
         };
         await this.axiosInstance.post("/submit", [entry]);
@@ -172,6 +178,7 @@ export class TelemetryService {
             const telemetryMessage: TelemetryMessage = {
                 timestamp,
                 sessionId: this.sessionId,
+                version: CARTA_INFO.version,
                 action,
                 details,
                 usageEntry: isUsageEntry
