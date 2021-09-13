@@ -822,11 +822,11 @@ export class WidgetsStore {
         }
     };
 
-    @action onImagePanelButtonClick = () => {
+    onImagePanelButtonClick = () => {
         this.setImageMultiPanelEnabled(!PreferenceStore.Instance.imageMultiPanelEnabled);
     };
 
-    @action setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
+    setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
         PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
         this.updateImagePanelButton(AppStore.Instance.imagePanelMode);
     };
@@ -847,7 +847,7 @@ export class WidgetsStore {
         return imagePanelMode === ImagePanelMode.None ? "bp3-icon-square" : "bp3-icon-grid-view";
     };
 
-    @action onNextPageClick = () => {
+    onNextPageClick = () => {
         const appStore = AppStore.Instance;
         const firstIndexInNextPage = (appStore.currentImagePage + 1) * appStore.imagesPerPage;
         if (appStore.frames?.length > firstIndexInNextPage) {
@@ -855,7 +855,7 @@ export class WidgetsStore {
         }
     };
 
-    @action onPreviousPageClick = () => {
+    onPreviousPageClick = () => {
         const appStore = AppStore.Instance;
         if (appStore.currentImagePage > 0) {
             const firstIndexInPreviousPage = (appStore.currentImagePage - 1) * appStore.imagesPerPage;
