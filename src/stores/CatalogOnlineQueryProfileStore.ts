@@ -4,7 +4,7 @@ import {ControlHeader} from "stores";
 import {AbstractCatalogProfileStore, CatalogType, CatalogInfo, ProcessedColumnData} from "models";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
-    private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode"];
+    private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode", "dist", "otype_txt"];
 
     @observable catalogInfo: CatalogInfo;
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;

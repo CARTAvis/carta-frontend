@@ -2,7 +2,7 @@ import * as React from "react";
 import axios, {CancelTokenSource} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, PopoverPosition, Spinner} from "@blueprintjs/core";
+import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, PopoverPosition, Spinner, Icon} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {IItemRendererProps, Select} from "@blueprintjs/select";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogDatabase, HelpType, RadiusUnits} from "stores";
@@ -33,6 +33,7 @@ export class CatalogQueryDialogComponent extends React.Component {
     }
 
     @action setResultSize(resultSize: number) {
+        console.log(resultSize)
         this.resultSize = resultSize;
     }
 
@@ -91,11 +92,12 @@ export class CatalogQueryDialogComponent extends React.Component {
         }
 
         const disable = configStore.isQuerying || configStore.isObjectQuerying;
-        const objectButton = (
-            <Tooltip2 content="Reset center coordinates by object" disabled={disable}>
-                <Button disabled={disable || configStore.disableObjectSearch} icon={"bring-data"} intent={Intent.NONE} minimal={true} onClick={this.handleObjectUpdate} />
-            </Tooltip2>
-        );
+        let sourceIndicater;
+        if (this.objectSize === 0) {
+            sourceIndicater = <Icon icon="cross" intent="warning" iconSize={30} />;
+        } else {
+            sourceIndicater = <Icon icon="tick" intent="success" iconSize={30} />;
+        }
         const configBoard = (
             <div className="online-catalog-config">
                 <FormGroup inline={false} label="Database" disabled={disable}>
@@ -113,7 +115,10 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </Select>
                 </FormGroup>
                 <FormGroup inline={false} label="Object" disabled={disable}>
-                    <InputGroup asyncControl={false} disabled={disable} rightElement={objectButton} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
+                    <InputGroup asyncControl={false} disabled={disable} rightElement={this.objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
+                    <Tooltip2 content="Reset center coordinates by object" disabled={disable}>
+                        <Button disabled={disable || configStore.disableObjectSearch} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
+                    </Tooltip2>
                 </FormGroup>
                 <FormGroup inline={false} label="Search Radius" disabled={disable}>
                     <Tooltip2 content={`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable}>
@@ -224,7 +229,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
         const baseUrl = CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).prefix;
-        const query = `SELECT Top ${configStore.maxObject} * FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${configStore.centerCoord.x},${configStore.centerCoord.y},${configStore.radiusInDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL`;
+        const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${configStore.centerCoord.x},${configStore.centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${configStore.centerCoord.x},${configStore.centerCoord.y},${configStore.radiusInDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
         configStore.setQueryStatus(true);
         AppStore.Instance.appendOnlineCatalog(baseUrl, query, this.cancelTokenSource)
             .then(dataSize => {
