@@ -58,6 +58,10 @@ export class RestFreqDialogComponent extends React.Component {
         return !isFinite(this.restFreq);
     }
 
+    @computed private get defaultInfo(): string {
+        return isFinite(this.defaultRestFreq) ? `Header: ${this.defaultRestFreq} ${this.defaultUnit}` : undefined;
+    }
+
     private convertUnit = (restFreq: number) => {
         if (restFreq >= 1e9) {
             return {value: restFreq / 1e9, unit: FrequencyUnit.GHZ};
@@ -127,9 +131,11 @@ export class RestFreqDialogComponent extends React.Component {
                                     value={this.restFreq}
                                     placeholder="rest frequency"
                                     selectAllOnFocus={true}
-                                    buttonPosition={"none"}
                                     onValueChanged={this.setRestFreq}
                                     onValueCleared={this.restoreDefaults}
+                                    resetDisabled={!isFinite(this.defaultRestFreq)}
+                                    tooltipContent={this.defaultInfo}
+                                    tooltipPlacement={"bottom"}
                                 />
                                 <HTMLSelect options={Object.values(FrequencyUnit)} value={this.unit} onChange={ev => this.setUnit(ev.currentTarget.value as FrequencyUnit)} />
                             </div>
