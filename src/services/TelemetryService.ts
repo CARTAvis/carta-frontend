@@ -1,6 +1,7 @@
+import jwt_decode from "jwt-decode";
+import axios, {AxiosInstance} from "axios";
 import {computed} from "mobx";
 import {v1 as uuidv1} from "uuid";
-import axios, {AxiosInstance} from "axios";
 import {openDB, DBSchema, IDBPDatabase} from "idb";
 import {PreferenceKeys, PreferenceStore} from "stores";
 import {CARTA_INFO} from "models";
@@ -14,6 +15,7 @@ export enum TelemetryMode {
 
 export enum TelemetryAction {
     Connection = "connection",
+    EndSession = "endSession",
     OptIn = "optIn",
     OptOut = "optOut",
     FileOpen = "fileOpen",
@@ -22,10 +24,11 @@ export enum TelemetryAction {
 
 export interface TelemetryMessage {
     timestamp: number;
+    id: string;
     sessionId: string;
     usageEntry?: boolean;
     action: TelemetryAction;
-    version: string
+    version: string;
     details?: any;
 }
 
@@ -38,7 +41,8 @@ interface TelemetryDb extends DBSchema {
 
 export class TelemetryService {
     private static staticInstance: TelemetryService;
-    private static readonly ServerUrl = "https://telemetry.cartavis.org/api";
+    // private static readonly ServerUrl = "https://telemetry.cartavis.org/api";
+    private static readonly ServerUrl = "https://www.veggiesaurus.net/telemetry";
     private static readonly SubmissionIntervalSeconds = 300;
     private static readonly EntryLimit = 1000;
     private static readonly DbName = "telemetry";
@@ -60,6 +64,7 @@ export class TelemetryService {
     }
 
     private readonly sessionId: string;
+    private uuid: string;
     private readonly axiosInstance: AxiosInstance;
     private db: IDBPDatabase<TelemetryDb>;
 
@@ -70,7 +75,9 @@ export class TelemetryService {
         this.sessionId = uuidv1();
 
         // Submit accumulated telemetry every 5 minutes, and when the user closes the frontend
+
         window.onbeforeunload = ev => {
+            //await this.addTelemetryEntry(TelemetryAction.EndSession);
             this.flushTelemetry();
             ev.preventDefault();
         };
@@ -80,13 +87,43 @@ export class TelemetryService {
 
     async checkAndGenerateId(forceNewId: boolean = false) {
         const preferences = PreferenceStore.Instance;
-        if (!preferences.telemetryUuid || forceNewId) {
-            const telemetryId = uuidv1();
-            await preferences.setPreference(PreferenceKeys.TELEMETRY_UUID, telemetryId);
-            console.log(`Generated new telemetry ID ${telemetryId}. This will only be used if telemetry consent is given.`);
-            await this.clearTelemetry();
+        let token = preferences.telemetryUuid;
+
+        if (!token || forceNewId) {
+            try {
+                const res = await this.axiosInstance.get("/token");
+                token = res.data?.token;
+                const decodedObject = jwt_decode(token) as any;
+                if (decodedObject?.uuid) {
+                    await preferences.setPreference(PreferenceKeys.TELEMETRY_UUID, token);
+                    console.log(`Generated new telemetry ID ${decodedObject.uuid}. This will only be used if telemetry consent is given.`);
+                    if (forceNewId) {
+                        await this.clearTelemetry();
+                    }
+                }
+            } catch (err) {
+                console.warn("Could not generate telemetry UUID");
+                return false;
+            }
         }
-        this.axiosInstance.defaults.headers.common["telemetry-uuid"] = preferences.telemetryUuid;
+
+        if (!token) {
+            console.warn("Could not generate telemetry UUID");
+            return false;
+        }
+
+        try {
+            const decodedObject: {uuid?: string} = jwt_decode(token);
+            if (decodedObject?.uuid) {
+                this.uuid = decodedObject.uuid;
+            }
+        } catch (err) {
+            console.warn("Malformed telemetry token");
+            return false;
+        }
+
+        this.axiosInstance.defaults.headers.common = {Authorization: `Bearer ${token}`};
+        return true;
     }
 
     async optIn(mode: TelemetryMode) {
@@ -96,6 +133,7 @@ export class TelemetryService {
 
         const entry: TelemetryMessage = {
             timestamp: getUnixTimestamp(),
+            id: uuidv1(),
             sessionId: this.sessionId,
             version: CARTA_INFO.version,
             action: TelemetryAction.OptIn
@@ -109,6 +147,7 @@ export class TelemetryService {
         await preferences.setPreference(PreferenceKeys.TELEMETRY_MODE, TelemetryMode.None);
 
         const entry: TelemetryMessage = {
+            id: uuidv1(),
             timestamp: getUnixTimestamp(),
             sessionId: this.sessionId,
             version: CARTA_INFO.version,
@@ -128,10 +167,15 @@ export class TelemetryService {
             const db = await this.getDb();
             const entries = await db.getAll(TelemetryService.StoreName);
 
+            if (!entries?.length) {
+                return;
+            }
+
             try {
                 const res = await this.axiosInstance.post("/submit", entries);
                 if (res.status === 200) {
                     await this.clearTelemetry();
+                    console.debug(`Submitted ${entries.length} telemetry entries`);
                 }
             } catch (err) {
                 console.warn(err);
@@ -167,15 +211,16 @@ export class TelemetryService {
 
     async addTelemetryEntry(action: TelemetryAction, details?: object) {
         // All other actions are considered usage stats
-        const isUsageEntry = !(action === TelemetryAction.Connection);
+        const isUsageEntry = !(action === TelemetryAction.Connection || action === TelemetryAction.EndSession);
         const preferences = PreferenceStore.Instance;
         const loggingEnabled = preferences.telemetryLogging;
-        const loggingPrefix = `[Telemetry] [uuid=${preferences.telemetryUuid}, sessionId=${this.sessionId}]`;
+        const loggingPrefix = `[Telemetry] [uuid=${this.uuid}, sessionId=${this.sessionId}]`;
         const timestamp = getUnixTimestamp();
 
         const entryAllowed = this.effectiveTelemetryMode === TelemetryMode.Usage || (!isUsageEntry && this.effectiveTelemetryMode === TelemetryMode.Minimal);
         if (entryAllowed) {
             const telemetryMessage: TelemetryMessage = {
+                id: uuidv1(),
                 timestamp,
                 sessionId: this.sessionId,
                 version: CARTA_INFO.version,
