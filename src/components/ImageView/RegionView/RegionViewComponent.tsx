@@ -29,7 +29,7 @@ export interface RegionViewComponentProps {
     stageOrigin: Point2D;
     getStageRef: (ref) => void;
     onMoveStageOrigin: (newOrigin: Point2D) => void;
-    onClicked?: (cursorInfo: CursorInfo) => void;
+    onClickToCenter: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
@@ -415,9 +415,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             frame.regionSet.deselectRegion();
         }
 
-        if (frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
+        if (frame.wcsInfo && this.props.onClickToCenter && (!this.props.dragPanningEnabled || isSecondaryClick)) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
-            this.props.onClicked(frame.getCursorInfo(cursorPosImageSpace));
+            this.props.onClickToCenter(frame.getCursorInfo(cursorPosImageSpace));
 
             // Move stage origin according to center moving track
             const centerOffset = subtract2D({x: mouseEvent.offsetX, y: mouseEvent.offsetY}, {x: this.props.width / 2, y: this.props.height / 2});

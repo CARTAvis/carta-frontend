@@ -48,7 +48,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         this.regionViewStageRef = ref;
     };
 
-    onClicked = (cursorInfo: CursorInfo) => {
+    onClickToCenter = (cursorInfo: CursorInfo) => {
         this.props.frame?.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
     };
 
@@ -186,7 +186,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             stageOrigin={this.regionViewStageOrigin}
                             getStageRef={this.getRegionViewStageRef}
                             onMoveStageOrigin={this.moveRegionViewStageOrigin}
-                            onClicked={this.onClicked}
+                            onClickToCenter={this.onClickToCenter}
                             onZoomed={this.onZoomed}
                             overlaySettings={overlayStore}
                             dragPanningEnabled={appStore.preferenceStore.dragPanning}
