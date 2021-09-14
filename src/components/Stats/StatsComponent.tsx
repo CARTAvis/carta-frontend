@@ -165,6 +165,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 } else if (type === CARTA.StatsType.FluxDensity) {
                     if (unit === "Jy/beam") {
                         unitString = "Jy";
+                    } else if (unit === "Jy/beam.km/s") {
+                        unitString = "Jy.km/s";
                     }
                 } else {
                     unitString = unit;
