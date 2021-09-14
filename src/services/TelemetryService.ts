@@ -41,8 +41,9 @@ interface TelemetryDb extends DBSchema {
 
 export class TelemetryService {
     private static staticInstance: TelemetryService;
-    // private static readonly ServerUrl = "https://telemetry.cartavis.org/api";
-    private static readonly ServerUrl = "https://www.veggiesaurus.net/telemetry";
+
+    // public static readonly ServerUrl = "https://telemetry.cartavis.org";
+    public static readonly ServerUrl = "https://www.veggiesaurus.net/telemetry";
     private static readonly SubmissionIntervalSeconds = 300;
     private static readonly EntryLimit = 1000;
     private static readonly DbName = "telemetry";
@@ -90,7 +91,7 @@ export class TelemetryService {
 
         if (!token || forceNewId) {
             try {
-                const res = await this.axiosInstance.get("/token");
+                const res = await this.axiosInstance.get("/api/token");
                 token = res.data?.token;
                 const decodedObject = jwt_decode(token) as any;
                 if (decodedObject?.uuid) {
@@ -139,7 +140,7 @@ export class TelemetryService {
         };
 
         try {
-            await this.axiosInstance.post("/submit", [entry]);
+            await this.axiosInstance.post("/api/submit", [entry]);
         } catch (err) {
             console.log("Telemetry server unavailable");
         }
@@ -159,7 +160,7 @@ export class TelemetryService {
         };
 
         try {
-            await this.axiosInstance.post("/submit", [entry]);
+            await this.axiosInstance.post("/api/submit", [entry]);
         } catch (err) {
             console.log("Telemetry server unavailable");
         }
@@ -198,7 +199,7 @@ export class TelemetryService {
             }
 
             try {
-                const res = await this.axiosInstance.post("/submit", entries);
+                const res = await this.axiosInstance.post("/api/submit", entries);
                 if (res.status === 200) {
                     await this.clearTelemetry();
                     console.debug(`Submitted ${entries.length} telemetry entries`);
