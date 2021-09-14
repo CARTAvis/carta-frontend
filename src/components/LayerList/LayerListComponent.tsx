@@ -8,6 +8,7 @@ import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} fr
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
 import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore, FrameStore} from "stores";
+import {SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING} from "models";
 import "./LayerListComponent.scss";
 
 @observer
@@ -314,6 +315,11 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
                         <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
                         <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
+                        <MenuItem text="Spectral matching type">
+                            {SPECTRAL_MATCHING_TYPES.map(type => (
+                                <MenuItem key={type} icon={appStore.preferenceStore.spectralMatchingType === type ? "small-tick" : "blank"} text={SPECTRAL_TYPE_STRING.get(type)} onClick={() => appStore.setSpectralMatchingType(type)} />
+                            ))}
+                        </MenuItem>
                         <MenuDivider />
                         <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)} />
                         <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />
