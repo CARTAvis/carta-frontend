@@ -42,6 +42,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @observable creatingRegion: RegionStore;
     @observable currentCursorPos: Point2D;
 
+    private stageRef;
     private regionStartPoint: Point2D;
     private mousePreviousClick: Point2D = {x: -1000, y: -1000};
     private mouseClickDistance: number = 0;
@@ -56,6 +57,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         super(props);
         makeObservable(this);
     }
+
+    private getStageRef = (ref) => {
+        this.stageRef = ref;
+        this.props.getStageRef(ref);
+    };
 
     updateCursorPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
@@ -412,6 +418,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             this.props.onClicked(frame.getCursorInfo(cursorPosImageSpace));
+
+            // Move stage origin according to center moving track
+            const centerOffset = subtract2D({x: mouseEvent.offsetX, y: mouseEvent.offsetY}, {x: this.props.width / 2, y: this.props.height / 2});
+            const newStageOrigin = subtract2D(this.stageRef.getPosition(), centerOffset);
+            this.props.onMoveStageOrigin(newStageOrigin);
+            this.stageRef.x(newStageOrigin.x);
+            this.stageRef.y(newStageOrigin.y);
         }
     };
 
@@ -617,7 +630,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         return (
             <div onKeyDown={this.onKeyDown} tabIndex={0}>
                 <Stage
-                    ref={this.props.getStageRef}
+                    ref={this.getStageRef}
                     className={className}
                     width={this.props.width}
                     height={this.props.height}

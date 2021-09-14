@@ -49,10 +49,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     };
 
     onClicked = (cursorInfo: CursorInfo) => {
-        const frame = this.props.frame;
-        if (frame) {
-            frame.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
-        }
+        this.props.frame?.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
     };
 
     onZoomed = (cursorInfo: CursorInfo, delta: number) => {
