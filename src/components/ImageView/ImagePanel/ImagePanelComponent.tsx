@@ -12,7 +12,7 @@ import {RegionViewComponent} from "../RegionView/RegionViewComponent";
 import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
-import {AppStore, RegionStore, FrameStore} from "stores";
+import {AppStore, FrameStore} from "stores";
 import {CursorInfo, CursorInfoVisibility, Point2D} from "models";
 import "./ImagePanelComponent.scss";
 
@@ -103,17 +103,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         if (this.props.frame !== appStore.activeFrame) {
             appStore.setActiveFrame(this.props.frame);
             ev.stopPropagation();
-        }
-    };
-
-    private handleRegionDoubleClicked = (region: RegionStore) => {
-        const appStore = AppStore.Instance;
-        if (region) {
-            const frame = appStore.getFrame(region.fileId);
-            if (frame) {
-                frame.regionSet.selectRegion(region);
-                appStore.dialogStore.showRegionDialog();
-            }
         }
     };
 
