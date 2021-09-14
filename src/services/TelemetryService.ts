@@ -77,8 +77,7 @@ export class TelemetryService {
         // Submit accumulated telemetry every 5 minutes, and when the user closes the frontend
 
         window.onbeforeunload = ev => {
-            //await this.addTelemetryEntry(TelemetryAction.EndSession);
-            this.flushTelemetry();
+            this.flushTelemetry(true);
             ev.preventDefault();
         };
 
@@ -138,7 +137,12 @@ export class TelemetryService {
             version: CARTA_INFO.version,
             action: TelemetryAction.OptIn
         };
-        await this.axiosInstance.post("/submit", [entry]);
+
+        try {
+            await this.axiosInstance.post("/submit", [entry]);
+        } catch (err) {
+            console.log("Telemetry server unavailable");
+        }
     }
 
     async optOut() {
@@ -153,19 +157,41 @@ export class TelemetryService {
             version: CARTA_INFO.version,
             action: TelemetryAction.OptOut
         };
-        await this.axiosInstance.post("/submit", [entry]);
+
+        try {
+            await this.axiosInstance.post("/submit", [entry]);
+        } catch (err) {
+            console.log("Telemetry server unavailable");
+        }
     }
 
-    flushTelemetry = async () => {
+    flushTelemetry = async (includeEndSession: boolean = false) => {
         if (this.effectiveTelemetryMode !== TelemetryMode.None) {
             if (this.effectiveTelemetryMode === TelemetryMode.Minimal) {
                 // TODO: Filter DB entries to remove usage stats if any exist in current DB
             }
 
-            // TODO: Ensure all entries have the current UUID
+            if (!this.uuid) {
+                await this.checkAndGenerateId();
+            }
 
             const db = await this.getDb();
-            const entries = await db.getAll(TelemetryService.StoreName);
+            const entries = (await db.getAll(TelemetryService.StoreName)) ?? [];
+
+            if (includeEndSession) {
+                const endSessionEntry: TelemetryMessage = {
+                    id: uuidv1(),
+                    timestamp: getUnixTimestamp(),
+                    sessionId: this.sessionId,
+                    version: CARTA_INFO.version,
+                    action: TelemetryAction.EndSession,
+                    usageEntry: false
+                };
+
+                entries.push(endSessionEntry);
+                // Add telemetry entry without waiting for the promise to return, to prevent it interrupting the window unload handler
+                this.addTelemetryEntry(TelemetryAction.EndSession, undefined, endSessionEntry.id);
+            }
 
             if (!entries?.length) {
                 return;
@@ -178,7 +204,7 @@ export class TelemetryService {
                     console.debug(`Submitted ${entries.length} telemetry entries`);
                 }
             } catch (err) {
-                console.warn(err);
+                console.debug("Telemetry server not available");
             }
         }
     };
@@ -209,7 +235,7 @@ export class TelemetryService {
         return this.addTelemetryEntry(TelemetryAction.FileClose, {id});
     }
 
-    async addTelemetryEntry(action: TelemetryAction, details?: object) {
+    async addTelemetryEntry(action: TelemetryAction, details?: object, id?: string) {
         // All other actions are considered usage stats
         const isUsageEntry = !(action === TelemetryAction.Connection || action === TelemetryAction.EndSession);
         const preferences = PreferenceStore.Instance;
@@ -220,7 +246,7 @@ export class TelemetryService {
         const entryAllowed = this.effectiveTelemetryMode === TelemetryMode.Usage || (!isUsageEntry && this.effectiveTelemetryMode === TelemetryMode.Minimal);
         if (entryAllowed) {
             const telemetryMessage: TelemetryMessage = {
-                id: uuidv1(),
+                id: id || uuidv1(),
                 timestamp,
                 sessionId: this.sessionId,
                 version: CARTA_INFO.version,
