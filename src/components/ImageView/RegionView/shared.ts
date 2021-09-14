@@ -37,8 +37,8 @@ export function transformedImageToCanvasPos(imageX: number, imageY: number, fram
     let imagePos = {x: imageX, y: imageY};
     if (frame.spatialReference) {
         imagePos = frame.spatialTransform.transformCoordinate(imagePos, true);
-        return imageToCanvasPos(imagePos.x, imagePos.y, frame.spatialReference.requiredFrameView, layerWidth, layerHeight, frame.spatialTransform);
+        return imageToCanvasPos(imagePos.x, imagePos.y, frame.spatialReference.requiredFrameViewForRegionRender, layerWidth, layerHeight, frame.spatialTransform);
     }
 
-    return imageToCanvasPos(imagePos.x, imagePos.y, frame.requiredFrameView, layerWidth, layerHeight, frame.spatialTransform);
+    return imageToCanvasPos(imagePos.x, imagePos.y, frame.requiredFrameViewForRegionRender, layerWidth, layerHeight, frame.spatialTransform);
 }

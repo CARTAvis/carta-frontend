@@ -64,6 +64,8 @@ export class FrameStore {
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
     private zoomTimeoutHandler;
 
+    public requiredFrameViewForRegionRender;
+
     public readonly wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
@@ -940,6 +942,14 @@ export class FrameStore {
         this.cursorInfo = this.getCursorInfo(this.center);
         this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
         this.cursorMoving = false;
+
+        // requiredFrameViewForRegionRender is a copy of requiredFrameView in non-observable version,
+        // to avoid triggering wasted render() in PointRegionComponent/SimpleShapeRegionComponent/LineSegmentRegionComponent
+        autorun(() => {
+            if (this.requiredFrameView) {
+                this.requiredFrameViewForRegionRender = this.requiredFrameView;
+            }
+        });
 
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing

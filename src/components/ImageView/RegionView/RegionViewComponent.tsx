@@ -44,14 +44,21 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private mouseClickDistance: number = 0;
     private dragPanning: boolean;
     private dragOffset: Point2D;
-    private initialDragPointCanvasSpace: Point2D;
+    private initialStagePosition: Point2D;
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
+    private stagePosition: {originX: number, originY: number, zoom: number};
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
+
+        this.stagePosition = {
+            originX: 0,
+            originY: 0,
+            zoom: 0
+        };
     }
 
     updateCursorPos = _.throttle((x: number, y: number) => {
@@ -263,11 +270,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (konvaEvent.target === konvaEvent.currentTarget) {
             if (this.props.dragPanningEnabled) {
                 this.dragPanning = true;
-
-                let cursorPoint = konvaEvent.target.getStage().getPointerPosition();
                 if (this.props.frame) {
                     const frame = this.props.frame.spatialReference || this.props.frame;
-                    this.initialDragPointCanvasSpace = cursorPoint;
+                    const stagePosition = konvaEvent.target.getStage().getPosition();
+                    this.initialStagePosition = stagePosition;
                     this.initialDragCenter = frame.center;
                     frame.startMoving();
                 }
@@ -278,7 +284,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     handleDragMove = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
-            let cursorPoint = konvaEvent.target.getStage().getPointerPosition();
             let isPanDrag = true;
             if (konvaEvent.evt.type === "touchmove") {
                 const touchEvent = konvaEvent.evt as unknown as TouchEvent;
@@ -296,10 +301,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
 
             if (isPanDrag) {
-                this.handlePan(cursorPoint);
+                const stagePosition = konvaEvent.target.getStage().getPosition();
+                this.handlePan(stagePosition);
             }
-            konvaEvent.target.x(0);
-            konvaEvent.target.y(0);
         }
     };
 
@@ -313,6 +317,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (frame) {
                 frame.endMoving();
             }
+            const stagePosition = konvaEvent.target.getStage().getPosition();
+            this.stagePosition.originX = stagePosition.x;
+            this.stagePosition.originY = stagePosition.y;
         }
         this.initialPinchDistance = -1;
         this.initialPinchZoom = -1;
@@ -343,9 +350,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    handlePan = (offset: Point2D) => {
+    handlePan = (currentStagePosition: Point2D) => {
         // ignore invalid offsets
-        if (!offset || !isFinite(offset.x) || !isFinite(offset.y)) {
+        if (!currentStagePosition || !isFinite(currentStagePosition.x) || !isFinite(currentStagePosition.y)) {
             return;
         }
         if (this.props.frame) {
@@ -353,7 +360,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (!this.dragOffset) {
                 this.dragOffset = {x: 0, y: 0};
             } else {
-                this.dragOffset = subtract2D(offset, this.initialDragPointCanvasSpace);
+                this.dragOffset = subtract2D(currentStagePosition, this.initialStagePosition);
                 const initialCenterCanvasSpace = imageToCanvasPos(this.initialDragCenter.x, this.initialDragCenter.y, frame.requiredFrameView, this.props.width, this.props.height);
                 const newCenterCanvasSpace = subtract2D(initialCenterCanvasSpace, this.dragOffset);
                 const newCenterImageSpace = canvasToImagePos(newCenterCanvasSpace.x, newCenterCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
@@ -633,7 +640,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     y={0}
                 >
                     <Layer>
-                        {<RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} />}
+                        {<RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stagePosition={this.stagePosition}/>}
                         {/*regionComponents*/}
                     </Layer>
                     <Layer>
@@ -646,7 +653,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 }
 
-class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number}> {
+class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number; stagePosition: any}> {
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
         if (region) {
@@ -669,6 +676,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                     frame: this.props.frame,
                     layerWidth: this.props.width,
                     layerHeight: this.props.height,
+                    stagePosition: this.props.stagePosition,
                     selected: r === regionSet.selectedRegion,
                     onSelect: regionSet.selectRegion,
                     onDoubleClick: this.handleRegionDoubleClicked

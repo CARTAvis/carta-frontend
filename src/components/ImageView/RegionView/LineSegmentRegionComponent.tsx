@@ -18,6 +18,7 @@ export interface LineSegmentRegionComponentProps {
     listening: boolean;
     selected: boolean;
     isRegionCornerMode: boolean;
+    stagePosition: any; // TODO: add type
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }

@@ -13,6 +13,7 @@ export interface PointRegionComponentProps {
     layerWidth: number;
     layerHeight: number;
     selected: boolean;
+    stagePosition: any; // TODO: add type
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
@@ -55,7 +56,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             const node = konvaEvent.target;
             const region = this.props.region;
             const frame = this.props.frame;
-            let positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+            let positionImageSpace = canvasToTransformedImagePos(node.position().x + this.props.stagePosition.originX, node.position().y + this.props.stagePosition.originY, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
@@ -79,6 +80,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             centerPixelSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = 0;
         }
+        centerPixelSpace = {x: centerPixelSpace.x - this.props.stagePosition.originX, y: centerPixelSpace.y - this.props.stagePosition.originY};
 
         return (
             <Group>
