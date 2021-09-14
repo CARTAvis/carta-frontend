@@ -11,6 +11,9 @@ import {ClearableNumericInputComponent, SafeNumericInput} from "components/Share
 import {CatalogSystemType} from "models";
 import "./CatalogOnlineQueryDialogComponent.scss";
 import {ApiService} from "services";
+import {clamp} from "utilities";
+
+const KEYCODE_ENTER = 13;
 
 @observer
 export class CatalogQueryDialogComponent extends React.Component {
@@ -116,20 +119,20 @@ export class CatalogQueryDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={false} label="Object" disabled={disable}>
                     <InputGroup asyncControl={false} disabled={disable} rightElement={this.objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
-                    <Tooltip2 content="Reset center coordinates by object" disabled={disable}>
+                    <Tooltip2 content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch}>
                         <Button disabled={disable || configStore.disableObjectSearch} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
                     </Tooltip2>
                 </FormGroup>
                 <FormGroup inline={false} label="Search Radius" disabled={disable}>
                     <Tooltip2 content={`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable}>
                         <SafeNumericInput
+                            asyncControl={true}
                             disabled={disable}
-                            min={0}
-                            max={configStore.maxRadius}
-                            clampValueOnBlur={true}
+                            buttonPosition={"none"}
                             value={configStore.searchRadius}
-                            stepSize={0.5}
                             onValueChange={(value: number) => configStore.setSearchRadius(value)}
+                            onBlur={ev => this.handleRadiusChange(ev)}
+                            onKeyDown={ev => this.handleRadiusChange(ev)}
                         />
                     </Tooltip2>
                     <Select
@@ -146,7 +149,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </Select>
                     <Tooltip2 content="Reset Center Coordinates and Search Radius according current image viewer" disabled={disable}>
                         <Button disabled={disable} onClick={() => configStore.resetSearchRadius()}>
-                            Set to Image
+                            Set to viewer
                         </Button>
                     </Tooltip2>
                 </FormGroup>
@@ -229,7 +232,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
         const baseUrl = CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).prefix;
-        const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${configStore.centerCoord.x},${configStore.centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${configStore.centerCoord.x},${configStore.centerCoord.y},${configStore.radiusInDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
+        const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${configStore.centerCoord.x},${configStore.centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${configStore.centerCoord.x},${configStore.centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
         configStore.setQueryStatus(true);
         AppStore.Instance.appendOnlineCatalog(baseUrl, query, this.cancelTokenSource)
             .then(dataSize => {
@@ -306,5 +309,18 @@ export class CatalogQueryDialogComponent extends React.Component {
 
     private renderSysTypePopOver = (type: CatalogSystemType, itemProps: IItemRendererProps) => {
         return <MenuItem key={type} text={type} onClick={itemProps.handleClick} />;
+    };
+
+    private handleRadiusChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+        const val = parseFloat(ev.currentTarget.value);
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        if (isFinite(val) && val <= configStore.maxRadius && val >= 0) {
+            configStore.setSearchRadius(val);
+        } else {
+            ev.currentTarget.value = clamp(val, 0, configStore.maxRadius).toString();
+        }
     };
 }

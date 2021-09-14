@@ -123,6 +123,17 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     @action setRadiusUnits(units: RadiusUnits) {
+        switch (units) {
+            case RadiusUnits.ARCMINUTES:
+                this.setSearchRadius(this.radiusAsArcm);
+                break;
+            case RadiusUnits.ARCSECONDS:
+                this.setSearchRadius(this.radiusAsArcs);
+                break;
+            default:
+                this.setSearchRadius(this.radiusAsDeg);
+                break;
+        }
         this.radiusUnits = units;
     }
 
@@ -138,19 +149,49 @@ export class CatalogOnlineQueryConfigStore {
         this.isObjectQuerying = isQuerying;
     }
 
-    @computed get radiusInDeg(): number {
-        let radiusIndeg = this.searchRadius;
+    @computed get radiusAsDeg(): number {
+        let radius = this.searchRadius;
         switch (this.radiusUnits) {
             case RadiusUnits.ARCMINUTES:
-                radiusIndeg = radiusIndeg * (1 / 60);
+                radius = radius * (1 / 60);
                 break;
             case RadiusUnits.ARCSECONDS:
-                radiusIndeg = radiusIndeg * (1 / 3600);
+                radius = radius * (1 / 3600);
                 break;
             default:
                 break;
         }
-        return radiusIndeg;
+        return Number(radius.toPrecision(6));
+    }
+
+    @computed get radiusAsArcm(): number {
+        let radius = this.searchRadius;
+        switch (this.radiusUnits) {
+            case RadiusUnits.DEGREES:
+                radius = radius * 60;
+                break;
+            case RadiusUnits.ARCSECONDS:
+                radius = radius * (1 / 60);
+                break;
+            default:
+                break;
+        }
+        return Number(radius.toPrecision(6));
+    }
+
+    @computed get radiusAsArcs(): number {
+        let radius = this.searchRadius;
+        switch (this.radiusUnits) {
+            case RadiusUnits.ARCMINUTES:
+                radius = radius * 60;
+                break;
+            case RadiusUnits.DEGREES:
+                radius = radius * 3600;
+                break;
+            default:
+                break;
+        }
+        return Number(radius.toPrecision(6));
     }
 
     // SIMBAD radius range 0 - 90 degrees
@@ -187,8 +228,18 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     @action resetSearchRadius() {
-        this.setSearchRadius(this.searchRadiusInDegree);
-        this.setRadiusUnits(RadiusUnits.DEGREES);
+        let radius = this.searchRadiusInDegree;
+        switch (this.radiusUnits) {
+            case RadiusUnits.ARCMINUTES:
+                radius = radius * 60;
+                break;
+            case RadiusUnits.ARCSECONDS:
+                radius = radius * 3600;
+                break;
+            default:
+                break;
+        }
+        this.setSearchRadius(radius);
         this.setFrameCenter();
     }
 
