@@ -15,8 +15,9 @@ export class ToolbarComponentProps {
     docked: boolean;
     visible: boolean;
     frame: FrameStore;
-    onActiveLayerChange: (layer: ImageViewLayer) => void;
     activeLayer: ImageViewLayer;
+    onActiveLayerChange: (layer: ImageViewLayer) => void;
+    resetRegionViewStageOrigin: () => void;
 }
 
 @observer
@@ -38,6 +39,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.Ecliptic, "Ecliptic coordinates"],
         [SystemType.ICRS, "International Celestial Reference System"]
     ]);
+
+    handleZoomToFitClicked = () =>{
+        this.props.frame?.fitZoom();
+        this.props.resetRegionViewStageOrigin();
+    };
 
     handleZoomToActualSizeClicked = () => {
         this.props.frame.setZoom(1.0);
@@ -269,7 +275,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             </AnchorButton>
                         </Tooltip2>
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
-                            <AnchorButton icon="zoom-to-fit" onClick={frame.fitZoom} />
+                            <AnchorButton icon="zoom-to-fit" onClick={this.handleZoomToFitClicked} />
                         </Tooltip2>
                         <Tooltip2
                             position={tooltipPosition}

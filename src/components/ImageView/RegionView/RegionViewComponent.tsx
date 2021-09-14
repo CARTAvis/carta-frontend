@@ -26,6 +26,9 @@ export interface RegionViewComponentProps {
     left: number;
     top: number;
     cursorFrozen: boolean;
+    stageOrigin: Point2D;
+    getStageRef: (ref) => void;
+    onMoveStageOrigin: (newOrigin: Point2D) => void;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
@@ -48,17 +51,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
-    private stagePosition: {originX: number, originY: number, zoom: number};
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
-
-        this.stagePosition = {
-            originX: 0,
-            originY: 0,
-            zoom: 0
-        };
     }
 
     updateCursorPos = _.throttle((x: number, y: number) => {
@@ -318,8 +314,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 frame.endMoving();
             }
             const stagePosition = konvaEvent.target.getStage().getPosition();
-            this.stagePosition.originX = stagePosition.x;
-            this.stagePosition.originY = stagePosition.y;
+            this.props.onMoveStageOrigin(stagePosition);
         }
         this.initialPinchDistance = -1;
         this.initialPinchZoom = -1;
@@ -622,6 +617,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         return (
             <div onKeyDown={this.onKeyDown} tabIndex={0}>
                 <Stage
+                    ref={this.props.getStageRef}
                     className={className}
                     width={this.props.width}
                     height={this.props.height}
@@ -640,7 +636,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     y={0}
                 >
                     <Layer>
-                        {<RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stagePosition={this.stagePosition}/>}
+                        {<RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageOrigin={this.props.stageOrigin}/>}
                         {/*regionComponents*/}
                     </Layer>
                     <Layer>
@@ -653,7 +649,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 }
 
-class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number; stagePosition: any}> {
+class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number; stageOrigin: Point2D}> {
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
         if (region) {
@@ -676,7 +672,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                     frame: this.props.frame,
                     layerWidth: this.props.width,
                     layerHeight: this.props.height,
-                    stagePosition: this.props.stagePosition,
+                    stageOrigin: this.props.stageOrigin,
                     selected: r === regionSet.selectedRegion,
                     onSelect: regionSet.selectRegion,
                     onDoubleClick: this.handleRegionDoubleClicked

@@ -13,7 +13,7 @@ import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {AppStore, RegionStore, FrameStore} from "stores";
-import {CursorInfo, CursorInfoVisibility} from "models";
+import {CursorInfo, CursorInfoVisibility, Point2D} from "models";
 import "./ImagePanelComponent.scss";
 
 interface ImagePanelComponentProps {
@@ -29,6 +29,9 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     @observable imageToolbarVisible: boolean = false;
     readonly activeLayer: ImageViewLayer;
 
+    private regionViewStageRef;
+    private regionViewStageOrigin: Point2D;
+
     @action setPixelHighlightValue = (val: number) => {
         this.pixelHighlightValue = val;
     };
@@ -38,7 +41,12 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         makeObservable(this);
 
         this.activeLayer = AppStore.Instance.activeLayer;
+        this.regionViewStageOrigin = {x: 0, y: 0};
     }
+
+    private getRegionViewStageRef = (ref) => {
+        this.regionViewStageRef = ref;
+    };
 
     onClicked = (cursorInfo: CursorInfo) => {
         const frame = this.props.frame;
@@ -61,6 +69,17 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                 frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
             }
         }
+    };
+
+    moveRegionViewStageOrigin = (newOrigin: Point2D) => {
+        this.regionViewStageOrigin = newOrigin;
+    };
+
+    resetRegionViewStageOrigin = () => {
+        // reset region view stage's origin to (0, 0)
+        this.regionViewStageRef?.x(0);
+        this.regionViewStageRef?.y(0);
+        this.regionViewStageOrigin = {x: 0, y: 0};
     };
 
     @action onMouseEnter = () => {
@@ -144,10 +163,10 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    {false && <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
+                    {true && <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
                     {false && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
                     {false && frame.valid && <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />}
-                    {false && this.cursorInfoRequired && frame.cursorInfo && (
+                    {true && this.cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
                             cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
@@ -178,6 +197,9 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             height={frame.renderHeight}
                             top={overlayStore.padding.top}
                             left={overlayStore.padding.left}
+                            stageOrigin={this.regionViewStageOrigin}
+                            getStageRef={this.getRegionViewStageRef}
+                            onMoveStageOrigin={this.moveRegionViewStageOrigin}
                             onClicked={this.onClicked}
                             onZoomed={this.onZoomed}
                             overlaySettings={overlayStore}
@@ -186,7 +208,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                         />
                     )}
-                    <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} frame={frame} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
+                    <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} frame={frame} activeLayer={this.activeLayer} resetRegionViewStageOrigin={this.resetRegionViewStageOrigin} onActiveLayerChange={appStore.updateActiveLayer} />
                 </div>
             );
         } else {
