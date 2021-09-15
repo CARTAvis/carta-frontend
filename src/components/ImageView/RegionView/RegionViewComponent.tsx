@@ -508,19 +508,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    /*
-    private handleRegionDoubleClick = (region: RegionStore) => {
-        const appStore = AppStore.Instance;
-        if (region) {
-            const frame = appStore.getFrame(region.fileId);
-            if (frame) {
-                frame.regionSet.selectRegion(region);
-                appStore.dialogStore.showRegionDialog();
-            }
-        }
-    };
-    */
-
     @action private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (this.mouseClickDistance > DOUBLE_CLICK_DISTANCE * DOUBLE_CLICK_DISTANCE) {
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
@@ -545,61 +532,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const frame = this.props.frame;
         const regionSet = frame.regionSet;
         const className = classNames("region-stage", {docked: this.props.docked});
-
-        /*
-        let regionComponents = null;
-        if (regionSet && regionSet.regions.length) {
-            regionComponents = regionSet.regions
-                .filter(r => r.isValid && r.regionId !== 0)
-                .sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1))
-                .map(r => {
-                    if (r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE) {
-                        return (
-                            <LineSegmentRegionComponent
-                                key={r.regionId}
-                                region={r}
-                                frame={frame}
-                                layerWidth={this.props.width}
-                                layerHeight={this.props.height}
-                                selected={r === regionSet.selectedRegion}
-                                onSelect={regionSet.selectRegion}
-                                onDoubleClick={this.handleRegionDoubleClick}
-                                listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
-                                isRegionCornerMode={AppStore.Instance.preferenceStore.isRegionCornerMode}
-                            />
-                        );
-                    } else if (r.regionType === CARTA.RegionType.POINT) {
-                        return (
-                            <PointRegionComponent
-                                key={r.regionId}
-                                region={r}
-                                frame={frame}
-                                layerWidth={this.props.width}
-                                layerHeight={this.props.height}
-                                selected={r === regionSet.selectedRegion}
-                                onSelect={regionSet.selectRegion}
-                                onDoubleClick={this.handleRegionDoubleClick}
-                            />
-                        );
-                    } else {
-                        return (
-                            <SimpleShapeRegionComponent
-                                key={r.regionId}
-                                region={r}
-                                frame={frame}
-                                layerWidth={this.props.width}
-                                layerHeight={this.props.height}
-                                selected={r === regionSet.selectedRegion}
-                                onSelect={regionSet.selectRegion}
-                                onDoubleClick={this.handleRegionDoubleClick}
-                                listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
-                                isRegionCornerMode={AppStore.Instance.preferenceStore.isRegionCornerMode}
-                            />
-                        );
-                    }
-                });
-        }
-        */
 
         let creatingLine = null;
         if (this.currentCursorPos && (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) && this.creatingRegion.isValid) {
