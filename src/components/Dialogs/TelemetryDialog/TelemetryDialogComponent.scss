@@ -1,7 +1,31 @@
+$opt-button-width: 200px;
+
 .telemetry-dialog {
     .image-div {
         text-align: center;
         padding-bottom: 5px;
         user-select: none;
+    }
+
+    .consent-note {
+        text-align: left;
+        padding-bottom: 15px;
+    }
+
+    .button-grid {
+        display: grid;
+        grid-template-columns: auto auto;
+        justify-content: space-around;
+
+        button {
+            width: $opt-button-width;
+        }
+
+        .opt-note {
+            padding-top: 5px;
+            width: 200px;
+            font-size: smaller;
+            text-align: left;
+        }
     }
 }

@@ -1,9 +1,9 @@
 import * as React from "react";
+import classNames from "classnames";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Classes, Dialog, DialogProps, Intent} from "@blueprintjs/core";
+import {Button, Classes, Dialog, Intent} from "@blueprintjs/core";
 import {AppStore} from "stores";
-import {CARTA_INFO} from "models";
 import {TelemetryMode, TelemetryService} from "services";
 import "./TelemetryDialogComponent.scss";
 
@@ -29,32 +29,28 @@ export class TelemetryDialogComponent extends React.Component {
         const appReady = appStore.apiService?.authenticated;
         const consentShown = appStore.preferenceStore.telemetryConsentShown;
 
-        const dialogProps: DialogProps = {
-            icon: "info-sign",
-            canOutsideClickClose: false,
-            isCloseButtonShown: false,
-            lazy: true,
-            isOpen: appReady && !consentShown,
-            className: "telemetry-dialog",
-            canEscapeKeyClose: false,
-            title: "CARTA Usage Collection"
-        };
+        const classes = classNames("telemetry-dialog", {"bp3-dark": appStore.darkTheme});
 
         return (
-            <Dialog {...dialogProps}>
+            <Dialog icon="data-connection" canOutsideClickClose={false} isCloseButtonShown={false} lazy={true} isOpen={appReady && !consentShown} className={classes} canEscapeKeyClose={false} title="CARTA Usage Data">
                 <div className={Classes.DIALOG_BODY}>
-                    <div className={"image-div"}>
+                    <div className="image-div">
                         <img src={"carta_logo.png"} width={80} alt={"carta logo"} />
-                        <h3>
-                            {CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})
-                        </h3>
-                        <p>{CARTA_INFO.fullName}</p>
-                    </div>
-                </div>
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.SUCCESS} onClick={this.optInClicked} text="Yes" />
-                        <AnchorButton intent={Intent.DANGER} onClick={this.optOutClicked} text="No" />
+                        <div className="consent-note">
+                            <p>
+                                CARTA would like to collect anonymous usage data, in order to help the development team prioritize additional features and platforms. No personal or scientific information will be collected. Please see our{" "}
+                                <a href="https://cartavis.org/telemetry" target="_blank">
+                                    data collection policy
+                                </a>{" "}
+                                for more details.
+                            </p>
+                        </div>
+                        <div className="button-grid">
+                            <Button intent={Intent.PRIMARY}>Yes, send usage data</Button>
+                            <Button intent={Intent.PRIMARY}>No, do not send usage data</Button>
+                            <div className="opt-note">Metrics include session duration, number and size of images opened.</div>
+                            <div className="opt-note">Only an anonymous opt-out message will be submitted.</div>
+                        </div>
                     </div>
                 </div>
             </Dialog>
