@@ -10,7 +10,7 @@ import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D, angle2D, length2D} from "utilities";
 import {canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 
-export interface LineSegmentRegionComponentProps {
+interface LineSegmentRegionComponentProps {
     region: RegionStore;
     frame: FrameStore;
     layerWidth: number;

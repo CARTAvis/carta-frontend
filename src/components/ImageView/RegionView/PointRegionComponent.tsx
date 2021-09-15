@@ -7,7 +7,7 @@ import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared
 import {Point2D} from "models";
 import {transformPoint} from "utilities";
 
-export interface PointRegionComponentProps {
+interface PointRegionComponentProps {
     region: RegionStore;
     frame: FrameStore;
     layerWidth: number;

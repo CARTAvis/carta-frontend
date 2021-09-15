@@ -53,6 +53,10 @@ export class RegionSetStore {
         return regionId;
     };
 
+    @computed get cursorRegion(): RegionStore {
+        return this.regions?.length > 0 ? this.regions[0] : null;
+    }
+
     @computed get regionsForRender(): RegionStore[] {
         return this.regions?.filter(r => r.isValid && r.regionId !== 0)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
     }

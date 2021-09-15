@@ -9,7 +9,7 @@ import {Point2D} from "models";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
 
-export interface RegionComponentProps {
+interface SimpleShapeRegionComponentProps {
     region: RegionStore;
     frame: FrameStore;
     layerWidth: number;
@@ -23,7 +23,7 @@ export interface RegionComponentProps {
 }
 
 @observer
-export class SimpleShapeRegionComponent extends React.Component<RegionComponentProps> {
+export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegionComponentProps> {
     private editAnchor: string;
     private editOppositeAnchorPoint: Point2D;
     private editStartCenterPoint: Point2D;
