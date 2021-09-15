@@ -1971,8 +1971,12 @@ export class AppStore {
     };
 
     setSpectralMatchingType = (spectralMatchingType: SpectralType) => {
-        this.frames?.forEach(f => this.setSpectralMatchingEnabled(f, false));
         this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, spectralMatchingType);
+        for (const f of this.frames) {
+            if (f.spectralReference) {
+                this.setSpectralMatchingEnabled(f, true);
+            }
+        }
     };
 
     @action setRasterScalingReference = (frame: FrameStore) => {
