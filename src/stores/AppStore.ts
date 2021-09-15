@@ -866,7 +866,8 @@ export class AppStore {
                             const headers = APIProcessing.ProcessSimbadMetaData(response.data?.metadata);
                             const columnData = APIProcessing.ProcessSimbadData(response.data?.data, headers);
                             const coosy: CARTA.ICoosys = {system: configStore.coordsType};
-                            const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${configStore.centerCoord.x}_${configStore.centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
+                            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D);
+                            const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
                             const catalogFileInfo: CARTA.ICatalogFileInfo = {
                                 name: fileName,
                                 type: CARTA.CatalogFileType.VOTable,

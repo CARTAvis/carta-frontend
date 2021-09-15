@@ -2,16 +2,16 @@ import * as React from "react";
 import axios, {CancelTokenSource} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, PopoverPosition, Spinner, Icon} from "@blueprintjs/core";
+import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, Spinner, Icon, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {IItemRendererProps, Select} from "@blueprintjs/select";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogDatabase, HelpType, RadiusUnits} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogDatabase, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CatalogSystemType} from "models";
 import "./CatalogOnlineQueryDialogComponent.scss";
 import {ApiService} from "services";
-import {clamp} from "utilities";
+import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 const KEYCODE_ENTER = 13;
 
@@ -36,7 +36,6 @@ export class CatalogQueryDialogComponent extends React.Component {
     }
 
     @action setResultSize(resultSize: number) {
-        console.log(resultSize)
         this.resultSize = resultSize;
     }
 
@@ -101,6 +100,13 @@ export class CatalogQueryDialogComponent extends React.Component {
         } else {
             sourceIndicater = <Icon icon="tick" intent="success" iconSize={30} />;
         }
+
+        const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const centerWCSPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+
         const configBoard = (
             <div className="online-catalog-config">
                 <FormGroup inline={false} label="Database" disabled={disable}>
@@ -110,7 +116,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                         onItemSelect={db => configStore.setCatalogDB(db)}
                         itemRenderer={this.renderDBPopOver}
                         disabled={disable}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        popoverProps={{minimal: true}}
                         filterable={false}
                         resetOnSelect={true}
                     >
@@ -119,12 +125,12 @@ export class CatalogQueryDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={false} label="Object" disabled={disable}>
                     <InputGroup asyncControl={false} disabled={disable} rightElement={this.objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
-                    <Tooltip2 content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch}>
+                    <Tooltip2 content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button disabled={disable || configStore.disableObjectSearch} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
                     </Tooltip2>
                 </FormGroup>
                 <FormGroup inline={false} label="Search Radius" disabled={disable}>
-                    <Tooltip2 content={`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable}>
+                    <Tooltip2 content={`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             asyncControl={true}
                             disabled={disable}
@@ -141,13 +147,13 @@ export class CatalogQueryDialogComponent extends React.Component {
                         onItemSelect={units => configStore.setRadiusUnits(units)}
                         itemRenderer={this.renderUnitsPopOver}
                         disabled={disable}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        popoverProps={{minimal: true}}
                         filterable={false}
                         resetOnSelect={true}
                     >
                         <Button text={configStore.radiusUnits} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
-                    <Tooltip2 content="Reset Center Coordinates and Search Radius according current image viewer" disabled={disable}>
+                    <Tooltip2 content="Reset Center Coordinates and Search Radius according current image viewer" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button disabled={disable} onClick={() => configStore.resetSearchRadius()}>
                             Set to viewer
                         </Button>
@@ -155,32 +161,40 @@ export class CatalogQueryDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={false} label="Center Coordinates" disabled={disable}>
                     <Select
-                        items={CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).type}
+                        items={Object.keys(SystemType).map(key => (SystemType[key]))}
                         activeItem={null}
-                        onItemSelect={type => configStore.setCoordsType(type)}
+                        onItemSelect={type => appStore.overlayStore.global.setSystem(type)}
                         itemRenderer={this.renderSysTypePopOver}
                         disabled={disable}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                        popoverProps={{minimal: true}}
                         filterable={false}
                         resetOnSelect={true}
                     >
-                        <Button text={configStore.coordsType} disabled={disable} rightIcon="double-caret-vertical" />
+                        <Button text={appStore.overlayStore.global.system} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
-                    <SafeNumericInput
-                        buttonPosition={"none"}
-                        placeholder="Ra"
-                        disabled={disable}
-                        value={configStore.centerCoord.x}
-                        onValueChange={(valueAsNumber: number, valueAsString: string) => configStore.setCenterCoord(valueAsString, "X")}
-                    />
-                    <SafeNumericInput
-                        buttonPosition={"none"}
-                        placeholder="Dec"
-                        disabled={disable}
-                        value={configStore.centerCoord.y}
-                        onValueChange={(valueAsNumber: number, valueAsString: string) => configStore.setCenterCoord(valueAsString, "Y")}
-                    />
-                    <Tooltip2 content="Reset to current view center" disabled={disable}>
+                    <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                        <SafeNumericInput
+                            allowNumericCharactersOnly={false}
+                            buttonPosition="none"
+                            placeholder="X WCS Coordinate"
+                            disabled={!wcsInfo || !centerWCSPoint || disable}
+                            value={centerWCSPoint ? centerWCSPoint.x : ""}
+                            onBlur={this.handleCenterWCSXChange}
+                            onKeyDown={this.handleCenterWCSXChange}
+                        />
+                    </Tooltip2>
+                    <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
+                        <SafeNumericInput
+                            allowNumericCharactersOnly={false}
+                            buttonPosition="none"
+                            placeholder="Y WCS Coordinate"
+                            disabled={!wcsInfo || !centerWCSPoint || disable}
+                            value={centerWCSPoint ? centerWCSPoint.y : ""}
+                            onBlur={this.handleCenterWCSYChange}
+                            onKeyDown={this.handleCenterWCSYChange}
+                        />
+                    </Tooltip2>
+                    <Tooltip2 content="Reset to current view center" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button icon="locate" disabled={disable} onClick={() => configStore.setFrameCenter()} />
                     </Tooltip2>
                 </FormGroup>
@@ -232,7 +246,8 @@ export class CatalogQueryDialogComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
         const baseUrl = CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).prefix;
-        const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${configStore.centerCoord.x},${configStore.centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${configStore.centerCoord.x},${configStore.centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
+        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D);
+        const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
         configStore.setQueryStatus(true);
         AppStore.Instance.appendOnlineCatalog(baseUrl, query, this.cancelTokenSource)
             .then(dataSize => {
@@ -267,8 +282,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                     const i = this.getDataIndex("ra", response.data?.metadata);
                     const j = this.getDataIndex("dec", response.data?.metadata);
                     if (i && j && size) {
-                        configStore.setCenterCoord(response.data?.data[0][i], "X");
-                        configStore.setCenterCoord(response.data?.data[0][j], "Y");
+                        const pixelCoord = configStore.convertToPixel({x: response.data?.data[0][i], y: response.data?.data[0][j]});
+                        configStore.updateCenterPixelCoord(pixelCoord);
                     }
                 }
             })
@@ -307,7 +322,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         return <MenuItem key={units} text={units} onClick={itemProps.handleClick} />;
     };
 
-    private renderSysTypePopOver = (type: CatalogSystemType, itemProps: IItemRendererProps) => {
+    private renderSysTypePopOver = (type: SystemType, itemProps: IItemRendererProps) => {
         return <MenuItem key={type} text={type} onClick={itemProps.handleClick} />;
     };
 
@@ -322,5 +337,57 @@ export class CatalogQueryDialogComponent extends React.Component {
         } else {
             ev.currentTarget.value = clamp(val, 0, configStore.maxRadius).toString();
         }
+    };
+
+    private handleCenterWCSXChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const centerWCSPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        if (!centerWCSPoint) {
+            return;
+        }
+        const wcsString = ev.currentTarget.value;
+        if (wcsString === centerWCSPoint.x) {
+            return;
+        }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+            const newPoint = getPixelValueFromWCS(wcsInfo, {x: wcsString, y: centerWCSPoint.y});
+            if (newPoint && isFinite(newPoint.x)) {
+                configStore.updateCenterPixelCoord(newPoint);
+                return;
+            }
+        }
+        ev.currentTarget.value = centerWCSPoint.x;
+    };
+
+    private handleCenterWCSYChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
+        const centerWCSPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        if (!centerWCSPoint) {
+            return;
+        }
+        const wcsString = ev.currentTarget.value;
+        if (wcsString === centerWCSPoint.y) {
+            return;
+        }
+        if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+            const newPoint = getPixelValueFromWCS(wcsInfo,  {x: centerWCSPoint.x, y: wcsString});
+            if (newPoint && isFinite(newPoint.y)) {
+                configStore.updateCenterPixelCoord(newPoint);
+                return;
+            }
+        }
+        ev.currentTarget.value = centerWCSPoint.y;
     };
 }

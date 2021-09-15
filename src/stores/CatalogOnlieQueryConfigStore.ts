@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 import {action, observable, makeObservable, reaction, computed} from "mobx";
 import {CatalogSystemType, Point2D} from "models";
 import {AppStore, OverlayStore, NumberFormatType, ASTSettingsString, SystemType} from "stores";
-import {clamp, transformPoint} from "utilities";
+import {clamp, getPixelValueFromWCS, transformPoint} from "utilities";
 
 export enum CatalogDatabase {
     SIMBAD = "SIMBAD"
@@ -25,7 +25,7 @@ export class CatalogOnlineQueryConfigStore {
     @observable searchRadius: number;
     @observable coordsType: CatalogSystemType;
     @observable coordsFormat: NumberFormatType;
-    @observable centerCoord: {x: string; y: string};
+    @observable centerPixelCoord: {x: string; y: string};
     @observable maxObject: number;
     @observable enablePointSelection: boolean;
     @observable radiusUnits: RadiusUnits;
@@ -38,7 +38,7 @@ export class CatalogOnlineQueryConfigStore {
         this.catalogDB = CatalogDatabase.SIMBAD;
         this.searchRadius = 1;
         this.coordsType = CatalogSystemType.ICRS;
-        this.centerCoord = {x: undefined, y: undefined};
+        this.centerPixelCoord = {x: undefined, y: undefined};
         this.maxObject = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
         this.enablePointSelection = false;
         this.radiusUnits = RadiusUnits.DEGREES;
@@ -58,7 +58,7 @@ export class CatalogOnlineQueryConfigStore {
             cursorFrozen => {
                 const frame = AppStore.Instance.activeFrame;
                 if (cursorFrozen && frame?.cursorInfo?.posImageSpace) {
-                    this.updateCenterCoord(frame.cursorInfo.posImageSpace);
+                    this.updateCenterPixelCoord(frame.cursorInfo.posImageSpace);
                 }
             }
         );
@@ -72,9 +72,9 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     public setFrameCenter() {
-        const frame = AppStore.Instance.activeFrame;
-        if (frame?.center) {
-            this.updateCenterCoord(frame.center);
+        const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
+        if(frame?.center) {
+            this.updateCenterPixelCoord(frame.center);
         }
     }
 
@@ -94,20 +94,9 @@ export class CatalogOnlineQueryConfigStore {
         this.coordsType = type;
     }
 
-    @action setCenterCoord(val: string, type: "X" | "Y") {
-        const coords = this.centerCoord;
-        if (type === "X") {
-            coords.x = val;
-        } else {
-            coords.y = val;
-        }
-        this.centerCoord = coords;
-    }
-
-    @action updateCenterCoord(center: Point2D) {
-        const coord = this.convertToDeg(center);
-        this.setCenterCoord(coord.x.toString(), "X");
-        this.setCenterCoord(coord.y.toString(), "Y");
+    @action updateCenterPixelCoord(center: Point2D) {
+        this.centerPixelCoord.x = center.x.toString();
+        this.centerPixelCoord.y = center.y.toString();
     }
 
     @action setMaxObjects(size: number) {
@@ -227,6 +216,13 @@ export class CatalogOnlineQueryConfigStore {
         return 90;
     }
 
+    @computed get centerPixelCoordAsPoint2D(): Point2D {
+        return {
+            x: Number(this.centerPixelCoord.x),
+            y: Number(this.centerPixelCoord.y)
+        }
+    }
+
     @action resetSearchRadius() {
         let radius = this.searchRadiusInDegree;
         switch (this.radiusUnits) {
@@ -243,7 +239,7 @@ export class CatalogOnlineQueryConfigStore {
         this.setFrameCenter();
     }
 
-    convertToDeg(pixelCoords: Point2D) {
+    convertToDeg(pixelCoords: Point2D): {x: string; y: string} {
         const frame = AppStore.Instance.activeFrame;
         const overlay = OverlayStore.Instance;
         let p: {x: string; y: string} = {x: undefined, y: undefined};
@@ -259,6 +255,25 @@ export class CatalogOnlineQueryConfigStore {
             const pointWCS = transformPoint(wcsCopy, pixelCoords);
             const normVals = AST.normalizeCoordinates(wcsCopy, pointWCS.x, pointWCS.y);
             p = AST.getFormattedCoordinates(wcsCopy, normVals.x, normVals.y, astString.toString(), true);
+            AST.deleteObject(wcsCopy);
+        }
+        return p;
+    }
+
+    convertToPixel(Coords: Point2D): Point2D {
+        const frame = AppStore.Instance.activeFrame;
+        const overlay = OverlayStore.Instance;
+        let p: {x: number; y: number} = {x: undefined, y: undefined};
+        if (frame && overlay) {
+            const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
+            const format = `${NumberFormatType.Degrees}.${precision}`;
+            const wcsCopy = AST.copy(frame.wcsInfo);
+            let astString = new ASTSettingsString();
+            AST.set(wcsCopy, `System=${SystemType.ICRS}`);
+            astString.add("Format(1)", format);
+            astString.add("Format(2)", format);
+            astString.add("System", SystemType.ICRS);
+            p = getPixelValueFromWCS(wcsCopy, {x: Coords.x.toString(), y: Coords.y.toString()});
             AST.deleteObject(wcsCopy);
         }
         return p;
