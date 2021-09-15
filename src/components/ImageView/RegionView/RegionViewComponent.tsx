@@ -218,7 +218,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             dy = Math.sign(dy) * maxDiff;
         }
         const isCtrlPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
-        if ((AppStore.Instance.preferenceStore.isRegionCornerMode && !isCtrlPressed) || (!AppStore.Instance.preferenceStore.isRegionCornerMode && isCtrlPressed)) {
+        const isRegionCornerMode = AppStore.Instance.preferenceStore.isRegionCornerMode;
+        if ((isRegionCornerMode && !isCtrlPressed) || (!isRegionCornerMode && isCtrlPressed)) {
             // corner-to-corner region creation
             const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
             const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
