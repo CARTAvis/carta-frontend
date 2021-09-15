@@ -40,7 +40,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.ICRS, "International Celestial Reference System"]
     ]);
 
-    handleZoomToFitClicked = () =>{
+    handleZoomToFitClicked = () => {
         this.props.frame?.fitZoom();
         this.props.resetRegionViewStageOrigin();
     };

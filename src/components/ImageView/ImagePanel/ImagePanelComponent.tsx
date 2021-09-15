@@ -44,7 +44,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         this.regionViewStageOrigin = {x: 0, y: 0};
     }
 
-    private getRegionViewStageRef = (ref) => {
+    private getRegionViewStageRef = ref => {
         this.regionViewStageRef = ref;
     };
 
@@ -194,7 +194,14 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                         />
                     )}
-                    <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} frame={frame} activeLayer={this.activeLayer} resetRegionViewStageOrigin={this.resetRegionViewStageOrigin} onActiveLayerChange={appStore.updateActiveLayer} />
+                    <ToolbarComponent
+                        docked={this.props.docked}
+                        visible={this.imageToolbarVisible}
+                        frame={frame}
+                        activeLayer={this.activeLayer}
+                        resetRegionViewStageOrigin={this.resetRegionViewStageOrigin}
+                        onActiveLayerChange={appStore.updateActiveLayer}
+                    />
                 </div>
             );
         } else {

@@ -58,7 +58,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         makeObservable(this);
     }
 
-    private getStageRef = (ref) => {
+    private getStageRef = ref => {
         this.stageRef = ref;
         this.props.getStageRef(ref);
     };
@@ -649,11 +649,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     y={0}
                 >
                     <Layer>
-                        {<RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageOrigin={this.props.stageOrigin}/>}
+                        {<RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageOrigin={this.props.stageOrigin} />}
                         {/*regionComponents*/}
                     </Layer>
                     <Layer>
-                        {this.props.cursorFrozen && <CursorLayerComponent width={this.props.width} height={this.props.height} frame={frame} cursorPoint={frame.cursorInfo.posImageSpace}/>}
+                        {this.props.cursorFrozen && <CursorLayerComponent width={this.props.width} height={this.props.height} frame={frame} cursorPoint={frame.cursorInfo.posImageSpace} />}
                         {creatingLine}
                     </Layer>
                 </Stage>
@@ -698,15 +698,17 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                         listening: regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring,
                         isRegionCornerMode: AppStore.Instance.preferenceStore.isRegionCornerMode
                     };
-                    return r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE ?
-                        <LineSegmentRegionComponent {...commonProps} {...otherProps} /> :
-                        <SimpleShapeRegionComponent {...commonProps} {...otherProps} />;
+                    return r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE ? (
+                        <LineSegmentRegionComponent {...commonProps} {...otherProps} />
+                    ) : (
+                        <SimpleShapeRegionComponent {...commonProps} {...otherProps} />
+                    );
                 }
             });
         }
         return null;
     }
-};
+}
 
 const CursorLayerComponent: React.FC<{width: number; height: number; frame: FrameStore; cursorPoint: Point2D}> = props => {
     const frame = props.frame;
