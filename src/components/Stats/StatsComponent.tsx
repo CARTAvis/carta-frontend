@@ -163,16 +163,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 } else if (type === CARTA.StatsType.SumSq) {
                     unitString = `(${unit})^2`;
                 } else if (type === CARTA.StatsType.FluxDensity) {
-                    if (unit === "Jy/beam") {
-                        unitString = "Jy";
-                    } else if (unit === "JY/BEAM") {
-                        unitString = "JY";
-                    } else if (unit === "jy/beam") {
-                        unitString = "jy";
-                    } else if (unit === "Jy/Beam") {
-                        unitString = "Jy";
-                    } else if (unit === "Jy/beam.km/s") {
-                        unitString = "Jy.km/s";
+                    if (unit.toLowerCase().includes("beam") && !unit.toLowerCase().includes("km/s")) {
+                        unitString = unit.split("/")[0];
+                    } else if (unit.toLowerCase().includes("km/s")) {
+                        unitString = unit.split("/")[0] + ".km/s";
                     }
                 } else {
                     unitString = unit;
