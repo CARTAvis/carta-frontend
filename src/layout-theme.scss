@@ -215,6 +215,18 @@ $custom-pane-controls-color-dark: white;
     .lm-settings {
         color: $custom-pane-controls-color;
     }
+
+    .lm-image-panel {
+        color: $custom-pane-controls-color;
+    }
+
+    .lm-image-panel-next {
+        color: $custom-pane-controls-color;
+    }
+
+    .lm-image-panel-previous {
+        color: $custom-pane-controls-color;
+    }
 }
 
 // If a specific Pane is maximized
@@ -440,6 +452,18 @@ $custom-pane-controls-color-dark: white;
         }
 
         .lm-settings {
+            color: $custom-pane-controls-color-dark;
+        }
+
+        .lm-image-panel {
+            color: $custom-pane-controls-color-dark;
+        }
+
+        .lm-image-panel-next {
+            color: $custom-pane-controls-color-dark;
+        }
+
+        .lm-image-panel-previous {
             color: $custom-pane-controls-color-dark;
         }
     }
