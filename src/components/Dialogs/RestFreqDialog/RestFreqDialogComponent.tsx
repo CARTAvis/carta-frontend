@@ -142,7 +142,7 @@ export class RestFreqDialogComponent extends React.Component {
                         </div>
                         <div className={Classes.DIALOG_FOOTER}>
                             <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                                <Button intent={Intent.PRIMARY} text="Save" disabled={this.inValidInput} onClick={this.saveRestFreq} />
+                                <Button intent={Intent.PRIMARY} text="Save" disabled={this.inValidInput || appStore.animatorStore.animationActive} onClick={this.saveRestFreq} />
                                 <Button intent={Intent.NONE} text="Close" onClick={appStore.dialogStore.hideRestFreqDialog} />
                             </div>
                         </div>
