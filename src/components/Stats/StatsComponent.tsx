@@ -154,10 +154,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
         let numString = "";
         let unitString = "";
 
-        function capitalizeFirstLetter(string) {
-            return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
-        }
-
         if (this.statsData && isFinite(index) && index >= 0 && index < this.statsData.statistics?.length) {
             const frame = this.widgetStore.effectiveFrame;
             if (frame && frame.unit) {
@@ -165,15 +161,21 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 if (type === CARTA.StatsType.NumPixels) {
                     unitString = "pixel(s)";
                 } else if (type === CARTA.StatsType.SumSq) {
-                    unitString = `(${capitalizeFirstLetter(unit)})^2`;
+                    unitString = `(${unit})^2`;
                 } else if (type === CARTA.StatsType.FluxDensity) {
-                    if (capitalizeFirstLetter(unit) === "Jy/beam") {
+                    if (unit === "Jy/beam") {
                         unitString = "Jy";
-                    } else if (capitalizeFirstLetter(unit) === "Jy/beam.km/s") {
+                    } else if (unit === "JY/BEAM") {
+                        unitString = "JY";
+                    } else if (unit === "jy/beam") {
+                        unitString = "jy";
+                    } else if (unit === "Jy/Beam") {
+                        unitString = "Jy";
+                    } else if (unit === "Jy/beam.km/s") {
                         unitString = "Jy.km/s";
                     }
                 } else {
-                    unitString = capitalizeFirstLetter(unit);
+                    unitString = unit;
                 }
             }
 
