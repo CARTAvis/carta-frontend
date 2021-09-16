@@ -74,9 +74,8 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
     resetRegionViewStageOrigin = () => {
         // reset region view stage's origin to (0, 0)
-        this.regionViewStageRef?.x(0);
-        this.regionViewStageRef?.y(0);
         this.regionViewStageOrigin = {x: 0, y: 0};
+        this.regionViewStageRef?.position(this.regionViewStageOrigin);
     };
 
     @action onMouseEnter = () => {

@@ -425,8 +425,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const centerOffset = subtract2D({x: mouseEvent.offsetX, y: mouseEvent.offsetY}, {x: this.props.width / 2, y: this.props.height / 2});
             const newStageOrigin = subtract2D(this.stageRef.getPosition(), centerOffset);
             this.props.onMoveStageOrigin(newStageOrigin);
-            this.stageRef.x(newStageOrigin.x);
-            this.stageRef.y(newStageOrigin.y);
+            this.stageRef.position(newStageOrigin);
         }
     };
 
