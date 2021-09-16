@@ -80,7 +80,7 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
                 break;
             case "right":
             default:
-                xPos = padding.left * devicePixelRatio * exportImageRatio + rasterCanvas.width * exportImageRatio;
+                xPos = padding.left * devicePixelRatio * exportImageRatio + rasterCanvas.width;
                 yPos = 0;
                 break;
         }

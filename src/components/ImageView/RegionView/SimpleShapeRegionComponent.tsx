@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Circle, Ellipse, Group, Line, Rect} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, RegionStore} from "stores";
+import {AppStore, FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
@@ -381,8 +381,8 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             const zoomLevel = frame.zoomLevel;
 
             const centerPixelSpace = transformedImageToCanvasPos(centerReferenceImage.x, centerReferenceImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            let width = (region.size.x * zoomLevel) / devicePixelRatio;
-            let height = (region.size.y * zoomLevel) / devicePixelRatio;
+            let width = (region.size.x * zoomLevel) / (devicePixelRatio * AppStore.Instance.exportImageRatio);
+            let height = (region.size.y * zoomLevel) / (devicePixelRatio * AppStore.Instance.exportImageRatio);
 
             // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
             // TODO: Is this needed anywhere?
@@ -429,7 +429,7 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
             }
 
             const zoomLevel = (frame.spatialReference ?? frame).zoomLevel;
-            let rotatorOffset = (15 / zoomLevel) * devicePixelRatio;
+            let rotatorOffset = (15 / zoomLevel) * (devicePixelRatio * AppStore.Instance.exportImageRatio);
 
             const anchorConfigs = [
                 {anchor: "top", offset: {x: 0, y: offsetY}},
