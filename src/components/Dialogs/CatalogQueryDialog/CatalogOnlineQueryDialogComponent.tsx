@@ -1,17 +1,15 @@
 import * as React from "react";
-import axios, {CancelTokenSource} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, Spinner, Icon, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {IItemRendererProps, Select} from "@blueprintjs/select";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogDatabase, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
-import {CatalogSystemType} from "models";
-import "./CatalogOnlineQueryDialogComponent.scss";
-import {ApiService} from "services";
+import {CatalogApiService, CatalogDatabase} from "services";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+import "./CatalogOnlineQueryDialogComponent.scss";
 
 const KEYCODE_ENTER = 13;
 
@@ -19,10 +17,6 @@ const KEYCODE_ENTER = 13;
 export class CatalogQueryDialogComponent extends React.Component {
     private static readonly DefaultWidth = 550;
     private static readonly DefaultHeight = 500;
-    private static readonly DBMap = new Map<CatalogDatabase, {type: CatalogSystemType[]; prefix: string}>([
-        [CatalogDatabase.SIMBAD, {type: [CatalogSystemType.ICRS], prefix: "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query="}]
-    ]);
-    private cancelTokenSource: CancelTokenSource;
 
     @observable resultSize: number;
     @observable objectSize: number;
@@ -30,7 +24,6 @@ export class CatalogQueryDialogComponent extends React.Component {
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        this.cancelTokenSource = axios.CancelToken.source();
         this.resultSize = undefined;
         this.objectSize = undefined;
     }
@@ -235,7 +228,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     <div className={"result-info"}>{tableInfo}</div>
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
-                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => this.cancelQuery()} text={"Cancel"} />
+                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancleSimbadQuery()} text={"Cancel"} />
                     </div>
                 </div>
             </DraggableDialogComponent>
@@ -245,11 +238,10 @@ export class CatalogQueryDialogComponent extends React.Component {
     private query = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-        const baseUrl = CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).prefix;
         const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D);
         const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
         configStore.setQueryStatus(true);
-        AppStore.Instance.appendOnlineCatalog(baseUrl, query, this.cancelTokenSource)
+        CatalogApiService.Instance.appendOnlineCatalog(query)
             .then(dataSize => {
                 configStore.setQueryStatus(false);
                 this.setResultSize(dataSize);
@@ -257,23 +249,15 @@ export class CatalogQueryDialogComponent extends React.Component {
             .catch(error => {
                 configStore.setQueryStatus(false);
                 this.setResultSize(0);
-                if (axios.isCancel(error)) {
-                    this.cancelTokenSource = axios.CancelToken.source();
-                }
+                CatalogApiService.Instance.resetCancelTokenSource(error);
             });
-    };
-
-    private cancelQuery = () => {
-        this.cancelTokenSource.cancel("Query canceled");
     };
 
     private handleObjectUpdate = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        const baseUrl = CatalogQueryDialogComponent.DBMap.get(configStore.catalogDB).prefix;
         const query = `SELECT basic.* FROM ident JOIN basic ON ident.oidref = basic.oid WHERE id = '${configStore.objectName}'`;
         configStore.setObjectQueryStatus(true);
-
-        ApiService.Instance.getSimbad(baseUrl, query, this.cancelTokenSource)
+        CatalogApiService.Instance.getSimbad(query)
             .then(response => {
                 configStore.setObjectQueryStatus(false);
                 const size = response.data?.data?.length;

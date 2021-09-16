@@ -2,11 +2,8 @@ import * as AST from "ast_wrapper";
 import {action, observable, makeObservable, reaction, computed} from "mobx";
 import {CatalogSystemType, Point2D} from "models";
 import {AppStore, OverlayStore, NumberFormatType, ASTSettingsString, SystemType} from "stores";
+import {CatalogDatabase} from "services";
 import {clamp, getPixelValueFromWCS, transformPoint} from "utilities";
-
-export enum CatalogDatabase {
-    SIMBAD = "SIMBAD"
-}
 
 export enum RadiusUnits {
     DEGREES = "deg",

@@ -33,6 +33,23 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         this.initFilterIndexMap();
     }
 
+    get updateRequestDataSize() {
+        return this.catalogFilterRequest;
+    }
+
+    // do not need infinite scroll for API data
+    get shouldUpdateData() {
+        return false;
+    }
+
+    get loadOntoImage() {
+        return this.loadingData;
+    }
+
+    get maxRows() {
+        return this.numVisibleRows;
+    }
+
     @computed get initCatalogControlHeader() {
         const controlHeaders = new Map<string, ControlHeader>();
         const catalogHeader = this.catalogHeader;
@@ -49,23 +66,6 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
             }
         }
         return controlHeaders;
-    }
-
-    @computed get updateRequestDataSize() {
-        return this.catalogFilterRequest;
-    }
-
-    // do not need infinite scroll for API data
-    @computed get shouldUpdateData(): boolean {
-        return false;
-    }
-
-    @computed get loadOntoImage() {
-        return this.loadingData;
-    }
-
-    @computed get maxRows(): number {
-        return this.numVisibleRows;
     }
 
     @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number) {

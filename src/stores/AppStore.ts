@@ -1,6 +1,5 @@
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable, ObservableMap, runInAction, when} from "mobx";
-import axios, {CancelTokenSource} from "axios";
 import * as Long from "long";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
@@ -15,7 +14,6 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
-    CatalogOnlineQueryProfileStore,
     CURSOR_REGION_ID,
     DialogStore,
     DistanceMeasuringStore,
@@ -34,12 +32,11 @@ import {
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    CatalogOnlineQueryConfigStore
+    WidgetsStore
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {APIProcessing, CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -848,69 +845,7 @@ export class AppStore {
         });
     };
 
-    // Online Catalog Query
-    appendOnlineCatalog = async (apiAddress: string, query: string, cancelTokenSource: CancelTokenSource) => {
-        return new Promise<number>((resolve, reject) => {
-            if (!this.activeFrame) {
-                AppToaster.show(ErrorToast("Please load the image file"));
-                throw new Error("No image file");
-            }
-
-            const frame = this.activeFrame;
-            const fileId = this.catalogNextFileId;
-            ApiService.Instance.getSimbad(apiAddress, query, cancelTokenSource)
-                .then(response => {
-                    if (frame && response?.status === 200 && response?.data?.data?.length) {
-                        runInAction(() => {
-                            const configStore = CatalogOnlineQueryConfigStore.Instance;
-                            const headers = APIProcessing.ProcessSimbadMetaData(response.data?.metadata);
-                            const columnData = APIProcessing.ProcessSimbadData(response.data?.data, headers);
-                            const coosy: CARTA.ICoosys = {system: configStore.coordsType};
-                            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D);
-                            const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
-                            const catalogFileInfo: CARTA.ICatalogFileInfo = {
-                                name: fileName,
-                                type: CARTA.CatalogFileType.VOTable,
-                                description: "Online Catalog",
-                                coosys: [coosy]
-                            };
-                            let catalogInfo: CatalogInfo = {
-                                fileId,
-                                fileInfo: catalogFileInfo,
-                                dataSize: response.data?.data?.length,
-                                directory: ""
-                            };
-                            let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
-                            if (catalogWidgetId) {
-                                this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                                this.catalogStore.addCatalog(fileId);
-                                this.fileBrowserStore.hideFileBrowser();
-                                const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, CatalogType.SIMBAD);
-                                this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                                this.dialogStore.hideCatalogQueryDialog();
-                                resolve(catalogInfo.dataSize);
-                            } else {
-                                reject();
-                            }
-                        });
-                    } else {
-                        reject();
-                    }
-                })
-                .catch(error => {
-                    if (axios.isCancel(error)) {
-                        AppToaster.show(WarningToast(error?.message));
-                    } else if (error?.message) {
-                        AppToaster.show(ErrorToast(error.message));
-                    } else {
-                        console.log("Append Catalog Error: " + error);
-                    }
-                    reject(error);
-                });
-        });
-    };
-
-    private updateCatalogProfile = (fileId: number, frame: FrameStore): string => {
+    updateCatalogProfile = (fileId: number, frame: FrameStore): string => {
         let catalogWidgetId;
         // update image associated catalog file
         let associatedCatalogFiles = [];
