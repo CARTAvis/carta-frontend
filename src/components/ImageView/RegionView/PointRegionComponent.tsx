@@ -13,7 +13,7 @@ interface PointRegionComponentProps {
     layerWidth: number;
     layerHeight: number;
     selected: boolean;
-    stageOrigin: any; // TODO: add type
+    stageOrigin: Point2D;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }

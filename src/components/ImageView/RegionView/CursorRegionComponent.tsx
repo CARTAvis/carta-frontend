@@ -3,13 +3,14 @@ import {observer} from "mobx-react";
 import {Group, Line, Rect} from "react-konva";
 import {FrameStore, RegionStore} from "stores";
 import {transformedImageToCanvasPos} from "./shared";
+import {Point2D} from "models";
 
 interface CursorRegionComponentProps {
     region: RegionStore;
     frame: FrameStore;
     layerWidth: number;
     layerHeight: number;
-    stageOrigin: any; // TODO: add type
+    stageOrigin: Point2D;
 }
 
 @observer

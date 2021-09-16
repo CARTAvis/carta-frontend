@@ -17,7 +17,7 @@ interface SimpleShapeRegionComponentProps {
     listening: boolean;
     selected: boolean;
     isRegionCornerMode: boolean;
-    stageOrigin: any; // TODO: add type
+    stageOrigin: Point2D;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
