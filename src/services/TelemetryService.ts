@@ -42,8 +42,7 @@ interface TelemetryDb extends DBSchema {
 export class TelemetryService {
     private static staticInstance: TelemetryService;
 
-    // public static readonly ServerUrl = "https://telemetry.cartavis.org";
-    public static readonly ServerUrl = "https://www.veggiesaurus.net/telemetry";
+    public static readonly ServerUrl = "https://telemetry.cartavis.org";
     private static readonly SubmissionIntervalSeconds = 300;
     private static readonly EntryLimit = 1000;
     private static readonly DbName = "telemetry";
