@@ -25,7 +25,8 @@ import {
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent,
     ImageViewSettingsPanelComponent,
-    CatalogOverlayPlotSettingsPanelComponent
+    CatalogOverlayPlotSettingsPanelComponent,
+    LayerListSettingsPanelComponent
 } from "components";
 import {AppStore, HelpStore, HelpType, LayoutStore, CatalogStore} from "stores";
 import {
@@ -409,6 +410,8 @@ export class WidgetsStore {
                 return HistogramSettingsPanelComponent.WIDGET_CONFIG;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 return CatalogOverlayPlotSettingsPanelComponent.WIDGET_CONFIG;
+            case LayerListComponent.WIDGET_CONFIG.type:
+                return LayerListSettingsPanelComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -644,7 +647,7 @@ export class WidgetsStore {
         layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
         layout.registerComponent("catalog-plot", CatalogPlotComponent);
 
-        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay"];
+        const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
         // add drag source buttons for ToolbarMenuComponent
         this.CARTAWidgets.forEach((props, widgetType) => {
             const widgetButtonID = widgetType.replace(/\s+/g, "") + "Button";
@@ -736,7 +739,7 @@ export class WidgetsStore {
         const parentType = parentItemConfig.component;
         const parentTitle = parentItemConfig.title;
 
-        // apply for image viewer, stokes, spectral profiler, spatial profiler, Render Config, Histogram
+        // apply for image viewer, stokes, spectral profiler, spatial profiler, Render Config, Histogram, Catalog Overlay, Layer List
         const floatingSettingsAppliedWidgets = [
             ImageViewComponent.WIDGET_CONFIG.type,
             StokesAnalysisComponent.WIDGET_CONFIG.type,
@@ -744,7 +747,8 @@ export class WidgetsStore {
             SpatialProfilerComponent.WIDGET_CONFIG.type,
             RenderConfigComponent.WIDGET_CONFIG.type,
             HistogramComponent.WIDGET_CONFIG.type,
-            CatalogOverlayComponent.WIDGET_CONFIG.type
+            CatalogOverlayComponent.WIDGET_CONFIG.type,
+            LayerListComponent.WIDGET_CONFIG.type
         ];
         if (floatingSettingsAppliedWidgets.indexOf(parentType) === -1) {
             return;
