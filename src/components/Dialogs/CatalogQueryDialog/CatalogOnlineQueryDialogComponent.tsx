@@ -88,9 +88,14 @@ export class CatalogQueryDialogComponent extends React.Component {
 
         const disable = configStore.isQuerying || configStore.isObjectQuerying;
         let sourceIndicater;
-        if (this.objectSize === 0) {
+        let objectSize = this.objectSize;
+        if (configStore.disableObjectSearch) {
+            objectSize = undefined;
+        }
+
+        if (objectSize === 0) {
             sourceIndicater = <Icon icon="cross" intent="warning" iconSize={30} />;
-        } else {
+        } else if (objectSize === 1) {
             sourceIndicater = <Icon icon="tick" intent="success" iconSize={30} />;
         }
 
@@ -117,7 +122,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </Select>
                 </FormGroup>
                 <FormGroup inline={false} label="Object" disabled={disable}>
-                    <InputGroup asyncControl={false} disabled={disable} rightElement={this.objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
+                    <InputGroup asyncControl={false} disabled={disable} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
                     <Tooltip2 content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button disabled={disable || configStore.disableObjectSearch} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
                     </Tooltip2>

@@ -48,7 +48,7 @@ export class CatalogApiService {
     }
 
     // Online Catalog Query
-    appendOnlineCatalog = async (query: string): Promise<number> => {
+    public appendOnlineCatalog = async (query: string): Promise<number> => {
         const frame = AppStore.Instance.activeFrame;
         if (!frame) {
             AppToaster.show(ErrorToast("Please load the image file"));

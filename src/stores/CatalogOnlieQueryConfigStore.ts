@@ -53,9 +53,10 @@ export class CatalogOnlineQueryConfigStore {
         reaction(
             () => AppStore.Instance.cursorFrozen,
             cursorFrozen => {
-                const frame = AppStore.Instance.activeFrame;
+                const frame = this.activeFrame;
                 if (cursorFrozen && frame?.cursorInfo?.posImageSpace) {
                     this.updateCenterPixelCoord(frame.cursorInfo.posImageSpace);
+                    this.resetObjectName();
                 }
             }
         );
@@ -69,9 +70,10 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     public setFrameCenter() {
-        const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
+        const frame = this.activeFrame;
         if (frame?.center) {
             this.updateCenterPixelCoord(frame.center);
+            this.resetObjectName();
         }
     }
 
@@ -129,6 +131,10 @@ export class CatalogOnlineQueryConfigStore {
 
     @action setObjectName(object: string) {
         this.objectName = object;
+    }
+
+    @action resetObjectName() {
+        this.objectName = "";
     }
 
     @action setObjectQueryStatus(isQuerying: boolean) {
@@ -197,7 +203,7 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     @computed get searchRadiusInDegree(): number {
-        const activeFrame = AppStore.Instance.activeFrame;
+        const activeFrame = this.activeFrame;
         if (activeFrame) {
             const requiredFrameView = activeFrame.requiredFrameView;
             const max = this.convertToDeg({x: requiredFrameView.xMax, y: requiredFrameView.yMax});
@@ -220,6 +226,10 @@ export class CatalogOnlineQueryConfigStore {
         };
     }
 
+    @computed get activeFrame() {
+        return AppStore.Instance?.activeFrame?.spatialReference ?? AppStore.Instance.activeFrame;
+    }
+
     @action resetSearchRadius() {
         let radius = this.searchRadiusInDegree;
         switch (this.radiusUnits) {
@@ -237,7 +247,7 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     convertToDeg(pixelCoords: Point2D): {x: string; y: string} {
-        const frame = AppStore.Instance.activeFrame;
+        const frame = this.activeFrame;
         const overlay = OverlayStore.Instance;
         let p: {x: string; y: string} = {x: undefined, y: undefined};
         if (frame && overlay) {
@@ -248,7 +258,6 @@ export class CatalogOnlineQueryConfigStore {
             AST.set(wcsCopy, `System=${SystemType.ICRS}`);
             astString.add("Format(1)", format);
             astString.add("Format(2)", format);
-            astString.add("System", SystemType.ICRS);
             const pointWCS = transformPoint(wcsCopy, pixelCoords);
             const normVals = AST.normalizeCoordinates(wcsCopy, pointWCS.x, pointWCS.y);
             p = AST.getFormattedCoordinates(wcsCopy, normVals.x, normVals.y, astString.toString(), true);
@@ -257,20 +266,18 @@ export class CatalogOnlineQueryConfigStore {
         return p;
     }
 
-    convertToPixel(Coords: Point2D): Point2D {
-        const frame = AppStore.Instance.activeFrame;
+    convertToPixel(coords: Point2D): Point2D {
+        const frame = this.activeFrame;
         const overlay = OverlayStore.Instance;
         let p: {x: number; y: number} = {x: undefined, y: undefined};
         if (frame && overlay) {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
             const format = `${NumberFormatType.Degrees}.${precision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
-            let astString = new ASTSettingsString();
             AST.set(wcsCopy, `System=${SystemType.ICRS}`);
-            astString.add("Format(1)", format);
-            astString.add("Format(2)", format);
-            astString.add("System", SystemType.ICRS);
-            p = getPixelValueFromWCS(wcsCopy, {x: Coords.x.toString(), y: Coords.y.toString()});
+            AST.set(wcsCopy, `Format(1)=${format}`);
+            AST.set(wcsCopy, `Format(2)=${format}`);
+            p = getPixelValueFromWCS(wcsCopy, {x: coords.x.toString(), y: coords.y.toString()});
             AST.deleteObject(wcsCopy);
         }
         return p;
