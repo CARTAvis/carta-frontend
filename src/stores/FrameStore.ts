@@ -425,6 +425,10 @@ export class FrameStore {
             if (spectralType) {
                 spectralInfo.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys ?? ""}): ${toFixed(channelInfo.values[this.channel], 4)} ${spectralType.unit ?? ""}`;
                 if (spectralType.code === "FREQ") {
+                    // dummy variable to update velocity when the rest freq for spectral transform is changed
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const restFreq = this.customRestFreq;
+
                     const freqVal = channelInfo.rawValues[this.channel];
                     // convert frequency value to unit in GHz
                     if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
