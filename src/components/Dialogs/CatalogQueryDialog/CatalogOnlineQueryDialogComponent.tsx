@@ -154,7 +154,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={false} label="Center Coordinates" disabled={disable}>
                     <Select
-                        items={Object.keys(SystemType).map(key => (SystemType[key]))}
+                        items={Object.keys(SystemType).map(key => SystemType[key])}
                         activeItem={null}
                         onItemSelect={type => appStore.overlayStore.global.setSystem(type)}
                         itemRenderer={this.renderSysTypePopOver}
@@ -310,7 +310,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         return <MenuItem key={type} text={type} onClick={itemProps.handleClick} />;
     };
 
-    private handleRadiusChange = (ev) => {
+    private handleRadiusChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -323,7 +323,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         }
     };
 
-    private handleCenterWCSXChange = (ev) => {
+    private handleCenterWCSXChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -349,7 +349,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         ev.currentTarget.value = centerWCSPoint.x;
     };
 
-    private handleCenterWCSYChange = (ev) => {
+    private handleCenterWCSYChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -366,7 +366,7 @@ export class CatalogQueryDialogComponent extends React.Component {
             return;
         }
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(wcsInfo,  {x: centerWCSPoint.x, y: wcsString});
+            const newPoint = getPixelValueFromWCS(wcsInfo, {x: centerWCSPoint.x, y: wcsString});
             if (newPoint && isFinite(newPoint.y)) {
                 configStore.updateCenterPixelCoord(newPoint);
                 return;

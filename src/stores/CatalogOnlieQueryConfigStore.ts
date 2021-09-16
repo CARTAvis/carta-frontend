@@ -70,7 +70,7 @@ export class CatalogOnlineQueryConfigStore {
 
     public setFrameCenter() {
         const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
-        if(frame?.center) {
+        if (frame?.center) {
             this.updateCenterPixelCoord(frame.center);
         }
     }
@@ -217,7 +217,7 @@ export class CatalogOnlineQueryConfigStore {
         return {
             x: Number(this.centerPixelCoord.x),
             y: Number(this.centerPixelCoord.y)
-        }
+        };
     }
 
     @action resetSearchRadius() {
