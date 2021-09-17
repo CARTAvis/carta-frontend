@@ -467,9 +467,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                     </Button>
                 </NonIdealState>
             );
-        }
-
-        if (!unfilteredEntryCount) {
+        } else if (!unfilteredEntryCount) {
             nonIdealState = <NonIdealState icon="folder-open" title="Empty folder" description="There are no files or subdirectories in this folder" />;
         } else if (!entryCount) {
             nonIdealState = <NonIdealState icon="search" title="No results" description="There are no files or subdirectories matching the filter expression" />;
