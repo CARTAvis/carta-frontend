@@ -42,6 +42,8 @@ export class FileBrowserStore {
         return FileBrowserStore.staticInstance;
     }
 
+    private static readonly ExtendedLoadingDelay = 500;
+
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
     @observable fileList: CARTA.IFileListResponse;
@@ -51,6 +53,7 @@ export class FileBrowserStore {
     @observable regionFileInfo: string[];
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
+    @observable extendedLoading = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
     @observable responseErrorMessage: string = "";
@@ -72,6 +75,8 @@ export class FileBrowserStore {
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
     @observable shouldDropDegenerateAxes: boolean;
+
+    private extendedDelayHandle: any;
 
     constructor() {
         makeObservable(this);
@@ -146,10 +151,31 @@ export class FileBrowserStore {
         this.catalogFileList = list;
     };
 
+    private setExtendedDelayTimer() {
+        this.clearExtendedDelayTimer();
+        this.extendedDelayHandle = setTimeout(() => this.setExtendedLoading(true), FileBrowserStore.ExtendedLoadingDelay);
+    }
+
+    private clearExtendedDelayTimer(resetState: boolean = false) {
+        if (this.extendedDelayHandle) {
+            clearTimeout(this.extendedDelayHandle);
+            this.extendedDelayHandle = null;
+        }
+        if (resetState) {
+            this.setExtendedLoading(false);
+        }
+    }
+
+    @action private setExtendedLoading = (val: boolean) => {
+        this.extendedLoading = val;
+    };
+
     @action getFileList = async (directory: string = "") => {
         const backendService = BackendService.Instance;
 
         this.loadingList = true;
+        this.setExtendedDelayTimer();
+
         this.selectedFile = null;
         this.selectedHDU = null;
         this.HDUfileInfoExtended = null;
@@ -448,6 +474,7 @@ export class FileBrowserStore {
 
     @action resetLoadingStates = () => {
         this.loadingList = false;
+        this.clearExtendedDelayTimer(true);
         this.isLoadingDialogOpen = false;
         this.updateLoadingState(0, 0, 0);
     };

@@ -1,5 +1,15 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
+.file-table-container {
+    position: relative;
+    height: 100%;
+    .bp3-non-ideal-state {
+        position: absolute;
+        z-index: 1;
+        backdrop-filter: blur(1px);
+    }
+}
+
 .column-name {
     overflow: hidden;
 

@@ -3,7 +3,7 @@ import {action, autorun, computed, makeObservable, observable, runInAction} from
 import {observer} from "mobx-react";
 import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
-import {Icon, Label, NonIdealState} from "@blueprintjs/core";
+import {Button, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
 import moment from "moment";
 import FuzzySearch from "fuzzy-search";
@@ -25,6 +25,8 @@ interface FileEntry extends ISelectedFile {
 export interface FileListTableComponentProps {
     darkTheme: boolean;
     loading?: boolean;
+    extendedLoading?: boolean;
+    fileProgress?: {total: number; checked: number};
     listResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
     selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo;
     selectedHDU: string;
@@ -37,6 +39,7 @@ export interface FileListTableComponentProps {
     onSelectionChanged: (selectedFiles: ISelectedFile[]) => void;
     onFileDoubleClicked: (file: ISelectedFile) => void;
     onFolderClicked: (folder: string) => void;
+    onListCancelled: () => void;
 }
 
 @observer
@@ -443,13 +446,36 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         const entryCount = this.tableEntries.length;
         const unfilteredEntryCount = (fileResponse?.files?.length || 0) + (fileResponse?.subdirectories?.length || 0);
-        if (!unfilteredEntryCount) {
-            return <NonIdealState icon="folder-open" title="Empty folder" description="There are no files or subdirectories in this folder" />;
-        } else if (!entryCount) {
-            return <NonIdealState icon="search" title="No results" description="There are no files or subdirectories matching the filter expression" />;
+
+        let nonIdealState: React.ReactNode;
+
+        // Show loading spinner if we've been loading for more than 500 ms, or if there are no existing files in the list
+        if (this.props.extendedLoading || (!unfilteredEntryCount && this.props.loading)) {
+            let description: string;
+            let progress: number;
+
+            const fileProgress = this.props.fileProgress;
+            if (fileProgress?.total > 0) {
+                description = `Loading ${fileProgress.checked} / ${fileProgress.total}`;
+                progress = fileProgress.checked / fileProgress.total;
+            }
+
+            nonIdealState = (
+                <NonIdealState icon={<Spinner value={progress} intent="primary" />} title={"Loading file list"} description={description}>
+                    <Button intent="warning" onClick={this.props.onListCancelled}>
+                        Cancel
+                    </Button>
+                </NonIdealState>
+            );
         }
 
-        return (
+        if (!unfilteredEntryCount) {
+            nonIdealState = <NonIdealState icon="folder-open" title="Empty folder" description="There are no files or subdirectories in this folder" />;
+        } else if (!entryCount) {
+            nonIdealState = <NonIdealState icon="search" title="No results" description="There are no files or subdirectories matching the filter expression" />;
+        }
+
+        const table = (
             <Table
                 ref={ref => (this.tableRef = ref)}
                 className={classes.join(" ")}
@@ -473,6 +499,13 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 <Column name="Size" columnHeaderCellRenderer={() => this.renderColumnHeader("Size")} cellRenderer={this.renderSizes} />
                 <Column name="Date" columnHeaderCellRenderer={() => this.renderColumnHeader("Date")} cellRenderer={this.renderDates} />
             </Table>
+        );
+
+        return (
+            <div className="file-table-container">
+                {nonIdealState}
+                {table}
+            </div>
         );
     }
 }
