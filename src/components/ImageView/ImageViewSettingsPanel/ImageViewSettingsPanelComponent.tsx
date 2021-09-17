@@ -144,29 +144,31 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
 
         const globalPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Multi-panel mode">
-                    <HTMLSelect value={preferences.imagePanelMode} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
-                        <option value={ImagePanelMode.None}>Single panel only</option>
+                <FormGroup inline={true} label="Enable multi-panel">
+                    <Switch checked={preferences.imageMultiPanelEnabled} onChange={ev => appStore.widgetsStore.setImageMultiPanelEnabled(ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Multi-panel mode" disabled={!preferences.imageMultiPanelEnabled}>
+                    <HTMLSelect value={preferences.imagePanelMode} disabled={!preferences.imageMultiPanelEnabled} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
                         <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
                         <option value={ImagePanelMode.Fixed}>Fixed grid size</option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={preferences.imagePanelMode === ImagePanelMode.None}>
+                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.imageMultiPanelEnabled}>
                     <SafeNumericInput
                         placeholder="Columns"
                         min={1}
                         value={preferences.imagePanelColumns}
-                        disabled={preferences.imagePanelMode === ImagePanelMode.None}
+                        disabled={!preferences.imageMultiPanelEnabled}
                         stepSize={1}
                         minorStepSize={null}
                         onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={preferences.imagePanelMode === ImagePanelMode.None}>
+                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.imageMultiPanelEnabled}>
                     <SafeNumericInput
                         placeholder="Rows"
                         min={1}
-                        disabled={preferences.imagePanelMode === ImagePanelMode.None}
+                        disabled={!preferences.imageMultiPanelEnabled}
                         value={preferences.imagePanelRows}
                         stepSize={1}
                         minorStepSize={null}
