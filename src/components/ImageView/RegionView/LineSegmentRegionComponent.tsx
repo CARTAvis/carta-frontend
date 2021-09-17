@@ -104,11 +104,11 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
                 }
                 const delta = subtract2D(newAnchorPoint, region.center);
-                const topAnchorPosition = rotate2D({x: 0, y: 1}, (region.rotation * Math.PI) / 180.0);
+                const topAnchorPosition = rotate2D({x: -1, y: 0}, (region.rotation * Math.PI) / 180.0);
                 const angle = (angle2D(topAnchorPosition, delta) * 180.0) / Math.PI;
                 const newRotation = (((region.rotation + angle + 360) % 360) * Math.PI) / 180.0;
-                const dx = length2D(region.size) * Math.cos(newRotation);
-                const dy = length2D(region.size) * Math.sin(newRotation);
+                const dx = -length2D(region.size) * Math.sin(newRotation);
+                const dy = length2D(region.size) * Math.cos(newRotation);
                 const newStart = {x: region.center.x - dx / 2, y: region.center.y - dy / 2};
                 const newEnd = {x: region.center.x + dx / 2, y: region.center.y + dy / 2};
                 region.setControlPoints([newStart, newEnd]);
@@ -309,7 +309,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         const region = this.props.region;
         const frame = this.props.frame;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        let rotation = -region.rotation;
+        let rotation = -region.rotation - 90.0;
 
         let controlPoints = region.controlPoints;
         let centerPointCanvasSpace: Point2D;

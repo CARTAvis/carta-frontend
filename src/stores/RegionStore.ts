@@ -284,8 +284,8 @@ export class RegionStore {
     }
 
     private getLineAngle = (start: Point2D, end: Point2D): number => {
-        let angle = (Math.atan((end.y - start.y) / (end.x - start.x)) * 180.0) / Math.PI;
-        if (end.x < start.x) {
+        let angle = (Math.atan((end.x - start.x) / (start.y - end.y)) * 180.0) / Math.PI;
+        if (end.y <= start.y) {
             angle += 180;
         }
         return angle;

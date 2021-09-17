@@ -237,12 +237,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     this.creatingRegion.setControlPoints([center, {y: Math.abs(dx) / 2.0, x: Math.abs(dy) / 2.0}]);
                     break;
                 case CARTA.RegionType.LINE:
-                    const start = this.regionStartPoint;
-                    if (start.x < cursorPosImageSpace.x) {
-                        this.creatingRegion.setControlPoints([start, cursorPosImageSpace]);
-                    } else {
-                        this.creatingRegion.setControlPoints([cursorPosImageSpace, start]);
-                    }
+                    this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
                     break;
                 default:
                     break;
@@ -257,12 +252,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     this.creatingRegion.setControlPoints([this.regionStartPoint, {y: Math.abs(dx), x: Math.abs(dy)}]);
                     break;
                 case CARTA.RegionType.LINE:
-                    const start = {x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy};
-                    if (start.x < cursorPosImageSpace.x) {
-                        this.creatingRegion.setControlPoints([start, cursorPosImageSpace]);
-                    } else {
-                        this.creatingRegion.setControlPoints([cursorPosImageSpace, start]);
-                    }
+                    this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
                     break;
                 default:
                     break;
