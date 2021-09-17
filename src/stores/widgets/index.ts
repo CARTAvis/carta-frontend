@@ -10,3 +10,4 @@ export * from "./CatalogWidgetStore";
 export * from "./CatalogPlotWidgetStore";
 export * from "./SpectralProfileWidget/SpectralProfileWidgetStore";
 export * from "./SpectralProfileWidget/SpectralProfileSelectionStore";
+export * from "./PVGeneratorWidgetStore";

@@ -42,10 +42,12 @@ import {
     CatalogPlotWidgetStore,
     CatalogPlotWidgetStoreProps,
     ACTIVE_FILE_ID,
-    CatalogPlotType
+    CatalogPlotType,
+    PVGeneratorWidgetStore
 } from "./widgets";
 import {PreferenceKeys, PreferenceStore} from "./PreferenceStore";
 import {ImagePanelMode} from "models";
+import {PVGeneratorComponent} from "components/PVGenerator/PVGeneratorComponent";
 
 export enum WidgetType {
     Region = "Region List Widget",
@@ -60,7 +62,8 @@ export enum WidgetType {
     ImageList = "Image List Widget",
     Catalog = "Catalog Widget",
     SpectralLineQuery = "Spectral Line Query Widget",
-    CursorInfo = "Cursor Info Widget"
+    CursorInfo = "Cursor Info Widget",
+    PVGenerator = "PV Generator"
 }
 
 export interface DefaultWidgetConfig {
@@ -161,6 +164,7 @@ export class WidgetsStore {
     @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore>;
     @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
     @observable cursorInfoWidgets: Map<string, EmptyWidgetStore>;
+    @observable pvGeneratorWidgets: Map<string, PVGeneratorWidgetStore>;
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
@@ -274,6 +278,15 @@ export class WidgetsStore {
                 onClick: () => WidgetsStore.Instance.createFloatingCursorInfoWidget(),
                 widgetConfig: CursorInfoComponent.WIDGET_CONFIG
             }
+        ],
+        [
+            WidgetType.PVGenerator,
+            {
+                isCustomIcon: false,
+                icon: "line-chart",
+                onClick: () => WidgetsStore.Instance.createFloatingPVGeneratorWidget(),
+                widgetConfig: PVGeneratorComponent.WIDGET_CONFIG
+            }
         ]
     ]);
 
@@ -349,7 +362,8 @@ export class WidgetsStore {
             [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogWidgets],
             [CatalogPlotComponent.WIDGET_CONFIG.type, this.catalogPlotWidgets],
             [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets],
-            [CursorInfoComponent.WIDGET_CONFIG.type, this.cursorInfoWidgets]
+            [CursorInfoComponent.WIDGET_CONFIG.type, this.cursorInfoWidgets],
+            [PVGeneratorComponent.WIDGET_CONFIG.type, this.pvGeneratorWidgets]
         ]);
 
         this.floatingWidgets = [];
@@ -535,6 +549,9 @@ export class WidgetsStore {
             case CursorInfoComponent.WIDGET_CONFIG.type:
                 itemId = this.addCursorInfoWidget();
                 break;
+            case PVGeneratorComponent.WIDGET_CONFIG.type:
+                itemId = this.addPVGeneratorWidget();
+                break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.catalogProfiles.set(itemId, 1);
@@ -638,6 +655,7 @@ export class WidgetsStore {
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("layer-list", LayerListComponent);
         layout.registerComponent("cursor-info", CursorInfoComponent);
+        layout.registerComponent("pv-generator", PVGeneratorComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
@@ -1358,6 +1376,21 @@ export class WidgetsStore {
     @action addCursorInfoWidget(id: string = null) {
         if (!id) {
             id = this.getNextId(CursorInfoComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.cursorInfoWidgets.set(id, new EmptyWidgetStore());
+        }
+        return id;
+    }
+
+    createFloatingPVGeneratorWidget = () => {
+        this.addFloatingWidget(new WidgetConfig(this.addPVGeneratorWidget(), PVGeneratorComponent.WIDGET_CONFIG));
+    };
+
+    @action addPVGeneratorWidget(id: string = null) {
+        if (!id) {
+            id = this.getNextId(PVGeneratorComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
