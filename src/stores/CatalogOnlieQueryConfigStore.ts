@@ -206,11 +206,10 @@ export class CatalogOnlineQueryConfigStore {
         const activeFrame = this.activeFrame;
         if (activeFrame) {
             const requiredFrameView = activeFrame.requiredFrameView;
-            const max = this.convertToDeg({x: requiredFrameView.xMax, y: requiredFrameView.yMax});
-            const min = this.convertToDeg({x: requiredFrameView.xMin, y: requiredFrameView.yMin});
-            const x = Number(max.x) - Number(min.x);
-            const y = Number(max.y) - Number(min.y);
-            const diagonal = Math.sqrt(x * x + y * y);
+            const diagonal1 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, true);
+            const diagonal2 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMin, y: requiredFrameView.yMax}, {x: requiredFrameView.xMax, y: requiredFrameView.yMin}, true);
+            const diagonal3 = this.calculateDistanceFromPixelCoord({x: requiredFrameView.xMax, y: requiredFrameView.yMax}, {x: requiredFrameView.xMin, y: requiredFrameView.yMin}, false);
+            const diagonal = Math.max(diagonal1, diagonal2, diagonal3);
             if (isNaN(diagonal)) {
                 return 90;
             }
@@ -281,5 +280,17 @@ export class CatalogOnlineQueryConfigStore {
             AST.deleteObject(wcsCopy);
         }
         return p;
+    }
+
+    private calculateDistanceFromPixelCoord(x: Point2D, y: Point2D, diagonal: boolean): number {
+        const max = this.convertToDeg(x);
+        const min = this.convertToDeg(y);
+        const xd = Number(max.x) - Number(min.x);
+        const yd = Number(max.y) - Number(min.y);
+        if (diagonal) {
+            return Math.sqrt(xd * xd + yd * yd) / 2;
+        } else {
+            return Math.abs(xd) > Math.abs(yd) ? Math.abs(xd) / 2 : Math.abs(yd) / 2;
+        }
     }
 }
