@@ -212,6 +212,9 @@ export class AppStore {
                     this.autoFitImages(frames);
                 }
             } else if (this.preferenceStore.autoLaunch) {
+                if (folderSearchParam) {
+                    this.fileBrowserStore.setStartingDirectory(folderSearchParam);
+                }
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         } catch (err) {
@@ -1188,7 +1191,7 @@ export class AppStore {
             try {
                 await this.connectToServer();
                 await this.preferenceStore.fetchPreferences();
-                await this.fileBrowserStore.setStartingDirectory();
+                await this.fileBrowserStore.restoreStartingDirectory();
                 await this.layoutStore.fetchLayouts();
                 await this.snippetStore.fetchSnippets();
 
