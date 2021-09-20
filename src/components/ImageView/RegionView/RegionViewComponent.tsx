@@ -31,9 +31,9 @@ export interface RegionViewComponentProps {
     getStageRef: (ref) => void;
     onMoveStageOrigin: (newOrigin: Point2D) => void;
     onClickToCenter: (cursorInfo: CursorInfo) => void;
-    onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
+const LINE_HEIGHT = 15;
 const DUPLICATE_POINT_THRESHOLD = 0.01;
 const DOUBLE_CLICK_DISTANCE = 5;
 const KEYCODE_ESC = 27;
@@ -432,11 +432,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     handleWheel = (konvaEvent: Konva.KonvaEventObject<WheelEvent>) => {
         const mouseEvent = konvaEvent.evt;
         const frame = this.props.frame;
-        const lineHeight = 15;
-        const delta = mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? mouseEvent.deltaY : mouseEvent.deltaY * lineHeight;
-        if (this.props.frame.wcsInfo && this.props.onZoomed) {
+        if (frame) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
-            this.props.onZoomed(this.props.frame.getCursorInfo(cursorPosImageSpace), -delta);
+            const cursorInfo = this.props.frame.getCursorInfo(cursorPosImageSpace);
+            const delta = -mouseEvent.deltaY * (mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? 1 : LINE_HEIGHT);
+            const zoomSpeed = 1 + Math.abs(delta / 750.0);
+
+            // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
+            const newZoom = (frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel) * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
+            frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
         }
     };
 

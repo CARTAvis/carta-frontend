@@ -52,22 +52,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         this.props.frame?.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
     };
 
-    onZoomed = (cursorInfo: CursorInfo, delta: number) => {
-        const frame = this.props.frame;
-        if (frame) {
-            const zoomSpeed = 1 + Math.abs(delta / 750.0);
-
-            // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
-            if (frame.spatialReference) {
-                const newZoom = frame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-                frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
-            } else {
-                const newZoom = frame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-                frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
-            }
-        }
-    };
-
     moveRegionViewStageOrigin = (newOrigin: Point2D) => {
         this.regionViewStageOrigin = newOrigin;
     };
@@ -174,7 +158,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     )}
                     {false && frame && overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
                     {false && frame && <BeamProfileOverlayComponent frame={frame} top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
-                    {false && frame && <CatalogViewGLComponent frame={frame} docked={this.props.docked} onZoomed={this.onZoomed} />}
+                    {false && frame && <CatalogViewGLComponent frame={frame} docked={this.props.docked} />}
                     {frame && (
                         <RegionViewComponent
                             frame={frame}
@@ -186,7 +170,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             getStageRef={this.getRegionViewStageRef}
                             onMoveStageOrigin={this.moveRegionViewStageOrigin}
                             onClickToCenter={this.onClickToCenter}
-                            onZoomed={this.onZoomed}
                             overlaySettings={overlayStore}
                             dragPanningEnabled={appStore.preferenceStore.dragPanning}
                             cursorFrozen={appStore.cursorFrozen}
