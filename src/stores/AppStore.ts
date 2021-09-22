@@ -214,6 +214,9 @@ export class AppStore {
                     this.autoFitImages(frames);
                 }
             } else if (this.preferenceStore.autoLaunch) {
+                if (folderSearchParam) {
+                    this.fileBrowserStore.setStartingDirectory(folderSearchParam);
+                }
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         } catch (err) {
@@ -1199,7 +1202,7 @@ export class AppStore {
             try {
                 await this.connectToServer();
                 await this.preferenceStore.fetchPreferences();
-                await this.fileBrowserStore.setStartingDirectory();
+                await this.fileBrowserStore.restoreStartingDirectory();
                 await this.layoutStore.fetchLayouts();
                 await this.snippetStore.fetchSnippets();
 
@@ -1411,6 +1414,13 @@ export class AppStore {
         autorun(() => {
             if (this.activeFrame) {
                 this.overlayStore.setDefaultsFromAST(this.activeFrame);
+            }
+        });
+
+        // Update image panel page buttons
+        autorun(() => {
+            if (this.activeFrame && this.numImageColumns && this.numImageRows) {
+                this.widgetsStore.updateImagePanelPageButtons();
             }
         });
 
@@ -2045,8 +2055,7 @@ export class AppStore {
             return 0;
         }
 
-        const imagesPerPage = this.numImageColumns * this.numImageRows;
-        return Math.ceil(this.frames.length / imagesPerPage);
+        return Math.ceil(this.frames.length / this.imagesPerPage);
     }
 
     @computed get currentImagePage() {
@@ -2054,9 +2063,8 @@ export class AppStore {
             return 0;
         }
 
-        const imagesPerPage = this.numImageColumns * this.numImageRows;
         const index = this.frames.indexOf(this.activeFrame);
-        return Math.floor(index / imagesPerPage);
+        return Math.floor(index / this.imagesPerPage);
     }
 
     @computed get visibleFrames(): FrameStore[] {
@@ -2065,9 +2073,8 @@ export class AppStore {
         }
 
         const pageIndex = clamp(this.currentImagePage, 0, this.numImagePages);
-        const imagesPerPage = this.numImageColumns * this.numImageRows;
-        const firstFrameIndex = pageIndex * imagesPerPage;
-        const indexUpperBound = Math.min(firstFrameIndex + imagesPerPage, this.frames.length);
+        const firstFrameIndex = pageIndex * this.imagesPerPage;
+        const indexUpperBound = Math.min(firstFrameIndex + this.imagesPerPage, this.frames.length);
         const pageFrames = [];
         for (let i = firstFrameIndex; i < indexUpperBound; i++) {
             pageFrames.push(this.frames[i]);
@@ -2076,7 +2083,7 @@ export class AppStore {
     }
 
     @computed get numImageColumns() {
-        switch (this.preferenceStore.imagePanelMode) {
+        switch (this.imagePanelMode) {
             case ImagePanelMode.None:
                 return 1;
             case ImagePanelMode.Fixed:
@@ -2088,7 +2095,7 @@ export class AppStore {
     }
 
     @computed get numImageRows() {
-        switch (this.preferenceStore.imagePanelMode) {
+        switch (this.imagePanelMode) {
             case ImagePanelMode.None:
                 return 1;
             case ImagePanelMode.Fixed:
@@ -2097,6 +2104,15 @@ export class AppStore {
                 const numImages = this.frames?.length ?? 0;
                 return clamp(Math.ceil(numImages / this.preferenceStore.imagePanelColumns), 1, this.preferenceStore.imagePanelRows);
         }
+    }
+
+    @computed get imagesPerPage() {
+        return this.numImageColumns * this.numImageRows;
+    }
+
+    @computed get imagePanelMode() {
+        const preferenceStore = PreferenceStore.Instance;
+        return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
     }
 
     exportImage = (): boolean => {

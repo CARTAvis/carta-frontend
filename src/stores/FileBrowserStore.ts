@@ -341,7 +341,16 @@ export class FileBrowserStore {
     }
 
     @action saveStartingDirectory(directory?: string) {
+        this.setStartingDirectory(directory);
         const preferenceStore = PreferenceStore.Instance;
+        if (preferenceStore.keepLastUsedFolder) {
+            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
+        } else {
+            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
+        }
+    }
+
+    @action setStartingDirectory(directory?: string) {
         if (directory !== undefined) {
             this.startingDirectory = directory;
         } else {
@@ -351,14 +360,9 @@ export class FileBrowserStore {
                 this.startingDirectory = this.fileList.directory;
             }
         }
-        if (preferenceStore.keepLastUsedFolder) {
-            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
-        } else {
-            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
-        }
     }
 
-    setStartingDirectory() {
+    @action restoreStartingDirectory() {
         const preferenceStore = PreferenceStore.Instance;
         if (preferenceStore.keepLastUsedFolder) {
             if (preferenceStore.lastUsedFolder?.length > 0) {
