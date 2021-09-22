@@ -53,15 +53,16 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
     handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            const node = konvaEvent.target;
-            const region = this.props.region;
             const frame = this.props.frame;
+            const zoomLevel = this.props.stageRef.scaleX();
             const stageOrigin = this.props.stageRef.getPosition();
-            let positionImageSpace = canvasToTransformedImagePos(node.position().x + stageOrigin.x, node.position().y + stageOrigin.y, frame, this.props.layerWidth, this.props.layerHeight);
+            const position = konvaEvent.target.position();
+            const correctedPosition = {x: position.x * zoomLevel + stageOrigin.x, y: position.y * zoomLevel + stageOrigin.y};
+            let positionImageSpace = canvasToTransformedImagePos(correctedPosition.x, correctedPosition.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
-            region.setCenter(positionImageSpace);
+            this.props.region.setCenter(positionImageSpace);
         }
     };
 
@@ -81,6 +82,8 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             centerPixelSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = 0;
         }
+
+        // Correct canvas space cooridnate according to stage's scale & origin
         const zoomLevel = this.props.stageRef.scaleX();
         const stageOrigin = this.props.stageRef.getPosition();
         centerPixelSpace = {x: (centerPixelSpace.x - stageOrigin.x) / zoomLevel, y: (centerPixelSpace.y - stageOrigin.y) / zoomLevel};
