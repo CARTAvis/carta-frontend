@@ -13,7 +13,7 @@ interface PointRegionComponentProps {
     layerWidth: number;
     layerHeight: number;
     selected: boolean;
-    stageOrigin: Point2D;
+    stageRef: any;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
@@ -56,7 +56,8 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             const node = konvaEvent.target;
             const region = this.props.region;
             const frame = this.props.frame;
-            let positionImageSpace = canvasToTransformedImagePos(node.position().x + this.props.stageOrigin.x, node.position().y + this.props.stageOrigin.y, frame, this.props.layerWidth, this.props.layerHeight);
+            const stageOrigin = this.props.stageRef.getPosition();
+            let positionImageSpace = canvasToTransformedImagePos(node.position().x + stageOrigin.x, node.position().y + stageOrigin.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
@@ -80,7 +81,9 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             centerPixelSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = 0;
         }
-        centerPixelSpace = {x: centerPixelSpace.x - this.props.stageOrigin.x, y: centerPixelSpace.y - this.props.stageOrigin.y};
+        const stageOrigin = this.props.stageRef.getPosition();
+        centerPixelSpace = {x: centerPixelSpace.x - stageOrigin.x, y: centerPixelSpace.y - stageOrigin.y};
+        // TODO: fix scale issue
 
         return (
             <Group>

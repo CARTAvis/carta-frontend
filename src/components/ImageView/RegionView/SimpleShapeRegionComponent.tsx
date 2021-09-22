@@ -17,7 +17,6 @@ interface SimpleShapeRegionComponentProps {
     listening: boolean;
     selected: boolean;
     isRegionCornerMode: boolean;
-    stageOrigin: Point2D;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
@@ -405,7 +404,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 onClick: this.handleClick,
                 onDblClick: this.handleDoubleClick,
                 onContextMenu: this.handleContextMenu,
-                perfectDrawEnabled: false
+                perfectDrawEnabled: false,
+                strokeScaleEnabled: false
             };
 
             if (region.regionType === CARTA.RegionType.RECTANGLE) {

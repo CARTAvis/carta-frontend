@@ -13,7 +13,7 @@ import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
-import {CursorInfo, Point2D} from "models";
+import {CursorInfo, Point2D, ZoomPoint} from "models";
 import {average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
 
@@ -62,6 +62,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private getStageRef = ref => {
         this.stageRef = ref;
         this.props.getStageRef(ref);
+        const frame = this.props.frame;
+        if (frame) {
+            this.stageZoomToPoint(this.props.width / 2, this.props.height / 2, frame.zoomLevel);
+        }
     };
 
     updateCursorPos = _.throttle((x: number, y: number) => {
@@ -429,6 +433,24 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    stageZoomToPoint = (x: number, y: number, zoom: number) => {
+        const stageRef = this.stageRef;
+        if (stageRef) {
+            const oldScale = stageRef.scaleX();
+            const origin = stageRef.getPosition();
+            const cursorPointTo = {
+                x: (x - origin.x) / oldScale,
+                y: (y - origin.y) / oldScale,
+            };
+            stageRef.scale({x: zoom, y: zoom});
+            const newOrigin = {
+                x: x - cursorPointTo.x * zoom,
+                y: y - cursorPointTo.y * zoom,
+            };
+            stageRef.position(newOrigin);
+        }
+    };
+
     handleWheel = (konvaEvent: Konva.KonvaEventObject<WheelEvent>) => {
         const mouseEvent = konvaEvent.evt;
         const frame = this.props.frame;
@@ -441,6 +463,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
             const newZoom = (frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel) * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
             frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
+
+            // Zoom stage
+            const zoomCenter = PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR ? {x: mouseEvent.offsetX, y: mouseEvent.offsetY} : {x: this.props.width / 2, y: this.props.height / 2};
+            this.stageZoomToPoint(zoomCenter.x, zoomCenter.y, newZoom);
         }
     };
 
@@ -586,7 +612,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     y={0}
                 >
                     <Layer>
-                        <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageOrigin={this.props.stageOrigin} />
+                        <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageOrigin={this.props.stageOrigin} stageRef={this.stageRef} />
                         {this.props.cursorFrozen && <CursorRegionComponent frame={frame} region={frame.regionSet?.cursorRegion} layerWidth={this.props.width} layerHeight={this.props.height} stageOrigin={this.props.stageOrigin} />}
                         {creatingLine}
                     </Layer>
@@ -596,7 +622,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 }
 
-class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number; stageOrigin: Point2D}> {
+class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number; stageOrigin: Point2D; stageRef: any}> {
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
         if (region) {
@@ -620,6 +646,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                     layerWidth: this.props.width,
                     layerHeight: this.props.height,
                     stageOrigin: this.props.stageOrigin,
+                    stageRef: this.props.stageRef,
                     selected: r === regionSet.selectedRegion,
                     onSelect: regionSet.selectRegion,
                     onDoubleClick: this.handleRegionDoubleClicked

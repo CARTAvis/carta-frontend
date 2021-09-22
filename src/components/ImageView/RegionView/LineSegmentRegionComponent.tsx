@@ -18,7 +18,6 @@ interface LineSegmentRegionComponentProps {
     listening: boolean;
     selected: boolean;
     isRegionCornerMode: boolean;
-    stageOrigin: Point2D;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
@@ -403,6 +402,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     onDragEnd={this.handleDragEnd}
                     onDragMove={this.handleDrag}
                     perfectDrawEnabled={false}
+                    strokeScaleEnabled={false}
                     lineJoin={"round"}
                     draggable={true}
                     points={pointArray}
