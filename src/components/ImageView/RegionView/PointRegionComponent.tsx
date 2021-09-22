@@ -81,9 +81,9 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             centerPixelSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = 0;
         }
+        const zoomLevel = this.props.stageRef.scaleX();
         const stageOrigin = this.props.stageRef.getPosition();
-        centerPixelSpace = {x: centerPixelSpace.x - stageOrigin.x, y: centerPixelSpace.y - stageOrigin.y};
-        // TODO: fix scale issue
+        centerPixelSpace = {x: (centerPixelSpace.x - stageOrigin.x) / zoomLevel, y: (centerPixelSpace.y - stageOrigin.y) / zoomLevel};
 
         return (
             <Group>
