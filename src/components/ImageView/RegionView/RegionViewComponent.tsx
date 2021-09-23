@@ -557,7 +557,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     render() {
-        const appStore = AppStore.Instance;
         const frame = this.props.frame;
         const regionSet = frame.regionSet;
         const className = classNames("region-stage", {docked: this.props.docked});
@@ -583,7 +582,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         let cursor: string;
-        if (regionSet.mode === RegionMode.CREATING || appStore?.activeLayer === ImageViewLayer.DistanceMeasuring) {
+        if (regionSet.mode === RegionMode.CREATING || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
             cursor = "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
             cursor = "move";
@@ -611,7 +610,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     y={0}
                 >
                     <Layer>
-                        {appStore.fileBrowserStore.isLoadingDialogOpen && <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />}
+                        <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {this.props.cursorFrozen && <CursorRegionComponent frame={frame} region={frame.regionSet?.cursorRegion} layerWidth={this.props.width} layerHeight={this.props.height} stageRef={this.stageRef} />}
                         {creatingLine}
                     </Layer>
@@ -621,6 +620,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 }
 
+@observer
 class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number; stageRef: any}> {
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
@@ -635,7 +635,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
 
     public render() {
         const regions = this.props.regions;
-        if (regions?.length) {
+        if (!AppStore.Instance.fileBrowserStore.isLoadingDialogOpen && regions?.length) {
             const regionSet = this.props.frame?.regionSet;
             return regions.map(r => {
                 const commonProps = {
