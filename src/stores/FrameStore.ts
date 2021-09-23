@@ -26,7 +26,8 @@ import {
     STANDARD_SPECTRAL_TYPE_SETS,
     STANDARD_POLARIZATIONS,
     Transform2D,
-    ZoomPoint
+    ZoomPoint,
+    POLARIZATION_LABELS
 } from "models";
 import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
@@ -103,7 +104,6 @@ export class FrameStore {
     @observable renderConfig: RenderConfigStore;
     @observable contourConfig: ContourConfigStore;
     @observable contourStores: Map<ContourLevel, ContourStore>;
-    @observable valid: boolean;
     @observable moving: boolean;
     @observable zooming: boolean;
 
@@ -725,7 +725,7 @@ export class FrameStore {
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (STANDARD_POLARIZATIONS.has(stokesVal)) {
-                        stokesOptions.push({value: stokesVal - 1, label: `${stokesVal > 0 ? "Stokes " : ""}${STANDARD_POLARIZATIONS.get(stokesVal)}`});
+                        stokesOptions.push({value: i, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
                     }
                 }
             }
@@ -837,7 +837,6 @@ export class FrameStore {
         }
 
         this.frameRegionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
-        this.valid = true;
         this.currentFrameView = {
             xMin: 0,
             xMax: 0,
