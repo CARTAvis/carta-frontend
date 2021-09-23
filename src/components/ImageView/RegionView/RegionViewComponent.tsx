@@ -426,12 +426,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    stageZoom = (zoom: number) => {
-        // TODO
-        console.log("zoom", zoom);
+    public stageZoom = (zoom: number) => {
+        this.stageZoomToPoint(this.props.width / 2, this.props.height / 2, zoom);
     };
 
-    stageZoomToPoint = (x: number, y: number, zoom: number) => {
+    private stageZoomToPoint = (x: number, y: number, zoom: number) => {
         const stageRef = this.stageRef;
         if (stageRef) {
             const oldScale = stageRef.scaleX();
