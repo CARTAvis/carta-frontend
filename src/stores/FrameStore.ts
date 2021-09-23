@@ -101,7 +101,6 @@ export class FrameStore {
     @observable renderConfig: RenderConfigStore;
     @observable contourConfig: ContourConfigStore;
     @observable contourStores: Map<number, ContourStore>;
-    @observable valid: boolean;
     @observable moving: boolean;
     @observable zooming: boolean;
 
@@ -835,7 +834,6 @@ export class FrameStore {
         }
 
         this.frameRegionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);
-        this.valid = true;
         this.currentFrameView = {
             xMin: 0,
             xMax: 0,
