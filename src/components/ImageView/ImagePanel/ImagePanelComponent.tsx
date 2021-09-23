@@ -124,10 +124,10 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    {true && <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />}
+                    <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
                     {false && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
-                    {false && frame.valid && <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />}
-                    {true && this.cursorInfoRequired && frame.cursorInfo && (
+                    {false && <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />}
+                    {false && this.cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
                             cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
@@ -140,32 +140,24 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             unit={frame.unit}
                             top={overlayStore.padding.top}
                             currentStokes={appStore.activeFrame.requiredStokes >= 0 && appStore.activeFrame.requiredStokes < appStore.activeFrame.stokesInfo?.length ? appStore.activeFrame.requiredStokesInfo : ""}
-                            showImage={true}
-                            showWCS={true}
-                            showValue={true}
-                            showChannel={false}
-                            showSpectral={true}
-                            showStokes={true}
                         />
                     )}
-                    {false && frame && overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
-                    {false && frame && <BeamProfileOverlayComponent frame={frame} top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
-                    {false && frame && <CatalogViewGLComponent frame={frame} docked={this.props.docked} />}
-                    {frame && (
-                        <RegionViewComponent
-                            ref={this.getRegionViewRef}
-                            frame={frame}
-                            width={frame.renderWidth}
-                            height={frame.renderHeight}
-                            top={overlayStore.padding.top}
-                            left={overlayStore.padding.left}
-                            onClickToCenter={this.onClickToCenter}
-                            overlaySettings={overlayStore}
-                            dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                            cursorFrozen={appStore.cursorFrozen}
-                            docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
-                        />
-                    )}
+                    {false && overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
+                    {false && <BeamProfileOverlayComponent frame={frame} top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />}
+                    {false && <CatalogViewGLComponent frame={frame} docked={this.props.docked} />}
+                    <RegionViewComponent
+                        ref={this.getRegionViewRef}
+                        frame={frame}
+                        width={frame.renderWidth}
+                        height={frame.renderHeight}
+                        top={overlayStore.padding.top}
+                        left={overlayStore.padding.left}
+                        onClickToCenter={this.onClickToCenter}
+                        overlaySettings={overlayStore}
+                        dragPanningEnabled={appStore.preferenceStore.dragPanning}
+                        cursorFrozen={appStore.cursorFrozen}
+                        docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
+                    />
                     <ToolbarComponent
                         docked={this.props.docked}
                         visible={this.imageToolbarVisible}

@@ -557,6 +557,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     render() {
+        const appStore = AppStore.Instance;
         const frame = this.props.frame;
         const regionSet = frame.regionSet;
         const className = classNames("region-stage", {docked: this.props.docked});
@@ -582,7 +583,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         let cursor: string;
-        if (regionSet.mode === RegionMode.CREATING || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
+        if (regionSet.mode === RegionMode.CREATING || appStore?.activeLayer === ImageViewLayer.DistanceMeasuring) {
             cursor = "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
             cursor = "move";
@@ -610,7 +611,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     y={0}
                 >
                     <Layer>
-                        <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
+                        {appStore.fileBrowserStore.isLoadingDialogOpen && <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />}
                         {this.props.cursorFrozen && <CursorRegionComponent frame={frame} region={frame.regionSet?.cursorRegion} layerWidth={this.props.width} layerHeight={this.props.height} stageRef={this.stageRef} />}
                         {creatingLine}
                     </Layer>

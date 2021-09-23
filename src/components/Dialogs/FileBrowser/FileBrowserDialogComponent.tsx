@@ -81,6 +81,8 @@ export class FileBrowserDialogComponent extends React.Component {
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
             await appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, file.fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
         } else {
+            fileBrowserStore.setImportingRegions(true);
+            fileBrowserStore.showLoadingDialog();
             await appStore.importRegion(fileBrowserStore.fileList.directory, file.fileInfo.name, file.fileInfo.type);
         }
 
@@ -165,7 +167,7 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.setExportFilename(ev.target.value);
     };
 
-    private handleFileBrowserRequestCancelled = () => {
+    private handleFileListRequestCancelled = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         fileBrowserStore.cancelRequestingFileList();
         fileBrowserStore.resetLoadingStates();
@@ -563,8 +565,16 @@ export class FileBrowserDialogComponent extends React.Component {
                     progress={fileBrowserStore.loadingProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}
-                    onCancel={this.handleFileBrowserRequestCancelled}
+                    onCancel={this.handleFileListRequestCancelled}
                     text={"Loading"}
+                    contentText={`loading ${fileBrowserStore.loadingCheckedCount} / ${fileBrowserStore.loadingTotalCount}`}
+                />
+                <TaskProgressDialogComponent
+                    isOpen={fileBrowserStore.isImportingRegions && fileBrowserStore.isLoadingDialogOpen && fileBrowserStore.loadingProgress < 1}
+                    progress={fileBrowserStore.loadingProgress}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={false}
+                    text={"Importing regions"}
                     contentText={`loading ${fileBrowserStore.loadingCheckedCount} / ${fileBrowserStore.loadingTotalCount}`}
                 />
             </DraggableDialogComponent>
