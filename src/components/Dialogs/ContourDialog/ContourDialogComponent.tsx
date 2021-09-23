@@ -521,7 +521,7 @@ export class ContourDialogComponent extends React.Component {
                     text={"Calculating cube histogram"}
                 />
                 <TaskProgressDialogComponent
-                    isOpen={this.showContourProgress && dataSource.contourProgress >= 0 && dataSource.contourProgress < 1}
+                    isOpen={this.showContourProgress && dataSource.contourProgress >= 0 && dataSource.contourProgress < 1 && appStore.taskUsedTime > 500}
                     progress={dataSource.contourProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     isSimplyClosable={true}

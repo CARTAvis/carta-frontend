@@ -255,6 +255,10 @@ export class AppStore {
         this.taskCurrentTime = performance.now();
     };
 
+    @computed get taskUsedTime(): number {
+        return this.taskCurrentTime - this.taskStartTime;
+    }
+
     @computed get estimatedTaskRemainingTime(): number {
         if (this.taskProgress <= 0 || this.taskProgress >= 1) {
             return undefined;
