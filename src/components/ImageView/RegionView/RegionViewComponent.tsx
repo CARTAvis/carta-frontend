@@ -390,7 +390,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
-        if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
+        if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring && !isSecondaryClick) {
             const imagePos = this.getDistanceMeasureImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
             const wcsPos = transformPoint(frame.wcsInfo, imagePos);
             if (!isAstBadPoint(wcsPos)) {
@@ -415,7 +415,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             frame.regionSet.deselectRegion();
         }
 
-        if (frame.wcsInfo && this.props.onClickToCenter && (!this.props.dragPanningEnabled || isSecondaryClick)) {
+        if (frame.wcsInfo && this.props.onClickToCenter && ((!this.props.dragPanningEnabled && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring) || isSecondaryClick)) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             this.props.onClickToCenter(frame.getCursorInfo(cursorPosImageSpace));
 
