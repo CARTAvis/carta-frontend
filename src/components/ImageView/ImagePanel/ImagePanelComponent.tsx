@@ -158,14 +158,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         cursorFrozen={appStore.cursorFrozen}
                         docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
                     />
-                    <ToolbarComponent
-                        docked={this.props.docked}
-                        visible={this.imageToolbarVisible}
-                        frame={frame}
-                        activeLayer={this.activeLayer}
-                        onActiveLayerChange={appStore.updateActiveLayer}
-                        onRegionViewZoom={this.onRegionViewZoom}
-                    />
+                    <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} frame={frame} activeLayer={this.activeLayer} onActiveLayerChange={appStore.updateActiveLayer} onRegionViewZoom={this.onRegionViewZoom} />
                 </div>
             );
         } else {

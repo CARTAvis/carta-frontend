@@ -107,13 +107,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
         return (
             <Group>
-                <Shape
-                    x={centerPixelSpace.x}
-                    y={centerPixelSpace.y}
-                    rotation={rotation}
-                    fill={region.color}
-                    sceneFunc={this.handlePointDraw}
-                />
+                <Shape x={centerPixelSpace.x} y={centerPixelSpace.y} rotation={rotation} fill={region.color} sceneFunc={this.handlePointDraw} />
                 <Shape
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}

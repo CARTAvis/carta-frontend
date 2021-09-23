@@ -437,12 +437,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const origin = stageRef.getPosition();
             const cursorPointTo = {
                 x: (x - origin.x) / oldScale,
-                y: (y - origin.y) / oldScale,
+                y: (y - origin.y) / oldScale
             };
             stageRef.scale({x: zoom, y: zoom});
             const newOrigin = {
                 x: x - cursorPointTo.x * zoom,
-                y: y - cursorPointTo.y * zoom,
+                y: y - cursorPointTo.y * zoom
             };
             stageRef.position(newOrigin);
         }
