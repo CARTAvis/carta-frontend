@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Group, Rect, Shape} from "react-konva";
+import {Group, Shape} from "react-konva";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -23,13 +23,30 @@ const POINT_WIDTH = 6;
 
 @observer
 export class PointRegionComponent extends React.Component<PointRegionComponentProps> {
-    handleDoubleClick = () => {
+    private handleSquareDraw = (ctx, shape, width) => {
+        const reverseScale = 1 / shape.getStage().scaleX();
+        const offset = -width * 0.5 * reverseScale;
+        const squareSize = width * reverseScale;
+        ctx.beginPath();
+        ctx.rect(offset, offset, squareSize, squareSize);
+        ctx.fillStrokeShape(shape);
+    };
+
+    private handlePointDraw = (ctx, shape) => {
+        this.handleSquareDraw(ctx, shape, POINT_WIDTH);
+    };
+
+    private handlePointBoundDraw = (ctx, shape) => {
+        this.handleSquareDraw(ctx, shape, POINT_DRAG_WIDTH);
+    };
+
+    private handleDoubleClick = () => {
         if (this.props.onDoubleClick) {
             this.props.onDoubleClick(this.props.region);
         }
     };
 
-    handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
 
         if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
@@ -40,18 +57,18 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         }
     };
 
-    handleDragStart = () => {
+    private handleDragStart = () => {
         if (this.props.onSelect) {
             this.props.onSelect(this.props.region);
         }
         this.props.region.beginEditing();
     };
 
-    handleDragEnd = () => {
+    private handleDragEnd = () => {
         this.props.region.endEditing();
     };
 
-    handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
             const frame = this.props.frame;
             const zoomLevel = this.props.stageRef.scaleX();
@@ -66,7 +83,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         }
     };
 
-    render() {
+    public render() {
         const region = this.props.region;
         const frame = this.props.frame;
 
@@ -95,25 +112,16 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                     y={centerPixelSpace.y}
                     rotation={rotation}
                     fill={region.color}
-                    sceneFunc={(ctx, shape) => {
-                        const reverseScale = 1 / shape.getStage().scaleX();
-                        const offset = -POINT_WIDTH * 0.5 * reverseScale;
-                        const squareSize = POINT_WIDTH * reverseScale;
-                        ctx.beginPath();
-                        ctx.rect(offset, offset, squareSize, squareSize);
-                        ctx.fillStrokeShape(shape);
-                    }}
+                    sceneFunc={this.handlePointDraw}
                 />
-                <Rect
-                    rotation={rotation}
+                <Shape
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
-                    width={POINT_DRAG_WIDTH}
+                    rotation={rotation}
+                    sceneFunc={this.handlePointBoundDraw}
                     stroke={"white"}
                     strokeWidth={1}
-                    height={POINT_DRAG_WIDTH}
-                    offsetX={POINT_DRAG_WIDTH * 0.5}
-                    offsetY={POINT_DRAG_WIDTH * 0.5}
+                    strokeScaleEnabled={false}
                     opacity={this.props.selected ? 1 : 0}
                     draggable={true}
                     listening={!region.locked}
