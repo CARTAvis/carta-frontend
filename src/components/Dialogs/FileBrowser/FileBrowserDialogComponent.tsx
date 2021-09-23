@@ -481,6 +481,15 @@ export class FileBrowserDialogComponent extends React.Component {
             };
         }
 
+        let fileProgress;
+
+        if (fileBrowserStore.loadingProgress) {
+            fileProgress = {
+                total: fileBrowserStore.loadingTotalCount,
+                checked: fileBrowserStore.loadingCheckedCount
+            };
+        }
+
         const fileList = fileBrowserStore.getfileListByMode;
 
         return (
@@ -510,6 +519,8 @@ export class FileBrowserDialogComponent extends React.Component {
                             <FileListTableComponent
                                 darkTheme={appStore.darkTheme}
                                 loading={fileBrowserStore.loadingList}
+                                extendedLoading={fileBrowserStore.extendedLoading}
+                                fileProgress={fileProgress}
                                 listResponse={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
                                 selectedFile={fileBrowserStore.selectedFile}
@@ -522,6 +533,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 onSelectionChanged={fileBrowserStore.setSelectedFiles}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}
+                                onListCancelled={this.handleFileListRequestCancelled}
                             />
                         </div>
                         <div className="file-info-pane">
@@ -560,15 +572,6 @@ export class FileBrowserDialogComponent extends React.Component {
                 >
                     This file exists. Are you sure to overwrite it?
                 </Alert>
-                <TaskProgressDialogComponent
-                    isOpen={fileBrowserStore.loadingList && fileBrowserStore.isLoadingDialogOpen && fileBrowserStore.loadingProgress < 1}
-                    progress={fileBrowserStore.loadingProgress}
-                    timeRemaining={appStore.estimatedTaskRemainingTime}
-                    cancellable={true}
-                    onCancel={this.handleFileListRequestCancelled}
-                    text={"Loading"}
-                    contentText={`loading ${fileBrowserStore.loadingCheckedCount} / ${fileBrowserStore.loadingTotalCount}`}
-                />
                 <TaskProgressDialogComponent
                     isOpen={fileBrowserStore.isImportingRegions && fileBrowserStore.isLoadingDialogOpen && fileBrowserStore.loadingProgress < 1}
                     progress={fileBrowserStore.loadingProgress}
