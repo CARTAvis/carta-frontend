@@ -13,7 +13,7 @@ import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {AppStore, FrameStore} from "stores";
-import {CursorInfo, CursorInfoVisibility, Point2D} from "models";
+import {CursorInfo, CursorInfoVisibility} from "models";
 import "./ImagePanelComponent.scss";
 
 interface ImagePanelComponentProps {
@@ -29,8 +29,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     @observable imageToolbarVisible: boolean = false;
     readonly activeLayer: ImageViewLayer;
 
-    private regionViewStageRef;
-    private regionViewStageOrigin: Point2D;
+    private regionViewRef;
 
     @action setPixelHighlightValue = (val: number) => {
         this.pixelHighlightValue = val;
@@ -41,25 +40,18 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         makeObservable(this);
 
         this.activeLayer = AppStore.Instance.activeLayer;
-        this.regionViewStageOrigin = {x: 0, y: 0};
     }
 
-    private getRegionViewStageRef = ref => {
-        this.regionViewStageRef = ref;
+    private getRegionViewRef = ref => {
+        this.regionViewRef = ref;
+    };
+
+    private onRegionViewZoom = (zoom: number) => {
+        this.regionViewRef?.stageZoom(zoom);
     };
 
     onClickToCenter = (cursorInfo: CursorInfo) => {
         this.props.frame?.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
-    };
-
-    moveRegionViewStageOrigin = (newOrigin: Point2D) => {
-        this.regionViewStageOrigin = newOrigin;
-    };
-
-    resetRegionViewStageOrigin = () => {
-        // reset region view stage's origin to (0, 0)
-        this.regionViewStageOrigin = {x: 0, y: 0};
-        this.regionViewStageRef?.position(this.regionViewStageOrigin);
     };
 
     @action onMouseEnter = () => {
@@ -161,14 +153,12 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     {false && frame && <CatalogViewGLComponent frame={frame} docked={this.props.docked} />}
                     {frame && (
                         <RegionViewComponent
+                            ref={this.getRegionViewRef}
                             frame={frame}
                             width={frame.renderWidth}
                             height={frame.renderHeight}
                             top={overlayStore.padding.top}
                             left={overlayStore.padding.left}
-                            stageOrigin={this.regionViewStageOrigin}
-                            getStageRef={this.getRegionViewStageRef}
-                            onMoveStageOrigin={this.moveRegionViewStageOrigin}
                             onClickToCenter={this.onClickToCenter}
                             overlaySettings={overlayStore}
                             dragPanningEnabled={appStore.preferenceStore.dragPanning}
@@ -181,8 +171,8 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         visible={this.imageToolbarVisible}
                         frame={frame}
                         activeLayer={this.activeLayer}
-                        resetRegionViewStageOrigin={this.resetRegionViewStageOrigin}
                         onActiveLayerChange={appStore.updateActiveLayer}
+                        onRegionViewZoom={this.onRegionViewZoom}
                     />
                 </div>
             );

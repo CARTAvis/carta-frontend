@@ -3,14 +3,13 @@ import {observer} from "mobx-react";
 import {Group, Line, Rect} from "react-konva";
 import {FrameStore, RegionStore} from "stores";
 import {transformedImageToCanvasPos} from "./shared";
-import {Point2D} from "models";
 
 interface CursorRegionComponentProps {
     region: RegionStore;
     frame: FrameStore;
     layerWidth: number;
     layerHeight: number;
-    stageOrigin: Point2D;
+    stageRef: any;
 }
 
 @observer
@@ -18,10 +17,11 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
+        const stageOrigin = this.props.stageRef.position();
 
         if (region && frame) {
             let cursorCanvasSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
-            cursorCanvasSpace = {x: cursorCanvasSpace.x - this.props.stageOrigin.x, y: cursorCanvasSpace.y - this.props.stageOrigin.y};
+            cursorCanvasSpace = {x: cursorCanvasSpace.x - stageOrigin.x, y: cursorCanvasSpace.y - stageOrigin.y};
 
             if (cursorCanvasSpace?.x >= 0 && cursorCanvasSpace?.x <= this.props.layerWidth && cursorCanvasSpace?.y >= 0 && cursorCanvasSpace?.y <= this.props.layerHeight) {
                 const crosshairLength = 20;

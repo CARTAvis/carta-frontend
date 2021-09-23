@@ -17,7 +17,7 @@ export class ToolbarComponentProps {
     frame: FrameStore;
     activeLayer: ImageViewLayer;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
-    resetRegionViewStageOrigin: () => void;
+    onRegionViewZoom: (zoom: number) => void;
 }
 
 @observer
@@ -42,21 +42,27 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleZoomToFitClicked = () => {
         this.props.frame?.fitZoom();
-        this.props.resetRegionViewStageOrigin();
+        // TODO
     };
 
     handleZoomToActualSizeClicked = () => {
-        this.props.frame.setZoom(1.0);
+        const zoom = 1.0;
+        this.props.frame.setZoom(zoom);
+        this.props.onRegionViewZoom(zoom);
     };
 
     handleZoomInClicked = () => {
         const frame = this.props.frame.spatialReference || this.props.frame;
-        frame.setZoom(frame.zoomLevel * 2.0, true);
+        const zoom = frame.zoomLevel * 2.0;
+        frame.setZoom(zoom, true);
+        this.props.onRegionViewZoom(zoom);
     };
 
     handleZoomOutClicked = () => {
         const frame = this.props.frame.spatialReference || this.props.frame;
-        frame.setZoom(frame.zoomLevel / 2.0, true);
+        const zoom = frame.zoomLevel / 2.0;
+        frame.setZoom(zoom, true);
+        this.props.onRegionViewZoom(zoom);
     };
 
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
