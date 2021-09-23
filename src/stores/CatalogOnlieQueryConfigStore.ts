@@ -11,7 +11,7 @@ export enum RadiusUnits {
     ARCSECONDS = "arcsec"
 }
 
-export type VizieRItem = {name: string, description: string, size: number};
+export type VizieRItem = {name: string; description: string; size: number};
 
 export class CatalogOnlineQueryConfigStore {
     private static staticInstance: CatalogOnlineQueryConfigStore;
@@ -31,7 +31,7 @@ export class CatalogOnlineQueryConfigStore {
     @observable objectName: string;
     @observable isObjectQuerying: boolean;
     //Vizier
-    @observable vizierResource: Map<string, VizieResource>
+    @observable vizierResource: Map<string, VizieResource>;
     @observable vizierSelectedTableName: VizieRItem[];
 
     constructor() {
@@ -296,8 +296,8 @@ export class CatalogOnlineQueryConfigStore {
                 name: resource.table.name,
                 description: resource.description,
                 size: resource.table.size
-            })
-        })
+            });
+        });
         return tables;
     }
 

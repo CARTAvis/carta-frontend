@@ -212,7 +212,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     disabled={disable}
                     inline={false}
                 />
-                {configStore.showVizierResult ?
+                {configStore.showVizierResult ? (
                     <FormGroup inline={false} label="VizieR Catalog" disabled={disable}>
                         <MultiSelect
                             placeholder={"Please select catalog tables"}
@@ -220,20 +220,19 @@ export class CatalogQueryDialogComponent extends React.Component {
                             popoverProps={{popoverClassName: "vizier-mulit-select", minimal: true, position: PopoverPosition.TOP}}
                             items={configStore.vizierTable}
                             itemRenderer={this.vizierItemRenderer}
-                            onItemSelect={(item) => configStore.updateVizierSelectedTable(item)}
+                            onItemSelect={item => configStore.updateVizierSelectedTable(item)}
                             selectedItems={configStore.vizierSelectedTableName}
-                            tagRenderer={(item) => item.name}
+                            tagRenderer={item => item.name}
                             itemPredicate={this.filterVizieRTable}
                             noResults={<MenuItem disabled={true} text="No results." />}
                             tagInputProps={{
                                 onRemove: v => configStore.removeVizierSelectedTable(v.toString()),
                                 rightElement: <Button icon="cross" minimal={true} onClick={() => configStore.resetVizierSelectedTable()} />,
-                                tagProps: {minimal: true},
+                                tagProps: {minimal: true}
                             }}
                         />
                     </FormGroup>
-                    : null
-                }
+                ) : null}
             </div>
         );
 
@@ -260,7 +259,9 @@ export class CatalogQueryDialogComponent extends React.Component {
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancleQuery(configStore.catalogDB)} text={"Cancel"} />
-                        {configStore.enableLoadVizieR ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => CatalogApiService.Instance.appendVizieRCatalog(configStore.selectedVizierSource)} text={"Load selected"} /> : null}
+                        {configStore.enableLoadVizieR ? (
+                            <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => CatalogApiService.Instance.appendVizieRCatalog(configStore.selectedVizierSource)} text={"Load selected"} />
+                        ) : null}
                     </div>
                 </div>
             </DraggableDialogComponent>
@@ -274,11 +275,10 @@ export class CatalogQueryDialogComponent extends React.Component {
             const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
             const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
             configStore.setQueryStatus(true);
-            CatalogApiService.Instance.appendOnlineCatalog(query)
-                .then(dataSize => {
-                    configStore.setQueryStatus(false);
-                    this.setResultSize(dataSize);
-                });
+            CatalogApiService.Instance.appendOnlineCatalog(query).then(dataSize => {
+                configStore.setQueryStatus(false);
+                this.setResultSize(dataSize);
+            });
         } else if (configStore.catalogDB === CatalogDatabase.VIZIER) {
             configStore.setQueryStatus(true);
             configStore.resetVizirR();
@@ -369,7 +369,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const nameSearcher = new FuzzySearch([item.name]);
         const descriptionSearcher = new FuzzySearch([item.description]);
         return nameSearcher.search(query).length > 0 || descriptionSearcher.search(query).length > 0;
-    }
+    };
 
     private handleRadiusChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {

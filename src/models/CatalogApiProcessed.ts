@@ -11,24 +11,24 @@ enum DataType {
 }
 
 export type VizieResource = {
-    id: string,
-    name: string,
-    description: string,
-    coosys: VizieRCoosys,
-    table: VizieRTable
-}
+    id: string;
+    name: string;
+    description: string;
+    coosys: VizieRCoosys;
+    table: VizieRTable;
+};
 
 type VizieRCoosys = {
-    system: string,
-    equinox: string
-}
+    system: string;
+    equinox: string;
+};
 
 type VizieRTable = {
-    name: string,
-    description: string,
-    size: number,
-    tableElement: Element
-}
+    name: string;
+    description: string;
+    size: number;
+    tableElement: Element;
+};
 
 export class APIProcessing {
     static ProcessSimbadMetaData(metaData: []): CARTA.ICatalogHeader[] {
@@ -78,10 +78,10 @@ export class APIProcessing {
         }
     }
 
-    static ProcessVizieRData(data: string): {tableNames: string[], resources: Map<string, VizieResource>} {
+    static ProcessVizieRData(data: string): {tableNames: string[]; resources: Map<string, VizieResource>} {
         const tableNames = [];
         const resources: Map<string, VizieResource> = new Map();
-        let dom: Document
+        let dom: Document;
         const parser = new DOMParser();
         dom = parser.parseFromString(data, "application/xml");
         const resourceElements = dom.documentElement.getElementsByTagName("RESOURCE");
@@ -108,7 +108,7 @@ export class APIProcessing {
                             size: data.length,
                             tableElement: tableElement
                         }
-                    }
+                    };
                     tableNames.push(name);
                     resources.set(name, res);
                 }
@@ -117,7 +117,7 @@ export class APIProcessing {
         return {tableNames, resources};
     }
 
-    static ProcessVizieRTableData(table: Element): {headers: CARTA.ICatalogHeader[], dataMap: Map<number, ProcessedColumnData>, size: number} {
+    static ProcessVizieRTableData(table: Element): {headers: CARTA.ICatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
         const fields = table.getElementsByTagName("FIELD");
         let headers: CARTA.CatalogHeader[] = new Array(fields.length);
         for (let index = 0; index < fields.length; index++) {
@@ -141,6 +141,6 @@ export class APIProcessing {
             }
             dataMap.set(i, column);
         }
-        return {headers, dataMap, size};   
+        return {headers, dataMap, size};
     }
 }

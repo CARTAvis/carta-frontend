@@ -48,46 +48,47 @@ export class CatalogApiService {
 
     public cancleQuery(type: CatalogDatabase) {
         if (type === CatalogDatabase.SIMBAD) {
-            this.cancelTokenSourceSimbad.cancel("Simbad query canceled by the user.");   
+            this.cancelTokenSourceSimbad.cancel("Simbad query canceled by the user.");
         } else if (type === CatalogDatabase.VIZIER) {
-            this.cancelTokenSourceVizieR.cancel("VizieR query canceled by the user.")
+            this.cancelTokenSourceVizieR.cancel("VizieR query canceled by the user.");
         }
     }
 
-    public queryVizier = async(point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number): Promise<Map<string, VizieResource>>  => {
+    public queryVizier = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number): Promise<Map<string, VizieResource>> => {
         let resources: Map<string, VizieResource> = new Map();
         let radiusUnits: string;
         switch (unit) {
             case RadiusUnits.ARCMINUTES:
-                radiusUnits = "rm"
+                radiusUnits = "rm";
                 break;
             case RadiusUnits.ARCSECONDS:
-                radiusUnits = "rs"
+                radiusUnits = "rs";
                 break;
             default:
-                radiusUnits = "rd"
+                radiusUnits = "rd";
                 break;
         }
 
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
-        await this.axiosInstanceVizieR.get(`votable?-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-sort=_r&-out.max=${max}&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`)
-        .then(response => {
-            if (response?.status === 200 && response?.data) {
-                const data = APIProcessing.ProcessVizieRData(response.data);
-                resources = data.resources; 
-            }
-        })
-        .catch(error => {
-            if (axios.isCancel(error)) {
-                AppToaster.show(WarningToast(error?.message));
-                CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
-            } else if (error?.message) {
-                AppToaster.show(ErrorToast(error.message));
-            } else {
-                console.log("Append Catalog Error: " + error);
-            }
-            return 0;
-        });
+        await this.axiosInstanceVizieR
+            .get(`votable?-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-sort=_r&-out.max=${max}&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`)
+            .then(response => {
+                if (response?.status === 200 && response?.data) {
+                    const data = APIProcessing.ProcessVizieRData(response.data);
+                    resources = data.resources;
+                }
+            })
+            .catch(error => {
+                if (axios.isCancel(error)) {
+                    AppToaster.show(WarningToast(error?.message));
+                    CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
+                } else if (error?.message) {
+                    AppToaster.show(ErrorToast(error.message));
+                } else {
+                    console.log("Append Catalog Error: " + error);
+                }
+                return 0;
+            });
         return resources;
     };
 
@@ -113,7 +114,7 @@ export class CatalogApiService {
             };
             this.loadCatalog(fileId, AppStore.Instance.activeFrame, catalogInfo, headers, dataMap, CatalogType.VIZIER);
         }
-    }
+    };
 
     public loadCatalog = (fileId: number, frame: FrameStore, catalogInfo: CatalogInfo, headers: CARTA.ICatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
         runInAction(() => {
@@ -127,12 +128,12 @@ export class CatalogApiService {
                 AppStore.Instance.dialogStore.hideCatalogQueryDialog();
             }
         });
-    }
+    };
 
     public resetCancelTokenSource(type: CatalogDatabase) {
         if (type === CatalogDatabase.SIMBAD) {
             this.cancelTokenSourceSimbad = axios.CancelToken.source();
-            this.axiosInstanceSimbad.defaults.cancelToken = this.cancelTokenSourceSimbad.token;   
+            this.axiosInstanceSimbad.defaults.cancelToken = this.cancelTokenSourceSimbad.token;
         } else if (type === CatalogDatabase.VIZIER) {
             this.cancelTokenSourceVizieR = axios.CancelToken.source();
             this.axiosInstanceVizieR.defaults.cancelToken = this.cancelTokenSourceVizieR.token;
