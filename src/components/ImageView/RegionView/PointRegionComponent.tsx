@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Group, Rect} from "react-konva";
+import {Group, Rect, Shape} from "react-konva";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -90,7 +90,20 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
         return (
             <Group>
-                <Rect rotation={rotation} x={centerPixelSpace.x} y={centerPixelSpace.y} width={POINT_WIDTH} height={POINT_WIDTH} offsetX={POINT_WIDTH * 0.5} offsetY={POINT_WIDTH * 0.5} fill={region.color} />
+                <Shape
+                    x={centerPixelSpace.x}
+                    y={centerPixelSpace.y}
+                    rotation={rotation}
+                    fill={region.color}
+                    sceneFunc={(ctx, shape) => {
+                        const reverseScale = 1 / shape.getStage().scaleX();
+                        const offset = -POINT_WIDTH * 0.5 * reverseScale;
+                        const squareSize = POINT_WIDTH * reverseScale;
+                        ctx.beginPath();
+                        ctx.rect(offset, offset, squareSize, squareSize);
+                        ctx.fillStrokeShape(shape);
+                    }}
+                />
                 <Rect
                     rotation={rotation}
                     x={centerPixelSpace.x}
