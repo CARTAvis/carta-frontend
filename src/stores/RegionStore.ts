@@ -426,7 +426,7 @@ export class RegionStore {
             return;
         }
         if (this.regionType === CARTA.RegionType.LINE) {
-            const rotation = (((angle + 360) % 360) * Math.PI) / 180.0;;
+            const rotation = (((angle + 360) % 360) * Math.PI) / 180.0;
             const dx = length2D(this.size) * Math.sin(rotation);
             const dy = -length2D(this.size) * Math.cos(rotation);
             const newStart = {x: this.center.x - dx / 2, y: this.center.y - dy / 2};
