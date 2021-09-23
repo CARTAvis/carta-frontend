@@ -14,6 +14,7 @@ export interface CatalogInfo {
 }
 
 export enum CatalogType {
+    VIZIER,
     SIMBAD,
     FILE
 }

@@ -1,10 +1,12 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, Spinner, Icon, Position} from "@blueprintjs/core";
+import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, Spinner, Icon, Position, PopoverPosition} from "@blueprintjs/core";
+import {MultiSelect} from "@blueprintjs/select";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {IItemRendererProps, Select} from "@blueprintjs/select";
-import {AppStore, CatalogOnlineQueryConfigStore, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL} from "stores";
+import FuzzySearch from "fuzzy-search";
+import {AppStore, CatalogOnlineQueryConfigStore, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL, VizieRItem} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
@@ -16,7 +18,7 @@ const KEYCODE_ENTER = 13;
 @observer
 export class CatalogQueryDialogComponent extends React.Component {
     private static readonly DefaultWidth = 550;
-    private static readonly DefaultHeight = 500;
+    private static readonly DefaultHeight = 550;
 
     @observable resultSize: number;
     @observable objectSize: number;
@@ -39,8 +41,10 @@ export class CatalogQueryDialogComponent extends React.Component {
     @computed get resultInfo(): string {
         let resultStr = undefined;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        if (configStore.isQuerying || configStore.isObjectQuerying) {
+        if (configStore.isQuerying) {
             resultStr = `Querying ${configStore.catalogDB}`;
+        } else if (configStore.isObjectQuerying) {
+            resultStr = `Querying ${CatalogDatabase.SIMBAD}`;
         } else if (this.resultSize === 0) {
             resultStr = "No objects found";
         } else if (this.resultSize >= 1) {
@@ -208,6 +212,28 @@ export class CatalogQueryDialogComponent extends React.Component {
                     disabled={disable}
                     inline={false}
                 />
+                {configStore.showVizierResult ?
+                    <FormGroup inline={false} label="VizieR Catalog" disabled={disable}>
+                        <MultiSelect
+                            placeholder={"Please select catalog tables"}
+                            fill={true}
+                            popoverProps={{popoverClassName: "vizier-mulit-select", minimal: true, position: PopoverPosition.TOP}}
+                            items={configStore.vizierTable}
+                            itemRenderer={this.vizierItemRenderer}
+                            onItemSelect={(item) => configStore.updateVizierSelectedTable(item)}
+                            selectedItems={configStore.vizierSelectedTableName}
+                            tagRenderer={(item) => item.name}
+                            itemPredicate={this.filterVizieRTable}
+                            noResults={<MenuItem disabled={true} text="No results." />}
+                            tagInputProps={{
+                                onRemove: v => configStore.removeVizierSelectedTable(v.toString()),
+                                rightElement: <Button icon="cross" minimal={true} onClick={() => configStore.resetVizierSelectedTable()} />,
+                                tagProps: {minimal: true},
+                            }}
+                        />
+                    </FormGroup>
+                    : null
+                }
             </div>
         );
 
@@ -233,7 +259,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                     <div className={"result-info"}>{tableInfo}</div>
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
-                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancleSimbadQuery()} text={"Cancel"} />
+                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancleQuery(configStore.catalogDB)} text={"Cancel"} />
+                        {configStore.enableLoadVizieR ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => CatalogApiService.Instance.appendVizieRCatalog(configStore.selectedVizierSource)} text={"Load selected"} /> : null}
                     </div>
                 </div>
             </DraggableDialogComponent>
@@ -242,20 +269,26 @@ export class CatalogQueryDialogComponent extends React.Component {
 
     private query = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D);
-        const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
-        configStore.setQueryStatus(true);
-        CatalogApiService.Instance.appendOnlineCatalog(query)
-            .then(dataSize => {
+        if (configStore.catalogDB === CatalogDatabase.SIMBAD) {
+            // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
+            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
+            const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
+            configStore.setQueryStatus(true);
+            CatalogApiService.Instance.appendOnlineCatalog(query)
+                .then(dataSize => {
+                    configStore.setQueryStatus(false);
+                    this.setResultSize(dataSize);
+                });
+        } else if (configStore.catalogDB === CatalogDatabase.VIZIER) {
+            configStore.setQueryStatus(true);
+            configStore.resetVizirR();
+            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
+            CatalogApiService.Instance.queryVizier(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject).then(resources => {
                 configStore.setQueryStatus(false);
-                this.setResultSize(dataSize);
-            })
-            .catch(error => {
-                configStore.setQueryStatus(false);
-                this.setResultSize(0);
-                CatalogApiService.Instance.resetCancelTokenSource(error);
+                configStore.setVizierQueryResult(resources);
+                this.setResultSize(resources.size);
             });
+        }
     };
 
     private handleObjectUpdate = () => {
@@ -314,6 +347,29 @@ export class CatalogQueryDialogComponent extends React.Component {
     private renderSysTypePopOver = (type: SystemType, itemProps: IItemRendererProps) => {
         return <MenuItem key={type} text={type} onClick={itemProps.handleClick} />;
     };
+
+    private vizierItemRenderer = (table: VizieRItem, itemProps: IItemRendererProps) => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const isFilmSelected = configStore.vizierSelectedTableName.filter(current => current.name === table.name).length > 0;
+
+        return (
+            <MenuItem
+                active={itemProps.modifiers.active}
+                icon={isFilmSelected ? "tick" : "blank"}
+                key={table.name}
+                label={table.name}
+                onClick={itemProps.handleClick}
+                text={`${itemProps.index + 1}. ${table.description} (${table.size} ${table.size > 1 ? "objects" : "object"})`}
+                shouldDismissPopover={false}
+            />
+        );
+    };
+
+    private filterVizieRTable = (query: string, item: VizieRItem) => {
+        const nameSearcher = new FuzzySearch([item.name]);
+        const descriptionSearcher = new FuzzySearch([item.description]);
+        return nameSearcher.search(query).length > 0 || descriptionSearcher.search(query).length > 0;
+    }
 
     private handleRadiusChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {

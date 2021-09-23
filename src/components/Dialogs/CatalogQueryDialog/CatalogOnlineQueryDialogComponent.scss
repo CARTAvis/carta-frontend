@@ -37,3 +37,13 @@
         height: inherit !important;
     }
 }
+
+.vizier-mulit-select {
+    .bp3-popover-content {
+        .bp3-menu {
+            max-height: 200px;
+            overflow: auto;
+            min-width: fit-content;
+        }
+    }
+}

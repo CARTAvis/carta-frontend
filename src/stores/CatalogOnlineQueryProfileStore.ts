@@ -1,10 +1,11 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {ControlHeader} from "stores";
+import {ControlHeader, PreferenceStore} from "stores";
 import {AbstractCatalogProfileStore, CatalogType, CatalogInfo, ProcessedColumnData} from "models";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode", "dist", "otype_txt"];
+    private static readonly VizieRInitialedColumnsKeyWords = ["_r", "_RAJ2000", "_DEJ2000"];
 
     @observable catalogInfo: CatalogInfo;
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;
@@ -58,7 +59,9 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
                 let display = false;
-                if (CatalogOnlineQueryProfileStore.SimbadInitialedColumnsKeyWords.includes(header.name)) {
+                if (this.catalogType === CatalogType.SIMBAD && CatalogOnlineQueryProfileStore.SimbadInitialedColumnsKeyWords.includes(header.name)) {
+                    display = true;
+                } else if (this.catalogType === CatalogType.VIZIER && (CatalogOnlineQueryProfileStore.VizieRInitialedColumnsKeyWords.includes(header.name) || index < PreferenceStore.Instance.catalogDisplayedColumnSize)) {
                     display = true;
                 }
                 let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};
@@ -68,14 +71,14 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
         return controlHeaders;
     }
 
-    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType, columnIndex?: number) {
+    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
         this.sortingInfo = {columnName, sortingType};
         this.updateSortedIndexMap();
     }
 
     @action updateSortedIndexMap() {
         const dataIndex = this.catalogControlHeader.get(this.sortingInfo.columnName)?.dataIndex;
-        if (dataIndex) {
+        if (dataIndex >= 0) {
             let direction = 0;
             const sortingType = this.sortingInfo.sortingType;
             if (sortingType === 0) {

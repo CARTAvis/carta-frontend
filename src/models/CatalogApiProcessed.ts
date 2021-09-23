@@ -1,13 +1,33 @@
 import {CARTA} from "carta-protobuf";
-import {ProcessedColumnData} from "models";
+import {CatalogSystemType, ProcessedColumnData} from "models";
 
-enum SimbadType {
+enum DataType {
     CHAR = "CHAR",
     SHORT = "SHORT",
     FLOAT = "FLOAT",
     LONG = "LONG",
     INT = "INT",
     DOUBLE = "DOUBLE"
+}
+
+export type VizieResource = {
+    id: string,
+    name: string,
+    description: string,
+    coosys: VizieRCoosys,
+    table: VizieRTable
+}
+
+type VizieRCoosys = {
+    system: string,
+    equinox: string
+}
+
+type VizieRTable = {
+    name: string,
+    description: string,
+    size: number,
+    tableElement: Element
 }
 
 export class APIProcessing {
@@ -40,20 +60,87 @@ export class APIProcessing {
     }
 
     static matchDataType(dataType: string): CARTA.ColumnType {
-        switch (dataType) {
-            case SimbadType.CHAR:
+        const dataTypeUpperCase = dataType.toUpperCase();
+        switch (dataTypeUpperCase) {
+            case DataType.CHAR:
                 return CARTA.ColumnType.String;
-            case SimbadType.INT:
-            case SimbadType.SHORT:
+            case DataType.INT:
+            case DataType.SHORT:
                 return CARTA.ColumnType.Int16;
-            case SimbadType.LONG:
+            case DataType.LONG:
                 return CARTA.ColumnType.Int32;
-            case SimbadType.FLOAT:
+            case DataType.FLOAT:
                 return CARTA.ColumnType.Float;
-            case SimbadType.DOUBLE:
+            case DataType.DOUBLE:
                 return CARTA.ColumnType.Double;
             default:
                 return CARTA.ColumnType.UnsupportedType;
         }
+    }
+
+    static ProcessVizieRData(data: string): {tableNames: string[], resources: Map<string, VizieResource>} {
+        const tableNames = [];
+        const resources: Map<string, VizieResource> = new Map();
+        let dom: Document
+        const parser = new DOMParser();
+        dom = parser.parseFromString(data, "application/xml");
+        const resourceElements = dom.documentElement.getElementsByTagName("RESOURCE");
+        for (let index = 0; index < resourceElements.length; index++) {
+            const resourceElement = resourceElements[index];
+            const tableElements = resourceElement.getElementsByTagName("TABLE");
+
+            for (let j = 0; j < tableElements.length; j++) {
+                const tableElement = tableElements[j];
+                const name = tableElement.getAttribute("name");
+                const data = tableElement.getElementsByTagName("DATA")[0]?.getElementsByTagName("TABLEDATA")[0]?.getElementsByTagName("TR");
+                if (data?.length && tableElement.getElementsByTagName("FIELD")?.length) {
+                    const res: VizieResource = {
+                        id: resourceElement.getAttribute("ID"),
+                        name: resourceElement.getAttribute("name"),
+                        description: resourceElement.getElementsByTagName("DESCRIPTION")[0]?.textContent,
+                        coosys: {
+                            system: CatalogSystemType.FK5,
+                            equinox: "J2000"
+                        },
+                        table: {
+                            name: name,
+                            description: tableElement.getElementsByTagName("DESCRIPTION")[0]?.textContent,
+                            size: data.length,
+                            tableElement: tableElement
+                        }
+                    }
+                    tableNames.push(name);
+                    resources.set(name, res);
+                }
+            }
+        }
+        return {tableNames, resources};
+    }
+
+    static ProcessVizieRTableData(table: Element): {headers: CARTA.ICatalogHeader[], dataMap: Map<number, ProcessedColumnData>, size: number} {
+        const fields = table.getElementsByTagName("FIELD");
+        let headers: CARTA.CatalogHeader[] = new Array(fields.length);
+        for (let index = 0; index < fields.length; index++) {
+            const field = fields[index];
+            headers[index] = new CARTA.CatalogHeader({
+                name: field.getAttribute("name"),
+                description: field.getElementsByTagName("DESCRIPTION")[0]?.textContent,
+                dataType: this.matchDataType(field.getAttribute("datatype")),
+                columnIndex: index,
+                units: field.getAttribute("unit")
+            });
+        }
+        const data = table.getElementsByTagName("DATA")[0]?.getElementsByTagName("TABLEDATA")[0]?.getElementsByTagName("TR");
+        const size = data.length;
+        const dataMap = new Map<number, ProcessedColumnData>();
+        for (let i = 0; i < headers.length; i++) {
+            const header = headers[i];
+            let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(size)};
+            for (let j = 0; j < size; j++) {
+                column.data[j] = data[j].getElementsByTagName("TD")[i].innerHTML;
+            }
+            dataMap.set(i, column);
+        }
+        return {headers, dataMap, size};   
     }
 }

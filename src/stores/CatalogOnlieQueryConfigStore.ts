@@ -1,6 +1,6 @@
 import * as AST from "ast_wrapper";
 import {action, observable, makeObservable, reaction, computed} from "mobx";
-import {CatalogSystemType, Point2D} from "models";
+import {CatalogSystemType, Point2D, VizieResource} from "models";
 import {AppStore, OverlayStore, NumberFormatType, ASTSettingsString, SystemType} from "stores";
 import {CatalogDatabase} from "services";
 import {clamp, getPixelValueFromWCS, transformPoint} from "utilities";
@@ -10,6 +10,8 @@ export enum RadiusUnits {
     ARCMINUTES = "arcmin",
     ARCSECONDS = "arcsec"
 }
+
+export type VizieRItem = {name: string, description: string, size: number};
 
 export class CatalogOnlineQueryConfigStore {
     private static staticInstance: CatalogOnlineQueryConfigStore;
@@ -28,6 +30,9 @@ export class CatalogOnlineQueryConfigStore {
     @observable radiusUnits: RadiusUnits;
     @observable objectName: string;
     @observable isObjectQuerying: boolean;
+    //Vizier
+    @observable vizierResource: Map<string, VizieResource>
+    @observable vizierSelectedTableName: VizieRItem[];
 
     constructor() {
         makeObservable(this);
@@ -42,6 +47,8 @@ export class CatalogOnlineQueryConfigStore {
         this.coordsFormat = NumberFormatType.Degrees;
         this.objectName = "";
         this.isObjectQuerying = false;
+        this.vizierSelectedTableName = [];
+        this.vizierResource = new Map();
 
         reaction(
             () => AppStore.Instance.activeFrame,
@@ -75,6 +82,29 @@ export class CatalogOnlineQueryConfigStore {
             this.updateCenterPixelCoord(frame.center);
             this.resetObjectName();
         }
+    }
+
+    @action setVizierQueryResult(resources: Map<string, VizieResource>) {
+        this.vizierResource = resources;
+    }
+
+    @action updateVizierSelectedTable(table: VizieRItem) {
+        if (!this.vizierSelectedTableName.includes(table)) {
+            this.vizierSelectedTableName.push(table);
+        }
+    }
+
+    @action removeVizierSelectedTable(table: string) {
+        this.vizierSelectedTableName = this.vizierSelectedTableName.filter(element => table !== element.name);
+    }
+
+    @action resetVizierSelectedTable() {
+        this.vizierSelectedTableName = [];
+    }
+
+    @action resetVizirR() {
+        this.vizierResource.clear();
+        this.resetVizierSelectedTable();
     }
 
     @action setQueryStatus(isQuerying: boolean) {
@@ -139,6 +169,22 @@ export class CatalogOnlineQueryConfigStore {
 
     @action setObjectQueryStatus(isQuerying: boolean) {
         this.isObjectQuerying = isQuerying;
+    }
+
+    @action resetSearchRadius() {
+        let radius = this.searchRadiusInDegree;
+        switch (this.radiusUnits) {
+            case RadiusUnits.ARCMINUTES:
+                radius = radius * 60;
+                break;
+            case RadiusUnits.ARCSECONDS:
+                radius = radius * 3600;
+                break;
+            default:
+                break;
+        }
+        this.setSearchRadius(radius);
+        this.setFrameCenter();
     }
 
     @computed get radiusAsDeg(): number {
@@ -229,23 +275,33 @@ export class CatalogOnlineQueryConfigStore {
         return AppStore.Instance?.activeFrame?.spatialReference ?? AppStore.Instance.activeFrame;
     }
 
-    @action resetSearchRadius() {
-        let radius = this.searchRadiusInDegree;
-        switch (this.radiusUnits) {
-            case RadiusUnits.ARCMINUTES:
-                radius = radius * 60;
-                break;
-            case RadiusUnits.ARCSECONDS:
-                radius = radius * 3600;
-                break;
-            default:
-                break;
-        }
-        this.setSearchRadius(radius);
-        this.setFrameCenter();
+    @computed get showVizierResult(): boolean {
+        return this.vizierResource.size !== 0 && this.catalogDB === CatalogDatabase.VIZIER;
     }
 
-    convertToDeg(pixelCoords: Point2D): {x: string; y: string} {
+    @computed get selectedVizierSource(): VizieResource[] {
+        const resources = [];
+        this.vizierSelectedTableName.forEach(table => resources.push(this.vizierResource.get(table.name)));
+        return resources;
+    }
+
+    @computed get enableLoadVizieR(): boolean {
+        return this.vizierSelectedTableName.length > 0 && this.showVizierResult;
+    }
+
+    @computed get vizierTable(): VizieRItem[] {
+        const tables: VizieRItem[] = [];
+        this.vizierResource.forEach(resource => {
+            tables.push({
+                name: resource.table.name,
+                description: resource.description,
+                size: resource.table.size
+            })
+        })
+        return tables;
+    }
+
+    convertToDeg(pixelCoords: Point2D, system: SystemType): {x: string; y: string} {
         const frame = this.activeFrame;
         const overlay = OverlayStore.Instance;
         let p: {x: string; y: string} = {x: undefined, y: undefined};
@@ -254,7 +310,7 @@ export class CatalogOnlineQueryConfigStore {
             const format = `${NumberFormatType.Degrees}.${precision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
-            AST.set(wcsCopy, `System=${SystemType.ICRS}`);
+            AST.set(wcsCopy, `System=${system}`);
             astString.add("Format(1)", format);
             astString.add("Format(2)", format);
             const pointWCS = transformPoint(wcsCopy, pixelCoords);
@@ -283,8 +339,8 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     private calculateDistanceFromPixelCoord(x: Point2D, y: Point2D, diagonal: boolean): number {
-        const max = this.convertToDeg(x);
-        const min = this.convertToDeg(y);
+        const max = this.convertToDeg(x, SystemType.ICRS);
+        const min = this.convertToDeg(y, SystemType.ICRS);
         const xd = Number(max.x) - Number(min.x);
         const yd = Number(max.y) - Number(min.y);
         if (diagonal) {
