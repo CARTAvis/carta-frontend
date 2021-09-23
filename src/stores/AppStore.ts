@@ -61,7 +61,7 @@ interface ChannelUpdate {
     stokes: number;
 }
 
-const IMPORT_REGION_BATCH_SIZE = 10;
+const IMPORT_REGION_BATCH_SIZE = 100;
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -936,7 +936,15 @@ export class AppStore {
             if (frame && ack.success && ack.regions) {
                 const regions = Object.entries(ack.regions);
                 const regionStyleMap = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
-                this.addRegionsInBatch(regions, regionStyleMap, 0);
+                let startIndex = 0;
+                while (startIndex < regions.length) {
+                    this.addRegionsInBatch(regions, regionStyleMap, startIndex, IMPORT_REGION_BATCH_SIZE);
+                    startIndex += IMPORT_REGION_BATCH_SIZE;
+                    await this.delay(0);
+                }
+                this.fileBrowserStore.setImportingRegions(false);
+                this.fileBrowserStore.resetLoadingStates();
+                this.fileBrowserStore.hideFileBrowser();
             }
         } catch (err) {
             console.error(err);
@@ -944,27 +952,19 @@ export class AppStore {
         }
     };
 
-    addRegionsInBatch = (regions: [string, CARTA.IRegionInfo][], regionStyleMap: Map<string, CARTA.IRegionStyle>, count: number) => {
-        if (!regions || !regionStyleMap || !isFinite(count)) {
+    @action addRegionsInBatch = (regions: [string, CARTA.IRegionInfo][], regionStyleMap: Map<string, CARTA.IRegionStyle>, startIndex: number, count: number) => {
+        if (!regions || !regionStyleMap || !isFinite(startIndex)) {
             return;
         }
 
         const frame = this.activeFrame;
-        const batchEnd = Math.min(count + IMPORT_REGION_BATCH_SIZE, regions.length);
-        for (; count < batchEnd; count++) {
-            const [regionIdString, regionInfo] = regions[count];
+        const batchEnd = Math.min(startIndex + count, regions.length);
+        for (let i = startIndex; i < batchEnd; i++) {
+            const [regionIdString, regionInfo] = regions[i];
             const styleInfo = regionStyleMap.get(regionIdString);
             frame.regionSet.addExistingRegion(regionInfo.controlPoints as Point2D[], regionInfo.rotation, regionInfo.regionType, parseInt(regionIdString), styleInfo?.name, styleInfo?.color, styleInfo?.lineWidth, styleInfo?.dashList);
         }
-        this.fileBrowserStore.updateLoadingState(count / regions.length, count, regions.length);
-
-        if (count < regions.length) {
-            setTimeout(this.addRegionsInBatch, 0, regions, regionStyleMap, count);
-        } else {
-            this.fileBrowserStore.setImportingRegions(false);
-            this.fileBrowserStore.resetLoadingStates();
-            this.fileBrowserStore.hideFileBrowser();
-        }
+        this.fileBrowserStore.updateLoadingState(batchEnd / regions.length, batchEnd, regions.length);
     };
 
     exportRegions = async (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) => {
