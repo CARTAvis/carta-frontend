@@ -1677,7 +1677,7 @@ export class FrameStore {
         }
     }
 
-    @action fitZoom = () => {
+    @action fitZoom = (): number => {
         if (this.spatialReference) {
             // Calculate midpoint of image
             this.initCenter();
@@ -1696,10 +1696,13 @@ export class FrameStore {
             const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
             const zoomX = (this.spatialReference.renderWidth * pixelRatio) / rangeX;
             const zoomY = (this.spatialReference.renderHeight * pixelRatio) / rangeY;
-            this.spatialReference.setZoom(Math.min(zoomX, zoomY), true);
+            const zoom = Math.min(zoomX, zoomY);
+            this.spatialReference.setZoom(zoom, true);
+            return zoom;
         } else {
             this.zoomLevel = this.zoomLevelForFit;
             this.initCenter();
+            return this.zoomLevel;
         }
     };
 

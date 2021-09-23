@@ -17,7 +17,7 @@ export class ToolbarComponentProps {
     frame: FrameStore;
     activeLayer: ImageViewLayer;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
-    onRegionViewZoom: (zoom: number) => void;
+    onRegionViewZoom: (zoom: number, isZoomToFit?: boolean) => void;
 }
 
 @observer
@@ -41,8 +41,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     ]);
 
     handleZoomToFitClicked = () => {
-        this.props.frame?.fitZoom();
-        // TODO
+        const zoom = this.props.frame?.fitZoom();
+        if (zoom) {
+            this.props.onRegionViewZoom(zoom, true);
+        }
     };
 
     handleZoomToActualSizeClicked = () => {
