@@ -525,12 +525,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     render() {
+        const appStore = AppStore.Instance;
         const frame = this.props.frame;
         const regionSet = frame.regionSet;
         const className = classNames("region-stage", {docked: this.props.docked});
         let regionComponents = null;
 
-        if (regionSet && regionSet.regions.length) {
+        if (appStore.fileBrowserStore.isLoadingDialogOpen) {
+            regionComponents = [];
+        } else if (regionSet && regionSet.regions.length) {
             regionComponents = regionSet.regions
                 .filter(r => r.isValid && r.regionId !== 0)
                 .sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1))
@@ -546,7 +549,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                                 selected={r === regionSet.selectedRegion}
                                 onSelect={regionSet.selectRegion}
                                 onDoubleClick={this.handleRegionDoubleClick}
-                                listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
+                                listening={regionSet.mode !== RegionMode.CREATING && appStore?.activeLayer !== ImageViewLayer.DistanceMeasuring}
                                 isRegionCornerMode={this.props.isRegionCornerMode}
                             />
                         );
@@ -574,7 +577,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                                 selected={r === regionSet.selectedRegion}
                                 onSelect={regionSet.selectRegion}
                                 onDoubleClick={this.handleRegionDoubleClick}
-                                listening={regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring}
+                                listening={regionSet.mode !== RegionMode.CREATING && appStore?.activeLayer !== ImageViewLayer.DistanceMeasuring}
                                 isRegionCornerMode={this.props.isRegionCornerMode}
                             />
                         );
@@ -632,7 +635,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         let cursor: string;
 
-        if (regionSet.mode === RegionMode.CREATING || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
+        if (regionSet.mode === RegionMode.CREATING || appStore?.activeLayer === ImageViewLayer.DistanceMeasuring) {
             cursor = "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
             cursor = "move";

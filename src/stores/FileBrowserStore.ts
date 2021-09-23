@@ -51,6 +51,7 @@ export class FileBrowserStore {
     @observable regionFileInfo: string[];
     @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
+    @observable isImportingRegions = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
     @observable responseErrorMessage: string = "";
@@ -96,6 +97,10 @@ export class FileBrowserStore {
     @observable loadingProgress: number;
     @observable loadingCheckedCount: number;
     @observable loadingTotalCount: number;
+
+    @action setImportingRegions = (isImportingRegions: boolean) => {
+        this.isImportingRegions = isImportingRegions;
+    };
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         switch (mode) {
@@ -161,21 +166,19 @@ export class FileBrowserStore {
             if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
                 const list = await backendService.getFileList(directory);
                 this.setFileList(list);
-                this.resetLoadingStates();
             } else if (this.browserMode === BrowserMode.Catalog) {
                 const list = await backendService.getCatalogList(directory);
                 this.setCatalogFileList(list);
-                this.resetLoadingStates();
             } else {
                 const list = await backendService.getRegionList(directory);
                 this.setFileList(list);
-                this.resetLoadingStates();
             }
         } catch (err) {
             console.log(err);
             AppToaster.show(ErrorToast(`Error loading file list for directory ${directory}`));
-            this.resetLoadingStates();
         }
+        this.loadingList = false;
+        this.resetLoadingStates();
     };
 
     @action getFileInfo = async (directory: string, file: string, hdu: string) => {
@@ -338,7 +341,16 @@ export class FileBrowserStore {
     }
 
     @action saveStartingDirectory(directory?: string) {
+        this.setStartingDirectory(directory);
         const preferenceStore = PreferenceStore.Instance;
+        if (preferenceStore.keepLastUsedFolder) {
+            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
+        } else {
+            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
+        }
+    }
+
+    @action setStartingDirectory(directory?: string) {
         if (directory !== undefined) {
             this.startingDirectory = directory;
         } else {
@@ -348,14 +360,9 @@ export class FileBrowserStore {
                 this.startingDirectory = this.fileList.directory;
             }
         }
-        if (preferenceStore.keepLastUsedFolder) {
-            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, this.startingDirectory);
-        } else {
-            preferenceStore.setPreference(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER, "");
-        }
     }
 
-    setStartingDirectory() {
+    @action restoreStartingDirectory() {
         const preferenceStore = PreferenceStore.Instance;
         if (preferenceStore.keepLastUsedFolder) {
             if (preferenceStore.lastUsedFolder?.length > 0) {
@@ -447,12 +454,12 @@ export class FileBrowserStore {
     };
 
     @action resetLoadingStates = () => {
-        this.loadingList = false;
         this.isLoadingDialogOpen = false;
         this.updateLoadingState(0, 0, 0);
     };
 
     @action cancelRequestingFileList = () => {
+        this.loadingList = false;
         if (this.loadingProgress < 1.0) {
             if (this.browserMode === BrowserMode.Catalog) {
                 BackendService.Instance.cancelRequestingFileList(CARTA.FileListType.Catalog);

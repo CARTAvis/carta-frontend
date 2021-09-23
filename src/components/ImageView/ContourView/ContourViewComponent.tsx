@@ -208,6 +208,10 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         }
     };
 
+    private getRef = ref => {
+        this.canvas = ref;
+    };
+
     render() {
         // dummy values to trigger React's componentDidUpdate()
         /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -241,7 +245,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 <canvas
                     id="contour-canvas"
                     className="contour-canvas"
-                    ref={ref => (this.canvas = ref)}
+                    ref={this.getRef}
                     style={{
                         top: padding.top,
                         left: padding.left,
