@@ -2,15 +2,14 @@ import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "stores/widgets";
 import {action, observable, makeObservable} from "mobx";
+import {VALID_COORDINATES} from "models";
 
 export class StatsWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
 
-    private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
-
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
-        if (StatsWidgetStore.ValidCoordinates.indexOf(coordinate) !== -1) {
+        if (VALID_COORDINATES.indexOf(coordinate) !== -1) {
             this.coordinate = coordinate;
         }
     };
@@ -50,8 +49,8 @@ export class StatsWidgetStore extends RegionWidgetStore {
                     regionRequirements.statsConfigs = [];
                 }
 
-                let hitogramConfig = regionRequirements.statsConfigs.find(config => config.coordinate === coordinate);
-                if (!hitogramConfig) {
+                let histogramConfig = regionRequirements.statsConfigs.find(config => config.coordinate === coordinate);
+                if (!histogramConfig) {
                     regionRequirements.statsConfigs.push({coordinate: coordinate, statsTypes: AppStore.DEFAULT_STATS_TYPES});
                 }
             }
