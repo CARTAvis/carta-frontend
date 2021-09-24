@@ -113,7 +113,7 @@ export class AppStore {
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
     @observable toolbarExpanded: boolean;
-    exportImageRatio: number = 2;
+    @observable imageRatio: number;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
@@ -1103,6 +1103,10 @@ export class AppStore {
         this.activeLayer = this.activeLayer === ImageViewLayer.RegionCreating ? ImageViewLayer.RegionMoving : ImageViewLayer.RegionCreating;
     };
 
+    @action setImageRatio = (val: number) => {
+        this.imageRatio = val;
+    };
+
     public static readonly DEFAULT_STATS_TYPES = [
         CARTA.StatsType.NumPixels,
         CARTA.StatsType.Sum,
@@ -1249,6 +1253,7 @@ export class AppStore {
         this.initRequirements();
         this.activeLayer = ImageViewLayer.RegionMoving;
         this.toolbarExpanded = true;
+        this.imageRatio = 1;
 
         AST.onReady.then(
             action(() => {
@@ -2092,18 +2097,23 @@ export class AppStore {
                 return false;
             }
             const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
-            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
-            if (composedCanvas) {
-                composedCanvas.toBlob(blob => {
-                    const link = document.createElement("a") as HTMLAnchorElement;
-                    const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
-                    // Trim filename to 230 characters in total to prevent browser errors
-                    link.download = `${joinedNames}-image-${getTimestamp()}`.substring(0, 225) + ".png";
-                    link.href = URL.createObjectURL(blob);
-                    link.dispatchEvent(new MouseEvent("click"));
-                }, "image/png");
-                return true;
-            }
+            
+            this.setImageRatio(this.preferenceStore.exportImageRatio);
+            setTimeout(() => {
+                const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+                if (composedCanvas) {
+                    composedCanvas.toBlob(blob => {
+                        const link = document.createElement("a") as HTMLAnchorElement;
+                        const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
+                        // Trim filename to 230 characters in total to prevent browser errors
+                        link.download = `${joinedNames}-image-${getTimestamp()}`.substring(0, 225) + ".png";
+                        link.href = URL.createObjectURL(blob);
+                        link.dispatchEvent(new MouseEvent("click"));
+                    }, "image/png");
+                    return true;
+                }
+                return false;
+            }, 1);
         }
         return false;
     };

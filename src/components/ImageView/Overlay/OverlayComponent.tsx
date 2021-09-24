@@ -38,14 +38,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     updateImageDimensions() {
-        this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.exportImageRatio;
-        this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.exportImageRatio;
+        this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
+        this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
     }
 
     renderCanvas = () => {
         const settings = this.props.overlaySettings;
         const frame = this.props.frame;
-        const pixelRatio = devicePixelRatio * AppStore.Instance.exportImageRatio;
+        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
 
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
@@ -149,6 +149,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringStart = frame.distanceMeasuring.transformedStart;
         const distanceMeasuringFinish = frame.distanceMeasuring.transformedFinish;
         const title = frame.titleCustomText;
+        const ratio = AppStore.Instance.imageRatio;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image

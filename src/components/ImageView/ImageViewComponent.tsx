@@ -21,7 +21,7 @@ export enum ImageViewLayer {
 export function getImageViewCanvas(padding: Padding, colorbarPosition: string, backgroundColor: string = "rgba(255, 255, 255, 0)") {
     const appStore = AppStore.Instance;
     const imageViewCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    const pixelRatio = devicePixelRatio * appStore.exportImageRatio;
+    const pixelRatio = devicePixelRatio * appStore.imageRatio;
     imageViewCanvas.width = appStore.overlayStore.fullViewWidth * pixelRatio;
     imageViewCanvas.height = appStore.overlayStore.fullViewHeight * pixelRatio;
     const ctx = imageViewCanvas.getContext("2d");
@@ -57,30 +57,30 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
     const beamProfileCanvas = panelElement.find(".beam-profile-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
     const regionCanvas = panelElement.find(".region-stage")?.children()?.children("canvas")?.[0] as HTMLCanvasElement;
 
-    const exportImageRatio = AppStore.Instance.exportImageRatio;
+    const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    composedCanvas.width = overlayCanvas.width * exportImageRatio;
-    composedCanvas.height = overlayCanvas.height * exportImageRatio;
+    composedCanvas.width = overlayCanvas.width * AppStore.Instance.imageRatio;
+    composedCanvas.height = overlayCanvas.height * AppStore.Instance.imageRatio;
 
     const ctx = composedCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
-    ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio * exportImageRatio, padding.top * devicePixelRatio * exportImageRatio);
-    ctx.drawImage(contourCanvas, padding.left * devicePixelRatio * exportImageRatio, padding.top * devicePixelRatio * exportImageRatio);
+    ctx.drawImage(rasterCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
+    ctx.drawImage(contourCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
     if (colorbarCanvas) {
         let xPos, yPos;
         switch (colorbarPosition) {
             case "top":
                 xPos = 0;
-                yPos = padding.top * devicePixelRatio * exportImageRatio - colorbarCanvas.height;
+                yPos = padding.top * pixelRatio - colorbarCanvas.height;
                 break;
             case "bottom":
                 xPos = 0;
-                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * devicePixelRatio * exportImageRatio;
+                yPos = overlayCanvas.height - colorbarCanvas.height - AppStore.Instance.overlayStore.colorbarHoverInfoHeight * pixelRatio;
                 break;
             case "right":
             default:
-                xPos = padding.left * devicePixelRatio * exportImageRatio + rasterCanvas.width;
+                xPos = padding.left * pixelRatio + rasterCanvas.width;
                 yPos = 0;
                 break;
         }
@@ -88,18 +88,18 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
     }
 
     if (beamProfileCanvas) {
-        ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio * exportImageRatio, padding.top * devicePixelRatio * exportImageRatio);
+        ctx.drawImage(beamProfileCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
     }
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(overlayCanvas, 0, 0);
 
     if (catalogCanvas) {
-        ctx.drawImage(catalogCanvas, padding.left * devicePixelRatio * exportImageRatio, padding.top * devicePixelRatio * exportImageRatio);
+        ctx.drawImage(catalogCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
     }
 
     if (regionCanvas) {
-        ctx.drawImage(regionCanvas, padding.left * devicePixelRatio * exportImageRatio, padding.top * devicePixelRatio * exportImageRatio);
+        ctx.drawImage(regionCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
     }
 
     return composedCanvas;

@@ -58,14 +58,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         makeObservable(this);
     }
 
-    componentDidMount() {
-        const pixelRatio = devicePixelRatio * AppStore.Instance.exportImageRatio;
-        const canvas = this.layerRef?.current?.getCanvas();
-        if (canvas && canvas.pixelRatio !== pixelRatio) {
-            canvas.setPixelRatio(pixelRatio);
-        }
-    }
-
     updateCursorPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
         if (frame.wcsInfo) {
@@ -548,6 +540,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const regionSet = frame.regionSet;
         const className = classNames("region-stage", {docked: this.props.docked});
         let regionComponents = null;
+
+        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
+        const canvas = this.layerRef?.current?.getCanvas();
+        if (canvas && canvas.pixelRatio !== pixelRatio) {
+            canvas.setPixelRatio(pixelRatio);
+        }
 
         if (regionSet && regionSet.regions.length) {
             regionComponents = regionSet.regions

@@ -38,7 +38,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         }
 
         const appStore = AppStore.Instance;
-        const pixelRatio = devicePixelRatio * appStore.exportImageRatio;
+        const pixelRatio = devicePixelRatio * appStore.imageRatio;
         const requiredWidth = Math.max(1, frame.renderWidth * pixelRatio);
         const requiredHeight = Math.max(1, frame.renderHeight * pixelRatio);
 
@@ -91,7 +91,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     };
 
     private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore) => {
-        const pixelRatio = devicePixelRatio * AppStore.Instance.exportImageRatio;
+        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
         const isActive = frame === baseFrame;
         let lineThickness: number;
         let dashFactor: number;

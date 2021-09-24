@@ -61,7 +61,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const shaderUniforms = TileWebGLService.Instance.shaderUniforms;
         const frame = this.props.frame;
         const renderConfig = frame.renderConfig;
-        const pixelRatio = devicePixelRatio * appStore.exportImageRatio;
+        const pixelRatio = devicePixelRatio * appStore.imageRatio;
 
         if (renderConfig && shaderUniforms) {
             this.gl.uniform1f(shaderUniforms.MinVal, renderConfig.scaleMinVal);
@@ -107,7 +107,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         const appStore = AppStore.Instance;
-        const pixelRatio = devicePixelRatio * appStore.exportImageRatio;
+        const pixelRatio = devicePixelRatio * appStore.imageRatio;
         const requiredWidth = Math.max(1, frame.renderWidth * pixelRatio);
         const requiredHeight = Math.max(1, frame.renderHeight * pixelRatio);
 
@@ -127,7 +127,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         // Only clear and render if we're in animation or tiled mode
         if (frame?.isRenderable) {
             const appStore = AppStore.Instance;
-            const pixelRatio = devicePixelRatio * appStore.exportImageRatio;
+            const pixelRatio = devicePixelRatio * appStore.imageRatio;
             const xOffset = this.props.column * frame.renderWidth * pixelRatio;
             // y-axis is inverted
             const yOffset = (appStore.numImageRows - 1 - this.props.row) * frame.renderHeight * pixelRatio;
@@ -310,7 +310,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         let zoom;
         let zoomFactor = 1.0;
         let aspectRatio = 1.0;
-        const pixelRatio = devicePixelRatio * appStore.exportImageRatio;
+        const pixelRatio = devicePixelRatio * appStore.imageRatio;
         if (frame.spatialReference) {
             zoomFactor = frame.spatialTransform.scale;
             zoom = (frame.spatialReference.zoomLevel / pixelRatio) * zoomFactor;
@@ -368,6 +368,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
                 pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
             };
+
+            const ratio = appStore.imageRatio;
         }
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
