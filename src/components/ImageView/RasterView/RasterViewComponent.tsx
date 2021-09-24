@@ -341,6 +341,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 
+    private getRef = ref => {
+        this.canvas = ref;
+    };
+
     render() {
         // dummy values to trigger React's componentDidUpdate()
         /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -381,7 +385,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 <canvas
                     className="raster-canvas"
                     id="raster-canvas"
-                    ref={ref => (this.canvas = ref)}
+                    ref={this.getRef}
                     style={{
                         top: padding.top,
                         left: padding.left,

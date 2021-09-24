@@ -86,9 +86,13 @@ export enum PreferenceKeys {
 
     PIXEL_GRID_VISIBLE = "pixelGridVisible",
     PIXEL_GRID_COLOR = "pixelGridColor",
+    IMAGE_MULTI_PANEL_ENABLED = "imageMultiPanelEnabled",
     IMAGE_PANEL_MODE = "imagePanelMode",
     IMAGE_PANEL_COLUMNS = "imagePanelColumns",
-    IMAGE_PANEL_ROWS = "imagePanelRows"
+    IMAGE_PANEL_ROWS = "imagePanelRows",
+
+    STATS_PANEL_ENABLED = "statsPanelEnabled",
+    STATS_PANEL_MODE = "statsPanelMode"
 }
 
 const DEFAULTS = {
@@ -97,7 +101,8 @@ const DEFAULTS = {
         fileFilteringType: FileFilteringType.Fuzzy,
         pixelGridVisible: false,
         pixelGridColor: "#FFFFFF",
-        imagePanelMode: ImagePanelMode.None,
+        imageMultiPanelEnabled: false,
+        imagePanelMode: ImagePanelMode.Dynamic,
         imagePanelColumns: 2,
         imagePanelRows: 2
     },
@@ -182,6 +187,10 @@ const DEFAULTS = {
     CATALOG: {
         catalogDisplayedColumnSize: 10,
         catalogTableSeparatorPosition: "60%"
+    },
+    STATS_PANEL: {
+        statsPanelEnabled: false,
+        statsPanelMode: 0
     }
 };
 
@@ -515,6 +524,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW) ?? DEFAULTS.PERFORMANCE.limitOverlayRedraw;
     }
 
+    @computed get imageMultiPanelEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED) ?? DEFAULTS.SILENT.imagePanelMode;
+    }
+
     @computed get imagePanelMode(): ImagePanelMode {
         return this.preferences.get(PreferenceKeys.IMAGE_PANEL_MODE) ?? DEFAULTS.SILENT.imagePanelMode;
     }
@@ -525,6 +538,14 @@ export class PreferenceStore {
 
     @computed get imagePanelRows(): number {
         return this.preferences.get(PreferenceKeys.IMAGE_PANEL_ROWS) ?? DEFAULTS.SILENT.imagePanelRows;
+    }
+
+    @computed get statsPanelEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.STATS_PANEL_ENABLED) ?? DEFAULTS.STATS_PANEL.statsPanelEnabled;
+    }
+
+    @computed get statsPanelMode(): number {
+        return this.preferences.get(PreferenceKeys.STATS_PANEL_MODE) ?? DEFAULTS.STATS_PANEL.statsPanelMode;
     }
 
     @action setPreference = async (key: PreferenceKeys, value: any) => {
@@ -569,6 +590,7 @@ export class PreferenceStore {
             PreferenceKeys.SILENT_FILE_FILTERING_TYPE,
             PreferenceKeys.PIXEL_GRID_VISIBLE,
             PreferenceKeys.PIXEL_GRID_COLOR,
+            PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED,
             PreferenceKeys.IMAGE_PANEL_MODE,
             PreferenceKeys.IMAGE_PANEL_COLUMNS,
             PreferenceKeys.IMAGE_PANEL_ROWS
