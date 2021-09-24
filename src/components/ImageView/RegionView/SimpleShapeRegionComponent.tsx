@@ -17,6 +17,7 @@ interface SimpleShapeRegionComponentProps {
     listening: boolean;
     selected: boolean;
     isRegionCornerMode: boolean;
+    stageRef: any;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
@@ -31,7 +32,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
     handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
-        console.log("context click!");
     };
 
     handleDoubleClick = () => {

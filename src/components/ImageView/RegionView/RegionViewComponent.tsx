@@ -653,14 +653,15 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                 if (r.regionType === CARTA.RegionType.POINT) {
                     return <PointRegionComponent {...commonProps} />;
                 } else {
-                    const otherProps = {
+                    const allProps = {
+                        ...commonProps,
                         listening: regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring,
                         isRegionCornerMode: AppStore.Instance.preferenceStore.isRegionCornerMode
                     };
                     return r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE ? (
-                        <LineSegmentRegionComponent {...commonProps} {...otherProps} />
+                        <LineSegmentRegionComponent {...allProps} />
                     ) : (
-                        <SimpleShapeRegionComponent {...commonProps} {...otherProps} />
+                        <SimpleShapeRegionComponent {...allProps} />
                     );
                 }
             });
