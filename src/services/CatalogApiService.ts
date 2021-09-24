@@ -11,6 +11,8 @@ export enum CatalogDatabase {
 }
 
 export class CatalogApiService {
+    public static readonly SimBadHyperLink: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
+
     private static staticInstance: CatalogApiService;
     private static readonly DBMap = new Map<CatalogDatabase, {baseURL: string}>([[CatalogDatabase.SIMBAD, {baseURL: "https://simbad.u-strasbg.fr/simbad/sim-tap/"}]]);
     private axiosInstanceSimbad: AxiosInstance;
@@ -94,6 +96,7 @@ export class CatalogApiService {
             .catch(error => {
                 if (axios.isCancel(error)) {
                     AppToaster.show(WarningToast(error?.message));
+                    CatalogApiService.Instance.resetCancelTokenSource(error);
                 } else if (error?.message) {
                     AppToaster.show(ErrorToast(error.message));
                 } else {

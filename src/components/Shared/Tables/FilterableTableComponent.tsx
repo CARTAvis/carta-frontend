@@ -8,6 +8,7 @@ import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
+import {CatalogApiService} from "services";
 import {SpectralLineHeaders} from "stores/widgets";
 import {CatalogType, ProcessedColumnData} from "models";
 import "./FilterableTableComponent.scss";
@@ -180,9 +181,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
         let cell = cellContext;
         if (this.props.catalogType === CatalogType.SIMBAD) {
-            if (columnHeader.name?.toLocaleLowerCase().includes("coo_bibcode")) {
+            if (columnHeader.name?.toLocaleLowerCase().includes("bibcode")) {
                 cell = (
-                    <a href={`https://ui.adsabs.harvard.edu/abs/${cellContext}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${CatalogApiService.SimBadHyperLink.bibcode}${cellContext}`} target="_blank" rel="noopener noreferrer">
                         {cellContext}
                     </a>
                 );
@@ -190,7 +191,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
             if (columnHeader.name?.toLocaleLowerCase().includes("main_id")) {
                 cell = (
-                    <a href={`https://simbad.u-strasbg.fr/simbad/sim-id?Ident=${cellContext}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${CatalogApiService.SimBadHyperLink.mainId}${cellContext}`} target="_blank" rel="noopener noreferrer">
                         {cellContext}
                     </a>
                 );

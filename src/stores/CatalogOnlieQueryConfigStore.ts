@@ -34,6 +34,7 @@ export class CatalogOnlineQueryConfigStore {
         this.isQuerying = false;
         this.catalogDB = CatalogDatabase.SIMBAD;
         this.searchRadius = 1;
+        // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
         this.coordsType = CatalogSystemType.ICRS;
         this.centerPixelCoord = {x: undefined, y: undefined};
         this.maxObject = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
