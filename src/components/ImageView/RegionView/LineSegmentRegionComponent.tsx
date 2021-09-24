@@ -241,32 +241,6 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         }
     };
 
-    private getCanvasPointArray(points: Point2D[]) {
-        if (!points || !points.length) {
-            return null;
-        }
-
-        const frame = this.props.frame;
-
-        const currentView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        const viewWidth = currentView.xMax - currentView.xMin;
-        const viewHeight = currentView.yMax - currentView.yMin;
-        let offset = {x: 1.0, y: 1.0};
-
-        if (frame.spatialReference) {
-            offset = scale2D(rotate2D(offset, frame.spatialTransform.rotation), frame.spatialTransform.scale);
-        }
-
-        const pointArray = new Array<number>(points.length * 2);
-        for (let i = 0; i < points.length; i++) {
-            const x = ((points[i].x + offset.x - currentView.xMin) / viewWidth) * this.props.layerWidth;
-            const y = this.props.layerHeight - ((points[i].y + offset.y - currentView.yMin) / viewHeight) * this.props.layerHeight;
-            pointArray[i * 2] = x;
-            pointArray[i * 2 + 1] = y;
-        }
-        return pointArray;
-    }
-
     private anchorNode(x: number, y: number, rotation: number = 0, key: number = undefined, editableAnchor: boolean = false, rotator: boolean = false) {
         let anchorProps: any = {
             x: x,
