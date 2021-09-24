@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {isAutoColor} from "utilities";
+import {VALID_COORDINATES} from "models";
 import tinycolor from "tinycolor2";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
@@ -22,11 +23,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable meanRmsVisible: boolean;
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
 
-    private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
-
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
-        if (HistogramWidgetStore.ValidCoordinates.indexOf(coordinate) !== -1) {
+        if (VALID_COORDINATES.indexOf(coordinate) !== -1) {
             // Reset zoom when changing between coordinates
             this.clearXYBounds();
             this.coordinate = coordinate;
@@ -116,8 +115,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                     regionRequirements.histograms = [];
                 }
 
-                let hitogramConfig = regionRequirements.histograms.find(config => config.coordinate === coordinate);
-                if (!hitogramConfig) {
+                let histogramConfig = regionRequirements.histograms.find(config => config.coordinate === coordinate);
+                if (!histogramConfig) {
                     regionRequirements.histograms.push({coordinate: coordinate, channel: -1, numBins: -1});
                 }
             }
