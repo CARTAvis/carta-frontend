@@ -360,6 +360,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                     y={centerPixelSpace.y}
                     stroke={region.color}
                     strokeWidth={region.lineWidth}
+                    strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     dash={[region.dashLength]}
                     closed={true}
