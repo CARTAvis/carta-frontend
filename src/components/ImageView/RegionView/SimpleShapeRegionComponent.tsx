@@ -430,9 +430,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 offsetY = region.size.x;
             }
 
-            const zoomLevel = (frame.spatialReference ?? frame).zoomLevel;
-            let rotatorOffset = (15 / zoomLevel) * devicePixelRatio;
-
             const anchorConfigs = [
                 {anchor: "top", offset: {x: 0, y: offsetY}},
                 {anchor: "bottom", offset: {x: 0, y: -offsetY}},
@@ -445,6 +442,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             ];
 
             if (frame.hasSquarePixels) {
+                const zoomLevel = (frame.spatialReference ?? frame).zoomLevel;
+                const rotatorOffset = (15 / zoomLevel) * devicePixelRatio;
                 anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offsetY + rotatorOffset}});
             }
 
