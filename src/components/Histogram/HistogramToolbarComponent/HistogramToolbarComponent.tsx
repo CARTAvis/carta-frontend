@@ -44,7 +44,7 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
         return (
             <div className="spectral-profiler-toolbar">
                 <RegionSelectorComponent widgetStore={this.props.widgetStore} />
-                <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
+                <FormGroup label={"Polarization"} inline={true} disabled={!enableStokesSelect}>
                     <HTMLSelect className={stokesClassName} value={widgetStore.coordinate} options={coordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} />
                 </FormGroup>
             </div>
