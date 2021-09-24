@@ -114,8 +114,8 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
                     break;
                 default:
                     this.sortedIndexMap.sort((a: number, b: number) => {
-                        const aNumber = catalogColumn.data[a] as number;
-                        const bNumber = catalogColumn.data[b] as number;
+                        const aNumber = Number(catalogColumn.data[a]);
+                        const bNumber = Number(catalogColumn.data[b]);
                         return direction * (aNumber < bNumber ? -1 : 1);
                     });
                     break;

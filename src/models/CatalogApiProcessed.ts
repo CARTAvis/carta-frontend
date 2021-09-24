@@ -7,7 +7,8 @@ enum DataType {
     FLOAT = "FLOAT",
     LONG = "LONG",
     INT = "INT",
-    DOUBLE = "DOUBLE"
+    DOUBLE = "DOUBLE",
+    UNSIGNEDBYTE = "UNSIGNEDBYTE"
 }
 
 export type VizieResource = {
@@ -73,6 +74,8 @@ export class APIProcessing {
                 return CARTA.ColumnType.Float;
             case DataType.DOUBLE:
                 return CARTA.ColumnType.Double;
+            case DataType.UNSIGNEDBYTE:
+                return CARTA.ColumnType.Uint16;
             default:
                 return CARTA.ColumnType.UnsupportedType;
         }
