@@ -406,8 +406,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const zoomLevel = frame.zoomLevel;
 
             const centerPixelSpace = transformedImageToCanvasPos(centerReferenceImage.x, centerReferenceImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            let width = (region.size.x * zoomLevel) / devicePixelRatio;
-            let height = (region.size.y * zoomLevel) / devicePixelRatio;
+            const width = (region.size.x * zoomLevel) / devicePixelRatio;
+            const height = (region.size.y * zoomLevel) / devicePixelRatio;
 
             // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
             // TODO: Is this needed anywhere?
