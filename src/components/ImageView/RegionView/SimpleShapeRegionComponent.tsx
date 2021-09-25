@@ -360,7 +360,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (frame.spatialReference) {
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
             const centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            // Ellipse axes swapped
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const N = pointsSecondaryImage.length;
             const pointArray = new Array<number>(N * 2);
