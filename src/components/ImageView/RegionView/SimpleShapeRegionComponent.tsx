@@ -36,19 +36,13 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     };
 
     handleDoubleClick = () => {
-        if (this.props.onDoubleClick) {
-            this.props.onDoubleClick(this.props.region);
-        }
+        this.props.onDoubleClick?.(this.props.region);
     };
 
     handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
-
         if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
-            // Select click
-            if (this.props.onSelect) {
-                this.props.onSelect(this.props.region);
-            }
+            this.props.onSelect?.(this.props.region);
         }
     };
 
@@ -188,9 +182,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     };
 
     handleDragStart = () => {
-        if (this.props.onSelect) {
-            this.props.onSelect(this.props.region);
-        }
+        this.props.onSelect?.(this.props.region);
         this.props.region.beginEditing();
     };
 

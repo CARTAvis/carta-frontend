@@ -47,9 +47,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
     private handleDoubleClick = () => {
         clearTimeout(this.addControlPointTimer);
-        if (this.props.onDoubleClick) {
-            this.props.onDoubleClick(this.props.region);
-        }
+        this.props.onDoubleClick?.(this.props.region);
     };
 
     @action private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -57,11 +55,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
         if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
             const region = this.props.region;
-
-            // Select click
-            if (this.props.onSelect) {
-                this.props.onSelect(region);
-            }
+            this.props.onSelect?.(region);
 
             // Add a new control point to the region between two existing control points
             if (region.regionType !== CARTA.RegionType.LINE && this.hoverIntersection && this.hoverIndex >= 0 && this.hoverIndex < region.controlPoints.length) {
@@ -78,9 +72,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     };
 
     private handleAnchorDragStart = () => {
-        if (this.props.onSelect) {
-            this.props.onSelect(this.props.region);
-        }
+        this.props.onSelect?.(this.props.region);
         this.props.region.beginEditing();
     };
 
@@ -214,9 +206,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     };
 
     @action handleDragStart = () => {
-        if (this.props.onSelect) {
-            this.props.onSelect(this.props.region);
-        }
+        this.props.onSelect?.(this.props.region);
         this.props.region.beginEditing();
         this.hoverIntersection = null;
     };
