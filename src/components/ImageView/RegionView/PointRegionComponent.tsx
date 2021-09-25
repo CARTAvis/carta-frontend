@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
-import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToMutatedStage, adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
 import {transformPoint} from "utilities";
 import {Point} from "./InvariantShapes";
@@ -43,11 +43,8 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
             const frame = this.props.frame;
-            const zoomLevel = this.props.stageRef.scaleX();
-            const stageOrigin = this.props.stageRef.getPosition();
-            const position = konvaEvent.target.position();
-            const correctedPosition = {x: position.x * zoomLevel + stageOrigin.x, y: position.y * zoomLevel + stageOrigin.y};
-            let positionImageSpace = canvasToTransformedImagePos(correctedPosition.x, correctedPosition.y, frame, this.props.layerWidth, this.props.layerHeight);
+            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.getPosition(), this.props.stageRef.scaleX());
+            let positionImageSpace = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
@@ -71,11 +68,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             centerPixelSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = 0;
         }
-
-        // Correct canvas space cooridnate according to stage's scale & origin
-        const zoomLevel = this.props.stageRef.scaleX();
-        const stageOrigin = this.props.stageRef.getPosition();
-        centerPixelSpace = {x: (centerPixelSpace.x - stageOrigin.x) / zoomLevel, y: (centerPixelSpace.y - stageOrigin.y) / zoomLevel};
+        centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.getPosition(), this.props.stageRef.scaleX());
 
         return (
             <Point

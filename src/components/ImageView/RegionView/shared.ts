@@ -42,3 +42,14 @@ export function transformedImageToCanvasPos(imageX: number, imageY: number, fram
 
     return imageToCanvasPos(imagePos.x, imagePos.y, frame.requiredFrameViewForRegionRender, layerWidth, layerHeight, frame.spatialTransform);
 }
+
+// Adjust the position in the stage of {origin: stageOrigin, scale stageZoom} to the stage of {origin: (0, 0), scale: 1},
+// Coordinate transformation between {origin: (0, 0), scale: 1} & {origin: o', scale: z'}:
+// x * 1 + 0 = x' * z' + o'
+export function adjustPosToUnityStage(pos: Point2D, stageOrigin: Point2D, stageZoom: number): Point2D {
+    return {x: pos.x * stageZoom + stageOrigin.x, y: pos.y * stageZoom + stageOrigin.y};;
+}
+
+export function adjustPosToMutatedStage(pos: Point2D, stageOrigin: Point2D, stageZoom: number): Point2D {
+    return {x: (pos.x - stageOrigin.x) / stageZoom, y: (pos.y - stageOrigin.y) / stageZoom};
+}
