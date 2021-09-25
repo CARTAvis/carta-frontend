@@ -1,13 +1,14 @@
 import * as React from "react";
 import {action} from "mobx";
 import {observer} from "mobx-react";
-import {Circle, Ellipse, Group, Line, Rect} from "react-konva";
+import {Ellipse, Group, Line, Rect} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
+import {Anchor} from "./InvariantShapes";
 
 interface SimpleShapeRegionComponentProps {
     region: RegionStore;
@@ -308,31 +309,54 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
     };
 
-    private anchorNode(x: number, y: number, anchor: string, rotation: number = 0) {
-        const commonProps = {
-            x,
-            y,
-            rotation,
-            fill: "white",
-            strokeWidth: 1,
-            stroke: "black",
-            draggable: true,
-            key: anchor,
-            id: anchor,
-            onMouseEnter: this.handleAnchorMouseEnter,
-            onMouseOut: this.handleAnchorMouseOut,
-            onDragStart: this.handleAnchorDragStart,
-            onDragEnd: this.handleAnchorDragEnd,
-            onDragMove: this.handleAnchorDrag,
-            dragBoundFunc: () => ({x, y})
-        };
-        if (anchor === "rotator") {
-            // Circle radius adjusted so that it circumscribes the other anchor squares
-            return <Circle {...commonProps} radius={SimpleShapeRegionComponent.AnchorWidth / Math.sqrt(2)} />;
+    private genAnchors = (): React.ReactNode[] => {
+        const region = this.props.region;
+        const frame = this.props.frame;
+
+        // Ellipse has swapped axes
+        const offset = region.regionType === CARTA.RegionType.RECTANGLE ? {x: region.size.x / 2, y: region.size.y / 2} : {x: region.size.y, y: region.size.x}
+        let anchorConfigs = [
+            {anchor: "top", offset: {x: 0, y: offset.y}},
+            {anchor: "bottom", offset: {x: 0, y: -offset.y}},
+            {anchor: "left", offset: {x: -offset.x, y: 0}},
+            {anchor: "right", offset: {x: offset.x, y: 0}},
+            {anchor: "top-left", offset: {x: -offset.x, y: offset.y}},
+            {anchor: "bottom-left", offset: {x: -offset.x, y: -offset.y}},
+            {anchor: "top-right", offset: {x: offset.x, y: offset.y}},
+            {anchor: "bottom-right", offset: {x: offset.x, y: -offset.y}}
+        ]
+        if (frame.hasSquarePixels) {
+            const zoomLevel = (frame.spatialReference ?? frame).zoomLevel;
+            const rotatorOffset = (15 / zoomLevel) * devicePixelRatio;
+            anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offset.y + rotatorOffset}});
         }
-        const offset = SimpleShapeRegionComponent.AnchorWidth / 2.0;
-        return <Rect {...commonProps} offsetX={offset} offsetY={offset} width={offset * 2} height={offset * 2} />;
-    }
+
+        return anchorConfigs.map(config => {
+            const centerReferenceImage = region.center;
+
+            let posImage = add2D(centerReferenceImage, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
+            if (frame.spatialReference) {
+                posImage = transformPoint(frame.spatialTransformAST, posImage, false);
+            }
+
+            const posCanvas = transformedImageToCanvasPos(posImage.x, posImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+            return (
+                <Anchor
+                    key={config.anchor}
+                    anchor={config.anchor}
+                    x={posCanvas.x}
+                    y={posCanvas.y}
+                    rotation={-region.rotation}
+                    isRotator={config.anchor === "rotator"}
+                    onMouseEnter={this.handleAnchorMouseEnter}
+                    onMouseOut={this.handleAnchorMouseOut}
+                    onDragStart={this.handleAnchorDragStart}
+                    onDragEnd={this.handleAnchorDragEnd}
+                    onDragMove={this.handleAnchorDrag}
+                />
+            );
+        });
+    };
 
     render() {
         const region = this.props.region;
@@ -416,51 +440,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             }
         }
 
-        let anchors: React.ReactNode[];
-
-        if (this.props.selected && this.props.listening && !region.locked) {
-            let offsetX: number;
-            let offsetY: number;
-            if (region.regionType === CARTA.RegionType.RECTANGLE) {
-                offsetX = region.size.x / 2;
-                offsetY = region.size.y / 2;
-            } else {
-                // Ellipse has swapped axes
-                offsetX = region.size.y;
-                offsetY = region.size.x;
-            }
-
-            const anchorConfigs = [
-                {anchor: "top", offset: {x: 0, y: offsetY}},
-                {anchor: "bottom", offset: {x: 0, y: -offsetY}},
-                {anchor: "left", offset: {x: -offsetX, y: 0}},
-                {anchor: "right", offset: {x: offsetX, y: 0}},
-                {anchor: "top-left", offset: {x: -offsetX, y: offsetY}},
-                {anchor: "bottom-left", offset: {x: -offsetX, y: -offsetY}},
-                {anchor: "top-right", offset: {x: offsetX, y: offsetY}},
-                {anchor: "bottom-right", offset: {x: offsetX, y: -offsetY}}
-            ];
-
-            if (frame.hasSquarePixels) {
-                const zoomLevel = (frame.spatialReference ?? frame).zoomLevel;
-                const rotatorOffset = (15 / zoomLevel) * devicePixelRatio;
-                anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offsetY + rotatorOffset}});
-            }
-
-            anchors = anchorConfigs.map(config => {
-                let posImage = add2D(centerReferenceImage, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
-                if (frame.spatialReference) {
-                    posImage = transformPoint(frame.spatialTransformAST, posImage, false);
-                }
-                const posCanvas = transformedImageToCanvasPos(posImage.x, posImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-                return this.anchorNode(posCanvas.x, posCanvas.y, config.anchor, -region.rotation);
-            });
-        }
-
         return (
             <Group>
                 {shapeNode}
-                {anchors}
+                {this.props.selected && this.props.listening && !region.locked ? this.genAnchors(): null}
             </Group>
         );
     }
