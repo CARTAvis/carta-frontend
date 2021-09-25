@@ -1,10 +1,67 @@
-import {Shape} from "react-konva";
+import {Group, Shape} from "react-konva";
 
+const POINT_WIDTH = 6;
+const POINT_DRAG_WIDTH = 13;
 const SQUARE_ANCHOR_WIDTH = 7;
 const CIRCLE_ANCHOR_RADIUS = SQUARE_ANCHOR_WIDTH / Math.sqrt(2);
 
+interface PointProps {
+    x: number;
+    y: number;
+    rotation: number;
+    color: string;
+    opacity: number;
+    listening: boolean;
+    onDragStart: (ev) => void;
+    onDragEnd: (ev) => void;
+    onDragMove: (ev) => void;
+    onClick: (ev) => void;
+    onDblClick: (ev) => void;
+}
+
+export const Point = (props: PointProps) => {
+    const handleSquareDraw = (ctx, shape, width) => {
+        const reverseScale = 1 / shape.getStage().scaleX();
+        const offset = -width * 0.5 * reverseScale;
+        const squareSize = width * reverseScale;
+        ctx.beginPath();
+        ctx.rect(offset, offset, squareSize, squareSize);
+        ctx.fillStrokeShape(shape);
+    };
+
+    const handlePointDraw = (ctx, shape) => {
+        handleSquareDraw(ctx, shape, POINT_WIDTH);
+    };
+
+    const handlePointBoundDraw = (ctx, shape) => {
+        handleSquareDraw(ctx, shape, POINT_DRAG_WIDTH);
+    };
+
+    return (
+        <Group>
+            <Shape x={props.x} y={props.y} rotation={props.rotation} fill={props.color} sceneFunc={handlePointDraw} />
+            <Shape
+                x={props.x}
+                y={props.y}
+                rotation={props.rotation}
+                sceneFunc={handlePointBoundDraw}
+                stroke={"white"}
+                strokeWidth={1}
+                strokeScaleEnabled={false}
+                opacity={props.opacity}
+                draggable={true}
+                listening={props.listening}
+                onDragStart={props.onDragStart}
+                onDragEnd={props.onDragEnd}
+                onDragMove={props.onDragMove}
+                onClick={props.onClick}
+                onDblClick={props.onDblClick}
+            />
+        </Group>
+    );
+};
+
 interface AnchorProps {
-    key: string;
     anchor: string;
     x: number;
     y: number;

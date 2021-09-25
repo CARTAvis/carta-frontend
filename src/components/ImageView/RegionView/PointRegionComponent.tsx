@@ -1,11 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Group, Shape} from "react-konva";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
 import {transformPoint} from "utilities";
+import {Point} from "./InvariantShapes";
 
 interface PointRegionComponentProps {
     region: RegionStore;
@@ -18,28 +18,8 @@ interface PointRegionComponentProps {
     onDoubleClick?: (region: RegionStore) => void;
 }
 
-const POINT_DRAG_WIDTH = 13;
-const POINT_WIDTH = 6;
-
 @observer
 export class PointRegionComponent extends React.Component<PointRegionComponentProps> {
-    private handleSquareDraw = (ctx, shape, width) => {
-        const reverseScale = 1 / shape.getStage().scaleX();
-        const offset = -width * 0.5 * reverseScale;
-        const squareSize = width * reverseScale;
-        ctx.beginPath();
-        ctx.rect(offset, offset, squareSize, squareSize);
-        ctx.fillStrokeShape(shape);
-    };
-
-    private handlePointDraw = (ctx, shape) => {
-        this.handleSquareDraw(ctx, shape, POINT_WIDTH);
-    };
-
-    private handlePointBoundDraw = (ctx, shape) => {
-        this.handleSquareDraw(ctx, shape, POINT_DRAG_WIDTH);
-    };
-
     private handleDoubleClick = () => {
         if (this.props.onDoubleClick) {
             this.props.onDoubleClick(this.props.region);
@@ -106,26 +86,19 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         centerPixelSpace = {x: (centerPixelSpace.x - stageOrigin.x) / zoomLevel, y: (centerPixelSpace.y - stageOrigin.y) / zoomLevel};
 
         return (
-            <Group>
-                <Shape x={centerPixelSpace.x} y={centerPixelSpace.y} rotation={rotation} fill={region.color} sceneFunc={this.handlePointDraw} />
-                <Shape
-                    x={centerPixelSpace.x}
-                    y={centerPixelSpace.y}
-                    rotation={rotation}
-                    sceneFunc={this.handlePointBoundDraw}
-                    stroke={"white"}
-                    strokeWidth={1}
-                    strokeScaleEnabled={false}
-                    opacity={this.props.selected ? 1 : 0}
-                    draggable={true}
-                    listening={!region.locked}
-                    onDragStart={this.handleDragStart}
-                    onDragEnd={this.handleDragEnd}
-                    onDragMove={this.handleDrag}
-                    onClick={this.handleClick}
-                    onDblClick={this.handleDoubleClick}
-                />
-            </Group>
+            <Point
+                x={centerPixelSpace.x}
+                y={centerPixelSpace.y}
+                rotation={rotation}
+                color={region.color}
+                opacity={this.props.selected ? 1 : 0}
+                listening={!region.locked}
+                onDragStart={this.handleDragStart}
+                onDragEnd={this.handleDragEnd}
+                onDragMove={this.handleDrag}
+                onClick={this.handleClick}
+                onDblClick={this.handleDoubleClick}
+            />
         );
     }
 }
