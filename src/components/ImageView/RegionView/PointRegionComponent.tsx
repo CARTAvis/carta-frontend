@@ -21,26 +21,18 @@ interface PointRegionComponentProps {
 @observer
 export class PointRegionComponent extends React.Component<PointRegionComponentProps> {
     private handleDoubleClick = () => {
-        if (this.props.onDoubleClick) {
-            this.props.onDoubleClick(this.props.region);
-        }
+        this.props.onDoubleClick?.(this.props.region);
     };
 
     private handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
-
         if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
-            // Select click
-            if (this.props.onSelect) {
-                this.props.onSelect(this.props.region);
-            }
+            this.props.onSelect?.(this.props.region);
         }
     };
 
     private handleDragStart = () => {
-        if (this.props.onSelect) {
-            this.props.onSelect(this.props.region);
-        }
+        this.props.onSelect?.(this.props.region);
         this.props.region.beginEditing();
     };
 
