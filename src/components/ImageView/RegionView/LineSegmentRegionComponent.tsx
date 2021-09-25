@@ -42,7 +42,6 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
-        console.log("context click!");
     };
 
     private handleDoubleClick = () => {
