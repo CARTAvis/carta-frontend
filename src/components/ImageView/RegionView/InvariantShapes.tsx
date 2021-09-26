@@ -4,6 +4,7 @@ const POINT_WIDTH = 6;
 const POINT_DRAG_WIDTH = 13;
 const SQUARE_ANCHOR_WIDTH = 7;
 const CIRCLE_ANCHOR_RADIUS = SQUARE_ANCHOR_WIDTH / Math.sqrt(2);
+const ROTATOR_ANCHOR_HEIGHT = 15;
 
 interface PointProps {
     x: number;
@@ -87,8 +88,9 @@ export const Anchor = (props: AnchorProps) => {
     const handleCircleDraw = (ctx, shape) => {
         const reverseScale = 1 / shape.getStage().scaleX();
         const radius = CIRCLE_ANCHOR_RADIUS * reverseScale;
+        const offsetY = -ROTATOR_ANCHOR_HEIGHT / shape.getStage().scaleX() * devicePixelRatio;
         ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, 2 * Math.PI, false);
+        ctx.arc(0, offsetY, radius, 0, 2 * Math.PI, false);
         ctx.fillStrokeShape(shape);
     };
 

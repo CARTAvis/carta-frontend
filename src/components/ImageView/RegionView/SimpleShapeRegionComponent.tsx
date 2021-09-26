@@ -6,11 +6,9 @@ import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {adjustPosToMutatedStage, /*adjustPosToUnityStage,*/ canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToMutatedStage, adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
 import {Anchor} from "./InvariantShapes";
-
-const ROTATOR_ANCHOR_HEIGHT = 15;
 
 interface SimpleShapeRegionComponentProps {
     region: RegionStore;
@@ -193,14 +191,13 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            const node = konvaEvent.target;
-            const region = this.props.region;
             const frame = this.props.frame;
-            let newPosition = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.getPosition(), this.props.stageRef.scaleX());
+            let positionImageSpace = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference) {
-                newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
+                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
-            region.setCenter(newPosition);
+            this.props.region.setCenter(positionImageSpace);
         }
     };
 
@@ -280,7 +277,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const region = this.props.region;
             const frame = this.props.frame;
             const evt = konvaEvent.evt;
-            const offsetPoint = {x: evt.offsetX, y: evt.offsetY};
+            const offsetPoint = adjustPosToUnityStage({x: evt.offsetX, y: evt.offsetY}, this.props.stageRef.getPosition(), this.props.stageRef.scaleX());
             if (anchor.includes("rotator")) {
                 // Calculate rotation from anchor position
                 let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
@@ -294,9 +291,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             } else {
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
                 if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
-                    this.applyCornerScaling(region, evt.offsetX, evt.offsetY, anchor);
+                    this.applyCornerScaling(region, offsetPoint.x, offsetPoint.y, anchor);
                 } else {
-                    this.applyCenterScaling(region, evt.offsetX, evt.offsetY, anchor, evt.shiftKey);
+                    this.applyCenterScaling(region, offsetPoint.x, offsetPoint.y, anchor, evt.shiftKey);
                 }
             }
         }
@@ -319,8 +316,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             {anchor: "bottom-right", offset: {x: offset.x, y: -offset.y}}
         ]
         if (frame.hasSquarePixels) {
-            const rotatorOffset = ROTATOR_ANCHOR_HEIGHT / this.props.stageRef.scaleX() * devicePixelRatio;
-            anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offset.y + rotatorOffset}});
+            anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offset.y}});
         }
 
         return anchorConfigs.map(config => {
