@@ -2,7 +2,7 @@ import React from "react";
 import {observer} from "mobx-react";
 import {Group, Line, Rect} from "react-konva";
 import {FrameStore, RegionStore} from "stores";
-import {transformedImageToCanvasPos} from "./shared";
+import {adjustPosToMutatedStage, transformedImageToCanvasPos} from "./shared";
 
 interface CursorRegionComponentProps {
     region: RegionStore;
@@ -17,11 +17,11 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
-        const stageOrigin = this.props.stageRef.position();
+        const stageRef = this.props.stageRef;
 
-        if (region && frame) {
+        if (frame && region && stageRef) {
             let cursorCanvasSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
-            cursorCanvasSpace = {x: cursorCanvasSpace.x - stageOrigin.x, y: cursorCanvasSpace.y - stageOrigin.y};
+            cursorCanvasSpace = adjustPosToMutatedStage(cursorCanvasSpace, stageRef.getPosition(), stageRef.scaleX());
 
             if (cursorCanvasSpace?.x >= 0 && cursorCanvasSpace?.x <= this.props.layerWidth && cursorCanvasSpace?.y >= 0 && cursorCanvasSpace?.y <= this.props.layerHeight) {
                 const crosshairLength = 20;
