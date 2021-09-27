@@ -7,8 +7,8 @@ import {CursorMarker} from "./InvariantShapes";
 interface CursorRegionComponentProps {
     region: RegionStore;
     frame: FrameStore;
-    layerWidth: number;
-    layerHeight: number;
+    width: number;
+    height: number;
     stageRef: any;
 }
 
@@ -21,7 +21,7 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
 
         if (AppStore.Instance.cursorFrozen && frame && region && stageRef) {
             const rotation = frame.spatialReference ? (frame.spatialTransform.rotation * 180.0) / Math.PI : 0.0;
-            let cursorCanvasSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
+            let cursorCanvasSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.width, this.props.height);
             cursorCanvasSpace = adjustPosToMutatedStage(cursorCanvasSpace, stageRef.getPosition(), stageRef.scaleX());
 
             return (
@@ -32,6 +32,7 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
                 />
             );
         }
+
         return null;
     }
 }
