@@ -140,6 +140,7 @@ export const CursorMarker = (props: CursorMarkerProps) => {
         ctx.fillStrokeShape(shape);
     };
 
+    // TODO: fix line issue
     return (
         <Group x={Math.floor(props.x) + 0.5} y={Math.floor(props.y) + 0.5} rotation={-props.rotation}>
             <Line listening={false} strokeScaleEnabled={false} points={[-CURSOR_CROSS_LENGTH / 2 - CURSOR_CROSS_THICKNESS_WIDE / 2, 0, -CURSOR_CROSS_GAP / 2, 0]} strokeWidth={CURSOR_CROSS_THICKNESS_WIDE} stroke="black" />
