@@ -29,6 +29,10 @@ export class SimpleShapeRegionComponent extends React.Component<RegionComponentP
     private previousCursorStyle: string;
     private static readonly AnchorWidth = 7;
 
+    componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
+    }
+
     handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
         console.log("context click!");

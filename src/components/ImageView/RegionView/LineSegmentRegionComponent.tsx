@@ -5,7 +5,7 @@ import {Circle, Group, Line, Rect} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
-import {FrameStore, RegionStore} from "stores";
+import {AppStore, FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D, angle2D, length2D} from "utilities";
 import {canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
@@ -38,6 +38,10 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     constructor(props: any) {
         super(props);
         makeObservable(this);
+    }
+
+    componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
     }
 
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {

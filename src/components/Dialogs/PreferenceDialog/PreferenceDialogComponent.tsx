@@ -168,7 +168,7 @@ export class PreferenceDialogComponent extends React.Component {
                     <Switch checked={preference.keepLastUsedFolder} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Export image resolution" helperText="(% of screen resolution)">
-                <HTMLSelect value={preference.exportImageRatio} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_EXPORT_IMAGE_RATIO, ev.currentTarget.value)}>
+                    <HTMLSelect value={preference.exportImageRatio} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_EXPORT_IMAGE_RATIO, ev.currentTarget.value)}>
                         <option value={1}>Normal (100%)</option>
                         <option value={2}>High (200%)</option>
                         <option value={4}>Highest (400%)</option>

@@ -32,13 +32,17 @@ interface BeamPlotProps {
 export class BeamProfileOverlayComponent extends React.Component<BeamProfileOverlayComponentProps> {
     private layerRef = React.createRef<any>();
 
+    componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
+    }
+
     private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps => {
         if (!frame.hasVisibleBeam) {
             return null;
         }
 
         const id = frame.frameInfo.fileId;
-        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
+        const zoomLevel = (frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel) / AppStore.Instance.imageRatio;
         const beamSettings = frame.overlayBeamSettings;
         const color = getColorForTheme(beamSettings.color);
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
@@ -106,15 +110,11 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const baseFrame = this.props.frame;
         const contourFrames = appStore.contourFrames.get(baseFrame)?.filter(frame => frame !== baseFrame && frame.hasVisibleBeam);
 
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-        const canvas = this.layerRef?.current?.getCanvas();
-        if (canvas && canvas.pixelRatio !== pixelRatio) {
-            canvas.setPixelRatio(pixelRatio);
-        }
-
         if (!baseFrame.hasVisibleBeam && !contourFrames.length) {
             return null;
         }
+
+        appStore.updateLayerPixelRatio(this.layerRef);
 
         let baseBeamPlotProps: BeamPlotProps;
         if (baseFrame.hasVisibleBeam) {

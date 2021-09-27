@@ -338,8 +338,8 @@ export class OverlayTickSettings {
         astString.add("MinTick(2)", this.densityY, this.customDensity);
         astString.add("Color(Ticks)", AstColorsIndex.TICK, this.customColor);
         astString.add("Width(Ticks)", this.width * AppStore.Instance.imageRatio, this.width > 0);
-        astString.add("MinTickLen", toFixed((this.length) / 100, 2)); // convert to fraction
-        astString.add("MajTickLen", toFixed((this.majorLength) / 100, 2)); // convert to fraction
+        astString.add("MinTickLen", toFixed(this.length / 100, 2)); // convert to fraction
+        astString.add("MajTickLen", toFixed(this.majorLength / 100, 2)); // convert to fraction
         return astString.toString();
     }
 

@@ -116,6 +116,7 @@ export class AppStore {
     @observable cursorFrozen: boolean;
     @observable toolbarExpanded: boolean;
     @observable imageRatio: number;
+    @observable isExportingImage: boolean;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
@@ -1118,7 +1119,14 @@ export class AppStore {
     };
 
     @action setImageRatio = (val: number) => {
+        for (const f of this.frames) {
+            f.setZoom(f.zoomLevel * val / this.imageRatio);
+        }
         this.imageRatio = val;
+    };
+
+    @action setIsExportingImage = (val: boolean) => {
+        this.isExportingImage = val;
     };
 
     public static readonly DEFAULT_STATS_TYPES = [
@@ -1268,6 +1276,7 @@ export class AppStore {
         this.activeLayer = ImageViewLayer.RegionMoving;
         this.toolbarExpanded = true;
         this.imageRatio = 1;
+        this.isExportingImage = false;
 
         AST.onReady.then(
             action(() => {
@@ -2129,7 +2138,9 @@ export class AppStore {
             }
             const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
             
+            this.setIsExportingImage(true);
             this.setImageRatio(this.preferenceStore.exportImageRatio);
+
             setTimeout(() => {
                 const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
                 if (composedCanvas) {
@@ -2141,12 +2152,28 @@ export class AppStore {
                         link.href = URL.createObjectURL(blob);
                         link.dispatchEvent(new MouseEvent("click"));
                     }, "image/png");
+                    this.setIsExportingImage(false);
                     return true;
                 }
+                this.setIsExportingImage(false);
                 return false;
             }, 1);
         }
         return false;
+    };
+
+    updateLayerPixelRatio = (layerRef) => {
+        const pixelRatio = devicePixelRatio * this.imageRatio;
+        const canvas = layerRef?.current?.getCanvas();
+        if (canvas && canvas.pixelRatio !== pixelRatio) {
+            canvas.setPixelRatio(pixelRatio);
+        }
+    };
+
+    resetImageRatio = () => {
+        if (this.imageRatio !== 1 && this.isExportingImage === false) {
+            this.setImageRatio(1);
+        }
     };
 
     getImageDataUrl = (backgroundColor: string) => {

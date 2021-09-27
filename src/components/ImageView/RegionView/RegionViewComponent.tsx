@@ -542,11 +542,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const className = classNames("region-stage", {docked: this.props.docked});
         let regionComponents = null;
 
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-        const canvas = this.layerRef?.current?.getCanvas();
-        if (canvas && canvas.pixelRatio !== pixelRatio) {
-            canvas.setPixelRatio(pixelRatio);
-        }
+        appStore.updateLayerPixelRatio(this.layerRef);
 
         if (appStore.fileBrowserStore.isLoadingDialogOpen) {
             regionComponents = [];

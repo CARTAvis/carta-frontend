@@ -28,6 +28,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     }
 
     componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
         requestAnimationFrame(this.updateCanvas);
     }
 

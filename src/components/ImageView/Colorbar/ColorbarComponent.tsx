@@ -60,6 +60,10 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         this.cursorY = y;
     };
 
+    componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
+    }
+
     private handleMouseMove = event => {
         const appStore = AppStore.Instance;
         const renderConfig = this.props.frame?.renderConfig;
@@ -96,11 +100,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const frame = this.props.frame;
         const colorbarSettings = appStore.overlayStore.colorbar;
 
-        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-        const canvas = this.layerRef?.current?.getCanvas();
-        if (canvas && canvas.pixelRatio !== pixelRatio) {
-            canvas.setPixelRatio(pixelRatio);
-        }
+        appStore.updateLayerPixelRatio(this.layerRef);
 
         let getColor = (customColor: boolean, color: string): string => {
             return customColor ? getColorForTheme(color) : colorbarSettings.customColor ? getColorForTheme(colorbarSettings.color) : getColorForTheme(appStore.overlayStore.global.color);

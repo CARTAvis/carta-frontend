@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Group, Rect} from "react-konva";
 import Konva from "konva";
-import {FrameStore, RegionStore} from "stores";
+import {AppStore, FrameStore, RegionStore} from "stores";
 import {canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
 import {transformPoint} from "utilities";
@@ -22,6 +22,10 @@ const POINT_WIDTH = 6;
 
 @observer
 export class PointRegionComponent extends React.Component<PointRegionComponentProps> {
+    componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
+    }
+
     handleDoubleClick = () => {
         if (this.props.onDoubleClick) {
             this.props.onDoubleClick(this.props.region);
