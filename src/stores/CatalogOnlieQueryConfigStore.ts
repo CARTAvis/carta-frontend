@@ -246,7 +246,7 @@ export class CatalogOnlineQueryConfigStore {
         this.setFrameCenter();
     }
 
-    convertToDeg(pixelCoords: Point2D): {x: string; y: string} {
+    convertToDeg(pixelCoords: Point2D, system?: SystemType): {x: string; y: string} {
         const frame = this.activeFrame;
         const overlay = OverlayStore.Instance;
         let p: {x: string; y: string} = {x: undefined, y: undefined};
@@ -255,7 +255,8 @@ export class CatalogOnlineQueryConfigStore {
             const format = `${NumberFormatType.Degrees}.${precision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
-            AST.set(wcsCopy, `System=${SystemType.ICRS}`);
+            const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
+            AST.set(wcsCopy, `System=${sys}`);
             astString.add("Format(1)", format);
             astString.add("Format(2)", format);
             const pointWCS = transformPoint(wcsCopy, pixelCoords);
@@ -289,9 +290,9 @@ export class CatalogOnlineQueryConfigStore {
         const xd = Number(max.x) - Number(min.x);
         const yd = Number(max.y) - Number(min.y);
         if (diagonal) {
-            return Math.sqrt(xd * xd + yd * yd) / 2;
+            return Math.sqrt(xd * xd + yd * yd);
         } else {
-            return Math.abs(xd) > Math.abs(yd) ? Math.abs(xd) / 2 : Math.abs(yd) / 2;
+            return Math.abs(xd) > Math.abs(yd) ? Math.abs(xd) : Math.abs(yd);
         }
     }
 }

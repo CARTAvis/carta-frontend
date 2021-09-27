@@ -243,7 +243,7 @@ export class CatalogQueryDialogComponent extends React.Component {
     private query = () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D);
+        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
         const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
         configStore.setQueryStatus(true);
         CatalogApiService.Instance.appendOnlineCatalog(query).then(dataSize => {
@@ -256,7 +256,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const query = `SELECT basic.* FROM ident JOIN basic ON ident.oidref = basic.oid WHERE id = '${configStore.objectName}'`;
         configStore.setObjectQueryStatus(true);
-        CatalogApiService.Instance.getSimbad(query)
+        CatalogApiService.Instance.getSimbadCatalog(query)
             .then(response => {
                 configStore.setObjectQueryStatus(false);
                 const size = response.data?.data?.length;

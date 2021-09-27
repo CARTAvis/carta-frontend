@@ -183,7 +183,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         if (this.props.catalogType === CatalogType.SIMBAD) {
             if (columnHeader.name?.toLocaleLowerCase().includes("bibcode")) {
                 cell = (
-                    <a href={`${CatalogApiService.SimBadHyperLink.bibcode}${cellContext}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${CatalogApiService.SimbadHyperLink.bibcode}${cellContext}`} target="_blank" rel="noopener noreferrer">
                         {cellContext}
                     </a>
                 );
@@ -191,7 +191,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
 
             if (columnHeader.name?.toLocaleLowerCase().includes("main_id")) {
                 cell = (
-                    <a href={`${CatalogApiService.SimBadHyperLink.mainId}${cellContext}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${CatalogApiService.SimbadHyperLink.mainId}${cellContext}`} target="_blank" rel="noopener noreferrer">
                         {cellContext}
                     </a>
                 );

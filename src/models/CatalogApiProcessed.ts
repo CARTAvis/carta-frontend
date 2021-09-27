@@ -24,7 +24,7 @@ export class APIProcessing {
                 columnIndex: index,
                 units: header["unit"]
             });
-            if (header["name"] == "dist") {
+            if (header["name"] === "dist") {
                 headers[index].units = "arcsec";
                 headers[index].description = "Distance to the center coordiante (computed by CARTA)";
             }
@@ -68,13 +68,13 @@ export class APIProcessing {
             const header = headers[i];
             let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(data.length)};
             for (let j = 0; j < data.length; j++) {
-                if (header["name"] == "dist") {
+                if (header["name"] === "dist") {
                     // simbad returns distance in deg, convert to arcsec for usability improvement
                     column.data[j] = data[j][header.columnIndex] * 3600;
-                } else if (header["name"] == "RA ICRS(J2000)" && raIndex > -1) {
+                } else if (header["name"] === "RA ICRS(J2000)" && raIndex > -1) {
                     const x = AST.format(wcsCopy, 1, data[j][raIndex] * fraction);
                     column.data[j] = x;
-                } else if (header["name"] == "DEC ICRS(J2000)" && decIndex > -1) {
+                } else if (header["name"] === "DEC ICRS(J2000)" && decIndex > -1) {
                     const y = AST.format(wcsCopy, 2, data[j][decIndex] * fraction);
                     column.data[j] = y;
                 } else {
