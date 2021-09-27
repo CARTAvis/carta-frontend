@@ -26,7 +26,6 @@ export interface RegionViewComponentProps {
     height: number;
     left: number;
     top: number;
-    cursorFrozen: boolean;
     onClickToCenter: (cursorInfo: CursorInfo) => void;
 }
 
@@ -530,7 +529,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring && frame.distanceMeasuring.isCreating) {
                 this.updateDistanceMeasureFinishPos(mouseEvent.offsetX, mouseEvent.offsetY);
             }
-            if (!this.props.cursorFrozen) {
+            if (!AppStore.Instance.cursorFrozen) {
                 this.updateCursorPos(mouseEvent.offsetX, mouseEvent.offsetY);
             }
         }
