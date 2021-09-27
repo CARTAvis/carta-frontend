@@ -304,7 +304,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const frame = this.props.frame;
 
         // Ellipse has swapped axes
-        const offset = region.regionType === CARTA.RegionType.RECTANGLE ? {x: region.size.x / 2, y: region.size.y / 2} : {x: region.size.y, y: region.size.x}
+        const offset = region.regionType === CARTA.RegionType.RECTANGLE ? {x: region.size.x / 2, y: region.size.y / 2} : {x: region.size.y, y: region.size.x};
         let anchorConfigs = [
             {anchor: "top", offset: {x: 0, y: offset.y}},
             {anchor: "bottom", offset: {x: 0, y: -offset.y}},
@@ -314,7 +314,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             {anchor: "bottom-left", offset: {x: -offset.x, y: -offset.y}},
             {anchor: "top-right", offset: {x: offset.x, y: offset.y}},
             {anchor: "bottom-right", offset: {x: offset.x, y: -offset.y}}
-        ]
+        ];
         if (frame.hasSquarePixels) {
             anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offset.y}});
         }
@@ -432,7 +432,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         return (
             <Group>
                 {shapeNode}
-                {this.props.selected && this.props.listening && !region.locked ? this.genAnchors(): null}
+                {this.props.selected && this.props.listening && !region.locked ? this.genAnchors() : null}
             </Group>
         );
     }

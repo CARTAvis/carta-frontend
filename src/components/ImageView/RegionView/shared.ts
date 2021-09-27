@@ -47,7 +47,7 @@ export function transformedImageToCanvasPos(imageX: number, imageY: number, fram
 // Coordinate transformation between {origin: (0, 0), scale: 1} & {origin: o', scale: z'}:
 // x * 1 + 0 = x' * z' + o'
 export function adjustPosToUnityStage(pos: Point2D, stageOrigin: Point2D, stageZoom: number): Point2D {
-    return {x: pos.x * stageZoom + stageOrigin.x, y: pos.y * stageZoom + stageOrigin.y};;
+    return {x: pos.x * stageZoom + stageOrigin.x, y: pos.y * stageZoom + stageOrigin.y};
 }
 
 export function adjustPosToMutatedStage(pos: Point2D, stageOrigin: Point2D, stageZoom: number): Point2D {
