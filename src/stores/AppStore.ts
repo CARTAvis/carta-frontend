@@ -1120,7 +1120,7 @@ export class AppStore {
 
     @action setImageRatio = (val: number) => {
         for (const f of this.frames) {
-            f.setZoom(f.zoomLevel * val / this.imageRatio);
+            f.setZoom((f.zoomLevel * val) / this.imageRatio);
         }
         this.imageRatio = val;
     };
@@ -2137,7 +2137,7 @@ export class AppStore {
                 return false;
             }
             const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
-            
+
             this.setIsExportingImage(true);
             this.setImageRatio(this.preferenceStore.exportImageRatio);
 
@@ -2162,7 +2162,7 @@ export class AppStore {
         return false;
     };
 
-    updateLayerPixelRatio = (layerRef) => {
+    updateLayerPixelRatio = layerRef => {
         const pixelRatio = devicePixelRatio * this.imageRatio;
         const canvas = layerRef?.current?.getCanvas();
         if (canvas && canvas.pixelRatio !== pixelRatio) {
