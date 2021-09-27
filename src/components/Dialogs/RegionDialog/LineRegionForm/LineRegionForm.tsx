@@ -372,13 +372,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const existingValue = this.props.region.rotation;
 
         if (isFinite(value) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
-            const region = this.props.region;
-            const newRotation = (((value + 360) % 360) * Math.PI) / 180.0;
-            const dx = length2D(region.size) * Math.cos(newRotation);
-            const dy = length2D(region.size) * Math.sin(newRotation);
-            const newStart = {x: region.center.x - dx / 2, y: region.center.y - dy / 2};
-            const newEnd = {x: region.center.x + dx / 2, y: region.center.y + dy / 2};
-            region.setControlPoints([newStart, newEnd]);
+            this.props.region.setRotation(value);
             return;
         }
 
