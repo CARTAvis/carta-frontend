@@ -27,3 +27,4 @@ export * from "./TypeDefinition";
 export * from "./Snippet";
 export * from "./CatalogControlMap";
 export * from "./ImagePanelMode";
+export * from "./PolarizationDefinition";

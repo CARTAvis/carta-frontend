@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {HTMLTable, Icon, NonIdealState, Position} from "@blueprintjs/core";
+import {HTMLTable, Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
@@ -89,7 +89,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         if (!frame) {
             return (
                 <div className="region-list-widget">
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;<ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
+                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
+                </div>
+            );
+        }
+
+        if (appStore.fileBrowserStore.isLoadingDialogOpen) {
+            return (
+                <div className="region-list-widget">
+                    <NonIdealState icon={<Spinner />} title={"Loading regions"} description={"Region list with be shown when regions have been loaded"} />
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
                 </div>
             );
         }

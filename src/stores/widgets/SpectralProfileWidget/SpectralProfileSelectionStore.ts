@@ -2,7 +2,7 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/widgets";
-import {LineKey, LineOption, ProcessedSpectralProfile, StatsTypeString, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES} from "models";
+import {LineKey, LineOption, ProcessedSpectralProfile, StatsTypeString, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES, POLARIZATION_LABELS} from "models";
 import {genColorFromIndex} from "utilities";
 
 export enum MultiProfileCategory {
@@ -26,15 +26,6 @@ interface SpectralConfig extends CARTA.SetSpectralRequirements.ISpectralConfig {
     fileId: number;
     regionId: number;
 }
-
-const SUPPORTED_STOKES = ["z", "Iz", "Qz", "Uz", "Vz"];
-const SUPPORTED_STOKES_LABEL_MAP = new Map<string, string>([
-    ["z", "Current"],
-    ["Iz", "I"],
-    ["Qz", "Q"],
-    ["Uz", "U"],
-    ["Vz", "V"]
-]);
 
 const MAXIMUM_PROFILES = 10;
 
@@ -81,7 +72,7 @@ export class SpectralProfileSelectionStore {
     private genProfileLabel = (fileId: number, regionName: string, statsType: CARTA.StatsType, coordinate: string): {image: string; plot: string} => {
         return {
             image: AppStore.Instance.getFrameName(fileId),
-            plot: `${regionName}, Statistic ${StatsTypeString(statsType)}, Cooridnate ${SUPPORTED_STOKES_LABEL_MAP.get(coordinate)}`
+            plot: `${regionName}, Statistic ${StatsTypeString(statsType)}, Cooridnate ${POLARIZATION_LABELS.get(coordinate.slice(0, coordinate.length - 1))}`
         };
     };
 
@@ -220,7 +211,7 @@ export class SpectralProfileSelectionStore {
                 statTypes += `${index === 0 ? "" : ","}${StatsTypeString(profileConfig.statsType)}`;
             }
             if (prevCoordinate !== profileConfig.coordinate) {
-                coordinates += `${index === 0 ? "" : ","}${SUPPORTED_STOKES_LABEL_MAP.get(profileConfig.coordinate)}`;
+                coordinates += `${index === 0 ? "" : ","}${POLARIZATION_LABELS.get(profileConfig.coordinate.slice(0, profileConfig.coordinate.length - 1))}}`;
             }
             prevFileId = profileConfig.fileId;
             prevRegionId = profileConfig.regionId;
@@ -521,7 +512,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectCoordinateSingleMode = (coordinate: string) => {
-        if (SUPPORTED_STOKES.includes(coordinate)) {
+        if (VALID_COORDINATES.includes(coordinate)) {
             this.selectedCoordinates = [coordinate];
         }
     };
@@ -565,7 +556,7 @@ export class SpectralProfileSelectionStore {
     };
 
     @action selectCoordinateMultiMode = (coordinate: string, itemIndex: number) => {
-        if (SUPPORTED_STOKES.includes(coordinate)) {
+        if (VALID_COORDINATES.includes(coordinate)) {
             if (this.selectedCoordinates?.includes(coordinate) && this.selectedCoordinates.length > 1) {
                 // remove selection
                 this.selectedCoordinates = this.selectedCoordinates.filter(coord => coord !== coordinate);

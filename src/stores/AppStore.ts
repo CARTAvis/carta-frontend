@@ -61,6 +61,8 @@ interface ChannelUpdate {
     stokes: number;
 }
 
+const IMPORT_REGION_BATCH_SIZE = 100;
+
 export class AppStore {
     private static staticInstance: AppStore;
 
@@ -212,6 +214,9 @@ export class AppStore {
                     this.autoFitImages(frames);
                 }
             } else if (this.preferenceStore.autoLaunch) {
+                if (folderSearchParam) {
+                    this.fileBrowserStore.setStartingDirectory(folderSearchParam);
+                }
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         } catch (err) {
@@ -929,28 +934,37 @@ export class AppStore {
         try {
             const ack = await this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
-                const regionMap = new Map<string, CARTA.IRegionInfo>(Object.entries(ack.regions));
-                const regionStyles = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
-                regionMap.forEach((regionInfo, regionIdString) => {
-                    const styleInfo = regionStyles.get(regionIdString);
-
-                    frame.regionSet.addExistingRegion(
-                        regionInfo.controlPoints as Point2D[],
-                        regionInfo.rotation,
-                        regionInfo.regionType,
-                        parseInt(regionIdString),
-                        styleInfo?.name,
-                        styleInfo?.color,
-                        styleInfo?.lineWidth,
-                        styleInfo?.dashList
-                    );
-                });
+                const regions = Object.entries(ack.regions);
+                const regionStyleMap = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
+                let startIndex = 0;
+                while (startIndex < regions.length) {
+                    this.addRegionsInBatch(regions, regionStyleMap, startIndex, IMPORT_REGION_BATCH_SIZE);
+                    startIndex += IMPORT_REGION_BATCH_SIZE;
+                    await this.delay(0);
+                }
+                this.fileBrowserStore.setImportingRegions(false);
+                this.fileBrowserStore.resetLoadingStates();
+                this.fileBrowserStore.hideFileBrowser();
             }
-            this.fileBrowserStore.hideFileBrowser();
         } catch (err) {
             console.error(err);
             AppToaster.show(ErrorToast(err));
         }
+    };
+
+    @action addRegionsInBatch = (regions: [string, CARTA.IRegionInfo][], regionStyleMap: Map<string, CARTA.IRegionStyle>, startIndex: number, count: number) => {
+        if (!regions || !regionStyleMap || !isFinite(startIndex)) {
+            return;
+        }
+
+        const frame = this.activeFrame;
+        const batchEnd = Math.min(startIndex + count, regions.length);
+        for (let i = startIndex; i < batchEnd; i++) {
+            const [regionIdString, regionInfo] = regions[i];
+            const styleInfo = regionStyleMap.get(regionIdString);
+            frame.regionSet.addExistingRegion(regionInfo.controlPoints as Point2D[], regionInfo.rotation, regionInfo.regionType, parseInt(regionIdString), styleInfo?.name, styleInfo?.color, styleInfo?.lineWidth, styleInfo?.dashList);
+        }
+        this.fileBrowserStore.updateLoadingState(batchEnd / regions.length, batchEnd, regions.length);
     };
 
     exportRegions = async (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) => {
@@ -1188,7 +1202,7 @@ export class AppStore {
             try {
                 await this.connectToServer();
                 await this.preferenceStore.fetchPreferences();
-                await this.fileBrowserStore.setStartingDirectory();
+                await this.fileBrowserStore.restoreStartingDirectory();
                 await this.layoutStore.fetchLayouts();
                 await this.snippetStore.fetchSnippets();
 
@@ -1443,6 +1457,10 @@ export class AppStore {
             } else {
                 this.showSplashScreen();
             }
+        });
+
+        autorun(() => {
+            this.activateStatsPanel(this.preferenceStore.statsPanelEnabled);
         });
     }
 
@@ -2253,6 +2271,29 @@ export class AppStore {
     }
 
     // endregion
+
+    private activateStatsPanel = (statsPanelEnabled: boolean) => {
+        if (statsPanelEnabled) {
+            import("stats-js")
+                .then(({default: Stats}) => {
+                    const stats = new Stats();
+                    stats.showPanel(this.preferenceStore.statsPanelMode); // 0: fps, 1: ms, 2: mb, 3+: custom
+                    document.body.appendChild(stats.dom);
+                    function animate() {
+                        stats.begin();
+                        // monitored code goes here
+                        stats.end();
+                        requestAnimationFrame(animate);
+                    }
+                    requestAnimationFrame(animate);
+                    stats.dom.style.right = "0";
+                    stats.dom.style.left = "initial";
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+    };
 
     // Reset spectral profile's progress to 0 instead of cleaning the entire out-dated profile to avoid flashy effect in spectral profiler.
     // Flashy effect: render empty profile and then render the coming profile, repeatedly.
