@@ -82,10 +82,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         this.props.region.beginEditing();
     };
 
-    private handleAnchorDragEnd = () => {
-        this.props.region.endEditing();
-    };
-
     private applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
         const frame = this.props.frame;
         let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
@@ -126,12 +122,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         // re-rotate after clamping the anchor bounds to get the correct position of the anchor point
         deltaAnchors = rotate2D(deltaAnchorsUnrotated, (region.rotation * Math.PI) / 180.0);
         const newCenter = add2D(this.editOppositeAnchorPoint, scale2D(deltaAnchors, 0.5));
-
-        if (region.regionType === CARTA.RegionType.RECTANGLE) {
-            region.setControlPoints([newCenter, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
-        } else {
-            region.setControlPoints([newCenter, {y: Math.max(1e-3, w), x: Math.max(1e-3, h)}]);
-        }
+        const newSize = region.regionType === CARTA.RegionType.RECTANGLE ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)} : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
+        region.setControlPoints([newCenter, newSize]);
     };
 
     private applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
@@ -173,11 +165,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             }
         }
 
-        if (region.regionType === CARTA.RegionType.RECTANGLE) {
-            region.setControlPoints([this.editStartCenterPoint, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
-        } else {
-            region.setControlPoints([this.editStartCenterPoint, {y: Math.max(1e-3, w), x: Math.max(1e-3, h)}]);
-        }
+        region.setSize(region.regionType === CARTA.RegionType.RECTANGLE ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)} : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)});
     };
 
     private handleDragStart = () => {
@@ -268,6 +256,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const anchor = node.id();
             this.startEditing(anchor);
         }
+    };
+
+    private handleAnchorDragEnd = () => {
+        this.props.region.endEditing();
     };
 
     @action private handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
