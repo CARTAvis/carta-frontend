@@ -53,15 +53,16 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     constructor(props: any) {
         super(props);
         makeObservable(this);
+
+        this.stageRef = React.createRef();
     }
 
-    private getStageRef = ref => {
-        this.stageRef = ref;
+    componentDidMount() {
         const frame = this.props.frame;
         if (frame) {
             this.stageZoomToPoint(this.props.width / 2, this.props.height / 2, frame.zoomLevel);
         }
-    };
+    }
 
     updateCursorPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
@@ -420,31 +421,35 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
             // Move stage origin according to center moving track
             const centerOffset = subtract2D({x: mouseEvent.offsetX, y: mouseEvent.offsetY}, {x: this.props.width / 2, y: this.props.height / 2});
-            const newStageOrigin = subtract2D(this.stageRef.getPosition(), centerOffset);
-            this.stageRef.position(newStageOrigin);
+            const stage = this.stageRef.current;
+            const newStageOrigin = subtract2D(stage.getPosition(), centerOffset);
+            stage.position(newStageOrigin);
         }
     };
 
     public resetStage = () => {
-        this.stageRef?.scale({x: 1, y: 1});
-        this.stageRef?.position({x: 0, y: 0});
+        const stage = this.stageRef.current;
+        if (stage) {
+            stage.scale({x: 1, y: 1});
+            stage.position({x: 0, y: 0});
+        }
     };
 
     public stageZoomToPoint = (x: number, y: number, zoom: number) => {
-        const stageRef = this.stageRef;
-        if (stageRef) {
-            const oldScale = stageRef.scaleX();
-            const origin = stageRef.getPosition();
+        const stage = this.stageRef.current;
+        if (stage) {
+            const oldScale = stage.scaleX();
+            const origin = stage.getPosition();
             const cursorPointTo = {
                 x: (x - origin.x) / oldScale,
                 y: (y - origin.y) / oldScale
             };
-            stageRef.scale({x: zoom, y: zoom});
+            stage.scale({x: zoom, y: zoom});
             const newOrigin = {
                 x: x - cursorPointTo.x * zoom,
                 y: y - cursorPointTo.y * zoom
             };
-            stageRef.position(newOrigin);
+            stage.position(newOrigin);
         }
     };
 
@@ -590,7 +595,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         return (
             <div onKeyDown={this.onKeyDown} tabIndex={0}>
                 <Stage
-                    ref={this.getStageRef}
+                    ref={this.stageRef}
                     className={className}
                     width={this.props.width}
                     height={this.props.height}
@@ -609,8 +614,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     y={0}
                 >
                     <Layer>
-                        <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
-                        <CursorRegionComponent frame={frame} region={frame.regionSet?.cursorRegion} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
+                        <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef.current} />
+                        {false && <CursorRegionComponent frame={frame} region={frame.regionSet?.cursorRegion} width={this.props.width} height={this.props.height} stageRef={this.stageRef.current} />}
                         {creatingLine}
                     </Layer>
                 </Stage>
