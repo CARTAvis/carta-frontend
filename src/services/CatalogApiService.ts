@@ -54,7 +54,7 @@ export class CatalogApiService {
         }
     }
 
-    public queryVizier = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number): Promise<Map<string, VizieResource>> => {
+    public queryVizier = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, keyWords: string): Promise<Map<string, VizieResource>> => {
         let resources: Map<string, VizieResource> = new Map();
         let radiusUnits: string;
         switch (unit) {
@@ -70,25 +70,28 @@ export class CatalogApiService {
         }
 
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
-        await this.axiosInstanceVizieR
-            .get(`votable?-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-sort=_r&-out.max=${max}&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`)
-            .then(response => {
-                if (response?.status === 200 && response?.data) {
-                    const data = APIProcessing.ProcessVizieRData(response.data);
-                    resources = data.resources;
-                }
-            })
-            .catch(error => {
-                if (axios.isCancel(error)) {
-                    AppToaster.show(WarningToast(error?.message));
-                    CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
-                } else if (error?.message) {
-                    AppToaster.show(ErrorToast(error.message));
-                } else {
-                    console.log("Append Catalog Error: " + error);
-                }
-                return 0;
-            });
+        let query = `votable?-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-sort=_r&-out.max=${max}&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
+        if (keyWords) {
+            query = `${query}&-words=${keyWords}`;
+        }
+
+        try {
+            const response = await this.axiosInstanceVizieR.get(query);
+            if (response?.status === 200 && response?.data) {
+                const data = APIProcessing.ProcessVizieRData(response.data);
+                resources = data.resources;
+            }
+        }
+        catch(error) {
+            if (axios.isCancel(error)) {
+                AppToaster.show(WarningToast(error?.message));
+                CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
+            } else if (error?.message) {
+                AppToaster.show(ErrorToast(error.message));
+            } else {
+                console.log("Append Catalog Error: " + error);
+            }
+        }
         return resources;
     };
 

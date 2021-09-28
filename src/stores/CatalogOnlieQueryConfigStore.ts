@@ -33,6 +33,7 @@ export class CatalogOnlineQueryConfigStore {
     //Vizier
     @observable vizierResource: Map<string, VizieResource>;
     @observable vizierSelectedTableName: VizieRItem[];
+    @observable vizierKeyWords: string;
 
     constructor() {
         makeObservable(this);
@@ -49,6 +50,7 @@ export class CatalogOnlineQueryConfigStore {
         this.isObjectQuerying = false;
         this.vizierSelectedTableName = [];
         this.vizierResource = new Map();
+        this.vizierKeyWords = "";
 
         reaction(
             () => AppStore.Instance.activeFrame,
@@ -82,6 +84,10 @@ export class CatalogOnlineQueryConfigStore {
             this.updateCenterPixelCoord(frame.center);
             this.resetObjectName();
         }
+    }
+
+    @action setVizierKeyWords(keyWords: string) {
+        this.vizierKeyWords = keyWords;
     }
 
     @action setVizierQueryResult(resources: Map<string, VizieResource>) {
@@ -344,9 +350,9 @@ export class CatalogOnlineQueryConfigStore {
         const xd = Number(max.x) - Number(min.x);
         const yd = Number(max.y) - Number(min.y);
         if (diagonal) {
-            return Math.sqrt(xd * xd + yd * yd) / 2;
+            return Math.sqrt(xd * xd + yd * yd);
         } else {
-            return Math.abs(xd) > Math.abs(yd) ? Math.abs(xd) / 2 : Math.abs(yd) / 2;
+            return Math.abs(xd) > Math.abs(yd) ? Math.abs(xd): Math.abs(yd);
         }
     }
 }

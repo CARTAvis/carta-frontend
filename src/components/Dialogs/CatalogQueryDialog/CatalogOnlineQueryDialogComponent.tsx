@@ -48,7 +48,11 @@ export class CatalogQueryDialogComponent extends React.Component {
         } else if (this.resultSize === 0) {
             resultStr = "No objects found";
         } else if (this.resultSize >= 1) {
-            resultStr = `Found ${this.resultSize} object(s)`;
+            if (configStore.catalogDB === CatalogDatabase.VIZIER) {
+                resultStr = `Found ${this.resultSize} table(s)`;
+            } else {
+                resultStr = `Found ${this.resultSize} object(s)`;
+            }
         } else if (this.objectSize === 0) {
             resultStr = `Object ${configStore.objectName} not found`;
         } else if (this.objectSize >= 1) {
@@ -108,10 +112,11 @@ export class CatalogQueryDialogComponent extends React.Component {
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
         const centerWCSPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        const isVizieR = configStore.catalogDB === CatalogDatabase.VIZIER;
 
         const configBoard = (
             <div className="online-catalog-config">
-                <FormGroup inline={false} label="Database" disabled={disable}>
+                <FormGroup inline={false} label="Database" disabled={disable} className={isVizieR ? "vizier-databse" : ""}>
                     <Select
                         items={Object.values(CatalogDatabase)}
                         activeItem={null}
@@ -125,6 +130,11 @@ export class CatalogQueryDialogComponent extends React.Component {
                         <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
+                {isVizieR ?
+                <FormGroup inline={false} label="Key Words (Catalog Title)" disabled={disable} className={isVizieR ? "vizier-key-words" : ""}>
+                    <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} />
+                </FormGroup> : null
+                }
                 <FormGroup inline={false} label="Object" disabled={disable}>
                     <InputGroup asyncControl={false} disabled={disable} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
                     <Tooltip2 content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -283,7 +293,7 @@ export class CatalogQueryDialogComponent extends React.Component {
             configStore.setQueryStatus(true);
             configStore.resetVizirR();
             const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
-            CatalogApiService.Instance.queryVizier(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject).then(resources => {
+            CatalogApiService.Instance.queryVizier(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, configStore.vizierKeyWords).then(resources => {
                 configStore.setQueryStatus(false);
                 configStore.setVizierQueryResult(resources);
                 this.setResultSize(resources.size);

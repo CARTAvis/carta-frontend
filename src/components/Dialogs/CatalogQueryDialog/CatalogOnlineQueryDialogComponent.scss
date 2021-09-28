@@ -15,6 +15,15 @@
                 margin-left: 5px;
             }
         }
+
+        .vizier-databse {
+            width: 93px;
+            float: left;
+        }
+
+        .vizier-key-words {
+            width: calc(100% - 93px);
+        }
     }
 
     .bp3-dialog-footer {

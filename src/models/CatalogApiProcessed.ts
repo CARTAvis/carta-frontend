@@ -128,7 +128,7 @@ export class APIProcessing {
             headers[index] = new CARTA.CatalogHeader({
                 name: field.getAttribute("name"),
                 description: field.getElementsByTagName("DESCRIPTION")[0]?.textContent,
-                dataType: this.matchDataType(field.getAttribute("datatype")),
+                dataType: APIProcessing.matchDataType(field.getAttribute("datatype")),
                 columnIndex: index,
                 units: field.getAttribute("unit")
             });
