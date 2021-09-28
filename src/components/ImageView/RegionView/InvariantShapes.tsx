@@ -1,4 +1,4 @@
-import {Group, Line, Shape} from "react-konva";
+import {Group, Shape} from "react-konva";
 
 const POINT_WIDTH = 6;
 const POINT_DRAG_WIDTH = 13;
@@ -7,10 +7,9 @@ const SQUARE_ANCHOR_WIDTH = 7;
 const CIRCLE_ANCHOR_RADIUS = SQUARE_ANCHOR_WIDTH / Math.sqrt(2);
 const ROTATOR_ANCHOR_HEIGHT = 15;
 
-const CURSOR_CROSS_LENGTH = 20;
+const CURSOR_CROSS_LENGTH = 10;
 const CURSOR_CROSS_THICKNESS_WIDE = 3;
-const CURSOR_CROSS_THICKNESS_NARROW = 1;
-const CURSOR_CROSS_GAP = 7;
+const CURSOR_CROSS_CENTER_SQUARE = 6;
 
 interface PointProps {
     x: number;
@@ -130,28 +129,32 @@ interface CursorMarkerProps {
 }
 
 export const CursorMarker = (props: CursorMarkerProps) => {
-    const CENTER_SQUARE_SIZE = CURSOR_CROSS_GAP - 1;
     const handleSquareDraw = (ctx, shape) => {
         const reverseScale = 1 / shape.getStage().scaleX();
-        const offset = -CENTER_SQUARE_SIZE * 0.5 * reverseScale;
-        const squareSize = CENTER_SQUARE_SIZE * reverseScale;
+        const offset = -CURSOR_CROSS_CENTER_SQUARE * 0.5 * reverseScale;
+        const squareSize = CURSOR_CROSS_CENTER_SQUARE * reverseScale;
         ctx.beginPath();
         ctx.rect(offset, offset, squareSize, squareSize);
         ctx.fillStrokeShape(shape);
     };
 
-    // TODO: fix line issue
+    const handleCrossDraw = (ctx, shape) => {
+        const reverseScale = 1 / shape.getStage().scaleX();
+        const offset = -CURSOR_CROSS_CENTER_SQUARE * 0.5 * reverseScale;
+        const crossWidth = CURSOR_CROSS_LENGTH * reverseScale;
+        const crossHeight = CURSOR_CROSS_THICKNESS_WIDE * reverseScale;
+        ctx.beginPath();
+        ctx.rect(-offset, offset / 2, crossWidth, crossHeight);
+        ctx.rect(offset - crossWidth, offset / 2, crossWidth, crossHeight);
+        ctx.rect(offset / 2, -offset, crossHeight, crossWidth);
+        ctx.rect(offset / 2, offset - crossWidth, crossHeight, crossWidth);
+        ctx.fillStrokeShape(shape);
+    };
+
     return (
         <Group x={Math.floor(props.x) + 0.5} y={Math.floor(props.y) + 0.5} rotation={-props.rotation}>
-            <Line listening={false} strokeScaleEnabled={false} points={[-CURSOR_CROSS_LENGTH / 2 - CURSOR_CROSS_THICKNESS_WIDE / 2, 0, -CURSOR_CROSS_GAP / 2, 0]} strokeWidth={CURSOR_CROSS_THICKNESS_WIDE} stroke="black" />
-            <Line listening={false} strokeScaleEnabled={false} points={[CURSOR_CROSS_GAP / 2, 0, CURSOR_CROSS_LENGTH / 2 + CURSOR_CROSS_THICKNESS_WIDE / 2, 0]} strokeWidth={CURSOR_CROSS_THICKNESS_WIDE} stroke="black" />
-            <Line listening={false} strokeScaleEnabled={false} points={[0, -CURSOR_CROSS_LENGTH / 2 - CURSOR_CROSS_THICKNESS_WIDE / 2, 0, -CURSOR_CROSS_GAP / 2]} strokeWidth={CURSOR_CROSS_THICKNESS_WIDE} stroke="black" />
-            <Line listening={false} strokeScaleEnabled={false} points={[0, CURSOR_CROSS_GAP / 2, 0, CURSOR_CROSS_LENGTH / 2 + CURSOR_CROSS_THICKNESS_WIDE / 2]} strokeWidth={CURSOR_CROSS_THICKNESS_WIDE} stroke="black" />
             <Shape listening={false} strokeScaleEnabled={false} strokeWidth={1} stroke={"black"} sceneFunc={handleSquareDraw} />
-            <Line listening={false} strokeScaleEnabled={false} points={[-CURSOR_CROSS_LENGTH / 2 - CURSOR_CROSS_THICKNESS_NARROW / 2, 0, -CURSOR_CROSS_GAP / 2, 0]} strokeWidth={CURSOR_CROSS_THICKNESS_NARROW} stroke="white" />
-            <Line listening={false} strokeScaleEnabled={false} points={[CURSOR_CROSS_GAP / 2, 0, CURSOR_CROSS_LENGTH / 2 + CURSOR_CROSS_THICKNESS_NARROW / 2, 0]} strokeWidth={CURSOR_CROSS_THICKNESS_NARROW} stroke="white" />
-            <Line listening={false} strokeScaleEnabled={false} points={[0, -CURSOR_CROSS_LENGTH / 2 - CURSOR_CROSS_THICKNESS_NARROW / 2, 0, -CURSOR_CROSS_GAP / 2]} strokeWidth={CURSOR_CROSS_THICKNESS_NARROW} stroke="white" />
-            <Line listening={false} strokeScaleEnabled={false} points={[0, CURSOR_CROSS_GAP / 2, 0, CURSOR_CROSS_LENGTH / 2 + CURSOR_CROSS_THICKNESS_NARROW / 2]} strokeWidth={CURSOR_CROSS_THICKNESS_NARROW} stroke="white" />
+            <Shape listening={false} strokeScaleEnabled={false} fill={"white"} strokeWidth={1} stroke={"black"} sceneFunc={handleCrossDraw} />
         </Group>
     );
 };
