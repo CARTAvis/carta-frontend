@@ -2140,8 +2140,7 @@ export class AppStore {
 
             this.setIsExportingImage(true);
             this.setImageRatio(this.preferenceStore.exportImageRatio);
-
-            setTimeout(() => {
+            this.waitForImageData().then(() => {
                 const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
                 if (composedCanvas) {
                     composedCanvas.toBlob(blob => {
@@ -2157,7 +2156,7 @@ export class AppStore {
                 }
                 this.setIsExportingImage(false);
                 return false;
-            }, 1);
+            });
         }
         return false;
     };
