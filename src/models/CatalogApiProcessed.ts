@@ -135,14 +135,20 @@ export class APIProcessing {
         }
         const data = table.getElementsByTagName("DATA")[0]?.getElementsByTagName("TABLEDATA")[0]?.getElementsByTagName("TR");
         const size = data.length;
+        // init data map
         const dataMap = new Map<number, ProcessedColumnData>();
-        for (let i = 0; i < headers.length; i++) {
-            const header = headers[i];
+        for (let index = 0; index < headers.length; index++) {
+            const header = headers[index];
             let column: ProcessedColumnData = {dataType: header.dataType, data: new Array(size)};
-            for (let j = 0; j < size; j++) {
-                column.data[j] = data[j].getElementsByTagName("TD")[i].innerHTML;
+            dataMap.set(index, column);
+        }
+
+        for (let index = 0; index < size; index++) {
+            const columns = data[index].getElementsByTagName("TD");
+            for (let j = 0; j < columns.length; j++) {
+                //textContent is faster than innerHTML
+                dataMap.get(j).data[index] = columns[j].textContent;
             }
-            dataMap.set(i, column);
         }
         return {headers, dataMap, size};
     }

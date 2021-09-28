@@ -352,7 +352,7 @@ export class CatalogOnlineQueryConfigStore {
         if (diagonal) {
             return Math.sqrt(xd * xd + yd * yd);
         } else {
-            return Math.abs(xd) > Math.abs(yd) ? Math.abs(xd): Math.abs(yd);
+            return Math.abs(xd) > Math.abs(yd) ? Math.abs(xd) : Math.abs(yd);
         }
     }
 }

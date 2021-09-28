@@ -81,8 +81,7 @@ export class CatalogApiService {
                 const data = APIProcessing.ProcessVizieRData(response.data);
                 resources = data.resources;
             }
-        }
-        catch(error) {
+        } catch (error) {
             if (axios.isCancel(error)) {
                 AppToaster.show(WarningToast(error?.message));
                 CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);

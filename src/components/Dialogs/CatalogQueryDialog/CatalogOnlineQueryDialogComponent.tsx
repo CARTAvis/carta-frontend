@@ -130,11 +130,11 @@ export class CatalogQueryDialogComponent extends React.Component {
                         <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
-                {isVizieR ?
-                <FormGroup inline={false} label="Key Words (Catalog Title)" disabled={disable} className={isVizieR ? "vizier-key-words" : ""}>
-                    <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} />
-                </FormGroup> : null
-                }
+                {isVizieR ? (
+                    <FormGroup inline={false} label="Key Words (Catalog Title)" disabled={disable} className={isVizieR ? "vizier-key-words" : ""}>
+                        <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} />
+                    </FormGroup>
+                ) : null}
                 <FormGroup inline={false} label="Object" disabled={disable}>
                     <InputGroup asyncControl={false} disabled={disable} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
                     <Tooltip2 content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch} position={Position.BOTTOM} hoverOpenDelay={300}>
