@@ -147,11 +147,11 @@ export const CursorMarker = (props: CursorMarkerProps) => {
             <Line listening={false} strokeScaleEnabled={false} points={[CURSOR_CROSS_GAP / 2, 0, CURSOR_CROSS_LENGTH / 2 + CURSOR_CROSS_THICKNESS_WIDE / 2, 0]} strokeWidth={CURSOR_CROSS_THICKNESS_WIDE} stroke="black" />
             <Line listening={false} strokeScaleEnabled={false} points={[0, -CURSOR_CROSS_LENGTH / 2 - CURSOR_CROSS_THICKNESS_WIDE / 2, 0, -CURSOR_CROSS_GAP / 2]} strokeWidth={CURSOR_CROSS_THICKNESS_WIDE} stroke="black" />
             <Line listening={false} strokeScaleEnabled={false} points={[0, CURSOR_CROSS_GAP / 2, 0, CURSOR_CROSS_LENGTH / 2 + CURSOR_CROSS_THICKNESS_WIDE / 2]} strokeWidth={CURSOR_CROSS_THICKNESS_WIDE} stroke="black" />
-            <Shape listening={false} strokeScaleEnabled={false} strokeWidth={1} stroke={"black"}  sceneFunc={handleSquareDraw} />
+            <Shape listening={false} strokeScaleEnabled={false} strokeWidth={1} stroke={"black"} sceneFunc={handleSquareDraw} />
             <Line listening={false} strokeScaleEnabled={false} points={[-CURSOR_CROSS_LENGTH / 2 - CURSOR_CROSS_THICKNESS_NARROW / 2, 0, -CURSOR_CROSS_GAP / 2, 0]} strokeWidth={CURSOR_CROSS_THICKNESS_NARROW} stroke="white" />
             <Line listening={false} strokeScaleEnabled={false} points={[CURSOR_CROSS_GAP / 2, 0, CURSOR_CROSS_LENGTH / 2 + CURSOR_CROSS_THICKNESS_NARROW / 2, 0]} strokeWidth={CURSOR_CROSS_THICKNESS_NARROW} stroke="white" />
             <Line listening={false} strokeScaleEnabled={false} points={[0, -CURSOR_CROSS_LENGTH / 2 - CURSOR_CROSS_THICKNESS_NARROW / 2, 0, -CURSOR_CROSS_GAP / 2]} strokeWidth={CURSOR_CROSS_THICKNESS_NARROW} stroke="white" />
             <Line listening={false} strokeScaleEnabled={false} points={[0, CURSOR_CROSS_GAP / 2, 0, CURSOR_CROSS_LENGTH / 2 + CURSOR_CROSS_THICKNESS_NARROW / 2]} strokeWidth={CURSOR_CROSS_THICKNESS_NARROW} stroke="white" />
         </Group>
     );
-}
+};

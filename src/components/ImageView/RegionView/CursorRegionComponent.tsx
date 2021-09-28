@@ -29,13 +29,7 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
                 cursorCanvasSpace = adjustPosToMutatedStage(cursorCanvasSpace, stage.getPosition(), stage.scaleX());
             }
 
-            return (
-                <CursorMarker
-                    x={cursorCanvasSpace.x}
-                    y={cursorCanvasSpace.y}
-                    rotation={-rotation}
-                />
-            );
+            return <CursorMarker x={cursorCanvasSpace.x} y={cursorCanvasSpace.y} rotation={-rotation} />;
         }
 
         return null;
