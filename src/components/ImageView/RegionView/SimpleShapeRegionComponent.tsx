@@ -180,7 +180,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
             const frame = this.props.frame;
-            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.getPosition(), this.props.stageRef.scaleX());
+            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
             let positionImageSpace = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
@@ -269,7 +269,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const region = this.props.region;
             const frame = this.props.frame;
             const evt = konvaEvent.evt;
-            const offsetPoint = adjustPosToUnityStage({x: evt.offsetX, y: evt.offsetY}, this.props.stageRef.getPosition(), this.props.stageRef.scaleX());
+            const offsetPoint = adjustPosToUnityStage({x: evt.offsetX, y: evt.offsetY}, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
             if (anchor.includes("rotator")) {
                 // Calculate rotation from anchor position
                 let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
@@ -320,7 +320,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             }
 
             let posCanvas = transformedImageToCanvasPos(posImage.x, posImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            posCanvas = adjustPosToMutatedStage(posCanvas, this.props.stageRef.getPosition(), this.props.stageRef.scaleX());
+            posCanvas = adjustPosToMutatedStage(posCanvas, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
             return (
                 <Anchor
                     key={config.anchor}
@@ -349,13 +349,13 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (frame.spatialReference) {
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
             let centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.getPosition(), this.props.stageRef.scaleX());
+            centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const N = pointsSecondaryImage.length;
             const pointArray = new Array<number>(N * 2);
             for (let i = 0; i < N; i++) {
                 let approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
-                approxPointPixelSpace = adjustPosToMutatedStage(approxPointPixelSpace, this.props.stageRef.getPosition(), this.props.stageRef.scaleX());
+                approxPointPixelSpace = adjustPosToMutatedStage(approxPointPixelSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
             }
@@ -388,7 +388,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const height = region.size.y / devicePixelRatio;
             const rotation = region.rotation;
             let centerPixelSpace = transformedImageToCanvasPos(centerReferenceImage.x, centerReferenceImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.getPosition(), this.props.stageRef.scaleX());
+            centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
 
             // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
             // TODO: Is this needed anywhere?
