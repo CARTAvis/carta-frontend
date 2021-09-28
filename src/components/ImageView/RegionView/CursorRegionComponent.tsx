@@ -17,7 +17,6 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
-        const stage = this.props.stageRef?.current;
 
         if (AppStore.Instance.cursorFrozen && frame && region) {
             const rotation = frame.spatialReference ? (frame.spatialTransform.rotation * 180.0) / Math.PI : 0.0;
@@ -25,6 +24,7 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
 
             // For the scenario of initially fixed cursor, stage is not ready in render(), but the scale is correct
             // and will be adjusted in the stageZoomToPoint() of componentDidMount() in RegionViewComponent accordingly.
+            const stage = this.props.stageRef?.current;
             if (stage) {
                 cursorCanvasSpace = adjustPosToMutatedStage(cursorCanvasSpace, stage.getPosition(), stage.scaleX());
             }
