@@ -134,8 +134,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
         }
 
-        const centerPoint = region.center;
-
         let w: number, h: number;
         let sizeFactor: number;
         if (region.regionType === CARTA.RegionType.RECTANGLE) {
@@ -148,7 +146,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             h = region.size.x;
         }
 
-        let deltaAnchorPoint = subtract2D(newAnchorPoint, centerPoint);
+        const deltaAnchorPoint = subtract2D(newAnchorPoint, region.center);
         // Apply inverse rotation to get difference between anchor and center without rotation
         const deltaAnchorPointUnrotated = rotate2D(deltaAnchorPoint, (-region.rotation * Math.PI) / 180.0);
 
@@ -165,7 +163,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             }
         }
 
-        region.setSize(region.regionType === CARTA.RegionType.RECTANGLE ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)} : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)});
+        const newSize = region.regionType === CARTA.RegionType.RECTANGLE ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)} : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
+        region.setSize(newSize);
     };
 
     private handleDragStart = () => {
@@ -269,7 +268,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const region = this.props.region;
             const frame = this.props.frame;
             const evt = konvaEvent.evt;
-            const offsetPoint = adjustPosToUnityStage({x: evt.offsetX, y: evt.offsetY}, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+            const offsetPoint = {x: evt.offsetX, y: evt.offsetY};
             if (anchor.includes("rotator")) {
                 // Calculate rotation from anchor position
                 let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
