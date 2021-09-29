@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Circle, Group, Line, Rect} from "react-konva";
+import {Group, Line} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
@@ -9,6 +9,7 @@ import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, subtract2D, angle2D} from "utilities";
 import {adjustPosToMutatedStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {Anchor} from "./InvariantShapes";
 
 interface LineSegmentRegionComponentProps {
     region: RegionStore;
@@ -226,7 +227,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         }
     };
 
-    private anchorNode(x: number, y: number, rotation: number = 0, key: number = undefined, editableAnchor: boolean = false, isRotator: boolean = false) {
+    private anchorNode(x: number, y: number, rotation: number = 0, key: number = undefined, editableAnchor: boolean = false, isRotator: boolean = false): React.ReactNode {
         let anchorProps: any = {
             x: x,
             y: y,
@@ -256,12 +257,24 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             anchorProps.opacity = 0.5;
             anchorProps.listening = false;
         }
-        if (isRotator) {
-            const radius = ANCHOR_WIDTH / Math.sqrt(2);
-            return <Circle {...anchorProps} radius={radius} offsetX={0} offsetY={0} dragBoundFunc={() => ({x, y})} />;
-        } else {
-            return <Rect {...anchorProps} />;
-        }
+
+        // TODO: handle editable
+        return (
+            <Anchor
+                // key={config.anchor}
+                anchor={isRotator ? "rotator" : ""}
+                x={x}
+                y={y}
+                rotation={rotation}
+                isRotator={isRotator}
+                onMouseEnter={this.handleAnchorMouseEnter}
+                onMouseOut={this.handleAnchorMouseOut}
+                onDragStart={this.handleAnchorDragStart}
+                onDragEnd={this.handleAnchorDragEnd}
+                onDragMove={this.handleAnchorDrag}
+                // onDblClick={this.props.region.regionType === CARTA.RegionType.LINE ? null : this.handleAnchorDoubleClick}
+            />
+        );
     }
 
     render() {
