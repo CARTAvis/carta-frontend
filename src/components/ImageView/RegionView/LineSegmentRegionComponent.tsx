@@ -8,7 +8,7 @@ import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, subtract2D, angle2D} from "utilities";
-import {canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToMutatedStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 
 interface LineSegmentRegionComponentProps {
     region: RegionStore;
@@ -18,6 +18,7 @@ interface LineSegmentRegionComponentProps {
     listening: boolean;
     selected: boolean;
     isRegionCornerMode: boolean;
+    stageRef: any;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
 }
@@ -266,7 +267,6 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
         let rotation = -region.rotation + 90.0;
 
         let controlPoints = region.controlPoints;
@@ -279,11 +279,13 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const centerReferenceImage = average2D(controlPoints);
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
             centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+            centerPointCanvasSpace = adjustPosToMutatedStage(centerPointCanvasSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const N = pointsSecondaryImage.length;
             pointArray = new Array<number>(N * 2);
             for (let i = 0; i < N; i++) {
-                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
+                let approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
+                approxPointPixelSpace = adjustPosToMutatedStage(approxPointPixelSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
             }
@@ -292,7 +294,8 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             if (this.props.selected && !region.locked) {
                 anchors = controlPoints.map((p, i) => {
                     const pSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
-                    const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+                    let pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+                    pCanvasPos = adjustPosToMutatedStage(pCanvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
                     return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i, true);
                 });
 
@@ -305,13 +308,17 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
             if (this.hoverIntersection && !region.locked) {
                 const pSecondaryImage = transformPoint(frame.spatialTransformAST, this.hoverIntersection, false);
-                const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+                let pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+                pCanvasPos = adjustPosToMutatedStage(pCanvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
                 newAnchor = this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation);
             }
 
             rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
-            controlPoints = controlPoints.map(p => imageToCanvasPos(p.x, p.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform));
+            controlPoints = controlPoints.map(p => {
+                const canvasPos = transformedImageToCanvasPos(p.x, p.y, frame, this.props.layerWidth, this.props.layerHeight);
+                return adjustPosToMutatedStage(canvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+            });
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
             if (this.props.selected && !region.locked) {
@@ -328,7 +335,8 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             }
 
             if (this.hoverIntersection && !region.locked) {
-                const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
+                let anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
+                anchorPositionPixelSpace = adjustPosToMutatedStage(anchorPositionPixelSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
                 newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
             }
 
