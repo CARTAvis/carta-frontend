@@ -284,10 +284,11 @@ export class RegionStore {
     }
 
     private getLineAngle = (start: Point2D, end: Point2D): number => {
-        let angle = (Math.atan((end.y - start.y) / (end.x - start.x)) * 180.0) / Math.PI;
-        if (end.x < start.x) {
+        let angle = (Math.atan((end.x - start.x) / (start.y - end.y)) * 180.0) / Math.PI;
+        if (end.y > start.y) {
             angle += 180;
         }
+        angle = (angle + 360) % 360;
         return angle;
     };
 
@@ -330,7 +331,7 @@ export class RegionStore {
         this.regionApproximationMap = new Map<number, Point2D[]>();
         this.simplePolygonTest();
         if (this.regionType === CARTA.RegionType.LINE && controlPoints.length === 2) {
-            this.setRotation(this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0);
+            this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
         }
         this.modifiedTimestamp = performance.now();
     }
@@ -376,7 +377,7 @@ export class RegionStore {
             }
 
             if (this.regionType === CARTA.RegionType.LINE) {
-                this.setRotation(this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0);
+                this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
             }
         }
     };
@@ -401,7 +402,7 @@ export class RegionStore {
         }
 
         if (this.regionType === CARTA.RegionType.LINE) {
-            this.setRotation(points.length === 2 ? this.getLineAngle(points[0], points[1]) : 0);
+            this.rotation = points.length === 2 ? this.getLineAngle(points[0], points[1]) : 0;
         }
 
         if (!this.editing && !skipUpdate) {
@@ -424,12 +425,20 @@ export class RegionStore {
         if (!this.activeFrame?.hasSquarePixels) {
             return;
         }
-
-        this.rotation = (angle + 360) % 360;
-        this.regionApproximationMap.clear();
-        this.modifiedTimestamp = performance.now();
-        if (!this.editing && !skipUpdate) {
-            this.updateRegion();
+        if (this.regionType === CARTA.RegionType.LINE) {
+            const rotation = (((angle + 360) % 360) * Math.PI) / 180.0;
+            const dx = length2D(this.size) * Math.sin(rotation);
+            const dy = -length2D(this.size) * Math.cos(rotation);
+            const newStart = {x: this.center.x - dx / 2, y: this.center.y - dy / 2};
+            const newEnd = {x: this.center.x + dx / 2, y: this.center.y + dy / 2};
+            this.setControlPoints([newStart, newEnd]);
+        } else {
+            this.rotation = (angle + 360) % 360;
+            this.regionApproximationMap.clear();
+            this.modifiedTimestamp = performance.now();
+            if (!this.editing && !skipUpdate) {
+                this.updateRegion();
+            }
         }
     };
 
