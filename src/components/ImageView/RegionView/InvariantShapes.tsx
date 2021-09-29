@@ -116,7 +116,6 @@ export const Anchor = (props: AnchorProps) => {
             onDragStart={props.onDragStart}
             onDragEnd={props.onDragEnd}
             onDragMove={props.onDragMove}
-            dragBoundFunc={() => ({x: props.x, y: props.y})}
             sceneFunc={props.isRotator ? handleCircleDraw : handleRectDraw}
         />
     );

@@ -1,5 +1,4 @@
 import * as React from "react";
-import {action} from "mobx";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Line, Rect} from "react-konva";
 import Konva from "konva";
@@ -261,14 +260,14 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         this.props.region.endEditing();
     };
 
-    @action private handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    private handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.currentTarget) {
             const node = konvaEvent.target;
             const anchor = node.id();
             const region = this.props.region;
             const frame = this.props.frame;
             const evt = konvaEvent.evt;
-            const offsetPoint = {x: evt.offsetX, y: evt.offsetY};
+            const offsetPoint = node.getStage().getPointerPosition();
             if (anchor.includes("rotator")) {
                 // Calculate rotation from anchor position
                 let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
