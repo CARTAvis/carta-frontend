@@ -225,7 +225,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         }
     };
 
-    private anchorNode(x: number, y: number, rotation: number = 0, key: number = undefined, editableAnchor: boolean = false, rotator: boolean = false) {
+    private anchorNode(x: number, y: number, rotation: number = 0, key: number = undefined, editableAnchor: boolean = false, isRotator: boolean = false) {
         let anchorProps: any = {
             x: x,
             y: y,
@@ -237,7 +237,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             strokeWidth: 1,
             stroke: "black",
             rotation: rotation,
-            id: rotator ? "rotator" : ""
+            id: isRotator ? "rotator" : ""
         };
         if (editableAnchor) {
             anchorProps = {
@@ -255,7 +255,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             anchorProps.opacity = 0.5;
             anchorProps.listening = false;
         }
-        if (rotator) {
+        if (isRotator) {
             const radius = ANCHOR_WIDTH / Math.sqrt(2);
             return <Circle {...anchorProps} radius={radius} offsetX={0} offsetY={0} dragBoundFunc={() => ({x, y})} />;
         } else {
