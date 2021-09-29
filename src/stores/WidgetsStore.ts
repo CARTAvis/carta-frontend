@@ -18,6 +18,7 @@ import {
     StokesAnalysisComponent,
     CatalogOverlayComponent,
     CatalogPlotComponent,
+    PVGeneratorComponent,
     // setting Panel
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
@@ -47,7 +48,6 @@ import {
 } from "./widgets";
 import {PreferenceKeys, PreferenceStore} from "./PreferenceStore";
 import {ImagePanelMode} from "models";
-import {PVGeneratorComponent} from "components/PVGenerator/PVGeneratorComponent";
 
 export enum WidgetType {
     Region = "Region List Widget",
@@ -283,7 +283,7 @@ export class WidgetsStore {
             WidgetType.PVGenerator,
             {
                 isCustomIcon: false,
-                icon: "line-chart",
+                icon: "timeline-line-chart",
                 onClick: () => WidgetsStore.Instance.createFloatingPVGeneratorWidget(),
                 widgetConfig: PVGeneratorComponent.WIDGET_CONFIG
             }
@@ -347,6 +347,7 @@ export class WidgetsStore {
         this.catalogPlotWidgets = new Map<string, CatalogPlotWidgetStore>();
         this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
         this.cursorInfoWidgets = new Map<string, EmptyWidgetStore>();
+        this.pvGeneratorWidgets = new Map<string, PVGeneratorWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -402,6 +403,8 @@ export class WidgetsStore {
                 return SpectralLineQueryComponent.WIDGET_CONFIG;
             case CursorInfoComponent.WIDGET_CONFIG.type:
                 return CursorInfoComponent.WIDGET_CONFIG;
+            case PVGeneratorComponent.WIDGET_CONFIG.type:
+                return PVGeneratorComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -1394,7 +1397,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            this.cursorInfoWidgets.set(id, new EmptyWidgetStore());
+            this.pvGeneratorWidgets.set(id, new PVGeneratorWidgetStore());
         }
         return id;
     }

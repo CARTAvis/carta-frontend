@@ -1,25 +1,42 @@
-import {RegionWidgetStore, RegionsType} from "stores/widgets";
-import {action, observable, makeObservable} from "mobx";
+import {action, observable, makeObservable, computed} from "mobx";
+import {CARTA} from "carta-protobuf";
+import {IOptionProps} from "@blueprintjs/core";
 
-export class PVGeneratorWidgetStore extends RegionWidgetStore {
-    @observable imageId: number;
+export class PVGeneratorWidgetStore {
+    @observable fileId: number;
     @observable regionId: number;
     @observable average: number;
 
-    @action setImageId = (val: number) => {
-        this.imageId = val;
+    @computed get regionOptions(): IOptionProps[] {
+        let regionOptions: IOptionProps[];
+        if (this.frame) {
+            if (this.frame?.regionSet) {
+                const validRegionOptions = this.frame.regionSet.regions
+                    ?.filter(r => !r.isTemporary && r.regionType === CARTA.RegionType.LINE)
+                    ?.map(region => {
+                        return {value: region?.regionId, label: region?.nameString};
+                    });
+                if (validRegionOptions) {
+                    regionOptions = validRegionOptions;
+                }
+            }
+        }
+        return regionOptions;
+    }
+
+    @action setFileId = (val: number) => {
+        this.fileId = val;
     };
 
-    // @action setRegionId = (val: number) => {
-    //     this.regionId = val;
-    // };
+    @action setRegionId = (val: number) => {
+        this.regionId = val;
+    };
 
     @action setAverage = (val: number) => {
         this.average = val;
     };
 
     constructor() {
-        super(RegionsType.CLOSED);
         makeObservable(this);
     }
 }

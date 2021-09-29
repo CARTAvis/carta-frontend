@@ -3,7 +3,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, NonIdealState, Tabs, Tab, TabId, HTMLSelect} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {AppStore, DefaultWidgetConfig, FrameStore, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {PVGeneratorWidgetStore} from "stores/widgets";
 import {SafeNumericInput} from "components/Shared";
 import "./PVGeneratorComponent.scss";
@@ -49,14 +49,6 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
         return new PVGeneratorWidgetStore();
     }
 
-    @computed get frame(): FrameStore {
-        if (this.widgetStore) {
-            return AppStore.Instance.getFrame(this.widgetStore.fileId);
-        } else {
-            return undefined;
-        }
-    }
-
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
@@ -85,7 +77,10 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
         const pvImagePanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Image">
-                    <HTMLSelect value={this.widgetStore.imageId} options={appStore.frameNames} onChange={ev => this.widgetStore.setImageId(parseInt(ev.currentTarget.value))} />
+                    <HTMLSelect value={this.widgetStore.fileId} options={appStore.frameNames} onChange={ev => this.widgetStore.setFileId(parseInt(ev.currentTarget.value))} />
+                </FormGroup>
+                <FormGroup inline={true} label="Region">
+                    <HTMLSelect value={this.widgetStore.regionId} options={this.widgetStore.regionOptions} onChange={ev => this.widgetStore.setRegionId(parseInt(ev.currentTarget.value))} />
                 </FormGroup>
                 <FormGroup inline={true} label="Average (px)">
                     <SafeNumericInput min={0} max={10} stepSize={0} value={this.widgetStore.average} onValueChange={value => this.widgetStore.setAverage(value)} />
