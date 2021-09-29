@@ -7,7 +7,7 @@ import {AppStore, FrameStore, ProfileSmoothingStore} from "stores";
 import {PlotType, LineSettings} from "components/Shared";
 import {SpatialProfilerSettingsTabs} from "components";
 import {clamp, isAutoColor} from "utilities";
-import {LineOption} from "models";
+import {LineOption, VALID_XY_COORDINATES} from "models";
 
 const DEFAULT_STOKES = "current";
 
@@ -33,15 +33,13 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: SpatialProfilerSettingsTabs;
 
-    private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vy"];
-
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
         this.clearXYBounds();
     };
 
     @action setCoordinate = (coordinate: string) => {
-        if (SpatialProfileWidgetStore.ValidCoordinates.includes(coordinate)) {
+        if (VALID_XY_COORDINATES.includes(coordinate)) {
             // Reset zoom when changing between coordinates
             this.clearXYBounds();
             this.coordinate = coordinate;
@@ -329,7 +327,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if (typeof widgetSettings.coordinate === "string" && SpatialProfileWidgetStore.ValidCoordinates.includes(widgetSettings.coordinate)) {
+        if (typeof widgetSettings.coordinate === "string" && VALID_XY_COORDINATES.includes(widgetSettings.coordinate)) {
             this.coordinate = widgetSettings.coordinate;
         }
         const lineColor = tinycolor(widgetSettings.primaryLineColor);
