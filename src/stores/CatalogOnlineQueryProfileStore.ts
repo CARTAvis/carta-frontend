@@ -75,7 +75,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
 
     @action updateSortedIndexMap() {
         const dataIndex = this.catalogControlHeader.get(this.sortingInfo.columnName)?.dataIndex;
-        if (dataIndex) {
+        if (dataIndex >= 0) {
             let direction = 0;
             const sortingType = this.sortingInfo.sortingType;
             if (sortingType === 0) {
@@ -94,8 +94,8 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
             switch (catalogColumn?.dataType) {
                 case CARTA.ColumnType.String:
                     this.sortedIndexMap.sort((a: number, b: number) => {
-                        const aString = catalogColumn.data[a] as string;
-                        const bString = catalogColumn.data[b] as string;
+                        const aString = String(catalogColumn.data[a]);
+                        const bString = String(catalogColumn.data[b]);
                         if (!aString) {
                             return direction * -1;
                         }
@@ -111,8 +111,8 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
                     break;
                 default:
                     this.sortedIndexMap.sort((a: number, b: number) => {
-                        const aNumber = catalogColumn.data[a] as number;
-                        const bNumber = catalogColumn.data[b] as number;
+                        const aNumber = Number(catalogColumn.data[a]);
+                        const bNumber = Number(catalogColumn.data[b]);
                         return direction * (aNumber < bNumber ? -1 : 1);
                     });
                     break;

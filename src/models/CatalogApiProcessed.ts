@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {ProcessedColumnData} from "models";
-import {AppStore, NumberFormatType, OverlayStore, SystemType} from "stores";
+import {AppStore, NumberFormatType, SystemType} from "stores";
 
 enum SimbadType {
     CHAR = "CHAR",
@@ -31,16 +31,16 @@ export class APIProcessing {
         }
 
         headers[metaData.length] = new CARTA.CatalogHeader({
-            name: "RA ICRS(J2000)",
-            description: "Ra in sexagesimal format(H:M:S, computed by CARTA)",
+            name: "RA_HMS",
+            description: "RA in sexagesimal format (H:M:S, computed by CARTA)",
             dataType: CARTA.ColumnType.String,
             columnIndex: metaData.length,
             units: "H:M:S"
         });
 
         headers[metaData.length + 1] = new CARTA.CatalogHeader({
-            name: "DEC ICRS(J2000)",
-            description: "Dec in sexagesimal format(D:M:S, computed by CARTA)",
+            name: "DEC_DMS",
+            description: "DEC in sexagesimal format (D:M:S, computed by CARTA)",
             dataType: CARTA.ColumnType.String,
             columnIndex: metaData.length + 1,
             units: "D:M:S"
@@ -54,10 +54,8 @@ export class APIProcessing {
         const decIndex = headers.filter(header => header.name === "dec")[0]?.columnIndex;
 
         const frame = AppStore.Instance.activeFrame;
-        const overlay = OverlayStore.Instance;
-        const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
-        const raformat = `${NumberFormatType.HMS}.${precision}`;
-        const deformat = `${NumberFormatType.DMS}.${precision}`;
+        const raformat = `${NumberFormatType.HMS}.${6}`;
+        const deformat = `${NumberFormatType.DMS}.${6}`;
         const wcsCopy = AST.copy(frame.wcsInfo);
         AST.set(wcsCopy, `System=${SystemType.ICRS}`);
         AST.set(wcsCopy, `Format(1)=${raformat}`);
@@ -70,11 +68,11 @@ export class APIProcessing {
             for (let j = 0; j < data.length; j++) {
                 if (header["name"] === "dist") {
                     // simbad returns distance in deg, convert to arcsec for usability improvement
-                    column.data[j] = data[j][header.columnIndex] * 3600;
-                } else if (header["name"] === "RA ICRS(J2000)" && raIndex > -1) {
+                    column.data[j] = Number((data[j][header.columnIndex] * 3600).toFixed(6));
+                } else if (header["name"] === "RA_HMS" && raIndex > -1) {
                     const x = AST.format(wcsCopy, 1, data[j][raIndex] * fraction);
                     column.data[j] = x;
-                } else if (header["name"] === "DEC ICRS(J2000)" && decIndex > -1) {
+                } else if (header["name"] === "DEC_DMS" && decIndex > -1) {
                     const y = AST.format(wcsCopy, 2, data[j][decIndex] * fraction);
                     column.data[j] = y;
                 } else {
