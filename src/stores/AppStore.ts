@@ -62,6 +62,7 @@ interface ChannelUpdate {
 }
 
 const IMPORT_REGION_BATCH_SIZE = 100;
+const EXPORT_IMAGE_DELAY = 500;
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -116,11 +117,12 @@ export class AppStore {
     @observable cursorFrozen: boolean;
     @observable toolbarExpanded: boolean;
     @observable imageRatio: number;
-    @observable isExportingImage: boolean;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
+    private isExportingImage: boolean;
+    private exportImageTimer;
 
     public getAppContainer = (): HTMLElement => {
         return this.appContainer;
@@ -1125,10 +1127,6 @@ export class AppStore {
         this.imageRatio = val;
     };
 
-    @action setIsExportingImage = (val: boolean) => {
-        this.isExportingImage = val;
-    };
-
     public static readonly DEFAULT_STATS_TYPES = [
         CARTA.StatsType.NumPixels,
         CARTA.StatsType.Sum,
@@ -2130,35 +2128,40 @@ export class AppStore {
         return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
     }
 
-    exportImage = (): boolean => {
+    exportImage = () => {
         if (this.activeFrame) {
             const index = this.visibleFrames.indexOf(this.activeFrame);
             if (index === -1) {
-                return false;
+                return;
             }
-            const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
 
-            this.setIsExportingImage(true);
+            this.isExportingImage = true;
             this.setImageRatio(this.preferenceStore.exportImageRatio);
-            setTimeout(() => {
-                const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
-                if (composedCanvas) {
-                    composedCanvas.toBlob(blob => {
-                        const link = document.createElement("a") as HTMLAnchorElement;
-                        const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
-                        // Trim filename to 230 characters in total to prevent browser errors
-                        link.download = `${joinedNames}-image-${getTimestamp()}`.substring(0, 225) + ".png";
-                        link.href = URL.createObjectURL(blob);
-                        link.dispatchEvent(new MouseEvent("click"));
-                    }, "image/png");
-                    this.setIsExportingImage(false);
-                    return true;
-                }
-                this.setIsExportingImage(false);
-                return false;
-            }, 500);
+            this.setExportImageTimer();
         }
-        return false;
+    };
+
+    setExportImageTimer = () => {
+        if (!this.isExportingImage) {
+            return;
+        }
+
+        clearTimeout(this.exportImageTimer);
+        this.exportImageTimer = setTimeout(() => {
+            const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
+            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+            if (composedCanvas) {
+                composedCanvas.toBlob(blob => {
+                    const link = document.createElement("a") as HTMLAnchorElement;
+                    const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
+                    // Trim filename to 230 characters in total to prevent browser errors
+                    link.download = `${joinedNames}-image-${getTimestamp()}`.substring(0, 225) + ".png";
+                    link.href = URL.createObjectURL(blob);
+                    link.dispatchEvent(new MouseEvent("click"));
+                }, "image/png");
+            }
+            this.isExportingImage = false;
+        }, EXPORT_IMAGE_DELAY);
     };
 
     updateLayerPixelRatio = layerRef => {
