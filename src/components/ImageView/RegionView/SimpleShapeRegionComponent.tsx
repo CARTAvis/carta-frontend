@@ -1,4 +1,5 @@
 import * as React from "react";
+import {action} from "mobx";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Line, Rect} from "react-konva";
 import Konva from "konva";
@@ -260,7 +261,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         this.props.region.endEditing();
     };
 
-    private handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    @action private handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.currentTarget) {
             const node = konvaEvent.target;
             const anchor = node.id();
