@@ -12,7 +12,7 @@ enum SimbadType {
     DOUBLE = "DOUBLE"
 }
 
-export class APIProcessing {
+export class CatalogApiProcessing {
     static ProcessSimbadMetaData(metaData: []): CARTA.ICatalogHeader[] {
         let headers: CARTA.CatalogHeader[] = new Array(metaData.length + 2);
         for (let index = 0; index < metaData.length; index++) {
@@ -20,7 +20,7 @@ export class APIProcessing {
             headers[index] = new CARTA.CatalogHeader({
                 name: header["name"],
                 description: header["description"],
-                dataType: APIProcessing.matchDataType(header["datatype"]),
+                dataType: CatalogApiProcessing.matchDataType(header["datatype"]),
                 columnIndex: index,
                 units: header["unit"]
             });

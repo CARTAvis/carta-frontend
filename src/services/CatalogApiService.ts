@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 import axios, {AxiosInstance, AxiosResponse, CancelTokenSource} from "axios";
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
-import {APIProcessing, CatalogInfo, CatalogType} from "models";
+import {CatalogApiProcessing, CatalogInfo, CatalogType} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, SystemType} from "stores";
 
 export enum CatalogDatabase {
@@ -49,21 +49,22 @@ export class CatalogApiService {
 
     // Online Catalog Query
     public appendOnlineCatalog = async (query: string): Promise<number> => {
-        const frame = AppStore.Instance.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (!frame) {
             AppToaster.show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
         }
 
-        const fileId = AppStore.Instance.catalogNextFileId;
+        const fileId = appStore.catalogNextFileId;
         let dataSize: number = 0;
         try {
             const response = await this.getSimbadCatalog(query);
             if (frame && response?.status === 200 && response?.data?.data?.length) {
                 runInAction(() => {
                     const configStore = CatalogOnlineQueryConfigStore.Instance;
-                    const headers = APIProcessing.ProcessSimbadMetaData(response.data?.metadata);
-                    const columnData = APIProcessing.ProcessSimbadData(response.data?.data, headers);
+                    const headers = CatalogApiProcessing.ProcessSimbadMetaData(response.data?.metadata);
+                    const columnData = CatalogApiProcessing.ProcessSimbadData(response.data?.data, headers);
                     const coosy: CARTA.ICoosys = {system: configStore.coordsType};
                     const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
                     const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
@@ -79,14 +80,14 @@ export class CatalogApiService {
                         dataSize: response.data?.data?.length,
                         directory: ""
                     };
-                    let catalogWidgetId = AppStore.Instance.updateCatalogProfile(fileId, frame);
+                    let catalogWidgetId = appStore.updateCatalogProfile(fileId, frame);
                     if (catalogWidgetId) {
-                        AppStore.Instance.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                        AppStore.Instance.catalogStore.addCatalog(fileId);
-                        AppStore.Instance.fileBrowserStore.hideFileBrowser();
+                        appStore.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
+                        appStore.catalogStore.addCatalog(fileId);
+                        appStore.fileBrowserStore.hideFileBrowser();
                         const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, CatalogType.SIMBAD);
-                        AppStore.Instance.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                        AppStore.Instance.dialogStore.hideCatalogQueryDialog();
+                        appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                        appStore.dialogStore.hideCatalogQueryDialog();
                     }
                 });
             }

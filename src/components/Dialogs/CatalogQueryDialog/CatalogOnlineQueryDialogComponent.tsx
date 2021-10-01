@@ -103,7 +103,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWCSPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
 
         const configBoard = (
             <div className="online-catalog-config">
@@ -175,10 +175,10 @@ export class CatalogQueryDialogComponent extends React.Component {
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             placeholder="X WCS Coordinate"
-                            disabled={!wcsInfo || !centerWCSPoint || disable}
-                            value={centerWCSPoint ? centerWCSPoint.x : ""}
-                            onBlur={this.handleCenterWCSXChange}
-                            onKeyDown={this.handleCenterWCSXChange}
+                            disabled={!wcsInfo || !centerWcsPoint || disable}
+                            value={centerWcsPoint ? centerWcsPoint.x : ""}
+                            onBlur={this.handleCenterWcsXChange}
+                            onKeyDown={this.handleCenterWcsXChange}
                         />
                     </Tooltip2>
                     <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -186,10 +186,10 @@ export class CatalogQueryDialogComponent extends React.Component {
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             placeholder="Y WCS Coordinate"
-                            disabled={!wcsInfo || !centerWCSPoint || disable}
-                            value={centerWCSPoint ? centerWCSPoint.y : ""}
-                            onBlur={this.handleCenterWCSYChange}
-                            onKeyDown={this.handleCenterWCSYChange}
+                            disabled={!wcsInfo || !centerWcsPoint || disable}
+                            value={centerWcsPoint ? centerWcsPoint.y : ""}
+                            onBlur={this.handleCenterWcsYChange}
+                            onKeyDown={this.handleCenterWcsYChange}
                         />
                     </Tooltip2>
                     <Tooltip2 content="Reset to current view center" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -322,7 +322,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         }
     };
 
-    private handleCenterWCSXChange = ev => {
+    private handleCenterWcsXChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -330,25 +330,25 @@ export class CatalogQueryDialogComponent extends React.Component {
         const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWCSPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
-        if (!centerWCSPoint) {
+        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        if (!centerWcsPoint) {
             return;
         }
         const wcsString = ev.currentTarget.value;
-        if (wcsString === centerWCSPoint.x) {
+        if (wcsString === centerWcsPoint.x) {
             return;
         }
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
-            const newPoint = getPixelValueFromWCS(wcsInfo, {x: wcsString, y: centerWCSPoint.y});
+            const newPoint = getPixelValueFromWCS(wcsInfo, {x: wcsString, y: centerWcsPoint.y});
             if (newPoint && isFinite(newPoint.x)) {
                 configStore.updateCenterPixelCoord(newPoint);
                 return;
             }
         }
-        ev.currentTarget.value = centerWCSPoint.x;
+        ev.currentTarget.value = centerWcsPoint.x;
     };
 
-    private handleCenterWCSYChange = ev => {
+    private handleCenterWcsYChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -356,21 +356,21 @@ export class CatalogQueryDialogComponent extends React.Component {
         const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWCSPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
-        if (!centerWCSPoint) {
+        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        if (!centerWcsPoint) {
             return;
         }
         const wcsString = ev.currentTarget.value;
-        if (wcsString === centerWCSPoint.y) {
+        if (wcsString === centerWcsPoint.y) {
             return;
         }
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(wcsInfo, {x: centerWCSPoint.x, y: wcsString});
+            const newPoint = getPixelValueFromWCS(wcsInfo, {x: centerWcsPoint.x, y: wcsString});
             if (newPoint && isFinite(newPoint.y)) {
                 configStore.updateCenterPixelCoord(newPoint);
                 return;
             }
         }
-        ev.currentTarget.value = centerWCSPoint.y;
+        ev.currentTarget.value = centerWcsPoint.y;
     };
 }
