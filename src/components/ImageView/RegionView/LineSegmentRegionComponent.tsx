@@ -88,7 +88,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const index = node.index;
             const anchor = node.id();
             const evt = konvaEvent.evt;
-            const offsetPoint = {x: evt.offsetX, y: evt.offsetY};
+            const offsetPoint = node.getStage().getPointerPosition();
             if (anchor.includes("rotator")) {
                 // Calculate rotation from anchor position
                 let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
@@ -100,7 +100,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 const angle = (angle2D(topAnchorPosition, delta) * 180.0) / Math.PI;
                 region.setRotation(region.rotation + angle);
             } else if (index >= 0 && index < region.controlPoints.length) {
-                let positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+                let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
                 if (frame.spatialReference) {
                     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
