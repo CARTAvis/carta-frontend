@@ -229,6 +229,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     private anchorNode(x: number, y: number, rotation: number = 0, key: number, isRotator: boolean = false): React.ReactNode {
         return (
             <Anchor
+                key={key}
                 anchor={isRotator ? "rotator" : `anchor-${key}`}
                 x={x}
                 y={y}
