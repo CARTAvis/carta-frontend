@@ -8,8 +8,8 @@ import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, subtract2D, angle2D} from "utilities";
-import {adjustPosToMutatedStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {Anchor} from "./InvariantShapes";
+import {adjustPosToMutatedStage, adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {Anchor, NonEditableAnchor} from "./InvariantShapes";
 
 interface LineSegmentRegionComponentProps {
     region: RegionStore;
@@ -24,7 +24,6 @@ interface LineSegmentRegionComponentProps {
     onDoubleClick?: (region: RegionStore) => void;
 }
 
-const ANCHOR_WIDTH = 7;
 const NEW_ANCHOR_MAX_DISTANCE = 16;
 const INVALID_POLYGON_COLOR = Colors.ROSE4;
 const DOUBLE_CLICK_THRESHOLD = 300;
@@ -213,11 +212,11 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
     @action handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            const node = konvaEvent.target;
             const region = this.props.region;
             const frame = this.props.frame;
             const centerImageSpace = average2D(region.controlPoints);
-            let newPosition = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
+            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+            let newPosition = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference) {
                 newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
             }
@@ -227,42 +226,10 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         }
     };
 
-    private anchorNode(x: number, y: number, rotation: number = 0, key: number = undefined, editableAnchor: boolean = false, isRotator: boolean = false): React.ReactNode {
-        let anchorProps: any = {
-            x: x,
-            y: y,
-            offsetX: ANCHOR_WIDTH / 2.0,
-            offsetY: ANCHOR_WIDTH / 2.0,
-            width: ANCHOR_WIDTH,
-            height: ANCHOR_WIDTH,
-            fill: "white",
-            strokeWidth: 1,
-            stroke: "black",
-            rotation: rotation,
-            id: isRotator ? "rotator" : ""
-        };
-        if (editableAnchor) {
-            anchorProps = {
-                ...anchorProps,
-                draggable: true,
-                key: key,
-                onMouseEnter: this.handleAnchorMouseEnter,
-                onMouseOut: this.handleAnchorMouseOut,
-                onDragStart: this.handleAnchorDragStart,
-                onDragEnd: this.handleAnchorDragEnd,
-                onDragMove: this.handleAnchorDrag,
-                onDblClick: this.props.region.regionType === CARTA.RegionType.LINE ? null : this.handleAnchorDoubleClick
-            };
-        } else {
-            anchorProps.opacity = 0.5;
-            anchorProps.listening = false;
-        }
-
-        // TODO: handle editable
+    private anchorNode(x: number, y: number, rotation: number = 0, key: number, isRotator: boolean = false): React.ReactNode {
         return (
             <Anchor
-                // key={config.anchor}
-                anchor={isRotator ? "rotator" : ""}
+                anchor={isRotator ? "rotator" : `anchor-${key}`}
                 x={x}
                 y={y}
                 rotation={rotation}
@@ -272,7 +239,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 onDragStart={this.handleAnchorDragStart}
                 onDragEnd={this.handleAnchorDragEnd}
                 onDragMove={this.handleAnchorDrag}
-                // onDblClick={this.props.region.regionType === CARTA.RegionType.LINE ? null : this.handleAnchorDoubleClick}
+                onDblClick={this.props.region.regionType === CARTA.RegionType.LINE ? null : this.handleAnchorDoubleClick}
             />
         );
     }
@@ -309,13 +276,13 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     const pSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
                     let pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
                     pCanvasPos = adjustPosToMutatedStage(pCanvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
-                    return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i, true);
+                    return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i);
                 });
 
                 if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
                     const rotatorOffset = 15;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
-                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, true));
+                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true));
                 }
             }
 
@@ -323,7 +290,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 const pSecondaryImage = transformPoint(frame.spatialTransformAST, this.hoverIntersection, false);
                 let pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
                 pCanvasPos = adjustPosToMutatedStage(pCanvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
-                newAnchor = this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation);
+                newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
             }
 
             rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
@@ -337,20 +304,20 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             if (this.props.selected && !region.locked) {
                 anchors = new Array<React.ReactNode>(controlPoints.length);
                 for (let i = 0; i < controlPoints.length; i++) {
-                    anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i, true);
+                    anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i);
                 }
 
                 if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
                     const rotatorOffset = 15;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
-                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true, true));
+                    anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true));
                 }
             }
 
             if (this.hoverIntersection && !region.locked) {
                 let anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
                 anchorPositionPixelSpace = adjustPosToMutatedStage(anchorPositionPixelSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
-                newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
+                newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
             }
 
             pointArray = new Array<number>(controlPoints.length * 2);

@@ -78,6 +78,7 @@ interface AnchorProps {
     onDragStart: (ev) => void;
     onDragEnd: (ev) => void;
     onDragMove: (ev) => void;
+    onDblClick?: (ev) => void;
 }
 
 export const Anchor = (props: AnchorProps) => {
@@ -116,9 +117,29 @@ export const Anchor = (props: AnchorProps) => {
             onDragStart={props.onDragStart}
             onDragEnd={props.onDragEnd}
             onDragMove={props.onDragMove}
+            onDblClick={props.onDblClick}
             sceneFunc={props.isRotator ? handleCircleDraw : handleRectDraw}
         />
     );
+};
+
+interface NonEditableAnchorProps {
+    x: number;
+    y: number;
+    rotation: number;
+}
+
+export const NonEditableAnchor = (props: NonEditableAnchorProps) => {
+    const handleRectDraw = (ctx, shape) => {
+        const reverseScale = 1 / shape.getStage().scaleX();
+        const offset = -SQUARE_ANCHOR_WIDTH * 0.5 * reverseScale;
+        const squareSize = SQUARE_ANCHOR_WIDTH * reverseScale;
+        ctx.beginPath();
+        ctx.rect(offset, offset, squareSize, squareSize);
+        ctx.fillStrokeShape(shape);
+    };
+
+    return <Shape x={props.x} y={props.y} rotation={props.rotation} fill={"white"} strokeWidth={1} stroke={"black"} strokeScaleEnabled={false} opacity={0.5} listening={false} sceneFunc={handleRectDraw} />;
 };
 
 interface CursorMarkerProps {
