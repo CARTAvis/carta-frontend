@@ -11,6 +11,15 @@ const CURSOR_CROSS_LENGTH = 10;
 const CURSOR_CROSS_THICKNESS_WIDE = 3;
 const CURSOR_CROSS_CENTER_SQUARE = 6;
 
+const HandleSquareDraw = (ctx, shape, width) => {
+    const reverseScale = 1 / shape.getStage().scaleX();
+    const offset = -width * 0.5 * reverseScale;
+    const squareSize = width * reverseScale;
+    ctx.beginPath();
+    ctx.rect(offset, offset, squareSize, squareSize);
+    ctx.fillStrokeShape(shape);
+};
+
 interface PointProps {
     x: number;
     y: number;
@@ -26,21 +35,12 @@ interface PointProps {
 }
 
 export const Point = (props: PointProps) => {
-    const handleSquareDraw = (ctx, shape, width) => {
-        const reverseScale = 1 / shape.getStage().scaleX();
-        const offset = -width * 0.5 * reverseScale;
-        const squareSize = width * reverseScale;
-        ctx.beginPath();
-        ctx.rect(offset, offset, squareSize, squareSize);
-        ctx.fillStrokeShape(shape);
-    };
-
     const handlePointDraw = (ctx, shape) => {
-        handleSquareDraw(ctx, shape, POINT_WIDTH);
+        HandleSquareDraw(ctx, shape, POINT_WIDTH);
     };
 
     const handlePointBoundDraw = (ctx, shape) => {
-        handleSquareDraw(ctx, shape, POINT_DRAG_WIDTH);
+        HandleSquareDraw(ctx, shape, POINT_DRAG_WIDTH);
     };
 
     return (
@@ -83,12 +83,7 @@ interface AnchorProps {
 
 export const Anchor = (props: AnchorProps) => {
     const handleRectDraw = (ctx, shape) => {
-        const reverseScale = 1 / shape.getStage().scaleX();
-        const offset = -SQUARE_ANCHOR_WIDTH * 0.5 * reverseScale;
-        const squareSize = SQUARE_ANCHOR_WIDTH * reverseScale;
-        ctx.beginPath();
-        ctx.rect(offset, offset, squareSize, squareSize);
-        ctx.fillStrokeShape(shape);
+        HandleSquareDraw(ctx, shape, SQUARE_ANCHOR_WIDTH);
     };
 
     const handleCircleDraw = (ctx, shape) => {
@@ -131,12 +126,7 @@ interface NonEditableAnchorProps {
 
 export const NonEditableAnchor = (props: NonEditableAnchorProps) => {
     const handleRectDraw = (ctx, shape) => {
-        const reverseScale = 1 / shape.getStage().scaleX();
-        const offset = -SQUARE_ANCHOR_WIDTH * 0.5 * reverseScale;
-        const squareSize = SQUARE_ANCHOR_WIDTH * reverseScale;
-        ctx.beginPath();
-        ctx.rect(offset, offset, squareSize, squareSize);
-        ctx.fillStrokeShape(shape);
+        HandleSquareDraw(ctx, shape, SQUARE_ANCHOR_WIDTH);
     };
 
     return <Shape x={props.x} y={props.y} rotation={props.rotation} fill={"white"} strokeWidth={1} stroke={"black"} strokeScaleEnabled={false} opacity={0.5} listening={false} sceneFunc={handleRectDraw} />;
@@ -150,12 +140,7 @@ interface CursorMarkerProps {
 
 export const CursorMarker = (props: CursorMarkerProps) => {
     const handleSquareDraw = (ctx, shape) => {
-        const reverseScale = 1 / shape.getStage().scaleX();
-        const offset = -CURSOR_CROSS_CENTER_SQUARE * 0.5 * reverseScale;
-        const squareSize = CURSOR_CROSS_CENTER_SQUARE * reverseScale;
-        ctx.beginPath();
-        ctx.rect(offset, offset, squareSize, squareSize);
-        ctx.fillStrokeShape(shape);
+        HandleSquareDraw(ctx, shape, CURSOR_CROSS_CENTER_SQUARE);
     };
 
     const handleCrossDraw = (ctx, shape) => {
