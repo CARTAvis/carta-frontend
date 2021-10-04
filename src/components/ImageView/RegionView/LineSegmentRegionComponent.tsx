@@ -81,7 +81,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     };
 
     @action private handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.target) {
+        if (konvaEvent.currentTarget) {
             const node = konvaEvent.target;
             const region = this.props.region;
             const frame = this.props.frame;
@@ -97,7 +97,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 }
                 const delta = subtract2D(newAnchorPoint, region.center);
                 const topAnchorPosition = rotate2D({x: 1, y: 0}, (region.rotation * Math.PI) / 180.0);
-                const angle = (angle2D(topAnchorPosition, delta) * 180.0) / Math.PI;
+                const angle = (180.0 / Math.PI) * angle2D(topAnchorPosition, delta);
                 region.setRotation(region.rotation + angle);
             } else if (index >= 0 && index < region.controlPoints.length) {
                 let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
@@ -272,7 +272,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             }
 
             // Construct anchors if region is selected
-            if (this.props.selected && !region.locked) {
+            if (this.props.selected && this.props.listening && !region.locked) {
                 anchors = controlPoints.map((p, i) => {
                     const pSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
                     let pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
@@ -281,7 +281,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 });
 
                 if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
-                    const rotatorOffset = 15;
+                    const rotatorOffset = 1;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
                     anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true));
                 }
@@ -302,14 +302,14 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             });
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
-            if (this.props.selected && !region.locked) {
+            if (this.props.selected && this.props.listening && !region.locked) {
                 anchors = new Array<React.ReactNode>(controlPoints.length);
                 for (let i = 0; i < controlPoints.length; i++) {
                     anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i);
                 }
 
                 if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
-                    const rotatorOffset = 15;
+                    const rotatorOffset = 1;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
                     anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true));
                 }
