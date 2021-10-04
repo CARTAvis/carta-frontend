@@ -12,7 +12,7 @@ import {PointRegionComponent} from "./PointRegionComponent";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
-import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D, ZoomPoint} from "models";
 import {average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
@@ -564,15 +564,18 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 firstControlPoint = transformPoint(frame.spatialTransformAST, firstControlPoint, false);
                 lastControlPoint = transformPoint(frame.spatialTransformAST, lastControlPoint, false);
             }
-            const lineStart = transformedImageToCanvasPos(firstControlPoint.x, firstControlPoint.y, frame, this.props.width, this.props.height);
-            const lineEnd = transformedImageToCanvasPos(lastControlPoint.x, lastControlPoint.y, frame, this.props.width, this.props.height);
+            let lineStart = transformedImageToCanvasPos(firstControlPoint.x, firstControlPoint.y, frame, this.props.width, this.props.height);
+            lineStart = adjustPosToMutatedStage(lineStart, this.stageRef.current.getPosition(), this.stageRef.current.scaleX());
+            let lineEnd = transformedImageToCanvasPos(lastControlPoint.x, lastControlPoint.y, frame, this.props.width, this.props.height);
+            lineEnd = adjustPosToMutatedStage(lineEnd, this.stageRef.current.getPosition(), this.stageRef.current.scaleX());
+            const cusorCanvasPos = adjustPosToMutatedStage(this.currentCursorPos, this.stageRef.current.getPosition(), this.stageRef.current.scaleX());
             let points: number[];
             if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE) {
-                points = [lineStart.x, lineStart.y, this.currentCursorPos.x, this.currentCursorPos.y, lineEnd.x, lineEnd.y];
+                points = [lineStart.x, lineStart.y, cusorCanvasPos.x, cusorCanvasPos.y, lineEnd.x, lineEnd.y];
             } else {
-                points = [lineEnd.x, lineEnd.y, this.currentCursorPos.x, this.currentCursorPos.y];
+                points = [lineEnd.x, lineEnd.y, cusorCanvasPos.x, cusorCanvasPos.y];
             }
-            creatingLine = <Line points={points} dash={[5]} stroke={this.creatingRegion.color} strokeWidth={this.creatingRegion.lineWidth} opacity={0.5} lineJoin={"round"} listening={false} perfectDrawEnabled={false} />;
+            creatingLine = <Line points={points} dash={[5]} stroke={this.creatingRegion.color} strokeWidth={this.creatingRegion.lineWidth} strokeScaleEnabled={false} opacity={0.5} lineJoin={"round"} listening={false} perfectDrawEnabled={false} />;
         }
 
         let cursor: string;
