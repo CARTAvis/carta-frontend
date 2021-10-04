@@ -268,7 +268,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const region = this.props.region;
             const frame = this.props.frame;
             const evt = konvaEvent.evt;
-            const offsetPoint = node.getStage().getPointerPosition();
+            const offsetPoint = adjustPosToUnityStage(node.position(), this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
             if (anchor.includes("rotator")) {
                 // Calculate rotation from anchor position
                 let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);

@@ -88,7 +88,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const index = node.index;
             const anchor = node.id();
             const evt = konvaEvent.evt;
-            const offsetPoint = node.getStage().getPointerPosition();
+            const offsetPoint = adjustPosToUnityStage(node.position(), this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
             if (anchor.includes("rotator")) {
                 // Calculate rotation from anchor position
                 let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
