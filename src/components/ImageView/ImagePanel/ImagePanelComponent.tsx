@@ -131,7 +131,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                     <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
-                    {false && <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />}
+                    <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
                     <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />
                     {this.cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
@@ -150,7 +150,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     )}
                     {overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
                     <BeamProfileOverlayComponent frame={frame} top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />
-                    {false && <CatalogViewGLComponent frame={frame} docked={this.props.docked} />}
+                    <CatalogViewGLComponent frame={frame} docked={this.props.docked} />
                     <RegionViewComponent
                         ref={this.getRegionViewRef}
                         frame={frame}
