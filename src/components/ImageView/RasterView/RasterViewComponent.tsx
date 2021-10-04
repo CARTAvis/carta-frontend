@@ -37,7 +37,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private updateCanvas = () => {
-        AppStore.Instance.setExportImageTimer();
+        AppStore.Instance.setCanvasUpdated();
 
         const frame = this.props.frame;
         const tileRenderService = TileWebGLService.Instance;
