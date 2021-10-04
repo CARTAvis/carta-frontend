@@ -575,7 +575,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             } else {
                 points = [lineEnd.x, lineEnd.y, cusorCanvasPos.x, cusorCanvasPos.y];
             }
-            creatingLine = <Line points={points} dash={[5]} stroke={this.creatingRegion.color} strokeWidth={this.creatingRegion.lineWidth} strokeScaleEnabled={false} opacity={0.5} lineJoin={"round"} listening={false} perfectDrawEnabled={false} />;
+            creatingLine = (
+                <Line points={points} dash={[5]} stroke={this.creatingRegion.color} strokeWidth={this.creatingRegion.lineWidth} strokeScaleEnabled={false} opacity={0.5} lineJoin={"round"} listening={false} perfectDrawEnabled={false} />
+            );
         }
 
         let cursor: string;
