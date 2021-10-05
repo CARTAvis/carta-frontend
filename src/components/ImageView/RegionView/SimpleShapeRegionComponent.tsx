@@ -294,8 +294,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 region.setRotation(region.rotation + angle);
             } else {
                 if (anchor === "left" || anchor === "right" || anchor === "top" || anchor === "bottom") {
-                    const boundedPos = this.getDragBoundedAnchorPos(anchor, node.position(), region.rotation);
-                    node.position(boundedPos);
+                    const dragBoundedPos = this.getDragBoundedAnchorPos(anchor, node.position(), region.rotation);
+                    node.position(dragBoundedPos);
                 }
 
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
