@@ -26,6 +26,7 @@ interface SimpleShapeRegionComponentProps {
 @observer
 export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegionComponentProps> {
     private editAnchor: string;
+    private editAnchorPos: Point2D;
     private editOppositeAnchorPoint: Point2D;
     private editStartCenterPoint: Point2D;
     private previousCursorStyle: string;
@@ -45,8 +46,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
     };
 
-    private startEditing = (anchor: string) => {
+    private startEditing = (anchor: string, anchorPos: Point2D) => {
         this.editAnchor = anchor;
+        this.editAnchorPos = anchorPos;
         const region = this.props.region;
 
         let w: number, h: number;
@@ -253,12 +255,23 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (konvaEvent.target) {
             const node = konvaEvent.target;
             const anchor = node.id();
-            this.startEditing(anchor);
+            this.startEditing(anchor, node.position());
         }
     };
 
     private handleAnchorDragEnd = () => {
         this.props.region.endEditing();
+    };
+
+    private getDragBoundedAnchorPos = (anchor: string, anchorPos: Point2D, rotation: number): Point2D => {
+        // Handle drag bound of left/right/top/bottom anchors
+        if (anchor === "left" || anchor === "right" || anchor === "top" || anchor === "bottom") {
+            const deltaAnchorPoint = subtract2D(anchorPos, this.editAnchorPos);
+            const deltaAnchorPointUnrotated = rotate2D(deltaAnchorPoint, (-rotation * Math.PI) / 180.0);
+            const dragBoundedDelta = (anchor === "left" || anchor === "right") ? {x: deltaAnchorPointUnrotated.x, y: 0} : {x: 0, y: deltaAnchorPointUnrotated.y};
+            return add2D(this.editAnchorPos, rotate2D(dragBoundedDelta, (rotation * Math.PI) / 180.0));
+        }
+        return undefined;
     };
 
     @action private handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -280,6 +293,11 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 const angle = (180.0 / Math.PI) * angle2D(topAnchorPosition, delta);
                 region.setRotation(region.rotation + angle);
             } else {
+                if (anchor === "left" || anchor === "right" || anchor === "top" || anchor === "bottom") {
+                    const boundedPos = this.getDragBoundedAnchorPos(anchor, node.position(), region.rotation);
+                    node.position(boundedPos);
+                }
+
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
                 if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
                     this.applyCornerScaling(region, offsetPoint.x, offsetPoint.y, anchor);
