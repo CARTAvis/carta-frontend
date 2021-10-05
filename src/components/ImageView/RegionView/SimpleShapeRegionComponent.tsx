@@ -281,7 +281,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom") {
             const delta = subtract2D(anchorPos, this.editAnchorPos);
             const deltaUnrotated = rotate2D(delta, (-rotation * Math.PI) / 180.0);
-            const dragBoundedDelta = (anchorName === "left" || anchorName === "right") ? {x: deltaUnrotated.x, y: 0} : {x: 0, y: deltaUnrotated.y};
+            const dragBoundedDelta = anchorName === "left" || anchorName === "right" ? {x: deltaUnrotated.x, y: 0} : {x: 0, y: deltaUnrotated.y};
             return add2D(this.editAnchorPos, rotate2D(dragBoundedDelta, (rotation * Math.PI) / 180.0));
         }
         return undefined;
