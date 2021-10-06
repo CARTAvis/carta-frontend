@@ -122,8 +122,8 @@ export class AppStore {
     private appContainer: HTMLElement;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
-    private isExportingImage: boolean;
     private canvasUpdatedTimer;
+    isExportingImage: boolean;
 
     public getAppContainer = (): HTMLElement => {
         return this.appContainer;
