@@ -74,6 +74,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const appStore = AppStore.Instance;
         const baseFrame = this.props.frame;
         if (baseFrame && this.canvas && this.gl && this.contourWebGLService.shaderUniforms) {
+            appStore.setCanvasUpdated();
+
             const contourFrames = appStore.contourFrames.get(baseFrame);
             this.resizeAndClearCanvas();
             if (contourFrames) {

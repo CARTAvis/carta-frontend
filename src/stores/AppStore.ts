@@ -2193,7 +2193,7 @@ export class AppStore {
     // Waits for image data to be ready. This consists of three steps:
     // 1. Wait 500 ms to allow other commands that may request new data to execute
     // 2. Use a MobX "when" to wait until no tiles or contours are required
-    // 3. Use a MobX "when" to wait for re-rendering of raster canvas
+    // 3. Use a MobX "when" to wait for re-rendering of raster and contour canvas
     waitForImageData = async () => {
         await this.delay(500);
         return new Promise<void>(resolve => {

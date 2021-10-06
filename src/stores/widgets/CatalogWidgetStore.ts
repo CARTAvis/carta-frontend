@@ -1,7 +1,7 @@
 import * as CARTACompute from "carta_computation";
 import {action, observable, makeObservable, computed, reaction} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {CatalogOverlay, CatalogStore, FrameScaling, PreferenceStore} from "stores";
+import {AppStore, CatalogOverlay, CatalogStore, FrameScaling, PreferenceStore} from "stores";
 import {minMaxArray, clamp} from "utilities";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 
@@ -678,7 +678,8 @@ export class CatalogWidgetStore {
         if (!this.disableSizeMap && column?.length && this.sizeColumnMin.clipd !== undefined && this.sizeColumnMax.clipd !== undefined) {
             const pointSize = this.pointSizebyType;
             let min = this.sizeArea ? this.shapeSettings.areaBase : this.shapeSettings.diameterBase;
-            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, devicePixelRatio);
+            return CARTACompute.CalculateCatalogSize(column, this.sizeColumnMin.clipd, this.sizeColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeScalingType, this.sizeArea, devicePixelRatio * AppStore.Instance.imageRatio);
+            
         }
         return new Float32Array(0);
     }
@@ -688,7 +689,7 @@ export class CatalogWidgetStore {
         if (!this.disableSizeMinorMap && column?.length && this.sizeMinorColumnMin.clipd !== undefined && this.sizeMinorColumnMax.clipd !== undefined) {
             const pointSize = this.minorPointSizebyType;
             let min = this.sizeMinorArea ? this.shapeSettings.areaBase : this.shapeSettings.diameterBase;
-            return CARTACompute.CalculateCatalogSize(column, this.sizeMinorColumnMin.clipd, this.sizeMinorColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeMinorScalingType, this.sizeMinorArea, devicePixelRatio);
+            return CARTACompute.CalculateCatalogSize(column, this.sizeMinorColumnMin.clipd, this.sizeMinorColumnMax.clipd, pointSize.min + min, pointSize.max + min, this.sizeMinorScalingType, this.sizeMinorArea, devicePixelRatio * AppStore.Instance.imageRatio);
         }
         return new Float32Array(0);
     }
