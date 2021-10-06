@@ -287,13 +287,19 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         return undefined;
     };
 
-    private getDragBoundedDiagonalAnchorPos = (anchorName: string, anchorPos: Point2D, rotation: number): Point2D => {
+    private getDragBoundedDiagonalAnchorPos = (region: RegionStore, anchorName: string): Point2D => {
         // Handle keep-aspect drag bound of diagonal anchors
         if (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right") {
-            const delta = subtract2D(anchorPos, this.centerCanvasPos);
-            const deltaUnrotated = rotate2D(delta, (-rotation * Math.PI) / 180.0);
-            const dragBoundedDelta = {x: anchorName === "bottom-left" || anchorName === "top-right" ? -deltaUnrotated.y : deltaUnrotated.y, y: deltaUnrotated.y};
-            return add2D(this.centerCanvasPos, rotate2D(dragBoundedDelta, (rotation * Math.PI) / 180.0));
+            const offset = rotate2D(scale2D(region.size, region.regionType === CARTA.RegionType.RECTANGLE ? 0.5 : 1), (region.rotation * Math.PI) / 180.0);
+            if (anchorName === "top-left") {
+                return add2D(this.centerCanvasPos, {x: -offset.y, y: -offset.x});
+            } else if (anchorName === "bottom-left") {
+                return add2D(this.centerCanvasPos, {x: -offset.x, y: offset.y});
+            } else if (anchorName === "top-right") {
+                return add2D(this.centerCanvasPos, {x: offset.x, y: -offset.y});
+            } else {
+                return add2D(this.centerCanvasPos, {x: offset.y, y: offset.x});
+            }
         }
         return undefined;
     };
@@ -324,17 +330,17 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 }
 
                 const isKeepAspectMode = evt.shiftKey;
-                if (isKeepAspectMode && (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right")) {
-                    const dragBoundedPos = this.getDragBoundedDiagonalAnchorPos(anchorName, anchorPos, region.rotation);
-                    anchor.position(dragBoundedPos);
-                }
-
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
                 const isRegionCornerMode = this.props.isRegionCornerMode;
                 if ((isRegionCornerMode && !isCtrlPressed) || (!isRegionCornerMode && isCtrlPressed)) {
                     this.applyCornerScaling(region, offsetPoint.x, offsetPoint.y, anchorName);
                 } else {
                     this.applyCenterScaling(region, offsetPoint.x, offsetPoint.y, anchorName, isKeepAspectMode);
+                }
+
+                if (isKeepAspectMode && (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right")) {
+                    const dragBoundedPos = this.getDragBoundedDiagonalAnchorPos(region, anchorName);
+                    anchor.position(dragBoundedPos);
                 }
             }
         }
