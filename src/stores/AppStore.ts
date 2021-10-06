@@ -2223,8 +2223,8 @@ export class AppStore {
 
     setCanvasUpdated = () => {
         clearTimeout(this.canvasUpdatedTimer);
-        this.canvasUpdatedTimer = setTimeout(() => (this.setIsCanvasUpdated(true)), EXPORT_IMAGE_DELAY);
-    }
+        this.canvasUpdatedTimer = setTimeout(() => this.setIsCanvasUpdated(true), EXPORT_IMAGE_DELAY);
+    };
 
     fetchParameter = (val: any) => {
         if (val && val instanceof Map) {
