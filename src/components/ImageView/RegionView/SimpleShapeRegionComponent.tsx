@@ -26,9 +26,9 @@ interface SimpleShapeRegionComponentProps {
 @observer
 export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegionComponentProps> {
     private editAnchor: string;
-    private editAnchorPos: Point2D;
     private centerCanvasPos: Point2D;
     private editOppositeAnchorPoint: Point2D;
+    private editOppositeAnchorCanvasPos: Point2D;
     private editStartCenterPoint: Point2D;
     private previousCursorStyle: string;
 
@@ -47,21 +47,20 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
     };
 
-    private startEditing = (anchor: string, anchorPos: Point2D, isKeepAspectMode: boolean) => {
+    private startEditing = (anchor: string) => {
         this.editAnchor = anchor;
-        this.editAnchorPos = anchorPos;
 
         const region = this.props.region;
-        if (isKeepAspectMode) {
-            const frame = this.props.frame;
-            let centerImagePos = region.center;
-            if (frame.spatialReference) {
-                centerImagePos = transformPoint(frame.spatialTransformAST, centerImagePos, false);
-            }
-            let centerCanvasPos = transformedImageToCanvasPos(centerImagePos.x, centerImagePos.y, frame, this.props.layerWidth, this.props.layerHeight);
-            centerCanvasPos = adjustPosToMutatedStage(centerCanvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
-            this.centerCanvasPos = centerCanvasPos;
+        const frame = this.props.frame;
+
+        // Find center's canvas space position
+        let centerImagePos = region.center;
+        if (frame.spatialReference) {
+            centerImagePos = transformPoint(frame.spatialTransformAST, centerImagePos, false);
         }
+        let centerCanvasPos = transformedImageToCanvasPos(centerImagePos.x, centerImagePos.y, frame, this.props.layerWidth, this.props.layerHeight);
+        centerCanvasPos = adjustPosToMutatedStage(centerCanvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+        this.centerCanvasPos = centerCanvasPos;
 
         let w: number, h: number;
         if (this.props.region.regionType === CARTA.RegionType.RECTANGLE) {
@@ -93,6 +92,16 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         const relativeOppositeAnchorPoint = rotate2D(relativeOppositeAnchorPointUnrotated, (this.props.region.rotation * Math.PI) / 180.0);
         this.editOppositeAnchorPoint = add2D(this.editStartCenterPoint, relativeOppositeAnchorPoint);
+
+        // Find opposite anchor's canvas space position for corner mode
+        let editOppositeAnchorImagePos = this.editOppositeAnchorPoint;
+        if (frame.spatialReference) {
+            editOppositeAnchorImagePos = transformPoint(frame.spatialTransformAST, editOppositeAnchorImagePos, false);
+        }
+        let editOppositeAnchorCanvasPos = transformedImageToCanvasPos(editOppositeAnchorImagePos.x, editOppositeAnchorImagePos.y, frame, this.props.layerWidth, this.props.layerHeight);
+        editOppositeAnchorCanvasPos = adjustPosToMutatedStage(editOppositeAnchorCanvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+        this.editOppositeAnchorCanvasPos = editOppositeAnchorCanvasPos;
+
         this.props.region.beginEditing();
     };
 
@@ -267,8 +276,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (konvaEvent.target) {
             const node = konvaEvent.target;
             const anchor = node.id();
-            const isKeepAspectMode = konvaEvent.evt.shiftKey;
-            this.startEditing(anchor, node.position(), isKeepAspectMode);
+            this.startEditing(anchor);
         }
     };
 
@@ -276,13 +284,22 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         this.props.region.endEditing();
     };
 
-    private getDragBoundedAnchorPos = (anchorName: string, anchorPos: Point2D, rotation: number): Point2D => {
+    private getDragBoundedAnchorPos = (region: RegionStore, anchorName: string, isCornerMode: boolean): Point2D => {
         // Handle drag bound of left/right/top/bottom anchors
         if (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom") {
-            const delta = subtract2D(anchorPos, this.editAnchorPos);
-            const deltaUnrotated = rotate2D(delta, (-rotation * Math.PI) / 180.0);
-            const dragBoundedDelta = anchorName === "left" || anchorName === "right" ? {x: deltaUnrotated.x, y: 0} : {x: 0, y: deltaUnrotated.y};
-            return add2D(this.editAnchorPos, rotate2D(dragBoundedDelta, (rotation * Math.PI) / 180.0));
+            const size = region.regionType === CARTA.RegionType.RECTANGLE ? {x: region.size.x, y: region.size.y} : {x: region.size.y, y: region.size.x};
+            let delta: Point2D;
+            if (anchorName === "left") {
+                delta = {x: -size.x, y: 0};
+            } else if (anchorName === "right") {
+                delta = {x: size.x, y: 0};
+            } else if (anchorName === "top") {
+                delta = {x: 0, y: -size.y};
+            } else {
+                delta = {x: 0, y: size.y};
+            }
+            const offset = rotate2D(scale2D(delta, region.regionType === CARTA.RegionType.RECTANGLE ? 0.5 : 1), (-region.rotation * Math.PI) / 180.0);
+            return isCornerMode ? add2D(this.editOppositeAnchorCanvasPos, scale2D(offset, 2)) : add2D(this.centerCanvasPos, offset);
         }
         return undefined;
     };
@@ -324,18 +341,18 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 const angle = (180.0 / Math.PI) * angle2D(topAnchorPosition, delta);
                 region.setRotation(region.rotation + angle);
             } else {
-                if (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom") {
-                    const dragBoundedPos = this.getDragBoundedAnchorPos(anchorName, anchorPos, region.rotation);
-                    anchor.position(dragBoundedPos);
-                }
-
                 const isKeepAspectMode = evt.shiftKey;
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
-                const isRegionCornerMode = this.props.isRegionCornerMode;
-                if ((isRegionCornerMode && !isCtrlPressed) || (!isRegionCornerMode && isCtrlPressed)) {
+                const isRegionCornerMode = (this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed);
+                if (isRegionCornerMode) {
                     this.applyCornerScaling(region, offsetPoint.x, offsetPoint.y, anchorName);
                 } else {
                     this.applyCenterScaling(region, offsetPoint.x, offsetPoint.y, anchorName, isKeepAspectMode);
+                }
+
+                if (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom") {
+                    const dragBoundedPos = this.getDragBoundedAnchorPos(region, anchorName, isRegionCornerMode);
+                    anchor.position(dragBoundedPos);
                 }
 
                 if (isKeepAspectMode && (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right")) {
