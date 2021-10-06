@@ -43,7 +43,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
             const frame = this.props.frame;
-            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current);
             let positionImageSpace = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
@@ -68,7 +68,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
             centerPixelSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
             rotation = 0;
         }
-        centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+        centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.current);
 
         return (
             <Point

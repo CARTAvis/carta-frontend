@@ -26,7 +26,7 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
             // and will be adjusted in the stageZoomToPoint() of componentDidMount() in RegionViewComponent accordingly.
             const stage = this.props.stageRef?.current;
             if (stage) {
-                cursorCanvasSpace = adjustPosToMutatedStage(cursorCanvasSpace, stage.getPosition(), stage.scaleX());
+                cursorCanvasSpace = adjustPosToMutatedStage(cursorCanvasSpace, stage);
             }
 
             return <CursorMarker x={cursorCanvasSpace.x} y={cursorCanvasSpace.y} rotation={-rotation} />;

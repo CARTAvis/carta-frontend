@@ -565,10 +565,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 lastControlPoint = transformPoint(frame.spatialTransformAST, lastControlPoint, false);
             }
             let lineStart = transformedImageToCanvasPos(firstControlPoint.x, firstControlPoint.y, frame, this.props.width, this.props.height);
-            lineStart = adjustPosToMutatedStage(lineStart, this.stageRef.current.getPosition(), this.stageRef.current.scaleX());
+            lineStart = adjustPosToMutatedStage(lineStart, this.stageRef.current);
             let lineEnd = transformedImageToCanvasPos(lastControlPoint.x, lastControlPoint.y, frame, this.props.width, this.props.height);
-            lineEnd = adjustPosToMutatedStage(lineEnd, this.stageRef.current.getPosition(), this.stageRef.current.scaleX());
-            const cusorCanvasPos = adjustPosToMutatedStage(this.currentCursorPos, this.stageRef.current.getPosition(), this.stageRef.current.scaleX());
+            lineEnd = adjustPosToMutatedStage(lineEnd, this.stageRef.current);
+            const cusorCanvasPos = adjustPosToMutatedStage(this.currentCursorPos, this.stageRef.current);
             let points: number[];
             if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE) {
                 points = [lineStart.x, lineStart.y, cusorCanvasPos.x, cusorCanvasPos.y, lineEnd.x, lineEnd.y];

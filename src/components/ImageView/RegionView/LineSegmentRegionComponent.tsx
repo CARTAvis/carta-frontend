@@ -88,7 +88,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const index = node.index;
             const anchor = node.id();
             const evt = konvaEvent.evt;
-            const offsetPoint = adjustPosToUnityStage(node.position(), this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+            const offsetPoint = adjustPosToUnityStage(node.position(), this.props.stageRef.current);
             if (anchor.includes("rotator")) {
                 // Calculate rotation from anchor position
                 let newAnchorPoint = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, this.props.layerWidth, this.props.layerHeight);
@@ -215,7 +215,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const region = this.props.region;
             const frame = this.props.frame;
             const centerImageSpace = average2D(region.controlPoints);
-            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+            const position = adjustPosToUnityStage(konvaEvent.target.position(), this.props.stageRef.current);
             let newPosition = canvasToTransformedImagePos(position.x, position.y, frame, this.props.layerWidth, this.props.layerHeight);
             if (frame.spatialReference) {
                 newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
@@ -260,13 +260,13 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const centerReferenceImage = average2D(controlPoints);
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
             centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            centerPointCanvasSpace = adjustPosToMutatedStage(centerPointCanvasSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+            centerPointCanvasSpace = adjustPosToMutatedStage(centerPointCanvasSpace, this.props.stageRef.current);
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const N = pointsSecondaryImage.length;
             pointArray = new Array<number>(N * 2);
             for (let i = 0; i < N; i++) {
                 let approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
-                approxPointPixelSpace = adjustPosToMutatedStage(approxPointPixelSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+                approxPointPixelSpace = adjustPosToMutatedStage(approxPointPixelSpace, this.props.stageRef.current);
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
             }
@@ -276,7 +276,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 anchors = controlPoints.map((p, i) => {
                     const pSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
                     let pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-                    pCanvasPos = adjustPosToMutatedStage(pCanvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+                    pCanvasPos = adjustPosToMutatedStage(pCanvasPos, this.props.stageRef.current);
                     return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i);
                 });
 
@@ -290,7 +290,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             if (this.hoverIntersection && !region.locked) {
                 const pSecondaryImage = transformPoint(frame.spatialTransformAST, this.hoverIntersection, false);
                 let pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-                pCanvasPos = adjustPosToMutatedStage(pCanvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+                pCanvasPos = adjustPosToMutatedStage(pCanvasPos, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
             }
 
@@ -298,7 +298,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         } else {
             controlPoints = controlPoints.map(p => {
                 const canvasPos = transformedImageToCanvasPos(p.x, p.y, frame, this.props.layerWidth, this.props.layerHeight);
-                return adjustPosToMutatedStage(canvasPos, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+                return adjustPosToMutatedStage(canvasPos, this.props.stageRef.current);
             });
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
@@ -317,7 +317,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
             if (this.hoverIntersection && !region.locked) {
                 let anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
-                anchorPositionPixelSpace = adjustPosToMutatedStage(anchorPositionPixelSpace, this.props.stageRef.current.getPosition(), this.props.stageRef.current.scaleX());
+                anchorPositionPixelSpace = adjustPosToMutatedStage(anchorPositionPixelSpace, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
             }
 
