@@ -1,10 +1,11 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, NonIdealState, Tabs, Tab, TabId, HTMLSelect} from "@blueprintjs/core";
+import {FormGroup, Tabs, Tab, TabId, HTMLSelect, AnchorButton, Position} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {PVGeneratorWidgetStore} from "stores/widgets";
+import {PVGeneratorWidgetStore, RegionId} from "stores/widgets";
 import {SafeNumericInput} from "components/Shared";
 import "./PVGeneratorComponent.scss";
 
@@ -25,9 +26,9 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
             id: "pv-generator",
             type: "pv-generator",
             minWidth: 350,
-            minHeight: 350,
-            defaultWidth: 650,
-            defaultHeight: 350,
+            minHeight: 200,
+            defaultWidth: 500,
+            defaultHeight: 300,
             title: "PV Generator",
             isCloseable: true,
             helpType: HelpType.SPATIAL_PROFILER
@@ -72,25 +73,54 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    render() {
+    private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = AppStore.Instance;
+        if (appStore.activeFrame) {
+            const selectedFileId = parseInt(changeEvent.target.value);
+            this.widgetStore.setFileId(selectedFileId);
+            this.widgetStore.setRegionId(this.widgetStore.effectiveFrame.frameInfo.fileId, RegionId.ACTIVE);
+        }
+    };
+
+    private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame) {
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            this.widgetStore.setFileId(fileId);
+            this.widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
+        }
+    };
+
+    render() {
+        let selectedValue = RegionId.ACTIVE;
+        if (this.widgetStore.effectiveFrame?.regionSet) {
+            selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
+        }
+
+        const disabledButton = !this.widgetStore.effectiveRegion;
+
         const pvImagePanel = (
-            <div className="panel-container">
+            <div className="pv-image-panel">
                 <FormGroup inline={true} label="Image">
-                    <HTMLSelect value={this.widgetStore.fileId} options={appStore.frameNames} onChange={ev => this.widgetStore.setFileId(parseInt(ev.currentTarget.value))} />
+                    <HTMLSelect value={this.widgetStore.fileId} options={this.widgetStore.frameOptions} onChange={this.handleFrameChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label="Region">
-                    <HTMLSelect value={this.widgetStore.regionId} options={this.widgetStore.regionOptions} onChange={ev => this.widgetStore.setRegionId(parseInt(ev.currentTarget.value))} />
+                    <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label="Average (px)">
-                    <SafeNumericInput min={0} max={10} stepSize={0} value={this.widgetStore.average} onValueChange={value => this.widgetStore.setAverage(value)} />
+                    <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.average} onValueChange={value => this.widgetStore.setAverage(value)} />
                 </FormGroup>
+                <div className="generate-button">
+                    <Tooltip2 disabled={!disabledButton} content="Please select Line region" position={Position.BOTTOM}>
+                        <AnchorButton intent="success" disabled={disabledButton} text="Generate" />
+                    </Tooltip2>
+                </div>
             </div>
         );
 
         return (
             <div className="pv-generator-widget">
-                <NonIdealState icon={"folder-open"} title={""} description={"Use the Generate preview cube tab to view the preview pv image interactivly "} />
+                {/* <NonIdealState icon={"folder-open"} title={""} description={"Use the Generate preview cube tab to view the preview pv image interactivly "} /> */}
                 <div className="pv-generator-panel">
                     <Tabs id="pvGeneratorTabs" selectedTabId={this.selectedTabId} onChange={this.setSelectedTab}>
                         <Tab id={PVGeneratorComponentTabs.PV_IMAGE} title="Generate PV image" panel={pvImagePanel} />

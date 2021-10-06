@@ -4,9 +4,13 @@
     margin: 20px;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    height: 100%;
     user-select: none;
+
+    .bp3-numeric-input {
+        .bp3-input-group {
+            width: 80px;
+        }
+    }
 
     .bp3-non-ideal-state {
         flex: auto;
@@ -20,13 +24,15 @@
         margin: 0;
 
         .bp3-form-group {
-            &:first-of-type {
-                margin-left: 0px;
+            margin-right: 10px;
+            .bp3-label {
+                margin: 0px;
+                width: 9em;
             }
         }
 
-        .bp3-form-group .bp3-label {
-            text-align: left;
+        .generate-button {
+            float: right;
         }
     }
 }
