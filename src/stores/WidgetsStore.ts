@@ -282,8 +282,8 @@ export class WidgetsStore {
         [
             WidgetType.PVGenerator,
             {
-                isCustomIcon: false,
-                icon: "timeline-line-chart",
+                isCustomIcon: true,
+                icon: "pv",
                 onClick: () => WidgetsStore.Instance.createFloatingPVGeneratorWidget(),
                 widgetConfig: PVGeneratorComponent.WIDGET_CONFIG
             }
