@@ -7,6 +7,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {PVGeneratorWidgetStore, RegionId} from "stores/widgets";
 import {SafeNumericInput} from "components/Shared";
+import {TaskProgressDialogComponent} from "components/Dialogs";
 import "./PVGeneratorComponent.scss";
 
 export enum PVGeneratorComponentTabs {
@@ -92,6 +93,9 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     render() {
+        const appStore = AppStore.Instance;
+        const frame = this.widgetStore.effectiveFrame;
+
         let selectedValue = RegionId.ACTIVE;
         if (this.widgetStore.effectiveFrame?.regionSet) {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
@@ -107,12 +111,12 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
                 <FormGroup inline={true} label="Region">
                     <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} />
                 </FormGroup>
-                <FormGroup inline={true} label="Average (px)">
-                    <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.average} onValueChange={value => this.widgetStore.setAverage(value)} />
+                <FormGroup inline={true} label="Average Width (px)">
+                    <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
                 </FormGroup>
                 <div className="generate-button">
                     <Tooltip2 disabled={!disabledButton} content="Please select Line region" position={Position.BOTTOM}>
-                        <AnchorButton intent="success" disabled={disabledButton} text="Generate" />
+                        <AnchorButton intent="success" disabled={disabledButton} text="Generate" onClick={this.widgetStore.requestPV} />
                     </Tooltip2>
                 </div>
             </div>
@@ -127,6 +131,14 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
                     </Tabs>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
+                <TaskProgressDialogComponent
+                    isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
+                    progress={frame ? frame.requestingPVProgress : 0}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={true}
+                    onCancel={this.widgetStore.requestingPVCancelled}
+                    text={"Generating PV"}
+                />
             </div>
         );
     }

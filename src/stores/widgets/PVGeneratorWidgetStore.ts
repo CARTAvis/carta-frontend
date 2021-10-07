@@ -5,7 +5,7 @@ import {IOptionProps} from "@blueprintjs/core";
 import {RegionWidgetStore, RegionsType, RegionId} from "./RegionWidgetStore";
 
 export class PVGeneratorWidgetStore extends RegionWidgetStore {
-    @observable average: number;
+    @observable width: number;
 
     @computed get regionOptions(): IOptionProps[] {
         const appStore = AppStore.Instance;
@@ -26,13 +26,34 @@ export class PVGeneratorWidgetStore extends RegionWidgetStore {
         return regionOptions;
     }
 
-    @action setAverage = (val: number) => {
-        this.average = val;
+    @action requestPV = () => {
+        const frame = this.effectiveFrame;
+        if (frame && this.effectiveRegion) {
+            const requestMessage: CARTA.IPvRequest = {
+                fileId: frame.frameInfo.fileId,
+                regionId: this.effectiveRegionId,
+                width: this.width
+            };
+            frame.resetPvRequestState();
+            frame.setIsRequestingPV(true);
+            AppStore.Instance.requestPV(requestMessage, frame);
+        }
+    };
+
+    @action requestingPVCancelled = () => {
+        const frame = this.effectiveFrame;
+        if (frame) {
+            AppStore.Instance.cancelRequestingPV(frame.frameInfo.fileId);
+        }
+    };
+
+    @action setWidth = (val: number) => {
+        this.width = val;
     };
 
     constructor() {
         super(RegionsType.LINE);
         makeObservable(this);
-        this.average = 3;
+        this.width = 3;
     }
 }

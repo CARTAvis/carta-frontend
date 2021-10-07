@@ -115,9 +115,12 @@ export class FrameStore {
     @observable secondarySpectralImages: FrameStore[];
     @observable secondaryRasterScalingImages: FrameStore[];
     @observable momentImages: FrameStore[];
+    @observable pvImages: FrameStore[];
 
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
+    @observable isRequestingPV: boolean;
+    @observable requestingPVProgress: number;
 
     @observable stokesFiles: CARTA.StokesFile[];
 
@@ -787,9 +790,12 @@ export class FrameStore {
         this.secondarySpectralImages = [];
         this.secondaryRasterScalingImages = [];
         this.momentImages = [];
+        this.pvImages = [];
 
         this.isRequestingMoments = false;
         this.requestingMomentsProgress = 0;
+        this.isRequestingPV = false;
+        this.requestingPVProgress = 0;
         this.cursorMovementHandle = null;
 
         this.stokesFiles = [];
@@ -1994,5 +2000,28 @@ export class FrameStore {
 
     @action setStokesFiles = (stokesFiles: CARTA.StokesFile[]) => {
         this.stokesFiles = stokesFiles;
+    };
+
+    @action addPvImage = (frame: FrameStore) => {
+        if (frame && !this.pvImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+            this.pvImages.push(frame);
+        }
+    };
+
+    @action removePvImage = () => {
+        this.pvImages = [];
+    };
+
+    @action setIsRequestingPV = (val: boolean) => {
+        this.isRequestingPV = val;
+    };
+
+    @action updateRequestingPvProgress = (progress: number) => {
+        this.requestingPVProgress = progress;
+    };
+
+    @action resetPvRequestState = () => {
+        this.setIsRequestingPV(false);
+        this.updateRequestingPvProgress(0);
     };
 }

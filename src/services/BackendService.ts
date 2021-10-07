@@ -87,6 +87,7 @@ export class BackendService {
     readonly momentProgressStream: Subject<CARTA.MomentProgress>;
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     readonly listProgressStream: Subject<CARTA.ListProgress>;
+    readonly pvProgressStream: Subject<CARTA.PvProgress>;
     private readonly decoderMap: Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>;
 
     private constructor() {
@@ -111,6 +112,7 @@ export class BackendService {
         this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
         this.momentProgressStream = new Subject<CARTA.MomentProgress>();
         this.listProgressStream = new Subject<CARTA.ListProgress>();
+        this.pvProgressStream = new Subject<CARTA.PvProgress>();
 
         // Construct handler and decoder maps
         this.decoderMap = new Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>([
@@ -144,7 +146,9 @@ export class BackendService {
             [CARTA.EventType.SCRIPTING_REQUEST, {messageClass: CARTA.ScriptingRequest, handler: this.onScriptingRequest}],
             [CARTA.EventType.SPLATALOGUE_PONG, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
-            [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}]
+            [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}],
+            [CARTA.EventType.PV_PROGRESS, {messageClass: CARTA.PvProgress, handler: this.onStreamedPvProgress}],
+            [CARTA.EventType.PV_RESPONSE, {messageClass: CARTA.PvResponse, handler: this.onDeferredResponse}]
         ]);
 
         // check ping every 5 seconds
@@ -749,6 +753,35 @@ export class BackendService {
         }
     }
 
+    async requestPV(message: CARTA.IPvRequest): Promise<CARTA.IPvResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.PV_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.PV_REQUEST, CARTA.PvRequest.encode(message).finish())) {
+                const deferredResponse = new Deferred<CARTA.IPvResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
+            } else {
+                throw new Error("Could not send event");
+            }
+        }
+    }
+
+    cancelRequestingPV(fileId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.StopPvCalc.create({fileId});
+            this.logEvent(CARTA.EventType.STOP_PV_CALC, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.STOP_PV_CALC, CARTA.StopPvCalc.encode(message).finish())) {
+                return true;
+            }
+            return throwError(new Error("Could not send event"));
+        }
+    }
+
     @action("send scripting response")
     sendScriptingResponse = (message: CARTA.IScriptingResponse) => {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
@@ -873,6 +906,10 @@ export class BackendService {
 
     private onStreamedListProgress(_eventId: number, listProgress: CARTA.ListProgress) {
         this.listProgressStream.next(listProgress);
+    }
+
+    private onStreamedPvProgress(_eventId: number, pvProgress: CARTA.PvProgress) {
+        this.pvProgressStream.next(pvProgress);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {
