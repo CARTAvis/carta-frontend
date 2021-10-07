@@ -59,8 +59,8 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
 
     const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    composedCanvas.width = overlayCanvas.width * AppStore.Instance.imageRatio;
-    composedCanvas.height = overlayCanvas.height * AppStore.Instance.imageRatio;
+    composedCanvas.width = overlayCanvas.width;
+    composedCanvas.height = overlayCanvas.height;
 
     const ctx = composedCanvas.getContext("2d");
     ctx.fillStyle = backgroundColor;

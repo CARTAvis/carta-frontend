@@ -30,7 +30,9 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     readonly activeLayer: ImageViewLayer;
 
     @action setPixelHighlightValue = (val: number) => {
-        this.pixelHighlightValue = val;
+        if (!AppStore.Instance.isExportingImage) {
+            this.pixelHighlightValue = val;
+        }
     };
 
     constructor(props: ImagePanelComponentProps) {
