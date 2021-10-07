@@ -1123,7 +1123,9 @@ export class AppStore {
 
     @action setImageRatio = (val: number) => {
         for (const f of this.frames) {
-            f.setZoom((f.zoomLevel * val) / this.imageRatio);
+            if (!f.spatialReference) {
+                f.setZoom((f.zoomLevel * val) / this.imageRatio);
+            };
         }
         this.imageRatio = val;
     };
