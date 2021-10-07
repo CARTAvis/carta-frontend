@@ -7,7 +7,7 @@ import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D, angle2D, length2D} from "utilities";
+import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, scale2D, subtract2D, angle2D} from "utilities";
 import {canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 
 export interface LineSegmentRegionComponentProps {
@@ -104,14 +104,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     newAnchorPoint = transformPoint(frame.spatialTransformAST, newAnchorPoint, true);
                 }
                 const delta = subtract2D(newAnchorPoint, region.center);
-                const topAnchorPosition = rotate2D({x: 0, y: 1}, (region.rotation * Math.PI) / 180.0);
+                const topAnchorPosition = rotate2D({x: 1, y: 0}, (region.rotation * Math.PI) / 180.0);
                 const angle = (angle2D(topAnchorPosition, delta) * 180.0) / Math.PI;
-                const newRotation = (((region.rotation + angle + 360) % 360) * Math.PI) / 180.0;
-                const dx = length2D(region.size) * Math.cos(newRotation);
-                const dy = length2D(region.size) * Math.sin(newRotation);
-                const newStart = {x: region.center.x - dx / 2, y: region.center.y - dy / 2};
-                const newEnd = {x: region.center.x + dx / 2, y: region.center.y + dy / 2};
-                region.setControlPoints([newStart, newEnd]);
+                region.setRotation(region.rotation + angle);
             } else if (index >= 0 && index < region.controlPoints.length) {
                 let positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
                 if (frame.spatialReference) {
@@ -309,7 +304,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         const region = this.props.region;
         const frame = this.props.frame;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        let rotation = -region.rotation;
+        let rotation = -region.rotation + 90.0;
 
         let controlPoints = region.controlPoints;
         let centerPointCanvasSpace: Point2D;
