@@ -90,7 +90,7 @@ export class ImageSaveComponent extends React.Component {
             const addOption = (value: number, stokesInfoList: string[]) => {
                 options.push({value: value, label: stokesInfoList.join(", ").replace(/, Stokes/g, ", ")});
             };
-            
+
             const optionsAddFourElements = () => {
                 addOption(4, [stokesInfo[3]]);
                 addOption(7, stokesInfo.slice(2, 4));
@@ -127,7 +127,7 @@ export class ImageSaveComponent extends React.Component {
                 default:
                     break;
             }
-            
+
             return options.sort((a, b) => a.value - b.value);
         }
         return [];
