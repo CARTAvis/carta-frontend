@@ -23,7 +23,6 @@ export enum PreferenceKeys {
     GLOBAL_CODE_SNIPPETS_ENABLED = "codeSnippetsEnabled",
     GLOBAL_KEEP_LAST_USED_FOLDER = "keepLastUsedFolder",
     GLOBAL_SAVED_LAST_FOLDER = "lastUsedFolder",
-    GLOBAL_EXPORT_IMAGE_RATIO = "exportImageRatio",
 
     RENDER_CONFIG_SCALING = "scaling",
     RENDER_CONFIG_COLORMAP = "colormap",
@@ -119,8 +118,7 @@ const DEFAULTS = {
         transparentImageBackground: false,
         codeSnippetsEnabled: false,
         keepLastUsedFolder: false,
-        lastUsedFolder: "",
-        exportImageRatio: 1
+        lastUsedFolder: ""
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
@@ -266,10 +264,6 @@ export class PreferenceStore {
 
     @computed get lastUsedFolder(): string {
         return this.preferences.get(PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER) ?? DEFAULTS.GLOBAL.lastUsedFolder;
-    }
-
-    @computed get exportImageRatio(): number {
-        return this.preferences.get(PreferenceKeys.GLOBAL_EXPORT_IMAGE_RATIO) ?? DEFAULTS.GLOBAL.exportImageRatio;
     }
 
     // getters for render config
@@ -611,8 +605,7 @@ export class PreferenceStore {
             PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
             PreferenceKeys.GLOBAL_CODE_SNIPPETS_ENABLED,
             PreferenceKeys.GLOBAL_KEEP_LAST_USED_FOLDER,
-            PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER,
-            PreferenceKeys.GLOBAL_EXPORT_IMAGE_RATIO
+            PreferenceKeys.GLOBAL_SAVED_LAST_FOLDER
         ]);
     };
 

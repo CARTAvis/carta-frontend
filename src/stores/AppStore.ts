@@ -117,13 +117,13 @@ export class AppStore {
     @observable cursorFrozen: boolean;
     @observable toolbarExpanded: boolean;
     @observable imageRatio: number;
+    @observable isExportingImage: boolean;
     @observable private isCanvasUpdated: boolean;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
     private canvasUpdatedTimer;
-    isExportingImage: boolean;
 
     public getAppContainer = (): HTMLElement => {
         return this.appContainer;
@@ -1128,6 +1128,10 @@ export class AppStore {
             };
         }
         this.imageRatio = val;
+    };
+
+    @action setIsExportingImage = (val: boolean) => {
+        this.isExportingImage = val;
     };
 
     @action setIsCanvasUpdated = (val: boolean) => {
@@ -2135,15 +2139,15 @@ export class AppStore {
         return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
     }
 
-    exportImage = () => {
+    exportImage = (imageRatio: number) => {
         if (this.activeFrame) {
             const index = this.visibleFrames.indexOf(this.activeFrame);
             if (index === -1) {
                 return;
             }
 
-            this.isExportingImage = true;
-            this.setImageRatio(this.preferenceStore.exportImageRatio);
+            this.setIsExportingImage(true);
+            this.setImageRatio(imageRatio);
             this.waitForImageData().then(() => {
                 const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
                 const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
@@ -2157,7 +2161,7 @@ export class AppStore {
                         link.dispatchEvent(new MouseEvent("click"));
                     }, "image/png");
                 }
-                this.isExportingImage = false;
+                this.setIsExportingImage(false);
             });
         }
     };

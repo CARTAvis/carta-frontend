@@ -7,6 +7,7 @@ import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, OverlayStore, RegionMode, RegionStore, SystemType} from "stores";
 import {ImageViewLayer} from "../ImageViewComponent";
+import {ExportImageMenuComponent} from "../../Shared";
 import {toFixed} from "utilities";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import "./ToolbarComponent.scss";
@@ -177,6 +178,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
+        const exportImageMenu = (
+            <Menu>
+                <ExportImageMenuComponent />
+            </Menu>
+         )
+
         const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
         const catalogSelectionDisabled = appStore.catalogNum === 0;
 
@@ -318,7 +325,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 </span>
                             }
                         >
-                            <AnchorButton icon="floppy-disk" onClick={appStore.exportImage} />
+                            <Popover2 content={exportImageMenu} position={Position.TOP} minimal={true}>
+                                <AnchorButton disabled={appStore.isExportingImage} icon="floppy-disk" />
+                            </Popover2>
                         </Tooltip2>
                     </React.Fragment>
                 )}
