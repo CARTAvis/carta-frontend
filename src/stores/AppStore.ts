@@ -1125,7 +1125,7 @@ export class AppStore {
         for (const f of this.frames) {
             if (!f.spatialReference) {
                 f.setZoom((f.zoomLevel * val) / this.imageRatio);
-            };
+            }
         }
         this.imageRatio = val;
     };

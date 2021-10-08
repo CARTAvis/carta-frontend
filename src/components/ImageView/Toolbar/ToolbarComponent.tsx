@@ -182,7 +182,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             <Menu>
                 <ExportImageMenuComponent />
             </Menu>
-         )
+        );
 
         const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
         const catalogSelectionDisabled = appStore.catalogNum === 0;
