@@ -32,7 +32,7 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
             defaultHeight: 300,
             title: "PV Generator",
             isCloseable: true,
-            helpType: HelpType.SPATIAL_PROFILER
+            helpType: HelpType.PV_GENERATOR
         };
     }
 

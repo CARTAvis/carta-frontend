@@ -75,5 +75,6 @@ export enum HelpType {
     CATALOG_SETTINGS_COLOR = "catalog-settings-color",
     CATALOG_SETTINGS_SIZE = "catalog-settings-size",
     CATALOG_SETTINGS_ORIENTATION = "catalog-settings-orientation",
-    SPECTRAL_LINE_QUERY = "spectral-line-query"
+    SPECTRAL_LINE_QUERY = "spectral-line-query",
+    PV_GENERATOR = "pv-generator"
 }

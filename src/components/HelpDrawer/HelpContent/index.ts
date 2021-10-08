@@ -38,3 +38,4 @@ export * from "./CatalogSettingsSizeHelpComponent";
 export * from "./CatalogSettingsOrientationHelpComponent";
 export * from "./SpectralLineQueryHelpComponent";
 export * from "./StokesHypercubeDialogHelpComponent";
+export * from "./PvGeneratorHelpComponent";

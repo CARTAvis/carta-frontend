@@ -42,7 +42,8 @@ import {
     CatalogSettingsSizeHelpComponent,
     CatalogSettingsOrientationHelpComponent,
     SpectralLineQueryHelpComponent,
-    StokesHypercubeDialogHelpComponent
+    StokesHypercubeDialogHelpComponent,
+    PvGeneratorHelpComponent
 } from "./HelpContent";
 import {AppStore, HelpStore, HelpType} from "stores";
 
@@ -369,6 +370,13 @@ export class HelpDrawerComponent extends React.Component {
             {
                 title: "Spectral Line Query",
                 content: <SpectralLineQueryHelpComponent />
+            }
+        ],
+        [
+            HelpType.PV_GENERATOR,
+            {
+                title: "PV Generator",
+                content: <PvGeneratorHelpComponent />
             }
         ]
     ]);
