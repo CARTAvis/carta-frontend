@@ -1,4 +1,4 @@
-import {createTextureFromArray, getShaderFromString, initWebGL2, loadImageTexture} from "utilities";
+import {createTextureFromArray, getShaderFromString, initWebGL2, loadImageTexture, makeBuffer} from "utilities";
 import allMaps from "../static/allmaps.png";
 import catalogVertexShader from "!raw-loader!./GLSL/vertex_shader_catalog.glsl";
 import catalogPixelShader from "!raw-loader!./GLSL/pixel_shader_catalog.glsl";
@@ -7,8 +7,6 @@ export enum CatalogTextureType {
     Size,
     Color,
     Orientation,
-    X,
-    Y,
     SelectedSource,
     SizeMinor
 }
@@ -32,8 +30,6 @@ interface ShaderUniforms {
     ControlMapMin: WebGLUniformLocation;
     ControlMapMax: WebGLUniformLocation;
     // texture
-    XTexture: WebGLUniformLocation;
-    YTexture: WebGLUniformLocation;
     OrientationTexture: WebGLUniformLocation;
     ColorTexture: WebGLUniformLocation;
     SizeTexture: WebGLUniformLocation;
@@ -56,8 +52,7 @@ interface ShaderUniforms {
 export class CatalogWebGLService {
     private static staticInstance: CatalogWebGLService;
     private cmapTexture: WebGLTexture;
-    private xTextures: Map<number, WebGLTexture>;
-    private yTextures: Map<number, WebGLTexture>;
+    private vertexBuffers: Map<number, WebGLBuffer>;
     private sizeTextures: Map<number, WebGLTexture>;
     private colorTextures: Map<number, WebGLTexture>;
     private orientationTextures: Map<number, WebGLTexture>;
@@ -65,6 +60,7 @@ export class CatalogWebGLService {
     private sizeMinorTextures: Map<number, WebGLTexture>;
     readonly gl: WebGL2RenderingContext;
     shaderUniforms: ShaderUniforms;
+    vertexPositionAttribute: GLint;
 
     static get Instance() {
         if (!CatalogWebGLService.staticInstance) {
@@ -82,32 +78,46 @@ export class CatalogWebGLService {
         this.gl.viewport(0, 0, width, height);
     };
 
+    public updateBuffer = (fileId: number, dataPoints: Float32Array, offset: number) => {
+        if (this.vertexBuffers.get(fileId)) {
+            // Fill data, 10 times faster than bufferData since do not need to allocate memory
+            this.gl.bufferSubData(this.gl.ARRAY_BUFFER, offset * 4, dataPoints);
+        } else {
+            // allocates a new buffer
+            this.vertexBuffers.set(fileId, makeBuffer(this.gl, dataPoints, this.gl.STATIC_DRAW));
+        }
+    };
+
+    public bindBuffer = (fileId: number): boolean => {
+        const buffer = this.vertexBuffers.get(fileId);
+        if (!this.vertexBuffers || !buffer) {
+            return false;
+        } else {
+            this.gl.bindBuffer(WebGL2RenderingContext.ARRAY_BUFFER, buffer);
+            return true;
+        }
+    };
+
     public updateDataTexture = (fileId: number, dataPoints: Float32Array | Uint8Array, textureType: CatalogTextureType) => {
         if (!this.gl) {
             return;
         }
         // colorMap is texture0, controlMap is texture1
         switch (textureType) {
-            case CatalogTextureType.X:
-                this.xTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE2, 1));
-                break;
-            case CatalogTextureType.Y:
-                this.yTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE3, 1));
-                break;
             case CatalogTextureType.Size:
-                this.sizeTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE4, 1));
+                this.sizeTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE2, 1));
                 break;
             case CatalogTextureType.Color:
-                this.colorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE5, 1));
+                this.colorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE3, 1));
                 break;
             case CatalogTextureType.Orientation:
-                this.orientationTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE6, 1));
+                this.orientationTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE4, 1));
                 break;
             case CatalogTextureType.SelectedSource:
-                this.selectedSourceTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE7, 1));
+                this.selectedSourceTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE5, 1));
                 break;
             case CatalogTextureType.SizeMinor:
-                this.sizeMinorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE8, 1));
+                this.sizeMinorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE6, 1));
                 break;
             default:
                 break;
@@ -116,10 +126,6 @@ export class CatalogWebGLService {
 
     public getDataTexture = (fileId: number, textureType: CatalogTextureType): WebGLTexture => {
         switch (textureType) {
-            case CatalogTextureType.X:
-                return this.xTextures.get(fileId);
-            case CatalogTextureType.Y:
-                return this.yTextures.get(fileId);
             case CatalogTextureType.Size:
                 return this.sizeTextures.get(fileId);
             case CatalogTextureType.Color:
@@ -136,13 +142,12 @@ export class CatalogWebGLService {
     };
 
     public clearTexture = (fileId: number) => {
-        this.xTextures.delete(fileId);
-        this.yTextures.delete(fileId);
         this.selectedSourceTextures.delete(fileId);
         this.sizeTextures.delete(fileId);
         this.colorTextures.delete(fileId);
         this.orientationTextures.delete(fileId);
         this.sizeMinorTextures.delete(fileId);
+        this.vertexBuffers.delete(fileId);
     };
 
     private initShaders() {
@@ -165,6 +170,9 @@ export class CatalogWebGLService {
         }
 
         this.gl.useProgram(shaderProgram);
+
+        this.vertexPositionAttribute = this.gl.getAttribLocation(shaderProgram, "a_position");
+        this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
 
         this.shaderUniforms = {
             LineThickness: this.gl.getUniformLocation(shaderProgram, "uLineThickness"),
@@ -194,8 +202,6 @@ export class CatalogWebGLService {
             ControlMapTexture: this.gl.getUniformLocation(shaderProgram, "uControlMapTexture"),
             // texture 0 1 2 3 4 5 6 7
             CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
-            XTexture: this.gl.getUniformLocation(shaderProgram, "uXTexture"),
-            YTexture: this.gl.getUniformLocation(shaderProgram, "uYTexture"),
             OrientationTexture: this.gl.getUniformLocation(shaderProgram, "uOrientationTexture"),
             SizeTexture: this.gl.getUniformLocation(shaderProgram, "uSizeTexture"),
             ColorTexture: this.gl.getUniformLocation(shaderProgram, "uColorTexture"),
@@ -203,10 +209,9 @@ export class CatalogWebGLService {
             SizeMinorTexture: this.gl.getUniformLocation(shaderProgram, "uSizeMinorTexture")
         };
 
+        this.vertexBuffers = new Map<number, WebGLBuffer>();
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 0);
-        this.xTextures = new Map<number, WebGLTexture>();
-        this.yTextures = new Map<number, WebGLTexture>();
         this.selectedSourceTextures = new Map<number, WebGLTexture>();
         this.orientationTextures = new Map<number, WebGLTexture>();
         this.sizeTextures = new Map<number, WebGLTexture>();

@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed, makeObservable} from "mobx";
 import {AppStore, CatalogProfileStore, CatalogSystemType, FrameStore, WidgetsStore} from "stores";
-import {CatalogWebGLService, CatalogTextureType} from "services";
+import {CatalogWebGLService} from "services";
 import {CatalogWidgetStore} from "stores/widgets";
 import {minMaxArray} from "utilities";
 
@@ -24,7 +24,8 @@ export class CatalogStore {
     private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
     private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
-    @observable catalogGLData: ObservableMap<number, CatalogOverlayCoords>;
+    private _catalogGLData: Map<number, CatalogOverlayCoords>;
+    @observable catalogCounts: Map<number, number>;
     // image file id : catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>>;
     // catalog component Id : catalog file Id
@@ -38,62 +39,72 @@ export class CatalogStore {
 
     private constructor() {
         makeObservable(this);
-        this.catalogGLData = new ObservableMap();
+        this._catalogGLData = new Map<number, CatalogOverlayCoords>();
         this.imageAssociatedCatalogId = new Map<number, Array<number>>();
         this.catalogProfiles = new Map<string, number>();
         this.catalogPlots = new Map<string, ObservableMap<number, string>>();
         this.catalogProfileStores = new Map<number, CatalogProfileStore>();
         this.catalogWidgets = new Map<number, string>();
+        this.catalogCounts = new Map<number, number>();
     }
 
-    @action addCatalog(fileId: number) {
+    get catalogGLData() {
+        return this._catalogGLData;
+    }
+
+    @action addCatalog(fileId: number, size: number) {
         this.catalogGLData.set(fileId, {
-            x: new Float32Array(0),
-            y: new Float32Array(0)
+            x: new Float32Array(size),
+            y: new Float32Array(size)
         });
+        this.catalogCounts.set(fileId, 0);
     }
 
-    @action updateCatalogData(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType) {
+    @action convertToImageCoordinate(fileId: number, xData: Array<number>, yData: Array<number>, wcsInfo: AST.FrameSet, xUnit: string, yUnit: string, catalogFrame: CatalogSystemType, subsetEndIndex: number, subsetDataSize: number) {
         const catalog = this.catalogGLData.get(fileId);
+        const position = new Float32Array(xData.length * 2);
         if (catalog && xData && yData) {
-            const dataSize = catalog.x.length;
-            let xPoints = new Float32Array(dataSize + xData.length);
-            let yPoints = new Float32Array(dataSize + yData.length);
-            xPoints.set(catalog.x);
-            yPoints.set(catalog.y);
+            const startIndex = subsetEndIndex - subsetDataSize;
             switch (catalogFrame) {
                 case CatalogSystemType.Pixel0:
                     for (let i = 0; i < xData.length; i++) {
-                        xPoints[dataSize + i] = xData[i];
-                        yPoints[dataSize + i] = yData[i];
+                        catalog.x[startIndex + i] = xData[i];
+                        catalog.y[startIndex + i] = yData[i];
+                        position[i * 2] = xData[i];
+                        position[i * 2 + 1] = yData[i];
                     }
                     break;
                 case CatalogSystemType.Pixel1:
                     for (let i = 0; i < xData.length; i++) {
-                        xPoints[dataSize + i] = xData[i] - 1;
-                        yPoints[dataSize + i] = yData[i] - 1;
+                        catalog.x[startIndex + i] = xData[i] - 1;
+                        catalog.y[startIndex + i] = yData[i] - 1;
+                        position[i * 2] = xData[i] - 1;
+                        position[i * 2 + 1] = yData[i] - 1;
                     }
                     break;
                 default:
                     const pixelData = CatalogStore.TransformCatalogData(xData, yData, wcsInfo, xUnit, yUnit, catalogFrame);
                     for (let i = 0; i < pixelData.xImageCoords.length; i++) {
-                        xPoints[dataSize + i] = pixelData.xImageCoords[i];
-                        yPoints[dataSize + i] = pixelData.yImageCoords[i];
+                        catalog.x[startIndex + i] = pixelData.xImageCoords[i];
+                        catalog.y[startIndex + i] = pixelData.yImageCoords[i];
+                        position[i * 2] = pixelData.xImageCoords[i];
+                        position[i * 2 + 1] = pixelData.yImageCoords[i];
                     }
                     break;
             }
-            catalog.x = xPoints;
-            catalog.y = yPoints;
-            CatalogWebGLService.Instance.updateDataTexture(fileId, xPoints, CatalogTextureType.X);
-            CatalogWebGLService.Instance.updateDataTexture(fileId, yPoints, CatalogTextureType.Y);
+            this.catalogCounts.set(fileId, this.catalogCounts.get(fileId) + xData.length);
+            CatalogWebGLService.Instance.updateBuffer(fileId, position, startIndex * 2);
         }
     }
 
     @action clearImageCoordsData(fileId: number) {
         const catalog = this.catalogGLData.get(fileId);
         if (catalog) {
-            catalog.x = new Float32Array(0);
-            catalog.y = new Float32Array(0);
+            catalog.x = new Float32Array(catalog.x.length);
+            catalog.y = new Float32Array(catalog.y.length);
+            const position = new Float32Array(catalog.x.length * 2);
+            this.catalogCounts.set(fileId, 0);
+            CatalogWebGLService.Instance.updateBuffer(fileId, position, 0);
         }
     }
 

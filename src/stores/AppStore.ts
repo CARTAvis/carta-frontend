@@ -855,7 +855,7 @@ export class AppStore {
                             }
                             if (catalogWidgetId) {
                                 this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                                this.catalogStore.addCatalog(fileId);
+                                this.catalogStore.addCatalog(fileId, ack.dataSize);
                                 this.fileBrowserStore.hideFileBrowser();
 
                                 const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData);
@@ -1629,7 +1629,17 @@ export class AppStore {
                 if (xColumn && yColumn && frame) {
                     const coords = catalogProfileStore.get2DPlotData(xColumn, yColumn, catalogData);
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
-                    this.catalogStore.updateCatalogData(catalogFileId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogProfileStore.catalogCoordinateSystem.system);
+                    this.catalogStore.convertToImageCoordinate(
+                        catalogFileId,
+                        coords.wcsX,
+                        coords.wcsY,
+                        wcs,
+                        coords.xHeaderInfo.units,
+                        coords.yHeaderInfo.units,
+                        catalogProfileStore.catalogCoordinateSystem.system,
+                        catalogFilter.subsetEndIndex,
+                        catalogFilter.subsetDataSize
+                    );
                 }
             }
         }

@@ -38,8 +38,6 @@ precision highp int;
 
 uniform sampler2D uCmapTexture;
 uniform highp sampler2D uControlMapTexture;
-uniform sampler2D uXTexture;
-uniform sampler2D uYTexture;
 uniform sampler2D uSizeTexture;
 uniform sampler2D uColorTexture;
 uniform sampler2D uOrientationTexture;
@@ -75,6 +73,7 @@ uniform vec2 uControlMapSize;
 uniform float uLineThickness;
 uniform float uPixelRatio;
 
+in vec4 a_position;
 out vec3 v_colour;
 out float v_pointSize;
 out float v_orientation;
@@ -196,11 +195,9 @@ vec2 controlMapLookup(vec2 pos) {
 }
 
 void main() {
-    vec4 x = getValueByIndexFromTexture(uXTexture, gl_VertexID);
-    vec4 y = getValueByIndexFromTexture(uYTexture, gl_VertexID);
     uvec4 selectedSource = getValueByIndexFromTextureU(uSelectedSourceTexture, gl_VertexID);
     // Scale and rotate
-    vec2 posImageSpace = vec2(x.x,y.x);
+    vec2 posImageSpace = vec2(a_position.x,a_position.y);
 
     if (uControlMapEnabled > 0) {
         posImageSpace = controlMapLookup(posImageSpace);
@@ -208,7 +205,7 @@ void main() {
 
     vec2 pos = rotate2D(posImageSpace, uRotationAngle) * uRangeScale + uRangeOffset;
 
-    gl_Position = vec4(imageToGL(pos), 0.5, 1);
+    gl_Position = vec4(imageToGL(pos), 0.5, 1.0);
 
     v_colour = uPointColor;
     v_orientation = 0.0;
