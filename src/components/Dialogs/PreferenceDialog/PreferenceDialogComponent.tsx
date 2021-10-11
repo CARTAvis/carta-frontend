@@ -12,7 +12,7 @@ import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {ColormapComponent, ColorPickerComponent, AutoColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.scss";
@@ -153,7 +153,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Spectral Matching">
-                    <HTMLSelect value={preference.spectralMatchingType} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, ev.currentTarget.value)}>
+                    <HTMLSelect value={preference.spectralMatchingType} onChange={ev => appStore.setSpectralMatchingType(ev.currentTarget.value as SpectralType)}>
                         {SPECTRAL_MATCHING_TYPES.map(type => (
                             <option key={type} value={type}>
                                 {SPECTRAL_TYPE_STRING.get(type)}

@@ -37,7 +37,7 @@ import {
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom} from "models";
+import {FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom, SpectralType} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -1993,6 +1993,15 @@ export class AppStore {
         }
 
         this.setSpectralMatchingEnabled(frame, !frame.spectralReference);
+    };
+
+    setSpectralMatchingType = (spectralMatchingType: SpectralType) => {
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, spectralMatchingType);
+        for (const f of this.frames) {
+            if (f.spectralReference) {
+                this.setSpectralMatchingEnabled(f, true);
+            }
+        }
     };
 
     @action setRasterScalingReference = (frame: FrameStore) => {
