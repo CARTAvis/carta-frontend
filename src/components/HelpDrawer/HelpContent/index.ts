@@ -10,6 +10,7 @@ export * from "./HistogramSettingsHelpComponent";
 export * from "./ImageViewHelpComponent";
 export * from "./ImageViewSettingsHelpComponent";
 export * from "./LayerListHelpComponent";
+export * from "./LayerListSettingsHelpComponent";
 export * from "./LogHelpComponent";
 export * from "./PlaceholderHelpComponent";
 export * from "./RegionListHelpComponent";
