@@ -10,6 +10,7 @@ export * from "./HistogramSettingsHelpContent";
 export * from "./ImageViewHelpContent";
 export * from "./ImageViewSettingsHelpContent";
 export * from "./LayerListHelpContent";
+export * from "./LayerListSettingsHelpContent";
 export * from "./LogHelpContent";
 export * from "./PlaceholderHelpContent";
 export * from "./RegionListHelpContent";

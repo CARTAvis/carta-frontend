@@ -18,6 +18,7 @@ export enum HelpType {
     IMAGE_VIEW = "Image View",
     IMAGE_VIEW_SETTINGS = "Image View Settings",
     LAYER_LIST = "Image List",
+    LAYER_LIST_SETTINGS = "Image List Settings",
     LOG = "Log",
     PLACEHOLDER = "Placeholder",
     REGION_LIST = "Region List",
