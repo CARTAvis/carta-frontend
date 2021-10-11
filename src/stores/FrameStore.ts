@@ -65,7 +65,7 @@ export class FrameStore {
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
     private zoomTimeoutHandler;
 
-    public requiredFrameViewForRegionRender;
+    public requiredFrameViewForRegionRender: FrameView;
 
     public readonly wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;

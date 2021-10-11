@@ -29,7 +29,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     @observable imageToolbarVisible: boolean = false;
     readonly activeLayer: ImageViewLayer;
 
-    private regionViewRef;
+    private regionViewRef: RegionViewComponent;
 
     @action setPixelHighlightValue = (val: number) => {
         this.pixelHighlightValue = val;
