@@ -248,6 +248,13 @@ export class AppStore {
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
         this.taskStartTime = performance.now();
+
+        // Update task time of contour in case of not receiving any response yet
+        if (this.contourDataSource?.contourStores?.size) {
+            setTimeout(() => runInAction(() => {
+                this.taskCurrentTime = performance.now();
+            }), 500);
+        }
     };
 
     @action updateTaskProgress = (progress: number) => {
@@ -1607,6 +1614,7 @@ export class AppStore {
         const updatedFrame = this.getFrame(contourImageData.fileId);
         if (updatedFrame) {
             updatedFrame.updateFromContourData(contourImageData);
+            this.updateTaskProgress(contourImageData.progress);
         }
     };
 
