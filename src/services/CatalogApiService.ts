@@ -2,8 +2,9 @@ import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 import axios, {AxiosInstance, AxiosResponse, CancelTokenSource} from "axios";
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
-import {CatalogApiProcessing, CatalogInfo, CatalogType} from "models";
+import {CatalogInfo, CatalogType} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, SystemType} from "stores";
+import {CatalogApiProcessing} from "utilities";
 
 export enum CatalogDatabase {
     SIMBAD = "SIMBAD"
@@ -65,14 +66,14 @@ export class CatalogApiService {
                     const configStore = CatalogOnlineQueryConfigStore.Instance;
                     const headers = CatalogApiProcessing.ProcessSimbadMetaData(response.data?.metadata);
                     const columnData = CatalogApiProcessing.ProcessSimbadData(response.data?.data, headers);
-                    const coosy: CARTA.ICoosys = {system: configStore.coordsType};
+                    const coosys: CARTA.ICoosys = {system: configStore.coordsType};
                     const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
                     const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
                     const catalogFileInfo: CARTA.ICatalogFileInfo = {
                         name: fileName,
                         type: CARTA.CatalogFileType.VOTable,
                         description: "Online Catalog",
-                        coosys: [coosy]
+                        coosys: [coosys]
                     };
                     let catalogInfo: CatalogInfo = {
                         fileId,

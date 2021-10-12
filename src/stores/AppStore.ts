@@ -36,10 +36,11 @@ import {
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, ProtobufProcessing, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
+import {ProtobufProcessing} from "utilities";
 import GitCommit from "../static/gitInfo";
 
 interface FrameOption extends IOptionProps {

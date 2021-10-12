@@ -13,8 +13,8 @@ import {CARTA} from "carta-protobuf";
 import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
-import {toFixed} from "utilities";
-import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType, ProcessedColumnData} from "models";
+import {toFixed, ProcessedColumnData} from "utilities";
+import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
 import "./CatalogOverlayComponent.scss";
 
 enum HeaderTableColumnName {

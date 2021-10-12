@@ -14,7 +14,7 @@ import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStor
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed, minMaxArray} from "utilities";
-import {TypedArray} from "models/Processed";
+import {TypedArray} from "utilities";
 import "./CatalogPlotComponent.scss";
 
 @observer

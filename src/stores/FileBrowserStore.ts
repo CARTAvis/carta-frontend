@@ -6,8 +6,8 @@ import {AppStore, DialogStore, PreferenceKeys, PreferenceStore, RegionStore} fro
 import {RegionId} from "stores/widgets";
 import {AppToaster, ErrorToast} from "components/Shared";
 import {FileInfoType} from "components";
-import {LineOption, ProcessedColumnData} from "models";
-import {getDataTypeString} from "utilities";
+import {LineOption} from "models";
+import {getDataTypeString, ProcessedColumnData} from "utilities";
 
 export enum BrowserMode {
     File,

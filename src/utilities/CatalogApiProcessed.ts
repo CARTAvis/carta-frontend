@@ -1,6 +1,6 @@
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {ProcessedColumnData} from "models";
+import {ProcessedColumnData} from "utilities";
 import {AppStore, NumberFormatType, SystemType} from "stores";
 
 enum SimbadType {

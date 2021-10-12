@@ -37,20 +37,19 @@ export class CatalogQueryDialogComponent extends React.Component {
     }
 
     @computed get resultInfo(): string {
-        let resultStr = undefined;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         if (configStore.isQuerying || configStore.isObjectQuerying) {
-            resultStr = `Querying ${configStore.catalogDB}`;
+            return `Querying ${configStore.catalogDB}`;
         } else if (this.resultSize === 0) {
-            resultStr = "No objects found";
+            return "No objects found";
         } else if (this.resultSize >= 1) {
-            resultStr = `Found ${this.resultSize} object(s)`;
+            return `Found ${this.resultSize} object(s)`;
         } else if (this.objectSize === 0) {
-            resultStr = `Object ${configStore.objectName} not found`;
+            return `Object ${configStore.objectName} not found`;
         } else if (this.objectSize >= 1) {
-            resultStr = `Updated Center Coordinates according ${configStore.objectName}`;
+            return `Updated Center Coordinates according ${configStore.objectName}`;
         }
-        return resultStr;
+        return undefined;
     }
 
     public render() {
@@ -240,16 +239,15 @@ export class CatalogQueryDialogComponent extends React.Component {
         );
     }
 
-    private query = () => {
+    private query = async () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
         const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
         const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
         configStore.setQueryStatus(true);
-        CatalogApiService.Instance.appendOnlineCatalog(query).then(dataSize => {
-            configStore.setQueryStatus(false);
-            this.setResultSize(dataSize);
-        });
+        const dataSize = await CatalogApiService.Instance.appendOnlineCatalog(query);
+        configStore.setQueryStatus(false);
+        this.setResultSize(dataSize);
     };
 
     private handleObjectUpdate = () => {

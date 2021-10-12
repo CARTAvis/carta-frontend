@@ -10,7 +10,8 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
 import {CatalogApiService} from "services";
 import {SpectralLineHeaders} from "stores/widgets";
-import {CatalogType, ProcessedColumnData} from "models";
+import {CatalogType} from "models";
+import {ProcessedColumnData} from "utilities";
 import "./FilterableTableComponent.scss";
 
 export type ColumnFilter = {index: number; columnFilter: string};
