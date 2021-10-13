@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import classNames from "classnames";
-import {action, makeObservable, observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Layer, Line, Stage} from "react-konva";
 import Konva from "konva";
@@ -55,6 +55,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         makeObservable(this);
 
         this.stageRef = React.createRef();
+
+        autorun(() => {
+            const frame = this.props.frame?.spatialReference;
+            if (frame) {
+                this.handleStageChange(frame.regionViewPos, frame.regionViewScale);
+            }
+        });
     }
 
     componentDidMount() {
@@ -417,12 +424,16 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    public resetStage = () => {
+    public handleStageChange = (pos: Point2D, scale: number) => {
         const stage = this.stageRef.current;
-        if (stage) {
-            stage.scale({x: 1, y: 1});
-            stage.position({x: 0, y: 0});
+        if (stage && pos && isFinite(pos.x) && isFinite(pos.y) && isFinite(scale)) {
+            // stage.scale({x: scale, y: scale});
+            stage.position(pos);
         }
+    };
+
+    public resetStage = () => {
+        this.handleStageChange({x: 0, y: 0}, 1);
     };
 
     public stageZoomToPoint = (x: number, y: number, zoom: number) => {

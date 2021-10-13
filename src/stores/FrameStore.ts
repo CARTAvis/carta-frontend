@@ -29,7 +29,7 @@ import {
     ZoomPoint,
     POLARIZATION_LABELS
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec} from "utilities";
@@ -106,6 +106,9 @@ export class FrameStore {
     @observable contourStores: Map<number, ContourStore>;
     @observable moving: boolean;
     @observable zooming: boolean;
+
+    @observable regionViewPos: Point2D;
+    @observable regionViewScale: number;
 
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
@@ -221,17 +224,8 @@ export class FrameStore {
     }
 
     @computed get spatialTransform() {
-        if (this.spatialReference && this.spatialTransformAST) {
-            const center = transformPoint(this.spatialTransformAST, this.spatialReference.center, false);
-            // Try use center of the screen as a reference point
-            if (!isAstBadPoint(center)) {
-                return new Transform2D(this.spatialTransformAST, center);
-            } else {
-                // Otherwise use the center of the image
-                return new Transform2D(this.spatialTransformAST, {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5});
-            }
-        }
-        return null;
+        const imageCenter = {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5};
+        return this.spatialReference && this.spatialTransformAST ? new Transform2D(this.spatialTransformAST, imageCenter) : null;
     }
 
     @computed get transformedWcsInfo() {
@@ -797,6 +791,9 @@ export class FrameStore {
         this.stokesFiles = [];
 
         this.distanceMeasuring = new DistanceMeasuringStore();
+
+        this.regionViewPos = {x: 0, y: 0};
+        this.regionViewScale = 1;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
@@ -2007,5 +2004,13 @@ export class FrameStore {
 
     @action setStokesFiles = (stokesFiles: CARTA.StokesFile[]) => {
         this.stokesFiles = stokesFiles;
+    };
+
+    @action setRegionViewPos = (pos: Point2D) => {
+        this.regionViewPos = pos;
+    };
+
+    @action setRegionViewScale = (scale: number) => {
+        this.regionViewScale = scale;
     };
 }
