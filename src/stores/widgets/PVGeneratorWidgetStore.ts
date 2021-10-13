@@ -31,7 +31,7 @@ export class PVGeneratorWidgetStore extends RegionWidgetStore {
         if (frame && this.effectiveRegion) {
             const requestMessage: CARTA.IPvRequest = {
                 fileId: frame.frameInfo.fileId,
-                regionId: 0,
+                regionId: this.effectiveRegionId,
                 width: this.width
             };
             frame.resetPvRequestState();
