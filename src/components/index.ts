@@ -30,4 +30,5 @@ export * from "./App/UIControllerComponent";
 export * from "./HelpDrawer/HelpDrawerComponent";
 export * from "./CatalogOverlay/CatalogPlotComponent/CatalogPlotComponent";
 export * from "./CatalogOverlay/CatalogOverlayPlotSettingsPanelComponent/CatalogOverlayPlotSettingsPanelComponent";
+export * from "./LayerList/LayerListSettingsPanelComponent/LayerListSettingsPanelComponent";
 export * from "./PVGenerator/PVGeneratorComponent";

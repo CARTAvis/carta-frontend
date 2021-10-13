@@ -23,7 +23,8 @@ import {
     SpatialProfilerSettingsPanelComponent,
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent,
-    CatalogOverlayPlotSettingsPanelComponent
+    CatalogOverlayPlotSettingsPanelComponent,
+    LayerListSettingsPanelComponent
 } from "components";
 import {WidgetConfig, WidgetsStore, CatalogStore} from "stores";
 import {ImageViewSettingsPanelComponent} from "components/ImageView/ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
@@ -112,6 +113,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                     return <HistogramSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
                 case CatalogOverlayComponent.WIDGET_CONFIG.type:
                     return <CatalogOverlayPlotSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
+                case LayerListComponent.WIDGET_CONFIG.type:
+                    return <LayerListSettingsPanelComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
                 default:
                     return null;
             }
@@ -139,6 +142,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
             case HistogramComponent.WIDGET_CONFIG.type:
                 return true;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                return true;
+            case LayerListComponent.WIDGET_CONFIG.type:
                 return true;
             default:
                 return false;
