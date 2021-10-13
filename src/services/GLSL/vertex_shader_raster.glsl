@@ -1,9 +1,10 @@
+#version 300 es
 precision highp float;
 
 //Data from bufferData
-attribute vec3 aVertexPosition;
-attribute vec2 aVertexUV;
-varying vec2 vUV;
+in vec3 aVertexPosition;
+in vec2 aVertexUV;
+out vec2 vUV;
 uniform float uCanvasWidth;
 uniform float uCanvasHeight;
 uniform vec2 uRotationOrigin;

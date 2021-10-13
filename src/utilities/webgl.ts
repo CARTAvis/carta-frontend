@@ -2,6 +2,7 @@ import {AlertStore} from "stores";
 import {TemplateNodes} from "./templates";
 
 export const GL = WebGLRenderingContext;
+export const GL2 = WebGL2RenderingContext;
 
 export function getShaderFromString(gl: WebGLRenderingContext | WebGL2RenderingContext, shaderScript: string, type: number) {
     if (!gl || !shaderScript || !(type === GL.VERTEX_SHADER || type === GL.FRAGMENT_SHADER)) {
@@ -60,32 +61,32 @@ export function loadImageTexture(gl: WebGLRenderingContext, url: string, texInde
     });
 }
 
-export function createFP32Texture(gl: WebGLRenderingContext, width: number, height: number, texIndex: number, filtering: number = GL.NEAREST) {
+export function createFP32Texture(gl: WebGL2RenderingContext, width: number, height: number, texIndex: number, filtering: number = GL2.NEAREST) {
     if (!gl) {
         return null;
     }
     const texture = gl.createTexture();
     gl.activeTexture(texIndex);
-    gl.bindTexture(GL.TEXTURE_2D, texture);
-    gl.texImage2D(GL.TEXTURE_2D, 0, GL.LUMINANCE, width, height, 0, GL.LUMINANCE, GL.FLOAT, new Float32Array(width * height));
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, filtering);
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, filtering);
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+    gl.bindTexture(GL2.TEXTURE_2D, texture);
+    gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.R32F, width, height, 0, GL2.RED, GL2.FLOAT, new Float32Array(width * height));
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, filtering);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, filtering);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
     return texture;
 }
 
-export function copyToFP32Texture(gl: WebGLRenderingContext, texture: WebGLTexture, data: Float32Array, texIndex: number, dataWidth: number, dataHeight: number, xOffset: number, yOffset: number) {
+export function copyToFP32Texture(gl: WebGL2RenderingContext, texture: WebGLTexture, data: Float32Array, texIndex: number, dataWidth: number, dataHeight: number, xOffset: number, yOffset: number) {
     if (!gl) {
         return;
     }
-    gl.bindTexture(GL.TEXTURE_2D, texture);
+    gl.bindTexture(GL2.TEXTURE_2D, texture);
     gl.activeTexture(texIndex);
-    gl.texSubImage2D(GL.TEXTURE_2D, 0, xOffset, yOffset, dataWidth, dataHeight, GL.LUMINANCE, GL.FLOAT, data);
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+    gl.texSubImage2D(GL2.TEXTURE_2D, 0, xOffset, yOffset, dataWidth, dataHeight, GL2.RED, GL2.FLOAT, data);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
+    gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
 }
 
 export function initWebGL() {
@@ -99,7 +100,6 @@ export function initWebGL() {
 }
 
 export function initWebGL2() {
-    // setting premultipliedAlpha: false?
     const gl = document.createElement("canvas").getContext("webgl2");
     if (!gl) {
         AlertStore.Instance.showAlert(TemplateNodes.WebGL2ErrorMessage, "issue");

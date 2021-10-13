@@ -16,10 +16,12 @@ export class RasterViewComponentProps {
     column: number;
 }
 
+const GL2 = WebGL2RenderingContext;
+
 @observer
 export class RasterViewComponent extends React.Component<RasterViewComponentProps> {
     private canvas: HTMLCanvasElement;
-    private gl: WebGLRenderingContext;
+    private gl: WebGL2RenderingContext;
     private static readonly Float32Max = 3.402823466e38;
 
     componentDidMount() {
@@ -128,13 +130,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             // y-axis is inverted
             const yOffset = (appStore.numImageRows - 1 - this.props.row) * frame.renderHeight * devicePixelRatio;
             this.gl.viewport(xOffset, yOffset, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
-            this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
+            this.gl.enable(GL2.DEPTH_TEST);
 
             // Clear a scissored rectangle limited to the current frame
-            this.gl.enable(WebGLRenderingContext.SCISSOR_TEST);
+            this.gl.enable(GL2.SCISSOR_TEST);
             this.gl.scissor(xOffset, yOffset, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
-            this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
-            this.gl.disable(WebGLRenderingContext.SCISSOR_TEST);
+            this.gl.clear(GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT);
+            this.gl.disable(GL2.SCISSOR_TEST);
 
             // Skip rendering if frame is hidden
             if (frame.renderConfig.visible) {
@@ -147,10 +149,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const frame = this.props.frame;
         const tileRenderService = TileWebGLService.Instance;
 
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, tileRenderService.vertexUVBuffer);
-        this.gl.vertexAttribPointer(tileRenderService.vertexUVAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, tileRenderService.vertexPositionBuffer);
-        this.gl.vertexAttribPointer(tileRenderService.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
+        this.gl.bindBuffer(GL2.ARRAY_BUFFER, tileRenderService.vertexUVBuffer);
+        this.gl.vertexAttribPointer(tileRenderService.vertexUVAttribute, 2, GL2.FLOAT, false, 0, 0);
+        this.gl.bindBuffer(GL2.ARRAY_BUFFER, tileRenderService.vertexPositionBuffer);
+        this.gl.vertexAttribPointer(tileRenderService.vertexPositionAttribute, 3, GL2.FLOAT, false, 0, 0);
 
         const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
         const boundedView: FrameView = {
@@ -161,7 +163,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             mip: frame.requiredFrameView.mip
         };
 
-        this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
+        this.gl.activeTexture(GL2.TEXTURE0);
         const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
         // Special case when zoomed out
         if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
@@ -266,9 +268,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         const textureParameters = tileService.getTileTextureParameters(rasterTile);
         if (textureParameters) {
-            this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, textureParameters.texture);
-            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, GL.NEAREST);
-            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, GL.NEAREST);
+            this.gl.bindTexture(GL2.TEXTURE_2D, textureParameters.texture);
+            this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL.NEAREST);
+            this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL.NEAREST);
             this.gl.uniform2f(shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
         }
 
@@ -329,11 +331,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         // take zoom level into account to convert from image space to canvas space
         bottomLeft = scale2D(bottomLeft, spatialRef.zoomLevel);
-
         this.gl.uniform2f(shaderUniforms.TileSize, rasterTile.width, rasterTile.height);
         this.gl.uniform2f(shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
         this.gl.uniform2f(shaderUniforms.TileScaling, tileScaling.x, tileScaling.y);
-        this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
+        this.gl.drawArrays(GL2.TRIANGLE_STRIP, 0, 4);
     }
 
     private getRef = ref => {

@@ -1,3 +1,4 @@
+#version 300 es
 precision highp float;
 
 #define LINEAR 0
@@ -11,7 +12,8 @@ precision highp float;
 
 #define FLT_MAX 3.402823466e+38
 
-varying vec2 vUV;
+in vec2 vUV;
+out vec4 outColor;
 // Textures
 uniform sampler2D uDataTexture;
 uniform sampler2D uCmapTexture;
@@ -43,7 +45,7 @@ uniform float uPixelGridOpacity;
 uniform float uPixelAspectRatio;
 
 // Some shader compilers have trouble with NaN checks, so we instead use a dummy value of -FLT_MAX
-bool isnan(float val) {
+bool isNaN(float val) {
     return val <= -FLT_MAX;
 }
 
@@ -55,7 +57,7 @@ float errorFunction(float x, float c, float x0) {
 void main(void) {
     // Tile border
     if (uTileBorder > 0.0 && (vUV.x < uTileBorder || vUV.y < uTileBorder)) {
-        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        outColor = vec4(1.0, 1.0, 1.0, 1.0);
         return;
     }
     vec2 texCoords;
@@ -77,7 +79,7 @@ void main(void) {
     texCoords = texCoordsPixel / uTextureSize;
 
     float range = uMaxVal - uMinVal;
-    float rawVal = texture2D(uDataTexture, texCoords).r;
+    float rawVal = texture(uDataTexture, texCoords).r;
 
     // Scaling types
     // LINEAR (Default: uScaleType == LINEAR)
@@ -131,14 +133,14 @@ void main(void) {
     vec2 cmapCoords = vec2(x, cmapYVal);
 
     // Apply pixel highlight
-    if (isnan(rawVal)) {
-        gl_FragColor = uNaNColor * uNaNColor.a;
+    if (isNaN(rawVal)) {
+        outColor = uNaNColor * uNaNColor.a;
     } else if (rawVal < uPixelHighlightVal) {
-        gl_FragColor = vec4(x, x, x, 1);
+        outColor = vec4(x, x, x, 1);
     } else {
-        gl_FragColor = texture2D(uCmapTexture, cmapCoords);
+        outColor = texture(uCmapTexture, cmapCoords);
     }
 
     // Apply pixel grid
-    gl_FragColor = mix(gl_FragColor, uPixelGridColor, gridOpacity);
+    outColor = mix(outColor, uPixelGridColor, gridOpacity);
 }

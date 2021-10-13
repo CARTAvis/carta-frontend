@@ -1,4 +1,4 @@
-import {getShaderProgram, initWebGL, loadImageTexture} from "utilities";
+import {getShaderProgram, initWebGL2, loadImageTexture} from "utilities";
 import {TEXTURE_SIZE, TILE_SIZE} from "./TileService";
 
 import allMaps from "static/allmaps.png";
@@ -39,10 +39,12 @@ interface ShaderUniforms {
     PixelAspectRatio: WebGLUniformLocation;
 }
 
+const GL2 = WebGL2RenderingContext;
+
 export class TileWebGLService {
     private static staticInstance: TileWebGLService;
 
-    readonly gl: WebGLRenderingContext;
+    readonly gl: WebGL2RenderingContext;
     cmapTexture: WebGLTexture;
     // GL buffers
     vertexPositionBuffer: WebGLBuffer;
@@ -148,24 +150,24 @@ export class TileWebGLService {
             return;
         }
         this.vertexPositionBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
+        this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexPositionBuffer);
         const vertices = new Float32Array([0.0, 0.0, 0, 1.0, 0.0, 0, 0.0, 1.0, 0, 1.0, 1.0, 0]);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertices, WebGLRenderingContext.STATIC_DRAW);
+        this.gl.bufferData(GL2.ARRAY_BUFFER, vertices, GL2.STATIC_DRAW);
 
         this.vertexUVBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
+        this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexUVBuffer);
         const uvs = new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, uvs, WebGLRenderingContext.STATIC_DRAW);
+        this.gl.bufferData(GL2.ARRAY_BUFFER, uvs, GL2.STATIC_DRAW);
     }
 
     private constructor() {
-        this.gl = initWebGL();
+        this.gl = initWebGL2();
         if (!this.gl) {
             return;
         }
         this.initShaders();
         this.initBuffers();
-        loadImageTexture(this.gl, allMaps, WebGLRenderingContext.TEXTURE1).then(texture => {
+        loadImageTexture(this.gl, allMaps, GL2.TEXTURE1).then(texture => {
             this.cmapTexture = texture;
         });
     }

@@ -72,7 +72,7 @@ export class TileService {
     private pendingSynchronisedTiles: Map<string, Array<number>>;
     private receivedSynchronisedTiles: Map<string, Array<{coordinate: number; tile: RasterTile}>>;
     private animationEnabled: boolean;
-    private readonly gl: WebGLRenderingContext;
+    private readonly gl: WebGL2RenderingContext;
 
     @observable remainingTiles: number;
     @observable workersReady: boolean[];
