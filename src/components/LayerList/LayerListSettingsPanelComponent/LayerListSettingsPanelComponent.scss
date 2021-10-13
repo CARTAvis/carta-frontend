@@ -1,0 +1,9 @@
+.layer-list-settings-panel {
+    margin: 20px;
+
+    .bp3-form-group {
+        &:first-of-type {
+            margin-left: 0px;
+        }
+    }
+}

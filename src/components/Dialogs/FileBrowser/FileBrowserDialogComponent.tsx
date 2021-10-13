@@ -81,6 +81,8 @@ export class FileBrowserDialogComponent extends React.Component {
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
             await appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, file.fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
         } else {
+            fileBrowserStore.setImportingRegions(true);
+            fileBrowserStore.showLoadingDialog();
             await appStore.importRegion(fileBrowserStore.fileList.directory, file.fileInfo.name, file.fileInfo.type);
         }
 
@@ -165,7 +167,7 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.setExportFilename(ev.target.value);
     };
 
-    private handleFileBrowserRequestCancelled = () => {
+    private handleFileListRequestCancelled = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         fileBrowserStore.cancelRequestingFileList();
         fileBrowserStore.resetLoadingStates();
@@ -479,6 +481,15 @@ export class FileBrowserDialogComponent extends React.Component {
             };
         }
 
+        let fileProgress;
+
+        if (fileBrowserStore.loadingProgress) {
+            fileProgress = {
+                total: fileBrowserStore.loadingTotalCount,
+                checked: fileBrowserStore.loadingCheckedCount
+            };
+        }
+
         const fileList = fileBrowserStore.getfileListByMode;
 
         return (
@@ -508,6 +519,8 @@ export class FileBrowserDialogComponent extends React.Component {
                             <FileListTableComponent
                                 darkTheme={appStore.darkTheme}
                                 loading={fileBrowserStore.loadingList}
+                                extendedLoading={fileBrowserStore.extendedLoading}
+                                fileProgress={fileProgress}
                                 listResponse={fileBrowserStore.getfileListByMode}
                                 fileBrowserMode={fileBrowserStore.browserMode}
                                 selectedFile={fileBrowserStore.selectedFile}
@@ -520,6 +533,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 onSelectionChanged={fileBrowserStore.setSelectedFiles}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}
+                                onListCancelled={this.handleFileListRequestCancelled}
                             />
                         </div>
                         <div className="file-info-pane">
@@ -559,12 +573,11 @@ export class FileBrowserDialogComponent extends React.Component {
                     This file exists. Are you sure to overwrite it?
                 </Alert>
                 <TaskProgressDialogComponent
-                    isOpen={fileBrowserStore.loadingList && fileBrowserStore.isLoadingDialogOpen && fileBrowserStore.loadingProgress < 1}
+                    isOpen={fileBrowserStore.isImportingRegions && fileBrowserStore.isLoadingDialogOpen && fileBrowserStore.loadingProgress < 1}
                     progress={fileBrowserStore.loadingProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
-                    cancellable={true}
-                    onCancel={this.handleFileBrowserRequestCancelled}
-                    text={"Loading"}
+                    cancellable={false}
+                    text={"Importing regions"}
                     contentText={`loading ${fileBrowserStore.loadingCheckedCount} / ${fileBrowserStore.loadingTotalCount}`}
                 />
             </DraggableDialogComponent>
