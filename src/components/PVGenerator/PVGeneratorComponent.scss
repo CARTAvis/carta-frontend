@@ -27,7 +27,22 @@
             margin-right: 10px;
             .bp3-label {
                 margin: 0px;
-                width: 9em;
+                width: 12em;
+            }
+        }
+
+        .label-info-group {
+            .bp3-html-select {
+                width: 150px;
+            }
+
+            .label-info {
+                max-width: calc(100% - 55px);
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: middle;
             }
         }
 

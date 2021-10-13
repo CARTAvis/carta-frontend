@@ -114,6 +114,17 @@ export class RegionWidgetStore {
         return this.effectiveFrame?.getRegion(this.effectiveRegionId);
     }
 
+    @computed get effectiveRegionInfo(): string {
+        if (this.effectiveFrame) {
+            if (this.effectiveRegionId === RegionId.IMAGE) {
+                return "Image";
+            } else {
+                return this.effectiveRegion?.nameString ?? undefined;
+            }
+        }
+        return undefined;
+    }
+
     @computed get matchesSelectedRegion(): boolean {
         if (this.isEffectiveFrameEqualToActiveFrame) {
             if (this.appStore.selectedRegion) {

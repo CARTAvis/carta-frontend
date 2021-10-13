@@ -95,28 +95,62 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const frame = this.widgetStore.effectiveFrame;
+        const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
+        const regionInfo = this.widgetStore.effectiveRegionInfo;
 
         let selectedValue = RegionId.ACTIVE;
         if (this.widgetStore.effectiveFrame?.regionSet) {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         }
 
-        const disabledButton = !this.widgetStore.effectiveRegion;
+        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive;
+        const hint = (
+            <span>
+                <br />
+                <i>
+                    <small>
+                        Please ensure:
+                        <br />
+                        1. Animation playback is stopped.
+                        <br />
+                        2. Line region is selected.
+                    </small>
+                </i>
+            </span>
+        );
 
         const pvImagePanel = (
             <div className="pv-image-panel">
-                <FormGroup inline={true} label="Image">
+                <FormGroup
+                    className="label-info-group"
+                    inline={true}
+                    label="Image"
+                    labelInfo={
+                        <span className="label-info" title={fileInfo}>
+                            {fileInfo ? `(${fileInfo})` : ""}
+                        </span>
+                    }
+                >
                     <HTMLSelect value={this.widgetStore.fileId} options={this.widgetStore.frameOptions} onChange={this.handleFrameChanged} />
                 </FormGroup>
-                <FormGroup inline={true} label="Region">
+                <FormGroup
+                    className="label-info-group"
+                    inline={true}
+                    label="Region"
+                    labelInfo={
+                        <span className="label-info" title={regionInfo}>
+                            {regionInfo ? `(${regionInfo})` : ""}
+                        </span>
+                    }
+                >
                     <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label="Average Width (px)">
                     <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
                 </FormGroup>
                 <div className="generate-button">
-                    <Tooltip2 disabled={!disabledButton} content="Please select Line region" position={Position.BOTTOM}>
-                        <AnchorButton intent="success" disabled={disabledButton} text="Generate" onClick={this.widgetStore.requestPV} />
+                    <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
+                        <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.widgetStore.requestPV} />
                     </Tooltip2>
                 </div>
             </div>

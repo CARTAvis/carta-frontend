@@ -1082,6 +1082,7 @@ export class AppStore {
             frame.resetPvRequestState();
             this.endFileLoading();
             console.error(err);
+            AppToaster.show(ErrorToast(err));
         }
     };
 
