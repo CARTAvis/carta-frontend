@@ -8,6 +8,7 @@ import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from
 import {PVGeneratorWidgetStore, RegionId} from "stores/widgets";
 import {SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
+import {Point2D} from "models";
 import "./PVGeneratorComponent.scss";
 
 export enum PVGeneratorComponentTabs {
@@ -49,6 +50,37 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
         }
         console.log("can't find store for widget");
         return new PVGeneratorWidgetStore();
+    }
+
+    @computed get isLineIntersectedWithImage(): boolean {
+        if (this.widgetStore.effectiveRegion) {
+            const startPoint = this.widgetStore.effectiveRegion.controlPoints[0];
+            const endPoint = this.widgetStore.effectiveRegion.controlPoints[1];
+            const width = this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.width;
+            const height = this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.height;
+            const imageCorners: Point2D[] = [
+                {x: 0, y: 0},
+                {x: width, y: 0},
+                {x: 0, y: height},
+                {x: width, y: height}
+            ];
+
+            // check if image corners are on the same side of the line region. from https://stackoverflow.com/a/1560510
+            let sideValue = 0;
+            for (let corner of imageCorners) {
+                sideValue = sideValue + Math.sign((endPoint.x - startPoint.x) * (corner.y - startPoint.y) - (endPoint.y - startPoint.y) * (corner.x - startPoint.x));
+            }
+
+            if (sideValue <= 2 && sideValue >= -2) {
+                // check if start/end points are outside image
+                if ((startPoint.x < 0 && endPoint.x < 0) || (startPoint.y < 0 && endPoint.y < 0) || (startPoint.x > width && endPoint.x > width) || (startPoint.y > height && endPoint.y > height)) {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+        return false;
     }
 
     constructor(props: WidgetProps) {
@@ -103,7 +135,7 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         }
 
-        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive;
+        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage;
         const hint = (
             <span>
                 <br />
@@ -114,6 +146,8 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
                         1. Animation playback is stopped.
                         <br />
                         2. Line region is selected.
+                        <br />
+                        3. Line region has intersection with image.
                     </small>
                 </i>
             </span>
