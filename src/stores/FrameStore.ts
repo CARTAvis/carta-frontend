@@ -2008,9 +2008,16 @@ export class FrameStore {
 
     @action setRegionViewPos = (pos: Point2D) => {
         this.regionViewPos = pos;
+        if (this.spatialReference) {
+            return;
+        }
+        this.spatialSiblings?.forEach(sibling => {
+            sibling.setRegionViewPos(pos);
+        });
     };
 
     @action setRegionViewScale = (scale: number) => {
         this.regionViewScale = scale;
+        // TODO: update siblings
     };
 }

@@ -56,10 +56,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         this.stageRef = React.createRef();
 
+        // Move the stage when spatial siblings moves
         autorun(() => {
-            const frame = this.props.frame?.spatialReference;
+            const frame = this.props.frame;
             if (frame) {
-                this.handleStageChange(frame.regionViewPos, frame.regionViewScale);
+                if (frame !== AppStore.Instance.activeFrame && frame.spatialSiblings) {
+                    this.handleStageChange(frame.regionViewPos, frame.regionViewScale);
+                }
             }
         });
     }
@@ -303,6 +306,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
             if (isPanDrag) {
                 const stagePosition = konvaEvent.target.getStage().getPosition();
+                if (this.props.frame) {
+                    const frame = this.props.frame.spatialReference || this.props.frame;
+                    frame.setRegionViewPos(stagePosition);
+                }
                 this.handlePan(stagePosition);
             }
         }
