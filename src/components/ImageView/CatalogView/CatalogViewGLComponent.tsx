@@ -7,7 +7,7 @@ import {CatalogTextureType, CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {CatalogOverlayShape} from "stores/widgets";
-import {closestCatalogIndexToCursor, rotate2D, scale2D, subtract2D} from "utilities";
+import {closestCatalogIndexToCursor, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 import "./CatalogViewGLComponent.scss";
 
 export interface CatalogViewGLComponentProps {
@@ -149,7 +149,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
     private renderCatalog() {
         const appStore = AppStore.Instance;
         const catalogStore = CatalogStore.Instance;
-        const GL2 = WebGL2RenderingContext;
         // For alpha blending (soft lines)
         this.gl.enable(GL2.BLEND);
         this.gl.blendFunc(GL2.SRC_ALPHA, GL2.ONE_MINUS_SRC_ALPHA);

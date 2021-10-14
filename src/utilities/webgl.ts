@@ -1,18 +1,17 @@
 import {AlertStore} from "stores";
 import {TemplateNodes} from "./templates";
 
-export const GL = WebGLRenderingContext;
 export const GL2 = WebGL2RenderingContext;
 
 export function getShaderFromString(gl: WebGLRenderingContext | WebGL2RenderingContext, shaderScript: string, type: number) {
-    if (!gl || !shaderScript || !(type === GL.VERTEX_SHADER || type === GL.FRAGMENT_SHADER)) {
+    if (!gl || !shaderScript || !(type === GL2.VERTEX_SHADER || type === GL2.FRAGMENT_SHADER)) {
         return null;
     }
 
     let shader = gl.createShader(type);
     gl.shaderSource(shader, shaderScript);
     gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, GL.COMPILE_STATUS)) {
+    if (!gl.getShaderParameter(shader, GL2.COMPILE_STATUS)) {
         console.log(gl.getShaderInfoLog(shader));
         return null;
     }
@@ -24,15 +23,15 @@ export function getShaderProgram(gl: WebGLRenderingContext, vertexShaderString: 
         return null;
     }
 
-    let vertexShader = getShaderFromString(gl, vertexShaderString, GL.VERTEX_SHADER);
-    let fragmentShader = getShaderFromString(gl, pixelShaderString, GL.FRAGMENT_SHADER);
+    let vertexShader = getShaderFromString(gl, vertexShaderString, GL2.VERTEX_SHADER);
+    let fragmentShader = getShaderFromString(gl, pixelShaderString, GL2.FRAGMENT_SHADER);
 
     let shaderProgram = gl.createProgram();
     gl.attachShader(shaderProgram, vertexShader);
     gl.attachShader(shaderProgram, fragmentShader);
     gl.linkProgram(shaderProgram);
 
-    if (!gl.getProgramParameter(shaderProgram, GL.LINK_STATUS)) {
+    if (!gl.getProgramParameter(shaderProgram, GL2.LINK_STATUS)) {
         console.log("Could not initialise shaders");
         return null;
     }
@@ -48,12 +47,12 @@ export function loadImageTexture(gl: WebGLRenderingContext, url: string, texInde
         image.onload = () => {
             const imageTexture = gl.createTexture();
             gl.activeTexture(texIndex);
-            gl.bindTexture(GL.TEXTURE_2D, imageTexture);
-            gl.texImage2D(GL.TEXTURE_2D, 0, GL.RGB, GL.RGB, GL.UNSIGNED_BYTE, image);
-            gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
-            gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
-            gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
-            gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+            gl.bindTexture(GL2.TEXTURE_2D, imageTexture);
+            gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RGB, GL2.RGB, GL2.UNSIGNED_BYTE, image);
+            gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
+            gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
+            gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+            gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
             resolve(imageTexture);
         };
         image.onerror = () => reject(`Error loading image ${url}`);
@@ -109,7 +108,6 @@ export function initWebGL2() {
 }
 
 export function createTextureFromArray(gl: WebGL2RenderingContext, data: Float32Array | Uint8Array, texIndex: number = WebGL2RenderingContext.TEXTURE0, components: number = 1): WebGLTexture {
-    const GL2 = WebGL2RenderingContext;
     const numPoints = data.length / components;
     if (data.length % components !== 0) {
         console.error(`Invalid data size (${data.length} for number of components ${components}`);

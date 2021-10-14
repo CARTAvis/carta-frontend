@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AppStore, FrameStore} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {GetRequiredTiles, GL, LayerToMip, add2D, scale2D, smoothStep, getColorForTheme} from "utilities";
+import {GetRequiredTiles, GL2, LayerToMip, add2D, scale2D, smoothStep, getColorForTheme} from "utilities";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
 import "./RasterViewComponent.scss";
 
@@ -15,8 +15,6 @@ export class RasterViewComponentProps {
     row: number;
     column: number;
 }
-
-const GL2 = WebGL2RenderingContext;
 
 @observer
 export class RasterViewComponent extends React.Component<RasterViewComponentProps> {
@@ -269,8 +267,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const textureParameters = tileService.getTileTextureParameters(rasterTile);
         if (textureParameters) {
             this.gl.bindTexture(GL2.TEXTURE_2D, textureParameters.texture);
-            this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL.NEAREST);
-            this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL.NEAREST);
+            this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+            this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
             this.gl.uniform2f(shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
         }
 

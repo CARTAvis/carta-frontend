@@ -1,7 +1,9 @@
+#version 300 es
 precision highp float;
 
-varying float vLinePosition;
-varying float vLineSide;
+in float vLinePosition;
+in float vLineSide;
+out vec4 outColor;
 
 uniform float uDashLength;
 uniform vec4 uLineColor;
@@ -36,10 +38,10 @@ void main(void) {
         x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
         vec2 cmapCoords = vec2(x, cmapYVal);
-        color = texture2D(uCmapTexture, cmapCoords);
+        color = texture(uCmapTexture, cmapCoords);
     } else {
         color = uLineColor;
     }
 
-    gl_FragColor = dashStrength * color;
+    outColor = dashStrength * color;
 }

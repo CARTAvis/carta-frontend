@@ -1,4 +1,4 @@
-import {getShaderProgram, initWebGL2, loadImageTexture} from "utilities";
+import {getShaderProgram, initWebGL2, loadImageTexture, GL2} from "utilities";
 import {TEXTURE_SIZE, TILE_SIZE} from "./TileService";
 
 import allMaps from "static/allmaps.png";
@@ -38,8 +38,6 @@ interface ShaderUniforms {
     PixelGridOpacity: WebGLUniformLocation;
     PixelAspectRatio: WebGLUniformLocation;
 }
-
-const GL2 = WebGL2RenderingContext;
 
 export class TileWebGLService {
     private static staticInstance: TileWebGLService;

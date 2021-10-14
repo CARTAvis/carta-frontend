@@ -1,6 +1,7 @@
 import * as AST from "ast_wrapper";
 import {FrameStore, CatalogStore} from "stores";
 import {Point2D} from "./Point2D";
+import {GL2} from "utilities";
 
 export class CatalogControlMap {
     readonly source: FrameStore;
@@ -81,7 +82,6 @@ export class CatalogControlMap {
         if (gl2 !== this.gl2 || !this.texture || this.boundaryUpdated) {
             this.boundaryUpdated = false;
             // Context has changed, texture needs to be regenerated
-            const GL2 = WebGL2RenderingContext;
             this.gl2 = gl2;
             this.texture = this.gl2.createTexture();
             this.gl2.activeTexture(GL2.TEXTURE1);

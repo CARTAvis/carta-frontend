@@ -1,8 +1,9 @@
+#version 300 es
 precision highp float;
 
 //Data from buffers
-attribute vec3 aVertexPosition;
-attribute vec2 aVertexNormal;
+in vec3 aVertexPosition;
+in vec2 aVertexNormal;
 
 uniform vec2 uRangeScale;
 uniform vec2 uRangeOffset;
@@ -19,8 +20,8 @@ uniform vec2 uControlMapMax;
 uniform vec2 uControlMapSize;
 uniform highp sampler2D uControlMapTexture;
 
-varying float vLinePosition;
-varying float vLineSide;
+out float vLinePosition;
+out float vLineSide;
 
 vec2 rotate2D(vec2 vector, float theta) {
     float sinTheta = sin(theta);
@@ -45,7 +46,7 @@ vec4 cubic(vec4 A, vec4 B, vec4 C, vec4 D, float t) {
     return a * t3 + b * t2 + c * t + d;
 }
 
-vec4 bicubicFilter(sampler2D texture, vec2 P) {
+vec4 bicubicFilter(sampler2D textureData, vec2 P) {
     // Calculate offset and base pixel coordiante
     vec2 pixelSize = 1.0 / uControlMapSize;
     vec2 pixel = P * uControlMapSize + 0.5;
@@ -53,25 +54,25 @@ vec4 bicubicFilter(sampler2D texture, vec2 P) {
     pixel = floor(pixel) / uControlMapSize - pixelSize / 2.0;
 
     // Texture lookups
-    vec4 C00 = texture2D(texture, pixel + pixelSize * vec2(-1.0, -1.0));
-    vec4 C10 = texture2D(texture, pixel + pixelSize * vec2(0.0, -1.0));
-    vec4 C20 = texture2D(texture, pixel + pixelSize * vec2(1.0, -1.0));
-    vec4 C30 = texture2D(texture, pixel + pixelSize * vec2(2.0, -1.0));
+    vec4 C00 = texture(textureData, pixel + pixelSize * vec2(-1.0, -1.0));
+    vec4 C10 = texture(textureData, pixel + pixelSize * vec2(0.0, -1.0));
+    vec4 C20 = texture(textureData, pixel + pixelSize * vec2(1.0, -1.0));
+    vec4 C30 = texture(textureData, pixel + pixelSize * vec2(2.0, -1.0));
 
-    vec4 C01 = texture2D(texture, pixel + pixelSize * vec2(-1.0, 0.0));
-    vec4 C11 = texture2D(texture, pixel + pixelSize * vec2(0.0, 0.0));
-    vec4 C21 = texture2D(texture, pixel + pixelSize * vec2(1.0, 0.0));
-    vec4 C31 = texture2D(texture, pixel + pixelSize * vec2(2.0, 0.0));
+    vec4 C01 = texture(textureData, pixel + pixelSize * vec2(-1.0, 0.0));
+    vec4 C11 = texture(textureData, pixel + pixelSize * vec2(0.0, 0.0));
+    vec4 C21 = texture(textureData, pixel + pixelSize * vec2(1.0, 0.0));
+    vec4 C31 = texture(textureData, pixel + pixelSize * vec2(2.0, 0.0));
 
-    vec4 C02 = texture2D(texture, pixel + pixelSize * vec2(-1.0, 1.0));
-    vec4 C12 = texture2D(texture, pixel + pixelSize * vec2(0.0, 1.0));
-    vec4 C22 = texture2D(texture, pixel + pixelSize * vec2(1.0, 1.0));
-    vec4 C32 = texture2D(texture, pixel + pixelSize * vec2(2.0, 1.0));
+    vec4 C02 = texture(textureData, pixel + pixelSize * vec2(-1.0, 1.0));
+    vec4 C12 = texture(textureData, pixel + pixelSize * vec2(0.0, 1.0));
+    vec4 C22 = texture(textureData, pixel + pixelSize * vec2(1.0, 1.0));
+    vec4 C32 = texture(textureData, pixel + pixelSize * vec2(2.0, 1.0));
 
-    vec4 C03 = texture2D(texture, pixel + pixelSize * vec2(-1.0, 2.0));
-    vec4 C13 = texture2D(texture, pixel + pixelSize * vec2(0.0, 2.0));
-    vec4 C23 = texture2D(texture, pixel + pixelSize * vec2(1.0, 2.0));
-    vec4 C33 = texture2D(texture, pixel + pixelSize * vec2(2.0, 2.0));
+    vec4 C03 = texture(textureData, pixel + pixelSize * vec2(-1.0, 2.0));
+    vec4 C13 = texture(textureData, pixel + pixelSize * vec2(0.0, 2.0));
+    vec4 C23 = texture(textureData, pixel + pixelSize * vec2(1.0, 2.0));
+    vec4 C33 = texture(textureData, pixel + pixelSize * vec2(2.0, 2.0));
 
     // Cubic along x
     vec4 CP0X = cubic(C00, C10, C20, C30, frac.x);
@@ -90,7 +91,7 @@ vec2 controlMapLookup(vec2 pos) {
     vec2 range = uControlMapMax - uControlMapMin;
     vec2 shiftedPoint = pos - uControlMapMin;
     vec2 index = shiftedPoint / range + 0.5 / uControlMapSize;
-    return bicubicFilter(uControlMapTexture, index).ra;
+    return bicubicFilter(uControlMapTexture, index).rg;
 }
 
 void main(void) {
