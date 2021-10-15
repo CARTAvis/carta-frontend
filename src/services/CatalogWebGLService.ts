@@ -1,7 +1,6 @@
-import {createTextureFromArray, getShaderFromString, initWebGL2, loadImageTexture, makeBuffer} from "utilities";
+import {createTextureFromArray, getShaderFromString, initWebGL2, loadImageTexture, makeBuffer, GL2} from "utilities";
+import {catalogShaders} from "./GLSL";
 import allMaps from "../static/allmaps.png";
-import catalogVertexShader from "!raw-loader!./GLSL/vertex_shader_catalog.glsl";
-import catalogPixelShader from "!raw-loader!./GLSL/pixel_shader_catalog.glsl";
 
 export enum CatalogTextureType {
     Size,
@@ -93,7 +92,7 @@ export class CatalogWebGLService {
         if (!this.vertexBuffers || !buffer) {
             return false;
         } else {
-            this.gl.bindBuffer(WebGL2RenderingContext.ARRAY_BUFFER, buffer);
+            this.gl.bindBuffer(GL2.ARRAY_BUFFER, buffer);
             return true;
         }
     };
@@ -105,19 +104,19 @@ export class CatalogWebGLService {
         // colorMap is texture0, controlMap is texture1
         switch (textureType) {
             case CatalogTextureType.Size:
-                this.sizeTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE2, 1));
+                this.sizeTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE2, 1));
                 break;
             case CatalogTextureType.Color:
-                this.colorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE3, 1));
+                this.colorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE3, 1));
                 break;
             case CatalogTextureType.Orientation:
-                this.orientationTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE4, 1));
+                this.orientationTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE4, 1));
                 break;
             case CatalogTextureType.SelectedSource:
-                this.selectedSourceTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE5, 1));
+                this.selectedSourceTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE5, 1));
                 break;
             case CatalogTextureType.SizeMinor:
-                this.sizeMinorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, WebGL2RenderingContext.TEXTURE6, 1));
+                this.sizeMinorTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE6, 1));
                 break;
             default:
                 break;
@@ -155,15 +154,15 @@ export class CatalogWebGLService {
             return;
         }
 
-        let vertexShader = getShaderFromString(this.gl, catalogVertexShader, WebGL2RenderingContext.VERTEX_SHADER);
-        let fragmentShader = getShaderFromString(this.gl, catalogPixelShader, WebGL2RenderingContext.FRAGMENT_SHADER);
+        let vertexShader = getShaderFromString(this.gl, catalogShaders.vertexShader, GL2.VERTEX_SHADER);
+        let fragmentShader = getShaderFromString(this.gl, catalogShaders.fragmentShader, GL2.FRAGMENT_SHADER);
 
         let shaderProgram = this.gl.createProgram();
         this.gl.attachShader(shaderProgram, vertexShader);
         this.gl.attachShader(shaderProgram, fragmentShader);
         this.gl.linkProgram(shaderProgram);
 
-        if (!this.gl.getProgramParameter(shaderProgram, WebGL2RenderingContext.LINK_STATUS)) {
+        if (!this.gl.getProgramParameter(shaderProgram, GL2.LINK_STATUS)) {
             const linkInfo = this.gl.getProgramInfoLog(shaderProgram);
             console.error("Could not initialise shaders");
             console.info(linkInfo);
@@ -226,7 +225,7 @@ export class CatalogWebGLService {
         }
 
         this.initShaders();
-        loadImageTexture(this.gl, allMaps, WebGL2RenderingContext.TEXTURE0).then(texture => {
+        loadImageTexture(this.gl, allMaps, GL2.TEXTURE0).then(texture => {
             this.cmapTexture = texture;
         });
     }

@@ -1,4 +1,3 @@
-#version 300 es
 precision highp float;
 
 //Data from bufferData
@@ -15,12 +14,6 @@ uniform vec2 uTileSize;
 uniform vec2 uTileScaling;
 uniform vec2 uTileOffset;
 uniform float uTileTextureSize;
-
-vec2 rotate2D(vec2 vector, float theta) {
-    float sinTheta = sin(theta);
-    float cosTheta = cos(theta);
-    return mat2(cosTheta, -sinTheta, sinTheta, cosTheta) * vector;
-}
 
 vec2 rotateAboutPoint2D(vec2 vector, vec2 origin, float theta) {
     return rotate2D(vector - origin, theta) + origin;

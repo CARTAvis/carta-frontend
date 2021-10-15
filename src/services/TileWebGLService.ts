@@ -1,9 +1,7 @@
 import {getShaderProgram, initWebGL2, loadImageTexture, GL2} from "utilities";
 import {TEXTURE_SIZE, TILE_SIZE} from "./TileService";
-
+import {rasterShaders} from "./GLSL";
 import allMaps from "static/allmaps.png";
-import vertexShader from "!raw-loader!./GLSL/vertex_shader_raster.glsl";
-import pixelShader from "!raw-loader!./GLSL/pixel_shader_raster.glsl";
 
 interface ShaderUniforms {
     MinVal: WebGLUniformLocation;
@@ -75,7 +73,7 @@ export class TileWebGLService {
         if (!this.gl) {
             return;
         }
-        this.shaderProgram = getShaderProgram(this.gl, vertexShader, pixelShader);
+        this.shaderProgram = getShaderProgram(this.gl, rasterShaders.vertexShader, rasterShaders.fragmentShader);
         this.gl.useProgram(this.shaderProgram);
 
         this.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexPosition");

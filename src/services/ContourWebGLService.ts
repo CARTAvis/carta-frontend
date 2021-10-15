@@ -1,8 +1,6 @@
 import {getShaderFromString, initWebGL2, loadImageTexture, GL2} from "utilities";
-
+import {contourShaders} from "./GLSL";
 import allMaps from "../static/allmaps.png";
-import vertexShaderLine from "!raw-loader!./GLSL/vertex_shader_contours.glsl";
-import pixelShaderDashed from "!raw-loader!./GLSL/pixel_shader_contours.glsl";
 
 interface ShaderUniforms {
     RangeScale: WebGLUniformLocation;
@@ -58,8 +56,8 @@ export class ContourWebGLService {
         if (!this.gl) {
             return;
         }
-        let vertexShader = getShaderFromString(this.gl, vertexShaderLine, GL2.VERTEX_SHADER);
-        let fragmentShader = getShaderFromString(this.gl, pixelShaderDashed, GL2.FRAGMENT_SHADER);
+        let vertexShader = getShaderFromString(this.gl, contourShaders.vertexShader, GL2.VERTEX_SHADER);
+        let fragmentShader = getShaderFromString(this.gl, contourShaders.fragmentShader, GL2.FRAGMENT_SHADER);
 
         let shaderProgram = this.gl.createProgram();
         this.gl.attachShader(shaderProgram, vertexShader);

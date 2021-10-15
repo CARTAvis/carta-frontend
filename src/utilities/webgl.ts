@@ -3,7 +3,7 @@ import {TemplateNodes} from "./templates";
 
 export const GL2 = WebGL2RenderingContext;
 
-export function getShaderFromString(gl: WebGLRenderingContext | WebGL2RenderingContext, shaderScript: string, type: number) {
+export function getShaderFromString(gl: WebGL2RenderingContext, shaderScript: string, type: number) {
     if (!gl || !shaderScript || !(type === GL2.VERTEX_SHADER || type === GL2.FRAGMENT_SHADER)) {
         return null;
     }
@@ -18,7 +18,7 @@ export function getShaderFromString(gl: WebGLRenderingContext | WebGL2RenderingC
     return shader;
 }
 
-export function getShaderProgram(gl: WebGLRenderingContext, vertexShaderString: string, pixelShaderString: string) {
+export function getShaderProgram(gl: WebGL2RenderingContext, vertexShaderString: string, pixelShaderString: string) {
     if (!gl) {
         return null;
     }
@@ -37,7 +37,7 @@ export function getShaderProgram(gl: WebGLRenderingContext, vertexShaderString: 
     }
     return shaderProgram;
 }
-export function loadImageTexture(gl: WebGLRenderingContext, url: string, texIndex: number): Promise<WebGLTexture> {
+export function loadImageTexture(gl: WebGL2RenderingContext, url: string, texIndex: number): Promise<WebGLTexture> {
     return new Promise<WebGLTexture>((resolve, reject) => {
         if (!gl) {
             reject();

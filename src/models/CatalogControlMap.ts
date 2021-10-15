@@ -43,7 +43,7 @@ export class CatalogControlMap {
         }
     }
 
-    hasTextureForContext = (gl2: WebGLRenderingContext) => {
+    hasTextureForContext = (gl2: WebGL2RenderingContext) => {
         return gl2 === this.gl2 && this.texture && gl2.isTexture(this.texture);
     };
 

@@ -129,7 +129,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         }
         // Otherwise just clear it
         this.gl.clearColor(0, 0, 0, 0);
-        const clearMask = WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT | WebGLRenderingContext.STENCIL_BUFFER_BIT;
+        const clearMask = GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT | GL2.STENCIL_BUFFER_BIT;
         this.gl.clear(clearMask);
     }
 
