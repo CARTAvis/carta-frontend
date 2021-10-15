@@ -28,7 +28,7 @@ export class ImageSaveComponent extends React.Component {
         const fileBrowser = FileBrowserStore.Instance;
         const spectralRange = appStore.activeFrame?.channelValueBounds;
         const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[0]);
-        return spectralRange.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
+        return spectralRange?.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
     }
 
     @computed get validSaveSpectralRangeEnd() {
