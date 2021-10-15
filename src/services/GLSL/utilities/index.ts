@@ -7,4 +7,4 @@ export const utilities = {
     imageToGL: imageToGL,
     bicubicFilter: bicubicFilter,
     rotate2D: rotate2D
-}
+};

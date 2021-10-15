@@ -51,4 +51,4 @@ const macorsPixel = `
 export const catalogShaders = {
     vertexShader: `${utilities.version300}\n${macors}\n${macorsVertex}\n${utilities.imageToGL}\n${utilities.bicubicFilter}\n${utilities.rotate2D}\n${catalogVertexShader}`,
     fragmentShader: `${utilities.version300}\n${macors}\n${macorsPixel}\n${catalogPixelShader}`
-}
+};

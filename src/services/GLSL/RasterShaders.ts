@@ -17,4 +17,4 @@ const macorsPixel = `
 export const rasterShaders = {
     vertexShader: `${utilities.version300}\n${utilities.rotate2D}\n${rasterVertexShader}`,
     fragmentShader: `${utilities.version300}\n${macorsPixel}\n${rasterPixelShader}`
-}
+};

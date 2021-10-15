@@ -5,4 +5,4 @@ import {utilities} from "./utilities";
 export const contourShaders = {
     vertexShader: `${utilities.version300}\n${utilities.bicubicFilter}\n${utilities.rotate2D}\n${contourVertexShader}`,
     fragmentShader: `${utilities.version300}\n${contourPixelShader}`
-}
+};
