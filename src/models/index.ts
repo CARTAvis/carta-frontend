@@ -29,3 +29,4 @@ export * from "./CatalogControlMap";
 export * from "./AbstractCatalogProfile";
 export * from "./ImagePanelMode";
 export * from "./CatalogApiProcessed";
+export * from "./PolarizationDefinition";
