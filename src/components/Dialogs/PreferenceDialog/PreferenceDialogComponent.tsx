@@ -4,17 +4,18 @@ import tinycolor from "tinycolor2";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
-import {ColormapComponent, ColorPickerComponent, AutoColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, SuccessToast} from "components/Shared";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
+import {TelemetryMode} from "services";
 import "./PreferenceDialogComponent.scss";
 
 enum PreferenceDialogTabs {
@@ -25,7 +26,8 @@ enum PreferenceDialogTabs {
     REGION,
     PERFORMANCE,
     LOG_EVENT,
-    CATALOG
+    CATALOG,
+    TELEMETRY
 }
 
 const PercentileSelect = Select.ofType<string>();
@@ -87,10 +89,23 @@ export class PreferenceDialogComponent extends React.Component {
             case PreferenceDialogTabs.CATALOG:
                 preference.resetCatalogSettings();
                 break;
+            case PreferenceDialogTabs.TELEMETRY:
+                preference.resetTelemetrySettings();
+                break;
             case PreferenceDialogTabs.GLOBAL:
             default:
                 preference.resetGlobalSettings();
                 break;
+        }
+    };
+
+    private handleUserIdCopied = async () => {
+        const appStore = AppStore.Instance;
+        try {
+            await navigator.clipboard?.writeText(appStore.telemetryService.getDecodedUserId());
+            AppToaster.show(SuccessToast("clipboard", "Copied user ID to clipboard."));
+        } catch (err) {
+            console.log(err);
         }
     };
 
@@ -629,6 +644,48 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
+        let telemetryHelperText: string;
+
+        if (preference.telemetryMode === TelemetryMode.Usage) {
+            telemetryHelperText = "Operating system and browser information will be collected, as well as anonymous usage data.";
+        } else if (preference.telemetryMode === TelemetryMode.Minimal) {
+            telemetryHelperText = "Operating system and browser information will be collected. No usage data will be collected.";
+        } else {
+            telemetryHelperText = "No data will be collected.";
+        }
+
+        const telemetryPanel = (
+            <div className="panel-container">
+                <div className="telemetry-callout">
+                    <Callout intent="primary">
+                        <p>
+                            CARTA can collect anonymous usage data, in order to help the development team prioritize additional features and platforms. No personal or scientific information will be collected. Please see our{" "}
+                            <a rel="noopener noreferrer" href="https://cartavis.org/telemetry" target="_blank">
+                                data collection policy
+                            </a>{" "}
+                            for more details.
+                        </p>
+                        {preference.telemetryUuid && (
+                            <div className="telemetry-id-text">
+                                <p>Anonymous user ID: {appStore.telemetryService.getDecodedUserId()}</p>
+                                <Button minimal={true} intent="primary" icon="clipboard" onClick={this.handleUserIdCopied} />
+                            </div>
+                        )}
+                    </Callout>
+                </div>
+                <FormGroup inline={true} label="Telemetry mode" helperText={telemetryHelperText} className="telemetry-mode-form-group">
+                    <HTMLSelect value={preference.telemetryMode} onChange={ev => preference.setPreference(PreferenceKeys.TELEMETRY_MODE, ev.currentTarget.value)}>
+                        <option value={TelemetryMode.None}>Disabled</option>
+                        <option value={TelemetryMode.Minimal}>Minimal</option>
+                        <option value={TelemetryMode.Usage}>Full</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Log telemetry output">
+                    <Switch checked={preference.telemetryLogging} onChange={ev => preference.setPreference(PreferenceKeys.TELEMETRY_LOGGING, ev.currentTarget.checked)} />
+                </FormGroup>
+            </div>
+        );
+
         const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
 
         const dialogProps: IDialogProps = {
@@ -653,6 +710,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.CATALOG} title="Catalog" panel={catalogPanel} />
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={regionSettingsPanel} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={performancePanel} />
+                        {!process.env.REACT_APP_SKIP_TELEMETRY && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={telemetryPanel} />}
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel} />
                     </Tabs>
                 </div>

@@ -41,7 +41,7 @@ export class TelemetryDialogComponent extends React.Component {
                                 CARTA would like to collect anonymous usage data, in order to help the development team prioritize additional features and platforms. No personal or scientific information will be collected. Please see our{" "}
                                 <a rel="noopener noreferrer" href="https://cartavis.org/telemetry" target="_blank">
                                     data collection policy
-                                </a>
+                                </a>{" "}
                                 for more details.
                             </p>
                         </div>

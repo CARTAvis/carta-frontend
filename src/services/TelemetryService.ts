@@ -249,6 +249,10 @@ export class TelemetryService {
         return this.addTelemetryEntry(TelemetryAction.FileClose, {id});
     }
 
+    getDecodedUserId() {
+        return this.uuid;
+    }
+
     async addTelemetryEntry(action: TelemetryAction, details?: object, id?: string) {
         // All other actions are considered usage stats
         const isUsageEntry = !(action === TelemetryAction.Connection || action === TelemetryAction.EndSession);

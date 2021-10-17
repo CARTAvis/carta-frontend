@@ -198,8 +198,7 @@ const DEFAULTS = {
     TELEMETRY: {
         telemetryConsentShown: false,
         telemetryMode: TelemetryMode.Usage,
-        // TODO: set this to false when merging into dev
-        telemetryLogging: true
+        telemetryLogging: false
     }
 };
 
