@@ -2018,6 +2018,11 @@ export class FrameStore {
 
     @action setRegionViewScale = (scale: number) => {
         this.regionViewScale = scale;
-        // TODO: update siblings
+        if (this.spatialReference) {
+            return;
+        }
+        this.spatialSiblings?.forEach(sibling => {
+            sibling.setRegionViewScale(scale);
+        });
     };
 }

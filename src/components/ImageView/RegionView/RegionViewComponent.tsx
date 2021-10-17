@@ -431,10 +431,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    public handleStageChange = (pos: Point2D, scale: number) => {
+    private handleStageChange = (pos: Point2D, scale: number) => {
         const stage = this.stageRef.current;
         if (stage && pos && isFinite(pos.x) && isFinite(pos.y) && isFinite(scale)) {
-            // stage.scale({x: scale, y: scale});
+            stage.scale({x: scale, y: scale});
             stage.position(pos);
         }
     };
@@ -443,7 +443,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.handleStageChange({x: 0, y: 0}, 1);
     };
 
-    public stageZoomToPoint = (x: number, y: number, zoom: number) => {
+    @action public stageZoomToPoint = (x: number, y: number, zoom: number) => {
         const stage = this.stageRef.current;
         if (stage) {
             const oldScale = stage.scaleX();
@@ -458,6 +458,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 y: y - cursorPointTo.y * zoom
             };
             stage.position(newOrigin);
+
+            if (this.props.frame) {
+                const frame = this.props.frame.spatialReference || this.props.frame;
+                frame.setRegionViewScale(zoom);
+                frame.setRegionViewPos(newOrigin);
+            }
         }
     };
 
