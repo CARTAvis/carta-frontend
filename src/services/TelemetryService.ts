@@ -85,6 +85,16 @@ export class TelemetryService {
     }
 
     async checkAndGenerateId(forceNewId: boolean = false) {
+        const url = new URL(window.location.href);
+        const skipTelemetry = url.searchParams.get("skipTelemetry");
+
+        // Check for URL query parameter or build-time flag for skipping telemetry
+        if (skipTelemetry || process.env.REACT_APP_SKIP_TELEMETRY) {
+            console.log("Skipping telemetry");
+            await this.skipTelemetry();
+            return false;
+        }
+
         const preferences = PreferenceStore.Instance;
         let token = preferences.telemetryUuid;
 
@@ -145,10 +155,14 @@ export class TelemetryService {
         }
     }
 
-    async optOut() {
+    async skipTelemetry() {
         const preferences = PreferenceStore.Instance;
         await preferences.setPreference(PreferenceKeys.TELEMETRY_CONSENT_SHOWN, true);
         await preferences.setPreference(PreferenceKeys.TELEMETRY_MODE, TelemetryMode.None);
+    }
+
+    async optOut() {
+        await this.skipTelemetry();
 
         const entry: TelemetryMessage = {
             id: uuidv1(),
