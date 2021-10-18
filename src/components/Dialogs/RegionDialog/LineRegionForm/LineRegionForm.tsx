@@ -140,7 +140,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        const existingValue = this.props.region.size.x;
+        const existingValue = length2D(this.props.region.size);
 
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
