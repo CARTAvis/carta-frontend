@@ -210,6 +210,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @computed get scatterData() {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
+        const numVisibleRows = profileStore.numVisibleRows;
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
         let scatterDatasets: Plotly.Data[] = [];
         let data: Partial<Plotly.PlotData> = {};
@@ -221,8 +222,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             opacity: 1
         };
         data.hoverinfo = "none";
-        data.x = coords.wcsX?.slice(0);
-        data.y = coords.wcsY?.slice(0);
+        data.x = coords.wcsX?.slice(0, numVisibleRows);
+        data.y = coords.wcsY?.slice(0, numVisibleRows);
         scatterDatasets.push(data);
 
         const border = this.getScatterBorder(coords.wcsX, coords.wcsY);
@@ -232,6 +233,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @computed get histogramData() {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
+        const numVisibleRows = profileStore.numVisibleRows;
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
         let histogramDatasets: Plotly.Data[] = [];
         let data: Partial<Plotly.PlotData> = {};
@@ -244,7 +246,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const size = (end - start) / nBinx;
         data.type = "histogram";
         data.hoverinfo = "none";
-        data.x = coords.wcsData?.slice(0);
+        data.x = coords.wcsData?.slice(0, numVisibleRows);
         data.marker = {
             color: Colors.BLUE2
         };
