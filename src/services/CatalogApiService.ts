@@ -78,13 +78,13 @@ export class CatalogApiService {
                     let catalogInfo: CatalogInfo = {
                         fileId,
                         fileInfo: catalogFileInfo,
-                        dataSize: response.data?.data?.length,
+                        dataSize: response.data?.data?.length ?? 0,
                         directory: ""
                     };
                     let catalogWidgetId = appStore.updateCatalogProfile(fileId, frame);
                     if (catalogWidgetId) {
                         appStore.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                        appStore.catalogStore.addCatalog(fileId);
+                        appStore.catalogStore.addCatalog(fileId, catalogInfo.dataSize);
                         appStore.fileBrowserStore.hideFileBrowser();
                         const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, CatalogType.SIMBAD);
                         appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
