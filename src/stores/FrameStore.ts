@@ -1824,6 +1824,10 @@ export class FrameStore {
         for (const region of this.frameRegionSet.regions) {
             this.frameRegionSet.deleteRegion(region);
         }
+
+        // Sync region view position & scale
+        this.setRegionViewPos(this.spatialReference.regionViewPos);
+        this.setRegionViewScale(this.spatialReference.regionViewScale);
         return true;
     };
 
