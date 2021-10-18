@@ -39,6 +39,7 @@ export enum HelpType {
     SAVE_LAYOUT = "save-layout",
     REGION_DIALOG = "region-dialog",
     STOKES = "STOKES",
+    ONLINE_CATALOG_QUERY = "online-catalog-query",
 
     // Widgets
     ANIMATOR = "animator",
@@ -47,6 +48,7 @@ export enum HelpType {
     IMAGE_VIEW = "image-view",
     IMAGE_VIEW_SETTINGS = "image-view-settings",
     LAYER_LIST = "layer-list",
+    LAYER_LIST_SETTINGS = "layer-list-settings",
     LOG = "log",
     PLACEHOLDER = "placeholder",
     REGION_LIST = "region-list",

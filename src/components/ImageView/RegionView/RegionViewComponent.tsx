@@ -639,6 +639,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             cursor = "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
             cursor = "move";
+        } else if (regionSet.selectedRegion === regionSet.regions[0] || !regionSet.selectedRegion) {
+            cursor = "default";
         }
 
         return (
