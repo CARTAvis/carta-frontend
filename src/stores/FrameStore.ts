@@ -14,7 +14,6 @@ import {
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
     Point2D,
-    ProtobufProcessing,
     SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
     SPECTRAL_TYPE_STRING,
@@ -32,7 +31,7 @@ import {
 import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
-import {formattedArcsec} from "utilities";
+import {formattedArcsec, ProtobufProcessing} from "utilities";
 import {ColorbarStore} from "./ColorbarStore";
 
 export interface FrameInfo {

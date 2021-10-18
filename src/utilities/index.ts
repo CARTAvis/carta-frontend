@@ -10,3 +10,5 @@ export * from "./wcs";
 export * from "./table";
 export * from "./templates";
 export * from "./export";
+export * from "./CatalogApiProcessed";
+export * from "./Processed";
