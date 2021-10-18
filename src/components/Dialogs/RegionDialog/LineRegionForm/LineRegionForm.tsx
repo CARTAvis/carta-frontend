@@ -145,7 +145,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const rotation = (region.rotation * Math.PI) / 180.0;
-            region.setSize({x: value * Math.cos(rotation), y: value * Math.sin(rotation)});
+            region.setSize({x: value * Math.sin(rotation), y: (-1) * value * Math.cos(rotation)});
             return;
         }
 
@@ -168,7 +168,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const rotation = (region.rotation * Math.PI) / 180.0;
-            region.setSize({x: value * Math.cos(rotation), y: value * Math.sin(rotation)});
+            region.setSize({x: value * Math.sin(rotation), y: (-1) * value * Math.cos(rotation)});
             return;
         }
 
