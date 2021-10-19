@@ -4,10 +4,10 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {LineKey, Point2D, ProcessedSpectralProfile, SpectralSystem} from "models";
+import {LineKey, Point2D, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
-import {clamp, getColorForTheme, isAutoColor} from "utilities";
+import {clamp, getColorForTheme, isAutoColor, ProcessedSpectralProfile} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,

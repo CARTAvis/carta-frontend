@@ -135,7 +135,7 @@ export class DialogStore {
         this.externalPageDialogVisible = false;
     };
 
-    // Stokes
+    // Stokes dialog
     @observable stokesDialogVisible: boolean = false;
     @action showStokesDialog = () => {
         this.stokesDialogVisible = true;
@@ -153,5 +153,14 @@ export class DialogStore {
     };
     @action hideRestFreqDialog = () => {
         this.restFreqDialogVisible = false;
+    };
+    
+    // Catalog query dialog
+    @observable catalogQueryDialogVisible: boolean = false;
+    @action showCatalogQueryDialog = () => {
+        this.catalogQueryDialogVisible = true;
+    };
+    @action hideCatalogQueryDialog = () => {
+        this.catalogQueryDialogVisible = false;
     };
 }

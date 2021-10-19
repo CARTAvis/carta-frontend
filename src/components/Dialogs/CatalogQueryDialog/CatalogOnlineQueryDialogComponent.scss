@@ -1,0 +1,39 @@
+.catalog-query-dialog {
+    height: 100%;
+    width: 100%;
+
+    .online-catalog-config {
+        .bp3-form-group {
+            .bp3-label {
+                margin-left: 5px !important;
+            }
+            .bp3-form-content {
+                display: inline-flex;
+            }
+            .bp3-form-content > * {
+                margin-right: 5px;
+                margin-left: 5px;
+            }
+        }
+    }
+
+    .bp3-dialog-footer {
+        .result-info {
+            display: inline-flex;
+            font-size: x-small;
+        }
+
+        .bp3-dialog-footer-actions {
+            float: right;
+        }
+    }
+
+    .query-loading-overlay {
+        position: absolute !important;
+        top: 50%;
+        left: 50%;
+        margin: -15px 0 0 -15px;
+        width: inherit !important;
+        height: inherit !important;
+    }
+}
