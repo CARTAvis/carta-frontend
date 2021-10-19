@@ -122,7 +122,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = AppStore.Instance;
         const frameNum = appStore.frames.length;
-        const frame = appStore.activeFrame;
+        const frame = appStore.hoveredFrame ?? appStore.activeFrame;
 
         if (frameNum <= 0) {
             return (
