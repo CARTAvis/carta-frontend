@@ -37,8 +37,9 @@ export class RegionSetStore {
         if (pos && this.regions.length > 0) {
             const cursorRegion = this.regions[0];
             // Need to avoid redundant update (position not changed), backend may not reply to redundant requests.
-            if (cursorRegion?.regionId === CURSOR_REGION_ID && (cursorRegion.center?.x !== pos.x || cursorRegion.center?.y !== pos.y)) {
-                cursorRegion.setCenter(pos);
+            const roundedPos = {x: Math.round(pos.x), y: Math.round(pos.y)};
+            if (cursorRegion?.regionId === CURSOR_REGION_ID && (cursorRegion.center?.x !== roundedPos.x || cursorRegion.center?.y !== roundedPos.y)) {
+                cursorRegion.setCenter(roundedPos);
             }
         }
     };

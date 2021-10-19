@@ -526,6 +526,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
             if (!AppStore.Instance.cursorFrozen) {
                 this.updateCursorPos(mouseEvent.offsetX, mouseEvent.offsetY);
+                if (this.props.frame !== AppStore.Instance.hoveredFrame) {
+                    AppStore.Instance.setHoveredFrame(this.props.frame);
+                }
             }
         }
     };
@@ -585,6 +588,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             cursor = "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
             cursor = "move";
+        } else if (regionSet.selectedRegion === regionSet.regions[0] || !regionSet.selectedRegion) {
+            cursor = "default";
         }
 
         return (

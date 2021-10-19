@@ -14,7 +14,6 @@ import {
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
     Point2D,
-    ProtobufProcessing,
     SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
     SPECTRAL_TYPE_STRING,
@@ -32,7 +31,7 @@ import {
 import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
-import {formattedArcsec} from "utilities";
+import {formattedArcsec, ProtobufProcessing} from "utilities";
 import {ColorbarStore} from "./ColorbarStore";
 
 export interface FrameInfo {
@@ -73,6 +72,7 @@ export class FrameStore {
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
+    public readonly headerRestFreq: number;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
@@ -106,6 +106,7 @@ export class FrameStore {
     @observable contourStores: Map<number, ContourStore>;
     @observable moving: boolean;
     @observable zooming: boolean;
+    @observable customRestFreq: number;
 
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
@@ -425,6 +426,10 @@ export class FrameStore {
             if (spectralType) {
                 spectralInfo.spectralString = `${spectralType.name} (${this.spectralAxis?.specsys ?? ""}): ${toFixed(channelInfo.values[this.channel], 4)} ${spectralType.unit ?? ""}`;
                 if (spectralType.code === "FREQ") {
+                    // dummy variable to update velocity when the rest freq for spectral transform is changed
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const restFreq = this.customRestFreq;
+
                     const freqVal = channelInfo.rawValues[this.channel];
                     // convert frequency value to unit in GHz
                     if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
@@ -570,6 +575,13 @@ export class FrameStore {
             result = isTypeEqual && isUnitEqual && isSpecsysEqual;
         }
         return result;
+    }
+
+    @computed get isRestFreqEditable(): boolean {
+        return (
+            (this.frameInfo?.fileInfoExtended?.depth > 1 || this.isPVImage) &&
+            (this.spectralAxis?.type?.code === SpectralType.FREQ || this.spectralAxis?.type?.code === SpectralType.WAVE || this.spectralAxis?.type?.code === SpectralType.AWAV)
+        );
     }
 
     @computed get isCoordChannel(): boolean {
@@ -920,6 +932,8 @@ export class FrameStore {
             }
         }
 
+        this.headerRestFreq = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue;
+        this.setCustomRestFreq(this.headerRestFreq);
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
@@ -957,12 +971,14 @@ export class FrameStore {
             }
         });
 
-        // if type/unit/specsys changes, trigger spectral conversion
+        // if type/unit/specsys/restFreq changes, trigger spectral conversion
         autorun(() => {
             const type = this.spectralType;
             const unit = this.spectralUnit;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
+            const restFreq = this.customRestFreq;
+            /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
                 if (!type && !unit) {
                     this.setChannelValues(this.channelInfo.values);
@@ -1146,6 +1162,31 @@ export class FrameStore {
                 }),
             FrameStore.ZoomInertiaDuration
         );
+    };
+
+    @action public updateCustomRestFreq = (restFreq: number) => {
+        if (!isFinite(restFreq) || restFreq === this.customRestFreq) {
+            return;
+        }
+
+        if (this.wcsInfo3D) {
+            AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
+        }
+        if (this.spectralFrame) {
+            AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
+        }
+        this.setCustomRestFreq(restFreq);
+
+        if (this.spectralReference) {
+            const spectralReference = this.spectralReference;
+            this.clearSpectralReference();
+            this.setSpectralReference(spectralReference);
+        } else if (this.secondarySpectralImages.length > 0) {
+            for (const frame of this.secondarySpectralImages) {
+                frame.clearSpectralReference();
+                frame.setSpectralReference(this);
+            }
+        }
     };
 
     public getRegion = (regionId: number): RegionStore => {
@@ -1393,6 +1434,10 @@ export class FrameStore {
         }
     }
 
+    @action private setCustomRestFreq = (restFreq: number) => {
+        this.customRestFreq = restFreq;
+    };
+
     @action
     private setChannelValues(values: number[]) {
         this.channelValues = values;
@@ -1418,8 +1463,7 @@ export class FrameStore {
         const spectralType = this.spectralAxis.type.code;
         if (IsSpectralTypeSupported(spectralType)) {
             // check RESTFRQ
-            const restFrqHeader = entries.find(entry => entry.name.indexOf("RESTFRQ") !== -1);
-            if (restFrqHeader) {
+            if (isFinite(this.headerRestFreq)) {
                 this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
             } else {
                 this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>();
