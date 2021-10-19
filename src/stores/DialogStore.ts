@@ -154,7 +154,7 @@ export class DialogStore {
     @action hideRestFreqDialog = () => {
         this.restFreqDialogVisible = false;
     };
-    
+
     // Catalog query dialog
     @observable catalogQueryDialogVisible: boolean = false;
     @action showCatalogQueryDialog = () => {
