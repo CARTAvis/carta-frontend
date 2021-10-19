@@ -164,7 +164,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
             return;
         }
         const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
-        const existingValue = this.props.region.size.x;
+        const existingValue = length2D(this.props.region.size);
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const rotation = (region.rotation * Math.PI) / 180.0; // rotation is in degrees counter-clockwise of north(N)
