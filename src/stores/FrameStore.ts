@@ -1154,7 +1154,7 @@ export class FrameStore {
         );
     };
 
-    public updateCustomRestFreq = (restFreq: number) => {
+    @action public updateCustomRestFreq = (restFreq: number) => {
         if (!isFinite(restFreq) || restFreq === this.customRestFreq) {
             return;
         }
