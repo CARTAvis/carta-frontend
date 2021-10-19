@@ -6,10 +6,11 @@ import classNames from "classnames";
 import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
-import {AppStore, CatalogStore, CatalogProfileStore, CatalogOverlay, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, CatalogOnlineQueryProfileStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, ValueClip} from "stores/widgets";
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
+import {CatalogOverlay} from "models";
 import {getColorForTheme, SWATCH_COLORS} from "utilities";
 import "./CatalogOverlayPlotSettingsPanelComponent.scss";
 
@@ -79,7 +80,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         return CatalogStore.Instance.catalogProfiles?.get(this.props.id);
     }
 
-    @computed get profileStore(): CatalogProfileStore {
+    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore {
         return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 

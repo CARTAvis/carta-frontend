@@ -169,3 +169,10 @@ function getBufferElementType(buffer: ArrayBufferView): string {
         return "Float32";
     }
 }
+
+export function makeBuffer(gl: WebGL2RenderingContext, data: Float32Array, usage: number) {
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, usage);
+    return buffer;
+}

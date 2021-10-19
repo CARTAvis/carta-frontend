@@ -10,6 +10,7 @@ export enum HelpType {
     SAVE_LAYOUT = "Save Layout",
     REGION_DIALOG = "Region Dialog",
     STOKES = "Stokes Hypercube Dialog",
+    ONLINE_CATALOG_QUERY = "Online Catalog Query",
 
     // Widgets
     ANIMATOR = "Animator",
