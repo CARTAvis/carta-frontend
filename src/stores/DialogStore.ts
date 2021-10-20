@@ -135,12 +135,32 @@ export class DialogStore {
         this.externalPageDialogVisible = false;
     };
 
-    // Stokes
+    // Stokes dialog
     @observable stokesDialogVisible: boolean = false;
     @action showStokesDialog = () => {
         this.stokesDialogVisible = true;
     };
     @action hideStokesDialog = () => {
         this.stokesDialogVisible = false;
+    };
+
+    // Rest frequency
+    @observable restFreqDialogVisible: boolean = false;
+    @observable restFreqDialogFileId: number;
+    @action showRestFreqDialog = (fileId: number) => {
+        this.restFreqDialogVisible = true;
+        this.restFreqDialogFileId = fileId;
+    };
+    @action hideRestFreqDialog = () => {
+        this.restFreqDialogVisible = false;
+    };
+
+    // Catalog query dialog
+    @observable catalogQueryDialogVisible: boolean = false;
+    @action showCatalogQueryDialog = () => {
+        this.catalogQueryDialogVisible = true;
+    };
+    @action hideCatalogQueryDialog = () => {
+        this.catalogQueryDialogVisible = false;
     };
 }
