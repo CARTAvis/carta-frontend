@@ -174,10 +174,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
         // Remove first and last ticks if they've been flagged
         const newticks = ticks.slice(removeFirstTick ? 1 : 0, removeLastTick ? -1 : undefined);
-        axis.ticks = roundingDecimalDigits ? newticks.map(tick => {
-            tick.value = Number(tick.value.toFixed(roundingDecimalDigits));
-            return tick;
-        }) : newticks;
+        axis.ticks = roundingDecimalDigits
+            ? newticks.map(tick => {
+                  tick.value = Number(tick.value.toFixed(roundingDecimalDigits));
+                  return tick;
+              })
+            : newticks;
     };
 
     private filterYLogTicks = (axis: Scale) => {
@@ -354,8 +356,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     },
                     grid: {
                         drawBorder: false,
-                        color: (grid) => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor),
-                        lineWidth: (grid) => (grid.index === 0 && this.props.zeroLineWidth ? this.props.zeroLineWidth : 1),
+                        color: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor),
+                        lineWidth: grid => (grid.index === 0 && this.props.zeroLineWidth ? this.props.zeroLineWidth : 1),
                         tickLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
                     }
                 },
@@ -371,7 +373,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         maxRotation: 0
                     }
                 },
-                "y-axis-0":{
+                "y-axis-0": {
                     min: this.props.yMin,
                     max: this.props.yMax,
                     title: {
@@ -386,8 +388,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     },
                     grid: {
                         drawBorder: false,
-                        color: (grid) => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor),
-                        lineWidth: (grid) => (grid.index === 0 && this.props.zeroLineWidth ? this.props.zeroLineWidth : 1)
+                        color: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor),
+                        lineWidth: grid => (grid.index === 0 && this.props.zeroLineWidth ? this.props.zeroLineWidth : 1)
                     }
                 }
             },
@@ -414,7 +416,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 data: this.props.data,
                 fill: false,
                 tension: 0,
-                order: this.props.order ? this.props.order : 0,
+                order: this.props.order ? this.props.order : 0
             };
             if (this.props.plotType === PlotType.POINTS) {
                 datasetConfig.showLine = false;
@@ -438,10 +440,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     datasetConfig.pointRadius = 0.5;
                     datasetConfig.pointStyle = "line";
                     datasetConfig.segment = {
-                        borderColor: (segment) => {
+                        borderColor: segment => {
                             return this.props.multiColorSingleLineColors[segment.p0DataIndex];
                         }
-                    }
+                    };
                 }
             }
             // line data point background color
@@ -490,10 +492,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     } else {
                         const colors = this.props.multiColorMultiLinesColors.get(key);
                         multiPlotDatasetConfig.segment = {
-                            borderColor: (segment) => { 
+                            borderColor: segment => {
                                 return colors[segment.p0DataIndex];
                             }
-                        }
+                        };
                     }
                 }
 
