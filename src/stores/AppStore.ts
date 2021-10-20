@@ -2180,6 +2180,13 @@ export class AppStore {
         }
     };
 
+    decreaseImageRatio = () => {
+        if (this.imageRatio !== 1 && this.isExportingImage === true) {
+            AppToaster.show(WarningToast(`Failed to export image; exporting image with ${this.imageRatio - 1}00% resolution instead.`));
+            this.setImageRatio(this.imageRatio - 1);
+        }
+    };
+
     getImageDataUrl = (backgroundColor: string) => {
         if (this.activeFrame) {
             const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);

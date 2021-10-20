@@ -121,6 +121,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         // Resize and clear the shared WebGL canvas if required
         tileRenderService.setCanvasSize(requiredWidth * appStore.numImageColumns, requiredHeight * appStore.numImageRows);
+
+        if (this.gl.drawingBufferWidth !== this.gl.canvas.width || this.gl.drawingBufferHeight !== this.gl.canvas.height) {
+            appStore.decreaseImageRatio();
+        }
     }
 
     private renderCanvas() {
