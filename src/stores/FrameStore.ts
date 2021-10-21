@@ -1611,6 +1611,10 @@ export class FrameStore {
                 frame.setChannels(siblingChannel, frame.requiredStokes, false);
             });
         }
+
+        if (this.contourStores?.size) {
+            AppStore.Instance.restartTaskProgress();
+        }
     }
 
     @action incrementChannels(deltaChannel: number, deltaStokes: number, wrap: boolean = true) {
@@ -1778,6 +1782,7 @@ export class FrameStore {
             contourChunkSize: preferenceStore.contourChunkSize
         };
         this.backendService.setContourParameters(contourParameters);
+        AppStore.Instance.restartTaskProgress();
     };
 
     @action clearContours = (updateBackend: boolean = true) => {

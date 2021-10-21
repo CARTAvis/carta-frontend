@@ -28,7 +28,6 @@ const HistogramSelect = Select.ofType<boolean>();
 @observer
 export class ContourDialogComponent extends React.Component {
     @observable showCubeHistogramAlert: boolean;
-    @observable showContourProgress: boolean;
     @observable currentTab: ContourDialogTabs = ContourDialogTabs.Levels;
     @observable levels: number[];
     @observable smoothingMode: CARTA.SmoothingMode;
@@ -44,8 +43,6 @@ export class ContourDialogComponent extends React.Component {
     constructor(props: {appStore: AppStore}) {
         super(props);
         makeObservable(this);
-
-        this.showContourProgress = false;
 
         this.widgetStore = new RenderConfigWidgetStore();
         this.setDefaultContourParameters();
@@ -67,16 +64,6 @@ export class ContourDialogComponent extends React.Component {
                 }
             }
         });
-
-        autorun(() =>
-            runInAction(() => {
-                const contourProgress = AppStore.Instance.contourDataSource?.contourProgress;
-                AppStore.Instance.updateTaskProgress(contourProgress);
-                if (contourProgress === 1) {
-                    this.showContourProgress = false;
-                }
-            })
-        );
     }
 
     @action private handleApplyContours = () => {
@@ -84,13 +71,7 @@ export class ContourDialogComponent extends React.Component {
         if (dataSource) {
             dataSource.contourConfig.setContourConfiguration(this.levels.slice(), this.smoothingMode, this.smoothingFactor);
             dataSource.applyContours();
-            AppStore.Instance.restartTaskProgress();
-            this.showContourProgress = true;
         }
-    };
-
-    @action private handleContourProgressClose = () => {
-        this.showContourProgress = false;
     };
 
     @action setDefaultContourParameters() {
@@ -519,14 +500,6 @@ export class ContourDialogComponent extends React.Component {
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
-                />
-                <TaskProgressDialogComponent
-                    isOpen={this.showContourProgress && dataSource.contourProgress >= 0 && dataSource.contourProgress < 1 && appStore.taskUsedTime > 500}
-                    progress={dataSource.contourProgress}
-                    timeRemaining={appStore.estimatedTaskRemainingTime}
-                    isSimplyClosable={true}
-                    onCancel={this.handleContourProgressClose}
-                    text={"Calculating contours"}
                 />
             </DraggableDialogComponent>
         );

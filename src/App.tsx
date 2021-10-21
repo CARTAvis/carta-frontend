@@ -64,6 +64,7 @@ export class App extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
+        const contourDataSource = appStore.contourDataSource;
         const className = classNames("App", {"bp3-dark": appStore.darkTheme});
         const glClassName = classNames("gl-container-app", {"dark-theme": appStore.darkTheme});
 
@@ -74,6 +75,15 @@ export class App extends React.Component {
                 <UIControllerComponent />
                 {alertComponent}
                 <TaskProgressDialogComponent progress={undefined} timeRemaining={0} isOpen={appStore.resumingSession} text={"Resuming session..."} />
+                {appStore.contourDataSource?.contourStores?.size &&
+                <TaskProgressDialogComponent
+                    isOpen={(contourDataSource.contourProgress >= 0 && contourDataSource.contourProgress < 1 && appStore.taskUsedTime >= 500)}
+                    progress={contourDataSource.contourProgress}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    isSimplyClosable={true}
+                    text={"Calculating contours"}
+                />
+                }
                 <div className={glClassName} ref={ref => appStore.setAppContainer(ref)}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}></ReactResizeDetector>
                 </div>
