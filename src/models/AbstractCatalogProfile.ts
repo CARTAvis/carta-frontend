@@ -290,7 +290,7 @@ export abstract class AbstractCatalogProfileStore {
                 if (column?.dataType === CARTA.ColumnType.String) {
                     hasfilter = true;
                 } else if (column?.dataType === CARTA.ColumnType.Bool) {
-                    hasfilter = value.filter.match(AbstractCatalogProfileStore.TRUE_REGEX)?.length >0 || value.filter.match(AbstractCatalogProfileStore.FALSE_REGEX)?.length > 0;
+                    hasfilter = value.filter.match(AbstractCatalogProfileStore.TRUE_REGEX)?.length > 0 || value.filter.match(AbstractCatalogProfileStore.FALSE_REGEX)?.length > 0;
                 } else {
                     const {operator, values} = getComparisonOperatorAndValue(value.filter);
                     if (operator >= 0 && values.length) {
