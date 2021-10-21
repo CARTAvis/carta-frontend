@@ -66,14 +66,6 @@ export class ContourDialogComponent extends React.Component {
         });
     }
 
-    @action private handleApplyContours = () => {
-        const dataSource = AppStore.Instance.contourDataSource;
-        if (dataSource) {
-            dataSource.contourConfig.setContourConfiguration(this.levels.slice(), this.smoothingMode, this.smoothingFactor);
-            dataSource.applyContours();
-        }
-    };
-
     @action setDefaultContourParameters() {
         const appStore = AppStore.Instance;
         const dataSource = appStore.contourDataSource;
@@ -205,6 +197,14 @@ export class ContourDialogComponent extends React.Component {
             dataSource.renderConfig.setUseCubeHistogramContours(false);
         }
         appStore.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
+    };
+
+    private handleApplyContours = () => {
+        const dataSource = AppStore.Instance.contourDataSource;
+        if (dataSource) {
+            dataSource.contourConfig.setContourConfiguration(this.levels.slice(), this.smoothingMode, this.smoothingFactor);
+            dataSource.applyContours();
+        }
     };
 
     private handleClearContours = () => {
