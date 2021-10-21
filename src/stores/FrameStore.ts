@@ -703,25 +703,37 @@ export class FrameStore {
         return (this.renderHeight * pixelRatio) / imageHeight;
     }
 
-    @computed get contourProgress(): number {
+    @computed get contourProcess(): {progress: number, isLongTask: boolean} {
         // Use -1 when there are no contours required
         if (!this.contourConfig.levels || !this.contourConfig.levels.length || !this.contourConfig.enabled) {
-            return -1;
+            return {progress: -1, isLongTask: false};
         }
 
         // Progress is zero if we haven't received any contours yet
         if (!this.contourStores || !this.contourStores.size) {
-            return 0;
+            return {progress: 0, isLongTask: false};
         }
 
         let totalProgress = 0;
+        let isLongTask = false;
         this.contourStores.forEach((contourStore, level) => {
             if (this.contourConfig.levels.includes(level)) {
                 totalProgress += contourStore.progress;
             }
+            if (contourStore.isLongTask) {
+                isLongTask = true;
+            }
         });
 
-        return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
+        return {progress: totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1), isLongTask: isLongTask};
+    }
+
+    @computed get isContourLongTask(): boolean {
+        return this.contourProcess.isLongTask;
+    }
+
+    @computed get contourProgress(): number {
+        return this.contourProcess.progress;
     }
 
     @computed get stokesOptions(): IOptionProps[] {
@@ -1573,9 +1585,9 @@ export class FrameStore {
             }
 
             if (!contourStore.isComplete && processedData.progress > 0) {
-                contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress, processedData.isLongTask);
             } else {
-                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress, processedData.isLongTask);
             }
         }
 

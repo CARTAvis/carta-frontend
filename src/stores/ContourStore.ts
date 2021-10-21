@@ -4,6 +4,7 @@ import {ContourWebGLService} from "../services";
 
 export class ContourStore {
     @observable progress: number;
+    @observable isLongTask: boolean;
     @observable numGeneratedVertices: number[];
     @observable vertexCount: number = 0;
     @observable chunkCount: number = 0;
@@ -34,13 +35,13 @@ export class ContourStore {
         this.gl = ContourWebGLService.Instance.gl;
     }
 
-    @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {
+    @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number, isLongTask: boolean) => {
         // Clear existing data to remove data buffers
         this.clearData();
-        this.addContourData(indexOffsets, vertexData, progress);
+        this.addContourData(indexOffsets, vertexData, progress, isLongTask);
     };
 
-    @action addContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
+    @action addContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number, isLongTask: boolean) => {
         const numVertices = sourceVertices.length / 2;
 
         if (!numVertices) {
@@ -61,6 +62,7 @@ export class ContourStore {
         this.vertexData.push(vertexData);
         this.indexOffsets.push(indexOffsets);
         this.progress = progress;
+        this.isLongTask = isLongTask;
         this.numGeneratedVertices.push(vertexData.length / (ContourStore.VertexDataElements / 2));
 
         const index = this.vertexData.length - 1;

@@ -19,6 +19,7 @@ export interface ProcessedContourData {
     channel: number;
     stokes: number;
     progress: number;
+    isLongTask: boolean;
     contourSets: ProcessedContourSet[];
 }
 
@@ -107,6 +108,7 @@ export class ProtobufProcessing {
             stokes: contourData.stokes,
             imageBounds: contourData.imageBounds,
             progress: contourData.progress,
+            isLongTask: contourData.isLongTask,
             contourSets: contourData.contourSets ? contourData.contourSets.map(contourSet => this.ProcessContourSet(contourSet)) : null
         };
     }

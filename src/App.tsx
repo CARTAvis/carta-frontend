@@ -77,7 +77,7 @@ export class App extends React.Component {
                 <TaskProgressDialogComponent progress={undefined} timeRemaining={0} isOpen={appStore.resumingSession} text={"Resuming session..."} />
                 {appStore.contourDataSource?.contourStores?.size &&
                 <TaskProgressDialogComponent
-                    isOpen={(contourDataSource.contourProgress >= 0 && contourDataSource.contourProgress < 1 && appStore.taskUsedTime >= 500)}
+                    isOpen={(contourDataSource.contourProgress >= 0 && contourDataSource.contourProgress < 1 && contourDataSource.isContourLongTask)}
                     progress={contourDataSource.contourProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     isSimplyClosable={true}
