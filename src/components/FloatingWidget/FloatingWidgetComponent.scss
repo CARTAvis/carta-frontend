@@ -62,7 +62,9 @@ $shadow-color: rgba($blue2, 0.1);
             font-size: 14px;
             cursor: move;
             flex: 1 1 100%;
-            overflow: auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .floating-header-button {
             padding-right: 5px;

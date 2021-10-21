@@ -5,8 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
 import * as _ from "lodash";
 import {BackendService} from "services";
-import {ProcessedColumnData, ProtobufProcessing} from "models";
-import {booleanFiltering, numericFiltering, stringFiltering, wavelengthToFrequency, SPEED_OF_LIGHT} from "utilities";
+import {booleanFiltering, numericFiltering, stringFiltering, wavelengthToFrequency, SPEED_OF_LIGHT, ProcessedColumnData, ProtobufProcessing} from "utilities";
 
 export enum SplataloguePingStatus {
     Checking,
