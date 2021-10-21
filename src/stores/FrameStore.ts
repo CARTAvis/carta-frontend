@@ -703,7 +703,7 @@ export class FrameStore {
         return (this.renderHeight * pixelRatio) / imageHeight;
     }
 
-    @computed get contourProcess(): {progress: number, isLongTask: boolean} {
+    @computed get contourProcess(): {progress: number; isLongTask: boolean} {
         // Use -1 when there are no contours required
         if (!this.contourConfig.levels || !this.contourConfig.levels.length || !this.contourConfig.enabled) {
             return {progress: -1, isLongTask: false};
