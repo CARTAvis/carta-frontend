@@ -1,4 +1,4 @@
-export const rotate2D = /* glsl */`
+export const rotate2D = /* glsl */ `
 vec2 rotate2D(vec2 vector, float theta) {
     float sinTheta = sin(theta);
     float cosTheta = cos(theta);
@@ -6,13 +6,13 @@ vec2 rotate2D(vec2 vector, float theta) {
 }
 `;
 
-export const imageToGL = /* glsl */`
+export const imageToGL = /* glsl */ `
 vec2 imageToGL(vec2 imageVec) {
     return 2.0 * imageVec - 1.0;
 }
 `;
 
-export const bicubicFilter = /* glsl */`
+export const bicubicFilter = /* glsl */ `
 // Adapted from https://www.shadertoy.com/view/MllSzX to work with non-square vec4 textures of variable size
 vec4 cubic(vec4 A, vec4 B, vec4 C, vec4 D, float t) {
     float t2 = t * t;
