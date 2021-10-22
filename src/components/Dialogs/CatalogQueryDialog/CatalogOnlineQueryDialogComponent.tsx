@@ -50,7 +50,7 @@ export class CatalogQueryDialogComponent extends React.Component {
             if (configStore.catalogDB === CatalogDatabase.VIZIER) {
                 return `Found ${this.resultSize} table(s)`;
             } else {
-                return`Found ${this.resultSize} object(s)`;
+                return `Found ${this.resultSize} object(s)`;
             }
         } else if (this.objectSize === 0) {
             return `Object ${configStore.objectName} not found`;

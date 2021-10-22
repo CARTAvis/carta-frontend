@@ -122,7 +122,7 @@ export class CatalogApiService {
     };
 
     public loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.ICatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
-        const appStore = AppStore.Instance; 
+        const appStore = AppStore.Instance;
         runInAction(() => {
             const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
             if (catalogWidgetId) {
@@ -158,7 +158,7 @@ export class CatalogApiService {
         let dataSize: number = 0;
         try {
             const response = await this.getSimbadCatalog(query);
-            if (frame && response?.status === 200 && response?.data?.data?.length) {               
+            if (frame && response?.status === 200 && response?.data?.data?.length) {
                 const configStore = CatalogOnlineQueryConfigStore.Instance;
                 const headers = CatalogApiProcessing.ProcessSimbadMetaData(response.data?.metadata);
                 const columnData = CatalogApiProcessing.ProcessSimbadData(response.data?.data, headers);
