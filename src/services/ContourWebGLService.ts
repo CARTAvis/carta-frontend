@@ -1,4 +1,4 @@
-import {getShaderFromString, initWebGL2, loadImageTexture, GL2} from "utilities";
+import {getShaderProgram, initWebGL2, loadImageTexture, GL2} from "utilities";
 import {contourShaders} from "./GLSL";
 import allMaps from "../static/allmaps.png";
 
@@ -56,18 +56,7 @@ export class ContourWebGLService {
         if (!this.gl) {
             return;
         }
-        let vertexShader = getShaderFromString(this.gl, contourShaders.vertexShader, GL2.VERTEX_SHADER);
-        let fragmentShader = getShaderFromString(this.gl, contourShaders.fragmentShader, GL2.FRAGMENT_SHADER);
-
-        let shaderProgram = this.gl.createProgram();
-        this.gl.attachShader(shaderProgram, vertexShader);
-        this.gl.attachShader(shaderProgram, fragmentShader);
-        this.gl.linkProgram(shaderProgram);
-
-        if (!this.gl.getProgramParameter(shaderProgram, GL2.LINK_STATUS)) {
-            console.log("Could not initialise shaders");
-        }
-
+        const shaderProgram = getShaderProgram(this.gl, contourShaders.vertexShader, contourShaders.fragmentShader);
         this.gl.useProgram(shaderProgram);
 
         this.vertexPositionAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexPosition");

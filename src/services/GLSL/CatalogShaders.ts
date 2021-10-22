@@ -2,7 +2,7 @@ import catalogVertexShader from "!raw-loader!./vertex_shader_catalog.glsl";
 import catalogPixelShader from "!raw-loader!./pixel_shader_catalog.glsl";
 import {utilities} from "./utilities";
 
-const macors = `
+const sharedMacros = `
 #define BOX_FILLED 0
 #define BOX_LINED 1
 #define CIRCLE_FILLED 2
@@ -25,7 +25,7 @@ const macors = `
 #define X_LINED 19
 #define LineSegment_FILLED 20
 `;
-const macorsVertex = `
+const vertexMacros = `
 #define PI radians(180.0)
 #define SQRT3 sqrt(3.0)
 #define SIN_60 0.86602540378
@@ -38,7 +38,7 @@ const macorsVertex = `
 #define GAMMA 5
 `;
 
-const macorsPixel = `
+const pixelMacros = `
 #define SIN_0 0.0
 #define COS_0 1.0
 #define COS_45 0.70710678118
@@ -49,6 +49,6 @@ const macorsPixel = `
 `;
 
 export const catalogShaders = {
-    vertexShader: `${utilities.version300}\n${macors}\n${macorsVertex}\n${utilities.imageToGL}\n${utilities.bicubicFilter}\n${utilities.rotate2D}\n${catalogVertexShader}`,
-    fragmentShader: `${utilities.version300}\n${macors}\n${macorsPixel}\n${catalogPixelShader}`
+    vertexShader: `${utilities.versionString}\n${sharedMacros}\n${vertexMacros}\n${utilities.imageToGL}\n${utilities.bicubicFilter}\n${utilities.rotate2D}\n${catalogVertexShader}`,
+    fragmentShader: `${utilities.versionString}\n${sharedMacros}\n${pixelMacros}\n${catalogPixelShader}`
 };

@@ -1,4 +1,4 @@
-import {createTextureFromArray, getShaderFromString, initWebGL2, loadImageTexture, makeBuffer, GL2} from "utilities";
+import {createTextureFromArray, getShaderProgram, initWebGL2, loadImageTexture, makeBuffer, GL2} from "utilities";
 import {catalogShaders} from "./GLSL";
 import allMaps from "../static/allmaps.png";
 
@@ -153,21 +153,7 @@ export class CatalogWebGLService {
         if (!this.gl) {
             return;
         }
-
-        let vertexShader = getShaderFromString(this.gl, catalogShaders.vertexShader, GL2.VERTEX_SHADER);
-        let fragmentShader = getShaderFromString(this.gl, catalogShaders.fragmentShader, GL2.FRAGMENT_SHADER);
-
-        let shaderProgram = this.gl.createProgram();
-        this.gl.attachShader(shaderProgram, vertexShader);
-        this.gl.attachShader(shaderProgram, fragmentShader);
-        this.gl.linkProgram(shaderProgram);
-
-        if (!this.gl.getProgramParameter(shaderProgram, GL2.LINK_STATUS)) {
-            const linkInfo = this.gl.getProgramInfoLog(shaderProgram);
-            console.error("Could not initialise shaders");
-            console.info(linkInfo);
-        }
-
+        const shaderProgram = getShaderProgram(this.gl, catalogShaders.vertexShader, catalogShaders.fragmentShader);
         this.gl.useProgram(shaderProgram);
 
         this.vertexPositionAttribute = this.gl.getAttribLocation(shaderProgram, "a_position");
