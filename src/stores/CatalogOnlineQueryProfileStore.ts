@@ -1,7 +1,8 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {ControlHeader, PreferenceStore} from "stores";
-import {AbstractCatalogProfileStore, CatalogType, CatalogInfo, ProcessedColumnData} from "models";
+import {AbstractCatalogProfileStore, CatalogType, CatalogInfo} from "models";
+import {ProcessedColumnData} from "utilities";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode", "dist", "otype_txt"];
@@ -97,8 +98,8 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
             switch (catalogColumn?.dataType) {
                 case CARTA.ColumnType.String:
                     this.sortedIndexMap.sort((a: number, b: number) => {
-                        const aString = catalogColumn.data[a] as string;
-                        const bString = catalogColumn.data[b] as string;
+                        const aString = String(catalogColumn.data[a]);
+                        const bString = String(catalogColumn.data[b]);
                         if (!aString) {
                             return direction * -1;
                         }

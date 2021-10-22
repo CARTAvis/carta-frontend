@@ -1,10 +1,9 @@
 import {CARTA} from "carta-protobuf";
 import {action, observable, computed} from "mobx";
 import {Regions, IRegion} from "@blueprintjs/table";
-import {ProcessedColumnData, TypedArray} from "models";
 import {AppStore, CatalogStore, ControlHeader, CatalogUpdateMode} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
-import {filterProcessedColumnData, getComparisonOperatorAndValue, minMaxArray, transformPoint} from "utilities";
+import {filterProcessedColumnData, getComparisonOperatorAndValue, minMaxArray, transformPoint, ProcessedColumnData, TypedArray} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;

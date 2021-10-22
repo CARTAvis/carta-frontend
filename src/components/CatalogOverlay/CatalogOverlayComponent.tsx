@@ -13,8 +13,8 @@ import {CARTA} from "carta-protobuf";
 import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
-import {toFixed} from "utilities";
-import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType, ProcessedColumnData} from "models";
+import {toFixed, ProcessedColumnData} from "utilities";
+import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
 import "./CatalogOverlayComponent.scss";
 
 enum HeaderTableColumnName {
@@ -479,7 +479,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     const wcs = frame.validWcs ? frame.wcsInfo : 0;
                     const catalogFileId = this.catalogFileId;
                     catalogStore.clearImageCoordsData(catalogFileId);
-                    catalogStore.updateCatalogData(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, profileStore.catalogCoordinateSystem.system);
+                    catalogStore.convertToImageCoordinate(catalogFileId, imageCoords.wcsX, imageCoords.wcsY, wcs, imageCoords.xHeaderInfo.units, imageCoords.yHeaderInfo.units, profileStore.catalogCoordinateSystem.system, 0, 0);
                     profileStore.setSelectedPointIndices(profileStore.selectedPointIndices, false);
                 }
                 if (profileStore.shouldUpdateData) {

@@ -1,9 +1,9 @@
 import * as AST from "ast_wrapper";
 import {action, observable, makeObservable, reaction, computed} from "mobx";
-import {CatalogSystemType, Point2D, VizieResource} from "models";
+import {CatalogSystemType, Point2D} from "models";
 import {AppStore, OverlayStore, NumberFormatType, ASTSettingsString, SystemType} from "stores";
 import {CatalogDatabase} from "services";
-import {clamp, getPixelValueFromWCS, transformPoint} from "utilities";
+import {clamp, getPixelValueFromWCS, transformPoint, VizieResource} from "utilities";
 
 export enum RadiusUnits {
     DEGREES = "deg",
@@ -40,6 +40,7 @@ export class CatalogOnlineQueryConfigStore {
         this.isQuerying = false;
         this.catalogDB = CatalogDatabase.SIMBAD;
         this.searchRadius = 1;
+        // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
         this.coordsType = CatalogSystemType.ICRS;
         this.centerPixelCoord = {x: undefined, y: undefined};
         this.maxObject = CatalogOnlineQueryConfigStore.OBJECT_SIZE;
@@ -307,7 +308,7 @@ export class CatalogOnlineQueryConfigStore {
         return tables;
     }
 
-    convertToDeg(pixelCoords: Point2D, system: SystemType): {x: string; y: string} {
+    convertToDeg(pixelCoords: Point2D, system?: SystemType): {x: string; y: string} {
         const frame = this.activeFrame;
         const overlay = OverlayStore.Instance;
         let p: {x: string; y: string} = {x: undefined, y: undefined};
@@ -316,7 +317,8 @@ export class CatalogOnlineQueryConfigStore {
             const format = `${NumberFormatType.Degrees}.${precision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
-            AST.set(wcsCopy, `System=${system}`);
+            const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
+            AST.set(wcsCopy, `System=${sys}`);
             astString.add("Format(1)", format);
             astString.add("Format(2)", format);
             const pointWCS = transformPoint(wcsCopy, pixelCoords);
@@ -345,8 +347,8 @@ export class CatalogOnlineQueryConfigStore {
     }
 
     private calculateDistanceFromPixelCoord(x: Point2D, y: Point2D, diagonal: boolean): number {
-        const max = this.convertToDeg(x, SystemType.ICRS);
-        const min = this.convertToDeg(y, SystemType.ICRS);
+        const max = this.convertToDeg(x);
+        const min = this.convertToDeg(y);
         const xd = Number(max.x) - Number(min.x);
         const yd = Number(max.y) - Number(min.y);
         if (diagonal) {

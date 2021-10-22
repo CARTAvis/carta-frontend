@@ -39,26 +39,25 @@ export class CatalogQueryDialogComponent extends React.Component {
     }
 
     @computed get resultInfo(): string {
-        let resultStr = undefined;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         if (configStore.isQuerying) {
-            resultStr = `Querying ${configStore.catalogDB}`;
+            return `Querying ${configStore.catalogDB}`;
         } else if (configStore.isObjectQuerying) {
-            resultStr = `Querying ${CatalogDatabase.SIMBAD}`;
+            return `Querying ${CatalogDatabase.SIMBAD}`;
         } else if (this.resultSize === 0) {
-            resultStr = "No objects found";
+            return "No objects found";
         } else if (this.resultSize >= 1) {
             if (configStore.catalogDB === CatalogDatabase.VIZIER) {
-                resultStr = `Found ${this.resultSize} table(s)`;
+                return `Found ${this.resultSize} table(s)`;
             } else {
-                resultStr = `Found ${this.resultSize} object(s)`;
+                return`Found ${this.resultSize} object(s)`;
             }
         } else if (this.objectSize === 0) {
-            resultStr = `Object ${configStore.objectName} not found`;
+            return `Object ${configStore.objectName} not found`;
         } else if (this.objectSize >= 1) {
-            resultStr = `Updated Center Coordinates according ${configStore.objectName}`;
+            return `Updated Center Coordinates according ${configStore.objectName}`;
         }
-        return resultStr;
+        return undefined;
     }
 
     public render() {
@@ -111,7 +110,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWCSPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
         const isVizieR = configStore.catalogDB === CatalogDatabase.VIZIER;
 
         const configBoard = (
@@ -189,10 +188,10 @@ export class CatalogQueryDialogComponent extends React.Component {
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             placeholder="X WCS Coordinate"
-                            disabled={!wcsInfo || !centerWCSPoint || disable}
-                            value={centerWCSPoint ? centerWCSPoint.x : ""}
-                            onBlur={this.handleCenterWCSXChange}
-                            onKeyDown={this.handleCenterWCSXChange}
+                            disabled={!wcsInfo || !centerWcsPoint || disable}
+                            value={centerWcsPoint ? centerWcsPoint.x : ""}
+                            onBlur={this.handleCenterWcsXChange}
+                            onKeyDown={this.handleCenterWcsXChange}
                         />
                     </Tooltip2>
                     <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -200,10 +199,10 @@ export class CatalogQueryDialogComponent extends React.Component {
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             placeholder="Y WCS Coordinate"
-                            disabled={!wcsInfo || !centerWCSPoint || disable}
-                            value={centerWCSPoint ? centerWCSPoint.y : ""}
-                            onBlur={this.handleCenterWCSYChange}
-                            onKeyDown={this.handleCenterWCSYChange}
+                            disabled={!wcsInfo || !centerWcsPoint || disable}
+                            value={centerWcsPoint ? centerWcsPoint.y : ""}
+                            onBlur={this.handleCenterWcsYChange}
+                            onKeyDown={this.handleCenterWcsYChange}
                         />
                     </Tooltip2>
                     <Tooltip2 content="Reset to current view center" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -278,26 +277,24 @@ export class CatalogQueryDialogComponent extends React.Component {
         );
     }
 
-    private query = () => {
+    private query = async () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         if (configStore.catalogDB === CatalogDatabase.SIMBAD) {
             // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
             const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
             const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
             configStore.setQueryStatus(true);
-            CatalogApiService.Instance.appendOnlineCatalog(query).then(dataSize => {
-                configStore.setQueryStatus(false);
-                this.setResultSize(dataSize);
-            });
+            const dataSize = await CatalogApiService.Instance.appendSimbadCatalog(query);
+            configStore.setQueryStatus(false);
+            this.setResultSize(dataSize);
         } else if (configStore.catalogDB === CatalogDatabase.VIZIER) {
             configStore.setQueryStatus(true);
             configStore.resetVizirR();
             const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
-            CatalogApiService.Instance.queryVizier(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, configStore.vizierKeyWords).then(resources => {
-                configStore.setQueryStatus(false);
-                configStore.setVizierQueryResult(resources);
-                this.setResultSize(resources.size);
-            });
+            const resources = await CatalogApiService.Instance.queryVizier(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, configStore.vizierKeyWords);
+            configStore.setQueryStatus(false);
+            configStore.setVizierQueryResult(resources);
+            this.setResultSize(resources.size);
         }
     };
 
@@ -305,7 +302,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const query = `SELECT basic.* FROM ident JOIN basic ON ident.oidref = basic.oid WHERE id = '${configStore.objectName}'`;
         configStore.setObjectQueryStatus(true);
-        CatalogApiService.Instance.getSimbad(query)
+        CatalogApiService.Instance.getSimbadCatalog(query)
             .then(response => {
                 configStore.setObjectQueryStatus(false);
                 const size = response.data?.data?.length;
@@ -394,7 +391,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         }
     };
 
-    private handleCenterWCSXChange = ev => {
+    private handleCenterWcsXChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -402,25 +399,25 @@ export class CatalogQueryDialogComponent extends React.Component {
         const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWCSPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
-        if (!centerWCSPoint) {
+        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        if (!centerWcsPoint) {
             return;
         }
         const wcsString = ev.currentTarget.value;
-        if (wcsString === centerWCSPoint.x) {
+        if (wcsString === centerWcsPoint.x) {
             return;
         }
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
-            const newPoint = getPixelValueFromWCS(wcsInfo, {x: wcsString, y: centerWCSPoint.y});
+            const newPoint = getPixelValueFromWCS(wcsInfo, {x: wcsString, y: centerWcsPoint.y});
             if (newPoint && isFinite(newPoint.x)) {
                 configStore.updateCenterPixelCoord(newPoint);
                 return;
             }
         }
-        ev.currentTarget.value = centerWCSPoint.x;
+        ev.currentTarget.value = centerWcsPoint.x;
     };
 
-    private handleCenterWCSYChange = ev => {
+    private handleCenterWcsYChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -428,21 +425,21 @@ export class CatalogQueryDialogComponent extends React.Component {
         const frame = AppStore.Instance.activeFrame.spatialReference ?? AppStore.Instance.activeFrame;
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
-        const centerWCSPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
-        if (!centerWCSPoint) {
+        const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        if (!centerWcsPoint) {
             return;
         }
         const wcsString = ev.currentTarget.value;
-        if (wcsString === centerWCSPoint.y) {
+        if (wcsString === centerWcsPoint.y) {
             return;
         }
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(wcsInfo, {x: centerWCSPoint.x, y: wcsString});
+            const newPoint = getPixelValueFromWCS(wcsInfo, {x: centerWcsPoint.x, y: wcsString});
             if (newPoint && isFinite(newPoint.y)) {
                 configStore.updateCenterPixelCoord(newPoint);
                 return;
             }
         }
-        ev.currentTarget.value = centerWCSPoint.y;
+        ev.currentTarget.value = centerWcsPoint.y;
     };
 }

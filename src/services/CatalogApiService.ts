@@ -2,8 +2,9 @@ import {CARTA} from "carta-protobuf";
 import {runInAction} from "mobx";
 import axios, {AxiosInstance, AxiosResponse, CancelTokenSource} from "axios";
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
-import {APIProcessing, CatalogInfo, CatalogType, ProcessedColumnData, VizieResource, WCSPoint2D} from "models";
-import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, FrameStore, RadiusUnits, SystemType} from "stores";
+import {CatalogInfo, CatalogType, WCSPoint2D} from "models";
+import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, RadiusUnits, SystemType} from "stores";
+import {CatalogApiProcessing, ProcessedColumnData, VizieResource} from "utilities";
 
 export enum CatalogDatabase {
     SIMBAD = "SIMBAD",
@@ -11,6 +12,8 @@ export enum CatalogDatabase {
 }
 
 export class CatalogApiService {
+    public static readonly SimbadHyperLink: {bibcode: string; mainId: string} = {bibcode: "https://ui.adsabs.harvard.edu/abs/", mainId: "https://simbad.u-strasbg.fr/simbad/sim-id?Ident="};
+
     private static staticInstance: CatalogApiService;
     private static readonly DBMap = new Map<CatalogDatabase, {baseURL: string}>([
         [CatalogDatabase.SIMBAD, {baseURL: "https://simbad.u-strasbg.fr/simbad/sim-tap/"}],
@@ -29,7 +32,6 @@ export class CatalogApiService {
     }
 
     constructor() {
-        // makeObservable(this);
         this.cancelTokenSourceSimbad = axios.CancelToken.source();
         this.cancelTokenSourceVizieR = axios.CancelToken.source();
         this.axiosInstanceSimbad = axios.create({
@@ -42,7 +44,7 @@ export class CatalogApiService {
         });
     }
 
-    public getSimbad = (query: string): Promise<AxiosResponse<any>> => {
+    public getSimbadCatalog = (query: string): Promise<AxiosResponse<any>> => {
         return this.axiosInstanceSimbad.get(`sync?request=doQuery&lang=adql&format=json&query=${query}`);
     };
 
@@ -78,7 +80,7 @@ export class CatalogApiService {
         try {
             const response = await this.axiosInstanceVizieR.get(query);
             if (response?.status === 200 && response?.data) {
-                const data = APIProcessing.ProcessVizieRData(response.data);
+                const data = CatalogApiProcessing.ProcessVizieRData(response.data);
                 resources = data.resources;
             }
         } catch (error) {
@@ -95,10 +97,11 @@ export class CatalogApiService {
     };
 
     public appendVizieRCatalog = (resources: VizieResource[]) => {
+        const appStore = AppStore.Instance;
         for (let index = 0; index < resources.length; index++) {
             const element = resources[index];
-            const fileId = AppStore.Instance.catalogNextFileId;
-            const {headers, dataMap, size} = APIProcessing.ProcessVizieRTableData(element.table.tableElement);
+            const fileId = appStore.catalogNextFileId;
+            const {headers, dataMap, size} = CatalogApiProcessing.ProcessVizieRTableData(element.table.tableElement);
             const configStore = CatalogOnlineQueryConfigStore.Instance;
             const coosy: CARTA.ICoosys = {system: element.coosys.system};
             const fileName = `${configStore.catalogDB}_${element.coosys.system}_${element.table.name}_${configStore.searchRadius}${configStore.radiusUnits}`;
@@ -114,20 +117,21 @@ export class CatalogApiService {
                 dataSize: size,
                 directory: ""
             };
-            this.loadCatalog(fileId, AppStore.Instance.activeFrame, catalogInfo, headers, dataMap, CatalogType.VIZIER);
+            this.loadCatalog(fileId, catalogInfo, headers, dataMap, CatalogType.VIZIER);
         }
     };
 
-    public loadCatalog = (fileId: number, frame: FrameStore, catalogInfo: CatalogInfo, headers: CARTA.ICatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
+    public loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.ICatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
+        const appStore = AppStore.Instance; 
         runInAction(() => {
-            let catalogWidgetId = AppStore.Instance.updateCatalogProfile(fileId, frame);
+            const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
             if (catalogWidgetId) {
-                AppStore.Instance.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                AppStore.Instance.catalogStore.addCatalog(fileId);
-                AppStore.Instance.fileBrowserStore.hideFileBrowser();
+                appStore.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
+                appStore.catalogStore.addCatalog(fileId, catalogInfo.dataSize);
+                appStore.fileBrowserStore.hideFileBrowser();
                 const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, type);
-                AppStore.Instance.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                AppStore.Instance.dialogStore.hideCatalogQueryDialog();
+                appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                appStore.dialogStore.hideCatalogQueryDialog();
             }
         });
     };
@@ -142,51 +146,50 @@ export class CatalogApiService {
         }
     }
 
-    // Online Catalog Query
-    public appendOnlineCatalog = async (query: string): Promise<number> => {
-        const frame = AppStore.Instance.activeFrame;
+    public appendSimbadCatalog = async (query: string): Promise<number> => {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (!frame) {
             AppToaster.show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
         }
 
-        const fileId = AppStore.Instance.catalogNextFileId;
-        const dataSize = await this.getSimbad(query)
-            .then(response => {
-                if (frame && response?.status === 200 && response?.data?.data?.length) {
-                    const configStore = CatalogOnlineQueryConfigStore.Instance;
-                    const headers = APIProcessing.ProcessSimbadMetaData(response.data?.metadata);
-                    const columnData = APIProcessing.ProcessSimbadData(response.data?.data, headers);
-                    const coosy: CARTA.ICoosys = {system: configStore.coordsType};
-                    const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
-                    const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
-                    const catalogFileInfo: CARTA.ICatalogFileInfo = {
-                        name: fileName,
-                        type: CARTA.CatalogFileType.VOTable,
-                        description: "Online Simbad Catalog",
-                        coosys: [coosy]
-                    };
-                    let catalogInfo: CatalogInfo = {
-                        fileId,
-                        fileInfo: catalogFileInfo,
-                        dataSize: response.data?.data?.length,
-                        directory: ""
-                    };
-                    this.loadCatalog(fileId, AppStore.Instance.activeFrame, catalogInfo, headers, columnData, CatalogType.SIMBAD);
-                }
-                return response?.data?.data?.length;
-            })
-            .catch(error => {
-                if (axios.isCancel(error)) {
-                    AppToaster.show(WarningToast(error?.message));
-                    CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.SIMBAD);
-                } else if (error?.message) {
-                    AppToaster.show(ErrorToast(error.message));
-                } else {
-                    console.log("Append Catalog Error: " + error);
-                }
-                return 0;
-            });
+        const fileId = appStore.catalogNextFileId;
+        let dataSize: number = 0;
+        try {
+            const response = await this.getSimbadCatalog(query);
+            if (frame && response?.status === 200 && response?.data?.data?.length) {               
+                const configStore = CatalogOnlineQueryConfigStore.Instance;
+                const headers = CatalogApiProcessing.ProcessSimbadMetaData(response.data?.metadata);
+                const columnData = CatalogApiProcessing.ProcessSimbadData(response.data?.data, headers);
+                const coosys: CARTA.ICoosys = {system: configStore.coordsType};
+                const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
+                const fileName = `${configStore.catalogDB}_${configStore.coordsType}_${centerCoord.x}_${centerCoord.y}_${configStore.searchRadius}${configStore.radiusUnits}`;
+                const catalogFileInfo: CARTA.ICatalogFileInfo = {
+                    name: fileName,
+                    type: CARTA.CatalogFileType.VOTable,
+                    description: "Online Simbad Catalog",
+                    coosys: [coosys]
+                };
+                let catalogInfo: CatalogInfo = {
+                    fileId,
+                    fileInfo: catalogFileInfo,
+                    dataSize: response.data?.data?.length ?? 0,
+                    directory: ""
+                };
+                this.loadCatalog(fileId, catalogInfo, headers, columnData, CatalogType.SIMBAD);
+            }
+            dataSize = response?.data?.data?.length;
+        } catch (error) {
+            if (axios.isCancel(error)) {
+                AppToaster.show(WarningToast(error?.message));
+                CatalogApiService.Instance.resetCancelTokenSource(error);
+            } else if (error?.message) {
+                AppToaster.show(ErrorToast(error.message));
+            } else {
+                console.log("Append Simbad Error: " + error);
+            }
+        }
         return dataSize;
     };
 }
