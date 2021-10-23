@@ -15,6 +15,7 @@ import {
     ImageViewHelpComponent,
     ImageViewSettingsHelpComponent,
     LayerListHelpComponent,
+    LayerListSettingsHelpComponent,
     LogHelpComponent,
     PlaceholderHelpComponent,
     RegionListHelpComponent,
@@ -166,6 +167,13 @@ export class HelpDrawerComponent extends React.Component {
             {
                 title: "Image List",
                 content: <LayerListHelpComponent />
+            }
+        ],
+        [
+            HelpType.LAYER_LIST_SETTINGS,
+            {
+                title: "Image List Settings",
+                content: <LayerListSettingsHelpComponent />
             }
         ],
         [

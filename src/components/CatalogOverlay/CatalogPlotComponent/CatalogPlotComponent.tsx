@@ -9,12 +9,12 @@ import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
-import {CatalogUpdateMode, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig} from "stores";
+import {CatalogUpdateMode, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig, CatalogOnlineQueryProfileStore} from "stores";
 import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStoreProps, CatalogWidgetStore, CatalogPlotType} from "stores/widgets";
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed, minMaxArray} from "utilities";
-import {TypedArray} from "models/Processed";
+import {TypedArray} from "utilities";
 import "./CatalogPlotComponent.scss";
 
 @observer
@@ -105,7 +105,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return widgetStore;
     }
 
-    @computed get profileStore(): CatalogProfileStore {
+    @computed get profileStore(): CatalogProfileStore | CatalogOnlineQueryProfileStore {
         return CatalogStore.Instance.catalogProfileStores.get(this.catalogFileId);
     }
 
@@ -210,7 +210,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @computed get scatterData() {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
+        // dummy values to trigger update, since profileStore.catalogData is not observable
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const numVisibleRows = profileStore.numVisibleRows;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
         let scatterDatasets: Plotly.Data[] = [];
         let data: Partial<Plotly.PlotData> = {};
@@ -233,7 +236,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     @computed get histogramData() {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
+        // dummy values to trigger update, since profileStore.catalogData is not observable
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const numVisibleRows = profileStore.numVisibleRows;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
         const coords = profileStore.get1DPlotData(widgetStore.xColumnName);
         let histogramDatasets: Plotly.Data[] = [];
         let data: Partial<Plotly.PlotData> = {};
@@ -320,6 +326,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const val = changeEvent.target.checked;
         if (widgetsStore && catalogWidgetStore) {
             catalogWidgetStore.setShowSelectedData(val);
+            catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
     };
 
@@ -434,7 +441,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
 
             if (selectedPointIndices?.length) {
-                profileStore.setSelectedPointIndices(selectedPointIndices, true);
+                const matched = profileStore.getOriginIndices(selectedPointIndices);
+                profileStore.setSelectedPointIndices(matched, true);
                 catalogWidgetStore.setCatalogTableAutoScroll(true);
             }
         }
@@ -446,7 +454,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const catalogWidgetStore = this.catalogWidgetStore;
         catalogStore.updateCatalogProfiles(this.catalogFileId);
         profileStore.setSelectedPointIndices([], false);
-        catalogWidgetStore.setCatalogTableAutoScroll(false);
         catalogWidgetStore.setShowSelectedData(false);
     };
 
@@ -467,8 +474,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             } else if (this.widgetStore.plotType === CatalogPlotType.Histogram && selectedPoint.pointIndices.length) {
                 selectedPointIndex = selectedPoint.pointIndices;
             }
-
-            profileStore.setSelectedPointIndices(selectedPointIndex, true);
+            const matched = profileStore.getOriginIndices(selectedPointIndex);
+            profileStore.setSelectedPointIndices(matched, true);
             catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
     };
@@ -729,7 +736,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         }
 
-        const selectedPointIndices = profileStore.selectedPointIndices;
+        const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
         let scatterDataMarker = data[0].marker;
         if (selectedPointIndices.length > 0) {
             data[0]["selectedpoints"] = selectedPointIndices;
@@ -799,7 +806,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                                 <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
                             </FormGroup>
                         </Tooltip2>
-                        <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled} />
+                        <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled || !profileStore.isFileBasedCatalog} />
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>

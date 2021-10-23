@@ -326,7 +326,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
             const widgetStoreId = catalogStore.catalogWidgets.get(selectedPoint.fileId);
             const catalogWidgetStore = WidgetsStore.Instance.catalogWidgets.get(widgetStoreId);
             catalogStore.updateCatalogProfiles(selectedPoint.fileId);
-            catalogProfileStore.setSelectedPointIndices([selectedPoint.minIndex], false);
+            const matched = catalogProfileStore.getOriginIndices([selectedPoint.minIndex]);
+            catalogProfileStore.setSelectedPointIndices(matched, false);
             catalogWidgetStore.setCatalogTableAutoScroll(true);
         }
     };
@@ -335,9 +336,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         const catalogStore = CatalogStore.Instance;
         if (catalogStore?.catalogGLData?.size) {
             catalogStore.catalogProfileStores?.forEach(profileStore => {
-                const widgetStoreId = CatalogStore.Instance.catalogWidgets.get(profileStore.catalogFileId);
                 profileStore.setSelectedPointIndices([], false);
-                WidgetsStore.Instance.catalogWidgets.get(widgetStoreId)?.setCatalogTableAutoScroll(false);
             });
         }
     }

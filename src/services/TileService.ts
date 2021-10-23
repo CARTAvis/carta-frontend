@@ -344,7 +344,7 @@ export class TileService {
 
     @action updateRemainingTileCount = () => {
         let remainingTiles = 0;
-        this.pendingRequests.forEach(value => (this.remainingTiles += value.size));
+        this.pendingRequests.forEach(value => (remainingTiles += value.size));
         this.remainingTiles = remainingTiles;
     };
 

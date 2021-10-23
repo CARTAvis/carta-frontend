@@ -1,7 +1,8 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed, makeObservable} from "mobx";
-import {AppStore, CatalogProfileStore, CatalogSystemType, FrameStore, WidgetsStore} from "stores";
+import {AppStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, FrameStore, WidgetsStore} from "stores";
 import {CatalogWebGLService} from "services";
+import {CatalogSystemType} from "models";
 import {CatalogWidgetStore} from "stores/widgets";
 import {minMaxArray} from "utilities";
 
@@ -33,7 +34,7 @@ export class CatalogStore {
     // catalog plot component Id : catalog file Id and associated catalog plot widget id
     @observable catalogPlots: Map<string, ObservableMap<number, string>>;
     // catalog file Id : catalog Profile store
-    @observable catalogProfileStores: Map<number, CatalogProfileStore>;
+    @observable catalogProfileStores: Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore>;
     // catalog file Id : catalog widget storeId
     @observable catalogWidgets: Map<number, string>;
 
@@ -43,7 +44,7 @@ export class CatalogStore {
         this.imageAssociatedCatalogId = new Map<number, Array<number>>();
         this.catalogProfiles = new Map<string, number>();
         this.catalogPlots = new Map<string, ObservableMap<number, string>>();
-        this.catalogProfileStores = new Map<number, CatalogProfileStore>();
+        this.catalogProfileStores = new Map<number, CatalogProfileStore | CatalogOnlineQueryProfileStore>();
         this.catalogWidgets = new Map<number, string>();
         this.catalogCounts = new Map<number, number>();
     }

@@ -11,7 +11,9 @@ import {
     ContourDialogComponent,
     CodeSnippetDialogComponent,
     ExternalPageDialogComponent,
-    StokesDialogComponent
+    StokesDialogComponent,
+    RestFreqDialogComponent,
+    CatalogQueryDialogComponent
 } from "components/Dialogs";
 
 @observer
@@ -21,6 +23,7 @@ export class UIControllerComponent extends React.Component {
             <React.Fragment>
                 <RootMenuComponent />
                 <RegionDialogComponent />
+                <CatalogQueryDialogComponent />
                 <ContourDialogComponent />
                 <FileInfoDialogComponent />
                 <FileBrowserDialogComponent />
@@ -32,6 +35,7 @@ export class UIControllerComponent extends React.Component {
                 <HelpDrawerComponent />
                 <StokesDialogComponent />
                 <SplashScreenComponent />
+                <RestFreqDialogComponent />
             </React.Fragment>
         );
     }
