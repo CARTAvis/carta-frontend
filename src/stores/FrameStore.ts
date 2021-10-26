@@ -1595,6 +1595,8 @@ export class FrameStore {
         this.contourStores.forEach((contourStore, level) => {
             if (!this.contourConfig.levels.includes(level)) {
                 this.contourStores.delete(level);
+            } else if (processedData.progress === 0) {
+                contourStore.resetProgress();
             }
         });
     }

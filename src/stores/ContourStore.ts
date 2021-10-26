@@ -35,6 +35,10 @@ export class ContourStore {
         this.gl = ContourWebGLService.Instance.gl;
     }
 
+    @action resetProgress = () => {
+        this.progress = 0;
+    };
+
     @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number, isLongTask: boolean) => {
         // Clear existing data to remove data buffers
         this.clearData();
