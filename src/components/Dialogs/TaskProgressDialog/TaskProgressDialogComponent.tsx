@@ -47,7 +47,7 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                             <Tooltip2 content={"Cancel the current task"}>
-                                <AnchorButton onClick={this.props.onCancel}>{"Cancel"}</AnchorButton>
+                                <AnchorButton onClick={this.props.onCancel}>Cancel</AnchorButton>
                             </Tooltip2>
                         </div>
                     </div>
