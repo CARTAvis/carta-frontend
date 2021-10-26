@@ -719,9 +719,9 @@ export class FrameStore {
         this.contourStores.forEach((contourStore, level) => {
             if (this.contourConfig.levels.includes(level)) {
                 totalProgress += contourStore.progress;
-            }
-            if (contourStore.isLongTask) {
-                isLongTask = true;
+                if (contourStore.isLongTask) {
+                    isLongTask = true;
+                }
             }
         });
 
