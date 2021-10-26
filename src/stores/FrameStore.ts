@@ -1577,6 +1577,15 @@ export class FrameStore {
             this.requiredStokes = processedData.stokes;
         }
 
+        // Clear up stale contour levels by checking against the config & reset progress
+        this.contourStores.forEach((contourStore, level) => {
+            if (!this.contourConfig.levels.includes(level)) {
+                this.contourStores.delete(level);
+            } else if (processedData.progress === 0) {
+                contourStore.resetProgress();
+            }
+        });
+
         for (const contourSet of processedData.contourSets) {
             let contourStore = this.contourStores.get(contourSet.level);
             if (!contourStore) {
@@ -1590,15 +1599,6 @@ export class FrameStore {
                 contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress, processedData.isLongTask);
             }
         }
-
-        // Clear up stale contour levels by checking against the config
-        this.contourStores.forEach((contourStore, level) => {
-            if (!this.contourConfig.levels.includes(level)) {
-                this.contourStores.delete(level);
-            } else if (processedData.progress === 0) {
-                contourStore.resetProgress();
-            }
-        });
     }
 
     @action setChannels(channel: number, stokes: number, recursive: boolean) {
