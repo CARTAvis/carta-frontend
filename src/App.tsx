@@ -80,7 +80,6 @@ export class App extends React.Component {
                         isOpen={contourDataSource.contourProgress >= 0 && contourDataSource.contourProgress < 1 && contourDataSource.isContourLongTask}
                         progress={contourDataSource.contourProgress}
                         timeRemaining={appStore.estimatedTaskRemainingTime}
-                        isSimplyClosable={true}
                         text={"Calculating contours"}
                     />
                 )}
