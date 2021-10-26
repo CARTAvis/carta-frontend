@@ -14,7 +14,7 @@ import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D, ZoomPoint} from "models";
-import {average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
+import {add2D, average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
 
 export interface RegionViewComponentProps {
@@ -40,6 +40,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @observable currentCursorPos: Point2D;
 
     private stageRef;
+    private stageResizeOffset: Point2D;
     private regionStartPoint: Point2D;
     private mousePreviousClick: Point2D = {x: -1000, y: -1000};
     private mouseClickDistance: number = 0;
@@ -55,6 +56,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         makeObservable(this);
 
         this.stageRef = React.createRef();
+        this.stageResizeOffset = {x: 0, y: 0};
 
         // Move the stage when spatial siblings moves
         autorun(() => {
@@ -71,6 +73,21 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const frame = this.props.frame;
         if (frame) {
             this.stageZoomToPoint(this.props.width / 2, this.props.height / 2, frame.zoomLevel);
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        // Resizing image viewer triggers re-render of region view,
+        // and regions' coordinates change accordingly under the stage's position & scale if zoom =\= 1,
+        // therefore the offset must be saved in order to center the stage correctly.
+        if (prevProps.width !== this.props.width || prevProps.height !== this.props.height) {
+            const stage = this.stageRef.current;
+            if (stage) {
+                const offset = {x: (this.props.width - prevProps.width) / 2, y: (this.props.height - prevProps.height) / 2};
+                const zoom = stage.scaleX();
+                const mutatedOffset = scale2D(offset, (1 - zoom) / zoom);
+                this.stageResizeOffset = add2D(this.stageResizeOffset, mutatedOffset);
+            }
         }
     }
 
@@ -439,8 +456,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    public resetStage = () => {
-        this.handleStageChange({x: 0, y: 0}, 1);
+    public centerStage = () => {
+        const stage = this.stageRef.current;
+        if (stage) {
+            const zoom = stage.scaleX();
+            const newOrigin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - zoom);
+            // Correct the origin if region view is ever resized
+            const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, zoom));
+            stage.position(correctedOrigin);
+        }
     };
 
     @action public stageZoomToPoint = (x: number, y: number, zoom: number) => {
@@ -452,11 +476,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 x: (x - origin.x) / oldScale,
                 y: (y - origin.y) / oldScale
             };
-            stage.scale({x: zoom, y: zoom});
             const newOrigin = {
                 x: x - cursorPointTo.x * zoom,
                 y: y - cursorPointTo.y * zoom
             };
+            stage.scale({x: zoom, y: zoom});
             stage.position(newOrigin);
 
             if (this.props.frame) {
