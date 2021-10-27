@@ -8,8 +8,10 @@ import {IconName} from "@blueprintjs/icons";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
+import {CatalogApiService} from "services";
 import {SpectralLineHeaders} from "stores/widgets";
-import {ProcessedColumnData} from "models";
+import {CatalogType} from "models";
+import {ProcessedColumnData} from "utilities";
 import "./FilterableTableComponent.scss";
 
 export type ColumnFilter = {index: number; columnFilter: string};
@@ -34,11 +36,15 @@ export class FilterableTableComponentProps {
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
     updateSelectedRow?: (dataIndex: number[]) => void;
-    updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType) => void;
+    updateSortRequest?: (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => void;
     flipRowSelection?: (rowIndex: number) => void;
     sortingInfo?: {columnName: string; sortingType: CARTA.SortingType};
     disableSort?: boolean;
     tableHeaders?: Array<CARTA.ICatalogHeader>;
+    sortedIndexMap?: Array<number>;
+    sortedIndices?: Array<number>;
+    onCompleteRender?: () => void;
+    catalogType?: CatalogType;
 }
 
 @observer
@@ -162,37 +168,42 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 key={columnHeader.name}
                 name={columnHeader.name}
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnHeader)}
-                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData) : undefined}
+                cellRenderer={columnData?.length ? (rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, columnData, columnHeader) : undefined}
             />
         );
     };
 
-    private renderCell = (rowIndex: number, columnIndex: number, columnData: Array<any> | NodeJS.TypedArray) => {
+    private renderCell = (index: number, columnIndex: number, columnData: any, columnHeader: CARTA.CatalogHeader) => {
         const dataIndex = this.props.selectedDataIndex;
-
-        let contents: any;
-        if (rowIndex < columnData.length) {
-            contents = columnData[rowIndex];
-            if (typeof contents === "boolean") {
-                contents = contents.toString();
+        let rowIndex = index;
+        if (this.props.sortedIndexMap) {
+            rowIndex = this.props.showSelectedData ? this.props.sortedIndices[rowIndex] : this.props.sortedIndexMap[rowIndex];
+        }
+        const cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
+        let cell = cellContext;
+        if (this.props.catalogType === CatalogType.SIMBAD) {
+            if (columnHeader.name?.toLocaleLowerCase().includes("bibcode")) {
+                cell = (
+                    <a href={`${CatalogApiService.SimbadHyperLink.bibcode}${cellContext}`} target="_blank" rel="noopener noreferrer">
+                        {cellContext}
+                    </a>
+                );
             }
-        } else {
-            contents = "";
-        }
 
-        if (dataIndex && dataIndex.includes(rowIndex) && !this.props.showSelectedData) {
-            return (
-                <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={false}>
-                    {contents}
-                </Cell>
-            );
-        } else {
-            return (
-                <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={false}>
-                    {contents}
-                </Cell>
-            );
+            if (columnHeader.name?.toLocaleLowerCase().includes("main_id")) {
+                cell = (
+                    <a href={`${CatalogApiService.SimbadHyperLink.mainId}${cellContext}`} target="_blank" rel="noopener noreferrer">
+                        {cellContext}
+                    </a>
+                );
+            }
         }
+        const selected = dataIndex && dataIndex.includes(index) && !this.props.showSelectedData;
+        return (
+            <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={selected ? "danger" : "none"} loading={this.isLoading(rowIndex)} interactive={false}>
+                <React.Fragment>{cell}</React.Fragment>
+            </Cell>
+        );
     };
 
     private getNextSortingType = () => {
@@ -216,7 +227,6 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const sortingInfo = this.props.sortingInfo;
         const headerDescription = this.props.tableHeaders?.[controlheader?.dataIndex]?.description;
         const disableSort = this.props.disableSort;
-
         const nameRenderer = () => {
             // sharing css with fileList table
             let sortIcon = "sort";
@@ -233,7 +243,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 }
             }
             return (
-                <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType))}>
+                <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType, column.columnIndex))}>
                     <Label disabled={disableSort} className="bp3-inline label">
                         <Icon className={iconClass} icon={sortIcon as IconName} />
                         <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp3-dark" : ""}>
@@ -301,7 +311,6 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
-
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
@@ -326,6 +335,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 enableMultipleSelection={true}
                 enableRowResizing={false}
                 columnWidths={table.columnWidths}
+                onCompleteRender={table.onCompleteRender}
             >
                 {tableColumns}
             </Table>
