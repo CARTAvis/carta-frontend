@@ -124,3 +124,23 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; un
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
     ["Channel", {type: SpectralType.CHANNEL, unit: null}]
 ]);
+
+enum Kelvin {
+    K = "K",
+    mK = "mK"
+}
+
+enum Jansky {
+    MJy = "MJy",
+    Jy = "Jy",
+    mJy = "mJy",
+    uJy = "uJy"
+}
+
+const Jys = Object.values(Jansky);
+const JyBeam = Jys.map(jy => `${jy}/beam`);
+const JySr = Jys.map(jy => `${jy}/sr`);
+const JyArcsecSquare = Jys.map(jy => `${jy}/arcsec^2`);
+const JyPixel = Jys.map(jy => `${jy}/pixel`);
+const Kelvins = Object.values(Kelvin);
+export const IntensityUnits = [...Kelvins, ...JyBeam, ...JySr, ...JyArcsecSquare, ...JyPixel];

@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {FrameStore} from "stores";
-import {SpectralSystem} from "models";
+import {IntensityUnits, SpectralSystem} from "models";
 
 @observer
 export class SpectralSettingsComponent extends React.Component<{
@@ -28,6 +28,9 @@ export class SpectralSettingsComponent extends React.Component<{
         const hasFrameCoordinateSetting = frame && (frame.isSpectralCoordinateConvertible || (frame.spectralAxis && !frame.spectralAxis.valid));
         const disableCoordinateSetting = this.props.disable || !hasFrameCoordinateSetting;
         const disableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
+        const intensityUnitOptions = IntensityUnits.map(unit => {
+            return {value: unit, label: unit};
+        });
 
         return (
             <React.Fragment>
@@ -45,6 +48,14 @@ export class SpectralSettingsComponent extends React.Component<{
                         value={frame && frame.spectralSystem ? frame.spectralSystem : ""}
                         options={spectralSystemOptions}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralSystemChange(event.currentTarget.value as SpectralSystem)}
+                    />
+                </FormGroup>
+                <FormGroup label={"Value"} inline={true}>
+                    <HTMLSelect
+                        disabled={false}
+                        value={undefined}
+                        options={intensityUnitOptions}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => {}}
                     />
                 </FormGroup>
             </React.Fragment>
