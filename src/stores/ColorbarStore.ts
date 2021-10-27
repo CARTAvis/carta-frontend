@@ -3,7 +3,7 @@ import {FrameStore, OverlayStore} from "stores";
 import {clamp} from "utilities";
 
 export class ColorbarStore {
-    private static readonly TextRatio = [0.5, 0.45, 0.5, 0.45, 0.6];
+    static readonly PRECISION_MAX = 15;
     private readonly frame: FrameStore;
     private readonly overlayStore: OverlayStore;
     constructor(frame: FrameStore) {
@@ -48,10 +48,10 @@ export class ColorbarStore {
         const precision = colorbar.numberCustomPrecision ? colorbar.numberPrecision : this.roundedNumbers.precision;
         if (maxOrder > 5.0 || minOrder < -5.0) {
             return this.roundedNumbers.numbers.map(x =>
-                x.toExponential(clamp(colorbar.numberCustomPrecision ? precision : x === 0 ? 0 : precision + ColorbarStore.GetPrecision(x), 0, 20))
+                x.toExponential(clamp(colorbar.numberCustomPrecision ? precision : x === 0 ? 0 : precision + ColorbarStore.GetPrecision(x), 0, ColorbarStore.PRECISION_MAX))
             );
         } else {
-            return this.roundedNumbers.numbers.map(x => x.toFixed(clamp(precision, 0, 20)));
+            return this.roundedNumbers.numbers.map(x => x.toFixed(clamp(precision, 0, ColorbarStore.PRECISION_MAX)));
         }
     }
 
