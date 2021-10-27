@@ -1593,7 +1593,7 @@ export class FrameStore {
                 this.contourStores.set(contourSet.level, contourStore);
             }
 
-            if (!contourStore.isComplete && processedData.progress >= 0) {
+            if (!contourStore.isComplete && processedData.progress > 0) {
                 contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress, processedData.isLongTask);
             } else {
                 contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress, processedData.isLongTask);
