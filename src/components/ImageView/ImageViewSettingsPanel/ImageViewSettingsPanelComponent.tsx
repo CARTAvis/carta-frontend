@@ -551,7 +551,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={colorbar.numberCustomPrecision}>
                     <FormGroup inline={true} label="Numbers precision" disabled={!colorbar.visible || !colorbar.numberVisible}>
-                        <SafeNumericInput min={0} stepSize={1} value={colorbar.numberPrecision} disabled={!colorbar.visible || !colorbar.numberVisible} onValueChange={(value: number) => colorbar.setNumberPrecision(value)} intOnly={true} />
+                        <SafeNumericInput min={0} max={20} stepSize={1} value={colorbar.numberPrecision} disabled={!colorbar.visible || !colorbar.numberVisible} onValueChange={(value: number) => colorbar.setNumberPrecision(value)} intOnly={true} />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Numbers custom color" disabled={!colorbar.visible || !colorbar.numberVisible}>

@@ -28,10 +28,10 @@ export class ColorbarStore {
             const min = Math.round(scaleMinVal * roundBase) / roundBase;
 
             let numbers = [];
-            let val = min > scaleMinVal ? min : min + dy;
+            let val = min > scaleMinVal ? min : Math.round((min + dy) * roundBase) / roundBase;
             while (val < scaleMaxVal) {
                 numbers.push(val);
-                val += dy;
+                val = Math.round((val + dy) * roundBase) / roundBase;
             }
             return {numbers: numbers, precision: precision};
         }
@@ -44,25 +44,28 @@ export class ColorbarStore {
         const orders = this.roundedNumbers.numbers.map(x => ColorbarStore.GetOrder(x));
         const maxOrder = Math.max(...orders);
         const minOrder = Math.min(...orders);
-        if (maxOrder >= 5.0 || minOrder <= -5.0) {
+        const colorbar = this.overlayStore.colorbar;
+        const precision = colorbar.numberCustomPrecision ? colorbar.numberPrecision : this.roundedNumbers.precision;
+        if (maxOrder > 5.0 || minOrder < -5.0) {
             return this.roundedNumbers.numbers.map(x =>
-                x.toExponential(this.overlayStore.colorbar.numberCustomPrecision ? this.overlayStore.colorbar.numberPrecision : x === 0 ? 0 : clamp(this.roundedNumbers.precision + ColorbarStore.GetPrecision(x), 0, 50))
+                x.toExponential(clamp(colorbar.numberCustomPrecision ? precision : x === 0 ? 0 : precision + ColorbarStore.GetPrecision(x), 0, 20))
             );
         } else {
-            return this.roundedNumbers.numbers.map(x => x.toFixed(this.overlayStore.colorbar.numberCustomPrecision ? this.overlayStore.colorbar.numberPrecision : clamp(this.roundedNumbers.precision, 0, 50)));
+            return this.roundedNumbers.numbers.map(x => x.toFixed(clamp(precision, 0, 20)));
         }
     }
 
     @computed get positions(): number[] {
-        const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
-        const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
-        if (!this.roundedNumbers || !this.frame || !isFinite(this.overlayStore.colorbar.yOffset)) {
+        const colorbar = this.overlayStore.colorbar;
+        if (!this.roundedNumbers || !this.frame || !isFinite(colorbar.yOffset)) {
             return [];
         }
-        if (this.overlayStore.colorbar.position === "right") {
-            return this.roundedNumbers.numbers.map(x => this.overlayStore.colorbar.yOffset + (this.overlayStore.colorbar.height * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
+        const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
+        const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
+        if (colorbar.position === "right") {
+            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
         } else {
-            return this.roundedNumbers.numbers.map(x => this.overlayStore.colorbar.yOffset + (this.overlayStore.colorbar.height * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
         }
     }
 
