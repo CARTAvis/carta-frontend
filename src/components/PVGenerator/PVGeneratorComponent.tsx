@@ -60,9 +60,9 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
             const height = this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.height;
             const imageCorners: Point2D[] = [
                 {x: 0, y: 0},
-                {x: width, y: 0},
-                {x: 0, y: height},
-                {x: width, y: height}
+                {x: width - 1, y: 0},
+                {x: 0, y: height - 1},
+                {x: width - 1, y: height - 1}
             ];
 
             // check if image corners are on the same side of the line region. from https://stackoverflow.com/a/1560510
@@ -77,6 +77,17 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
                     return false;
                 }
 
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @computed get isLineInOnePixel(): boolean {
+        if (this.widgetStore.effectiveRegion) {
+            const startPoint = this.widgetStore.effectiveRegion.controlPoints[0];
+            const endPoint = this.widgetStore.effectiveRegion.controlPoints[1];
+            if (Math.round(startPoint.x) === Math.round(endPoint.x) && Math.round(startPoint.y) === Math.round(endPoint.y)) {
                 return true;
             }
         }
@@ -135,10 +146,9 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         }
 
-        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage;
+        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel;
         const hint = (
             <span>
-                <br />
                 <i>
                     <small>
                         Please ensure:
@@ -148,6 +158,8 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
                         2. Line region is selected.
                         <br />
                         3. Line region has intersection with image.
+                        <br />
+                        4. Line region is not in one pixel.
                     </small>
                 </i>
             </span>
