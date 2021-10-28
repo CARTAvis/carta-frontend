@@ -2213,7 +2213,7 @@ export class AppStore {
 
     decreaseImageRatio = () => {
         if (this.imageRatio !== 1 && this.isExportingImage === true) {
-            AppToaster.show(WarningToast(`Failed to export image; exporting image with ${this.imageRatio - 1}00% resolution instead.`));
+            AppToaster.show(WarningToast(`Exceeded the maximum canvas size; exporting image with ${this.imageRatio - 1}00% resolution instead.`));
             this.setImageRatio(this.imageRatio - 1);
         }
     };
