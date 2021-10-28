@@ -713,7 +713,7 @@ export class OverlayColorbarSettings {
     @observable labelCustomText: boolean;
     @observable labelCustomColor: boolean;
     @observable labelColor: string;
-    private textRatio = [0.55, 0.5, 0.55, 0.5, 0.6];
+    private textRatio = [0.56, 0.51, 0.56, 0.51, 0.6];
 
     constructor() {
         makeObservable(this);
