@@ -249,7 +249,7 @@ export class StokesDialogComponent extends React.Component {
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
 
         const ctype = headers?.find(obj => obj.value.toUpperCase() === "STOKES");
-        if (ctype?.name.indexOf("CTYPE") !== -1) {
+        if (ctype && ctype.name.indexOf("CTYPE") !== -1) {
             const index = ctype.name.substring(5);
             const crpixHeader = headers.find(entry => entry.name.indexOf(`CRPIX${index}`) !== -1);
             const crvalHeader = headers.find(entry => entry.name.indexOf(`CRVAL${index}`) !== -1);
