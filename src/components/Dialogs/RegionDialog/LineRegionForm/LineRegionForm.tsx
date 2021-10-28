@@ -144,7 +144,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
-            const rotation = (region.rotation * Math.PI) / 180.0; 
+            const rotation = (region.rotation * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
             // cos and sin with a proper +/-1 constant applied.
@@ -170,7 +170,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const existingValue = length2D(this.props.region.size);
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
-            const rotation = (region.rotation * Math.PI) / 180.0; 
+            const rotation = (region.rotation * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
             // cos and sin with a proper +/-1 constant applied.
