@@ -173,13 +173,16 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         );
     };
 
-    private renderCell = (index: number, columnIndex: number, columnData: any, columnHeader: CARTA.CatalogHeader) => {
+    private renderCell = (index: number, columnIndex: number, columnData: Array<any> | NodeJS.TypedArray, columnHeader: CARTA.CatalogHeader) => {
         const dataIndex = this.props.selectedDataIndex;
         let rowIndex = index;
         if (this.props.sortedIndexMap) {
             rowIndex = this.props.showSelectedData ? this.props.sortedIndices[rowIndex] : this.props.sortedIndexMap[rowIndex];
         }
-        const cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
+        let cellContext = rowIndex < columnData.length ? columnData[rowIndex] : "";
+        if (typeof cellContext === "boolean" && this.props.catalogType === CatalogType.FILE) {
+            cellContext = cellContext.toString();
+        }
         let cell = cellContext;
         if (this.props.catalogType === CatalogType.SIMBAD) {
             if (columnHeader.name?.toLocaleLowerCase().includes("bibcode")) {
