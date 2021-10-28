@@ -154,6 +154,9 @@ const JyPixel = Jys.map(jy => `${jy}/pixel`);
 const Kelvins = Object.values(Kelvin);
 export const IntensityUnits = [...Kelvins, ...JyBeam, ...JySr, ...JyArcsec2, ...JyPixel];
 
+// TODO: gen available conversion options
+export const AvailableIntensityUnits = IntensityUnits;
+
 // TODO: store this in a map
 
 export const FindIntensityUnitType = (unitStr: string): IntensityUnitType => {
@@ -192,6 +195,7 @@ export const FindIntensityUnitType = (unitStr: string): IntensityUnitType => {
 export const IntensityConversion = (unitFrom: string, unitTo: string, values: number[]): number[] => {
     const unitFromType = FindIntensityUnitType(unitFrom);
     const unitToType = FindIntensityUnitType(unitTo);
+
     if (unitFromType === IntensityUnitType.Unsupported || unitToType === IntensityUnitType.Unsupported || values?.length <= 0) {
         return values;
     }
