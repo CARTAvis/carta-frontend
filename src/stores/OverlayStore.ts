@@ -910,7 +910,9 @@ export class OverlayColorbarSettings {
             textWidth = 0;
             const textFontIndex = clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length);
             for (const frame of AppStore.Instance.visibleFrames) {
-                const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x => x.length - (textFontIndex === 4 ? 0 : x.match(/[.-]/g)?.length * 0.5))) * this.textRatio[textFontIndex];
+                const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x =>
+                    x.length - (textFontIndex === 4 ? 0 : (x.match(/[.-]/g)?.length * 0.5 || 0))
+                )) * this.textRatio[textFontIndex];
                 textWidth = Math.max(textWidth, frameTextWidth);
             }
         }
