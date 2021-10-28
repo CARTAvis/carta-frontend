@@ -125,9 +125,13 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType; un
     ["Channel", {type: SpectralType.CHANNEL, unit: null}]
 ]);
 
-enum Kelvin {
-    K = "K",
-    mK = "mK"
+enum IntensityUnitType {
+    JyBeam,
+    JySr,
+    JyArcsec2,
+    JyPixel,
+    Kelvin,
+    Unsupported
 }
 
 enum Jansky {
@@ -137,10 +141,85 @@ enum Jansky {
     uJy = "uJy"
 }
 
+enum Kelvin {
+    K = "K",
+    mK = "mK"
+}
+
 const Jys = Object.values(Jansky);
-const JyBeam = Jys.map(jy => `${jy}/beam`);
-const JySr = Jys.map(jy => `${jy}/sr`);
-const JyArcsecSquare = Jys.map(jy => `${jy}/arcsec^2`);
+const JyBeam = Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/beam`);
+const JySr = Jys.filter(jy => jy !== Jansky.Jy && jy !== Jansky.mJy).map(jy => `${jy}/sr`);
+const JyArcsec2 = Jys.map(jy => `${jy}/arcsec^2`);
 const JyPixel = Jys.map(jy => `${jy}/pixel`);
 const Kelvins = Object.values(Kelvin);
-export const IntensityUnits = [...Kelvins, ...JyBeam, ...JySr, ...JyArcsecSquare, ...JyPixel];
+export const IntensityUnits = [...Kelvins, ...JyBeam, ...JySr, ...JyArcsec2, ...JyPixel];
+
+// TODO: store this in a map
+
+export const FindIntensityUnitType = (unitStr: string): IntensityUnitType => {
+    const lowercaseJyBeam = JyBeam.map(unit => {
+        return unit.toLowerCase();
+    });
+    const lowercaseJySr = JySr.map(unit => {
+        return unit.toLowerCase();
+    });
+    const lowercaseJyArcsec2 = JyArcsec2.map(unit => {
+        return unit.toLowerCase();
+    });
+    const lowercaseJyPixel = JyPixel.map(unit => {
+        return unit.toLowerCase();
+    });
+    const lowercaseKelvins = Kelvins.map(unit => {
+        return unit.toLowerCase();
+    });
+    const lowercaseUnitStr = unitStr?.toLowerCase();
+
+    if (lowercaseJyBeam.includes(lowercaseUnitStr)) {
+        return IntensityUnitType.JyBeam;
+    } else if (lowercaseJySr.includes(lowercaseUnitStr)) {
+        return IntensityUnitType.JySr;
+    } else if (lowercaseJyArcsec2.includes(lowercaseUnitStr)) {
+        return IntensityUnitType.JyArcsec2;
+    } else if (lowercaseJyPixel.includes(lowercaseUnitStr)) {
+        return IntensityUnitType.JyPixel;
+    } else if (lowercaseKelvins.includes(lowercaseUnitStr)) {
+        return IntensityUnitType.Kelvin;
+    } else {
+        return IntensityUnitType.Unsupported;
+    }
+};
+
+export const IntensityConversion = (unitFrom: string, unitTo: string, values: number[]): number[] => {
+    const unitFromType = FindIntensityUnitType(unitFrom);
+    const unitToType = FindIntensityUnitType(unitTo);
+    if (unitFromType === IntensityUnitType.Unsupported || unitToType === IntensityUnitType.Unsupported || values?.length <= 0) {
+        return values;
+    }
+
+    let unitFromScale = 1;
+    if (unitFrom.match(/^M/)) {
+        unitFromScale = 1e6;
+    } else if (unitFrom.match(/^m/)) {
+        unitFromScale = 1e-1;
+    } else if (unitFrom.match(/^u/)) {
+        unitFromScale = 1e-3;
+    }
+
+    let unitToScale = 1;
+    if (unitTo.match(/^M/)) {
+        unitToScale = 1e6;
+    } else if (unitTo.match(/^m/)) {
+        unitToScale = 1e-1;
+    } else if (unitTo.match(/^u/)) {
+        unitToScale = 1e-3;
+    }
+
+    const normalizedValues = values.map(value => value * unitFromScale);
+    const convertedValues = KelvinToJyBeam(normalizedValues);
+    return convertedValues?.map(value => value / unitToScale);
+};
+
+const KelvinToJyBeam = (values: number[]): number[] => {
+    // TODO
+    return values;
+};
