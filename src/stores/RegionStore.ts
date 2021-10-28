@@ -343,8 +343,11 @@ export class RegionStore {
     @action setCenter = (p: Point2D, skipUpdate = false) => {
         if (this.regionType === CARTA.RegionType.LINE) {
             const rotation = (this.rotation * Math.PI) / 180.0;
-            const dx = length2D(this.size) * Math.cos(rotation);
-            const dy = length2D(this.size) * Math.sin(rotation);
+            // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
+            // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
+            // cos and sin with a proper +/-1 constant applied.
+            const dx = length2D(this.size) * Math.sin(rotation);
+            const dy = length2D(this.size) * -1 * Math.cos(rotation);
             const newStart = {x: p.x - dx / 2, y: p.y - dy / 2};
             const newEnd = {x: p.x + dx / 2, y: p.y + dy / 2};
             this.setControlPoints([newStart, newEnd]);
