@@ -32,7 +32,7 @@
 
     .catalog-plotly {
         width: 100%;
-        height: calc(100% - 90px);
+        height: calc(100% - 105px);
         position: relative;
 
         .js-plotly-plot .plotly .hoverlayer .spikeline {
@@ -43,7 +43,7 @@
 
     .catalog-plotly-dark {
         width: calc(100% - 10px);
-        height: calc(100% - 90px);
+        height: calc(100% - 105px);
         position: relative;
 
         .js-plotly-plot .plotly .hoverlayer .spikeline {
@@ -65,7 +65,10 @@
     }
 
     .bp3-dialog-footer {
-        height: 50px;
+        height: 65px;
+        width: 100%;
+        bottom: 5px;
+        position: absolute;
         margin: 0px;
         padding: 0 5px 5px 5px;
         .bp3-button {
@@ -79,7 +82,7 @@
         }
 
         .scatter-info {
-            height: 15px;
+            height: 35px;
             width: 100%;
             position: relative;
         }

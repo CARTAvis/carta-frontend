@@ -3,6 +3,7 @@ import "./ProfilerInfoComponent.scss";
 
 interface ProfilerInfoComponentProps {
     info: string[];
+    type?: "pre-line";
 }
 
 export const ProfilerInfoComponent: React.FC<ProfilerInfoComponentProps> = props => {
@@ -13,7 +14,7 @@ export const ProfilerInfoComponent: React.FC<ProfilerInfoComponentProps> = props
 
     return (
         <div className="profiler-info">
-            <pre>{infoString}</pre>
+            <pre className={props.type === "pre-line" ? "pre-line" : "pre"}>{infoString}</pre>
         </div>
     );
 };

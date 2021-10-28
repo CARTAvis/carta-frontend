@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as Plotly from "plotly.js";
+import * as GSL from "gsl_wrapper";
 import Plot from "react-plotly.js";
 import {action, autorun, computed, runInAction, observable, makeObservable} from "mobx";
 import {observer} from "mobx-react";
@@ -278,15 +279,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get genProfilerInfo(): string[] {
-        let profileInfo: string[] = [];
+    @computed get genProfilerInfo(): string {
+        let profileInfo: string = "";
         const widgetStore = this.widgetStore;
         const indicatorInfo = widgetStore.indicatorInfo;
         if (indicatorInfo) {
             if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
-                profileInfo.push(`${widgetStore.xColumnName}: ${indicatorInfo.x}, ${widgetStore.yColumnName}: ${indicatorInfo.y}`);
+                profileInfo = `${widgetStore.xColumnName}: ${indicatorInfo.x}, ${widgetStore.yColumnName}: ${indicatorInfo.y}`;
             } else if (widgetStore.plotType === CatalogPlotType.Histogram) {
-                profileInfo.push(`${widgetStore.xColumnName}: ${indicatorInfo.x}, Count: ${indicatorInfo.y}`);
+                profileInfo = `${widgetStore.xColumnName}: ${indicatorInfo.x}, Count: ${indicatorInfo.y}`;
             }
         }
         return profileInfo;
@@ -312,6 +313,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 return;
             }
             widgetsStore.setScatterborder(this.initScatterBorder);
+            widgetsStore.initLinearFitting();
         } else if (widgetsStore.plotType === CatalogPlotType.Histogram) {
             if (column === CatalogPlotComponent.emptyColumn) {
                 return;
@@ -451,10 +453,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private onDeselect = () => {
         const catalogStore = CatalogStore.Instance;
         const profileStore = this.profileStore;
+        const widgetsStore = this.widgetStore;
         const catalogWidgetStore = this.catalogWidgetStore;
         catalogStore.updateCatalogProfiles(this.catalogFileId);
         profileStore.setSelectedPointIndices([], false);
         catalogWidgetStore.setShowSelectedData(false);
+        widgetsStore.initLinearFitting();
     };
 
     // Single source selected
@@ -507,6 +511,23 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         let text = `${fileId}: ${fileName}`;
         return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
+
+    private handleFittingClick = (selectedPointIndices: number[]) => {
+        const widgetStore = this.widgetStore;
+        const profileStore = this.profileStore;
+        const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
+        let x = new Float64Array(selectedPointIndices.length);
+        let y = new Float64Array(selectedPointIndices.length)
+        for (let index = 0; index <selectedPointIndices.length; index++) {
+            const selected = selectedPointIndices[index];
+            x[index] = coords.wcsX[selected];
+            y[index] = coords.wcsY[selected];
+        }
+        const result = GSL.getFittingParameters(x, y);
+        const minMaxX = minMaxArray(x);
+        widgetStore.setMinMaxX(minMaxX);
+        widgetStore.setFitting(result);
+    }
 
     public render() {
         const profileStore = this.profileStore;
@@ -634,7 +655,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         let layout: Partial<Plotly.Layout> = {
             width: this.width * ratio,
-            height: (this.height - 85) * ratio,
+            height: (this.height - 105) * ratio,
             paper_bgcolor: themeColor,
             plot_bgcolor: themeColor,
             hovermode: "closest",
@@ -702,13 +723,34 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             dragmode: widgetStore.dragmode
         };
 
+        if (widgetStore.showFittingResult) {
+            const fitting = widgetStore.fitting;
+            const minMaxX = widgetStore.minMaxX;
+            layout.shapes = [
+                {
+                    type: "line",
+                    layer: "above",
+                    x0: minMaxX.minVal,
+                    y0: fitting.intercept + fitting.slope * minMaxX.minVal,
+                    x1: minMaxX.maxVal,
+                    y1: fitting.intercept + fitting.slope * minMaxX.maxVal,
+                    line: {
+                        color: Colors.GREEN2,
+                        width: 5
+                    }
+                }
+            ];
+        }
+
         let data;
+        let catalogDataIndex = 0;
         if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
-            data = this.scatterData.data;
-            data[0].marker.size = 5 * ratio;
+            const scatter = this.scatterData;
+            data = scatter.data;
+            data[catalogDataIndex].marker.size = 5 * ratio;
             let border;
             if (widgetStore.isScatterAutoScaled) {
-                border = this.scatterData.border;
+                border = scatter.border;
             } else {
                 border = widgetStore.scatterborder;
             }
@@ -737,15 +779,15 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         }
 
         const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
-        let scatterDataMarker = data[0].marker;
+        let scatterDataMarker = data[catalogDataIndex].marker;
         if (selectedPointIndices.length > 0) {
-            data[0]["selectedpoints"] = selectedPointIndices;
-            data[0]["selected"] = {marker: {color: Colors.RED2}};
-            data[0]["unselected"] = {marker: {opacity: 0.5}};
+            data[catalogDataIndex]["selectedpoints"] = selectedPointIndices;
+            data[catalogDataIndex]["selected"] = {marker: {color: Colors.RED2}};
+            data[catalogDataIndex]["unselected"] = {marker: {opacity: 0.5}};
         } else {
-            data[0]["selectedpoints"] = [];
+            data[catalogDataIndex]["selectedpoints"] = [];
             scatterDataMarker.color = Colors.BLUE2;
-            data[0]["unselected"] = {marker: {opacity: 1}};
+            data[catalogDataIndex]["unselected"] = {marker: {opacity: 1}};
         }
 
         const config: Partial<Plotly.Config> = {
@@ -771,6 +813,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             />
         );
 
+        const renderLinearRegressionButton = (
+            <AnchorButton intent={Intent.PRIMARY} text="Linear Fitting" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length < 2} />
+        );
+        const infoStrings = widgetStore.showFittingResult ? [this.genProfilerInfo, widgetStore.fittingResultString] : [this.genProfilerInfo];
         return (
             <div className={"catalog-plot"}>
                 <div className={"catalog-plot-option"}>
@@ -798,7 +844,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="scatter-info">
-                        <ProfilerInfoComponent info={this.genProfilerInfo} />
+                        <ProfilerInfoComponent info={infoStrings} type= "pre-line"/>
                     </div>
                     <div className="bp3-dialog-footer-actions">
                         <Tooltip2 content={"Show only selected sources at image and table viewer"}>
@@ -806,6 +852,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                                 <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />
                             </FormGroup>
                         </Tooltip2>
+                        {isScatterPlot && renderLinearRegressionButton}
                         <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={disabled || !profileStore.isFileBasedCatalog} />
                     </div>
                 </div>
