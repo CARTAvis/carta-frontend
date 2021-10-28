@@ -1,6 +1,6 @@
 import * as React from "react";
 import {AnchorButton, FormGroup, NumericInput, INumericInputProps} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {Tooltip2, Placement} from "@blueprintjs/popover2";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
 import {toExponential} from "utilities";
@@ -16,6 +16,9 @@ export interface ClearableNumericInputProps extends INumericInputProps {
     onValueChanged: (val: number) => void;
     onValueCleared: () => void;
     displayExponential?: boolean;
+    resetDisabled?: boolean;
+    tooltipContent?: string;
+    tooltipPlacement?: Placement;
     inline?: boolean;
 }
 
@@ -90,8 +93,8 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
                     buttonPosition="none"
                     disabled={this.props.disabled}
                     rightElement={
-                        <Tooltip2 content="Reset value to default" disabled={this.props.disabled}>
-                            <AnchorButton icon="refresh" minimal={true} onClick={this.props.onValueCleared} disabled={this.props.disabled} />
+                        <Tooltip2 content={this.props.tooltipContent ?? "Reset value to default"} disabled={this.props.disabled || this.props.resetDisabled} placement={this.props.tooltipPlacement ?? "auto"}>
+                            <AnchorButton icon="refresh" minimal={true} onClick={this.props.onValueCleared} disabled={this.props.disabled || this.props.resetDisabled} />
                         </Tooltip2>
                     }
                 />

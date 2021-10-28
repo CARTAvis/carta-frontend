@@ -494,6 +494,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
             if (!this.props.cursorFrozen) {
                 this.updateCursorPos(mouseEvent.offsetX, mouseEvent.offsetY);
+                if (this.props.frame !== AppStore.Instance.hoveredFrame) {
+                    AppStore.Instance.setHoveredFrame(this.props.frame);
+                }
             }
         }
     };
