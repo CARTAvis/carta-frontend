@@ -322,6 +322,7 @@ export class RegionStore {
         } else {
             this.coordinate = RegionCoordinate.Image;
         }
+        this.isSimplePolygon = true;
 
         // Force rotation to zero if image pixes are non-square
         if (!this.activeFrame?.hasSquarePixels) {
@@ -329,7 +330,9 @@ export class RegionStore {
         }
 
         this.regionApproximationMap = new Map<number, Point2D[]>();
-        this.simplePolygonTest();
+        if (this.regionType === CARTA.RegionType.POLYGON) {
+            this.simplePolygonTest();
+        }
         if (this.regionType === CARTA.RegionType.LINE && controlPoints.length === 2) {
             this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
         }
