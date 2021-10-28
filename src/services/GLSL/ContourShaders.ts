@@ -1,8 +1,8 @@
 import contourVertexShader from "!raw-loader!./vertex_shader_contours.glsl";
 import contourPixelShader from "!raw-loader!./pixel_shader_contours.glsl";
-import {utilities} from "./utilities";
+import utilities from "!raw-loader!./utilities.glsl";
 
 export const contourShaders = {
-    vertexShader: `${utilities.versionString}\n${utilities.bicubicFilter}\n${utilities.rotate2D}\n${contourVertexShader}`,
-    fragmentShader: `${utilities.versionString}\n${contourPixelShader}`
+    vertexShader: `#version 300 es\n${utilities}\n${contourVertexShader}`,
+    fragmentShader: `#version 300 es\n${contourPixelShader}`
 };

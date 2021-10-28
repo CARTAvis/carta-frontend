@@ -1,18 +1,13 @@
-export const rotate2D = /* glsl */ `
 vec2 rotate2D(vec2 vector, float theta) {
     float sinTheta = sin(theta);
     float cosTheta = cos(theta);
     return mat2(cosTheta, -sinTheta, sinTheta, cosTheta) * vector;
 }
-`;
 
-export const imageToGL = /* glsl */ `
 vec2 imageToGL(vec2 imageVec) {
     return 2.0 * imageVec - 1.0;
 }
-`;
 
-export const bicubicFilter = /* glsl */ `
 // Adapted from https://www.shadertoy.com/view/MllSzX to work with non-square vec4 textures of variable size
 vec4 cubic(vec4 A, vec4 B, vec4 C, vec4 D, float t) {
     float t2 = t * t;
@@ -71,4 +66,3 @@ vec2 controlMapLookup(sampler2D controlMapTexture, vec2 pos, vec2 controlMapSize
     vec2 index = shiftedPoint / range + 0.5 / controlMapSize;
     return bicubicFilter(controlMapTexture, index, controlMapSize).rg;
 }
-`;

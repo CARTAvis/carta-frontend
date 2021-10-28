@@ -1,6 +1,6 @@
 import rasterVertexShader from "!raw-loader!./vertex_shader_raster.glsl";
 import rasterPixelShader from "!raw-loader!./pixel_shader_raster.glsl";
-import {utilities} from "./utilities";
+import utilities from "!raw-loader!./utilities.glsl";
 
 const pixelMacros = `
 #define LINEAR 0
@@ -15,6 +15,6 @@ const pixelMacros = `
 `;
 
 export const rasterShaders = {
-    vertexShader: `${utilities.versionString}\n${utilities.rotate2D}\n${rasterVertexShader}`,
-    fragmentShader: `${utilities.versionString}\n${pixelMacros}\n${rasterPixelShader}`
+    vertexShader: `#version 300 es\n${utilities}\n${rasterVertexShader}`,
+    fragmentShader: `#version 300 es\n${pixelMacros}\n${rasterPixelShader}`
 };

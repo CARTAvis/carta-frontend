@@ -1,6 +1,6 @@
 import catalogVertexShader from "!raw-loader!./vertex_shader_catalog.glsl";
 import catalogPixelShader from "!raw-loader!./pixel_shader_catalog.glsl";
-import {utilities} from "./utilities";
+import utilities from "!raw-loader!./utilities.glsl";
 
 const sharedMacros = `
 #define BOX_FILLED 0
@@ -49,6 +49,6 @@ const pixelMacros = `
 `;
 
 export const catalogShaders = {
-    vertexShader: `${utilities.versionString}\n${sharedMacros}\n${vertexMacros}\n${utilities.imageToGL}\n${utilities.bicubicFilter}\n${utilities.rotate2D}\n${catalogVertexShader}`,
-    fragmentShader: `${utilities.versionString}\n${sharedMacros}\n${pixelMacros}\n${catalogPixelShader}`
+    vertexShader: `#version 300 es\n${sharedMacros}\n${vertexMacros}\n${utilities}\n${catalogVertexShader}`,
+    fragmentShader: `#version 300 es\n${sharedMacros}\n${pixelMacros}\n${catalogPixelShader}`
 };
