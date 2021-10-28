@@ -78,8 +78,10 @@ export class CatalogWebGLService {
     };
 
     public updateBuffer = (fileId: number, dataPoints: Float32Array, offset: number) => {
-        if (this.vertexBuffers.get(fileId)) {
+        const buffer = this.vertexBuffers.get(fileId);
+        if (buffer) {
             // Fill data, 10 times faster than bufferData since do not need to allocate memory
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
             this.gl.bufferSubData(this.gl.ARRAY_BUFFER, offset * 4, dataPoints);
         } else {
             // allocates a new buffer
