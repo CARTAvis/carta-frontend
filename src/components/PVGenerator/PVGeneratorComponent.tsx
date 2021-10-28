@@ -23,6 +23,7 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTabId = tab;
     };
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "pv-generator",
@@ -204,9 +205,8 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="pv-generator-widget">
-                {/* <NonIdealState icon={"folder-open"} title={""} description={"Use the Generate preview cube tab to view the preview pv image interactivly "} /> */}
                 <div className="pv-generator-panel">
-                    <Tabs id="pvGeneratorTabs" selectedTabId={this.selectedTabId} onChange={this.setSelectedTab}>
+                    <Tabs id="pvGeneratorTabs" selectedTabId={this.selectedTabId} onChange={this.setSelectedTab} animate={false}>
                         <Tab id={PVGeneratorComponentTabs.PV_IMAGE} title="Generate PV image" panel={pvImagePanel} />
                     </Tabs>
                 </div>
