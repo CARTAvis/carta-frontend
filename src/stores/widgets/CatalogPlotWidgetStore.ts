@@ -12,7 +12,7 @@ export type Border = {xMin: number; xMax: number; yMin: number; yMax: number};
 export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
-type Fitting = {intercept: number, slope: number, cov00: number, cov01: number, cov11: number, rss:number};
+type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
 
 export class CatalogPlotWidgetStore {
     @observable indicatorInfo: Point2D;
@@ -25,7 +25,7 @@ export class CatalogPlotWidgetStore {
     @observable xColumnName: string;
     @observable yColumnName: string;
     @observable fitting: Fitting;
-    @observable minMaxX: {minVal: number, maxVal: number};
+    @observable minMaxX: {minVal: number; maxVal: number};
 
     constructor(props: CatalogPlotWidgetStoreProps) {
         makeObservable(this);
@@ -77,14 +77,14 @@ export class CatalogPlotWidgetStore {
         this.fitting = value;
     }
 
-    @action setMinMaxX(value: {minVal: number, maxVal: number}) {
+    @action setMinMaxX(value: {minVal: number; maxVal: number}) {
         this.minMaxX = value;
     }
 
     @action initLinearFitting = () => {
         this.setFitting({intercept: undefined, slope: undefined, cov00: undefined, cov01: undefined, cov11: undefined, rss: undefined});
         this.setMinMaxX({minVal: undefined, maxVal: undefined});
-    }
+    };
 
     @computed get isScatterAutoScaled() {
         return this.scatterborder === undefined;
@@ -96,7 +96,9 @@ export class CatalogPlotWidgetStore {
 
     @computed get fittingResultString(): string {
         if (this.showFittingResult) {
-            return `${this.yColumnName} = ${this.fitting.intercept.toFixed(3)} + ${this.fitting.slope.toFixed(3)} ${this.xColumnName}, cov00 = ${this.fitting.cov00.toFixed(3)}, cov01 = ${this.fitting.cov01.toFixed(3)}, cov11 = ${this.fitting.cov11.toFixed(3)}, rss = ${this.fitting.rss.toFixed(3)}`;   
+            return `${this.yColumnName} = ${this.fitting.intercept.toFixed(3)} + ${this.fitting.slope.toFixed(3)} ${this.xColumnName}, cov00 = ${this.fitting.cov00.toFixed(3)}, cov01 = ${this.fitting.cov01.toFixed(
+                3
+            )}, cov11 = ${this.fitting.cov11.toFixed(3)}, rss = ${this.fitting.rss.toFixed(3)}`;
         }
         return "";
     }

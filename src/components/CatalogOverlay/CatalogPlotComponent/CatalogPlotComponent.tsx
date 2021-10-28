@@ -516,18 +516,24 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
-        let x = new Float64Array(selectedPointIndices.length);
-        let y = new Float64Array(selectedPointIndices.length)
-        for (let index = 0; index <selectedPointIndices.length; index++) {
-            const selected = selectedPointIndices[index];
-            x[index] = coords.wcsX[selected];
-            y[index] = coords.wcsY[selected];
+        let x: Float64Array, y: Float64Array;
+        if (selectedPointIndices.length === 0) {
+            x = new Float64Array(coords.wcsX);
+            y = new Float64Array(coords.wcsY);
+        } else {
+            x = new Float64Array(selectedPointIndices.length);
+            y = new Float64Array(selectedPointIndices.length);
+            for (let index = 0; index < selectedPointIndices.length; index++) {
+                const selected = selectedPointIndices[index];
+                x[index] = coords.wcsX[selected];
+                y[index] = coords.wcsY[selected];
+            }
         }
         const result = GSL.getFittingParameters(x, y);
         const minMaxX = minMaxArray(x);
         widgetStore.setMinMaxX(minMaxX);
         widgetStore.setFitting(result);
-    }
+    };
 
     public render() {
         const profileStore = this.profileStore;
@@ -813,9 +819,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             />
         );
 
-        const renderLinearRegressionButton = (
-            <AnchorButton intent={Intent.PRIMARY} text="Linear Fitting" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length < 2} />
-        );
+        const renderLinearRegressionButton = <AnchorButton intent={Intent.PRIMARY} text="Linear Fitting" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} />;
         const infoStrings = widgetStore.showFittingResult ? [this.genProfilerInfo, widgetStore.fittingResultString] : [this.genProfilerInfo];
         return (
             <div className={"catalog-plot"}>
@@ -844,7 +848,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="scatter-info">
-                        <ProfilerInfoComponent info={infoStrings} type= "pre-line"/>
+                        <ProfilerInfoComponent info={infoStrings} type="pre-line" />
                     </div>
                     <div className="bp3-dialog-footer-actions">
                         <Tooltip2 content={"Show only selected sources at image and table viewer"}>
