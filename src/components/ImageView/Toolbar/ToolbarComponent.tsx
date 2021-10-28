@@ -320,7 +320,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             position={tooltipPosition}
                             content={
                                 <span>
-                                    {`Export image`}
+                                    Export image
                                     {this.exportImageTooltip()}
                                 </span>
                             }
