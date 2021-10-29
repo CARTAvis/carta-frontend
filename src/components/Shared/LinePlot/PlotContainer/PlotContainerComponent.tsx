@@ -393,7 +393,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     }
                 }
             },
-            animation: false
+            animation: false,
+            layout: {
+                padding: 5
+            }
         };
 
         if (this.props.topAxisTickFormatter) {
