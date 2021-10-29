@@ -1,6 +1,6 @@
 import {action, observable, ObservableMap, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {ProcessedSpectralProfile} from "models";
+import {ProcessedSpectralProfile} from "utilities";
 
 type Coordinate = string;
 

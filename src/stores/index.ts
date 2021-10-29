@@ -1,6 +1,7 @@
 export * from "./AlertStore";
 export * from "./AnimatorStore";
 export * from "./AppStore";
+export * from "./ColorbarStore";
 export * from "./ContourStore";
 export * from "./ContourConfigStore";
 export * from "./DistanceMeasuringStore";
@@ -25,3 +26,5 @@ export * from "./ProfileSmoothingStore";
 export * from "./CatalogProfileStore";
 export * from "./ProfileFittingStore";
 export * from "./SnippetStore";
+export * from "./CatalogOnlineQueryProfileStore";
+export * from "./CatalogOnlieQueryConfigStore";

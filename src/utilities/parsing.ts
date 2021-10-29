@@ -61,7 +61,11 @@ export function findDeep(obj: any, pred: (obj: any) => boolean) {
 
 // parsing filter string for TableComponent filter function
 function getNumberFromFilterString(filterString: string): number {
-    return Number(filterString.replace(/[^0-9.+-.]+/g, ""));
+    const n = filterString.replace(/[^0-9.+-.]+/g, "");
+    if (n !== "") {
+        return Number(n);
+    }
+    return undefined;
 }
 
 export function getComparisonOperatorAndValue(filterString: string): {operator: CARTA.ComparisonOperator; values: number[]} {
@@ -74,45 +78,61 @@ export function getComparisonOperatorAndValue(filterString: string): {operator: 
         if (found) {
             if (operator === ComparisonOperator.Equal) {
                 const equalTo = getNumberFromFilterString(filter);
-                result.operator = CARTA.ComparisonOperator.Equal;
-                result.values.push(equalTo);
+                if (equalTo !== undefined) {
+                    result.operator = CARTA.ComparisonOperator.Equal;
+                    result.values.push(equalTo);
+                }
                 return result;
             } else if (operator === ComparisonOperator.NotEqual) {
                 const notEqualTo = getNumberFromFilterString(filter);
-                result.operator = CARTA.ComparisonOperator.NotEqual;
-                result.values.push(notEqualTo);
+                if (notEqualTo !== undefined) {
+                    result.operator = CARTA.ComparisonOperator.NotEqual;
+                    result.values.push(notEqualTo);
+                }
                 return result;
             } else if (operator === ComparisonOperator.Lesser) {
                 const lessThan = getNumberFromFilterString(filter);
-                result.operator = CARTA.ComparisonOperator.Lesser;
-                result.values.push(lessThan);
+                if (lessThan !== undefined) {
+                    result.operator = CARTA.ComparisonOperator.Lesser;
+                    result.values.push(lessThan);
+                }
                 return result;
             } else if (operator === ComparisonOperator.LessorOrEqual) {
                 const lessThanOrEqualTo = getNumberFromFilterString(filter);
-                result.values.push(lessThanOrEqualTo);
-                result.operator = CARTA.ComparisonOperator.LessorOrEqual;
+                if (lessThanOrEqualTo !== undefined) {
+                    result.values.push(lessThanOrEqualTo);
+                    result.operator = CARTA.ComparisonOperator.LessorOrEqual;
+                }
                 return result;
             } else if (operator === ComparisonOperator.Greater) {
                 const greaterThan = getNumberFromFilterString(filter);
-                result.operator = CARTA.ComparisonOperator.Greater;
-                result.values.push(greaterThan);
+                if (greaterThan !== undefined) {
+                    result.operator = CARTA.ComparisonOperator.Greater;
+                    result.values.push(greaterThan);
+                }
                 return result;
             } else if (operator === ComparisonOperator.GreaterOrEqual) {
                 const greaterThanOrEqualTo = getNumberFromFilterString(filter);
-                result.values.push(greaterThanOrEqualTo);
-                result.operator = CARTA.ComparisonOperator.GreaterOrEqual;
+                if (greaterThanOrEqualTo !== undefined) {
+                    result.values.push(greaterThanOrEqualTo);
+                    result.operator = CARTA.ComparisonOperator.GreaterOrEqual;
+                }
                 return result;
             } else if (operator === ComparisonOperator.RangeOpen) {
                 const fromTo = filter.split(ComparisonOperator.RangeOpen, 2);
-                result.values.push(Number(fromTo[0]));
-                result.values.push(Number(fromTo[1]));
-                result.operator = CARTA.ComparisonOperator.RangeOpen;
+                if (fromTo[0] !== "" && fromTo[1] !== "") {
+                    result.values.push(Number(fromTo[0]));
+                    result.values.push(Number(fromTo[1]));
+                    result.operator = CARTA.ComparisonOperator.RangeOpen;
+                }
                 return result;
             } else if (operator === ComparisonOperator.RangeClosed) {
                 const betweenAnd = filter.split(ComparisonOperator.RangeClosed, 2);
-                result.values.push(Number(betweenAnd[0]));
-                result.values.push(Number(betweenAnd[1]));
-                result.operator = CARTA.ComparisonOperator.RangeClosed;
+                if (betweenAnd[0] !== "" && betweenAnd[1] !== "") {
+                    result.values.push(Number(betweenAnd[0]));
+                    result.values.push(Number(betweenAnd[1]));
+                    result.operator = CARTA.ComparisonOperator.RangeClosed;
+                }
                 return result;
             }
         }
