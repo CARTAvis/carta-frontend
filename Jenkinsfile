@@ -25,7 +25,7 @@ pipeline {
                     sh "git submodule update --init --recursive"
                     sh "n exec 14 npm run build-libs-docker"
                     stash includes: "protobuf/**/*", name: "protobuf" 
-                    stash includes: "wasm_libs/built/**/*", name: "wasm_libs"
+                    stash includes: "wasm_libs/built/**/*,wasm_libs/zstd/build/standalone_zstd.bc", name: "wasm_libs"
                 }
             }
         }
