@@ -430,6 +430,9 @@ export class RegionStore {
         }
         if (this.regionType === CARTA.RegionType.LINE) {
             const rotation = (((angle + 360) % 360) * Math.PI) / 180.0;
+            // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
+            // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
+            // cos and sin with a proper +/-1 constant applied.
             const dx = length2D(this.size) * Math.sin(rotation);
             const dy = -length2D(this.size) * Math.cos(rotation);
             const newStart = {x: this.center.x - dx / 2, y: this.center.y - dy / 2};
