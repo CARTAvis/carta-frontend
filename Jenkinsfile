@@ -27,43 +27,45 @@ pipeline {
                 }
             }
         }
-        parallel {
-            stage('Build with node v12') {
-                agent {
-                    label "ubuntu-2004"
-                }
-                steps {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        sh 'rm -rf node_modules build'
-                        sh 'n exec 12 node -v'
-                        sh 'n exec 12 npm install'
-                        sh 'n exec 12 npm run build-docker'
+        stage('Build') {
+            parallel {
+                stage('Build with node v12') {
+                    agent {
+                        label "ubuntu-2004"
+                    }
+                    steps {
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            sh 'rm -rf node_modules build'
+                            sh 'n exec 12 node -v'
+                            sh 'n exec 12 npm install'
+                            sh 'n exec 12 npm run build-docker'
+                        }
                     }
                 }
-            }
-            stage('Build with node v14') {
-                agent {
-                    label "ubuntu-2004"
-                }
-                steps {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        sh 'rm -rf node_modules build'
-                        sh 'n exec 14 node -v'
-                        sh 'n exec 14 npm install'
-                        sh 'n exec 14 npm run build-docker'
+                stage('Build with node v14') {
+                    agent {
+                        label "ubuntu-2004"
+                    }
+                    steps {
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            sh 'rm -rf node_modules build'
+                            sh 'n exec 14 node -v'
+                            sh 'n exec 14 npm install'
+                            sh 'n exec 14 npm run build-docker'
+                        }
                     }
                 }
-            }
-            stage('Build with node v16') {
-                agent {
-                    label "ubuntu-2004"
-                }
-                steps {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        sh 'rm -rf node_modules build'
-                        sh 'n exec 16 node -v'
-                        sh 'n exec 16 npm install'
-                        sh 'n exec 16 npm run build-docker'
+                stage('Build with node v16') {
+                    agent {
+                        label "ubuntu-2004"
+                    }
+                    steps {
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            sh 'rm -rf node_modules build'
+                            sh 'n exec 16 node -v'
+                            sh 'n exec 16 npm install'
+                            sh 'n exec 16 npm run build-docker'
+                        }
                     }
                 }
             }
