@@ -24,7 +24,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     sh "git submodule update --init --recursive"
                     sh "n exec 14 npm run build-libs-docker"
-                    stash includes: "wasm_libs/**/*", name: "wasm_libs"
+                    stash includes: "protobuf/**/*", name: "protobuf" 
+                    stash includes: "wasm_libs/ast/ast.h,wasm_libs/zfp/zfp.h,wasm_libs/gsl/gsl_math.h", name: "wasm_libs"
                 }
             }
         }
@@ -34,6 +35,7 @@ pipeline {
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    unstash "protobuf"
                     unstash "wasm_libs"
                     sh 'rm -rf node_modules build'
                     sh 'n exec 12 node -v'
@@ -48,6 +50,7 @@ pipeline {
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    unstash "protobuf"
                     unstash "wasm_libs"
                     sh 'rm -rf node_modules build'
                     sh 'n exec 14 node -v'
@@ -62,6 +65,7 @@ pipeline {
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    unstash "protobuf"
                     unstash "wasm_libs"
                     sh 'rm -rf node_modules build'
                     sh 'n exec 16 node -v'
