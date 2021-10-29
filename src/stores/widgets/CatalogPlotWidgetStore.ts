@@ -1,6 +1,7 @@
 import {action, observable, computed, makeObservable} from "mobx";
 import {CatalogPlotType} from "stores/widgets";
 import {Point2D} from "models";
+import {toExponential} from "utilities";
 
 export interface CatalogPlotWidgetStoreProps {
     xColumnName: string;
@@ -96,9 +97,10 @@ export class CatalogPlotWidgetStore {
 
     @computed get fittingResultString(): string {
         if (this.showFittingResult) {
-            return `${this.yColumnName} = ${this.fitting.intercept.toFixed(3)} + ${this.fitting.slope.toFixed(3)} ${this.xColumnName}, cov00 = ${this.fitting.cov00.toFixed(3)}, cov01 = ${this.fitting.cov01.toFixed(
-                3
-            )}, cov11 = ${this.fitting.cov11.toFixed(3)}, rss = ${this.fitting.rss.toFixed(3)}`;
+            return `${this.yColumnName} = ${toExponential(this.fitting.intercept, 2)} + ${toExponential(this.fitting.slope, 2)} ${this.xColumnName}, cov00 = ${toExponential(this.fitting.cov00, 2)}, cov01 = ${toExponential(
+                this.fitting.cov01,
+                2
+            )}, cov11 = ${toExponential(this.fitting.cov11, 2)}, rss = ${toExponential(this.fitting.rss, 2)}`;
         }
         return "";
     }

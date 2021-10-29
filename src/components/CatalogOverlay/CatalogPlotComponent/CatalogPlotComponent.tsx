@@ -819,7 +819,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             />
         );
 
-        const renderLinearRegressionButton = <AnchorButton intent={Intent.PRIMARY} text="Linear Fitting" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} />;
+        const renderLinearRegressionButton = <AnchorButton intent={Intent.PRIMARY} text="Linear Fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} />;
         const infoStrings = widgetStore.showFittingResult ? [this.genProfilerInfo, widgetStore.fittingResultString] : [this.genProfilerInfo];
         return (
             <div className={"catalog-plot"}>
