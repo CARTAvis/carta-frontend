@@ -1824,7 +1824,6 @@ export class FrameStore {
         for (const region of this.frameRegionSet.regions) {
             this.frameRegionSet.deleteRegion(region);
         }
-
         return true;
     };
 
