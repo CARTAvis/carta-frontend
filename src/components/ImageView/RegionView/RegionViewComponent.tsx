@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import classNames from "classnames";
-import {action, autorun, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 import {Layer, Line, Stage} from "react-konva";
 import Konva from "konva";
@@ -58,15 +58,43 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.stageRef = React.createRef();
         this.stageResizeOffset = {x: 0, y: 0};
 
-        // Move the stage when spatial siblings moves
-        autorun(() => {
-            const frame = this.props.frame;
-            if (frame) {
-                if (frame !== AppStore.Instance.activeFrame && frame.spatialSiblings) {
-                    this.handleStageChange(frame.regionViewPos, frame.regionViewScale);
+        // Sync stage when matched, tracking frame's spatialReference only.
+        reaction(
+            () => this.props.frame?.spatialReference,
+            spatialReference => {
+                if (spatialReference) {
+                    this.syncStage(spatialReference.centerMovement, spatialReference.zoomLevel);
                 }
             }
-        });
+        );
+
+        // Update stage when spatial reference move/zoom,
+        // tracking spatial reference's centerMovement/zoomLevel to move/zoom stage.
+        reaction(
+            () => {
+                const frame = this.props.frame;
+                if (frame.spatialReference) {
+                    // frame is sibling
+                    return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.zoomLevel};
+                } else if (frame.spatialSiblings?.length > 0) {
+                    // frame is spatial reference
+                    return {centerMovement: frame.centerMovement, zoom: frame.zoomLevel};
+                }
+                return undefined;
+            },
+            (reference, prevReferece) => {
+                const frame = this.props.frame;
+                if (
+                    reference &&
+                    (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) &&
+                    frame &&
+                    frame !== AppStore.Instance.activeFrame
+                ) {
+                    // Only update those stages that are not moved/zoomed by mouse directly(activeFrame).
+                    this.syncStage(reference.centerMovement, reference.zoom);
+                }
+            }
+        );
     }
 
     componentDidMount() {
@@ -448,11 +476,16 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    private handleStageChange = (pos: Point2D, scale: number) => {
+    private syncStage = (refCenterMovement: Point2D, refFrameZoom: number) => {
         const stage = this.stageRef.current;
-        if (stage && pos && isFinite(pos.x) && isFinite(pos.y) && isFinite(scale)) {
-            stage.scale({x: scale, y: scale});
-            stage.position(pos);
+        if (stage && refCenterMovement && isFinite(refCenterMovement.x) && isFinite(refCenterMovement.y) && isFinite(refFrameZoom)) {
+            stage.scale({x: refFrameZoom, y: refFrameZoom});
+            const origin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - refFrameZoom);
+            const centerMovementCanvas = scale2D({x: refCenterMovement.x, y: -refCenterMovement.y}, refFrameZoom);
+            const newOrigin = add2D(origin, centerMovementCanvas);
+            // Correct the origin if region view is ever resized
+            const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, refFrameZoom));
+            stage.position(correctedOrigin);
         }
     };
 
