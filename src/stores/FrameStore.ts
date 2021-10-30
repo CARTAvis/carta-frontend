@@ -108,9 +108,6 @@ export class FrameStore {
     @observable moving: boolean;
     @observable zooming: boolean;
 
-    @observable regionViewPos: Point2D;
-    @observable regionViewScale: number;
-
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
     @observable overlayBeamSettings: OverlayBeamStore;
@@ -797,9 +794,6 @@ export class FrameStore {
         this.stokesFiles = [];
 
         this.distanceMeasuring = new DistanceMeasuringStore();
-
-        this.regionViewPos = {x: 0, y: 0};
-        this.regionViewScale = 1;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
@@ -1831,9 +1825,6 @@ export class FrameStore {
             this.frameRegionSet.deleteRegion(region);
         }
 
-        // Sync region view position & scale
-        this.setRegionViewPos(this.spatialReference.regionViewPos);
-        this.setRegionViewScale(this.spatialReference.regionViewScale);
         return true;
     };
 
@@ -2014,25 +2005,5 @@ export class FrameStore {
 
     @action setStokesFiles = (stokesFiles: CARTA.StokesFile[]) => {
         this.stokesFiles = stokesFiles;
-    };
-
-    @action setRegionViewPos = (pos: Point2D) => {
-        this.regionViewPos = pos;
-        if (this.spatialReference) {
-            return;
-        }
-        this.spatialSiblings?.forEach(sibling => {
-            sibling.setRegionViewPos(pos);
-        });
-    };
-
-    @action setRegionViewScale = (scale: number) => {
-        this.regionViewScale = scale;
-        if (this.spatialReference) {
-            return;
-        }
-        this.spatialSiblings?.forEach(sibling => {
-            sibling.setRegionViewScale(scale);
-        });
     };
 }

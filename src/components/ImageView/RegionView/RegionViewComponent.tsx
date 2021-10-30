@@ -351,10 +351,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
             if (isPanDrag) {
                 const stagePosition = konvaEvent.target.getStage().getPosition();
-                if (this.props.frame) {
-                    const frame = this.props.frame.spatialReference || this.props.frame;
-                    frame.setRegionViewPos(stagePosition);
-                }
                 this.handlePan(stagePosition);
             }
         }
@@ -500,7 +496,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    @action public stageZoomToPoint = (x: number, y: number, zoom: number) => {
+    public stageZoomToPoint = (x: number, y: number, zoom: number) => {
         const stage = this.stageRef.current;
         if (stage) {
             const oldScale = stage.scaleX();
@@ -515,12 +511,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             };
             stage.scale({x: zoom, y: zoom});
             stage.position(newOrigin);
-
-            if (this.props.frame) {
-                const frame = this.props.frame.spatialReference || this.props.frame;
-                frame.setRegionViewScale(zoom);
-                frame.setRegionViewPos(newOrigin);
-            }
         }
     };
 
