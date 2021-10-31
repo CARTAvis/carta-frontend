@@ -713,7 +713,7 @@ export class OverlayColorbarSettings {
     @observable labelCustomText: boolean;
     @observable labelCustomColor: boolean;
     @observable labelColor: string;
-    private textRatio = [0.5, 0.45, 0.5, 0.45, 0.6];
+    private textRatio = [0.56, 0.51, 0.56, 0.51, 0.6];
 
     constructor() {
         makeObservable(this);
@@ -904,12 +904,18 @@ export class OverlayColorbarSettings {
     }
 
     @computed get numberWidth(): number {
-        let textWidth = 0;
-        for (const frame of AppStore.Instance.visibleFrames) {
-            const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x => x.length)) * this.textRatio[clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length)];
-            textWidth = Math.max(textWidth, frameTextWidth);
+        let textWidth = 1;
+
+        if (!this.numberRotation && this.position === "right") {
+            textWidth = 0;
+            const textFontIndex = clamp(Math.floor(this.numberFont / 4), 0, this.textRatio.length);
+            for (const frame of AppStore.Instance.visibleFrames) {
+                const frameTextWidth = Math.max(...frame.colorbarStore.texts.map(x => x.length - (textFontIndex === 4 ? 0 : x.match(/[.-]/g)?.length * 0.5 || 0))) * this.textRatio[textFontIndex];
+                textWidth = Math.max(textWidth, frameTextWidth);
+            }
         }
-        return this.numberVisible ? this.numberFontSize * (this.numberRotation || this.position !== "right" ? 1 : textWidth) + this.textGap : 0;
+
+        return this.numberVisible ? this.numberFontSize * textWidth + this.textGap : 0;
     }
 
     @computed get labelWidth(): number {
