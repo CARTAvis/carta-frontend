@@ -29,7 +29,7 @@ export class RegionSetStore {
         this.regions = [];
         this.newRegionType = preference.regionType;
         this.mode = RegionMode.MOVING;
-        this.addPointRegion({x: 0, y: 0}, true);
+        this.addPointRegion(frame.center, true);
         this.selectedRegion = this.regions[0];
     }
 
