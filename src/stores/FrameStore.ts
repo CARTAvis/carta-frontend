@@ -28,7 +28,7 @@ import {
     ZoomPoint,
     POLARIZATION_LABELS
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, subtract2D, getFormattedWCSPoint, getPixelSize} from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec, ProtobufProcessing} from "utilities";
@@ -59,6 +59,7 @@ export class FrameStore {
     private readonly backendService: BackendService;
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
+    private readonly initialCenter: Point2D;
 
     private spectralTransformAST: AST.FrameSet;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
@@ -129,6 +130,10 @@ export class FrameStore {
         const extName =
             this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ? `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
         return this.frameInfo.hdu && this.frameInfo.hdu !== "" && this.frameInfo.hdu !== "0" ? `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` : this.frameInfo.fileInfo.name;
+    }
+
+    @computed get centerMovement(): Point2D {
+        return subtract2D(this.initialCenter, this.center);
     }
 
     @computed get regionSet(): RegionSetStore {
@@ -222,17 +227,8 @@ export class FrameStore {
     }
 
     @computed get spatialTransform() {
-        if (this.spatialReference && this.spatialTransformAST) {
-            const center = transformPoint(this.spatialTransformAST, this.spatialReference.center, false);
-            // Try use center of the screen as a reference point
-            if (!isAstBadPoint(center)) {
-                return new Transform2D(this.spatialTransformAST, center);
-            } else {
-                // Otherwise use the center of the image
-                return new Transform2D(this.spatialTransformAST, {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5});
-            }
-        }
-        return null;
+        const imageCenter = {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5};
+        return this.spatialReference && this.spatialTransformAST ? new Transform2D(this.spatialTransformAST, imageCenter) : null;
     }
 
     @computed get transformedWcsInfo() {
@@ -778,6 +774,7 @@ export class FrameStore {
         this.wcsInfo3D = null;
         this.validWcs = false;
         this.frameInfo = frameInfo;
+        this.initialCenter = {x: (this.frameInfo.fileInfoExtended.width - 1) / 2.0, y: (this.frameInfo.fileInfoExtended.height - 1) / 2.0};
         this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
         this.stokes = 0;

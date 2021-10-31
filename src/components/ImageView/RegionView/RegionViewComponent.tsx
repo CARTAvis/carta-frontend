@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import classNames from "classnames";
-import {action, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 import {Layer, Line, Stage} from "react-konva";
 import Konva from "konva";
@@ -14,7 +14,7 @@ import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D, ZoomPoint} from "models";
-import {average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
+import {add2D, average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
 
 export interface RegionViewComponentProps {
@@ -40,6 +40,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @observable currentCursorPos: Point2D;
 
     private stageRef;
+    private stageResizeOffset: Point2D;
     private regionStartPoint: Point2D;
     private mousePreviousClick: Point2D = {x: -1000, y: -1000};
     private mouseClickDistance: number = 0;
@@ -55,12 +56,66 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         makeObservable(this);
 
         this.stageRef = React.createRef();
+        this.stageResizeOffset = {x: 0, y: 0};
+
+        // Sync stage when matched, tracking frame's spatialReference only.
+        reaction(
+            () => this.props.frame?.spatialReference,
+            spatialReference => {
+                if (spatialReference) {
+                    this.syncStage(spatialReference.centerMovement, spatialReference.zoomLevel);
+                }
+            }
+        );
+
+        // Update stage when spatial reference move/zoom,
+        // tracking spatial reference's centerMovement/zoomLevel to move/zoom stage.
+        reaction(
+            () => {
+                const frame = this.props.frame;
+                if (frame.spatialReference) {
+                    // frame is sibling
+                    return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.zoomLevel};
+                } else if (frame.spatialSiblings?.length > 0) {
+                    // frame is spatial reference
+                    return {centerMovement: frame.centerMovement, zoom: frame.zoomLevel};
+                }
+                return undefined;
+            },
+            (reference, prevReferece) => {
+                const frame = this.props.frame;
+                if (
+                    reference &&
+                    (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) &&
+                    frame &&
+                    frame !== AppStore.Instance.activeFrame
+                ) {
+                    // Only update those stages that are not moved/zoomed by mouse directly(activeFrame).
+                    this.syncStage(reference.centerMovement, reference.zoom);
+                }
+            }
+        );
     }
 
     componentDidMount() {
         const frame = this.props.frame;
         if (frame) {
             this.stageZoomToPoint(this.props.width / 2, this.props.height / 2, frame.zoomLevel);
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        // Resizing image viewer triggers re-render of region view,
+        // and regions' coordinates change accordingly under the stage's position & scale if zoom =\= 1,
+        // therefore the offset must be saved in order to center the stage correctly.
+        if (prevProps.width !== this.props.width || prevProps.height !== this.props.height) {
+            const stage = this.stageRef.current;
+            if (stage) {
+                const offset = {x: (this.props.width - prevProps.width) / 2, y: (this.props.height - prevProps.height) / 2};
+                const zoom = stage.scaleX();
+                const mutatedOffset = scale2D(offset, (1 - zoom) / zoom);
+                this.stageResizeOffset = add2D(this.stageResizeOffset, mutatedOffset);
+            }
         }
     }
 
@@ -417,11 +472,27 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    public resetStage = () => {
+    private syncStage = (refCenterMovement: Point2D, refFrameZoom: number) => {
+        const stage = this.stageRef.current;
+        if (stage && refCenterMovement && isFinite(refCenterMovement.x) && isFinite(refCenterMovement.y) && isFinite(refFrameZoom)) {
+            stage.scale({x: refFrameZoom, y: refFrameZoom});
+            const origin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - refFrameZoom);
+            const centerMovementCanvas = scale2D({x: refCenterMovement.x, y: -refCenterMovement.y}, refFrameZoom);
+            const newOrigin = add2D(origin, centerMovementCanvas);
+            // Correct the origin if region view is ever resized
+            const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, refFrameZoom));
+            stage.position(correctedOrigin);
+        }
+    };
+
+    public centerStage = () => {
         const stage = this.stageRef.current;
         if (stage) {
-            stage.scale({x: 1, y: 1});
-            stage.position({x: 0, y: 0});
+            const zoom = stage.scaleX();
+            const newOrigin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - zoom);
+            // Correct the origin if region view is ever resized
+            const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, zoom));
+            stage.position(correctedOrigin);
         }
     };
 
@@ -434,11 +505,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 x: (x - origin.x) / oldScale,
                 y: (y - origin.y) / oldScale
             };
-            stage.scale({x: zoom, y: zoom});
             const newOrigin = {
                 x: x - cursorPointTo.x * zoom,
                 y: y - cursorPointTo.y * zoom
             };
+            stage.scale({x: zoom, y: zoom});
             stage.position(newOrigin);
         }
     };
