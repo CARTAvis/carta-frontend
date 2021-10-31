@@ -6,7 +6,7 @@ import {action, autorun, makeObservable, observable} from "mobx";
 import {ItemRenderer, Select} from "@blueprintjs/select";
 import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
 import {AutoColorPickerComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
+import {AppStore, BeamType, ColorbarStore, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {ImagePanelMode} from "models";
 import {SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
@@ -551,7 +551,15 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={colorbar.numberCustomPrecision}>
                     <FormGroup inline={true} label="Numbers precision" disabled={!colorbar.visible || !colorbar.numberVisible}>
-                        <SafeNumericInput min={0} stepSize={1} value={colorbar.numberPrecision} disabled={!colorbar.visible || !colorbar.numberVisible} onValueChange={(value: number) => colorbar.setNumberPrecision(value)} intOnly={true} />
+                        <SafeNumericInput
+                            min={0}
+                            max={ColorbarStore.PRECISION_MAX}
+                            stepSize={1}
+                            value={colorbar.numberPrecision}
+                            disabled={!colorbar.visible || !colorbar.numberVisible}
+                            onValueChange={(value: number) => colorbar.setNumberPrecision(value)}
+                            intOnly={true}
+                        />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Numbers custom color" disabled={!colorbar.visible || !colorbar.numberVisible}>

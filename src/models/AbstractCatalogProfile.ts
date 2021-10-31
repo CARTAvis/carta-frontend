@@ -46,6 +46,8 @@ export enum CatalogOverlay {
 export abstract class AbstractCatalogProfileStore {
     private static readonly NEGATIVE_INFINITY = -1.7976931348623157e308;
     private static readonly POSITIVE_INFINITY = 1.7976931348623157e308;
+    private static readonly TRUE_REGEX = /^[tTyY].*$/;
+    private static readonly FALSE_REGEX = /^[fFnN].*$/;
 
     abstract catalogInfo: CatalogInfo;
     abstract catalogHeader: Array<CARTA.ICatalogHeader>;
@@ -187,6 +189,17 @@ export abstract class AbstractCatalogProfileStore {
                         filter.subString = value.filter;
                         userFilters.push(filter);
                     }
+                } else if (dataType === CARTA.ColumnType.Bool) {
+                    if (value.filter) {
+                        filter.comparisonOperator = CARTA.ComparisonOperator.Equal;
+                        if (value.filter.match(AbstractCatalogProfileStore.TRUE_REGEX)) {
+                            filter.value = 1;
+                            userFilters.push(filter);
+                        } else if (value.filter.match(AbstractCatalogProfileStore.FALSE_REGEX)) {
+                            filter.value = 0;
+                            userFilters.push(filter);
+                        }
+                    }
                 } else {
                     const result = getComparisonOperatorAndValue(value.filter);
                     if (result.operator !== undefined && result.values.length > 0) {
@@ -274,8 +287,10 @@ export abstract class AbstractCatalogProfileStore {
         this.catalogControlHeader.forEach((value, key) => {
             if (value.filter && value.display) {
                 const column = this.catalogData.get(value.dataIndex);
-                if (column.dataType === CARTA.ColumnType.String) {
+                if (column?.dataType === CARTA.ColumnType.String) {
                     hasfilter = true;
+                } else if (column?.dataType === CARTA.ColumnType.Bool) {
+                    hasfilter = value.filter.match(AbstractCatalogProfileStore.TRUE_REGEX)?.length > 0 || value.filter.match(AbstractCatalogProfileStore.FALSE_REGEX)?.length > 0;
                 } else {
                     const {operator, values} = getComparisonOperatorAndValue(value.filter);
                     if (operator >= 0 && values.length) {
