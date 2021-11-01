@@ -45,7 +45,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private mousePreviousClick: Point2D = {x: -1000, y: -1000};
     private mouseClickDistance: number = 0;
     private dragPanning: boolean;
-    private dragOffset: Point2D;
     private initialStagePosition: Point2D;
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
@@ -360,7 +359,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
             this.dragPanning = false;
-            this.dragOffset = null;
             const frame = this.props.frame;
 
             if (frame) {
@@ -403,15 +401,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
         if (this.props.frame) {
             const frame = this.props.frame.spatialReference || this.props.frame;
-            if (!this.dragOffset) {
-                this.dragOffset = {x: 0, y: 0};
-            } else {
-                this.dragOffset = subtract2D(currentStagePosition, this.initialStagePosition);
-                const initialCenterCanvasSpace = imageToCanvasPos(this.initialDragCenter.x, this.initialDragCenter.y, frame.requiredFrameView, this.props.width, this.props.height);
-                const newCenterCanvasSpace = subtract2D(initialCenterCanvasSpace, this.dragOffset);
-                const newCenterImageSpace = canvasToImagePos(newCenterCanvasSpace.x, newCenterCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
-                frame.setCenter(newCenterImageSpace.x, newCenterImageSpace.y);
-            }
+            const dragOffset = subtract2D(currentStagePosition, this.initialStagePosition);
+            const initialCenterCanvasSpace = imageToCanvasPos(this.initialDragCenter.x, this.initialDragCenter.y, frame.requiredFrameView, this.props.width, this.props.height);
+            const newCenterCanvasSpace = subtract2D(initialCenterCanvasSpace, dragOffset);
+            const newCenterImageSpace = canvasToImagePos(newCenterCanvasSpace.x, newCenterCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
+            frame.setCenter(newCenterImageSpace.x, newCenterImageSpace.y);
         }
     };
 
