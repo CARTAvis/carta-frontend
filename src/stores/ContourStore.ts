@@ -33,6 +33,7 @@ export class ContourStore {
     constructor() {
         makeObservable(this);
         this.gl = ContourWebGLService.Instance.gl;
+        this.progress = 0;
     }
 
     @action resetProgress = () => {
