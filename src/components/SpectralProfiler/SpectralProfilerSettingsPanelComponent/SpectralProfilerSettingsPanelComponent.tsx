@@ -1,12 +1,13 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Tab, Tabs} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
+import {IsIntensitySupported, IntensityUnits} from "models";
 import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerSettingsPanelComponent.scss";
 
@@ -172,6 +173,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             handleYMaxChange: this.handleYMaxChange
         };
 
+        const intensityUnitOptions = IntensityUnits.map(unit => {
+            return {value: unit, label: unit};
+        });
+        const isIntensitySupported = IsIntensitySupported(widgetStore.effectiveFrame?.unit);
+
         return (
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
@@ -180,12 +186,17 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                         panelClassName="conversion-tab-panel"
                         title="Conversion"
                         panel={
-                            <SpectralSettingsComponent
-                                frame={widgetStore.effectiveFrame}
-                                onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                disable={widgetStore.effectiveFrame?.isPVImage}
-                            />
+                            <React.Fragment>
+                                <SpectralSettingsComponent
+                                    frame={widgetStore.effectiveFrame}
+                                    onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                    onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                    disable={widgetStore.effectiveFrame?.isPVImage}
+                                />
+                                <FormGroup label={"Intensity unit"} inline={true}>
+                                    <HTMLSelect disabled={!isIntensitySupported} value={widgetStore.effectiveFrame?.unit} options={intensityUnitOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => {}} />
+                                </FormGroup>
+                            </React.Fragment>
                         }
                     />
                     <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />

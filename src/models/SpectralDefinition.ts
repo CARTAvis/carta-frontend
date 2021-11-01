@@ -192,6 +192,10 @@ export const FindIntensityUnitType = (unitStr: string): IntensityUnitType => {
     }
 };
 
+export const IsIntensitySupported = (unitStr: string): boolean => {
+    return FindIntensityUnitType(unitStr) !== IntensityUnitType.Unsupported;
+};
+
 export const IntensityConversion = (unitFrom: string, unitTo: string, values: number[]): number[] => {
     const unitFromType = FindIntensityUnitType(unitFrom);
     const unitToType = FindIntensityUnitType(unitTo);
