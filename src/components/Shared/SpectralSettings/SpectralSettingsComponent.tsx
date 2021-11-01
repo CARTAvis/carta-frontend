@@ -50,7 +50,7 @@ export class SpectralSettingsComponent extends React.Component<{
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralSystemChange(event.currentTarget.value as SpectralSystem)}
                     />
                 </FormGroup>
-                <FormGroup label={"Value"} inline={true}>
+                <FormGroup label={"Intensity unit"} inline={true}>
                     <HTMLSelect disabled={false} value={undefined} options={intensityUnitOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => {}} />
                 </FormGroup>
             </React.Fragment>
