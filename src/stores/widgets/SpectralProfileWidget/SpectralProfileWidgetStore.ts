@@ -553,20 +553,18 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get yUnit(): string {
-        let yUnit = "";
-        const frame = this.effectiveFrame;
-        if (frame?.unit) {
+        if (this.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit) {
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly) {
-                    yUnit = "Jy";
+                    return "Jy"; // TODO
                 } else if (this.profileSelectionStore.isStatsTypeSumSqOnly) {
-                    yUnit = `(${frame.unit})^2`;
+                    return `(${this.intensityUnit})^2`;
                 } else {
-                    yUnit = `${frame.unit}`;
+                    return this.intensityUnit;
                 }
             }
         }
-        return yUnit;
+        return "";
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {
