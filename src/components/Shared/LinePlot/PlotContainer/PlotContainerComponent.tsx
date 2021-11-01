@@ -145,11 +145,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             const finalDist = Math.abs(ticks[ticks.length - 1].value - ticks[ticks.length - 2].value);
 
             // Flag initial tick removal if tick is too close to the subsequent tick
-            if (initialDist < interTickDist * 0.999 || initialDist > interTickDist * 0.999) {
+            if (initialDist < interTickDist * 0.999 || initialDist > interTickDist * 1.001) {
                 removeFirstTick = true;
             }
             // Flag final tick removal if tick is too close to the preceding tick
-            if (finalDist < interTickDist * 0.999 || finalDist > interTickDist * 0.999) {
+            if (finalDist < interTickDist * 0.999 || finalDist > interTickDist * 1.001) {
                 removeLastTick = true;
             }
             // Ensure that very small ticks display as zero
