@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {LineKey, Point2D, IsIntensitySupported, SpectralSystem} from "models";
+import {GetAvailableIntensityConversions, LineKey, Point2D, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, isAutoColor, ProcessedSpectralProfile} from "utilities";
@@ -331,6 +331,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get nativeIntensityUnit(): string {
         return this.effectiveFrame?.unit;
+    }
+
+    @computed get availableIntensityOptions(): string[] {
+        return GetAvailableIntensityConversions(this.nativeIntensityUnit);
     }
 
     @computed get profileNum(): number {
