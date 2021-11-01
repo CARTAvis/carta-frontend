@@ -1591,7 +1591,7 @@ export class FrameStore {
             }
         }
 
-        // Clear up stale contour levels by checking against the config & reset progress
+        // Clear up stale contour levels by checking against the config
         this.contourStores.forEach((contourStore, level) => {
             if (!this.contourConfig.levels.includes(level)) {
                 this.contourStores.delete(level);
