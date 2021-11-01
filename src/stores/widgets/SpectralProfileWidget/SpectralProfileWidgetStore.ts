@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {LineKey, Point2D, SpectralSystem} from "models";
+import {LineKey, Point2D, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, isAutoColor, ProcessedSpectralProfile} from "utilities";
@@ -49,6 +49,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isStreamingData: boolean;
     @observable isHighlighted: boolean;
     @observable private spectralLinesMHz: SpectralLine[];
+    @observable intensityUnit: string;
 
     // style settings
     @observable plotType: PlotType;
@@ -89,6 +90,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setSpectralSystem = (specsys: SpectralSystem) => {
         if (this.effectiveFrame.setSpectralSystem(specsys)) {
             this.clearXBounds();
+        }
+    };
+
+    @action setIntensityUnit = (intensityUnitStr: string) => {
+        if (IsIntensitySupported(intensityUnitStr)) {
+            this.intensityUnit = intensityUnitStr;
         }
     };
 
@@ -305,7 +312,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
 
         autorun(() => {
-            if (this.effectiveFrame) {
+            const frame = this.effectiveFrame;
+            if (frame) {
+                this.intensityUnit = frame.unit;
                 this.updateRanges();
                 this.momentRegionId = RegionId.ACTIVE;
             }
@@ -318,6 +327,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 this.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
             }
         });
+    }
+
+    @computed get nativeIntensityUnit(): string {
+        return this.effectiveFrame?.unit;
     }
 
     @computed get profileNum(): number {

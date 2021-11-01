@@ -176,7 +176,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         const intensityUnitOptions = IntensityUnits.map(unit => {
             return {value: unit, label: unit};
         });
-        const isIntensitySupported = IsIntensitySupported(widgetStore.effectiveFrame?.unit);
+        const isIntensitySupported = IsIntensitySupported(widgetStore.nativeIntensityUnit);
 
         return (
             <div className="spectral-settings">
@@ -194,7 +194,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     disable={widgetStore.effectiveFrame?.isPVImage}
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
-                                    <HTMLSelect disabled={!isIntensitySupported} value={widgetStore.effectiveFrame?.unit} options={intensityUnitOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => {}} />
+                                    <HTMLSelect disabled={!isIntensitySupported} value={widgetStore.intensityUnit} options={intensityUnitOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
                                 </FormGroup>
                             </React.Fragment>
                         }
