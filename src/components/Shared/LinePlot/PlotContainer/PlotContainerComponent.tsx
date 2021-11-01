@@ -412,7 +412,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
 
         let plotData: ChartDataset<"scatter">[] = [];
-        if (this.props.data && this.props.data.length) {
+        if (this.props.data?.length) {
             const datasetConfig: ChartDataset = {
                 label: "LineGraph",
                 type: "scatter",
@@ -436,12 +436,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
 
             // change line segments or points color with interaction
-            if (this.props.multiColorSingleLineColors && this.props.multiColorSingleLineColors.length) {
+            if (this.props.multiColorSingleLineColors?.length) {
                 if (this.props.plotType === PlotType.POINTS) {
                     datasetConfig.pointBackgroundColor = this.props.multiColorSingleLineColors;
                 } else {
                     datasetConfig.pointRadius = 0.5;
-                    datasetConfig.pointStyle = "line";
                     datasetConfig.segment = {
                         borderColor: segment => {
                             return this.props.multiColorSingleLineColors[segment.p0DataIndex];
@@ -456,7 +455,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             plotData.push(datasetConfig);
         }
 
-        if (this.props.multiPlotPropsMap && this.props.multiPlotPropsMap.size > 0) {
+        if (this.props.multiPlotPropsMap?.size > 0) {
             this.props.multiPlotPropsMap.forEach((props, key) => {
                 if (props.hidden) {
                     return;
@@ -487,18 +486,20 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     order: props.order ? props.order : 0
                 };
 
-                if (this.props.multiColorMultiLinesColors && this.props.multiColorMultiLinesColors.size) {
+                if (this.props.multiColorMultiLinesColors?.size) {
                     if (props.type === PlotType.POINTS) {
                         multiPlotDatasetConfig.pointBackgroundColor = this.props.multiColorMultiLinesColors.get(key);
                         multiPlotDatasetConfig.borderColor = currentLineColor;
                         multiPlotDatasetConfig.pointBorderColor = "rgba(0, 0, 0, 0)";
                     } else {
                         const colors = this.props.multiColorMultiLinesColors.get(key);
-                        multiPlotDatasetConfig.segment = {
-                            borderColor: segment => {
-                                return colors[segment.p0DataIndex];
-                            }
-                        };
+                        if (colors) {
+                            multiPlotDatasetConfig.segment = {
+                                borderColor: segment => {
+                                    return colors[segment.p0DataIndex];
+                                }
+                            };
+                        }
                     }
                 }
 
