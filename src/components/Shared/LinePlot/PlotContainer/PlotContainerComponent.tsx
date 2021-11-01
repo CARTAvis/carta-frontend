@@ -230,6 +230,17 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
     }
 
+    // replace log(0) with log(0.5)
+    private static ConvertLogData(data: {x: number; y: number; z?: number}[]) {
+        for (let index = 0; index < data.length; index++) {
+            const point = data[index];
+            if (point.y === 0) {
+                point.y = 0.5;
+            }
+        }
+        return data;
+    }
+
     shouldComponentUpdate(nextProps: PlotContainerProps) {
         const props = this.props;
 
@@ -416,7 +427,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             const datasetConfig: ChartDataset = {
                 label: "LineGraph",
                 type: "scatter",
-                data: this.props.data,
+                data: this.props.logY ? PlotContainerComponent.ConvertLogData(this.props.data) : this.props.data,
                 fill: false,
                 tension: 0,
                 order: this.props.order ? this.props.order : 0
@@ -438,9 +449,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             // change line segments or points color with interaction
             if (this.props.multiColorSingleLineColors?.length) {
                 if (this.props.plotType === PlotType.POINTS) {
+                    datasetConfig.pointStyle = "circle";
                     datasetConfig.pointBackgroundColor = this.props.multiColorSingleLineColors;
                 } else {
                     datasetConfig.pointRadius = 0.5;
+                    datasetConfig.pointStyle = "line";
                     datasetConfig.segment = {
                         borderColor: segment => {
                             return this.props.multiColorSingleLineColors[segment.p0DataIndex];
@@ -461,16 +474,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     return;
                 }
 
-                // replace log(0) with log(0.5)
-                if (this.props.logY) {
-                    for (let index = 0; index < props.data.length; index++) {
-                        const point = props.data[index];
-                        if (point.y === 0) {
-                            point.y = 0.5;
-                        }
-                    }
-                }
-
                 let currentLineColor = props.borderColor ? props.borderColor : lineColor;
                 let currentOpacity = clamp((props.opacity ? props.opacity : opacity) || 1.0, 0, 1);
                 if (currentOpacity < 1.0) {
@@ -479,7 +482,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 const multiPlotDatasetConfig: ChartDataset = {
                     type: "scatter",
                     label: key,
-                    data: props.data,
+                    data: this.props.logY ? PlotContainerComponent.ConvertLogData(props.data) : props.data,
                     fill: false,
                     tension: 0,
                     backgroundColor: currentLineColor,
