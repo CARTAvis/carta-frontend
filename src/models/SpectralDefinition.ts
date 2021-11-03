@@ -152,12 +152,6 @@ const JySr = Jys.filter(jy => jy !== Jansky.Jy && jy !== Jansky.mJy).map(jy => `
 const JyArcsec2 = Jys.map(jy => `${jy}/arcsec^2`);
 const JyPixel = Jys.map(jy => `${jy}/pixel`);
 const Kelvins = Object.values(Kelvin);
-export const IntensityUnits = [...Kelvins, ...JyBeam, ...JySr, ...JyArcsec2, ...JyPixel];
-
-// TODO: gen available conversion options
-export const AvailableIntensityUnits = IntensityUnits;
-
-// TODO: store this in a map
 
 export const FindIntensityUnitType = (unitStr: string): IntensityUnitType => {
     const lowercaseJyBeam = JyBeam.map(unit => {
