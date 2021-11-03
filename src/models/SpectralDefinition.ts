@@ -203,6 +203,16 @@ export const GetAvailableIntensityOptions = (unitStr: string, option: IntensityO
         const type = FindIntensityUnitType(unitStr);
         if (type === IntensityUnitType.JyBeam) {
             supportedConversions.push(...JyBeam);
+        } else if (type === IntensityUnitType.JySr) {
+            supportedConversions.push(...JySr);
+            supportedConversions.push(...JyArcsec2);
+        } else if (type === IntensityUnitType.JyArcsec2) {
+            supportedConversions.push(...JySr);
+            supportedConversions.push(...JyArcsec2);
+        } else if (type === IntensityUnitType.JyPixel) {
+            supportedConversions.push(...JyPixel);
+        } else if (type === IntensityUnitType.Kelvin) {
+            supportedConversions.push(...Kelvins);
         }
         return supportedConversions;
     }
@@ -220,29 +230,8 @@ const GetUnitScale = (unitStr: string): number => {
     return 1;
 };
 
-export const IntensityConversion = (unitFrom: string, unitTo: string, values: number[]): number[] => {
-    const unitFromType = FindIntensityUnitType(unitFrom);
-    const unitToType = FindIntensityUnitType(unitTo);
-    if (unitFromType === IntensityUnitType.Unsupported || unitToType === IntensityUnitType.Unsupported || values?.length <= 0) {
-        return undefined;
-    }
-
-    const unitFromScale = GetUnitScale(unitFrom);
-    const unitToScale = GetUnitScale(unitTo);
-
-    let convertedValues;
-    if (unitFromType === unitToType) {
-        const scale = unitToScale / unitFromScale;
-        return values.map(value => value * scale);
-    } else {
-        const normalizedValues = values.map(value => value * unitFromScale);
-        if (unitFromType === IntensityUnitType.Kelvin && unitToType === IntensityUnitType.JyBeam) {
-            convertedValues = KelvinToJyBeam(normalizedValues);
-        } else if (unitFromType === IntensityUnitType.JySr && unitToType === IntensityUnitType.JyArcsec2) {
-            convertedValues = JySrTOJyArcsec2(normalizedValues);
-        }
-    }
-    return convertedValues?.map(value => value / unitToScale);
+const JySrTOJyArcsec2 = (forward: boolean = true): number => {
+    return (forward ? 1 : -1) * 2.350443 * 1e-11;
 };
 
 export const GetIntensityConversion = (unitFrom: string, unitTo: string): ((values: Float32Array | Float64Array) => Float32Array | Float64Array) => {
@@ -254,26 +243,23 @@ export const GetIntensityConversion = (unitFrom: string, unitTo: string): ((valu
 
     const unitFromScale = GetUnitScale(unitFrom);
     const unitToScale = GetUnitScale(unitTo);
+    const scale = unitFromScale / unitToScale;
     if (unitFromType === unitToType) {
-        const scale = unitFromScale / unitToScale;
         return (values: Float32Array | Float64Array): Float32Array | Float64Array => {
             return values.map(value => value * scale);
         };
     } else {
+        if (unitFromType === IntensityUnitType.JySr && unitToType === IntensityUnitType.JyArcsec2) {
+            return (values: Float32Array | Float64Array): Float32Array | Float64Array => {
+                return values.map(value => value * JySrTOJyArcsec2() * scale);
+            };
+        } else if (unitFromType === IntensityUnitType.JyArcsec2 && unitToType === IntensityUnitType.JySr) {
+            return (values: Float32Array | Float64Array): Float32Array | Float64Array => {
+                return values.map(value => value * JySrTOJyArcsec2(false) * scale);
+            };
+        }
         return (values: Float32Array | Float64Array): Float32Array | Float64Array => {
             return values;
         };
     }
-};
-
-const KelvinToJyBeam = (values: number[]): number[] => {
-    // TODO
-    const CONSTANT = 1.222 * 1e6;
-    const scale = CONSTANT;
-    return values.map(value => value * scale);
-};
-
-const JySrTOJyArcsec2 = (values: number[]): number[] => {
-    const CONSTANT = 23.50443;
-    return values?.map(value => value * CONSTANT);
 };
