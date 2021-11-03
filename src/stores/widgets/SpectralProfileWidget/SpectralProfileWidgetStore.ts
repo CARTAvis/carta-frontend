@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {FindIntensityUnitType, GetAvailableIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
+import {FindIntensityUnitType, GetAvailableIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, isAutoColor} from "utilities";
@@ -333,12 +333,25 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.effectiveFrame?.unit;
     }
 
+    @computed get intensityConversionConfig(): IntensityConfig {
+        const frame = this.effectiveFrame;
+        let config: IntensityConfig = {};
+        if (frame) {
+            if (frame.frameInfo?.beamTable?.length > 0) {
+                const beam = frame.frameInfo.beamTable[0];
+                config["bmaj"] = beam.majorAxis;
+                config["bmin"] = beam.minorAxis;
+            }
+        }
+        return config;
+    }
+
     @computed get availableIntensityOptions(): string[] {
-        return GetAvailableIntensityOptions(this.nativeIntensityUnit);
+        return GetAvailableIntensityOptions(this.nativeIntensityUnit, this.intensityConversionConfig);
     }
 
     @computed get intensityConversion(): (values: Float32Array | Float64Array) => Float32Array | Float64Array {
-        return GetIntensityConversion(this.nativeIntensityUnit, this.intensityUnit);
+        return GetIntensityConversion(this.nativeIntensityUnit, this.intensityUnit, this.intensityConversionConfig);
     }
 
     @computed get profileNum(): number {
