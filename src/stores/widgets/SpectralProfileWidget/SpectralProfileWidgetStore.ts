@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {GetAvailableIntensityOptions, GetIntensityConversion, LineKey, Point2D, IsIntensitySupported, SpectralSystem} from "models";
+import {FindIntensityUnitType, GetAvailableIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, isAutoColor, ProcessedSpectralProfile} from "utilities";
@@ -560,7 +560,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (this.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit) {
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly) {
-                    return "Jy"; // TODO
+                    return FindIntensityUnitType(this.intensityUnit) === IntensityUnitType.Kelvin ? "K" : "Jy";
                 } else if (this.profileSelectionStore.isStatsTypeSumSqOnly) {
                     return `(${this.intensityUnit})^2`;
                 } else {
