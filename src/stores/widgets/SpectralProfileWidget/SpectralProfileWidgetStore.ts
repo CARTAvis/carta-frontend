@@ -7,7 +7,7 @@ import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
 import {FindIntensityUnitType, GetAvailableIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
-import {clamp, getColorForTheme, isAutoColor, ProcessedSpectralProfile} from "utilities";
+import {clamp, getColorForTheme, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -373,13 +373,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
         profiles.forEach(profile => {
-            if (profile) {
+            if (profile?.data) {
                 numProfiles++;
                 colors.push(getColorForTheme(profileColorMap.get(profile.colorKey)));
                 labels.push(profile.label);
                 comments.push(profile.comments);
 
-                const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, profile.data, wantMeanRms);
+                const intensityValues = this.intensityConversion ? this.intensityConversion(profile.data.values) : profile.data.values;
+                const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
                 data.push(pointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
                 if (pointsAndProperties) {
@@ -408,7 +409,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let fittingData: {x: number[]; y: Float32Array | Float64Array};
         if (profiles.length === 1 && startEndIndexes.length === 1) {
             let x = profiles[0].channelValues.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
-            let y = profiles[0].data.values.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
+            const intensityValues = this.intensityConversion ? this.intensityConversion(profiles[0].data.values) : profiles[0].data.values;
+            let y = intensityValues.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE) {
                 const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
                 x = smoothedData.x;
@@ -810,7 +812,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     private getDataPointsAndProperties = (
         frameChannelValues: number[],
-        profile: ProcessedSpectralProfile,
+        intensityValues: Float32Array | Float64Array,
         wantMeanRms: boolean
     ): {
         points: Point2D[];
@@ -829,8 +831,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let yMean = undefined;
         let yRms = undefined;
 
-        if (profile?.values?.length > 0 && frameChannelValues?.length > 0 && profile.values.length === frameChannelValues.length) {
-            const intensityValues = this.intensityConversion ? this.intensityConversion(profile.values) : profile.values;
+        if (intensityValues?.length > 0 && frameChannelValues?.length > 0 && intensityValues.length === frameChannelValues.length) {
             // Variables for mean and RMS calculations
             let ySum = 0;
             let ySum2 = 0;
