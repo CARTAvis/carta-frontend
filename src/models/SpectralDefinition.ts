@@ -146,8 +146,6 @@ enum Kelvin {
     mK = "mK"
 }
 
-const JYSR_TO_JYARCSEC2_CONSTANT = 23.50443;
-
 const Jys = Object.values(Jansky);
 const JyBeam = Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/beam`);
 const JySr = Jys.filter(jy => jy !== Jansky.Jy && jy !== Jansky.mJy).map(jy => `${jy}/sr`);
@@ -199,7 +197,7 @@ export const IsIntensitySupported = (unitStr: string): boolean => {
 };
 
 type IntensityOption = {bmaj?: number; bmin?: number; cdelt1?: number; cdelta2?: number; isCTYPE3freq?: boolean};
-export const GetAvailableIntensityConversions = (unitStr: string, option: IntensityOption = undefined): string[] => {
+export const GetAvailableIntensityOptions = (unitStr: string, option: IntensityOption = undefined): string[] => {
     if (IsIntensitySupported(unitStr)) {
         let supportedConversions = [];
         const type = FindIntensityUnitType(unitStr);
@@ -247,11 +245,35 @@ export const IntensityConversion = (unitFrom: string, unitTo: string, values: nu
     return convertedValues?.map(value => value / unitToScale);
 };
 
+export const GetIntensityConversion = (unitFrom: string, unitTo: string): ((values: Float32Array | Float64Array) => Float32Array | Float64Array) => {
+    const unitFromType = FindIntensityUnitType(unitFrom);
+    const unitToType = FindIntensityUnitType(unitTo);
+    if (unitFromType === IntensityUnitType.Unsupported || unitToType === IntensityUnitType.Unsupported || unitFrom === unitTo) {
+        return undefined;
+    }
+
+    const unitFromScale = GetUnitScale(unitFrom);
+    const unitToScale = GetUnitScale(unitTo);
+    if (unitFromType === unitToType) {
+        const scale = unitFromScale / unitToScale;
+        return (values: Float32Array | Float64Array): Float32Array | Float64Array => {
+            return values.map(value => value * scale);
+        };
+    } else {
+        return (values: Float32Array | Float64Array): Float32Array | Float64Array => {
+            return values;
+        };
+    }
+};
+
 const KelvinToJyBeam = (values: number[]): number[] => {
     // TODO
-    return values;
+    const CONSTANT = 1.222 * 1e6;
+    const scale = CONSTANT;
+    return values.map(value => value * scale);
 };
 
 const JySrTOJyArcsec2 = (values: number[]): number[] => {
-    return values?.map(value => value * JYSR_TO_JYARCSEC2_CONSTANT);
+    const CONSTANT = 23.50443;
+    return values?.map(value => value * CONSTANT);
 };

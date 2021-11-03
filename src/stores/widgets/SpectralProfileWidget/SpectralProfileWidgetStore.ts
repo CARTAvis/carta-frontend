@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {GetAvailableIntensityConversions, LineKey, Point2D, IsIntensitySupported, SpectralSystem} from "models";
+import {GetAvailableIntensityOptions, GetIntensityConversion, LineKey, Point2D, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, isAutoColor, ProcessedSpectralProfile} from "utilities";
@@ -334,7 +334,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get availableIntensityOptions(): string[] {
-        return GetAvailableIntensityConversions(this.nativeIntensityUnit);
+        return GetAvailableIntensityOptions(this.nativeIntensityUnit);
+    }
+
+    @computed get intensityConversion(): (values: Float32Array | Float64Array) => Float32Array | Float64Array {
+        return GetIntensityConversion(this.nativeIntensityUnit, this.intensityUnit);
     }
 
     @computed get profileNum(): number {
@@ -826,6 +830,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let yRms = undefined;
 
         if (profile?.values?.length > 0 && frameChannelValues?.length > 0 && profile.values.length === frameChannelValues.length) {
+            const intensityValues = this.intensityConversion ? this.intensityConversion(profile.values) : profile.values;
             // Variables for mean and RMS calculations
             let ySum = 0;
             let ySum2 = 0;
@@ -833,7 +838,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             let startIndex, endIndex;
             for (let i = 0; i < frameChannelValues.length; i++) {
                 const x = frameChannelValues[i];
-                const y = profile.values[i];
+                const y = intensityValues[i];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xBound?.xMin || x > xBound?.xMax) {
@@ -862,7 +867,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     }
                 }
             }
-            smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, profile.values));
+            smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, intensityValues));
 
             if (wantMeanRms && yCount > 0) {
                 yMean = ySum / yCount;
