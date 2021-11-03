@@ -86,7 +86,7 @@ export class CatalogApiService {
         return resources;
     };
 
-    public queryVizierSource = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, sources: VizieResource[]): Promise<Map<string, VizieResource>> => {
+    public queryVizierSource = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, enableMax: boolean, sources: VizieResource[]): Promise<Map<string, VizieResource>> => {
         let resources: Map<string, VizieResource> = new Map();
         let radiusUnits = this.getRadiusUnits(unit);
         let sourceString = "-source=";
@@ -95,7 +95,11 @@ export class CatalogApiService {
         });
 
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
-        let query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-sort=_r&-out.max=${max}&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
+        let query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-sort=_r&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
+        if (enableMax) {
+            query = query + `&-out.max=${max}`;
+        }
+
         try {
             const response = await this.axiosInstanceVizieR.get(query);
             if (response?.status === 200 && response?.data) {

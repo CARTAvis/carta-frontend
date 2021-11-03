@@ -34,6 +34,7 @@ export class CatalogOnlineQueryConfigStore {
     @observable vizierResource: Map<string, VizieResource>;
     @observable vizierSelectedTableName: VizieRItem[];
     @observable vizierKeyWords: string;
+    @observable enableMaxObject: boolean;
 
     constructor() {
         makeObservable(this);
@@ -52,6 +53,7 @@ export class CatalogOnlineQueryConfigStore {
         this.vizierSelectedTableName = [];
         this.vizierResource = new Map();
         this.vizierKeyWords = "";
+        this.enableMaxObject = true;
 
         reaction(
             () => AppStore.Instance.activeFrame,
@@ -85,6 +87,10 @@ export class CatalogOnlineQueryConfigStore {
             this.updateCenterPixelCoord(frame.center);
             this.resetObjectName();
         }
+    }
+
+    @action setMaxObjectSwitchValue(value: boolean) {
+        this.enableMaxObject = value;
     }
 
     @action setVizierKeyWords(keyWords: string) {

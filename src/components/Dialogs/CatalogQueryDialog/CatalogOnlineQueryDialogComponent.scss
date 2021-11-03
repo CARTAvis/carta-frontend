@@ -24,6 +24,15 @@
         .vizier-key-words {
             width: calc(100% - 93px);
         }
+
+        .vizier-max-obj {
+            width: 200px;
+            float: left;
+        }
+
+        .vizier-max-obj-switch {
+            width: calc(100% - 200px);
+        }
     }
 
     .bp3-dialog-footer {
