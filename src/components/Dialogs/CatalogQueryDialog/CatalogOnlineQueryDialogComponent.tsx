@@ -268,9 +268,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancleQuery(configStore.catalogDB)} text={"Cancel"} />
-                        {configStore.enableLoadVizieR ? (
-                            <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => CatalogApiService.Instance.appendVizieRCatalog(configStore.selectedVizierSource)} text={"Load selected"} />
-                        ) : null}
+                        {configStore.enableLoadVizieR ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
                     </div>
                 </div>
             </DraggableDialogComponent>
@@ -291,11 +289,21 @@ export class CatalogQueryDialogComponent extends React.Component {
             configStore.setQueryStatus(true);
             configStore.resetVizirR();
             const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
-            const resources = await CatalogApiService.Instance.queryVizier(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, configStore.vizierKeyWords);
+            const resources = await CatalogApiService.Instance.queryVizierTableName(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.vizierKeyWords);
             configStore.setQueryStatus(false);
             configStore.setVizierQueryResult(resources);
             this.setResultSize(resources.size);
         }
+    };
+
+    private loadVizierCatalogs = async () => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const sources = configStore.selectedVizierSource;
+        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
+        configStore.setQueryStatus(true);
+        const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
+        CatalogApiService.Instance.appendVizieRCatalog(resources);
+        configStore.setQueryStatus(false);
     };
 
     private handleObjectUpdate = () => {
@@ -366,7 +374,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 key={table.name}
                 label={table.name}
                 onClick={itemProps.handleClick}
-                text={`${itemProps.index + 1}. ${table.description} (${table.size} ${table.size > 1 ? "objects" : "object"})`}
+                text={`${itemProps.index + 1}. ${table.description}`}
                 shouldDismissPopover={false}
             />
         );

@@ -56,23 +56,14 @@ export class CatalogApiService {
         }
     }
 
-    public queryVizier = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, keyWords: string): Promise<Map<string, VizieResource>> => {
+    public queryVizierTableName = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, keyWords: string): Promise<Map<string, VizieResource>> => {
         let resources: Map<string, VizieResource> = new Map();
-        let radiusUnits: string;
-        switch (unit) {
-            case RadiusUnits.ARCMINUTES:
-                radiusUnits = "rm";
-                break;
-            case RadiusUnits.ARCSECONDS:
-                radiusUnits = "rs";
-                break;
-            default:
-                radiusUnits = "rd";
-                break;
-        }
-
+        let radiusUnits = this.getRadiusUnits(unit);
+        // http://cdsarc.u-strasbg.fr/doc/asu-summary.htx
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
-        let query = `votable?-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-sort=_r&-out.max=${max}&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
+        // -meta.max = 100000, use a large number to get all tables(same number as vizier use for their websit). default is 500.
+        // when use -meta.max to limit the return data size, the API will not return the correct result.
+        let query = `votable?-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-corr=pos&-out.meta=hud&-meta.all=1&-meta.max=100000`;
         if (keyWords) {
             query = `${query}&-words=${keyWords}`;
         }
@@ -80,8 +71,7 @@ export class CatalogApiService {
         try {
             const response = await this.axiosInstanceVizieR.get(query);
             if (response?.status === 200 && response?.data) {
-                const data = CatalogApiProcessing.ProcessVizieRData(response.data);
-                resources = data.resources;
+                resources = CatalogApiProcessing.ProcessVizieRData(response.data);
             }
         } catch (error) {
             if (axios.isCancel(error)) {
@@ -90,16 +80,43 @@ export class CatalogApiService {
             } else if (error?.message) {
                 AppToaster.show(ErrorToast(error.message));
             } else {
-                console.log("Append Catalog Error: " + error);
+                console.log("Vizier Resource Error: " + error);
             }
         }
         return resources;
     };
 
-    public appendVizieRCatalog = (resources: VizieResource[]) => {
+    public queryVizierSource = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, sources: VizieResource[]): Promise<Map<string, VizieResource>> => {
+        let resources: Map<string, VizieResource> = new Map();
+        let radiusUnits = this.getRadiusUnits(unit);
+        let sourceString = "-source=";
+        sources.forEach(element => {
+            sourceString += `${element.table.name},`;
+        });
+
+        // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
+        let query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-sort=_r&-out.max=${max}&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
+        try {
+            const response = await this.axiosInstanceVizieR.get(query);
+            if (response?.status === 200 && response?.data) {
+                resources = CatalogApiProcessing.ProcessVizieRData(response.data);
+            }
+        } catch (error) {
+            if (axios.isCancel(error)) {
+                AppToaster.show(WarningToast(error?.message));
+                CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.VIZIER);
+            } else if (error?.message) {
+                AppToaster.show(ErrorToast(error.message));
+            } else {
+                console.log("Vizier Table Error: " + error);
+            }
+        }
+        return resources;
+    };
+
+    public appendVizieRCatalog = (resources: Map<string, VizieResource>) => {
         const appStore = AppStore.Instance;
-        for (let index = 0; index < resources.length; index++) {
-            const element = resources[index];
+        resources.forEach(element => {
             const fileId = appStore.catalogNextFileId;
             const {headers, dataMap, size} = CatalogApiProcessing.ProcessVizieRTableData(element.table.tableElement);
             const configStore = CatalogOnlineQueryConfigStore.Instance;
@@ -118,7 +135,7 @@ export class CatalogApiService {
                 directory: ""
             };
             this.loadCatalog(fileId, catalogInfo, headers, dataMap, CatalogType.VIZIER);
-        }
+        });
     };
 
     public loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.ICatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
@@ -192,4 +209,20 @@ export class CatalogApiService {
         }
         return dataSize;
     };
+
+    private getRadiusUnits(unit: RadiusUnits): string {
+        let radiusUnits: string;
+        switch (unit) {
+            case RadiusUnits.ARCMINUTES:
+                radiusUnits = "rm";
+                break;
+            case RadiusUnits.ARCSECONDS:
+                radiusUnits = "rs";
+                break;
+            default:
+                radiusUnits = "rd";
+                break;
+        }
+        return radiusUnits;
+    }
 }

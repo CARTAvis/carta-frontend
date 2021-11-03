@@ -30,7 +30,6 @@ type VizieRCoosys = {
 type VizieRTable = {
     name: string;
     description: string;
-    size: number;
     tableElement: Element;
 };
 
@@ -129,8 +128,7 @@ export class CatalogApiProcessing {
         }
     }
 
-    static ProcessVizieRData(data: string): {tableNames: string[]; resources: Map<string, VizieResource>} {
-        const tableNames = [];
+    static ProcessVizieRData(data: string): Map<string, VizieResource> {
         const resources: Map<string, VizieResource> = new Map();
         let dom: Document;
         const parser = new DOMParser();
@@ -139,12 +137,10 @@ export class CatalogApiProcessing {
         for (let index = 0; index < resourceElements.length; index++) {
             const resourceElement = resourceElements[index];
             const tableElements = resourceElement.getElementsByTagName("TABLE");
-
             for (let j = 0; j < tableElements.length; j++) {
                 const tableElement = tableElements[j];
                 const name = tableElement.getAttribute("name");
-                const data = tableElement.getElementsByTagName("DATA")[0]?.getElementsByTagName("TABLEDATA")[0]?.getElementsByTagName("TR");
-                if (data?.length && tableElement.getElementsByTagName("FIELD")?.length) {
+                if (tableElement.getElementsByTagName("FIELD")?.length) {
                     const res: VizieResource = {
                         id: resourceElement.getAttribute("ID"),
                         name: resourceElement.getAttribute("name"),
@@ -156,16 +152,14 @@ export class CatalogApiProcessing {
                         table: {
                             name: name,
                             description: tableElement.getElementsByTagName("DESCRIPTION")[0]?.textContent,
-                            size: data.length,
                             tableElement: tableElement
                         }
                     };
-                    tableNames.push(name);
                     resources.set(name, res);
                 }
             }
         }
-        return {tableNames, resources};
+        return resources;
     }
 
     static ProcessVizieRTableData(table: Element): {headers: CARTA.ICatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
@@ -182,7 +176,7 @@ export class CatalogApiProcessing {
             });
         }
         const data = table.getElementsByTagName("DATA")[0]?.getElementsByTagName("TABLEDATA")[0]?.getElementsByTagName("TR");
-        const size = data.length;
+        const size = data?.length;
         // init data map
         const dataMap = new Map<number, ProcessedColumnData>();
         for (let index = 0; index < headers.length; index++) {

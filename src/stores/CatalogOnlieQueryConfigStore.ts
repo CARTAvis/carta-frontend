@@ -11,7 +11,7 @@ export enum RadiusUnits {
     ARCSECONDS = "arcsec"
 }
 
-export type VizieRItem = {name: string; description: string; size: number};
+export type VizieRItem = {name: string; description: string};
 
 export class CatalogOnlineQueryConfigStore {
     private static staticInstance: CatalogOnlineQueryConfigStore;
@@ -301,8 +301,7 @@ export class CatalogOnlineQueryConfigStore {
         this.vizierResource.forEach(resource => {
             tables.push({
                 name: resource.table.name,
-                description: resource.description,
-                size: resource.table.size
+                description: resource.description
             });
         });
         return tables;
