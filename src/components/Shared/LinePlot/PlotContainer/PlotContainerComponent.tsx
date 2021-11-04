@@ -360,6 +360,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         text: this.props.xLabel
                     },
                     ticks: {
+                        includeBounds: false,
                         display: this.props.showXAxisTicks === undefined ? true : this.props.showXAxisTicks,
                         maxRotation: 0,
                         color: labelColor,
@@ -380,6 +381,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     type: "linear",
                     display: this.props.showTopAxis !== undefined,
                     ticks: {
+                        includeBounds: false,
                         color: labelColor,
                         maxRotation: 0
                     }
@@ -393,6 +395,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         text: this.props.yLabel
                     },
                     ticks: {
+                        includeBounds: false,
                         color: labelColor,
                         display: this.props.showYAxisTicks === undefined ? true : this.props.showYAxisTicks,
                         callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY)
