@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, Spinner, Icon, Position, PopoverPosition, Switch} from "@blueprintjs/core";
+import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, Spinner, Icon, Position, PopoverPosition} from "@blueprintjs/core";
 import {MultiSelect} from "@blueprintjs/select";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {IItemRendererProps, Select} from "@blueprintjs/select";
@@ -210,8 +210,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </Tooltip2>
                 </FormGroup>
                 <ClearableNumericInputComponent
-                    className={isVizieR ? "vizier-max-obj" : ""}
-                    label="Max Number of Objects"
+                    label={isVizieR ? "Max Number of Objects Per Catalog" : "Max Number of Objects"}
                     min={CatalogOnlineQueryConfigStore.MIN_OBJECTS}
                     max={CatalogOnlineQueryConfigStore.MAX_OBJECTS}
                     integerOnly={true}
@@ -219,14 +218,9 @@ export class CatalogQueryDialogComponent extends React.Component {
                     onValueChanged={val => configStore.setMaxObjects(val)}
                     onValueCleared={() => configStore.resetMaxObjects()}
                     displayExponential={false}
-                    disabled={disable || (configStore.catalogDB === CatalogDatabase.VIZIER && !configStore.enableMaxObject)}
+                    disabled={disable}
                     inline={false}
                 />
-                {isVizieR ? (
-                    <FormGroup className={isVizieR ? "vizier-max-obj-switch" : ""} inline={false} label="Cutoff" disabled={disable}>
-                        <Switch checked={configStore.enableMaxObject} disabled={disable} onChange={ev => configStore.setMaxObjectSwitchValue(ev.currentTarget.checked)} />
-                    </FormGroup>
-                ) : null}
                 {configStore.showVizierResult ? (
                     <FormGroup inline={false} label="VizieR Catalog" disabled={disable}>
                         <MultiSelect
@@ -306,9 +300,8 @@ export class CatalogQueryDialogComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const sources = configStore.selectedVizierSource;
         const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
-        const enableMax = configStore.catalogDB === CatalogDatabase.VIZIER && configStore.enableMaxObject;
         configStore.setQueryStatus(true);
-        const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, enableMax, sources);
+        const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
         CatalogApiService.Instance.appendVizieRCatalog(resources);
         configStore.setQueryStatus(false);
     };
