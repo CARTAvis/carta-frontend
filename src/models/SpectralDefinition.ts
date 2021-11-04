@@ -148,8 +148,8 @@ enum Kelvin {
 
 const Jys = Object.values(Jansky);
 const JyBeam = Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/beam`);
-const JySr = Jys.filter(jy => jy !== Jansky.Jy && jy !== Jansky.mJy).map(jy => `${jy}/sr`);
-const JyArcsec2 = Jys.map(jy => `${jy}/arcsec^2`);
+const JySr = Jys.filter(jy => jy === Jansky.MJy).map(jy => `${jy}/sr`);
+const JyArcsec2 = Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/arcsec^2`);
 const JyPixel = Jys.map(jy => `${jy}/pixel`);
 const Kelvins = Object.values(Kelvin);
 
