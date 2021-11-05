@@ -91,7 +91,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         reaction(
             () => this.widgetStore?.statisticColumnName,
             () => {
-                if (this.widgetStore.enableStatistic) {
+                if (this.widgetStore?.enableStatistic) {
                     this.updateStatistic();
                 }
             }
