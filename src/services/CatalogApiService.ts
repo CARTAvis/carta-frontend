@@ -4,7 +4,7 @@ import axios, {AxiosInstance, AxiosResponse, CancelTokenSource} from "axios";
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogInfo, CatalogType, WCSPoint2D} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, RadiusUnits, SystemType} from "stores";
-import {CatalogApiProcessing, ProcessedColumnData, VizieResource} from "utilities";
+import {CatalogApiProcessing, ProcessedColumnData, VizierResource} from "utilities";
 
 export enum CatalogDatabase {
     SIMBAD = "SIMBAD",
@@ -20,9 +20,9 @@ export class CatalogApiService {
         [CatalogDatabase.VIZIER, {baseURL: "https://vizier.u-strasbg.fr/viz-bin/"}]
     ]);
     private axiosInstanceSimbad: AxiosInstance;
-    private axiosInstanceVizieR: AxiosInstance;
+    private axiosInstanceVizier: AxiosInstance;
     private cancelTokenSourceSimbad: CancelTokenSource;
-    private cancelTokenSourceVizieR: CancelTokenSource;
+    private cancelTokenSourceVizier: CancelTokenSource;
 
     static get Instance() {
         if (!CatalogApiService.staticInstance) {
@@ -33,14 +33,14 @@ export class CatalogApiService {
 
     constructor() {
         this.cancelTokenSourceSimbad = axios.CancelToken.source();
-        this.cancelTokenSourceVizieR = axios.CancelToken.source();
+        this.cancelTokenSourceVizier = axios.CancelToken.source();
         this.axiosInstanceSimbad = axios.create({
             baseURL: CatalogApiService.DBMap.get(CatalogDatabase.SIMBAD).baseURL,
             cancelToken: this.cancelTokenSourceSimbad.token
         });
-        this.axiosInstanceVizieR = axios.create({
+        this.axiosInstanceVizier = axios.create({
             baseURL: CatalogApiService.DBMap.get(CatalogDatabase.VIZIER).baseURL,
-            cancelToken: this.cancelTokenSourceVizieR.token
+            cancelToken: this.cancelTokenSourceVizier.token
         });
     }
 
@@ -52,12 +52,12 @@ export class CatalogApiService {
         if (type === CatalogDatabase.SIMBAD) {
             this.cancelTokenSourceSimbad.cancel("Simbad query canceled by the user.");
         } else if (type === CatalogDatabase.VIZIER) {
-            this.cancelTokenSourceVizieR.cancel("VizieR query canceled by the user.");
+            this.cancelTokenSourceVizier.cancel("VizieR query canceled by the user.");
         }
     }
 
-    public queryVizierTableName = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, keyWords: string): Promise<Map<string, VizieResource>> => {
-        let resources: Map<string, VizieResource> = new Map();
+    public queryVizierTableName = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, keyWords: string): Promise<Map<string, VizierResource>> => {
+        let resources: Map<string, VizierResource> = new Map();
         let radiusUnits = this.getRadiusUnits(unit);
         // http://cdsarc.u-strasbg.fr/doc/asu-summary.htx
         // _RA, _DE are a shorthand for _RA(J2000,J2000), _DE(J2000,J2000)
@@ -69,9 +69,9 @@ export class CatalogApiService {
         }
 
         try {
-            const response = await this.axiosInstanceVizieR.get(query);
+            const response = await this.axiosInstanceVizier.get(query);
             if (response?.status === 200 && response?.data) {
-                resources = CatalogApiProcessing.ProcessVizieRData(response.data);
+                resources = CatalogApiProcessing.ProcessVizierData(response.data);
             }
         } catch (error) {
             if (axios.isCancel(error)) {
@@ -86,8 +86,8 @@ export class CatalogApiService {
         return resources;
     };
 
-    public queryVizierSource = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, sources: VizieResource[]): Promise<Map<string, VizieResource>> => {
-        let resources: Map<string, VizieResource> = new Map();
+    public queryVizierSource = async (point: WCSPoint2D, radius: number, unit: RadiusUnits, max: number, sources: VizierResource[]): Promise<Map<string, VizierResource>> => {
+        let resources: Map<string, VizierResource> = new Map();
         let radiusUnits = this.getRadiusUnits(unit);
         let sourceString = "-source=";
         sources.forEach(element => {
@@ -98,9 +98,9 @@ export class CatalogApiService {
         let query = `votable?${sourceString}&-c=${point.x} ${point.y}&-c.eq=J2000&-c.${radiusUnits}=${radius}&-out.max=${max}&-sort=_r&-corr=pos&-out.add=_r,_RA,_DE&-oc.form=d&-out.meta=hud`;
 
         try {
-            const response = await this.axiosInstanceVizieR.get(query);
+            const response = await this.axiosInstanceVizier.get(query);
             if (response?.status === 200 && response?.data) {
-                resources = CatalogApiProcessing.ProcessVizieRData(response.data);
+                resources = CatalogApiProcessing.ProcessVizierData(response.data);
             }
         } catch (error) {
             if (axios.isCancel(error)) {
@@ -109,17 +109,17 @@ export class CatalogApiService {
             } else if (error?.message) {
                 AppToaster.show(ErrorToast(error.message));
             } else {
-                console.log("Vizier Table Error: " + error);
+                console.log("VizieR Table Error: " + error);
             }
         }
         return resources;
     };
 
-    public appendVizieRCatalog = (resources: Map<string, VizieResource>) => {
+    public appendVizierCatalog = (resources: Map<string, VizierResource>) => {
         const appStore = AppStore.Instance;
         resources.forEach(element => {
             const fileId = appStore.catalogNextFileId;
-            const {headers, dataMap, size} = CatalogApiProcessing.ProcessVizieRTableData(element.table.tableElement);
+            const {headers, dataMap, size} = CatalogApiProcessing.ProcessVizierTableData(element.table.tableElement);
             const configStore = CatalogOnlineQueryConfigStore.Instance;
             const coosy: CARTA.ICoosys = {system: element.coosys.system};
             const fileName = `${configStore.catalogDB}_${element.coosys.system}_${element.table.name}_${configStore.searchRadius}${configStore.radiusUnits}`;
@@ -159,8 +159,8 @@ export class CatalogApiService {
             this.cancelTokenSourceSimbad = axios.CancelToken.source();
             this.axiosInstanceSimbad.defaults.cancelToken = this.cancelTokenSourceSimbad.token;
         } else if (type === CatalogDatabase.VIZIER) {
-            this.cancelTokenSourceVizieR = axios.CancelToken.source();
-            this.axiosInstanceVizieR.defaults.cancelToken = this.cancelTokenSourceVizieR.token;
+            this.cancelTokenSourceVizier = axios.CancelToken.source();
+            this.axiosInstanceVizier.defaults.cancelToken = this.cancelTokenSourceVizier.token;
         }
     }
 

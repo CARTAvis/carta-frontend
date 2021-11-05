@@ -6,7 +6,7 @@ import {MultiSelect} from "@blueprintjs/select";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {IItemRendererProps, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
-import {AppStore, CatalogOnlineQueryConfigStore, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL, VizieRItem} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL, VizierItem} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
@@ -111,11 +111,11 @@ export class CatalogQueryDialogComponent extends React.Component {
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
-        const isVizieR = configStore.catalogDB === CatalogDatabase.VIZIER;
+        const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
 
         const configBoard = (
             <div className="online-catalog-config">
-                <FormGroup inline={false} label="Database" disabled={disable} className={isVizieR ? "vizier-databse" : ""}>
+                <FormGroup inline={false} label="Database" disabled={disable} className={isVizier ? "vizier-databse" : ""}>
                     <Select
                         items={Object.values(CatalogDatabase)}
                         activeItem={null}
@@ -129,8 +129,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                         <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
-                {isVizieR ? (
-                    <FormGroup inline={false} label="Key Words (Catalog Title)" disabled={disable} className={isVizieR ? "vizier-key-words" : ""}>
+                {isVizier ? (
+                    <FormGroup inline={false} label="Key Words (Catalog Title)" disabled={disable} className={isVizier ? "vizier-key-words" : ""}>
                         <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} />
                     </FormGroup>
                 ) : null}
@@ -210,7 +210,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </Tooltip2>
                 </FormGroup>
                 <ClearableNumericInputComponent
-                    label={isVizieR ? "Max Number of Objects Per Catalog" : "Max Number of Objects"}
+                    label={isVizier ? "Max Number of Objects Per Catalog" : "Max Number of Objects"}
                     min={CatalogOnlineQueryConfigStore.MIN_OBJECTS}
                     max={CatalogOnlineQueryConfigStore.MAX_OBJECTS}
                     integerOnly={true}
@@ -232,7 +232,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                             onItemSelect={item => configStore.updateVizierSelectedTable(item)}
                             selectedItems={configStore.vizierSelectedTableName}
                             tagRenderer={item => item.name}
-                            itemPredicate={this.filterVizieRTable}
+                            itemPredicate={this.filterVizierTable}
                             noResults={<MenuItem disabled={true} text="No results." />}
                             tagInputProps={{
                                 onRemove: v => configStore.removeVizierSelectedTable(v.toString()),
@@ -268,7 +268,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancleQuery(configStore.catalogDB)} text={"Cancel"} />
-                        {configStore.enableLoadVizieR ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
+                        {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
                     </div>
                 </div>
             </DraggableDialogComponent>
@@ -287,7 +287,7 @@ export class CatalogQueryDialogComponent extends React.Component {
             this.setResultSize(dataSize);
         } else if (configStore.catalogDB === CatalogDatabase.VIZIER) {
             configStore.setQueryStatus(true);
-            configStore.resetVizirR();
+            configStore.resetVizier();
             const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
             const resources = await CatalogApiService.Instance.queryVizierTableName(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.vizierKeyWords);
             configStore.setQueryStatus(false);
@@ -302,7 +302,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
         configStore.setQueryStatus(true);
         const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
-        CatalogApiService.Instance.appendVizieRCatalog(resources);
+        CatalogApiService.Instance.appendVizierCatalog(resources);
         configStore.setQueryStatus(false);
     };
 
@@ -363,7 +363,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         return <MenuItem key={type} text={type} onClick={itemProps.handleClick} />;
     };
 
-    private vizierItemRenderer = (table: VizieRItem, itemProps: IItemRendererProps) => {
+    private vizierItemRenderer = (table: VizierItem, itemProps: IItemRendererProps) => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         const isFilmSelected = configStore.vizierSelectedTableName.filter(current => current.name === table.name).length > 0;
 
@@ -380,7 +380,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         );
     };
 
-    private filterVizieRTable = (query: string, item: VizieRItem) => {
+    private filterVizierTable = (query: string, item: VizierItem) => {
         const nameSearcher = new FuzzySearch([item.name]);
         const descriptionSearcher = new FuzzySearch([item.description]);
         return nameSearcher.search(query).length > 0 || descriptionSearcher.search(query).length > 0;

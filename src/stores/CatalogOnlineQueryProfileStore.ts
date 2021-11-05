@@ -6,7 +6,7 @@ import {ProcessedColumnData} from "utilities";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {
     private static readonly SimbadInitialedColumnsKeyWords = ["ra", "dec", "main_id", "coo_bibcode", "dist", "otype_txt"];
-    private static readonly VizieRInitialedColumnsKeyWords = ["_r", "_RAJ2000", "_DEJ2000"];
+    private static readonly VizierInitialedColumnsKeyWords = ["_r", "_RAJ2000", "_DEJ2000"];
 
     @observable catalogInfo: CatalogInfo;
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;
@@ -62,7 +62,7 @@ export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore 
                 let display = false;
                 if (this.catalogType === CatalogType.SIMBAD && CatalogOnlineQueryProfileStore.SimbadInitialedColumnsKeyWords.includes(header.name)) {
                     display = true;
-                } else if (this.catalogType === CatalogType.VIZIER && (CatalogOnlineQueryProfileStore.VizieRInitialedColumnsKeyWords.includes(header.name) || index < PreferenceStore.Instance.catalogDisplayedColumnSize)) {
+                } else if (this.catalogType === CatalogType.VIZIER && (CatalogOnlineQueryProfileStore.VizierInitialedColumnsKeyWords.includes(header.name) || index < PreferenceStore.Instance.catalogDisplayedColumnSize)) {
                     display = true;
                 }
                 let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, filter: "", columnWidth: null};

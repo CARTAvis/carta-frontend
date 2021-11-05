@@ -14,20 +14,20 @@ enum DataType {
     UNSIGNEDBYTE = "UNSIGNEDBYTE"
 }
 
-export type VizieResource = {
+export type VizierResource = {
     id: string;
     name: string;
     description: string;
-    coosys: VizieRCoosys;
-    table: VizieRTable;
+    coosys: VizierCoosys;
+    table: VizierTable;
 };
 
-type VizieRCoosys = {
+type VizierCoosys = {
     system: string;
     equinox: string;
 };
 
-type VizieRTable = {
+type VizierTable = {
     name: string;
     description: string;
     tableElement: Element;
@@ -128,8 +128,8 @@ export class CatalogApiProcessing {
         }
     }
 
-    static ProcessVizieRData(data: string): Map<string, VizieResource> {
-        const resources: Map<string, VizieResource> = new Map();
+    static ProcessVizierData(data: string): Map<string, VizierResource> {
+        const resources: Map<string, VizierResource> = new Map();
         let dom: Document;
         const parser = new DOMParser();
         dom = parser.parseFromString(data, "application/xml");
@@ -141,7 +141,7 @@ export class CatalogApiProcessing {
                 const tableElement = tableElements[j];
                 const name = tableElement.getAttribute("name");
                 if (tableElement.getElementsByTagName("FIELD")?.length) {
-                    const res: VizieResource = {
+                    const res: VizierResource = {
                         id: resourceElement.getAttribute("ID"),
                         name: resourceElement.getAttribute("name"),
                         description: resourceElement.getElementsByTagName("DESCRIPTION")[0]?.textContent,
@@ -162,7 +162,7 @@ export class CatalogApiProcessing {
         return resources;
     }
 
-    static ProcessVizieRTableData(table: Element): {headers: CARTA.ICatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
+    static ProcessVizierTableData(table: Element): {headers: CARTA.ICatalogHeader[]; dataMap: Map<number, ProcessedColumnData>; size: number} {
         const fields = table.getElementsByTagName("FIELD");
         let headers: CARTA.CatalogHeader[] = new Array(fields.length);
         for (let index = 0; index < fields.length; index++) {

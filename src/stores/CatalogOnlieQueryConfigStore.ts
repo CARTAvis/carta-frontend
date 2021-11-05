@@ -3,7 +3,7 @@ import {action, observable, makeObservable, reaction, computed} from "mobx";
 import {CatalogSystemType, Point2D} from "models";
 import {AppStore, OverlayStore, NumberFormatType, ASTSettingsString, SystemType} from "stores";
 import {CatalogDatabase} from "services";
-import {clamp, getPixelValueFromWCS, transformPoint, VizieResource} from "utilities";
+import {clamp, getPixelValueFromWCS, transformPoint, VizierResource} from "utilities";
 
 export enum RadiusUnits {
     DEGREES = "deg",
@@ -11,7 +11,7 @@ export enum RadiusUnits {
     ARCSECONDS = "arcsec"
 }
 
-export type VizieRItem = {name: string; description: string};
+export type VizierItem = {name: string; description: string};
 
 export class CatalogOnlineQueryConfigStore {
     private static staticInstance: CatalogOnlineQueryConfigStore;
@@ -31,8 +31,8 @@ export class CatalogOnlineQueryConfigStore {
     @observable objectName: string;
     @observable isObjectQuerying: boolean;
     //Vizier
-    @observable vizierResource: Map<string, VizieResource>;
-    @observable vizierSelectedTableName: VizieRItem[];
+    @observable vizierResource: Map<string, VizierResource>;
+    @observable vizierSelectedTableName: VizierItem[];
     @observable vizierKeyWords: string;
 
     constructor() {
@@ -91,11 +91,11 @@ export class CatalogOnlineQueryConfigStore {
         this.vizierKeyWords = keyWords;
     }
 
-    @action setVizierQueryResult(resources: Map<string, VizieResource>) {
+    @action setVizierQueryResult(resources: Map<string, VizierResource>) {
         this.vizierResource = resources;
     }
 
-    @action updateVizierSelectedTable(table: VizieRItem) {
+    @action updateVizierSelectedTable(table: VizierItem) {
         if (!this.vizierSelectedTableName.includes(table)) {
             this.vizierSelectedTableName.push(table);
         }
@@ -109,7 +109,7 @@ export class CatalogOnlineQueryConfigStore {
         this.vizierSelectedTableName = [];
     }
 
-    @action resetVizirR() {
+    @action resetVizier() {
         this.vizierResource.clear();
         this.resetVizierSelectedTable();
     }
@@ -286,18 +286,18 @@ export class CatalogOnlineQueryConfigStore {
         return this.vizierResource.size !== 0 && this.catalogDB === CatalogDatabase.VIZIER;
     }
 
-    @computed get selectedVizierSource(): VizieResource[] {
+    @computed get selectedVizierSource(): VizierResource[] {
         const resources = [];
         this.vizierSelectedTableName.forEach(table => resources.push(this.vizierResource.get(table.name)));
         return resources;
     }
 
-    @computed get enableLoadVizieR(): boolean {
+    @computed get enableLoadVizier(): boolean {
         return this.vizierSelectedTableName.length > 0 && this.showVizierResult;
     }
 
-    @computed get vizierTable(): VizieRItem[] {
-        const tables: VizieRItem[] = [];
+    @computed get vizierTable(): VizierItem[] {
+        const tables: VizierItem[] = [];
         this.vizierResource.forEach(resource => {
             tables.push({
                 name: resource.table.name,
