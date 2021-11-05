@@ -1,8 +1,6 @@
-import {getShaderFromString, initWebGL, loadImageTexture} from "utilities";
-
+import {getShaderProgram, initWebGL2, loadImageTexture, GL2} from "utilities";
+import {contourShaders} from "./GLSL";
 import allMaps from "../static/allmaps.png";
-import vertexShaderLine from "!raw-loader!./GLSL/vertex_shader_contours.glsl";
-import pixelShaderDashed from "!raw-loader!./GLSL/pixel_shader_contours.glsl";
 
 interface ShaderUniforms {
     RangeScale: WebGLUniformLocation;
@@ -32,7 +30,7 @@ export class ContourWebGLService {
     private static staticInstance: ContourWebGLService;
 
     private cmapTexture: WebGLTexture;
-    readonly gl: WebGLRenderingContext;
+    readonly gl: WebGL2RenderingContext;
     shaderUniforms: ShaderUniforms;
     // Shader attribute handles
     vertexPositionAttribute: number;
@@ -58,18 +56,7 @@ export class ContourWebGLService {
         if (!this.gl) {
             return;
         }
-        let vertexShader = getShaderFromString(this.gl, vertexShaderLine, WebGLRenderingContext.VERTEX_SHADER);
-        let fragmentShader = getShaderFromString(this.gl, pixelShaderDashed, WebGLRenderingContext.FRAGMENT_SHADER);
-
-        let shaderProgram = this.gl.createProgram();
-        this.gl.attachShader(shaderProgram, vertexShader);
-        this.gl.attachShader(shaderProgram, fragmentShader);
-        this.gl.linkProgram(shaderProgram);
-
-        if (!this.gl.getProgramParameter(shaderProgram, WebGLRenderingContext.LINK_STATUS)) {
-            console.log("Could not initialise shaders");
-        }
-
+        const shaderProgram = getShaderProgram(this.gl, contourShaders.vertexShader, contourShaders.fragmentShader);
         this.gl.useProgram(shaderProgram);
 
         this.vertexPositionAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexPosition");
@@ -106,13 +93,13 @@ export class ContourWebGLService {
     }
 
     private constructor() {
-        this.gl = initWebGL();
+        this.gl = initWebGL2();
         if (!this.gl) {
             return;
         }
 
         this.initShaders();
-        loadImageTexture(this.gl, allMaps, WebGLRenderingContext.TEXTURE0).then(texture => {
+        loadImageTexture(this.gl, allMaps, GL2.TEXTURE0).then(texture => {
             this.cmapTexture = texture;
         });
     }
