@@ -1,6 +1,56 @@
 import {action, observable, makeObservable} from "mobx";
 import {Position} from "@blueprintjs/core";
 
+export enum HelpType {
+    // Dialogs
+    CONTOUR = "Contour Configuration",
+    PREFERENCES = "Preferences",
+    FILE_BROWSER = "File Browser",
+    FILE_INFO = "File Header",
+    SAVE_LAYOUT = "Save Layout",
+    REGION_DIALOG = "Region Dialog",
+    STOKES = "Stokes Hypercube Dialog",
+    ONLINE_CATALOG_QUERY = "Online Catalog Query",
+
+    // Widgets
+    ANIMATOR = "Animator",
+    HISTOGRAM = "Histogram",
+    HISTOGRAM_SETTINGS = "Histogram Settings",
+    IMAGE_VIEW = "Image View",
+    IMAGE_VIEW_SETTINGS = "Image View Settings",
+    LAYER_LIST = "Image List",
+    LAYER_LIST_SETTINGS = "Image List Settings",
+    LOG = "Log",
+    PLACEHOLDER = "Placeholder",
+    REGION_LIST = "Region List",
+    RENDER_CONFIG = "Render Configuration",
+    RENDER_CONFIG_SETTINGS = "Render Configuration Settings",
+    SPATIAL_PROFILER = "Spatial Profiler",
+    SPATIAL_PROFILER_SETTINGS_STYLING = "Spatial Profiler Style Settings",
+    SPATIAL_PROFILER_SETTINGS_SMOOTHING = "Spatial Profiler Smoothing Settings",
+    SPECTRAL_PROFILER = "Spectral Profiler",
+    SPECTRAL_PROFILER_SETTINGS_CONVERSION = "Spectral Profiler Conversion Settings",
+    SPECTRAL_PROFILER_SETTINGS_STYLING = "Spectral Profiler Style Settings",
+    SPECTRAL_PROFILER_SETTINGS_SMOOTHING = "Spectral Profiler Smoothing Settings",
+    SPECTRAL_PROFILER_SETTINGS_MOMENTS = "Spectral Profiler Moments Settings",
+    SPECTRAL_PROFILER_SETTINGS_FITTING = "Spectral Profiler Fitting Settings",
+    STATS = "Statistics",
+    STOKES_ANALYSIS = "Stokes Analysis",
+    STOKES_ANALYSIS_SETTINGS_CONVERSION = "Stokes Conversion Settings",
+    STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING = "Stokes Line Plot Settings",
+    STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING = "Stokes Scatter Plot Settings",
+    STOKES_ANALYSIS_SETTINGS_SMOOTHING = "Stokes Smoothing Settings",
+    CATALOG_OVERLAY = "Catalog Overlay",
+    CATALOG_HISTOGRAM_PLOT = "Catalog Histogram Plot",
+    CATALOG_SCATTER_PLOT = "Catalog Scatter Plot",
+    CATALOG_SETTINGS_GOLBAL = "Catalog Global Settings",
+    CATALOG_SETTINGS_OVERLAY = "Catalog Overlay Settings",
+    CATALOG_SETTINGS_COLOR = "Catalog Color Settings",
+    CATALOG_SETTINGS_SIZE = "Catalog Size Settings",
+    CATALOG_SETTINGS_ORIENTATION = "Catalog Orientation Settings",
+    SPECTRAL_LINE_QUERY = "Spectral Line Query"
+}
+
 export class HelpStore {
     private static staticInstance: HelpStore;
 
@@ -28,54 +78,4 @@ export class HelpStore {
     @action hideHelpDrawer = () => {
         this.helpVisible = false;
     };
-}
-
-export enum HelpType {
-    // Dialogs
-    CONTOUR = "contour",
-    PREFERENCES = "preferences",
-    FILE_Browser = "file-browser",
-    FILE_INFO = "file-info",
-    SAVE_LAYOUT = "save-layout",
-    REGION_DIALOG = "region-dialog",
-    STOKES = "STOKES",
-    ONLINE_CATALOG_QUERY = "online-catalog-query",
-
-    // Widgets
-    ANIMATOR = "animator",
-    HISTOGRAM = "histogram",
-    HISTOGRAM_SETTINGS = "histogram-settings",
-    IMAGE_VIEW = "image-view",
-    IMAGE_VIEW_SETTINGS = "image-view-settings",
-    LAYER_LIST = "layer-list",
-    LAYER_LIST_SETTINGS = "layer-list-settings",
-    LOG = "log",
-    PLACEHOLDER = "placeholder",
-    REGION_LIST = "region-list",
-    RENDER_CONFIG = "render-config",
-    RENDER_CONFIG_SETTINGS = "render-config-settings",
-    SPATIAL_PROFILER = "spatial-profiler",
-    SPATIAL_PROFILER_SETTINGS_STYLING = "spatial-profiler-settings-styling",
-    SPATIAL_PROFILER_SETTINGS_SMOOTHING = "spatial-profiler-settings-smoothing",
-    SPECTRAL_PROFILER = "spectral-profiler",
-    SPECTRAL_PROFILER_SETTINGS_CONVERSION = "spectral-profiler-settings-conversion",
-    SPECTRAL_PROFILER_SETTINGS_STYLING = "spectral-profiler-settings-styling",
-    SPECTRAL_PROFILER_SETTINGS_SMOOTHING = "spectral-profiler-settings-smoothing",
-    SPECTRAL_PROFILER_SETTINGS_MOMENTS = "spectral-profiler-settings-moments",
-    SPECTRAL_PROFILER_SETTINGS_FITTING = "spectral-profiler-settings-fitting",
-    STATS = "stats",
-    STOKES_ANALYSIS = "stoke-analysis",
-    STOKES_ANALYSIS_SETTINGS_CONVERSION = "stoke-analysis-settings-conversion",
-    STOKES_ANALYSIS_SETTINGS_LINE_PLOT_STYLING = "stoke-analysis-settings-line-plot-styling",
-    STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING = "stoke-analysis-settings-scatter-plot-styling",
-    STOKES_ANALYSIS_SETTINGS_SMOOTHING = "stoke-analysis-settings-smoothing",
-    CATALOG_OVERLAY = "catalog-overlay",
-    CATALOG_HISTOGRAM_PLOT = "catalog-histogram-plot",
-    CATALOG_SCATTER_PLOT = "catalog-scatter-plot",
-    CATALOG_SETTINGS_GOLBAL = "catalog-settings-golbal",
-    CATALOG_SETTINGS_OVERLAY = "catalog-settings-overlay",
-    CATALOG_SETTINGS_COLOR = "catalog-settings-color",
-    CATALOG_SETTINGS_SIZE = "catalog-settings-size",
-    CATALOG_SETTINGS_ORIENTATION = "catalog-settings-orientation",
-    SPECTRAL_LINE_QUERY = "spectral-line-query"
 }
