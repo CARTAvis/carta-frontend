@@ -1,8 +1,9 @@
 import * as React from "react";
+import * as _ from "lodash";
 import * as Plotly from "plotly.js";
 import * as GSL from "gsl_wrapper";
 import Plot from "react-plotly.js";
-import {action, autorun, computed, runInAction, observable, makeObservable} from "mobx";
+import {action, autorun, computed, runInAction, observable, makeObservable, reaction} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, AnchorButton, Intent, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
@@ -86,6 +87,22 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 WidgetsStore.Instance.setWidgetTitle(this.props.id, `Catalog ${this.plotType}`);
             }
         });
+
+        reaction(
+            () => this.widgetStore?.statisticColumnName,
+            () => {
+                if (this.widgetStore.enableStatistic) {
+                    this.updateStatistic();
+                }
+            }
+        );
+
+        reaction(
+            () => this.profileStore?.selectedPointIndices,
+            () => {
+                this.updateStatistic();
+            }
+        );
     }
 
     @action private onResize = (width: number, height: number) => {
@@ -301,24 +318,44 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         return nBinx;
     }
 
-    private handleColumnNameChange = (type: string, column: string) => {
-        const widgetsStore = this.widgetStore;
-        if (type === "x") {
-            widgetsStore.setColumnX(column);
-        } else if (type === "y") {
-            widgetsStore.setColumnY(column);
+    private updateStatistic = () => {
+        const profileStore = this.profileStore;
+        const widgetStore = this.widgetStore;
+        if(widgetStore?.enableStatistic && profileStore) {
+            const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
+            const coords = profileStore.get1DPlotData(widgetStore.statisticColumnName);
+            let data = coords.wcsData;
+            if (selectedPointIndices.length > 0) {
+                data = new Float64Array(selectedPointIndices.length);
+                for (let index = 0; index < selectedPointIndices.length; index++) {
+                    const selected = selectedPointIndices[index];
+                    data[index] = coords.wcsData[selected];
+                }
+            }
+            widgetStore.setStatistic({mean: _.mean(data)});
         }
-        if (widgetsStore.plotType === CatalogPlotType.D2Scatter) {
-            if (widgetsStore.xColumnName === CatalogPlotComponent.emptyColumn || widgetsStore.yColumnName === CatalogPlotComponent.emptyColumn) {
+    }
+
+    private handleColumnNameChange = (type: "X" | "Y" | "S", column: string) => {
+        const widgetStore = this.widgetStore;
+        if (type === "X") {
+            widgetStore.setColumnX(column);
+        } else if (type === "Y") {
+            widgetStore.setColumnY(column);
+        } else if (type === "S") {
+            widgetStore.setStatisticColumn(column);
+        }
+        if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
+            if (widgetStore.xColumnName === CatalogPlotComponent.emptyColumn || widgetStore.yColumnName === CatalogPlotComponent.emptyColumn) {
                 return;
             }
-            widgetsStore.setScatterborder(this.initScatterBorder);
-            widgetsStore.initLinearFitting();
-        } else if (widgetsStore.plotType === CatalogPlotType.Histogram) {
+            widgetStore.setScatterborder(this.initScatterBorder);
+            widgetStore.initLinearFitting();
+        } else if (widgetStore.plotType === CatalogPlotType.Histogram) {
             if (column === CatalogPlotComponent.emptyColumn) {
                 return;
             }
-            widgetsStore.setHistogramXBorder(this.initHistogramXBorder);
+            widgetStore.setHistogramXBorder(this.initHistogramXBorder);
         }
     };
 
@@ -421,7 +458,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             let selectedPointIndices;
             if (this.widgetStore.plotType === CatalogPlotType.D2Scatter) {
                 const points = event.points;
-                selectedPointIndices = Array(points.length);
+                selectedPointIndices = new Array(points.length);
                 for (let index = 0; index < points.length; index++) {
                     selectedPointIndices[index] = points[index].pointIndex;
                 }
@@ -432,12 +469,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     const count = points[i].pointIndices.length;
                     arraySize = arraySize + count;
                 }
-                selectedPointIndices = Array(arraySize);
+                selectedPointIndices = new Array(arraySize);
+                let index = 0;
                 for (let i = 0; i < points.length; i++) {
                     const selectedPoints = points[i].pointIndices;
                     const size = selectedPoints.length;
                     for (let j = 0; j < size; j++) {
-                        selectedPointIndices[i * size + j] = selectedPoints[j];
+                        selectedPointIndices[index] = selectedPoints[j];
+                        index += 1;
                     }
                 }
             }
@@ -459,6 +498,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         profileStore.setSelectedPointIndices([], false);
         catalogWidgetStore.setShowSelectedData(false);
         widgetsStore.initLinearFitting();
+        widgetsStore.initStatistic();
+        this.updateStatistic();
     };
 
     // Single source selected
@@ -600,7 +641,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     className="bp3-fill"
                     items={xyOptions}
                     activeItem={widgetStore.xColumnName}
-                    onItemSelect={item => this.handleColumnNameChange("x", item)}
+                    onItemSelect={item => this.handleColumnNameChange("X", item)}
                     itemRenderer={this.renderColumnNamePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                     filterable={true}
@@ -625,7 +666,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     className="bp3-fill"
                     items={xyOptions}
                     activeItem={widgetStore.yColumnName}
-                    onItemSelect={item => this.handleColumnNameChange("y", item)}
+                    onItemSelect={item => this.handleColumnNameChange("Y", item)}
                     itemRenderer={this.renderColumnNamePopOver}
                     popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                     filterable={true}
@@ -634,6 +675,25 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     resetOnSelect={true}
                 >
                     <Button text={widgetStore.yColumnName} rightIcon="double-caret-vertical" />
+                </Select>
+            </FormGroup>
+        );
+
+        const renderStatisticSelect = (
+            <FormGroup inline={true} label="Statistic">
+                <Select
+                    className="bp3-fill"
+                    items={xyOptions}
+                    activeItem={widgetStore.statisticColumnName}
+                    onItemSelect={item => this.handleColumnNameChange("S", item)}
+                    itemRenderer={this.renderColumnNamePopOver}
+                    popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                    filterable={true}
+                    noResults={noResults}
+                    itemPredicate={this.filterColumn}
+                    resetOnSelect={true}
+                >
+                    <Button text={widgetStore.statisticColumnName} rightIcon="double-caret-vertical" />
                 </Select>
             </FormGroup>
         );
@@ -821,6 +881,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const renderLinearRegressionButton = <AnchorButton intent={Intent.PRIMARY} text="Linear Fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} />;
         const infoStrings = widgetStore.showFittingResult ? [this.genProfilerInfo, widgetStore.fittingResultString] : [this.genProfilerInfo];
+        if (widgetStore.showStatisticResult && widgetStore.enableStatistic) {
+            infoStrings.push(widgetStore.statisticString);
+        }
+
         return (
             <div className={"catalog-plot"}>
                 <div className={"catalog-plot-option"}>
@@ -829,6 +893,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     {isHistogramPlot && renderHistogramBins}
                     {isHistogramPlot && renderHistogramLog}
                     {isScatterPlot && renderYSelect}
+                    {renderStatisticSelect}
                 </div>
                 <div className={`${spikeLineClass} ${isScatterPlot && devicePixelRatio > 1 ? catalogScatterClass : ""}`}>
                     <Plot

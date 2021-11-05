@@ -1,6 +1,6 @@
 import {action, observable, computed, makeObservable} from "mobx";
 import {CatalogPlotType} from "stores/widgets";
-import {Point2D} from "models";
+import {CatalogOverlay, Point2D} from "models";
 import {toExponential} from "utilities";
 
 export interface CatalogPlotWidgetStoreProps {
@@ -14,6 +14,7 @@ export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
+type Statistic = {mean: number};
 
 export class CatalogPlotWidgetStore {
     @observable indicatorInfo: Point2D;
@@ -27,6 +28,8 @@ export class CatalogPlotWidgetStore {
     @observable yColumnName: string;
     @observable fitting: Fitting;
     @observable minMaxX: {minVal: number; maxVal: number};
+    @observable statisticColumnName: string;
+    @observable statistic: Statistic;
 
     constructor(props: CatalogPlotWidgetStoreProps) {
         makeObservable(this);
@@ -40,6 +43,16 @@ export class CatalogPlotWidgetStore {
         this.xColumnName = props.xColumnName;
         this.yColumnName = props.yColumnName;
         this.initLinearFitting();
+        this.statisticColumnName = CatalogOverlay.NONE;
+        this.initStatistic();
+    }
+
+    @action setStatisticColumn(columnName: string) {
+        this.statisticColumnName = columnName;
+    }
+
+    @action setStatistic(value: Statistic) {
+        this.statistic = value;
     }
 
     @action setColumnX(columnName: string) {
@@ -87,6 +100,10 @@ export class CatalogPlotWidgetStore {
         this.setMinMaxX({minVal: undefined, maxVal: undefined});
     };
 
+    @action initStatistic = () => {
+        this.statistic = {mean: undefined};
+    }
+
     @computed get isScatterAutoScaled() {
         return this.scatterborder === undefined;
     }
@@ -107,5 +124,20 @@ export class CatalogPlotWidgetStore {
 
     @computed get showFittingResult(): boolean {
         return !isNaN(this.fitting.intercept) && !isNaN(this.fitting.slope) && !isNaN(this.minMaxX.minVal) && !isNaN(this.minMaxX.maxVal);
+    }
+
+    @computed get enableStatistic(): boolean {
+        return this.statisticColumnName !== CatalogOverlay.NONE;
+    }
+
+    @computed get showStatisticResult(): boolean {
+        return !isNaN(this.statistic.mean);
+    }
+
+    @computed get statisticString(): string {
+        if (this.enableStatistic && this.showStatisticResult) {
+            return `${this.statisticColumnName}: mean = ${this.statistic.mean}`;
+        }
+        return "";
     }
 }
