@@ -161,7 +161,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         onClickToCenter={this.onClickToCenter}
                         overlaySettings={overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                        docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
+                        docked={this.props.docked && this.activeLayer !== ImageViewLayer.Catalog}
                     />
                     <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} frame={frame} activeLayer={this.activeLayer} onActiveLayerChange={appStore.updateActiveLayer} onRegionViewZoom={this.onRegionViewZoom} />
                 </div>
