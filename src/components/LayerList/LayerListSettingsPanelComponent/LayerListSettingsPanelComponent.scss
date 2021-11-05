@@ -1,9 +1,49 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
 .layer-list-settings-panel {
     margin: 20px;
 
     .bp3-form-group {
         &:first-of-type {
             margin-left: 0px;
+        }
+    }
+
+    .name-text {
+        .bp3-label {
+            width: 110px;
+        }
+
+        .bp3-form-content {
+            display: inline-block;
+            width: calc(100% - 120px);
+
+            .bp3-text-overflow-ellipsis {
+                line-height: 30px;
+            }
+        }
+
+        .disabled {
+            color: $pt-text-color-disabled;        
+        }
+        .disabled.dark {
+            color: $pt-dark-text-color-disabled;
+        }  
+    }
+
+    .freq-input {
+        display: flex;
+
+        .bp3-label {
+            width: 110px;
+        }
+
+        .bp3-form-group {
+            margin-right: 10px;
+
+            .bp3-input-group {
+                width: 130px;
+            }
         }
     }
 }
