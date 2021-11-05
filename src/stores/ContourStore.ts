@@ -1,6 +1,7 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import * as CARTACompute from "carta_computation";
 import {ContourWebGLService} from "../services";
+import {GL2} from "utilities";
 
 export class ContourStore {
     @observable progress: number;
@@ -13,7 +14,7 @@ export class ContourStore {
     private vertexData: Float32Array[];
     private vertexBuffers: WebGLBuffer[];
 
-    private gl: WebGLRenderingContext;
+    private gl: WebGL2RenderingContext;
     // Number of vertex data "float" values (normals are actually int16, so both coordinates count as one 32-bit value)
     // Each vertex is repeated twice
     private static VertexDataElements = 8;
@@ -89,8 +90,8 @@ export class ContourStore {
 
         // TODO: handle buffer cleanup when no longer needed
         this.vertexBuffers.push(this.gl.createBuffer());
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexBuffers[index]);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.vertexData[index], WebGLRenderingContext.STATIC_DRAW);
+        this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers[index]);
+        this.gl.bufferData(GL2.ARRAY_BUFFER, this.vertexData[index], GL2.STATIC_DRAW);
 
         // Clear CPU memory after copying to GPU
         this.vertexData[index] = null;
@@ -116,7 +117,7 @@ export class ContourStore {
         if (!this.vertexBuffers || index >= this.vertexBuffers.length) {
             console.log(`WebGL buffer missing`);
         } else {
-            this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexBuffers[index]);
+            this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexBuffers[index]);
         }
     }
 }
