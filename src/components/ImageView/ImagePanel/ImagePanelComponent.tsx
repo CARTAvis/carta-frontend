@@ -179,7 +179,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         cursorFrozen={appStore.cursorFrozen}
                         cursorPoint={frame.cursorInfo.posImageSpace}
-                        docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
+                        docked={this.props.docked && this.activeLayer !== ImageViewLayer.Catalog}
                     />
                     <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} frame={frame} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
                 </div>
