@@ -321,7 +321,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private updateStatistic = () => {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
-        if(widgetStore?.enableStatistic && profileStore) {
+        if (widgetStore?.enableStatistic && profileStore) {
             const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
             const coords = profileStore.get1DPlotData(widgetStore.statisticColumnName);
             let data = coords.wcsData;
@@ -334,7 +334,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
             widgetStore.setStatistic({mean: _.mean(data)});
         }
-    }
+    };
 
     private handleColumnNameChange = (type: "X" | "Y" | "S", column: string) => {
         const widgetStore = this.widgetStore;

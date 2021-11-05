@@ -102,7 +102,7 @@ export class CatalogPlotWidgetStore {
 
     @action initStatistic = () => {
         this.statistic = {mean: undefined};
-    }
+    };
 
     @computed get isScatterAutoScaled() {
         return this.scatterborder === undefined;
