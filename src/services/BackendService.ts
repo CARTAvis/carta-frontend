@@ -1,4 +1,4 @@
-import {action, observable, makeObservable, runInAction} from "mobx";
+import {action, makeObservable, observable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
@@ -232,7 +232,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.FileListRequest.create({directory});
+            const message = CARTA.FileListRequest.create({directory, filterMode: CARTA.FileListFilterMode.Extension});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_LIST_REQUEST, CARTA.FileListRequest.encode(message).finish())) {
@@ -249,7 +249,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.RegionListRequest.create({directory});
+            const message = CARTA.RegionListRequest.create({directory, filterMode: CARTA.FileListFilterMode.Extension});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.REGION_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_LIST_REQUEST, CARTA.RegionListRequest.encode(message).finish())) {
@@ -266,7 +266,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.CatalogListRequest.create({directory});
+            const message = CARTA.CatalogListRequest.create({directory, filterMode: CARTA.FileListFilterMode.Extension});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.CATALOG_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.CATALOG_LIST_REQUEST, CARTA.CatalogListRequest.encode(message).finish())) {
