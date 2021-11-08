@@ -325,14 +325,21 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
             const coords = profileStore.get1DPlotData(widgetStore.statisticColumnName);
             let data = coords.wcsData;
-            if (selectedPointIndices.length > 0) {
-                data = new Float64Array(selectedPointIndices.length);
-                for (let index = 0; index < selectedPointIndices.length; index++) {
+            let size = coords.wcsData.length;
+            const selectedSize = selectedPointIndices.length;
+            if (selectedSize > 0) {
+                data = new Float64Array(selectedSize);
+                size = selectedSize;
+                for (let index = 0; index < selectedSize; index++) {
                     const selected = selectedPointIndices[index];
                     data[index] = coords.wcsData[selected];
                 }
             }
-            widgetStore.setStatistic({mean: _.mean(data)});
+            const mean = _.mean(data);
+            const std = Math.sqrt(_.sum(_.map(data, i => Math.pow(i - mean, 2))) / size);
+            const rms = Math.sqrt(_.sum(_.map(data, i => Math.pow(i, 2))) / size);
+            const minMax = minMaxArray(data);
+            widgetStore.setStatistic({mean: mean, count: size, std: std, min: minMax.minVal, max: minMax.maxVal, rms: rms});
         }
     };
 
@@ -346,7 +353,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             widgetStore.setStatisticColumn(column);
         }
         if (widgetStore.plotType === CatalogPlotType.D2Scatter) {
-            if (widgetStore.xColumnName === CatalogPlotComponent.emptyColumn || widgetStore.yColumnName === CatalogPlotComponent.emptyColumn) {
+            if (widgetStore.xColumnName === CatalogPlotComponent.emptyColumn || widgetStore.yColumnName === CatalogPlotComponent.emptyColumn || type === "S") {
                 return;
             }
             widgetStore.setScatterborder(this.initScatterBorder);
@@ -680,7 +687,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         );
 
         const renderStatisticSelect = (
-            <FormGroup inline={true} label="Statistic">
+            <FormGroup inline={true} label="Statistic Source">
                 <Select
                     className="bp3-fill"
                     items={xyOptions}
@@ -721,7 +728,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         let layout: Partial<Plotly.Layout> = {
             width: this.width * ratio,
-            height: (this.height - 105) * ratio,
+            height: (this.height - 110) * ratio,
             paper_bgcolor: themeColor,
             plot_bgcolor: themeColor,
             hovermode: "closest",
@@ -806,6 +813,25 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     }
                 }
             ];
+
+            layout.annotations = [
+                {
+                    xref: "paper",
+                    yref: "paper",
+                    x: 0,
+                    xanchor: "left",
+                    y: 1,
+                    yanchor: "top",
+                    align: "left",
+                    text: widgetStore.fittingResultString,
+                    showarrow: false,
+                    font: {
+                        size: 18,
+                        family: "monospace",
+                        color: "#182026"
+                    }
+                }
+            ];
         }
 
         let data;
@@ -880,7 +906,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         );
 
         const renderLinearRegressionButton = <AnchorButton intent={Intent.PRIMARY} text="Linear Fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} />;
-        const infoStrings = widgetStore.showFittingResult ? [this.genProfilerInfo, widgetStore.fittingResultString] : [this.genProfilerInfo];
+        const infoStrings = [this.genProfilerInfo];
         if (widgetStore.showStatisticResult && widgetStore.enableStatistic) {
             infoStrings.push(widgetStore.statisticString);
         }
@@ -913,7 +939,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="scatter-info">
-                        <ProfilerInfoComponent info={infoStrings} type="pre-line" />
+                        <ProfilerInfoComponent info={infoStrings} type="pre-line" separator="newLine" />
                     </div>
                     <div className="bp3-dialog-footer-actions">
                         <Tooltip2 content={"Show only selected sources at image and table viewer"}>

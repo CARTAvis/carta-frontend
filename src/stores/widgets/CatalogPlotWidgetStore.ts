@@ -14,7 +14,7 @@ export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
-type Statistic = {mean: number};
+type Statistic = {mean: number; count: number; std: number; min: number; max: number; rms: number};
 
 export class CatalogPlotWidgetStore {
     @observable indicatorInfo: Point2D;
@@ -101,7 +101,7 @@ export class CatalogPlotWidgetStore {
     };
 
     @action initStatistic = () => {
-        this.statistic = {mean: undefined};
+        this.statistic = {mean: undefined, count: undefined, std: undefined, min: undefined, max: undefined, rms: undefined};
     };
 
     @computed get isScatterAutoScaled() {
@@ -114,10 +114,10 @@ export class CatalogPlotWidgetStore {
 
     @computed get fittingResultString(): string {
         if (this.showFittingResult) {
-            return `${this.yColumnName} = ${toExponential(this.fitting.intercept, 2)} + ${toExponential(this.fitting.slope, 2)} ${this.xColumnName}, cov00 = ${toExponential(this.fitting.cov00, 2)}, cov01 = ${toExponential(
+            return `${this.yColumnName} = ${toExponential(this.fitting.intercept, 2)} + ${toExponential(this.fitting.slope, 2)} ${this.xColumnName} <br>cov00 = ${toExponential(this.fitting.cov00, 2)}, cov01 = ${toExponential(
                 this.fitting.cov01,
                 2
-            )}, cov11 = ${toExponential(this.fitting.cov11, 2)}, rss = ${toExponential(this.fitting.rss, 2)}`;
+            )}, cov11 = ${toExponential(this.fitting.cov11, 2)} <br>rss = ${toExponential(this.fitting.rss, 2)}`;
         }
         return "";
     }
@@ -131,12 +131,15 @@ export class CatalogPlotWidgetStore {
     }
 
     @computed get showStatisticResult(): boolean {
-        return !isNaN(this.statistic.mean);
+        return !isNaN(this.statistic.count);
     }
 
     @computed get statisticString(): string {
         if (this.enableStatistic && this.showStatisticResult) {
-            return `${this.statisticColumnName}: mean = ${this.statistic.mean}`;
+            return `${this.statisticColumnName} - count: ${this.statistic.count}, mean: ${toExponential(this.statistic.mean, 2)}, rms: ${toExponential(this.statistic.rms, 2)}, stddev: ${toExponential(
+                this.statistic.std,
+                2
+            )}, min: ${toExponential(this.statistic.min, 2)}, max: ${toExponential(this.statistic.max, 2)}`;
         }
         return "";
     }
