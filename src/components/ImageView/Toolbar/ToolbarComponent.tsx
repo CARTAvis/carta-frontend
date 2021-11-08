@@ -16,8 +16,9 @@ export class ToolbarComponentProps {
     docked: boolean;
     visible: boolean;
     frame: FrameStore;
-    onActiveLayerChange: (layer: ImageViewLayer) => void;
     activeLayer: ImageViewLayer;
+    onActiveLayerChange: (layer: ImageViewLayer) => void;
+    onRegionViewZoom: (zoom: number, isZoomToFit?: boolean) => void;
 }
 
 @observer
@@ -40,18 +41,31 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.ICRS, "International Celestial Reference System"]
     ]);
 
+    handleZoomToFitClicked = () => {
+        const zoom = this.props.frame?.fitZoom();
+        if (zoom) {
+            this.props.onRegionViewZoom(zoom, true);
+        }
+    };
+
     handleZoomToActualSizeClicked = () => {
-        this.props.frame.setZoom(1.0);
+        const zoom = 1.0;
+        this.props.frame.setZoom(zoom);
+        this.props.onRegionViewZoom(zoom);
     };
 
     handleZoomInClicked = () => {
         const frame = this.props.frame.spatialReference || this.props.frame;
-        frame.setZoom(frame.zoomLevel * 2.0, true);
+        const zoom = frame.zoomLevel * 2.0;
+        frame.setZoom(zoom, true);
+        this.props.onRegionViewZoom(zoom);
     };
 
     handleZoomOutClicked = () => {
         const frame = this.props.frame.spatialReference || this.props.frame;
-        frame.setZoom(frame.zoomLevel / 2.0, true);
+        const zoom = frame.zoomLevel / 2.0;
+        frame.setZoom(zoom, true);
+        this.props.onRegionViewZoom(zoom);
     };
 
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
@@ -276,7 +290,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             </AnchorButton>
                         </Tooltip2>
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
-                            <AnchorButton icon="zoom-to-fit" onClick={frame.fitZoom} />
+                            <AnchorButton icon="zoom-to-fit" onClick={this.handleZoomToFitClicked} />
                         </Tooltip2>
                         <Tooltip2
                             position={tooltipPosition}

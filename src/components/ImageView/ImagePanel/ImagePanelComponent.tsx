@@ -12,7 +12,7 @@ import {RegionViewComponent} from "../RegionView/RegionViewComponent";
 import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
-import {AppStore, RegionStore, FrameStore} from "stores";
+import {AppStore, FrameStore} from "stores";
 import {CursorInfo, CursorInfoVisibility} from "models";
 import "./ImagePanelComponent.scss";
 
@@ -29,6 +29,8 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     @observable imageToolbarVisible: boolean = false;
     readonly activeLayer: ImageViewLayer;
 
+    private regionViewRef: RegionViewComponent;
+
     @action setPixelHighlightValue = (val: number) => {
         if (!AppStore.Instance.isExportingImage) {
             this.pixelHighlightValue = val;
@@ -42,27 +44,22 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         this.activeLayer = AppStore.Instance.activeLayer;
     }
 
-    onClicked = (cursorInfo: CursorInfo) => {
+    private getRegionViewRef = ref => {
+        this.regionViewRef = ref;
+    };
+
+    private onRegionViewZoom = (zoom: number, isZoomToFit: boolean = false) => {
         const frame = this.props.frame;
         if (frame) {
-            frame.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
+            if (isZoomToFit) {
+                this.regionViewRef?.centerStage();
+            }
+            this.regionViewRef?.stageZoomToPoint(frame.renderWidth / 2, frame.renderHeight / 2, zoom);
         }
     };
 
-    onZoomed = (cursorInfo: CursorInfo, delta: number) => {
-        const frame = this.props.frame;
-        if (frame) {
-            const zoomSpeed = 1 + Math.abs(delta / 750.0);
-
-            // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
-            if (frame.spatialReference) {
-                const newZoom = frame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-                frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
-            } else {
-                const newZoom = frame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-                frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
-            }
-        }
+    onClickToCenter = (cursorInfo: CursorInfo) => {
+        this.props.frame?.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
     };
 
     @action onMouseEnter = () => {
@@ -86,17 +83,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         if (this.props.frame !== appStore.activeFrame) {
             appStore.setActiveFrame(this.props.frame);
             ev.stopPropagation();
-        }
-    };
-
-    private handleRegionDoubleClicked = (region: RegionStore) => {
-        const appStore = AppStore.Instance;
-        if (region) {
-            const frame = appStore.getFrame(region.fileId);
-            if (frame) {
-                frame.regionSet.selectRegion(region);
-                appStore.dialogStore.showRegionDialog();
-            }
         }
     };
 
@@ -168,22 +154,18 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     <BeamProfileOverlayComponent frame={frame} top={overlayStore.padding.top} left={overlayStore.padding.left} docked={this.props.docked} padding={10} />
                     <CatalogViewGLComponent frame={frame} docked={this.props.docked} />
                     <RegionViewComponent
+                        ref={this.getRegionViewRef}
                         frame={frame}
                         width={frame.renderWidth}
                         height={frame.renderHeight}
                         top={overlayStore.padding.top}
                         left={overlayStore.padding.left}
-                        onClicked={this.onClicked}
-                        onRegionDoubleClicked={this.handleRegionDoubleClicked}
-                        onZoomed={this.onZoomed}
+                        onClickToCenter={this.onClickToCenter}
                         overlaySettings={overlayStore}
-                        isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                        cursorFrozen={appStore.cursorFrozen}
-                        cursorPoint={frame.cursorInfo.posImageSpace}
-                        docked={this.props.docked && (this.activeLayer === ImageViewLayer.RegionMoving || this.activeLayer === ImageViewLayer.RegionCreating)}
+                        docked={this.props.docked && this.activeLayer !== ImageViewLayer.Catalog}
                     />
-                    <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} frame={frame} onActiveLayerChange={appStore.updateActiveLayer} activeLayer={this.activeLayer} />
+                    <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} frame={frame} activeLayer={this.activeLayer} onActiveLayerChange={appStore.updateActiveLayer} onRegionViewZoom={this.onRegionViewZoom} />
                 </div>
             );
         } else {
