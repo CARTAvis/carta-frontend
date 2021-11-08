@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Ellipse, Group, Line, Rect} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, RegionStore} from "stores";
+import {AppStore, FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {adjustPosToMutatedStage, adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
@@ -31,6 +31,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private editOppositeAnchorCanvasPos: Point2D;
     private editStartCenterPoint: Point2D;
     private previousCursorStyle: string;
+
+    componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
+    }
 
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
@@ -379,6 +383,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             {anchor: "top-right", offset: {x: offset.x, y: offset.y}},
             {anchor: "bottom-right", offset: {x: offset.x, y: -offset.y}}
         ];
+
         if (frame.hasSquarePixels) {
             anchorConfigs.push({anchor: "rotator", offset: {x: 0, y: offset.y}});
         }
@@ -417,6 +422,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         let shapeNode: React.ReactNode;
         const centerReferenceImage = region.center;
+
+        // trigger re-render when exporting images
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const imageRatio = AppStore.Instance.imageRatio;
 
         if (frame.spatialReference) {
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
@@ -459,6 +468,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const width = region.size.x / devicePixelRatio;
             const height = region.size.y / devicePixelRatio;
             const rotation = region.rotation;
+
             let centerPixelSpace = transformedImageToCanvasPos(centerReferenceImage.x, centerReferenceImage.y, frame, this.props.layerWidth, this.props.layerHeight);
             centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.current);
 

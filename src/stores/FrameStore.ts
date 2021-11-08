@@ -208,7 +208,7 @@ export class FrameStore {
                 };
             }
 
-            const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+            const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
             // Required image dimensions
             const imageWidth = (pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
             const imageHeight = (pixelRatio * this.renderHeight) / this.zoomLevel;
@@ -683,7 +683,7 @@ export class FrameStore {
     @computed
     private get calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
-        const pixelRatio = (this.renderHiDPI ? devicePixelRatio : 1.0) / this.aspectRatio;
+        const pixelRatio = (this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0) / this.aspectRatio;
 
         if (imageWidth <= 0) {
             return 1.0;
@@ -694,7 +694,7 @@ export class FrameStore {
     @computed
     private get calculateZoomY() {
         const imageHeight = this.frameInfo.fileInfoExtended.height;
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+        const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
         if (imageHeight <= 0) {
             return 1.0;
         }
@@ -1749,7 +1749,7 @@ export class FrameStore {
             const {minPoint, maxPoint} = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
             const rangeY = maxPoint.y - minPoint.y;
-            const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+            const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
             const zoomX = (this.spatialReference.renderWidth * pixelRatio) / rangeX;
             const zoomY = (this.spatialReference.renderHeight * pixelRatio) / rangeY;
             const zoom = Math.min(zoomX, zoomY);
