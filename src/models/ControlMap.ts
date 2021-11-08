@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {FrameStore} from "stores";
 import {Point2D} from "./Point2D";
-import {GL, subtract2D} from "utilities";
+import {GL2, subtract2D} from "utilities";
 
 export class ControlMap {
     readonly source: FrameStore;
@@ -12,7 +12,7 @@ export class ControlMap {
     readonly maxPoint: Point2D;
     private readonly grid: Float32Array;
     private texture: WebGLTexture;
-    private gl: WebGLRenderingContext;
+    private gl: WebGL2RenderingContext;
 
     constructor(src: FrameStore, dst: FrameStore, astTransform: AST.FrameSet, width: number, height: number) {
         this.source = src;
@@ -44,24 +44,24 @@ export class ControlMap {
         }
     }
 
-    getTextureX = (gl: WebGLRenderingContext) => {
+    getTextureX = (gl: WebGL2RenderingContext) => {
         if (gl !== this.gl || !this.texture) {
             // Context has changed, texture needs to be regenerated
             this.gl = gl;
             this.texture = this.gl.createTexture();
-            this.gl.activeTexture(GL.TEXTURE1);
-            this.gl.bindTexture(GL.TEXTURE_2D, this.texture);
-            this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
-            this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
-            this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
-            this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
-            this.gl.texImage2D(GL.TEXTURE_2D, 0, GL.LUMINANCE_ALPHA, this.width, this.height, 0, GL.LUMINANCE_ALPHA, GL.FLOAT, this.grid);
+            this.gl.activeTexture(GL2.TEXTURE1);
+            this.gl.bindTexture(GL2.TEXTURE_2D, this.texture);
+            this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+            this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
+            this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_S, GL2.CLAMP_TO_EDGE);
+            this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_WRAP_T, GL2.CLAMP_TO_EDGE);
+            this.gl.texImage2D(GL2.TEXTURE_2D, 0, GL2.RG32F, this.width, this.height, 0, GL2.RG, GL2.FLOAT, this.grid);
         }
 
         return this.texture;
     };
 
-    hasTextureForContext = (gl: WebGLRenderingContext) => {
+    hasTextureForContext = (gl: WebGL2RenderingContext) => {
         return gl === this.gl && this.texture && gl.isTexture(this.texture);
     };
 
