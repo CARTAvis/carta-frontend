@@ -5,7 +5,7 @@ import {Group, Line} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
-import {FrameStore, RegionStore} from "stores";
+import {AppStore, FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, subtract2D, angle2D} from "utilities";
 import {adjustPosToMutatedStage, adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -39,6 +39,10 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     constructor(props: any) {
         super(props);
         makeObservable(this);
+    }
+
+    componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
     }
 
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -255,6 +259,10 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         let anchors = null;
         let newAnchor = null;
         let pointArray: Array<number>;
+
+        // trigger re-render when exporting images
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const imageRatio = AppStore.Instance.imageRatio;
 
         if (frame.spatialReference) {
             const centerReferenceImage = average2D(controlPoints);
