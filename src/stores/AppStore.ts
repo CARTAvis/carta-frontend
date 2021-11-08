@@ -62,6 +62,7 @@ interface ChannelUpdate {
 }
 
 const IMPORT_REGION_BATCH_SIZE = 100;
+const EXPORT_IMAGE_DELAY = 500;
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -116,10 +117,14 @@ export class AppStore {
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
     @observable toolbarExpanded: boolean;
+    @observable imageRatio: number;
+    @observable isExportingImage: boolean;
+    @observable private isCanvasUpdated: boolean;
 
     private appContainer: HTMLElement;
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
+    private canvasUpdatedTimer;
 
     public getAppContainer = (): HTMLElement => {
         return this.appContainer;
@@ -1120,6 +1125,23 @@ export class AppStore {
         this.activeLayer = this.activeLayer === ImageViewLayer.RegionCreating ? ImageViewLayer.RegionMoving : ImageViewLayer.RegionCreating;
     };
 
+    @action setImageRatio = (val: number) => {
+        for (const f of this.frames) {
+            if (!f.spatialReference) {
+                f.setZoom((f.zoomLevel * val) / this.imageRatio);
+            }
+        }
+        this.imageRatio = val;
+    };
+
+    @action setIsExportingImage = (val: boolean) => {
+        this.isExportingImage = val;
+    };
+
+    @action setIsCanvasUpdated = (val: boolean) => {
+        this.isCanvasUpdated = val;
+    };
+
     public static readonly DEFAULT_STATS_TYPES = [
         CARTA.StatsType.NumPixels,
         CARTA.StatsType.Sum,
@@ -1267,6 +1289,8 @@ export class AppStore {
         this.initRequirements();
         this.activeLayer = ImageViewLayer.RegionMoving;
         this.toolbarExpanded = true;
+        this.imageRatio = 1;
+        this.isExportingImage = false;
 
         AST.onReady.then(
             action(() => {
@@ -2146,27 +2170,52 @@ export class AppStore {
         return preferenceStore.imageMultiPanelEnabled ? preferenceStore.imagePanelMode : ImagePanelMode.None;
     }
 
-    exportImage = (): boolean => {
+    exportImage = (imageRatio: number) => {
         if (this.activeFrame) {
             const index = this.visibleFrames.indexOf(this.activeFrame);
             if (index === -1) {
-                return false;
+                return;
             }
-            const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
-            const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
-            if (composedCanvas) {
-                composedCanvas.toBlob(blob => {
-                    const link = document.createElement("a") as HTMLAnchorElement;
-                    const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
-                    // Trim filename to 230 characters in total to prevent browser errors
-                    link.download = `${joinedNames}-image-${getTimestamp()}`.substring(0, 225) + ".png";
-                    link.href = URL.createObjectURL(blob);
-                    link.dispatchEvent(new MouseEvent("click"));
-                }, "image/png");
-                return true;
-            }
+
+            this.setIsExportingImage(true);
+            this.setImageRatio(imageRatio);
+            this.waitForImageData().then(() => {
+                const backgroundColor = this.preferenceStore.transparentImageBackground ? "rgba(255, 255, 255, 0)" : this.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
+                const composedCanvas = getImageViewCanvas(this.overlayStore.padding, this.overlayStore.colorbar.position, backgroundColor);
+                if (composedCanvas) {
+                    composedCanvas.toBlob(blob => {
+                        const link = document.createElement("a") as HTMLAnchorElement;
+                        const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
+                        // Trim filename to 230 characters in total to prevent browser errors
+                        link.download = `${joinedNames}-image-${getTimestamp()}`.substring(0, 225) + ".png";
+                        link.href = URL.createObjectURL(blob);
+                        link.dispatchEvent(new MouseEvent("click"));
+                    }, "image/png");
+                }
+                this.setIsExportingImage(false);
+            });
         }
-        return false;
+    };
+
+    updateLayerPixelRatio = layerRef => {
+        const pixelRatio = devicePixelRatio * this.imageRatio;
+        const canvas = layerRef?.current?.getCanvas();
+        if (canvas && canvas.pixelRatio !== pixelRatio) {
+            canvas.setPixelRatio(pixelRatio);
+        }
+    };
+
+    resetImageRatio = () => {
+        if (this.imageRatio !== 1 && this.isExportingImage === false) {
+            this.setImageRatio(1);
+        }
+    };
+
+    decreaseImageRatio = () => {
+        if (this.imageRatio !== 1 && this.isExportingImage === true) {
+            AppToaster.show(WarningToast(`Exceeded the maximum canvas size; exporting image with ${this.imageRatio - 1}00% resolution instead.`));
+            this.setImageRatio(this.imageRatio - 1);
+        }
     };
 
     getImageDataUrl = (backgroundColor: string) => {
@@ -2186,24 +2235,39 @@ export class AppStore {
     }
 
     // Waits for image data to be ready. This consists of three steps:
-    // 1. Wait 25 ms to allow other commands that may request new data to execute
+    // 1. Wait 500 ms to allow other commands that may request new data to execute
     // 2. Use a MobX "when" to wait until no tiles or contours are required
-    // 3. Wait 25 ms to allow for re-rendering of tiles
+    // 3. Use a MobX "when" to wait for re-rendering of raster and contour canvas
     waitForImageData = async () => {
-        await this.delay(25);
+        await this.delay(500);
         return new Promise<void>(resolve => {
             when(
                 () => {
                     const tilesLoading = this.tileService.remainingTiles > 0;
-                    const contoursLoading = this.activeFrame && this.activeFrame.contourProgress >= 0 && this.activeFrame.contourProgress < 1;
+                    let contoursLoading = false;
+                    for (const frame of this.visibleFrames) {
+                        if (frame.contourProgress >= 0 && frame.contourProgress < 1) {
+                            contoursLoading = true;
+                            break;
+                        }
+                    }
                     return !tilesLoading && !contoursLoading;
                 },
-                async () => {
-                    await this.delay(25);
-                    resolve();
+                () => {
+                    this.setIsCanvasUpdated(false);
+                    this.setCanvasUpdated();
+                    when(
+                        () => this.isCanvasUpdated,
+                        async () => resolve()
+                    );
                 }
             );
         });
+    };
+
+    setCanvasUpdated = () => {
+        clearTimeout(this.canvasUpdatedTimer);
+        this.canvasUpdatedTimer = setTimeout(() => this.setIsCanvasUpdated(true), EXPORT_IMAGE_DELAY);
     };
 
     fetchParameter = (val: any) => {

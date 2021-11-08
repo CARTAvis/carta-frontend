@@ -49,6 +49,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialDragCenter: Point2D;
     private initialPinchZoom: number;
     private initialPinchDistance: number;
+    private layerRef = React.createRef<any>();
 
     constructor(props: any) {
         super(props);
@@ -623,6 +624,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const regionSet = frame.regionSet;
         const className = classNames("region-stage", {docked: this.props.docked});
 
+        AppStore.Instance.updateLayerPixelRatio(this.layerRef);
+
         let creatingLine = null;
         if (this.currentCursorPos && (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) && this.creatingRegion.isValid) {
             let firstControlPoint = this.creatingRegion.controlPoints[0];
@@ -678,7 +681,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer>
+                    <Layer ref={this.layerRef}>
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         <CursorRegionComponent frame={frame} region={frame.regionSet?.cursorRegion} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}
