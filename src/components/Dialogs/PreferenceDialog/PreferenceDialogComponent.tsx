@@ -12,7 +12,23 @@ import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {ColormapComponent, ColorPickerComponent, AutoColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {
+    CompressionQuality,
+    CursorInfoVisibility,
+    CursorPosition,
+    Event,
+    FileFilterMode,
+    RegionCreationMode,
+    SPECTRAL_MATCHING_TYPES,
+    SPECTRAL_TYPE_STRING,
+    SpectralType,
+    Theme,
+    TileCache,
+    WCSMatchingType,
+    WCSType,
+    Zoom,
+    ZoomPoint
+} from "models";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
 import {SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.scss";
@@ -113,6 +129,13 @@ export class PreferenceDialogComponent extends React.Component {
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
                     <Switch checked={preference.autoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="File List">
+                    <HTMLSelect value={preference.fileFilterMode} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_FILE_FILTER_MODE, Number(ev.currentTarget.value))}>
+                        <option value={FileFilterMode.Content}>Filter by file content</option>
+                        <option value={FileFilterMode.Extension}>Filter by extension</option>
+                        <option value={FileFilterMode.All}>All files</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Layout">
                     <HTMLSelect value={preference.layout} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_LAYOUT, ev.currentTarget.value)}>

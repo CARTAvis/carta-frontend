@@ -6,7 +6,7 @@ import {AppStore, DialogStore, PreferenceKeys, PreferenceStore, RegionStore} fro
 import {RegionId} from "stores/widgets";
 import {AppToaster, ErrorToast} from "components/Shared";
 import {FileInfoType} from "components";
-import {LineOption} from "models";
+import {LineOption, ToFileListFilterMode} from "models";
 import {getDataTypeString, ProcessedColumnData} from "utilities";
 
 export enum BrowserMode {
@@ -176,7 +176,7 @@ export class FileBrowserStore {
     };
 
     @action getFileList = async (directory: string = "") => {
-        const backendService = BackendService.Instance;
+        const appStore = AppStore.Instance;
 
         this.loadingList = true;
         this.setExtendedDelayTimer();
@@ -186,17 +186,18 @@ export class FileBrowserStore {
         this.HDUfileInfoExtended = null;
         this.regionFileInfo = null;
         this.catalogFileInfo = null;
+        const filterMode = ToFileListFilterMode(appStore.preferenceStore.fileFilterMode);
         AppStore.Instance.restartTaskProgress();
 
         try {
             if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
-                const list = await backendService.getFileList(directory);
+                const list = await appStore.backendService.getFileList(directory, filterMode);
                 this.setFileList(list);
             } else if (this.browserMode === BrowserMode.Catalog) {
-                const list = await backendService.getCatalogList(directory);
+                const list = await appStore.backendService.getCatalogList(directory, filterMode);
                 this.setCatalogFileList(list);
             } else {
-                const list = await backendService.getRegionList(directory);
+                const list = await appStore.backendService.getRegionList(directory, filterMode);
                 this.setFileList(list);
             }
         } catch (err) {
