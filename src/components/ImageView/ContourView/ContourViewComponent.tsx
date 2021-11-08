@@ -2,7 +2,7 @@ import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AppStore, ContourDashMode, FrameStore, RenderConfigStore} from "stores";
-import {ceilToPower, GL, rotate2D, scale2D, subtract2D} from "utilities";
+import {ceilToPower, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 import {ContourWebGLService} from "services";
 import "./ContourViewComponent.scss";
 
@@ -16,7 +16,7 @@ export interface ContourViewComponentProps {
 @observer
 export class ContourViewComponent extends React.Component<ContourViewComponentProps> {
     private canvas: HTMLCanvasElement;
-    private gl: WebGLRenderingContext;
+    private gl: WebGL2RenderingContext;
     private contourWebGLService: ContourWebGLService;
 
     componentDidMount() {
@@ -63,11 +63,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.gl.viewport(xOffset, yOffset, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio);
         this.gl.clearColor(0, 0, 0, 0);
         // Clear a scissored rectangle limited to the current frame
-        this.gl.enable(WebGLRenderingContext.SCISSOR_TEST);
+        this.gl.enable(GL2.SCISSOR_TEST);
         this.gl.scissor(xOffset, yOffset, frame.renderWidth * pixelRatio, frame.renderHeight * pixelRatio);
-        const clearMask = WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT | WebGLRenderingContext.STENCIL_BUFFER_BIT;
+        const clearMask = GL2.COLOR_BUFFER_BIT | GL2.DEPTH_BUFFER_BIT | GL2.STENCIL_BUFFER_BIT;
         this.gl.clear(clearMask);
-        this.gl.disable(WebGLRenderingContext.SCISSOR_TEST);
+        this.gl.disable(GL2.SCISSOR_TEST);
     }
 
     private updateCanvas = () => {
@@ -158,8 +158,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             } else {
                 console.error("Could not generate control map for contours");
             }
-            this.gl.activeTexture(GL.TEXTURE1);
-            this.gl.bindTexture(GL.TEXTURE_2D, controlMap.getTextureX(this.gl));
+            this.gl.activeTexture(GL2.TEXTURE1);
+            this.gl.bindTexture(GL2.TEXTURE_2D, controlMap.getTextureX(this.gl));
             this.gl.uniform1i(this.contourWebGLService.shaderUniforms.ControlMapTexture, 1);
         }
 
@@ -205,9 +205,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 for (let i = 0; i < contourStore.chunkCount; i++) {
                     contourStore.bindBuffer(i);
                     const numVertices = contourStore.numGeneratedVertices[i];
-                    this.gl.vertexAttribPointer(this.contourWebGLService.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 16, 0);
-                    this.gl.vertexAttribPointer(this.contourWebGLService.vertexNormalAttribute, 2, WebGLRenderingContext.SHORT, false, 16, 12);
-                    this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, numVertices);
+                    this.gl.vertexAttribPointer(this.contourWebGLService.vertexPositionAttribute, 3, GL2.FLOAT, false, 16, 0);
+                    this.gl.vertexAttribPointer(this.contourWebGLService.vertexNormalAttribute, 2, GL2.SHORT, false, 16, 12);
+                    this.gl.drawArrays(GL2.TRIANGLE_STRIP, 0, numVertices);
                 }
             });
         }
