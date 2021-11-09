@@ -828,7 +828,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     font: {
                         size: 18,
                         family: "monospace",
-                        color: "#182026"
+                        color: AppStore.Instance.darkTheme ? "#f5f8fa" : "#182026"
                     }
                 }
             ];
