@@ -15,20 +15,20 @@
         }
 
         .bp3-form-content {
-            display: inline-block;
+            display: flex;
             width: calc(100% - 120px);
+            line-height: 30px;
 
-            .bp3-text-overflow-ellipsis {
-                line-height: 30px;
+            .disabled {
+                color: $pt-text-color-disabled;        
             }
-        }
-
-        .disabled {
-            color: $pt-text-color-disabled;        
-        }
-        .disabled.dark {
-            color: $pt-dark-text-color-disabled;
-        }  
+            .disabled.dark {
+                color: $pt-dark-text-color-disabled;
+            }
+            .active {
+                font-weight: bold;
+            }
+        } 
     }
 
     .freq-input {
