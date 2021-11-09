@@ -1,27 +1,19 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {observable, action, makeObservable} from "mobx";
-import {AppStore, WidgetProps, DefaultWidgetConfig, HelpType} from "stores";
+import {computed, makeObservable} from "mobx";
+import {AppStore, WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
+import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/widgets";
 import {SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType, FrequencyUnit} from "models";
-import {FormGroup, HTMLSelect, MenuDivider, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, MenuDivider, Tab, Tabs, Text} from "@blueprintjs/core";
 import {ClearableNumericInputComponent} from "components/Shared";
 import "./LayerListSettingsPanelComponent.scss";
 
-export enum LayerListSettingsTabs {
-    MATCHING,
-    REST_FREQ
-}
 
 const FILENAME_END_LEN = 15
 
 @observer
 export class LayerListSettingsPanelComponent extends React.Component<WidgetProps> {
-    @observable selectedTabId: TabId = LayerListSettingsTabs.MATCHING;
-
-    @action private setSelectedTab = (tab: TabId) => {
-        this.selectedTabId = tab;
-    };
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -39,7 +31,19 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         };
     }
 
-    constructor(props: WidgetProps) {
+    @computed get widgetStore(): LayerListWidgetStore {
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.layerListWidgets) {
+            const widgetStore = widgetsStore.layerListWidgets.get(this.props.id);
+            if (widgetStore) {
+                return widgetStore;
+            }
+        }
+        console.log("can't find store for widget");
+        return null;
+    }
+
+    constructor(props) {
         super(props);
         makeObservable(this);
     }
@@ -66,21 +70,16 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                 {appStore.frames.map((frame, index) => {
                     const isActive = index === appStore.activeFrameIndex;
                     const style = classNames({"disabled": !frame.isRestFreqEditable}, {"dark": appStore.darkTheme}, {"active": isActive});
-                    const filenameEndLen = FILENAME_END_LEN - (isActive ? 9 : 0);
+                    const filename = `${index}:\u00a0${frame.filename}${isActive ? "\u00a0(Active)" : ""}`;
                     return (
                         <React.Fragment key={index}>
                             <FormGroup inline={true} label="Source" className="name-text" disabled={!frame.isRestFreqEditable}>
                                 <Text className={style} ellipsize={true}>
-                                    {`${index}: `}{frame.filename.slice(0, -1 - filenameEndLen)}
+                                    {filename.slice(0, -FILENAME_END_LEN)}
                                 </Text>
                                 <Text className={style}>
-                                    {frame.filename.slice(-1 - filenameEndLen, -1)}
+                                    {filename.slice(-FILENAME_END_LEN)}
                                 </Text>
-                                {isActive ?
-                                    <Text className={style}>
-                                        {"\u00a0(Active)"}
-                                    </Text>
-                                : null}
                             </FormGroup>
                             <div className="freq-input">
                                 <ClearableNumericInputComponent
@@ -94,6 +93,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                                     resetDisabled={false}
                                     tooltipContent={"default"}
                                     tooltipPlacement={"bottom"}
+                                    focused={index === this.widgetStore.selectedFrameIndex}
                                 />
                                 <HTMLSelect disabled={!frame.isRestFreqEditable} options={Object.values(FrequencyUnit)} value={"Hz"} onChange={ev => console.log(ev.currentTarget.value as FrequencyUnit)} />
                             </div>
@@ -105,7 +105,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
 
         return (
             <div className="layer-list-settings-panel">
-                <Tabs id="layerListSettingsTabs" selectedTabId={this.selectedTabId} onChange={this.setSelectedTab}>
+                <Tabs id="layerListSettingsTabs" selectedTabId={this.widgetStore.settingsTabId} onChange={this.widgetStore.setSettingsTabId}>
                     <Tab id={LayerListSettingsTabs.MATCHING} title="Matching" panel={matchingPanel} />
                     <Tab id={LayerListSettingsTabs.REST_FREQ} title="Rest Frequency" panel={restFreqPanel} />
                 </Tabs>

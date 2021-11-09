@@ -20,11 +20,25 @@ export interface ClearableNumericInputProps extends INumericInputProps {
     tooltipContent?: string;
     tooltipPlacement?: Placement;
     inline?: boolean;
+    focused?: boolean;
 }
 
 @observer
 export class ClearableNumericInputComponent extends React.Component<ClearableNumericInputProps> {
+    componentDidMount() {
+        if (this.props.focused) {
+            this.inputRef?.current?.focus();
+        }
+    }
+
+    componentDidUpdate() {
+        if (this.props.focused) {
+            this.inputRef?.current?.focus();
+        }
+    }
+
     private static minorStepSize = 0.001;
+    private inputRef = React.createRef<any>();
 
     @observable private isFocused: boolean = false;
 
@@ -83,6 +97,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
         return (
             <FormGroup className={this.props.className} label={this.props.label} inline={this.props.inline === undefined} disabled={this.props.disabled}>
                 <NumericInput
+                    inputRef={this.inputRef}
                     asyncControl={true}
                     stepSize={this.props.stepSize}
                     value={value}
