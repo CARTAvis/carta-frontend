@@ -357,7 +357,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             data: fittingStore.baseLinePoint2DArray,
                             type: PlotType.LINES,
                             borderColor: getColorForTheme("auto-lime"),
-                            borderWidth: 1,
+                            borderWidth: 2,
                             pointRadius: 1,
                             order: 0,
                             noExport: true
@@ -371,7 +371,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                             data: fittingStore.modelPoint2DArray,
                             type: PlotType.LINES,
                             borderColor: getColorForTheme("auto-orange"),
-                            borderWidth: 1,
+                            borderWidth: 2,
                             pointRadius: 1,
                             order: 0,
                             noExport: true
@@ -385,7 +385,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                                 data: fittingStore.individualModelPoint2DArrays[i],
                                 type: PlotType.LINES,
                                 borderColor: getColorForTheme("auto-orange"),
-                                borderWidth: 1,
+                                borderWidth: 2,
                                 pointRadius: 1,
                                 order: 0,
                                 opacity: 0.6,
@@ -401,7 +401,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                                 data: fittingStore.residualPoint2DArray,
                                 type: PlotType.POINTS,
                                 borderColor: getColorForTheme("auto-orange"),
-                                borderWidth: 1,
+                                borderWidth: 2,
                                 pointRadius: 1,
                                 order: 0,
                                 noExport: true

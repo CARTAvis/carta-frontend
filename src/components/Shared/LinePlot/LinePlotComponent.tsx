@@ -3,8 +3,7 @@ import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {Colors} from "@blueprintjs/core";
-import {ChartArea} from "chart.js";
-import {Scatter} from "react-chartjs-2";
+import {Chart, ChartArea, Tick} from "chart.js";
 import ReactResizeDetector from "react-resize-detector";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {PlotContainerComponent, TickType, MultiPlotProps} from "./PlotContainer/PlotContainerComponent";
@@ -89,7 +88,7 @@ export class LinePlotComponentProps {
     tickTypeY?: TickType;
     markers?: LineMarker[];
     showTopAxis?: boolean;
-    topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
+    topAxisTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
     graphZoomedX?: (xMin: number, xMax: number) => void;
@@ -141,7 +140,7 @@ export const VERTICAL_RANGE_PADDING = 0.05;
 
 @observer
 export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
-    private plotRef;
+    private plotRef: Chart;
     private stageRef;
     private stageClickStartX: number;
     private stageClickStartY: number;
@@ -538,23 +537,21 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     private exportSubPlotImage(visible: boolean) {
-        const scatterChart = this.plotRef.chartInstance;
-        scatterChart.config.options.scales.xAxes[0].ticks.display = visible;
-        scatterChart.config.options.scales.xAxes[0].ticks.major.display = visible;
-        scatterChart.config.options.scales.xAxes[0].ticks.minor.display = visible;
+        const scatterChart = this.plotRef;
+        scatterChart.config["_config"].options.scales["x-axis-0"].ticks.display = visible;
         let tickMarkLength = 10;
         if (!visible) {
             tickMarkLength = 0;
         }
-        scatterChart.options.scales.xAxes[0].gridLines.tickMarkLength = tickMarkLength;
-        scatterChart.options.scales.xAxes[0].scaleLabel.display = visible;
+        scatterChart.config["_config"].options.scales["x-axis-0"].grid.tickLength = tickMarkLength;
+        scatterChart.config["_config"].options.scales["x-axis-0"].title.display = visible;
         scatterChart.update();
     }
 
     private showPlotxAxes() {
-        const scatterProps = this.plotRef.chartInstance;
+        const scatterChart = this.plotRef;
         if (this.props.isGroupSubPlot === true) {
-            if (scatterProps && scatterProps.options.scales.xAxes[0].ticks.display === false) {
+            if (scatterChart && scatterChart.config["_config"].options.scales["x-axis-0"].ticks.display === false) {
                 return true;
             }
         }
@@ -562,12 +559,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     exportImage = () => {
-        const scatter = this.plotRef as Scatter;
+        const scatter = this.plotRef;
         const showPlotxAxes = this.showPlotxAxes();
         if (showPlotxAxes) {
             this.exportSubPlotImage(true);
         }
-        const canvas = scatter.chartInstance.canvas;
+        const canvas = scatter.canvas;
         const plotName = this.props.plotName || "unknown";
         const imageName = this.props.imageName || "unknown";
 
