@@ -9,12 +9,10 @@ import {FormGroup, HTMLSelect, MenuDivider, Tab, Tabs, Text} from "@blueprintjs/
 import {ClearableNumericInputComponent} from "components/Shared";
 import "./LayerListSettingsPanelComponent.scss";
 
-
-const FILENAME_END_LEN = 15
+const FILENAME_END_LEN = 15;
 
 @observer
 export class LayerListSettingsPanelComponent extends React.Component<WidgetProps> {
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "layer-list-settings",
@@ -77,7 +75,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                                 <Text className={style} ellipsize={true}>
                                     {filename.slice(0, -FILENAME_END_LEN)}
                                 </Text>
-                                <Text className={style}>
+                                <Text className={style + " end-part"}>
                                     {filename.slice(-FILENAME_END_LEN)}
                                 </Text>
                             </FormGroup>
@@ -97,9 +95,10 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                                 />
                                 <HTMLSelect disabled={!frame.isRestFreqEditable} options={Object.values(FrequencyUnit)} value={"Hz"} onChange={ev => console.log(ev.currentTarget.value as FrequencyUnit)} />
                             </div>
-                            {index !== appStore.frames.length - 1 ? <MenuDivider/> : null}
+                            {index !== appStore.frames.length - 1 ? <MenuDivider /> : null}
                         </React.Fragment>
-                )})}
+                    );
+                })}
             </div>
         );
 

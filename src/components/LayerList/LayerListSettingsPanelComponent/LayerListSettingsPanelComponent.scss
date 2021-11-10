@@ -19,8 +19,11 @@
             width: calc(100% - 120px);
             line-height: 30px;
 
+            .end-part {
+                white-space: nowrap; // avoid new line
+            }
             .disabled {
-                color: $pt-text-color-disabled;        
+                color: $pt-text-color-disabled;
             }
             .disabled.dark {
                 color: $pt-dark-text-color-disabled;
@@ -28,7 +31,7 @@
             .active {
                 font-weight: bold;
             }
-        } 
+        }
     }
 
     .freq-input {

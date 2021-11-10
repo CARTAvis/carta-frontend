@@ -1,7 +1,6 @@
 import {observable, action, makeObservable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 
-
 export enum LayerListSettingsTabs {
     MATCHING,
     REST_FREQ
