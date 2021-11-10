@@ -34,7 +34,7 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
+import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, linearRegression, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom, SpectralType} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -2263,6 +2263,31 @@ export class AppStore {
                 }
             );
         });
+    };
+
+    measureBandwidth = async (iterations: number = 20, maxBytes: number = 500000) => {
+        const minBytes = maxBytes / 4.0;
+        const times = [];
+        const byteSizes = [];
+
+        for (let i = 0; i < iterations; i++) {
+            const tStart = performance.now();
+            const res = await this.backendService.requestRandomData(minBytes, maxBytes);
+            const tEnd = performance.now();
+            const dt = tEnd - tStart;
+            const numBytes = res.data?.length ?? 0;
+            times.push(dt);
+            byteSizes.push(numBytes);
+        }
+
+        const results = linearRegression(times, byteSizes);
+        if (results?.slope) {
+            const speedMbps = (results.slope * 8) / 1000.0;
+            AppToaster.show(SuccessToast("globe-network", `Approximate bandwidth to backend process: ${speedMbps.toFixed(1)} Mbps.`));
+        } else {
+            AppToaster.show(ErrorToast("Could not determine network bandwidth!"));
+        }
+        console.log(results);
     };
 
     setCanvasUpdated = () => {

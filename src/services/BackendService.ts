@@ -144,7 +144,8 @@ export class BackendService {
             [CARTA.EventType.SCRIPTING_REQUEST, {messageClass: CARTA.ScriptingRequest, handler: this.onScriptingRequest}],
             [CARTA.EventType.SPLATALOGUE_PONG, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
-            [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}]
+            [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}],
+            [CARTA.EventType.RANDOM_DATA_RESPONSE, {messageClass: CARTA.RandomDataResponse, handler: this.onDeferredResponse}]
         ]);
 
         // check ping every 5 seconds
@@ -741,6 +742,23 @@ export class BackendService {
             this.logEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, CARTA.SpectralLineRequest.encode(message).finish())) {
                 const deferredResponse = new Deferred<CARTA.ISpectralLineResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
+            } else {
+                throw new Error("Could not send event");
+            }
+        }
+    }
+
+    async requestRandomData(minBytes: number, maxBytes: number): Promise<CARTA.IRandomDataResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const requestId = this.eventCounter;
+            const message = CARTA.RandomDataRequest.create({minBytes, maxBytes});
+            this.logEvent(CARTA.EventType.RANDOM_DATA_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.RANDOM_DATA_REQUEST, CARTA.RandomDataRequest.encode(message).finish())) {
+                const deferredResponse = new Deferred<CARTA.IRandomDataResponse>();
                 this.deferredMap.set(requestId, deferredResponse);
                 return await deferredResponse.promise;
             } else {
