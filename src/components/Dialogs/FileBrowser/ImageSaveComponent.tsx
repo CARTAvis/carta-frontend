@@ -28,7 +28,7 @@ export class ImageSaveComponent extends React.Component {
         const fileBrowser = FileBrowserStore.Instance;
         const spectralRange = appStore.activeFrame?.channelValueBounds;
         const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[0]);
-        return spectralRange.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
+        return spectralRange?.min <= valueAsNumber && valueAsNumber <= parseFloat(fileBrowser.saveSpectralRange[1]);
     }
 
     @computed get validSaveSpectralRangeEnd() {
@@ -83,50 +83,51 @@ export class ImageSaveComponent extends React.Component {
 
     /// Generate options for stokes via string
     @computed get stokesOptions() {
-        const activeFrame = AppStore.Instance.activeFrame;
-        const stokesInfo = activeFrame.stokesInfo.map(string => string.replace("Stokes ", ""));
-        let options = [{value: 0, label: stokesInfo.join("")}];
-        const optionsAddFourElements = () => {
-            options.push({value: 4, label: stokesInfo[3]});
-            options.push({value: 7, label: stokesInfo.slice(2, 4).join("")});
-            options.push({value: 9, label: stokesInfo[0] + stokesInfo[3]});
-            options.push({value: 10, label: stokesInfo[1] + stokesInfo[3]});
-            options.push({value: 11, label: stokesInfo.slice(0, 3).join("")});
-            options.push({value: 12, label: stokesInfo.slice(1, 4).join("")});
-        };
-        const optionsAddThreeElements = () => {
-            options.push({value: 3, label: stokesInfo[2]});
-            options.push({value: 5, label: stokesInfo.slice(0, 2).join("")});
-            options.push({value: 6, label: stokesInfo.slice(1, 3).join("")});
-            options.push({value: 8, label: stokesInfo[0] + stokesInfo[2]});
-        };
-        const optionsAddTwoElements = () => {
-            options.push({value: 1, label: stokesInfo[0]});
-            options.push({value: 2, label: stokesInfo[1]});
-        };
-        if (activeFrame) {
-            switch (stokesInfo.join("")) {
-                case "IQUV":
+        const stokesInfo = AppStore.Instance.activeFrame?.stokesInfo;
+
+        if (stokesInfo) {
+            let options = [];
+            const addOption = (value: number, stokesInfoList: string[]) => {
+                options.push({value: value, label: stokesInfoList.join(", ").replace(/, Stokes/g, ", ")});
+            };
+
+            const optionsAddFourElements = () => {
+                addOption(4, [stokesInfo[3]]);
+                addOption(7, stokesInfo.slice(2, 4));
+                addOption(9, [stokesInfo[0], stokesInfo[3]]);
+                addOption(10, [stokesInfo[1], stokesInfo[3]]);
+                addOption(11, stokesInfo.slice(0, 3));
+                addOption(12, stokesInfo.slice(1, 4));
+            };
+            const optionsAddThreeElements = () => {
+                addOption(3, [stokesInfo[2]]);
+                addOption(5, stokesInfo.slice(0, 2));
+                addOption(6, stokesInfo.slice(1, 3));
+                addOption(8, [stokesInfo[0], stokesInfo[2]]);
+            };
+            const optionsAddTwoElements = () => {
+                addOption(1, [stokesInfo[0]]);
+                addOption(2, [stokesInfo[1]]);
+            };
+
+            addOption(0, stokesInfo);
+            switch (stokesInfo.length) {
+                case 4:
                     optionsAddFourElements();
                     optionsAddThreeElements();
                     optionsAddTwoElements();
                     break;
-                case "IQU":
-                case "QUV":
+                case 3:
                     optionsAddThreeElements();
                     optionsAddTwoElements();
                     break;
-                case "IQ":
-                case "IU":
-                case "IV":
-                case "QU":
-                case "QV":
-                case "UV":
+                case 2:
                     optionsAddTwoElements();
                     break;
                 default:
                     break;
             }
+
             return options.sort((a, b) => a.value - b.value);
         }
         return [];
@@ -230,7 +231,7 @@ export class ImageSaveComponent extends React.Component {
                         {activeFrame.hasStokes && (
                             <React.Fragment>
                                 <div className="stokes-select">
-                                    <FormGroup label={"Stokes"} inline={true}>
+                                    <FormGroup label={"Polarization"} inline={true}>
                                         <HTMLSelect value={fileBrowser.saveStokesOption || ""} options={stokesOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))} />
                                     </FormGroup>
                                 </div>

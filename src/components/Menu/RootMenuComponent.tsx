@@ -6,6 +6,7 @@ import {IconName} from "@blueprintjs/icons";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
+import {ExportImageMenuComponent} from "../Shared";
 import {PresetLayout, Snippet} from "models";
 import {AppStore, BrowserMode, FrameStore, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {ApiService, ConnectionStatus} from "services";
@@ -200,7 +201,9 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Divider />
                 <Menu.Item text="Import catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
                 <Menu.Divider />
-                <Menu.Item text="Export image" label={`${modString}E`} disabled={!appStore.activeFrame} onClick={appStore.exportImage} />
+                <Menu.Item text="Export image" disabled={!appStore.activeFrame || appStore.isExportingImage}>
+                    <ExportImageMenuComponent />
+                </Menu.Item>
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE} />
                 {serverSubMenu}
             </Menu>

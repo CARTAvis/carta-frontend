@@ -3,10 +3,9 @@ import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {Colors} from "@blueprintjs/core";
-import {Scatter} from "react-chartjs-2";
 import ReactResizeDetector from "react-resize-detector";
 import {Layer, Stage, Group, Line, Ring, Rect} from "react-konva";
-import {ChartArea} from "chart.js";
+import {Chart, ChartArea, Tick} from "chart.js";
 import {PlotContainerComponent, TickType, MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
@@ -40,7 +39,7 @@ export class ScatterPlotComponentProps {
     tickTypeX?: TickType;
     tickTypeY?: TickType;
     showTopAxis?: boolean;
-    topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
+    topAxisTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
     graphClicked?: (x: number, y: number, data: {x: number; y: number; z?: number}[]) => void;
     graphRightClicked?: (x: number) => void;
     graphZoomedX?: (xMin: number, xMax: number) => void;
@@ -82,7 +81,7 @@ const OUTERRADIUS = 3;
 @observer
 export class ScatterPlotComponent extends React.Component<ScatterPlotComponentProps> {
     private markerOpacity = 0.8;
-    private plotRef;
+    private plotRef: Chart;
     private previousClickTime: number;
     private pendingClickHandle;
     private stageClickStartX: number;
@@ -289,8 +288,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     exportImage = () => {
-        const scatter = this.plotRef as Scatter;
-        const canvas = scatter.chartInstance.canvas;
+        const scatter = this.plotRef;
+        const canvas = scatter.canvas;
         const plotName = this.props.plotName || "unknown";
         const imageName = this.props.imageName || "unknown";
 

@@ -495,7 +495,7 @@ export class FileBrowserDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                helpType={HelpType.FILE_Browser}
+                helpType={HelpType.FILE_BROWSER}
                 minWidth={400}
                 minHeight={400}
                 defaultWidth={this.defaultWidth}
