@@ -40,7 +40,7 @@ export const IsSpectralTypeSupported = (typeStr: string): boolean => {
     return Object.values(SpectralType).includes(normalizedStr as SpectralType) && normalizedStr !== SpectralType.CHANNEL;
 };
 
-export const SPECTRAL_MATCHING_TYPES: SpectralType[] = [SpectralType.VRAD, SpectralType.VOPT, SpectralType.FREQ, SpectralType.CHANNEL];
+export const SPECTRAL_MATCHING_TYPES: SpectralType[] = Object.values(SpectralType);
 export function IsSpectralMatchingTypeValid(type: SpectralType) {
     return type && SPECTRAL_MATCHING_TYPES.includes(type);
 }
