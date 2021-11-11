@@ -145,7 +145,7 @@ export class BackendService {
             [CARTA.EventType.SPLATALOGUE_PONG, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}],
-            [CARTA.EventType.RANDOM_DATA_RESPONSE, {messageClass: CARTA.RandomDataResponse, handler: this.onDeferredResponse}]
+            [CARTA.EventType.RANDOM_DATA_RESPONSE, {messageClass: undefined, handler: this.onDeferredResponse}]
         ]);
 
         // check ping every 5 seconds
@@ -806,7 +806,14 @@ export class BackendService {
         try {
             const decoderEntry = this.decoderMap.get(eventType);
             if (decoderEntry) {
-                const parsedMessage = decoderEntry.messageClass.decode(eventData);
+                let parsedMessage;
+
+                if (decoderEntry.messageClass) {
+                    parsedMessage = decoderEntry.messageClass.decode(eventData);
+                } else {
+                    // Skip decoding of messages with no defined class
+                    parsedMessage = {success: true};
+                }
                 if (parsedMessage) {
                     this.logEvent(eventType, eventId, parsedMessage);
                     decoderEntry.handler.call(this, eventId, parsedMessage);

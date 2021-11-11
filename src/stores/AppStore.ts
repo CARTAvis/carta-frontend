@@ -247,18 +247,31 @@ export class AppStore {
     @observable taskProgress: number;
     @observable taskStartTime: number;
     @observable taskCurrentTime: number;
+    @observable genericTaskProgressVisible: boolean;
+    @observable genericTaskText: string;
     @observable fileLoading: boolean;
     @observable fileSaving: boolean;
-    @observable resumingSession: boolean;
+
+    @action showGenericTaskProgress = (text: string = "", initialProgress = 0) => {
+        this.genericTaskProgressVisible = true;
+        this.taskProgress = initialProgress;
+        this.genericTaskText = text;
+        this.taskStartTime = performance.now();
+    };
+
+    @action hideGenericTaskProgress = () => {
+        this.genericTaskProgressVisible = false;
+    };
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
         this.taskStartTime = performance.now();
     };
 
-    @action updateTaskProgress = (progress: number) => {
+    @action updateTaskProgress = (progress: number, genericTaskText = "") => {
         this.taskProgress = progress;
         this.taskCurrentTime = performance.now();
+        this.genericTaskText = genericTaskText;
     };
 
     @computed get estimatedTaskRemainingTime(): number {
@@ -1794,7 +1807,7 @@ export class AppStore {
             });
         });
 
-        this.resumingSession = true;
+        this.showGenericTaskProgress("Resuming session...", undefined);
 
         try {
             await this.backendService.resumeSession({images, catalogFiles});
@@ -1802,6 +1815,7 @@ export class AppStore {
         } catch (err) {
             console.error(err);
             this.alertStore.showAlert("Error resuming session");
+            this.hideGenericTaskProgress();
         }
     };
 
@@ -1809,7 +1823,7 @@ export class AppStore {
         console.log(`Resumed successfully`);
         // Clear requirements once session has resumed
         this.initRequirements();
-        this.resumingSession = false;
+        this.hideGenericTaskProgress();
         this.backendService.connectionDropped = false;
     };
 
@@ -2265,29 +2279,53 @@ export class AppStore {
         });
     };
 
-    measureBandwidth = async (iterations: number = 20, maxBytes: number = 500000) => {
-        const minBytes = maxBytes / 4.0;
+    // Repeatedly requests random data with a 60 seconds time limit to measure bandwidth
+    measureBandwidth = async (duration: number = 60) => {
+        const maxBytes = 4096 * 1024;
+        const minBytes = 512 * 1024;
+        const increment = 8 * 1024;
+
         const times = [];
         const byteSizes = [];
+        const tStart = performance.now();
 
-        for (let i = 0; i < iterations; i++) {
-            const tStart = performance.now();
-            const res = await this.backendService.requestRandomData(minBytes, maxBytes);
-            const tEnd = performance.now();
-            const dt = tEnd - tStart;
-            const numBytes = res.data?.length ?? 0;
+        this.showGenericTaskProgress("Measuring network bandwidth");
+        let bytes = minBytes;
+        let speedMbps = 0;
+        let speedText = "";
+
+        while (true) {
+            const t0 = performance.now();
+            await this.backendService.requestRandomData(bytes, bytes);
+            const t1 = performance.now();
+            const dt = t1 - t0;
             times.push(dt);
-            byteSizes.push(numBytes);
-        }
+            byteSizes.push(bytes);
+            bytes = Math.min(bytes + increment, maxBytes);
+            const runningTime = t1 - tStart;
 
-        const results = linearRegression(times, byteSizes);
-        if (results?.slope) {
-            const speedMbps = (results.slope * 8) / 1000.0;
-            AppToaster.show(SuccessToast("globe-network", `Approximate bandwidth to backend process: ${speedMbps.toFixed(1)} Mbps.`));
+            const results = linearRegression(byteSizes, times);
+            if (results?.slope > 0) {
+                speedMbps = 8.0 / results.slope / 1000.0;
+            } else {
+                speedMbps = undefined;
+            }
+
+            const progress = runningTime / (duration * 1000);
+            speedText = speedMbps ? `${speedMbps.toFixed(1)} Mbps` : "Calculating...";
+            this.updateTaskProgress(progress, `${(progress * 100).toFixed(0)}% Complete. Current speed: ${speedText}`);
+
+            if (runningTime > duration * 1000 || bytes === maxBytes) {
+                break;
+            }
+        }
+        this.hideGenericTaskProgress();
+
+        if (speedMbps) {
+            AppToaster.show(SuccessToast("globe-network", `Approximate bandwidth to backend process: ${speedText}`));
         } else {
             AppToaster.show(ErrorToast("Could not determine network bandwidth!"));
         }
-        console.log(results);
     };
 
     setCanvasUpdated = () => {
@@ -2399,12 +2437,14 @@ export class AppStore {
                     const stats = new Stats();
                     stats.showPanel(this.preferenceStore.statsPanelMode); // 0: fps, 1: ms, 2: mb, 3+: custom
                     document.body.appendChild(stats.dom);
+
                     function animate() {
                         stats.begin();
                         // monitored code goes here
                         stats.end();
                         requestAnimationFrame(animate);
                     }
+
                     requestAnimationFrame(animate);
                     stats.dom.style.right = "0";
                     stats.dom.style.left = "initial";

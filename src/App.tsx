@@ -73,7 +73,7 @@ export class App extends React.Component {
             <div className={className}>
                 <UIControllerComponent />
                 {alertComponent}
-                <TaskProgressDialogComponent progress={undefined} timeRemaining={0} isOpen={appStore.resumingSession} cancellable={false} text={"Resuming session..."} />
+                <TaskProgressDialogComponent progress={appStore.taskProgress} timeRemaining={0} isOpen={appStore.genericTaskProgressVisible} cancellable={false} text={appStore.genericTaskText} />
                 <div className={glClassName} ref={ref => appStore.setAppContainer(ref)}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}></ReactResizeDetector>
                 </div>
