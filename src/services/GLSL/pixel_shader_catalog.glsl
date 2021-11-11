@@ -1,28 +1,5 @@
-#version 300 es
 precision highp float;
 precision highp int;
-
-#define BOX_FILLED 0
-#define BOX_LINED 1
-#define CIRCLE_FILLED 2
-#define CIRCLE_LINED 3
-#define HEXAGON_FILLED 4
-#define HEXAGON_LINED 5
-#define RHOMB_FILLED 6
-#define RHOMB_LINED 7
-#define TRIANGLE_FILLED_UP 8
-#define TRIANGLE_LINED_UP 9
-#define ELLIPSE_FILLED 10
-#define ELLIPSE_LINED 11
-#define TRIANGLE_FILLED_DOWN 12
-#define TRIANGLE_LINED_DOWN 13
-#define HEXAGON_FILLED_2 14
-#define HEXAGON_LINED_2 15
-#define CROSS_FILLED 16
-#define CROSS_LINED 17
-#define X_FILLED 18
-#define X_LINED 19
-#define LineSegment_FILLED 20
 
 #define SIN_0 0.0
 #define COS_0 1.0

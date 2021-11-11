@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import Konva from "konva";
-import {FrameStore, RegionStore} from "stores";
+import {AppStore, FrameStore, RegionStore} from "stores";
 import {adjustPosToMutatedStage, adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
 import {transformPoint} from "utilities";
@@ -20,6 +20,10 @@ interface PointRegionComponentProps {
 
 @observer
 export class PointRegionComponent extends React.Component<PointRegionComponentProps> {
+    componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
+    }
+
     private handleDoubleClick = () => {
         this.props.onDoubleClick?.(this.props.region);
     };
@@ -58,6 +62,10 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
 
         let centerPixelSpace: Point2D;
         let rotation: number;
+
+        // trigger re-render when exporting images
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const imageRatio = AppStore.Instance.imageRatio;
 
         if (frame.spatialReference) {
             const pointReferenceImage = region.center;

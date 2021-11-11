@@ -1,9 +1,9 @@
 precision highp float;
 
 //Data from bufferData
-attribute vec3 aVertexPosition;
-attribute vec2 aVertexUV;
-varying vec2 vUV;
+in vec3 aVertexPosition;
+in vec2 aVertexUV;
+out vec2 vUV;
 uniform float uCanvasWidth;
 uniform float uCanvasHeight;
 uniform vec2 uRotationOrigin;
@@ -14,12 +14,6 @@ uniform vec2 uTileSize;
 uniform vec2 uTileScaling;
 uniform vec2 uTileOffset;
 uniform float uTileTextureSize;
-
-vec2 rotate2D(vec2 vector, float theta) {
-    float sinTheta = sin(theta);
-    float cosTheta = cos(theta);
-    return mat2(cosTheta, -sinTheta, sinTheta, cosTheta) * vector;
-}
 
 vec2 rotateAboutPoint2D(vec2 vector, vec2 origin, float theta) {
     return rotate2D(vector - origin, theta) + origin;

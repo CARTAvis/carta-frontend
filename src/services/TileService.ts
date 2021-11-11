@@ -4,7 +4,7 @@ import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
 import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
-import {copyToFP32Texture, createFP32Texture} from "utilities";
+import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
 
@@ -72,7 +72,7 @@ export class TileService {
     private pendingSynchronisedTiles: Map<string, Array<number>>;
     private receivedSynchronisedTiles: Map<string, Array<{coordinate: number; tile: RasterTile}>>;
     private animationEnabled: boolean;
-    private readonly gl: WebGLRenderingContext;
+    private readonly gl: WebGL2RenderingContext;
 
     @observable remainingTiles: number;
     @observable workersReady: boolean[];
@@ -320,13 +320,13 @@ export class TileService {
         const textureSizeMb = (TEXTURE_SIZE * TEXTURE_SIZE * 4) / 1024 / 1024;
         console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
         for (let i = 0; i < this.textureArray.length; i++) {
-            this.textureArray[i] = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
+            this.textureArray[i] = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
         }
     }
 
     uploadTileToGPU(tile: RasterTile) {
         const textureParameters = this.getTileTextureParameters(tile);
-        copyToFP32Texture(this.gl, textureParameters.texture, tile.data, WebGLRenderingContext.TEXTURE0, tile.width, tile.height, textureParameters.offset.x, textureParameters.offset.y);
+        copyToFP32Texture(this.gl, textureParameters.texture, tile.data, GL2.TEXTURE0, tile.width, tile.height, textureParameters.offset.x, textureParameters.offset.y);
     }
 
     getTileTextureParameters(tile: RasterTile) {

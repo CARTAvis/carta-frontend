@@ -4,6 +4,7 @@ export * from "./BiasContrastSelectComponent/BiasContrastSelectComponent";
 export * from "./ClearableNumericInput/ClearableNumericInputComponent";
 export * from "./ColorPicker/ColorPickerComponent";
 export * from "./ColormapComponent/ColormapComponent";
+export * from "./ExportImageMenu/ExportImageMenuComponent";
 export * from "./LinePlot/LinePlotComponent";
 export * from "./LinePlot/PlotSettings/LinePlotSettingsPanelComponent";
 export * from "./PlotTypeSelector/PlotTypeSelectorComponent";
