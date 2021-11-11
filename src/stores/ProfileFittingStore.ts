@@ -213,7 +213,7 @@ export class ProfileFittingStore {
                 if (this.continuum === FittingContinuum.FIRST_ORDER) {
                     yi += x[i] * this.slope;
                 }
-                continuumPoint2DArray.push({x: x[i], y: yi});
+                continuumPoint2DArray[i] = {x: x[i], y: yi};
             }
             return continuumPoint2DArray;
         }
@@ -233,7 +233,7 @@ export class ProfileFittingStore {
                         yi += lorentzian(x[i], component.resultAmp, component.resultCenter, component.resultFwhm);
                     }
                 }
-                modelPoint2DArray.push({x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)});
+                modelPoint2DArray[i] = {x: x[i], y: yi + (this.resultSlope * x[i] + this.resultYIntercept)};
             }
             return modelPoint2DArray;
         }
@@ -243,7 +243,7 @@ export class ProfileFittingStore {
     @computed get individualModelPoint2DArrays(): Array<Point2D[]> {
         if (this.components && this.hasResult) {
             const x = this.originData.x;
-            const individualModelPoint2DArrays = new Array<Point2D[]>(this.components.length);
+            const individualModelPoint2DArrays = new Array<Point2D[]>();
             for (const component of this.components) {
                 let individualResultPoint2DArray: Point2D[] = [];
                 for (let i = 0; i < x.length; i++) {
@@ -263,7 +263,7 @@ export class ProfileFittingStore {
             const x = this.originData.x;
             const residualPoint2DArray = new Array<{x: number; y: number}>(x.length);
             for (let i = 0; i < x.length; i++) {
-                residualPoint2DArray.push({x: x[i], y: this.resultResidual[i]});
+                residualPoint2DArray[i] = {x: x[i], y: this.resultResidual[i]};
             }
             return residualPoint2DArray;
         }

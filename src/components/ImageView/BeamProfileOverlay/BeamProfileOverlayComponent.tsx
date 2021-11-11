@@ -30,13 +30,19 @@ interface BeamPlotProps {
 
 @observer
 export class BeamProfileOverlayComponent extends React.Component<BeamProfileOverlayComponentProps> {
+    private layerRef = React.createRef<any>();
+
+    componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
+    }
+
     private getPlotProps = (frame: FrameStore, basePosition?: Point2D): BeamPlotProps => {
         if (!frame.hasVisibleBeam) {
             return null;
         }
 
         const id = frame.frameInfo.fileId;
-        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
+        const zoomLevel = (frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel) / AppStore.Instance.imageRatio;
         const beamSettings = frame.overlayBeamSettings;
         const color = getColorForTheme(beamSettings.color);
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
@@ -108,6 +114,8 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             return null;
         }
 
+        appStore.updateLayerPixelRatio(this.layerRef);
+
         let baseBeamPlotProps: BeamPlotProps;
         if (baseFrame.hasVisibleBeam) {
             baseBeamPlotProps = this.getPlotProps(baseFrame);
@@ -123,7 +131,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
 
         return (
             <Stage className={className} width={baseFrame.renderWidth} height={baseFrame.renderHeight} style={{left: this.props.left, top: this.props.top}}>
-                <Layer listening={false}>
+                <Layer listening={false} ref={this.layerRef}>
                     {this.plotBeam(baseBeamPlotProps)}
                     {contourBeams}
                 </Layer>
