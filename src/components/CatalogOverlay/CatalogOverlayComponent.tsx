@@ -425,15 +425,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (profileStore && appStore) {
             this.resetSelectedPointIndices();
             appStore.catalogStore.clearImageCoordsData(this.catalogFileId);
+            profileStore.setSortingInfo(columnName, sortingType);
             if (profileStore.isFileBasedCatalog) {
                 profileStore.resetFilterRequest();
                 let filter = profileStore.updateRequestDataSize;
                 filter.sortColumn = columnName;
                 filter.sortingType = sortingType;
-                profileStore.setSortingInfo(columnName, sortingType);
                 appStore.sendCatalogFilter(filter);
-            } else {
-                profileStore.setSortingInfo(columnName, sortingType, columnIndex);
             }
         }
     };
