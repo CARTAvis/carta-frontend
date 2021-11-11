@@ -84,6 +84,7 @@ export class FileBrowserDialogComponent extends React.Component {
             fileBrowserStore.setImportingRegions(true);
             fileBrowserStore.showLoadingDialog();
             await appStore.importRegion(fileBrowserStore.fileList.directory, file.fileInfo.name, file.fileInfo.type);
+            fileBrowserStore.resetLoadingStates();
         }
 
         fileBrowserStore.saveStartingDirectory();
