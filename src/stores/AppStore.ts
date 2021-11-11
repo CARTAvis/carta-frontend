@@ -957,6 +957,8 @@ export class AppStore {
             }
         } catch (err) {
             console.error(err);
+            this.fileBrowserStore.setImportingRegions(false);
+            this.fileBrowserStore.resetLoadingStates();
             AppToaster.show(ErrorToast(err));
         }
     };

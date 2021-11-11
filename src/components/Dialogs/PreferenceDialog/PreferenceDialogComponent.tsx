@@ -131,7 +131,7 @@ export class PreferenceDialogComponent extends React.Component {
                     <Switch checked={preference.autoLaunch} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} label="File List">
-                    <HTMLSelect value={preference.fileFilterMode} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_FILE_FILTER_MODE, Number(ev.currentTarget.value))}>
+                    <HTMLSelect value={preference.fileFilterMode} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_FILE_FILTER_MODE, ev.currentTarget.value)}>
                         <option value={FileFilterMode.Content}>Filter by file content</option>
                         <option value={FileFilterMode.Extension}>Filter by extension</option>
                         <option value={FileFilterMode.All}>All files</option>
