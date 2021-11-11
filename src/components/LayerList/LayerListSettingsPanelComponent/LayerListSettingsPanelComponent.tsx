@@ -5,7 +5,8 @@ import {computed, makeObservable} from "mobx";
 import {AppStore, WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
 import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/widgets";
 import {SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType, FrequencyUnit} from "models";
-import {FormGroup, HTMLSelect, MenuDivider, Tab, Tabs, Text} from "@blueprintjs/core";
+import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
+import {IItemRendererProps, Select} from "@blueprintjs/select";
 import {ClearableNumericInputComponent} from "components/Shared";
 import "./LayerListSettingsPanelComponent.scss";
 
@@ -46,6 +47,11 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         makeObservable(this);
     }
 
+    private renderFrameOptions = (val: number, itemProps: IItemRendererProps) => {
+        const option = this.widgetStore.frameOptions.find(option => option.value === val);
+        return <MenuItem key={option?.value} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+    };
+
     render() {
         const appStore = AppStore.Instance;
 
@@ -63,44 +69,84 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         );
 
-        const restFreqPanel = (
-            <div className="panel-container">
-                {appStore.frames.map((frame, index) => {
-                    const isActive = index === appStore.activeFrameIndex;
-                    const style = classNames({"disabled": !frame.isRestFreqEditable}, {"dark": appStore.darkTheme}, {"active": isActive});
-                    const filename = `${index}:\u00a0${frame.filename}${isActive ? "\u00a0(Active)" : ""}`;
-                    return (
-                        <React.Fragment key={index}>
-                            <FormGroup inline={true} label="Source" className="name-text" disabled={!frame.isRestFreqEditable}>
-                                <Text className={style} ellipsize={true}>
-                                    {filename.slice(0, -FILENAME_END_LEN)}
-                                </Text>
-                                <Text className={style + " end-part"}>
-                                    {filename.slice(-FILENAME_END_LEN)}
-                                </Text>
-                            </FormGroup>
-                            <div className="freq-input">
-                                <ClearableNumericInputComponent
-                                    label="Rest frequency"
-                                    value={0}
-                                    disabled={!frame.isRestFreqEditable}
-                                    placeholder="rest frequency"
-                                    selectAllOnFocus={true}
-                                    onValueChanged={() => {}}
-                                    onValueCleared={() => {}}
-                                    resetDisabled={false}
-                                    tooltipContent={"default"}
-                                    tooltipPlacement={"bottom"}
-                                    focused={index === this.widgetStore.selectedFrameIndex}
-                                />
-                                <HTMLSelect disabled={!frame.isRestFreqEditable} options={Object.values(FrequencyUnit)} value={"Hz"} onChange={ev => console.log(ev.currentTarget.value as FrequencyUnit)} />
-                            </div>
-                            {index !== appStore.frames.length - 1 ? <MenuDivider /> : null}
-                        </React.Fragment>
-                    );
-                })}
-            </div>
-        );
+        const selectedFrameIndex = this.widgetStore.selectedFrameIndex;
+        const frameOptions = this.widgetStore.frameOptions;
+        let restFreqPanel = null;
+        if (appStore.frames.length > 10) {
+            const fileText = frameOptions.find(option => option.value === selectedFrameIndex)?.label;
+            const inputFrame = frameOptions.find(option => option.value === (selectedFrameIndex === -1 ? appStore.activeFrameIndex : selectedFrameIndex));
+            restFreqPanel = (
+                <div className="panel-container">
+                    <FormGroup inline={true} label="Source" className="name-text">
+                        <Select
+                            filterable={false}
+                            items={this.widgetStore.frameOptions.map(option => option.value)}
+                            activeItem={selectedFrameIndex}
+                            onItemSelect={this.widgetStore.setSelectedFrameIndex}
+                            itemRenderer={this.renderFrameOptions}
+                            popoverProps={{minimal: true, position: PopoverPosition.AUTO_END}}
+                        >
+                            <Button
+                                text={fileText}
+                                rightIcon="double-caret-vertical"
+                                alignText={Alignment.LEFT}
+                                style={{width: 200}}
+                            />
+                        </Select>
+                    </FormGroup>
+                    <div className="freq-input">
+                        <ClearableNumericInputComponent
+                            label="Rest frequency"
+                            value={0}
+                            disabled={inputFrame.disable}
+                            placeholder="rest frequency"
+                            selectAllOnFocus={true}
+                            onValueChanged={() => {}}
+                            onValueCleared={() => {}}
+                            resetDisabled={false}
+                            tooltipContent={"default"}
+                            tooltipPlacement={"bottom"}
+                        />
+                        <HTMLSelect disabled={inputFrame.disable} options={Object.values(FrequencyUnit)} value={"Hz"} onChange={ev => console.log(ev.currentTarget.value as FrequencyUnit)} />
+                    </div>
+                </div>
+            )
+        } else {
+            restFreqPanel = (
+                <div className="panel-container">
+                    {frameOptions.slice(1).map((option, index) => {
+                        const style = classNames({disabled: option.disable}, {dark: appStore.darkTheme}, {active: option.active});
+                        return (
+                            <React.Fragment key={index}>
+                                <FormGroup inline={true} label="Source" className="name-text" disabled={option.disable}>
+                                    <Text className={style} ellipsize={true}>
+                                        {option.label.slice(0, -FILENAME_END_LEN)}
+                                    </Text>
+                                    <Text className={style + " end-part"}>{option.label.slice(-FILENAME_END_LEN)}</Text>
+                                </FormGroup>
+                                <div className="freq-input">
+                                    <ClearableNumericInputComponent
+                                        label="Rest frequency"
+                                        value={0}
+                                        disabled={option.disable}
+                                        placeholder="rest frequency"
+                                        selectAllOnFocus={true}
+                                        onValueChanged={() => {}}
+                                        onValueCleared={() => {}}
+                                        resetDisabled={false}
+                                        tooltipContent={"default"}
+                                        tooltipPlacement={"bottom"}
+                                        focused={index === selectedFrameIndex}
+                                    />
+                                    <HTMLSelect disabled={option.disable} options={Object.values(FrequencyUnit)} value={"Hz"} onChange={ev => console.log(ev.currentTarget.value as FrequencyUnit)} />
+                                </div>
+                                {index !== appStore.frames.length - 1 ? <MenuDivider /> : null}
+                            </React.Fragment>
+                        );
+                    })}
+                </div>
+            );
+        }
 
         return (
             <div className="layer-list-settings-panel">

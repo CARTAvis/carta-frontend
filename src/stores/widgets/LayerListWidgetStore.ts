@@ -1,5 +1,6 @@
-import {observable, action, makeObservable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
+import {AppStore} from "stores";
 
 export enum LayerListSettingsTabs {
     MATCHING,
@@ -21,6 +22,20 @@ export class LayerListWidgetStore {
     @action resetSelectedFrameIndex = () => {
         this.selectedFrameIndex = -1;
     };
+
+    @computed get frameOptions() {
+        const appStore = AppStore.Instance;
+        let options = [{label: "Active", value: -1, disable: false, active: false}];
+        appStore.frames?.forEach((frame, index) => {
+            options.push({
+                label: index + ": " + frame.filename + (index === appStore.activeFrameIndex ? " (Active)" : ""),
+                value: index,
+                disable: !frame.isRestFreqEditable,
+                active: index === appStore.activeFrameIndex
+            });
+        });
+        return options;
+    }
 
     constructor() {
         makeObservable(this);

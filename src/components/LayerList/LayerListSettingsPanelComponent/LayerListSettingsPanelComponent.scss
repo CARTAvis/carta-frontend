@@ -9,6 +9,13 @@
         }
     }
 
+    .bp3-button-text {
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .name-text {
         .bp3-label {
             width: 110px;
@@ -42,7 +49,7 @@
         }
 
         .bp3-form-group {
-            margin-right: 10px;
+            margin-right: 7px;
 
             .bp3-input-group {
                 width: 130px;
