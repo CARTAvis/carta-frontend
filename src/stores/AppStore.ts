@@ -36,7 +36,7 @@ import {
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom, SpectralType} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom, SpectralType, ToFileListFilterMode} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -957,6 +957,8 @@ export class AppStore {
             }
         } catch (err) {
             console.error(err);
+            this.fileBrowserStore.setImportingRegions(false);
+            this.fileBrowserStore.resetLoadingStates();
             AppToaster.show(ErrorToast(err));
         }
     };
@@ -2283,7 +2285,7 @@ export class AppStore {
     };
 
     getFileList = async (directory: string) => {
-        return await this.backendService.getFileList(directory);
+        return await this.backendService.getFileList(directory, ToFileListFilterMode(this.preferenceStore.fileFilterMode));
     };
 
     // region requirements calculations

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Added ability to list files filtered by extension (rather than content) or list all files ([#1](https://github.com/CARTAvis/carta/issues/1)).
 * Added two spectral matching types "Vacuum wavelength" and "Air wavelength."
 * Circular/linear polarizations are supported in polarization dropdowns for saving subimages and generating hypercubes.
 * The ability to export high resolution png images for publication quality in journals.
