@@ -335,6 +335,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     data[index] = coords.wcsData[selected];
                 }
             }
+            for (let i = 0; i < data.length; i++) {
+                data[i] = isNaN(data[i]) ? 0 : data[i]; 
+            }
             const mean = _.mean(data);
             const std = Math.sqrt(_.sum(_.map(data, i => Math.pow(i - mean, 2))) / size);
             const rms = Math.sqrt(_.sum(_.map(data, i => Math.pow(i, 2))) / size);
@@ -566,15 +569,19 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
         let x: Float64Array, y: Float64Array;
         if (selectedPointIndices.length === 0) {
-            x = new Float64Array(coords.wcsX);
-            y = new Float64Array(coords.wcsY);
+            x = new Float64Array(coords.wcsX.length);
+            y = new Float64Array(coords.wcsY.length);
+            for (let index = 0; index < coords.wcsX.length; index++) {
+                x[index] = isNaN(coords.wcsX[index]) ? 0 : coords.wcsX[index];
+                y[index] = isNaN(coords.wcsY[index]) ? 0 : coords.wcsY[index];
+            }
         } else {
             x = new Float64Array(selectedPointIndices.length);
             y = new Float64Array(selectedPointIndices.length);
             for (let index = 0; index < selectedPointIndices.length; index++) {
                 const selected = selectedPointIndices[index];
-                x[index] = coords.wcsX[selected];
-                y[index] = coords.wcsY[selected];
+                x[index] = isNaN(coords.wcsX[selected]) ? 0 : coords.wcsX[selected];
+                y[index] = isNaN(coords.wcsY[selected]) ? 0 : coords.wcsY[selected];
             }
         }
         const result = GSL.getFittingParameters(x, y);
