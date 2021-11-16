@@ -336,7 +336,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             }
             for (let i = 0; i < data.length; i++) {
-                data[i] = isNaN(data[i]) ? 0 : data[i]; 
+                data[i] = isNaN(data[i]) ? 0 : data[i];
             }
             const mean = _.mean(data);
             const std = Math.sqrt(_.sum(_.map(data, i => Math.pow(i - mean, 2))) / size);
