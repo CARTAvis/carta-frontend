@@ -259,7 +259,7 @@ export const GetIntensityConversion = (unitFrom: string, unitTo: string, config:
             return values.map(value => value * scale);
         };
     } else {
-        let conversion;
+        let conversion = undefined;
         if (unitFromType === IntensityUnitType.JyBeam && unitToType === IntensityUnitType.JySr && isFinite(config?.bmaj) && isFinite(config?.bmin)) {
             conversion = value => value * JyBeamTOJySr(config.bmaj, config.bmin) * scale;
         } else if (unitFromType === IntensityUnitType.JySr && unitToType === IntensityUnitType.JyBeam && isFinite(config?.bmaj) && isFinite(config?.bmin)) {
@@ -273,8 +273,10 @@ export const GetIntensityConversion = (unitFrom: string, unitTo: string, config:
         } else if (unitFromType === IntensityUnitType.JyArcsec2 && unitToType === IntensityUnitType.JySr) {
             conversion = value => value * JySrTOJyArcsec2(false) * scale;
         }
-        return (values: Float32Array | Float64Array): Float32Array | Float64Array => {
-            return values.map(conversion);
-        };
+        return conversion
+            ? (values: Float32Array | Float64Array): Float32Array | Float64Array => {
+                  return values.map(conversion);
+              }
+            : undefined;
     }
 };
