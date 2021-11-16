@@ -306,6 +306,11 @@
             "type": "integer",
             "minimum": 0,
             "default": 0
+        },
+        "fileFilterMode": {
+            "type": "string",
+            "enum": ["content", "extension", "all"],
+            "default": "content"
         }
     }
 }
