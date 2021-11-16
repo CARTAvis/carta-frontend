@@ -7,7 +7,7 @@ import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
 import {FindIntensityUnitType, GetAvailableIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
-import {clamp, getColorForTheme, isAutoColor} from "utilities";
+import {clamp, getColorForTheme, getHeaderNumericValue, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -336,13 +336,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get intensityConversionConfig(): IntensityConfig {
-        const frame = this.effectiveFrame;
+        const frameInfo = this.effectiveFrame?.frameInfo;
         let config: IntensityConfig = {};
-        if (frame) {
-            if (frame.frameInfo?.beamTable?.length > 0) {
-                const beam = frame.frameInfo.beamTable[0];
+        if (frameInfo) {
+            if (frameInfo.beamTable?.length > 0) {
+                const beam = frameInfo.beamTable[0];
                 config["bmaj"] = beam.majorAxis;
                 config["bmin"] = beam.minorAxis;
+            }
+            const cdelta1 = frameInfo.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT1");
+            const cdelta2 = frameInfo.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT2");
+            if (cdelta1 && cdelta2) {
+                config["cdelta1"] = getHeaderNumericValue(cdelta1);
+                config["cdelta2"] = getHeaderNumericValue(cdelta2);
             }
         }
         return config;

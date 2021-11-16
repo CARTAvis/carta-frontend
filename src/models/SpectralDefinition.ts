@@ -190,7 +190,7 @@ export const IsIntensitySupported = (unitStr: string): boolean => {
     return FindIntensityUnitType(unitStr) !== IntensityUnitType.Unsupported;
 };
 
-export type IntensityConfig = {bmaj?: number; bmin?: number; cdelt1?: number; cdelta2?: number; isCTYPE3freq?: boolean};
+export type IntensityConfig = {bmaj?: number; bmin?: number; cdelta1?: number; cdelta2?: number; isCTYPE3freq?: boolean};
 export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityConfig = undefined): string[] => {
     if (IsIntensitySupported(unitStr)) {
         let supportedConversions = [];
@@ -200,6 +200,9 @@ export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityC
             if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
                 supportedConversions.push(...JySr);
                 supportedConversions.push(...JyArcsec2);
+                if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
+                    supportedConversions.push(...JyPixel);
+                }
             }
         } else if (type === IntensityUnitType.JySr) {
             supportedConversions.push(...JySr);
@@ -207,14 +210,27 @@ export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityC
             if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
                 supportedConversions.push(...JyBeam);
             }
+            if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
+                supportedConversions.push(...JyPixel);
+            }
         } else if (type === IntensityUnitType.JyArcsec2) {
             supportedConversions.push(...JySr);
             supportedConversions.push(...JyArcsec2);
             if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
                 supportedConversions.push(...JyBeam);
             }
+            if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
+                supportedConversions.push(...JyPixel);
+            }
         } else if (type === IntensityUnitType.JyPixel) {
             supportedConversions.push(...JyPixel);
+            if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
+                supportedConversions.push(...JyArcsec2);
+                supportedConversions.push(...JySr);
+                if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
+                    supportedConversions.push(...JyBeam);
+                }
+            }
         } else if (type === IntensityUnitType.Kelvin) {
             supportedConversions.push(...Kelvins);
         }
@@ -234,14 +250,19 @@ const GetUnitScale = (unitStr: string): number => {
     return 1;
 };
 
-const JyBeamTOJySr = (bmaj: number, bmin: number, forward: boolean = true): number => {
+const JyBeamToJySr = (bmaj: number, bmin: number, forward: boolean = true): number => {
     const omega = (Math.PI * bmaj * bmin) / (4 * Math.log(2));
     return forward ? 1 / omega : omega;
 };
 
-const JySrTOJyArcsec2 = (forward: boolean = true): number => {
+const JySrToJyArcsec2 = (forward: boolean = true): number => {
     const constant = 2.350443 * 1e-11;
     return forward ? constant : 1 / constant;
+};
+
+const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, forward: boolean = true): number => {
+    const coefficient = ((cdelta1 * cdelta2) / 2.350443) * 1e-11;
+    return forward ? coefficient : 1 / coefficient;
 };
 
 export const GetIntensityConversion = (unitFrom: string, unitTo: string, config: IntensityConfig = undefined): ((values: Float32Array | Float64Array) => Float32Array | Float64Array) => {
@@ -261,17 +282,29 @@ export const GetIntensityConversion = (unitFrom: string, unitTo: string, config:
     } else {
         let conversion = undefined;
         if (unitFromType === IntensityUnitType.JyBeam && unitToType === IntensityUnitType.JySr && isFinite(config?.bmaj) && isFinite(config?.bmin)) {
-            conversion = value => value * JyBeamTOJySr(config.bmaj, config.bmin) * scale;
+            conversion = value => value * JyBeamToJySr(config.bmaj, config.bmin) * scale;
         } else if (unitFromType === IntensityUnitType.JySr && unitToType === IntensityUnitType.JyBeam && isFinite(config?.bmaj) && isFinite(config?.bmin)) {
-            conversion = value => value * JyBeamTOJySr(config.bmaj, config.bmin, false) * scale;
+            conversion = value => value * JyBeamToJySr(config.bmaj, config.bmin, false) * scale;
         } else if (unitFromType === IntensityUnitType.JyBeam && unitToType === IntensityUnitType.JyArcsec2 && isFinite(config?.bmaj) && isFinite(config?.bmin)) {
-            conversion = value => value * JyBeamTOJySr(config.bmaj, config.bmin) * JySrTOJyArcsec2() * scale;
+            conversion = value => value * JyBeamToJySr(config.bmaj, config.bmin) * JySrToJyArcsec2() * scale;
         } else if (unitFromType === IntensityUnitType.JyArcsec2 && unitToType === IntensityUnitType.JyBeam && isFinite(config?.bmaj) && isFinite(config?.bmin)) {
-            conversion = value => value * JyBeamTOJySr(config.bmaj, config.bmin, false) * JySrTOJyArcsec2(false) * scale;
+            conversion = value => value * JyBeamToJySr(config.bmaj, config.bmin, false) * JySrToJyArcsec2(false) * scale;
         } else if (unitFromType === IntensityUnitType.JySr && unitToType === IntensityUnitType.JyArcsec2) {
-            conversion = value => value * JySrTOJyArcsec2() * scale;
+            conversion = value => value * JySrToJyArcsec2() * scale;
         } else if (unitFromType === IntensityUnitType.JyArcsec2 && unitToType === IntensityUnitType.JySr) {
-            conversion = value => value * JySrTOJyArcsec2(false) * scale;
+            conversion = value => value * JySrToJyArcsec2(false) * scale;
+        } else if (unitFromType === IntensityUnitType.JyPixel && unitToType === IntensityUnitType.JyArcsec2 && isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
+            conversion = value => value * JyPixelToJyArcsec2(config.cdelta1, config.cdelta2) * scale;
+        } else if (unitFromType === IntensityUnitType.JyArcsec2 && unitToType === IntensityUnitType.JyPixel && isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
+            conversion = value => value * JyPixelToJyArcsec2(config.cdelta1, config.cdelta2, false) * scale;
+        } else if (unitFromType === IntensityUnitType.JyPixel && unitToType === IntensityUnitType.JySr && isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
+            conversion = value => value * JyPixelToJyArcsec2(config.cdelta1, config.cdelta2) * JySrToJyArcsec2(false) * scale;
+        } else if (unitFromType === IntensityUnitType.JySr && unitToType === IntensityUnitType.JyPixel && isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
+            conversion = value => value * JyPixelToJyArcsec2(config.cdelta1, config.cdelta2, false) * JySrToJyArcsec2(false) * scale;
+        } else if (unitFromType === IntensityUnitType.JyPixel && unitToType === IntensityUnitType.JyBeam && isFinite(config?.bmaj) && isFinite(config?.bmin) && isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
+            conversion = value => value * JyPixelToJyArcsec2(config.cdelta1, config.cdelta2) * JySrToJyArcsec2(false) * JyBeamToJySr(config.bmaj, config.bmin, false) * scale;
+        } else if (unitFromType === IntensityUnitType.JyBeam && unitToType === IntensityUnitType.JyPixel) {
+            conversion = value => value * JyPixelToJyArcsec2(config.cdelta1, config.cdelta2, false) * JySrToJyArcsec2() * JyBeamToJySr(config.bmaj, config.bmin) * scale;
         }
         return conversion
             ? (values: Float32Array | Float64Array): Float32Array | Float64Array => {
