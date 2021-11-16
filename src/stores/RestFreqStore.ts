@@ -19,6 +19,10 @@ export class RestFreqStore {
         return !isFinite(this.customVal);
     }
 
+    @computed get resetDisable(): boolean {
+        return !isFinite(this.headerVal);
+    }
+
     @computed get defaultInfo(): string {
         return isFinite(this.headerVal) ? `Header: ${this.headerVal} ${this.headerUnit}` : undefined;
     }
@@ -46,6 +50,10 @@ export class RestFreqStore {
     };
 
     private static convertUnit = (restFreq: number) => {
+        if (!isFinite(restFreq)) {
+            return {value: undefined, unit: FrequencyUnit.MHZ};
+        }
+
         if (restFreq >= 1e9) {
             return {value: restFreq / 1e9, unit: FrequencyUnit.GHZ};
         } else if (restFreq >= 1e6) {

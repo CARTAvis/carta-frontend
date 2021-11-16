@@ -52,7 +52,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         return <MenuItem key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    private renderRestFreqInput = (frameOption) => {
+    private renderRestFreqInput = frameOption => {
         const restFreqStore = AppStore.Instance.frames[frameOption.frameIndex]?.restFreqStore;
         return (
             <div className="freq-input">
@@ -64,14 +64,14 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     selectAllOnFocus={true}
                     onValueChanged={restFreqStore.setCustomVal}
                     onValueCleared={restFreqStore.restoreDefaults}
-                    resetDisabled={false}
+                    resetDisabled={restFreqStore.resetDisable}
                     tooltipContent={restFreqStore.defaultInfo}
                     tooltipPlacement={"bottom"}
                     focused={frameOption.frameIndex === this.widgetStore.selectedFrameIndex}
                 />
                 <HTMLSelect disabled={frameOption.disable} options={Object.values(FrequencyUnit)} value={restFreqStore.customUnit} onChange={ev => restFreqStore.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
             </div>
-        )
+        );
     };
 
     render() {
@@ -108,16 +108,12 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                             itemRenderer={this.renderFrameOptions}
                             popoverProps={{minimal: true, position: PopoverPosition.AUTO_END}}
                         >
-                            <Button
-                                text={fileText}
-                                rightIcon="double-caret-vertical"
-                                alignText={Alignment.LEFT}
-                            />
+                            <Button text={fileText} rightIcon="double-caret-vertical" alignText={Alignment.LEFT} />
                         </Select>
                     </FormGroup>
                     {this.renderRestFreqInput(inputFrame)}
                 </div>
-            )
+            );
         } else {
             restFreqPanel = (
                 <div className="panel-container">
@@ -126,10 +122,12 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                         return (
                             <React.Fragment key={index}>
                                 <FormGroup inline={true} label="Source" className="name-text" disabled={option.disable}>
-                                    <Text className={style} ellipsize={true}>
+                                    <Text className={style} ellipsize={true} title={option.label}>
                                         {option.label.slice(0, -FILENAME_END_LEN)}
                                     </Text>
-                                    <Text className={classNames(style, "end-part")}>{option.label.slice(-FILENAME_END_LEN)}</Text>
+                                    <Text className={classNames(style, "end-part")} title={option.label}>
+                                        {option.label.slice(-FILENAME_END_LEN)}
+                                    </Text>
                                 </FormGroup>
                                 {this.renderRestFreqInput(option)}
                                 {index !== appStore.frames.length - 1 ? <MenuDivider /> : null}
