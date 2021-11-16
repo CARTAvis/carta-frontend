@@ -84,6 +84,7 @@ export class FileBrowserDialogComponent extends React.Component {
             fileBrowserStore.setImportingRegions(true);
             fileBrowserStore.showLoadingDialog();
             await appStore.importRegion(fileBrowserStore.fileList.directory, file.fileInfo.name, file.fileInfo.type);
+            fileBrowserStore.resetLoadingStates();
         }
 
         fileBrowserStore.saveStartingDirectory();
@@ -495,7 +496,7 @@ export class FileBrowserDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                helpType={HelpType.FILE_Browser}
+                helpType={HelpType.FILE_BROWSER}
                 minWidth={400}
                 minHeight={400}
                 defaultWidth={this.defaultWidth}

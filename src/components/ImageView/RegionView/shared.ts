@@ -37,8 +37,29 @@ export function transformedImageToCanvasPos(imageX: number, imageY: number, fram
     let imagePos = {x: imageX, y: imageY};
     if (frame.spatialReference) {
         imagePos = frame.spatialTransform.transformCoordinate(imagePos, true);
-        return imageToCanvasPos(imagePos.x, imagePos.y, frame.spatialReference.requiredFrameView, layerWidth, layerHeight, frame.spatialTransform);
+        return imageToCanvasPos(imagePos.x, imagePos.y, frame.spatialReference.requiredFrameViewForRegionRender, layerWidth, layerHeight, frame.spatialTransform);
     }
 
-    return imageToCanvasPos(imagePos.x, imagePos.y, frame.requiredFrameView, layerWidth, layerHeight, frame.spatialTransform);
+    return imageToCanvasPos(imagePos.x, imagePos.y, frame.requiredFrameViewForRegionRender, layerWidth, layerHeight, frame.spatialTransform);
+}
+
+// Adjust the position in the stage of {origin: o', scale: z'} to the stage of {origin: (0, 0), scale: 1}.
+// If (x, y) in stage {origin: (0, 0), scale: 1} and (x', y') in stage {origin: o', scale: z'} are the same point,
+// the coordinate transformation between (x, y) and (x', y') would be x * 1 + 0 = x' * z' + o'
+export function adjustPosToUnityStage(pos: Point2D, stage: any): Point2D {
+    const origin = stage?.getPosition();
+    const zoom = stage?.scaleX();
+    if (pos && isFinite(pos.x) && isFinite(pos.y) && origin && isFinite(origin.x) && isFinite(origin.y) && isFinite(zoom)) {
+        return {x: pos.x * zoom + origin.x, y: pos.y * zoom + origin.y};
+    }
+    return undefined;
+}
+
+export function adjustPosToMutatedStage(pos: Point2D, stage: any): Point2D {
+    const origin = stage?.getPosition();
+    const zoom = stage?.scaleX();
+    if (pos && isFinite(pos.x) && isFinite(pos.y) && origin && isFinite(origin.x) && isFinite(origin.y) && isFinite(zoom)) {
+        return {x: (pos.x - origin.x) / zoom, y: (pos.y - origin.y) / zoom};
+    }
+    return undefined;
 }

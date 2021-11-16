@@ -30,6 +30,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     componentDidUpdate() {
+        AppStore.Instance.resetImageRatio();
         if (PreferenceStore.Instance.limitOverlayRedraw) {
             this.throttledRenderCanvas();
         } else {
@@ -38,14 +39,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     updateImageDimensions() {
-        this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio;
-        this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio;
+        this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
+        this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
     }
 
     renderCanvas = () => {
         const settings = this.props.overlaySettings;
         const frame = this.props.frame;
-        const pixelRatio = devicePixelRatio;
+        const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
 
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
@@ -131,12 +132,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
+        const w = this.props.overlaySettings.viewWidth;
+        const h = this.props.overlaySettings.viewHeight;
+
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
         const frameView = refFrame.requiredFrameView;
         const framePadding = this.props.overlaySettings.padding;
-        const w = this.props.overlaySettings.viewWidth;
-        const h = this.props.overlaySettings.viewHeight;
         const moving = frame.moving;
         const system = this.props.overlaySettings.global.system;
         const globalColor = this.props.overlaySettings.global.color;
@@ -152,6 +154,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringStart = frame.distanceMeasuring.transformedStart;
         const distanceMeasuringFinish = frame.distanceMeasuring.transformedFinish;
         const title = frame.titleCustomText;
+        const ratio = AppStore.Instance.imageRatio;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image

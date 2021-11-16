@@ -5,6 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
+import {Tick} from "chart.js";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
@@ -253,9 +254,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    private calculateFormattedValues(values: number[]) {
-        if (!this.cachedFormattedCoordinates || this.cachedFormattedCoordinates.length !== values.length) {
-            this.cachedFormattedCoordinates = new Array(values.length);
+    private calculateFormattedValues(ticks: Tick[]) {
+        if (!this.cachedFormattedCoordinates || this.cachedFormattedCoordinates.length !== ticks.length) {
+            this.cachedFormattedCoordinates = new Array(ticks.length);
         }
         if (!this.frame || !this.profileStore || !this.widgetStore) {
             return;
@@ -265,14 +266,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         astString.add("System", OverlayStore.Instance.global.explicitSystem);
 
         if (this.widgetStore.isXProfile) {
-            for (let i = 0; i < values.length; i++) {
-                const pointWCS = transformPoint(this.frame.wcsInfo, {x: values[i], y: this.profileStore.y});
+            for (let i = 0; i < ticks.length; i++) {
+                const pointWCS = transformPoint(this.frame.wcsInfo, {x: ticks[i].value, y: this.profileStore.y});
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
                 this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined, astString.toString(), true).x;
             }
         } else {
-            for (let i = 0; i < values.length; i++) {
-                const pointWCS = transformPoint(this.frame.wcsInfo, {x: this.profileStore.x, y: values[i]});
+            for (let i = 0; i < ticks.length; i++) {
+                const pointWCS = transformPoint(this.frame.wcsInfo, {x: this.profileStore.x, y: ticks[i].value});
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
                 this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y, astString.toString(), true).y;
             }
@@ -326,7 +327,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return false;
     }
 
-    private formatProfileAst = (v: number, i: number, values: number[]) => {
+    private formatProfileAst = (v: number, i: number, values: Tick[]) => {
         if (!this.frame || !this.profileStore) {
             return v;
         }

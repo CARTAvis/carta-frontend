@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService} from "services";
 
@@ -12,6 +12,7 @@ export enum PreferenceKeys {
 
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",
+    GLOBAL_FILE_FILTER_MODE = "fileFilterMode",
     GLOBAL_LAYOUT = "layout",
     GLOBAL_CURSOR_POSITION = "cursorPosition",
     GLOBAL_ZOOM_MODE = "zoomMode",
@@ -108,6 +109,7 @@ const DEFAULTS = {
     GLOBAL: {
         theme: Theme.AUTO,
         autoLaunch: true,
+        fileFilterMode: FileFilterMode.Content,
         layout: PresetLayout.DEFAULT,
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT,
@@ -212,6 +214,10 @@ export class PreferenceStore {
 
     @computed get autoLaunch(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
+    }
+
+    @computed get fileFilterMode(): FileFilterMode {
+        return this.preferences.get(PreferenceKeys.GLOBAL_FILE_FILTER_MODE) ?? DEFAULTS.GLOBAL.fileFilterMode;
     }
 
     @computed get fileSortingString(): string {
@@ -595,6 +601,7 @@ export class PreferenceStore {
         this.clearPreferences([
             PreferenceKeys.GLOBAL_THEME,
             PreferenceKeys.GLOBAL_AUTOLAUNCH,
+            PreferenceKeys.GLOBAL_FILE_FILTER_MODE,
             PreferenceKeys.GLOBAL_LAYOUT,
             PreferenceKeys.GLOBAL_CURSOR_POSITION,
             PreferenceKeys.GLOBAL_ZOOM_MODE,

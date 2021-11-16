@@ -33,9 +33,9 @@ export class DistanceMeasuringStore {
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("Color(Curve)", AstColorsIndex.DISTANCE_MEASURE);
-        astString.add("Width(Curve)", DistanceMeasuringStore.DEFAULT_WIDTH);
+        astString.add("Width(Curve)", DistanceMeasuringStore.DEFAULT_WIDTH * AppStore.Instance.imageRatio);
         astString.add("Color(Strings)", AstColorsIndex.DISTANCE_MEASURE);
-        astString.add("Size(Strings)", DistanceMeasuringStore.DEFAULT_FONTSIZE);
+        astString.add("Size(Strings)", DistanceMeasuringStore.DEFAULT_FONTSIZE * AppStore.Instance.imageRatio);
         return astString.toString();
     }
 
