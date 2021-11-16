@@ -2,7 +2,7 @@ import {action, autorun, computed, observable, makeObservable, runInAction, reac
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, DistanceMeasuringStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, ColorbarStore, ContourConfigStore, ContourStore, DistanceMeasuringStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RestFreqStore, RenderConfigStore} from "stores";
 import {
     ChannelInfo,
     CatalogControlMap,
@@ -32,8 +32,6 @@ import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel,
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec, ProtobufProcessing} from "utilities";
-import {ColorbarStore} from "./ColorbarStore";
-import {RestFreqStore} from "./RestFreqStore";
 
 export interface FrameInfo {
     fileId: number;
