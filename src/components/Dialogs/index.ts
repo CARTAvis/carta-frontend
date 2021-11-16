@@ -12,5 +12,4 @@ export * from "./LayoutDialog/SaveLayoutDialogComponent";
 export * from "./ContourDialog/ContourDialogComponent";
 export * from "./CodeSnippetDialog/CodeSnippetDialogComponent";
 export * from "./StokesDialog/StokesDialogComponent";
-export * from "./RestFreqDialog/RestFreqDialogComponent";
 export * from "./CatalogQueryDialog/CatalogOnlineQueryDialogComponent";

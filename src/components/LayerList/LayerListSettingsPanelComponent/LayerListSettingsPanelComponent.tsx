@@ -48,8 +48,30 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
     }
 
     private renderFrameOptions = (val: number, itemProps: IItemRendererProps) => {
-        const option = this.widgetStore.frameOptions.find(option => option.value === val);
-        return <MenuItem key={option?.value} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        const option = this.widgetStore.restFreqFrameOptions.find(option => option.frameIndex === val);
+        return <MenuItem key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+    };
+
+    private renderRestFreqInput = (frameOption) => {
+        const restFreqStore = AppStore.Instance.frames[frameOption.frameIndex]?.restFreqStore;
+        return (
+            <div className="freq-input">
+                <ClearableNumericInputComponent
+                    label="Rest frequency"
+                    value={restFreqStore.customVal}
+                    disabled={frameOption.disable}
+                    placeholder="rest frequency"
+                    selectAllOnFocus={true}
+                    onValueChanged={restFreqStore.setCustomVal}
+                    onValueCleared={restFreqStore.restoreDefaults}
+                    resetDisabled={false}
+                    tooltipContent={restFreqStore.defaultInfo}
+                    tooltipPlacement={"bottom"}
+                    focused={frameOption.frameIndex === this.widgetStore.selectedFrameIndex}
+                />
+                <HTMLSelect disabled={frameOption.disable} options={Object.values(FrequencyUnit)} value={restFreqStore.customUnit} onChange={ev => restFreqStore.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
+            </div>
+        )
     };
 
     render() {
@@ -70,17 +92,17 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         );
 
         const selectedFrameIndex = this.widgetStore.selectedFrameIndex;
-        const frameOptions = this.widgetStore.frameOptions;
+        const frameOptions = this.widgetStore.restFreqFrameOptions;
         let restFreqPanel = null;
         if (appStore.frames.length > 10) {
-            const fileText = frameOptions.find(option => option.value === selectedFrameIndex)?.label;
-            const inputFrame = frameOptions.find(option => option.value === (selectedFrameIndex === -1 ? appStore.activeFrameIndex : selectedFrameIndex));
+            const fileText = frameOptions.find(option => option.frameIndex === selectedFrameIndex)?.label;
+            const inputFrame = frameOptions.find(option => option.frameIndex === (selectedFrameIndex === -1 ? appStore.activeFrameIndex : selectedFrameIndex));
             restFreqPanel = (
                 <div className="panel-container">
                     <FormGroup inline={true} label="Source" className="name-text">
                         <Select
                             filterable={false}
-                            items={this.widgetStore.frameOptions.map(option => option.value)}
+                            items={this.widgetStore.restFreqFrameOptions.map(option => option.frameIndex)}
                             activeItem={selectedFrameIndex}
                             onItemSelect={this.widgetStore.setSelectedFrameIndex}
                             itemRenderer={this.renderFrameOptions}
@@ -90,25 +112,10 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                                 text={fileText}
                                 rightIcon="double-caret-vertical"
                                 alignText={Alignment.LEFT}
-                                style={{width: 200}}
                             />
                         </Select>
                     </FormGroup>
-                    <div className="freq-input">
-                        <ClearableNumericInputComponent
-                            label="Rest frequency"
-                            value={0}
-                            disabled={inputFrame.disable}
-                            placeholder="rest frequency"
-                            selectAllOnFocus={true}
-                            onValueChanged={() => {}}
-                            onValueCleared={() => {}}
-                            resetDisabled={false}
-                            tooltipContent={"default"}
-                            tooltipPlacement={"bottom"}
-                        />
-                        <HTMLSelect disabled={inputFrame.disable} options={Object.values(FrequencyUnit)} value={"Hz"} onChange={ev => console.log(ev.currentTarget.value as FrequencyUnit)} />
-                    </div>
+                    {this.renderRestFreqInput(inputFrame)}
                 </div>
             )
         } else {
@@ -122,24 +129,9 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                                     <Text className={style} ellipsize={true}>
                                         {option.label.slice(0, -FILENAME_END_LEN)}
                                     </Text>
-                                    <Text className={style + " end-part"}>{option.label.slice(-FILENAME_END_LEN)}</Text>
+                                    <Text className={classNames(style, "end-part")}>{option.label.slice(-FILENAME_END_LEN)}</Text>
                                 </FormGroup>
-                                <div className="freq-input">
-                                    <ClearableNumericInputComponent
-                                        label="Rest frequency"
-                                        value={0}
-                                        disabled={option.disable}
-                                        placeholder="rest frequency"
-                                        selectAllOnFocus={true}
-                                        onValueChanged={() => {}}
-                                        onValueCleared={() => {}}
-                                        resetDisabled={false}
-                                        tooltipContent={"default"}
-                                        tooltipPlacement={"bottom"}
-                                        focused={index === selectedFrameIndex}
-                                    />
-                                    <HTMLSelect disabled={option.disable} options={Object.values(FrequencyUnit)} value={"Hz"} onChange={ev => console.log(ev.currentTarget.value as FrequencyUnit)} />
-                                </div>
+                                {this.renderRestFreqInput(option)}
                                 {index !== appStore.frames.length - 1 ? <MenuDivider /> : null}
                             </React.Fragment>
                         );

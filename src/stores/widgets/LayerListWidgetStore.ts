@@ -23,15 +23,21 @@ export class LayerListWidgetStore {
         this.selectedFrameIndex = -1;
     };
 
-    @computed get frameOptions() {
+    @computed get restFreqFrameOptions() {
         const appStore = AppStore.Instance;
-        let options = [{label: "Active", value: -1, disable: false, active: false}];
+        let options = [{
+            label: "Active",
+            frameIndex: -1,
+            active: false,
+            disable: false
+        }];
+
         appStore.frames?.forEach((frame, index) => {
             options.push({
                 label: index + ": " + frame.filename + (index === appStore.activeFrameIndex ? " (Active)" : ""),
-                value: index,
-                disable: !frame.isRestFreqEditable,
-                active: index === appStore.activeFrameIndex
+                frameIndex: index,
+                active: index === appStore.activeFrameIndex,
+                disable: !frame.isRestFreqEditable
             });
         });
         return options;
