@@ -17,6 +17,7 @@ type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; 
 type Statistic = {mean: number; count: number; validCount: number; std: number; min: number; max: number; rms: number};
 
 export class CatalogPlotWidgetStore {
+    private static readonly Decimals = 4;
     @observable indicatorInfo: Point2D;
     @observable scatterborder: Border;
     @observable dragmode: DragMode;
@@ -114,10 +115,15 @@ export class CatalogPlotWidgetStore {
 
     @computed get fittingResultString(): string {
         if (this.showFittingResult) {
-            return `${this.yColumnName} = ${toExponential(this.fitting.intercept, 2)} + ${toExponential(this.fitting.slope, 2)} ${this.xColumnName} <br>cov00 = ${toExponential(this.fitting.cov00, 2)}, cov01 = ${toExponential(
-                this.fitting.cov01,
-                2
-            )}, cov11 = ${toExponential(this.fitting.cov11, 2)} <br>rss = ${toExponential(this.fitting.rss, 2)}`;
+            const sqrtCov00 = toExponential(Math.sqrt(this.fitting.cov00), CatalogPlotWidgetStore.Decimals);
+            const sqrtCov11 = toExponential(Math.sqrt(this.fitting.cov11), CatalogPlotWidgetStore.Decimals);
+            return `${this.yColumnName} = ${toExponential(this.fitting.intercept, CatalogPlotWidgetStore.Decimals)} + ${toExponential(this.fitting.slope, CatalogPlotWidgetStore.Decimals)} ${this.xColumnName} <br>cov00 = ${toExponential(
+                this.fitting.cov00,
+                CatalogPlotWidgetStore.Decimals
+            )}, cov01 = ${toExponential(this.fitting.cov01, CatalogPlotWidgetStore.Decimals)}, cov11 = ${toExponential(
+                this.fitting.cov11,
+                CatalogPlotWidgetStore.Decimals
+            )} <br>sqrt(cov00) = ${sqrtCov00}, sqrt(cov11) = ${sqrtCov11} <br>rss = ${toExponential(this.fitting.rss, CatalogPlotWidgetStore.Decimals)}`;
         }
         return "";
     }
@@ -136,10 +142,13 @@ export class CatalogPlotWidgetStore {
 
     @computed get statisticString(): string {
         if (this.enableStatistic && this.showStatisticResult) {
-            return `${this.statisticColumnName} - count: ${this.statistic.count}, valid count: ${this.statistic.validCount}, mean: ${toExponential(this.statistic.mean, 2)}, rms: ${toExponential(
+            return `${this.statisticColumnName} - count: ${this.statistic.count}, valid count: ${this.statistic.validCount}, mean: ${toExponential(this.statistic.mean, CatalogPlotWidgetStore.Decimals)}, rms: ${toExponential(
                 this.statistic.rms,
-                2
-            )}, stddev: ${toExponential(this.statistic.std, 2)}, min: ${toExponential(this.statistic.min, 2)}, max: ${toExponential(this.statistic.max, 2)}`;
+                CatalogPlotWidgetStore.Decimals
+            )}, stddev: ${toExponential(this.statistic.std, CatalogPlotWidgetStore.Decimals)}, min: ${toExponential(this.statistic.min, CatalogPlotWidgetStore.Decimals)}, max: ${toExponential(
+                this.statistic.max,
+                CatalogPlotWidgetStore.Decimals
+            )}`;
         }
         return "";
     }
