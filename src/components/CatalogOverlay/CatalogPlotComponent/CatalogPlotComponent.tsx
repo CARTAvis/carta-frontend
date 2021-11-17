@@ -332,7 +332,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 size = selectedSize;
                 for (let index = 0; index < selectedSize; index++) {
                     const selected = selectedPointIndices[index];
-                    if(isNaN(coords.wcsData[selected])) {
+                    if (isNaN(coords.wcsData[selected])) {
                         count = count - 1;
                     } else {
                         data.push(coords.wcsData[selected]);
@@ -340,7 +340,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 }
             } else {
                 for (let i = 0; i < coords.wcsData.length; i++) {
-                    if(isNaN(coords.wcsData[i])) {
+                    if (isNaN(coords.wcsData[i])) {
                         count = count - 1;
                     } else {
                         data.push(coords.wcsData[i]);
@@ -576,7 +576,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
-        let x = [], y = [];
+        let x = [],
+            y = [];
         if (selectedPointIndices.length === 0) {
             for (let index = 0; index < coords.wcsX.length; index++) {
                 if (!isNaN(coords.wcsX[index]) && !isNaN(coords.wcsY[index])) {

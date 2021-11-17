@@ -136,10 +136,10 @@ export class CatalogPlotWidgetStore {
 
     @computed get statisticString(): string {
         if (this.enableStatistic && this.showStatisticResult) {
-            return `${this.statisticColumnName} - count: ${this.statistic.count}, valid count: ${this.statistic.validCount}, mean: ${toExponential(this.statistic.mean, 2)}, rms: ${toExponential(this.statistic.rms, 2)}, stddev: ${toExponential(
-                this.statistic.std,
+            return `${this.statisticColumnName} - count: ${this.statistic.count}, valid count: ${this.statistic.validCount}, mean: ${toExponential(this.statistic.mean, 2)}, rms: ${toExponential(
+                this.statistic.rms,
                 2
-            )}, min: ${toExponential(this.statistic.min, 2)}, max: ${toExponential(this.statistic.max, 2)}`;
+            )}, stddev: ${toExponential(this.statistic.std, 2)}, min: ${toExponential(this.statistic.min, 2)}, max: ${toExponential(this.statistic.max, 2)}`;
         }
         return "";
     }
