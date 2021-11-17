@@ -62,7 +62,12 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     disabled={frameOption.disable}
                     placeholder="rest frequency"
                     selectAllOnFocus={true}
-                    onValueChanged={restFreqStore.setCustomVal}
+                    onValueChanged={val => {
+                        restFreqStore.setCustomVal(val);
+                        if (AppStore.Instance.frameNum <= 10) {
+                            this.widgetStore.resetSelectedFrameIndex();
+                        }
+                    }}
                     onValueCleared={restFreqStore.restoreDefaults}
                     resetDisabled={restFreqStore.resetDisable}
                     tooltipContent={restFreqStore.defaultInfo}
@@ -94,7 +99,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
         const selectedFrameIndex = this.widgetStore.selectedFrameIndex;
         const frameOptions = this.widgetStore.restFreqFrameOptions;
         let restFreqPanel = null;
-        if (appStore.frames.length > 10) {
+        if (appStore.frameNum > 10) {
             const fileText = frameOptions.find(option => option.frameIndex === selectedFrameIndex)?.label;
             const inputFrame = frameOptions.find(option => option.frameIndex === (selectedFrameIndex === -1 ? appStore.activeFrameIndex : selectedFrameIndex));
             restFreqPanel = (

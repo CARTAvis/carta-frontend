@@ -309,7 +309,6 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         widgetsStore.createFloatingSettingsWidget(LayerListComponent.WIDGET_CONFIG.title, this.props.id, LayerListComponent.WIDGET_CONFIG.type);
         if (layerListWidget) {
             layerListWidget.setSettingsTabId(LayerListSettingsTabs.REST_FREQ);
-            layerListWidget.resetSelectedFrameIndex();
             layerListWidget.setSelectedFrameIndex(selectedFrameIndex);
         }
     };

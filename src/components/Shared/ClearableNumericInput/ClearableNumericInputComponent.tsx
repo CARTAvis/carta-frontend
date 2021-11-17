@@ -28,12 +28,14 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
     componentDidMount() {
         if (this.props.focused) {
             this.inputRef?.current?.focus();
+            this.inputRef?.current?.select();
         }
     }
 
     componentDidUpdate() {
         if (this.props.focused) {
             this.inputRef?.current?.focus();
+            this.inputRef?.current?.select();
         }
     }
 
