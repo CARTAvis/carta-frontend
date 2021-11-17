@@ -14,7 +14,7 @@ export type XBorder = {xMin: number; xMax: number};
 export type DragMode = "zoom" | "pan" | "select" | "lasso" | "orbit" | "turntable" | false;
 
 type Fitting = {intercept: number; slope: number; cov00: number; cov01: number; cov11: number; rss: number};
-type Statistic = {mean: number; count: number; std: number; min: number; max: number; rms: number};
+type Statistic = {mean: number; count: number; validCount: number; std: number; min: number; max: number; rms: number};
 
 export class CatalogPlotWidgetStore {
     @observable indicatorInfo: Point2D;
@@ -101,7 +101,7 @@ export class CatalogPlotWidgetStore {
     };
 
     @action initStatistic = () => {
-        this.statistic = {mean: undefined, count: undefined, std: undefined, min: undefined, max: undefined, rms: undefined};
+        this.statistic = {mean: undefined, count: undefined, validCount: undefined, std: undefined, min: undefined, max: undefined, rms: undefined};
     };
 
     @computed get isScatterAutoScaled() {
@@ -131,12 +131,12 @@ export class CatalogPlotWidgetStore {
     }
 
     @computed get showStatisticResult(): boolean {
-        return !isNaN(this.statistic.count);
+        return !isNaN(this.statistic.count) && !isNaN(this.statistic.validCount);
     }
 
     @computed get statisticString(): string {
         if (this.enableStatistic && this.showStatisticResult) {
-            return `${this.statisticColumnName} - count: ${this.statistic.count}, mean: ${toExponential(this.statistic.mean, 2)}, rms: ${toExponential(this.statistic.rms, 2)}, stddev: ${toExponential(
+            return `${this.statisticColumnName} - count: ${this.statistic.count}, valid count: ${this.statistic.validCount}, mean: ${toExponential(this.statistic.mean, 2)}, rms: ${toExponential(this.statistic.rms, 2)}, stddev: ${toExponential(
                 this.statistic.std,
                 2
             )}, min: ${toExponential(this.statistic.min, 2)}, max: ${toExponential(this.statistic.max, 2)}`;

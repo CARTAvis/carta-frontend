@@ -324,25 +324,34 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (widgetStore?.enableStatistic && profileStore) {
             const selectedPointIndices = profileStore.getSortedIndices(profileStore.selectedPointIndices);
             const coords = profileStore.get1DPlotData(widgetStore.statisticColumnName);
-            let data = coords.wcsData;
+            let data = [];
             let size = coords.wcsData.length;
+            let count = size;
             const selectedSize = selectedPointIndices.length;
             if (selectedSize > 0) {
-                data = new Float64Array(selectedSize);
                 size = selectedSize;
                 for (let index = 0; index < selectedSize; index++) {
                     const selected = selectedPointIndices[index];
-                    data[index] = coords.wcsData[selected];
+                    if(isNaN(coords.wcsData[selected])) {
+                        count = count - 1;
+                    } else {
+                        data.push(coords.wcsData[selected]);
+                    }
+                }
+            } else {
+                for (let i = 0; i < coords.wcsData.length; i++) {
+                    if(isNaN(coords.wcsData[i])) {
+                        count = count - 1;
+                    } else {
+                        data.push(coords.wcsData[i]);
+                    }
                 }
             }
-            for (let i = 0; i < data.length; i++) {
-                data[i] = isNaN(data[i]) ? 0 : data[i];
-            }
             const mean = _.mean(data);
-            const std = Math.sqrt(_.sum(_.map(data, i => Math.pow(i - mean, 2))) / size);
-            const rms = Math.sqrt(_.sum(_.map(data, i => Math.pow(i, 2))) / size);
+            const std = Math.sqrt(_.sum(_.map(data, i => Math.pow(i - mean, 2))) / count);
+            const rms = Math.sqrt(_.sum(_.map(data, i => Math.pow(i, 2))) / count);
             const minMax = minMaxArray(data);
-            widgetStore.setStatistic({mean: mean, count: size, std: std, min: minMax.minVal, max: minMax.maxVal, rms: rms});
+            widgetStore.setStatistic({mean: mean, count: size, validCount: count, std: std, min: minMax.minVal, max: minMax.maxVal, rms: rms});
         }
     };
 
@@ -567,24 +576,24 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const profileStore = this.profileStore;
         const coords = profileStore.get2DPlotData(widgetStore.xColumnName, widgetStore.yColumnName, profileStore.catalogData);
-        let x: Float64Array, y: Float64Array;
+        let x = [], y = [];
         if (selectedPointIndices.length === 0) {
-            x = new Float64Array(coords.wcsX.length);
-            y = new Float64Array(coords.wcsY.length);
             for (let index = 0; index < coords.wcsX.length; index++) {
-                x[index] = isNaN(coords.wcsX[index]) ? 0 : coords.wcsX[index];
-                y[index] = isNaN(coords.wcsY[index]) ? 0 : coords.wcsY[index];
+                if (!isNaN(coords.wcsX[index]) && !isNaN(coords.wcsY[index])) {
+                    x.push(coords.wcsX[index]);
+                    y.push(coords.wcsY[index]);
+                }
             }
         } else {
-            x = new Float64Array(selectedPointIndices.length);
-            y = new Float64Array(selectedPointIndices.length);
             for (let index = 0; index < selectedPointIndices.length; index++) {
                 const selected = selectedPointIndices[index];
-                x[index] = isNaN(coords.wcsX[selected]) ? 0 : coords.wcsX[selected];
-                y[index] = isNaN(coords.wcsY[selected]) ? 0 : coords.wcsY[selected];
+                if (!isNaN(coords.wcsX[selected]) && !isNaN(coords.wcsY[selected])) {
+                    x.push(coords.wcsX[selected]);
+                    y.push(coords.wcsY[selected]);
+                }
             }
         }
-        const result = GSL.getFittingParameters(x, y);
+        const result = GSL.getFittingParameters(new Float64Array(x), new Float64Array(y));
         const minMaxX = minMaxArray(x);
         widgetStore.setMinMaxX(minMaxX);
         widgetStore.setFitting(result);
