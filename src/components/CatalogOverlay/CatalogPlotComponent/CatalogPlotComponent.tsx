@@ -329,7 +329,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             let count = size;
             const selectedSize = selectedPointIndices.length;
             if (selectedSize > 0) {
-                size = selectedSize;
+                count = size = selectedSize;
                 for (let index = 0; index < selectedSize; index++) {
                     const selected = selectedPointIndices[index];
                     if (isNaN(coords.wcsData[selected])) {
