@@ -27,6 +27,7 @@ export interface ClearableNumericInputProps extends INumericInputProps {
 export class ClearableNumericInputComponent extends React.Component<ClearableNumericInputProps> {
     componentDidMount() {
         if (this.props.focused) {
+            this.inputRef?.current?.setSelectionRange(0, 0);
             this.inputRef?.current?.focus();
             this.inputRef?.current?.select();
         }
@@ -34,6 +35,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
 
     componentDidUpdate() {
         if (this.props.focused) {
+            this.inputRef?.current?.setSelectionRange(0, 0);
             this.inputRef?.current?.focus();
             this.inputRef?.current?.select();
         }
