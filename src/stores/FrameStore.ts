@@ -1,8 +1,24 @@
-import {action, autorun, computed, observable, makeObservable, runInAction} from "mobx";
+import {action, autorun, computed, observable, makeObservable, runInAction, reaction} from "mobx";
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, DistanceMeasuringStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
+import {
+    AnimatorStore,
+    AppStore,
+    ASTSettingsString,
+    ColorbarStore,
+    ContourConfigStore,
+    ContourStore,
+    DistanceMeasuringStore,
+    LogStore,
+    OverlayBeamStore,
+    OverlayStore,
+    PreferenceStore,
+    RegionSetStore,
+    RegionStore,
+    RestFreqStore,
+    RenderConfigStore
+} from "stores";
 import {
     ChannelInfo,
     CatalogControlMap,
@@ -32,7 +48,6 @@ import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel,
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec, ProtobufProcessing} from "utilities";
-import {ColorbarStore} from "./ColorbarStore";
 
 export interface FrameInfo {
     fileId: number;
@@ -73,7 +88,6 @@ export class FrameStore {
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
-    public readonly headerRestFreq: number;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
@@ -81,6 +95,7 @@ export class FrameStore {
     private cursorMovementHandle: NodeJS.Timeout;
 
     public distanceMeasuring: DistanceMeasuringStore;
+    public restFreqStore: RestFreqStore;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
@@ -107,7 +122,6 @@ export class FrameStore {
     @observable contourStores: Map<number, ContourStore>;
     @observable moving: boolean;
     @observable zooming: boolean;
-    @observable customRestFreq: number;
 
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
@@ -424,7 +438,7 @@ export class FrameStore {
                 if (spectralType.code === "FREQ") {
                     // dummy variable to update velocity when the rest freq for spectral transform is changed
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const restFreq = this.customRestFreq;
+                    const restFreq = this.restFreqStore.restFreq;
 
                     const freqVal = channelInfo.rawValues[this.channel];
                     // convert frequency value to unit in GHz
@@ -929,8 +943,8 @@ export class FrameStore {
             }
         }
 
-        this.headerRestFreq = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue;
-        this.setCustomRestFreq(this.headerRestFreq);
+        const headerRestFreq = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue;
+        this.restFreqStore = new RestFreqStore(headerRestFreq);
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
@@ -953,6 +967,33 @@ export class FrameStore {
         this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
         this.cursorMoving = false;
 
+        reaction(
+            () => this.restFreqStore.restFreq,
+            restFreq => {
+                if (this.restFreqStore.inValidInput || !isFinite(restFreq)) {
+                    return;
+                }
+
+                if (this.wcsInfo3D) {
+                    AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
+                }
+                if (this.spectralFrame) {
+                    AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
+                }
+
+                if (this.spectralReference) {
+                    const spectralReference = this.spectralReference;
+                    this.clearSpectralReference();
+                    this.setSpectralReference(spectralReference);
+                } else if (this.secondarySpectralImages.length > 0) {
+                    for (const frame of this.secondarySpectralImages) {
+                        frame.clearSpectralReference();
+                        frame.setSpectralReference(this);
+                    }
+                }
+            }
+        );
+
         // requiredFrameViewForRegionRender is a copy of requiredFrameView in non-observable version,
         // to avoid triggering wasted render() in PointRegionComponent/SimpleShapeRegionComponent/LineSegmentRegionComponent
         autorun(() => {
@@ -974,7 +1015,7 @@ export class FrameStore {
             const unit = this.spectralUnit;
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
-            const restFreq = this.customRestFreq;
+            const restFreq = this.restFreqStore.restFreq;
             /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
                 if (!type && !unit) {
@@ -1159,31 +1200,6 @@ export class FrameStore {
                 }),
             FrameStore.ZoomInertiaDuration
         );
-    };
-
-    @action public updateCustomRestFreq = (restFreq: number) => {
-        if (!isFinite(restFreq) || restFreq === this.customRestFreq) {
-            return;
-        }
-
-        if (this.wcsInfo3D) {
-            AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
-        }
-        if (this.spectralFrame) {
-            AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
-        }
-        this.setCustomRestFreq(restFreq);
-
-        if (this.spectralReference) {
-            const spectralReference = this.spectralReference;
-            this.clearSpectralReference();
-            this.setSpectralReference(spectralReference);
-        } else if (this.secondarySpectralImages.length > 0) {
-            for (const frame of this.secondarySpectralImages) {
-                frame.clearSpectralReference();
-                frame.setSpectralReference(this);
-            }
-        }
     };
 
     public getRegion = (regionId: number): RegionStore => {
@@ -1431,10 +1447,6 @@ export class FrameStore {
         }
     }
 
-    @action private setCustomRestFreq = (restFreq: number) => {
-        this.customRestFreq = restFreq;
-    };
-
     @action
     private setChannelValues(values: number[]) {
         this.channelValues = values;
@@ -1460,7 +1472,7 @@ export class FrameStore {
         const spectralType = this.spectralAxis.type.code;
         if (IsSpectralTypeSupported(spectralType)) {
             // check RESTFRQ
-            if (isFinite(this.headerRestFreq)) {
+            if (isFinite(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue)) {
                 this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
             } else {
                 this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>();
