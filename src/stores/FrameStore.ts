@@ -1,8 +1,24 @@
-import {action, autorun, computed, observable, makeObservable, runInAction} from "mobx";
+import {action, autorun, computed, observable, makeObservable, runInAction, reaction} from "mobx";
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AnimatorStore, AppStore, ASTSettingsString, ContourConfigStore, ContourStore, DistanceMeasuringStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RegionStore, RenderConfigStore} from "stores";
+import {
+    AnimatorStore,
+    AppStore,
+    ASTSettingsString,
+    ColorbarStore,
+    ContourConfigStore,
+    ContourStore,
+    DistanceMeasuringStore,
+    LogStore,
+    OverlayBeamStore,
+    OverlayStore,
+    PreferenceStore,
+    RegionSetStore,
+    RegionStore,
+    RestFreqStore,
+    RenderConfigStore
+} from "stores";
 import {
     ChannelInfo,
     CatalogControlMap,
@@ -28,11 +44,10 @@ import {
     ZoomPoint,
     POLARIZATION_LABELS
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, getFormattedWCSPoint, getPixelSize} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, subtract2D, getFormattedWCSPoint, getPixelSize} from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec, ProtobufProcessing} from "utilities";
-import {ColorbarStore} from "./ColorbarStore";
 
 export interface FrameInfo {
     fileId: number;
@@ -59,10 +74,13 @@ export class FrameStore {
     private readonly backendService: BackendService;
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
+    private readonly initialCenter: Point2D;
 
     private spectralTransformAST: AST.FrameSet;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
     private zoomTimeoutHandler;
+
+    public requiredFrameViewForRegionRender: FrameView;
 
     public readonly wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
@@ -70,7 +88,6 @@ export class FrameStore {
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
-    public readonly headerRestFreq: number;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
@@ -78,6 +95,7 @@ export class FrameStore {
     private cursorMovementHandle: NodeJS.Timeout;
 
     public distanceMeasuring: DistanceMeasuringStore;
+    public restFreqStore: RestFreqStore;
 
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
@@ -104,7 +122,6 @@ export class FrameStore {
     @observable contourStores: Map<number, ContourStore>;
     @observable moving: boolean;
     @observable zooming: boolean;
-    @observable customRestFreq: number;
 
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
@@ -127,6 +144,10 @@ export class FrameStore {
         const extName =
             this.frameInfo?.fileInfoExtended?.computedEntries?.length >= 3 && this.frameInfo?.fileInfoExtended?.computedEntries[2]?.name === "Extension name" ? `_${this.frameInfo.fileInfoExtended.computedEntries[2]?.value}` : "";
         return this.frameInfo.hdu && this.frameInfo.hdu !== "" && this.frameInfo.hdu !== "0" ? `${this.frameInfo.fileInfo.name}.HDU_${this.frameInfo.hdu}${extName}` : this.frameInfo.fileInfo.name;
+    }
+
+    @computed get centerMovement(): Point2D {
+        return subtract2D(this.initialCenter, this.center);
     }
 
     @computed get regionSet(): RegionSetStore {
@@ -199,7 +220,7 @@ export class FrameStore {
                 };
             }
 
-            const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+            const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
             // Required image dimensions
             const imageWidth = (pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
             const imageHeight = (pixelRatio * this.renderHeight) / this.zoomLevel;
@@ -220,17 +241,8 @@ export class FrameStore {
     }
 
     @computed get spatialTransform() {
-        if (this.spatialReference && this.spatialTransformAST) {
-            const center = transformPoint(this.spatialTransformAST, this.spatialReference.center, false);
-            // Try use center of the screen as a reference point
-            if (!isAstBadPoint(center)) {
-                return new Transform2D(this.spatialTransformAST, center);
-            } else {
-                // Otherwise use the center of the image
-                return new Transform2D(this.spatialTransformAST, {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5});
-            }
-        }
-        return null;
+        const imageCenter = {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5};
+        return this.spatialReference && this.spatialTransformAST ? new Transform2D(this.spatialTransformAST, imageCenter) : null;
     }
 
     @computed get transformedWcsInfo() {
@@ -426,7 +438,7 @@ export class FrameStore {
                 if (spectralType.code === "FREQ") {
                     // dummy variable to update velocity when the rest freq for spectral transform is changed
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const restFreq = this.customRestFreq;
+                    const restFreq = this.restFreqStore.restFreq;
 
                     const freqVal = channelInfo.rawValues[this.channel];
                     // convert frequency value to unit in GHz
@@ -683,7 +695,7 @@ export class FrameStore {
     @computed
     private get calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
-        const pixelRatio = (this.renderHiDPI ? devicePixelRatio : 1.0) / this.aspectRatio;
+        const pixelRatio = (this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0) / this.aspectRatio;
 
         if (imageWidth <= 0) {
             return 1.0;
@@ -694,7 +706,7 @@ export class FrameStore {
     @computed
     private get calculateZoomY() {
         const imageHeight = this.frameInfo.fileInfoExtended.height;
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+        const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
         if (imageHeight <= 0) {
             return 1.0;
         }
@@ -776,6 +788,7 @@ export class FrameStore {
         this.wcsInfo3D = null;
         this.validWcs = false;
         this.frameInfo = frameInfo;
+        this.initialCenter = {x: (this.frameInfo.fileInfoExtended.width - 1) / 2.0, y: (this.frameInfo.fileInfoExtended.height - 1) / 2.0};
         this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
         this.stokes = 0;
@@ -930,8 +943,8 @@ export class FrameStore {
             }
         }
 
-        this.headerRestFreq = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue;
-        this.setCustomRestFreq(this.headerRestFreq);
+        const headerRestFreq = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue;
+        this.restFreqStore = new RestFreqStore(headerRestFreq);
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
@@ -954,6 +967,41 @@ export class FrameStore {
         this.cursorValue = {position: {x: NaN, y: NaN}, channel: 0, value: NaN};
         this.cursorMoving = false;
 
+        reaction(
+            () => this.restFreqStore.restFreq,
+            restFreq => {
+                if (this.restFreqStore.inValidInput || !isFinite(restFreq)) {
+                    return;
+                }
+
+                if (this.wcsInfo3D) {
+                    AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
+                }
+                if (this.spectralFrame) {
+                    AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
+                }
+
+                if (this.spectralReference) {
+                    const spectralReference = this.spectralReference;
+                    this.clearSpectralReference();
+                    this.setSpectralReference(spectralReference);
+                } else if (this.secondarySpectralImages.length > 0) {
+                    for (const frame of this.secondarySpectralImages) {
+                        frame.clearSpectralReference();
+                        frame.setSpectralReference(this);
+                    }
+                }
+            }
+        );
+
+        // requiredFrameViewForRegionRender is a copy of requiredFrameView in non-observable version,
+        // to avoid triggering wasted render() in PointRegionComponent/SimpleShapeRegionComponent/LineSegmentRegionComponent
+        autorun(() => {
+            if (this.requiredFrameView) {
+                this.requiredFrameViewForRegionRender = this.requiredFrameView;
+            }
+        });
+
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing
             if (this.isRenderable && this.zoomLevel <= 0) {
@@ -967,7 +1015,7 @@ export class FrameStore {
             const unit = this.spectralUnit;
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
-            const restFreq = this.customRestFreq;
+            const restFreq = this.restFreqStore.restFreq;
             /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
                 if (!type && !unit) {
@@ -1152,31 +1200,6 @@ export class FrameStore {
                 }),
             FrameStore.ZoomInertiaDuration
         );
-    };
-
-    @action public updateCustomRestFreq = (restFreq: number) => {
-        if (!isFinite(restFreq) || restFreq === this.customRestFreq) {
-            return;
-        }
-
-        if (this.wcsInfo3D) {
-            AST.set(this.wcsInfo3D, `RestFreq=${restFreq} Hz`);
-        }
-        if (this.spectralFrame) {
-            AST.set(this.spectralFrame, `RestFreq=${restFreq} Hz`);
-        }
-        this.setCustomRestFreq(restFreq);
-
-        if (this.spectralReference) {
-            const spectralReference = this.spectralReference;
-            this.clearSpectralReference();
-            this.setSpectralReference(spectralReference);
-        } else if (this.secondarySpectralImages.length > 0) {
-            for (const frame of this.secondarySpectralImages) {
-                frame.clearSpectralReference();
-                frame.setSpectralReference(this);
-            }
-        }
     };
 
     public getRegion = (regionId: number): RegionStore => {
@@ -1424,10 +1447,6 @@ export class FrameStore {
         }
     }
 
-    @action private setCustomRestFreq = (restFreq: number) => {
-        this.customRestFreq = restFreq;
-    };
-
     @action
     private setChannelValues(values: number[]) {
         this.channelValues = values;
@@ -1453,7 +1472,7 @@ export class FrameStore {
         const spectralType = this.spectralAxis.type.code;
         if (IsSpectralTypeSupported(spectralType)) {
             // check RESTFRQ
-            if (isFinite(this.headerRestFreq)) {
+            if (isFinite(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue)) {
                 this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
             } else {
                 this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>();
@@ -1712,7 +1731,7 @@ export class FrameStore {
         }
     }
 
-    @action fitZoom = () => {
+    @action fitZoom = (): number => {
         if (this.spatialReference) {
             // Calculate midpoint of image
             this.initCenter();
@@ -1728,13 +1747,16 @@ export class FrameStore {
             const {minPoint, maxPoint} = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
             const rangeY = maxPoint.y - minPoint.y;
-            const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+            const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
             const zoomX = (this.spatialReference.renderWidth * pixelRatio) / rangeX;
             const zoomY = (this.spatialReference.renderHeight * pixelRatio) / rangeY;
-            this.spatialReference.setZoom(Math.min(zoomX, zoomY), true);
+            const zoom = Math.min(zoomX, zoomY);
+            this.spatialReference.setZoom(zoom, true);
+            return zoom;
         } else {
             this.zoomLevel = this.zoomLevelForFit;
             this.initCenter();
+            return this.zoomLevel;
         }
     };
 

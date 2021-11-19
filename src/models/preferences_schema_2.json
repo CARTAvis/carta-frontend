@@ -322,6 +322,11 @@
         "telemetryLogging": {
             "type": "boolean",
             "default": false
+        },
+        "fileFilterMode": {
+            "type": "string",
+            "enum": ["content", "extension", "all"],
+            "default": "content"
         }
     }
 }

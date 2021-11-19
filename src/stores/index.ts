@@ -10,6 +10,7 @@ export * from "./FrameStore";
 export * from "./LogStore";
 export * from "./OverlayStore";
 export * from "./RenderConfigStore";
+export * from "./RestFreqStore";
 export * from "./SpatialProfileStore";
 export * from "./SpectralProfileStore";
 export * from "./WidgetsStore";
