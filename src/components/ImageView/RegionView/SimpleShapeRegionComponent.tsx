@@ -436,11 +436,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const pointArray = new Array<number>(N * 2);
             for (let i = 0; i < N; i++) {
                 let approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
-                if (approxPointPixelSpace && isFinite(approxPointPixelSpace.x) && isFinite(approxPointPixelSpace.y)) {
-                    approxPointPixelSpace = adjustPosToMutatedStage(approxPointPixelSpace, this.props.stageRef.current);
-                    pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
-                    pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
-                }
+                approxPointPixelSpace = adjustPosToMutatedStage(approxPointPixelSpace, this.props.stageRef.current);
+                pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
+                pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
             }
 
             shapeNode = (
