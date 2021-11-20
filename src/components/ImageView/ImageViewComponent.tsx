@@ -7,7 +7,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
-import {Point2D} from "models";
+import {Point2D, Zoom} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.scss";
 
@@ -121,6 +121,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         };
     }
 
+    private imagePanelRefs: any[];
     private ratioIndicatorTimeoutHandle;
     private cachedImageSize: Point2D;
     private cachedGridSize: Point2D;
@@ -129,7 +130,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
-            AppStore.Instance.setImageViewDimensions(width, height);
+            const appStore = AppStore.Instance;
+            const requiresAutoFit = appStore.preferenceStore.zoomMode === Zoom.FIT && appStore.overlayStore.fullViewWidth <= 1 && appStore.overlayStore.fullViewHeight <= 1;
+            appStore.setImageViewDimensions(width, height);
+            if (requiresAutoFit) {
+                this.imagePanelRefs?.forEach(imagePanelRef => imagePanelRef?.fitZoomFrameAndRegion());
+            }
         }
     };
 
@@ -141,6 +147,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         super(props);
         makeObservable(this);
 
+        this.imagePanelRefs = [];
         const appStore = AppStore.Instance;
 
         autorun(() => {
@@ -159,9 +166,14 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         });
     }
 
+    private collectImagePanelRef = ref => {
+        this.imagePanelRefs.push(ref);
+    };
+
     @computed get panels() {
         const appStore = AppStore.Instance;
         const visibleFrames = appStore.visibleFrames;
+        this.imagePanelRefs = [];
         if (!visibleFrames) {
             return [];
         }
@@ -169,7 +181,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             const column = index % appStore.numImageColumns;
             const row = Math.floor(index / appStore.numImageColumns);
 
-            return <ImagePanelComponent key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} row={row} column={column} />;
+            return <ImagePanelComponent ref={this.collectImagePanelRef} key={frame.frameInfo.fileId} docked={this.props.docked} frame={frame} row={row} column={column} />;
         });
     }
 
