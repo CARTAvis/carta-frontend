@@ -190,7 +190,7 @@ export const IsIntensitySupported = (unitStr: string): boolean => {
     return FindIntensityUnitType(unitStr) !== IntensityUnitType.Unsupported;
 };
 
-export type IntensityConfig = {bmaj?: number; bmin?: number; cdelta1?: number; cdelta2?: number; isCTYPE3freq?: boolean};
+export type IntensityConfig = {bmaj?: number; bmin?: number; cdelta1?: number; cdelta2?: number; isSpectralAxisFreq?: boolean};
 export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityConfig = undefined): string[] => {
     if (IsIntensitySupported(unitStr)) {
         let supportedConversions = [];

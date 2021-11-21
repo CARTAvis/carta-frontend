@@ -343,6 +343,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 const beam = frameInfo.beamTable[0];
                 config["bmaj"] = beam.majorAxis;
                 config["bmin"] = beam.minorAxis;
+                if (this.effectiveFrame.spectralAxis?.type?.code === "FREQ") {
+                    config["isSpectralAxisFreq"] = true;
+                }
             }
             const cdelta1 = frameInfo.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT1");
             const cdelta2 = frameInfo.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT2");
