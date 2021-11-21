@@ -7,7 +7,6 @@ import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGenera
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
-import {IsIntensitySupported} from "models";
 import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerSettingsPanelComponent.scss";
 
@@ -173,8 +172,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             handleYMaxChange: this.handleYMaxChange
         };
 
-        const isIntensitySupported = IsIntensitySupported(widgetStore.nativeIntensityUnit);
-
         return (
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
@@ -191,7 +188,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     disable={widgetStore.effectiveFrame?.isPVImage}
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
-                                    <HTMLSelect disabled={!isIntensitySupported} value={widgetStore.intensityUnit} options={widgetStore.availableIntensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
+                                    <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
                                 </FormGroup>
                             </React.Fragment>
                         }

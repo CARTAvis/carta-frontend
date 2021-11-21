@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {FindIntensityUnitType, GetAvailableIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
+import {FindIntensityUnitType, GetIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, getHeaderNumericValue, isAutoColor} from "utilities";
@@ -50,6 +50,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isHighlighted: boolean;
     @observable private spectralLinesMHz: SpectralLine[];
     @observable intensityUnit: string;
+    @observable intensityConversion: IntensityConversion;
 
     // style settings
     @observable plotType: PlotType;
@@ -96,6 +97,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setIntensityUnit = (intensityUnitStr: string) => {
         if (IsIntensitySupported(intensityUnitStr)) {
             this.intensityUnit = intensityUnitStr;
+            this.intensityConversion = GetIntensityConversion(this.intensityConfig, this.intensityUnit);
         }
     };
 
@@ -311,6 +313,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
 
+        this.intensityUnit = undefined;
+        this.intensityConversion = undefined;
+
         reaction(
             () => this.effectiveFrame,
             frame => {
@@ -331,38 +336,35 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         });
     }
 
-    @computed get nativeIntensityUnit(): string {
-        return this.effectiveFrame?.unit;
-    }
-
-    @computed get intensityConversionConfig(): IntensityConfig {
-        const frameInfo = this.effectiveFrame?.frameInfo;
-        let config: IntensityConfig = {};
-        if (frameInfo) {
-            if (frameInfo.beamTable?.length > 0) {
-                const beam = frameInfo.beamTable[0];
+    @computed private get intensityConfig(): IntensityConfig {
+        const frame = this.effectiveFrame;
+        if (frame) {
+            let config: IntensityConfig = {nativeIntensityUnit: frame.unit};
+            if (frame.frameInfo?.beamTable?.length > 0) {
+                const beam = frame.frameInfo.beamTable[0];
                 config["bmaj"] = beam.majorAxis;
                 config["bmin"] = beam.minorAxis;
-                if (this.effectiveFrame.spectralAxis?.type?.code === "FREQ") {
-                    config["isSpectralAxisFreq"] = true;
+                if (frame.spectralAxis?.type?.code === "FREQ") {
+                    config["freqGHz"] = 1; // TODO check unit, get value
                 }
             }
-            const cdelta1 = frameInfo.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT1");
-            const cdelta2 = frameInfo.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT2");
+            const cdelta1 = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT1");
+            const cdelta2 = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT2");
             if (cdelta1 && cdelta2) {
                 config["cdelta1"] = getHeaderNumericValue(cdelta1);
                 config["cdelta2"] = getHeaderNumericValue(cdelta2);
             }
+            return config;
         }
-        return config;
+        return undefined;
     }
 
-    @computed get availableIntensityOptions(): string[] {
-        return GetAvailableIntensityOptions(this.nativeIntensityUnit, this.intensityConversionConfig);
+    @computed get isIntensityConvertible(): boolean {
+        return IsIntensitySupported(this.intensityConfig?.nativeIntensityUnit);
     }
 
-    @computed get intensityConversion(): (values: Float32Array | Float64Array) => Float32Array | Float64Array {
-        return GetIntensityConversion(this.nativeIntensityUnit, this.intensityUnit, this.intensityConversionConfig);
+    @computed get intensityOptions(): string[] {
+        return GetIntensityOptions(this.intensityConfig);
     }
 
     @computed get profileNum(): number {
