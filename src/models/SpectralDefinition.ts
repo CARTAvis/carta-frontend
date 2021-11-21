@@ -83,7 +83,7 @@ export const IsSpectralSystemSupported = (systemStr: string): boolean => {
 };
 
 export const GetFreqInGHz = (unit: string, value: number): number => {
-    if (unit && Object.values(FrequencyUnit).includes(unit as FrequencyUnit)) {
+    if (unit && Object.values(FrequencyUnit).includes(unit as FrequencyUnit) && isFinite(value)) {
         if (unit === FrequencyUnit.GHZ) {
             return value;
         } else if (unit === FrequencyUnit.MHZ) {
