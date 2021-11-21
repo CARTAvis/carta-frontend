@@ -200,6 +200,9 @@ export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityC
             if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
                 supportedConversions.push(...JySr);
                 supportedConversions.push(...JyArcsec2);
+                if (config?.isSpectralAxisFreq) {
+                    supportedConversions.push(...Kelvins);
+                }
                 if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
                     supportedConversions.push(...JyPixel);
                 }
@@ -209,6 +212,9 @@ export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityC
             supportedConversions.push(...JyArcsec2);
             if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
                 supportedConversions.push(...JyBeam);
+                if (config?.isSpectralAxisFreq) {
+                    supportedConversions.push(...Kelvins);
+                }
             }
             if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
                 supportedConversions.push(...JyPixel);
@@ -218,6 +224,9 @@ export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityC
             supportedConversions.push(...JyArcsec2);
             if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
                 supportedConversions.push(...JyBeam);
+                if (config?.isSpectralAxisFreq) {
+                    supportedConversions.push(...Kelvins);
+                }
             }
             if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
                 supportedConversions.push(...JyPixel);
@@ -229,10 +238,21 @@ export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityC
                 supportedConversions.push(...JySr);
                 if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
                     supportedConversions.push(...JyBeam);
+                    if (config?.isSpectralAxisFreq) {
+                        supportedConversions.push(...Kelvins);
+                    }
                 }
             }
         } else if (type === IntensityUnitType.Kelvin) {
             supportedConversions.push(...Kelvins);
+            if (isFinite(config?.bmaj) && isFinite(config?.bmin) && config?.isSpectralAxisFreq) {
+                supportedConversions.push(...JyBeam);
+                supportedConversions.push(...JySr);
+                supportedConversions.push(...JyArcsec2);
+                if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
+                    supportedConversions.push(...JyPixel);
+                }
+            }
         }
         return supportedConversions;
     }
