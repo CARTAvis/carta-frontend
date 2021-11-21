@@ -288,7 +288,7 @@ const JySrToJyArcsec2 = (forward: boolean = true): number => {
 };
 
 const JyPixelToJyArcsec2 = (cdelta1: number, cdelta2: number, forward: boolean = true): number => {
-    const coefficient = ((cdelta1 * cdelta2) / 2.350443) * 1e-11;
+    const coefficient = (cdelta1 * cdelta2) / (2.350443 * 1e-11);
     return forward ? coefficient : 1 / coefficient;
 };
 
