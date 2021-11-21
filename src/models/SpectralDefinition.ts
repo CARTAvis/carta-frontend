@@ -193,10 +193,10 @@ export const IsIntensitySupported = (unitStr: string): boolean => {
 };
 
 export type IntensityConfig = {bmaj?: number; bmin?: number; cdelta1?: number; cdelta2?: number; isSpectralAxisFreq?: boolean};
-export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityConfig = undefined): string[] => {
+const FindConvertibleIntensityTypes = (unitStr: string, config: IntensityConfig = undefined): IntensityUnitType[] => {
+    let options: IntensityUnitType[] = [];
     if (IsIntensitySupported(unitStr)) {
         const type = FindIntensityUnitType(unitStr);
-        let options: IntensityUnitType[] = [];
         if (type === IntensityUnitType.JyBeam) {
             options.push(IntensityUnitType.JyBeam);
             if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
@@ -256,14 +256,17 @@ export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityC
                 }
             }
         }
-
-        let supportedOptions = [];
-        options.forEach(option => {
-            supportedOptions.push(...IntensityOptionsMap.get(option));
-        });
-        return supportedOptions;
     }
-    return undefined;
+    return options;
+};
+
+export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityConfig = undefined): string[] => {
+    const convertibleTypes = FindConvertibleIntensityTypes(unitStr, config);
+    let supportedOptions = [];
+    convertibleTypes?.forEach(type => {
+        supportedOptions.push(...IntensityOptionsMap.get(type));
+    });
+    return supportedOptions;
 };
 
 const GetUnitScale = (unitStr: string): number => {
