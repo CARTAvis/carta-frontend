@@ -147,26 +147,28 @@ enum Kelvin {
 }
 
 const Jys = Object.values(Jansky);
-const JyBeam = Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/beam`);
-const JySr = Jys.filter(jy => jy === Jansky.MJy).map(jy => `${jy}/sr`);
-const JyArcsec2 = Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/arcsec^2`);
-const JyPixel = Jys.map(jy => `${jy}/pixel`);
-const Kelvins = Object.values(Kelvin);
+const IntensityOptionsMap = new Map<IntensityUnitType, string[]>([
+    [IntensityUnitType.JyBeam, Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/beam`)],
+    [IntensityUnitType.JySr, Jys.filter(jy => jy === Jansky.MJy).map(jy => `${jy}/sr`)],
+    [IntensityUnitType.JyArcsec2, Jys.filter(jy => jy !== Jansky.MJy).map(jy => `${jy}/arcsec^2`)],
+    [IntensityUnitType.JyPixel, Jys.map(jy => `${jy}/pixel`)],
+    [IntensityUnitType.Kelvin, Object.values(Kelvin)]
+]);
 
 export const FindIntensityUnitType = (unitStr: string): IntensityUnitType => {
-    const lowercaseJyBeam = JyBeam.map(unit => {
+    const lowercaseJyBeam = IntensityOptionsMap.get(IntensityUnitType.JyBeam).map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJySr = JySr.map(unit => {
+    const lowercaseJySr = IntensityOptionsMap.get(IntensityUnitType.JySr).map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJyArcsec2 = JyArcsec2.map(unit => {
+    const lowercaseJyArcsec2 = IntensityOptionsMap.get(IntensityUnitType.JyArcsec2).map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseJyPixel = JyPixel.map(unit => {
+    const lowercaseJyPixel = IntensityOptionsMap.get(IntensityUnitType.JyPixel).map(unit => {
         return unit.toLowerCase();
     });
-    const lowercaseKelvins = Kelvins.map(unit => {
+    const lowercaseKelvins = IntensityOptionsMap.get(IntensityUnitType.Kelvin).map(unit => {
         return unit.toLowerCase();
     });
     const lowercaseUnitStr = unitStr?.toLowerCase();
@@ -193,68 +195,73 @@ export const IsIntensitySupported = (unitStr: string): boolean => {
 export type IntensityConfig = {bmaj?: number; bmin?: number; cdelta1?: number; cdelta2?: number; isSpectralAxisFreq?: boolean};
 export const GetAvailableIntensityOptions = (unitStr: string, config: IntensityConfig = undefined): string[] => {
     if (IsIntensitySupported(unitStr)) {
-        let supportedConversions = [];
         const type = FindIntensityUnitType(unitStr);
+        let options: IntensityUnitType[] = [];
         if (type === IntensityUnitType.JyBeam) {
-            supportedConversions.push(...JyBeam);
+            options.push(IntensityUnitType.JyBeam);
             if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
-                supportedConversions.push(...JySr);
-                supportedConversions.push(...JyArcsec2);
+                options.push(IntensityUnitType.JySr);
+                options.push(IntensityUnitType.JyArcsec2);
                 if (config?.isSpectralAxisFreq) {
-                    supportedConversions.push(...Kelvins);
+                    options.push(IntensityUnitType.Kelvin);
                 }
                 if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
-                    supportedConversions.push(...JyPixel);
+                    options.push(IntensityUnitType.JyPixel);
                 }
             }
         } else if (type === IntensityUnitType.JySr) {
-            supportedConversions.push(...JySr);
-            supportedConversions.push(...JyArcsec2);
+            options.push(IntensityUnitType.JySr);
+            options.push(IntensityUnitType.JyArcsec2);
             if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
-                supportedConversions.push(...JyBeam);
+                options.push(IntensityUnitType.JyBeam);
                 if (config?.isSpectralAxisFreq) {
-                    supportedConversions.push(...Kelvins);
+                    options.push(IntensityUnitType.Kelvin);
                 }
             }
             if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
-                supportedConversions.push(...JyPixel);
+                options.push(IntensityUnitType.JyPixel);
             }
         } else if (type === IntensityUnitType.JyArcsec2) {
-            supportedConversions.push(...JySr);
-            supportedConversions.push(...JyArcsec2);
+            options.push(IntensityUnitType.JySr);
+            options.push(IntensityUnitType.JyArcsec2);
             if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
-                supportedConversions.push(...JyBeam);
+                options.push(IntensityUnitType.JyBeam);
                 if (config?.isSpectralAxisFreq) {
-                    supportedConversions.push(...Kelvins);
+                    options.push(IntensityUnitType.Kelvin);
                 }
             }
             if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
-                supportedConversions.push(...JyPixel);
+                options.push(IntensityUnitType.JyPixel);
             }
         } else if (type === IntensityUnitType.JyPixel) {
-            supportedConversions.push(...JyPixel);
+            options.push(IntensityUnitType.JyPixel);
             if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
-                supportedConversions.push(...JyArcsec2);
-                supportedConversions.push(...JySr);
+                options.push(IntensityUnitType.JySr);
+                options.push(IntensityUnitType.JyArcsec2);
                 if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
-                    supportedConversions.push(...JyBeam);
+                    options.push(IntensityUnitType.JyBeam);
                     if (config?.isSpectralAxisFreq) {
-                        supportedConversions.push(...Kelvins);
+                        options.push(IntensityUnitType.Kelvin);
                     }
                 }
             }
         } else if (type === IntensityUnitType.Kelvin) {
-            supportedConversions.push(...Kelvins);
+            options.push(IntensityUnitType.Kelvin);
             if (isFinite(config?.bmaj) && isFinite(config?.bmin) && config?.isSpectralAxisFreq) {
-                supportedConversions.push(...JyBeam);
-                supportedConversions.push(...JySr);
-                supportedConversions.push(...JyArcsec2);
+                options.push(IntensityUnitType.JyBeam);
+                options.push(IntensityUnitType.JySr);
+                options.push(IntensityUnitType.JyArcsec2);
                 if (isFinite(config?.cdelta1) && isFinite(config?.cdelta2)) {
-                    supportedConversions.push(...JyPixel);
+                    options.push(IntensityUnitType.JyPixel);
                 }
             }
         }
-        return supportedConversions;
+
+        let supportedOptions = [];
+        options.forEach(option => {
+            supportedOptions.push(...IntensityOptionsMap.get(option));
+        });
+        return supportedOptions;
     }
     return undefined;
 };
