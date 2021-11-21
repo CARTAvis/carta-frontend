@@ -82,6 +82,21 @@ export const IsSpectralSystemSupported = (systemStr: string): boolean => {
     return Object.values(SpectralSystem).includes(normalizedStr as SpectralSystem);
 };
 
+export const GetFreqInGHz = (unit: string, value: number): number => {
+    if (unit && Object.values(FrequencyUnit).includes(unit as FrequencyUnit)) {
+        if (unit === FrequencyUnit.GHZ) {
+            return value;
+        } else if (unit === FrequencyUnit.MHZ) {
+            return value / 1e3;
+        } else if (unit === FrequencyUnit.KHZ) {
+            return value / 1e6;
+        } else {
+            return value / 1e9;
+        }
+    }
+    return undefined;
+};
+
 export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([
     [SpectralType.VRAD, "Radio velocity"],
     [SpectralType.VOPT, "Optical velocity"],
@@ -351,7 +366,6 @@ const GetUnitScale = (unitStr: string): number => {
 };
 
 export const GetIntensityConversion = (config: IntensityConfig, unitTo: string): IntensityConversion => {
-    console.log("GetIntensityConversion", config?.nativeIntensityUnit, unitTo);
     const unitFromType = FindIntensityUnitType(config?.nativeIntensityUnit);
     const unitToType = FindIntensityUnitType(unitTo);
     if (unitFromType === IntensityUnitType.Unsupported || unitToType === IntensityUnitType.Unsupported || config?.nativeIntensityUnit === unitTo) {

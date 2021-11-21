@@ -506,7 +506,7 @@ export class FrameStore {
         return undefined;
     }
 
-    @computed get spectralAxis(): {valid: boolean; dimension: number; type: SpectralTypeSet; specsys: string} {
+    @computed get spectralAxis(): {valid: boolean; dimension: number; type: SpectralTypeSet; specsys: string; value: number} {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
 
@@ -539,6 +539,7 @@ export class FrameStore {
                 const spectralHeader = entries.find(entry => entry.name.includes(`CTYPE${dimension}`));
                 const spectralValue = spectralHeader?.value.trim().toUpperCase();
                 const spectralType = STANDARD_SPECTRAL_TYPE_SETS.find(type => spectralValue === type.code);
+                const valueHeader = entries.find(entry => entry.name.includes(`CRVAL${dimension}`));
                 const unitHeader = entries.find(entry => entry.name.includes(`CUNIT${dimension}`));
                 const specSysHeader = entries.find(entry => entry.name.includes("SPECSYS"));
                 const specsys = specSysHeader?.value ? trimFitsComment(specSysHeader.value)?.toUpperCase() : undefined;
@@ -547,14 +548,16 @@ export class FrameStore {
                         valid: true,
                         dimension: dimension,
                         type: {name: spectralType.name, code: spectralType.code, unit: unitHeader?.value?.trim() ?? spectralType.unit},
-                        specsys: specsys
+                        specsys: specsys,
+                        value: getHeaderNumericValue(valueHeader)
                     };
                 } else {
                     return {
                         valid: false,
                         dimension: dimension,
                         type: {name: spectralValue, code: spectralValue, unit: unitHeader?.value?.trim() ?? undefined},
-                        specsys: specsys
+                        specsys: specsys,
+                        value: getHeaderNumericValue(valueHeader)
                     };
                 }
             }

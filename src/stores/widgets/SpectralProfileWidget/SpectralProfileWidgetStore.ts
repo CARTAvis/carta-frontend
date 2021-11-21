@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {FindIntensityUnitType, GetIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
+import {FindIntensityUnitType, GetFreqInGHz, GetIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getColorForTheme, getHeaderNumericValue, isAutoColor} from "utilities";
@@ -345,7 +345,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 config["bmaj"] = beam.majorAxis;
                 config["bmin"] = beam.minorAxis;
                 if (frame.spectralAxis?.type?.code === "FREQ") {
-                    config["freqGHz"] = 1; // TODO check unit, get value
+                    config["freqGHz"] = GetFreqInGHz(frame.spectralAxis.type.unit, frame.spectralAxis.value);
                 }
             }
             const cdelta1 = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT1");
