@@ -57,7 +57,7 @@ export class TelemetryService {
 
     @computed get effectiveTelemetryMode() {
         const preferences = PreferenceStore.Instance;
-        if (preferences.telemetryConsentShown && preferences.telemetryUuid) {
+        if (!this.skipTelemetry && preferences.telemetryConsentShown && preferences.telemetryUuid) {
             return preferences.telemetryMode;
         }
         return TelemetryMode.None;
@@ -65,6 +65,7 @@ export class TelemetryService {
 
     private readonly sessionId: string;
     private uuid: string;
+    private skipTelemetry: boolean;
     private readonly axiosInstance: AxiosInstance;
     private db: IDBPDatabase<TelemetryDb>;
 
@@ -90,8 +91,8 @@ export class TelemetryService {
 
         // Check for URL query parameter or build-time flag for skipping telemetry
         if (skipTelemetry || process.env.REACT_APP_SKIP_TELEMETRY) {
-            console.log("Skipping telemetry");
-            await this.skipTelemetry();
+            console.log(`Skipping telemetry due to ${skipTelemetry ? "URL override" : "build-time override"}`);
+            this.skipTelemetry = true;
             return false;
         }
 
@@ -155,14 +156,10 @@ export class TelemetryService {
         }
     }
 
-    async skipTelemetry() {
+    async optOut() {
         const preferences = PreferenceStore.Instance;
         await preferences.setPreference(PreferenceKeys.TELEMETRY_CONSENT_SHOWN, true);
         await preferences.setPreference(PreferenceKeys.TELEMETRY_MODE, TelemetryMode.None);
-    }
-
-    async optOut() {
-        await this.skipTelemetry();
 
         const entry: TelemetryMessage = {
             id: uuidv1(),
