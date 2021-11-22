@@ -370,9 +370,11 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private genAnchors = (): React.ReactNode[] => {
         const region = this.props.region;
         const frame = this.props.frame;
+        const width = region.size.x / devicePixelRatio;
+        const height = region.size.y / devicePixelRatio;
 
         // Ellipse has swapped axes
-        const offset = region.regionType === CARTA.RegionType.RECTANGLE ? {x: region.size.x / 2, y: region.size.y / 2} : {x: region.size.y, y: region.size.x};
+        const offset = region.regionType === CARTA.RegionType.RECTANGLE ? {x: width / 2, y: height / 2} : {x: height, y: width};
         let anchorConfigs = [
             {anchor: "top", offset: {x: 0, y: offset.y}},
             {anchor: "bottom", offset: {x: 0, y: -offset.y}},
