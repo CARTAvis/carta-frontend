@@ -4,6 +4,10 @@ export function getTimestamp(format: string = "YYYY-MM-DD-HH-mm-ss") {
     return moment(new Date()).format(format);
 }
 
+export function getUnixTimestamp() {
+    return +moment(new Date());
+}
+
 export function exportTsvFile(imageName: string, plotName: string, content: string) {
     const tsvData = `data:text/tab-separated-values;charset=utf-8,${content}\n`;
     const dataURL = encodeURI(tsvData).replace(/#/g, "%23");
