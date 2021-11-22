@@ -68,10 +68,14 @@ export class TelemetryService {
         return !this.skipTelemetry && !preferences.telemetryConsentShown;
     }
 
+    @computed get decodedUserId() {
+        return this.uuid;
+    }
+
     private readonly sessionId: string;
-    private uuid: string;
     private readonly axiosInstance: AxiosInstance;
     private db: IDBPDatabase<TelemetryDb>;
+    @observable private uuid: string;
     @observable private skipTelemetry: boolean;
 
     private constructor() {
@@ -249,10 +253,6 @@ export class TelemetryService {
 
     addFileCloseEntry(id: number) {
         return this.addTelemetryEntry(TelemetryAction.FileClose, {id});
-    }
-
-    getDecodedUserId() {
-        return this.uuid;
     }
 
     async addTelemetryEntry(action: TelemetryAction, details?: object, id?: string) {

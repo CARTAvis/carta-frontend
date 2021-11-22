@@ -118,7 +118,7 @@ export class PreferenceDialogComponent extends React.Component {
     private handleUserIdCopied = async () => {
         const appStore = AppStore.Instance;
         try {
-            await navigator.clipboard?.writeText(appStore.telemetryService.getDecodedUserId());
+            await navigator.clipboard?.writeText(appStore.telemetryService.decodedUserId);
             AppToaster.show(SuccessToast("clipboard", "Copied user ID to clipboard."));
         } catch (err) {
             console.log(err);
@@ -690,7 +690,7 @@ export class PreferenceDialogComponent extends React.Component {
                         </p>
                         {preference.telemetryUuid && (
                             <div className="telemetry-id-text">
-                                <p>Anonymous user ID: {appStore.telemetryService.getDecodedUserId()}</p>
+                                <p>Anonymous user ID: {appStore.telemetryService.decodedUserId}</p>
                                 <Button minimal={true} intent="primary" icon="clipboard" onClick={this.handleUserIdCopied} />
                             </div>
                         )}
