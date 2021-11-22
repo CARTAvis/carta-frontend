@@ -733,7 +733,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.CATALOG} title="Catalog" panel={catalogPanel} />
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={regionSettingsPanel} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={performancePanel} />
-                        {!process.env.REACT_APP_SKIP_TELEMETRY && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={telemetryPanel} />}
+                        {process.env.REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={telemetryPanel} />}
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel} />
                     </Tabs>
                 </div>

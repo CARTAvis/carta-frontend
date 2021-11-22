@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
-import {ApiService, TelemetryMode, TelemetryService} from "services";
+import {ApiService, TelemetryMode} from "services";
 
 export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
@@ -726,9 +726,8 @@ export class PreferenceStore {
         this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
     };
 
-    @action resetTelemetrySettings = async () => {
-        await this.clearPreferences([PreferenceKeys.TELEMETRY_CONSENT_SHOWN, PreferenceKeys.TELEMETRY_MODE, PreferenceKeys.TELEMETRY_UUID, PreferenceKeys.TELEMETRY_LOGGING]);
-        await TelemetryService.Instance.checkAndGenerateId();
+    @action resetTelemetrySettings = () => {
+        this.clearPreferences([PreferenceKeys.TELEMETRY_CONSENT_SHOWN, PreferenceKeys.TELEMETRY_MODE, PreferenceKeys.TELEMETRY_LOGGING]);
     };
 
     @action fetchPreferences = async () => {
