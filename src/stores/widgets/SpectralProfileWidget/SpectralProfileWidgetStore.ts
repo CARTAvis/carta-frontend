@@ -343,8 +343,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             const bmaj = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "BMAJ");
             const bmin = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "BMIN");
             if (bmaj && bmin) {
-                config["bmaj"] = getHeaderNumericValue(bmaj);
-                config["bmin"] = getHeaderNumericValue(bmin);
+                // convert to arcsec (1 deg = 3600 arcsec)
+                config["bmaj"] = getHeaderNumericValue(bmaj) * 3600;
+                config["bmin"] = getHeaderNumericValue(bmin) * 3600;
                 if (frame.spectralAxis?.type?.code === "FREQ") {
                     config["freqGHz"] = GetFreqInGHz(frame.spectralAxis.type.unit, frame.spectralAxis.value);
                 }
