@@ -27,12 +27,11 @@ export class TelemetryDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const appReady = appStore.apiService?.authenticated;
-        const consentShown = appStore.preferenceStore.telemetryConsentShown;
-
+        const consentRequired = appStore.telemetryService.consentRequired;
         const classes = classNames("telemetry-dialog", {"bp3-dark": appStore.darkTheme});
 
         return (
-            <Dialog icon="data-connection" canOutsideClickClose={false} isCloseButtonShown={false} lazy={true} isOpen={appReady && !consentShown} className={classes} canEscapeKeyClose={false} title="CARTA Usage Data">
+            <Dialog icon="data-connection" canOutsideClickClose={false} isCloseButtonShown={false} lazy={true} isOpen={appReady && consentRequired} className={classes} canEscapeKeyClose={false} title="CARTA Usage Data">
                 <div className={Classes.DIALOG_BODY}>
                     <div className="image-div">
                         <img src={"carta_logo.png"} width={80} alt={"carta logo"} />

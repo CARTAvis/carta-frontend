@@ -1,6 +1,6 @@
 import jwt_decode from "jwt-decode";
 import axios, {AxiosInstance} from "axios";
-import {computed} from "mobx";
+import {computed, makeObservable, observable} from "mobx";
 import {v1 as uuidv1} from "uuid";
 import {openDB, DBSchema, IDBPDatabase} from "idb";
 import {PreferenceKeys, PreferenceStore} from "stores";
@@ -63,18 +63,23 @@ export class TelemetryService {
         return TelemetryMode.None;
     }
 
+    @computed get consentRequired() {
+        const preferences = PreferenceStore.Instance;
+        return !this.skipTelemetry && !preferences.telemetryConsentShown;
+    }
+
     private readonly sessionId: string;
     private uuid: string;
-    private skipTelemetry: boolean;
     private readonly axiosInstance: AxiosInstance;
     private db: IDBPDatabase<TelemetryDb>;
+    @observable private skipTelemetry: boolean;
 
     private constructor() {
+        makeObservable(this);
         this.axiosInstance = axios.create({
             baseURL: TelemetryService.ServerUrl
         });
         this.sessionId = uuidv1();
-
         // Submit accumulated telemetry every 5 minutes, and when the user closes the frontend
 
         window.onbeforeunload = ev => {
