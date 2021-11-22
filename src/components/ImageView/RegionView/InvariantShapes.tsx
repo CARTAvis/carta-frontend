@@ -89,7 +89,7 @@ export const Anchor = (props: AnchorProps) => {
     const handleCircleDraw = (ctx, shape) => {
         const reverseScale = 1 / shape.getStage().scaleX();
         const radius = CIRCLE_ANCHOR_RADIUS * reverseScale;
-        const offsetY = (-ROTATOR_ANCHOR_HEIGHT / shape.getStage().scaleX()) * devicePixelRatio;
+        const offsetY = -ROTATOR_ANCHOR_HEIGHT / shape.getStage().scaleX();
         ctx.beginPath();
         ctx.arc(0, offsetY, radius, 0, 2 * Math.PI, false);
         ctx.fillStrokeShape(shape);
