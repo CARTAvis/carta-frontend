@@ -351,7 +351,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             const cdelta1 = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT1");
             const cdelta2 = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT2");
             if (cdelta1 && cdelta2) {
-                config["cdelta1"] = getHeaderNumericValue(cdelta1);
+                config["cdelta1"] = Math.abs(getHeaderNumericValue(cdelta1));
                 config["cdelta2"] = getHeaderNumericValue(cdelta2);
             }
             return config;
