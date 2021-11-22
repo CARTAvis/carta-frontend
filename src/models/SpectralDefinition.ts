@@ -262,7 +262,6 @@ export const GetIntensityOptions = (config: IntensityConfig): string[] => {
 
 const JyBeamToKelvin = (freqGHz: number, bmaj: number, bmin: number, forward: boolean = true): number => {
     const coefficient = (1.222 * 1e6) / (freqGHz * freqGHz * bmaj * bmin);
-    console.log("JyBeamToKelvin", freqGHz, bmaj, bmin, coefficient);
     return forward ? coefficient : 1 / coefficient;
 };
 
