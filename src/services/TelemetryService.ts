@@ -1,6 +1,6 @@
 import jwt_decode from "jwt-decode";
 import axios, {AxiosInstance} from "axios";
-import {computed, makeObservable, observable} from "mobx";
+import {computed, makeObservable, observable, runInAction} from "mobx";
 import {v1 as uuidv1} from "uuid";
 import {openDB, DBSchema, IDBPDatabase} from "idb";
 import {PreferenceKeys, PreferenceStore} from "stores";
@@ -97,11 +97,12 @@ export class TelemetryService {
     async checkAndGenerateId(forceNewId: boolean = false) {
         const url = new URL(window.location.href);
         const skipTelemetry = url.searchParams.get("skipTelemetry");
-
         // Check for URL query parameter or build-time flag for skipping telemetry
-        if (skipTelemetry || process.env.REACT_APP_SKIP_TELEMETRY) {
+        if (skipTelemetry || process.env.REACT_APP_SKIP_TELEMETRY === "true") {
             console.log(`Skipping telemetry due to ${skipTelemetry ? "URL override" : "build-time override"}`);
-            this.skipTelemetry = true;
+            runInAction(() => {
+                this.skipTelemetry = true;
+            });
             return false;
         }
 
@@ -134,7 +135,9 @@ export class TelemetryService {
         try {
             const decodedObject: {uuid?: string} = jwt_decode(token);
             if (decodedObject?.uuid) {
-                this.uuid = decodedObject.uuid;
+                runInAction(() => {
+                    this.uuid = decodedObject.uuid;
+                });
             }
         } catch (err) {
             console.warn("Malformed telemetry token");
