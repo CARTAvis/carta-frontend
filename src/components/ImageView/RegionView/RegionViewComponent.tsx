@@ -477,7 +477,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (stage && refCenterMovement && isFinite(refCenterMovement.x) && isFinite(refCenterMovement.y) && isFinite(refFrameZoom)) {
             stage.scale({x: refFrameZoom, y: refFrameZoom});
             const origin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - refFrameZoom);
-            const centerMovementCanvas = scale2D({x: refCenterMovement.x, y: -refCenterMovement.y}, refFrameZoom);
+            const centerMovementCanvas = scale2D({x: refCenterMovement.x / devicePixelRatio, y: -refCenterMovement.y / devicePixelRatio}, refFrameZoom);
             const newOrigin = add2D(origin, centerMovementCanvas);
             // Correct the origin if region view is ever resized
             const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, refFrameZoom));
