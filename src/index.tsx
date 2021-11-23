@@ -28,7 +28,7 @@ window["React"] = React; // tslint:disable-line
 window["ReactDOM"] = ReactDOM; // tslint:disable-line
 
 async function fetchConfig() {
-    const baseUrl = window.location.href.replace(window.location.search, "");
+    const baseUrl = window.location.href.replace(window.location.search, "").replace("index.html", "");
     const configUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "config";
     try {
         const res = await axios.get(configUrl);
