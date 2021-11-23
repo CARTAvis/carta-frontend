@@ -39,7 +39,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             type: "catalog-plot",
             minWidth: 320,
             minHeight: 400,
-            defaultWidth: 600,
+            defaultWidth: 680,
             defaultHeight: 350,
             title: "Catalog Plot",
             isCloseable: true,
@@ -826,7 +826,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     y1: fitting.intercept + fitting.slope * minMaxX.maxVal,
                     line: {
                         color: Colors.GREEN2,
-                        width: 5
+                        width: 2.5 * devicePixelRatio
                     }
                 }
             ];
@@ -843,7 +843,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     text: widgetStore.fittingResultString,
                     showarrow: false,
                     font: {
-                        size: 18,
+                        size: 9 * devicePixelRatio,
                         family: "monospace",
                         color: AppStore.Instance.darkTheme ? "#f5f8fa" : "#182026"
                     }
