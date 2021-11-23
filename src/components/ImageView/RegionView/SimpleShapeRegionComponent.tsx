@@ -291,7 +291,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private getDragBoundedAnchorPos = (region: RegionStore, anchorName: string, isCornerMode: boolean): Point2D => {
         // Handle drag bound of left/right/top/bottom anchors
         if (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom") {
-            const size = region.regionType === CARTA.RegionType.RECTANGLE ? {x: region.size.x, y: region.size.y} : {x: region.size.y, y: region.size.x};
+            const width = region.size.x / devicePixelRatio;
+            const height = region.size.y / devicePixelRatio;
+            const size = region.regionType === CARTA.RegionType.RECTANGLE ? {x: width, y: height} : {x: height, y: width};
             let delta: Point2D;
             if (anchorName === "left") {
                 delta = {x: -size.x, y: 0};
