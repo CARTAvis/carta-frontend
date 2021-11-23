@@ -338,18 +338,21 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 const touchEvent = konvaEvent.evt as unknown as TouchEvent;
 
                 if (touchEvent.touches.length > 1 && touchEvent.target) {
+                    console.log("handlePinch");
                     isPanDrag = false;
                     const rect = (touchEvent.target as any).getBoundingClientRect();
                     const touch0 = {x: touchEvent.touches[0].pageX - rect.left, y: touchEvent.touches[0].pageY - rect.top};
                     const touch1 = {x: touchEvent.touches[1].pageX - rect.left, y: touchEvent.touches[1].pageY - rect.top};
                     this.handlePinch(touch0, touch1);
                 } else {
+                    console.log("else");
                     this.initialPinchDistance = -1;
                     this.initialPinchZoom = -1;
                 }
             }
 
             if (isPanDrag) {
+                console.log("isPanDrag");
                 const stagePosition = konvaEvent.target.getStage().getPosition();
                 this.handlePan(stagePosition);
             }
@@ -402,6 +405,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
         if (this.props.frame) {
             const frame = this.props.frame.spatialReference || this.props.frame;
+            console.log("currentStagePosition", currentStagePosition.x, currentStagePosition.y);
+            console.log("initialStagePosition", this.initialStagePosition.x, this.initialStagePosition.y);
             const dragOffset = subtract2D(currentStagePosition, this.initialStagePosition);
             const initialCenterCanvasSpace = imageToCanvasPos(this.initialDragCenter.x, this.initialDragCenter.y, frame.requiredFrameView, this.props.width, this.props.height);
             const newCenterCanvasSpace = subtract2D(initialCenterCanvasSpace, dragOffset);
