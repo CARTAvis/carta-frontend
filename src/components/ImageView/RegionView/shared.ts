@@ -49,7 +49,7 @@ export function transformedImageToCanvasPos(imageX: number, imageY: number, fram
 export function adjustPosToUnityStage(pos: Point2D, stage: any): Point2D {
     const origin = stage?.getPosition();
     const zoom = stage?.scaleX();
-    if (pos && isFinite(pos.x) && isFinite(pos.y) && origin && isFinite(origin.x) && isFinite(origin.y) && isFinite(zoom)) {
+    if (pos && origin && isFinite(zoom)) {
         return {x: pos.x * zoom + origin.x, y: pos.y * zoom + origin.y};
     }
     return undefined;
@@ -58,7 +58,7 @@ export function adjustPosToUnityStage(pos: Point2D, stage: any): Point2D {
 export function adjustPosToMutatedStage(pos: Point2D, stage: any): Point2D {
     const origin = stage?.getPosition();
     const zoom = stage?.scaleX();
-    if (pos && isFinite(pos.x) && isFinite(pos.y) && origin && isFinite(origin.x) && isFinite(origin.y) && isFinite(zoom)) {
+    if (pos && origin && isFinite(zoom)) {
         return {x: (pos.x - origin.x) / zoom, y: (pos.y - origin.y) / zoom};
     }
     return undefined;
