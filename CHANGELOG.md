@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circular/linear polarizations are supported in polarization dropdowns for saving subimages and generating hypercubes.
 * The ability to export high resolution png images for publication quality in journals.
 * The ability to use a custom rest freqency for spectral matching, spectral axis display, and PV image x/y axis display.
+* Added PV generator(static).
 
 ### Fixed
 * Fixed crash when opening the image view configuration dialog before opening an image [(#1705)](https://github.com/CARTAvis/carta-frontend/issues/1705).
