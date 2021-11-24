@@ -29,7 +29,15 @@ export class ApiService {
 
     public static SetRuntimeConfig(data: any) {
         console.log("Setting runtime config");
-        if (data) {
+        if (typeof data === "object") {
+            if (typeof data.apiAddress === "string") {
+                // Grab the port from the socketUrl argument if it exists
+                const url = new URL(window.location.href);
+                const socketUrl = url.searchParams.get("socketUrl");
+                const socketRegex = /^wss?:\/\/.*:(\d+)/;
+                const socketPort = socketUrl?.match(socketRegex)?.[1] ?? "";
+                data.apiAddress = data.apiAddress.replace("{port}", socketPort);
+            }
             ApiService.RuntimeConfig = data as RuntimeConfig;
         } else {
             ApiService.RuntimeConfig = {};
