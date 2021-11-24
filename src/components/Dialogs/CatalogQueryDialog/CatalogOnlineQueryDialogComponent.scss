@@ -15,6 +15,15 @@
                 margin-left: 5px;
             }
         }
+
+        .vizier-databse {
+            width: 93px;
+            float: left;
+        }
+
+        .vizier-key-words {
+            width: calc(100% - 93px);
+        }
     }
 
     .bp3-dialog-footer {
@@ -35,5 +44,15 @@
         margin: -15px 0 0 -15px;
         width: inherit !important;
         height: inherit !important;
+    }
+}
+
+.vizier-mulit-select {
+    .bp3-popover-content {
+        .bp3-menu {
+            max-height: 200px;
+            overflow: auto;
+            min-width: fit-content;
+        }
     }
 }

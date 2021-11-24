@@ -51,6 +51,10 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 widgetsStore.removeFloatingWidgetComponent(widget.componentId);
                 CatalogStore.Instance.clearCatalogPlotsByComponentId(widget.componentId);
                 break;
+            case LayerListSettingsPanelComponent.WIDGET_CONFIG.type:
+                widgetsStore.layerListWidgets.get(widget.parentId)?.resetSelectedFrameIndex();
+                widgetsStore.removeFloatingWidget(widget.id);
+                break;
             default:
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;

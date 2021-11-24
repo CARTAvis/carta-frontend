@@ -2,9 +2,9 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
-import {ApiService} from "services";
+import {ApiService, TelemetryMode} from "services";
 
 export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
@@ -12,6 +12,7 @@ export enum PreferenceKeys {
 
     GLOBAL_THEME = "theme",
     GLOBAL_AUTOLAUNCH = "autoLaunch",
+    GLOBAL_FILE_FILTER_MODE = "fileFilterMode",
     GLOBAL_LAYOUT = "layout",
     GLOBAL_CURSOR_POSITION = "cursorPosition",
     GLOBAL_ZOOM_MODE = "zoomMode",
@@ -91,7 +92,12 @@ export enum PreferenceKeys {
     IMAGE_PANEL_ROWS = "imagePanelRows",
 
     STATS_PANEL_ENABLED = "statsPanelEnabled",
-    STATS_PANEL_MODE = "statsPanelMode"
+    STATS_PANEL_MODE = "statsPanelMode",
+
+    TELEMETRY_UUID = "telemetryUuid",
+    TELEMETRY_MODE = "telemetryMode",
+    TELEMETRY_CONSENT_SHOWN = "telemetryConsentShown",
+    TELEMETRY_LOGGING = "telemetryLogging"
 }
 
 const DEFAULTS = {
@@ -108,6 +114,7 @@ const DEFAULTS = {
     GLOBAL: {
         theme: Theme.AUTO,
         autoLaunch: true,
+        fileFilterMode: FileFilterMode.Content,
         layout: PresetLayout.DEFAULT,
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT,
@@ -189,6 +196,11 @@ const DEFAULTS = {
     STATS_PANEL: {
         statsPanelEnabled: false,
         statsPanelMode: 0
+    },
+    TELEMETRY: {
+        telemetryConsentShown: false,
+        telemetryMode: TelemetryMode.Usage,
+        telemetryLogging: false
     }
 };
 
@@ -212,6 +224,10 @@ export class PreferenceStore {
 
     @computed get autoLaunch(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_AUTOLAUNCH) ?? DEFAULTS.GLOBAL.autoLaunch;
+    }
+
+    @computed get fileFilterMode(): FileFilterMode {
+        return this.preferences.get(PreferenceKeys.GLOBAL_FILE_FILTER_MODE) ?? DEFAULTS.GLOBAL.fileFilterMode;
     }
 
     @computed get fileSortingString(): string {
@@ -542,6 +558,23 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.STATS_PANEL_MODE) ?? DEFAULTS.STATS_PANEL.statsPanelMode;
     }
 
+    // getters for telemetry
+    @computed get telemetryConsentShown(): boolean {
+        return this.preferences.get(PreferenceKeys.TELEMETRY_CONSENT_SHOWN) ?? DEFAULTS.TELEMETRY.telemetryConsentShown;
+    }
+
+    @computed get telemetryMode(): TelemetryMode {
+        return this.preferences.get(PreferenceKeys.TELEMETRY_MODE) ?? DEFAULTS.TELEMETRY.telemetryMode;
+    }
+
+    @computed get telemetryLogging(): boolean {
+        return this.preferences.get(PreferenceKeys.TELEMETRY_LOGGING) ?? DEFAULTS.TELEMETRY.telemetryLogging;
+    }
+
+    @computed get telemetryUuid(): string {
+        return this.preferences.get(PreferenceKeys.TELEMETRY_UUID);
+    }
+
     @action setPreference = async (key: PreferenceKeys, value: any) => {
         if (!key) {
             return false;
@@ -595,6 +628,7 @@ export class PreferenceStore {
         this.clearPreferences([
             PreferenceKeys.GLOBAL_THEME,
             PreferenceKeys.GLOBAL_AUTOLAUNCH,
+            PreferenceKeys.GLOBAL_FILE_FILTER_MODE,
             PreferenceKeys.GLOBAL_LAYOUT,
             PreferenceKeys.GLOBAL_CURSOR_POSITION,
             PreferenceKeys.GLOBAL_ZOOM_MODE,
@@ -690,6 +724,10 @@ export class PreferenceStore {
 
     @action resetCatalogSettings = () => {
         this.clearPreferences([PreferenceKeys.CATALOG_DISPLAYED_COLUMN_SIZE, PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION]);
+    };
+
+    @action resetTelemetrySettings = () => {
+        this.clearPreferences([PreferenceKeys.TELEMETRY_CONSENT_SHOWN, PreferenceKeys.TELEMETRY_MODE, PreferenceKeys.TELEMETRY_LOGGING]);
     };
 
     @action fetchPreferences = async () => {

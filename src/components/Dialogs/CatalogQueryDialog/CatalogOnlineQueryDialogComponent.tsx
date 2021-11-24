@@ -1,10 +1,12 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, Spinner, Icon, Position} from "@blueprintjs/core";
+import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, Spinner, Icon, Position, PopoverPosition} from "@blueprintjs/core";
+import {MultiSelect} from "@blueprintjs/select";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {IItemRendererProps, Select} from "@blueprintjs/select";
-import {AppStore, CatalogOnlineQueryConfigStore, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL} from "stores";
+import FuzzySearch from "fuzzy-search";
+import {AppStore, CatalogOnlineQueryConfigStore, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL, VizierItem} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
@@ -16,7 +18,7 @@ const KEYCODE_ENTER = 13;
 @observer
 export class CatalogQueryDialogComponent extends React.Component {
     private static readonly DefaultWidth = 550;
-    private static readonly DefaultHeight = 500;
+    private static readonly DefaultHeight = 550;
 
     @observable resultSize: number;
     @observable objectSize: number;
@@ -38,12 +40,18 @@ export class CatalogQueryDialogComponent extends React.Component {
 
     @computed get resultInfo(): string {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        if (configStore.isQuerying || configStore.isObjectQuerying) {
+        if (configStore.isQuerying) {
             return `Querying ${configStore.catalogDB}`;
+        } else if (configStore.isObjectQuerying) {
+            return `Querying ${CatalogDatabase.SIMBAD}`;
         } else if (this.resultSize === 0) {
             return "No objects found";
         } else if (this.resultSize >= 1) {
-            return `Found ${this.resultSize} object(s)`;
+            if (configStore.catalogDB === CatalogDatabase.VIZIER) {
+                return `Found ${this.resultSize} table(s)`;
+            } else {
+                return `Found ${this.resultSize} object(s)`;
+            }
         } else if (this.objectSize === 0) {
             return `Object ${configStore.objectName} not found`;
         } else if (this.objectSize >= 1) {
@@ -103,10 +111,11 @@ export class CatalogQueryDialogComponent extends React.Component {
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const wcsInfo = frame.validWcs ? frame.wcsInfoForTransformation : 0;
         const centerWcsPoint = getFormattedWCSPoint(wcsInfo, configStore.centerPixelCoordAsPoint2D);
+        const isVizier = configStore.catalogDB === CatalogDatabase.VIZIER;
 
         const configBoard = (
             <div className="online-catalog-config">
-                <FormGroup inline={false} label="Database" disabled={disable}>
+                <FormGroup inline={false} label="Database" disabled={disable} className={isVizier ? "vizier-databse" : ""}>
                     <Select
                         items={Object.values(CatalogDatabase)}
                         activeItem={null}
@@ -120,6 +129,11 @@ export class CatalogQueryDialogComponent extends React.Component {
                         <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select>
                 </FormGroup>
+                {isVizier ? (
+                    <FormGroup inline={false} label="Key Words (Catalog Title)" disabled={disable} className={isVizier ? "vizier-key-words" : ""}>
+                        <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} />
+                    </FormGroup>
+                ) : null}
                 <FormGroup inline={false} label="Object" disabled={disable}>
                     <InputGroup asyncControl={false} disabled={disable} rightElement={objectSize === undefined ? null : sourceIndicater} onChange={event => this.updateObjectName(event.target.value)} value={configStore.objectName} />
                     <Tooltip2 content="Reset center coordinates by object" disabled={disable || configStore.disableObjectSearch} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -196,7 +210,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </Tooltip2>
                 </FormGroup>
                 <ClearableNumericInputComponent
-                    label="Max Number of Objects"
+                    label={isVizier ? "Max Number of Objects Per Catalog" : "Max Number of Objects"}
                     min={CatalogOnlineQueryConfigStore.MIN_OBJECTS}
                     max={CatalogOnlineQueryConfigStore.MAX_OBJECTS}
                     integerOnly={true}
@@ -207,6 +221,27 @@ export class CatalogQueryDialogComponent extends React.Component {
                     disabled={disable}
                     inline={false}
                 />
+                {configStore.showVizierResult ? (
+                    <FormGroup inline={false} label="VizieR Catalog" disabled={disable}>
+                        <MultiSelect
+                            placeholder={"Please select catalog tables"}
+                            fill={true}
+                            popoverProps={{popoverClassName: "vizier-mulit-select", minimal: true, position: PopoverPosition.TOP}}
+                            items={configStore.vizierTable}
+                            itemRenderer={this.vizierItemRenderer}
+                            onItemSelect={item => configStore.updateVizierSelectedTable(item)}
+                            selectedItems={configStore.vizierSelectedTableName}
+                            tagRenderer={item => item.name}
+                            itemPredicate={this.filterVizierTable}
+                            noResults={<MenuItem disabled={true} text="No results." />}
+                            tagInputProps={{
+                                onRemove: v => configStore.removeVizierSelectedTable(v.toString()),
+                                rightElement: <Button icon="cross" minimal={true} onClick={() => configStore.resetVizierSelectedTable()} />,
+                                tagProps: {minimal: true}
+                            }}
+                        />
+                    </FormGroup>
+                ) : null}
             </div>
         );
 
@@ -232,7 +267,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                     <div className={"result-info"}>{tableInfo}</div>
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
-                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancleSimbadQuery()} text={"Cancel"} />
+                        <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancleQuery(configStore.catalogDB)} text={"Cancel"} />
+                        {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
                     </div>
                 </div>
             </DraggableDialogComponent>
@@ -241,13 +277,33 @@ export class CatalogQueryDialogComponent extends React.Component {
 
     private query = async () => {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
-        // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
-        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
-        const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
+        if (configStore.catalogDB === CatalogDatabase.SIMBAD) {
+            // In Simbad, the coordinate system parameter is never interpreted. All coordinates MUST be expressed in the ICRS coordinate system
+            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.ICRS);
+            const query = `SELECT Top ${configStore.maxObject} *, DISTANCE(POINT('ICRS', ${centerCoord.x},${centerCoord.y}), POINT('ICRS', ra, dec)) as dist FROM basic WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',${centerCoord.x},${centerCoord.y},${configStore.radiusAsDeg}))=1 AND ra IS NOT NULL AND dec IS NOT NULL order by dist`;
+            configStore.setQueryStatus(true);
+            const dataSize = await CatalogApiService.Instance.appendSimbadCatalog(query);
+            configStore.setQueryStatus(false);
+            this.setResultSize(dataSize);
+        } else if (configStore.catalogDB === CatalogDatabase.VIZIER) {
+            configStore.setQueryStatus(true);
+            configStore.resetVizier();
+            const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
+            const resources = await CatalogApiService.Instance.queryVizierTableName(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.vizierKeyWords);
+            configStore.setQueryStatus(false);
+            configStore.setVizierQueryResult(resources);
+            this.setResultSize(resources.size);
+        }
+    };
+
+    private loadVizierCatalogs = async () => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const sources = configStore.selectedVizierSource;
+        const centerCoord = configStore.convertToDeg(configStore.centerPixelCoordAsPoint2D, SystemType.FK5);
         configStore.setQueryStatus(true);
-        const dataSize = await CatalogApiService.Instance.appendOnlineCatalog(query);
+        const resources = await CatalogApiService.Instance.queryVizierSource(centerCoord, configStore.searchRadius, configStore.radiusUnits, configStore.maxObject, sources);
+        CatalogApiService.Instance.appendVizierCatalog(resources);
         configStore.setQueryStatus(false);
-        this.setResultSize(dataSize);
     };
 
     private handleObjectUpdate = () => {
@@ -305,6 +361,29 @@ export class CatalogQueryDialogComponent extends React.Component {
 
     private renderSysTypePopOver = (type: SystemType, itemProps: IItemRendererProps) => {
         return <MenuItem key={type} text={type} onClick={itemProps.handleClick} />;
+    };
+
+    private vizierItemRenderer = (table: VizierItem, itemProps: IItemRendererProps) => {
+        const configStore = CatalogOnlineQueryConfigStore.Instance;
+        const isFilmSelected = configStore.vizierSelectedTableName.filter(current => current.name === table.name).length > 0;
+
+        return (
+            <MenuItem
+                active={itemProps.modifiers.active}
+                icon={isFilmSelected ? "tick" : "blank"}
+                key={table.name}
+                label={table.name}
+                onClick={itemProps.handleClick}
+                text={`${itemProps.index + 1}. ${table.description}`}
+                shouldDismissPopover={false}
+            />
+        );
+    };
+
+    private filterVizierTable = (query: string, item: VizierItem) => {
+        const nameSearcher = new FuzzySearch([item.name]);
+        const descriptionSearcher = new FuzzySearch([item.description]);
+        return nameSearcher.search(query).length > 0 || descriptionSearcher.search(query).length > 0;
     };
 
     private handleRadiusChange = ev => {

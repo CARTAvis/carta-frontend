@@ -45,6 +45,7 @@ import {
     CatalogPlotWidgetStoreProps,
     ACTIVE_FILE_ID,
     CatalogPlotType,
+    LayerListWidgetStore,
     PVGeneratorWidgetStore
 } from "./widgets";
 import {PreferenceKeys, PreferenceStore} from "./PreferenceStore";
@@ -155,7 +156,7 @@ export class WidgetsStore {
     @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore>;
     @observable statsWidgets: Map<string, StatsWidgetStore>;
     @observable histogramWidgets: Map<string, HistogramWidgetStore>;
-    @observable layerListWidgets: Map<string, EmptyWidgetStore>;
+    @observable layerListWidgets: Map<string, LayerListWidgetStore>;
     @observable logWidgets: Map<string, EmptyWidgetStore>;
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
@@ -339,7 +340,7 @@ export class WidgetsStore {
         this.histogramWidgets = new Map<string, HistogramWidgetStore>();
         this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
         this.animatorWidgets = new Map<string, EmptyWidgetStore>();
-        this.layerListWidgets = new Map<string, EmptyWidgetStore>();
+        this.layerListWidgets = new Map<string, LayerListWidgetStore>();
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
@@ -1371,7 +1372,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            this.layerListWidgets.set(id, new EmptyWidgetStore());
+            this.layerListWidgets.set(id, new LayerListWidgetStore());
         }
         return id;
     }

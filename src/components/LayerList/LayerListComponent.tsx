@@ -8,6 +8,7 @@ import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} fr
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
 import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore, FrameStore} from "stores";
+import {LayerListSettingsTabs} from "stores/widgets";
 import "./LayerListComponent.scss";
 
 @observer
@@ -302,6 +303,16 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return <ColumnHeaderCell name={name} style={columnHeaderStyleProps} />;
     };
 
+    private restFreqShortCutOnClick = (selectedFrameIndex: number) => {
+        const widgetsStore = AppStore.Instance.widgetsStore;
+        const layerListWidget = widgetsStore.layerListWidgets?.get(this.props.id);
+        widgetsStore.createFloatingSettingsWidget(LayerListComponent.WIDGET_CONFIG.title, this.props.id, LayerListComponent.WIDGET_CONFIG.type);
+        if (layerListWidget) {
+            layerListWidget.setSettingsTabId(LayerListSettingsTabs.REST_FREQ);
+            layerListWidget.setSelectedFrameIndex(selectedFrameIndex);
+        }
+    };
+
     private contextMenuRenderer = (context: IMenuContext) => {
         const rows = context.getTarget().rows;
         const appStore = AppStore.Instance;
@@ -315,7 +326,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
                         <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
                         <MenuDivider />
-                        <MenuItem disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => appStore.dialogStore.showRestFreqDialog(frame.frameInfo.fileId)} />
+                        <MenuItem disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />
                         <MenuDivider />
                         <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)} />
                         <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />

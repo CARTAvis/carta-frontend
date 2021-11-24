@@ -7,6 +7,8 @@ import {Cell, Column, SelectionModes, Table} from "@blueprintjs/table";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, BrowserMode, HelpType} from "stores";
+import {POLARIZATION_LABELS, STANDARD_POLARIZATIONS} from "models/PolarizationDefinition";
+import {getHeaderNumericValue} from "utilities/wcs";
 import {CARTA} from "carta-protobuf";
 import "./StokesDialogComponent.scss";
 
@@ -102,7 +104,7 @@ export class StokesDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
         const className = classNames("stokes-dialog", {"bp3-dark": appStore.darkTheme});
-        const stokesItems = [CARTA.PolarizationType.POLARIZATION_TYPE_NONE, CARTA.PolarizationType.I, CARTA.PolarizationType.Q, CARTA.PolarizationType.U, CARTA.PolarizationType.V];
+        const stokesItems = Object.values(CARTA.PolarizationType) as CARTA.PolarizationType[];
         const files = this.fileNames;
 
         const fileName = (
@@ -120,7 +122,7 @@ export class StokesDialogComponent extends React.Component {
         const stokesDropDown = (
             <Column
                 key={"Stokes"}
-                name={"Stokes"}
+                name={"Polarization"}
                 cellRenderer={rowIndex => {
                     const file = files[rowIndex];
                     return (
@@ -149,7 +151,7 @@ export class StokesDialogComponent extends React.Component {
             lazy: true,
             isOpen: appStore.dialogStore.stokesDialogVisible,
             onClose: appStore.dialogStore.hideStokesDialog,
-            title: "Merging Stokes hypercube"
+            title: "Merging polarization hypercube"
         };
 
         return (
@@ -164,7 +166,7 @@ export class StokesDialogComponent extends React.Component {
                         defaultRowHeight={30}
                         minRowHeight={20}
                         minColumnWidth={30}
-                        columnWidths={[470, 90]}
+                        columnWidths={[440, 120]}
                         enableRowResizing={false}
                     >
                         {[fileName, stokesDropDown]}
@@ -224,18 +226,10 @@ export class StokesDialogComponent extends React.Component {
     };
 
     private getLabelFromValue = (value: CARTA.PolarizationType) => {
-        switch (value) {
-            case 1:
-                return "I";
-            case 2:
-                return "Q";
-            case 3:
-                return "U";
-            case 4:
-                return "V";
-            default:
-                return "None";
+        if (value === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
+            return "None";
         }
+        return POLARIZATION_LABELS.get(CARTA.PolarizationType[value]) ?? String(value);
     };
 
     private renderPopOver = (stokesType: CARTA.PolarizationType, itemProps: IItemRendererProps) => {
@@ -252,48 +246,23 @@ export class StokesDialogComponent extends React.Component {
     };
 
     private getTypeFromHeader(headers: CARTA.IHeaderEntry[]): CARTA.PolarizationType {
-        let CRVAL: CARTA.IHeaderEntry = {};
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
-        const CTYPE = headers?.find(obj => {
-            return obj.value.toUpperCase() === "STOKES";
-        });
 
-        if (CTYPE) {
-            if (CTYPE.name.includes("1")) {
-                CRVAL = headers.find(obj => {
-                    return obj.name === "CRVAL1";
-                });
-            } else if (CTYPE.name.includes("2")) {
-                CRVAL = headers.find(obj => {
-                    return obj.name === "CRVAL2";
-                });
-            } else if (CTYPE.name.includes("3")) {
-                CRVAL = headers.find(obj => {
-                    return obj.name === "CRVAL3";
-                });
-            } else if (CTYPE.name.includes("4")) {
-                CRVAL = headers.find(obj => {
-                    return obj.name === "CRVAL4";
-                });
+        const ctype = headers?.find(obj => obj.value.toUpperCase() === "STOKES");
+        if (ctype && ctype.name.indexOf("CTYPE") !== -1) {
+            const index = ctype.name.substring(5);
+            const crpixHeader = headers.find(entry => entry.name.indexOf(`CRPIX${index}`) !== -1);
+            const crvalHeader = headers.find(entry => entry.name.indexOf(`CRVAL${index}`) !== -1);
+            const cdeltHeader = headers.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
+            const polarizationIndex = getHeaderNumericValue(crvalHeader) + (1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
+            if (polarizationIndex) {
+                const polarizationString = STANDARD_POLARIZATIONS.get(polarizationIndex);
+                if (polarizationString) {
+                    type = CARTA.PolarizationType[polarizationString] ?? CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
+                }
             }
         }
 
-        switch (CRVAL?.numericValue) {
-            case 1:
-                type = CARTA.PolarizationType.I;
-                break;
-            case 2:
-                type = CARTA.PolarizationType.Q;
-                break;
-            case 3:
-                type = CARTA.PolarizationType.U;
-                break;
-            case 4:
-                type = CARTA.PolarizationType.V;
-                break;
-            default:
-                break;
-        }
         return type;
     }
 
@@ -303,21 +272,9 @@ export class StokesDialogComponent extends React.Component {
         separators.forEach(separator => {
             const words = fileName.split(separator);
             words.forEach(word => {
-                switch (word) {
-                    case "I":
-                        type = CARTA.PolarizationType.I;
-                        break;
-                    case "Q":
-                        type = CARTA.PolarizationType.Q;
-                        break;
-                    case "U":
-                        type = CARTA.PolarizationType.U;
-                        break;
-                    case "V":
-                        type = CARTA.PolarizationType.V;
-                        break;
-                    default:
-                        break;
+                const matchedType = CARTA.PolarizationType[word];
+                if (matchedType) {
+                    type = matchedType;
                 }
             });
         });

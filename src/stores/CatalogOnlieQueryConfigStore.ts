@@ -3,7 +3,7 @@ import {action, observable, makeObservable, reaction, computed} from "mobx";
 import {CatalogSystemType, Point2D} from "models";
 import {AppStore, OverlayStore, NumberFormatType, ASTSettingsString, SystemType} from "stores";
 import {CatalogDatabase} from "services";
-import {clamp, getPixelValueFromWCS, transformPoint} from "utilities";
+import {clamp, getPixelValueFromWCS, transformPoint, VizierResource} from "utilities";
 
 export enum RadiusUnits {
     DEGREES = "deg",
@@ -11,10 +11,12 @@ export enum RadiusUnits {
     ARCSECONDS = "arcsec"
 }
 
+export type VizierItem = {name: string; description: string};
+
 export class CatalogOnlineQueryConfigStore {
     private static staticInstance: CatalogOnlineQueryConfigStore;
     public static readonly MIN_OBJECTS = 1;
-    public static readonly MAX_OBJECTS = 50000;
+    public static readonly MAX_OBJECTS = 10000000;
     public static readonly OBJECT_SIZE = 1000;
 
     @observable isQuerying: boolean;
@@ -28,6 +30,10 @@ export class CatalogOnlineQueryConfigStore {
     @observable radiusUnits: RadiusUnits;
     @observable objectName: string;
     @observable isObjectQuerying: boolean;
+    //Vizier
+    @observable vizierResource: Map<string, VizierResource>;
+    @observable vizierSelectedTableName: VizierItem[];
+    @observable vizierKeyWords: string;
 
     constructor() {
         makeObservable(this);
@@ -43,6 +49,9 @@ export class CatalogOnlineQueryConfigStore {
         this.coordsFormat = NumberFormatType.Degrees;
         this.objectName = "";
         this.isObjectQuerying = false;
+        this.vizierSelectedTableName = [];
+        this.vizierResource = new Map();
+        this.vizierKeyWords = "";
 
         reaction(
             () => AppStore.Instance.activeFrame,
@@ -76,6 +85,33 @@ export class CatalogOnlineQueryConfigStore {
             this.updateCenterPixelCoord(frame.center);
             this.resetObjectName();
         }
+    }
+
+    @action setVizierKeyWords(keyWords: string) {
+        this.vizierKeyWords = keyWords;
+    }
+
+    @action setVizierQueryResult(resources: Map<string, VizierResource>) {
+        this.vizierResource = resources;
+    }
+
+    @action updateVizierSelectedTable(table: VizierItem) {
+        if (!this.vizierSelectedTableName.includes(table)) {
+            this.vizierSelectedTableName.push(table);
+        }
+    }
+
+    @action removeVizierSelectedTable(table: string) {
+        this.vizierSelectedTableName = this.vizierSelectedTableName.filter(element => table !== element.name);
+    }
+
+    @action resetVizierSelectedTable() {
+        this.vizierSelectedTableName = [];
+    }
+
+    @action resetVizier() {
+        this.vizierResource.clear();
+        this.resetVizierSelectedTable();
     }
 
     @action setQueryStatus(isQuerying: boolean) {
@@ -140,6 +176,22 @@ export class CatalogOnlineQueryConfigStore {
 
     @action setObjectQueryStatus(isQuerying: boolean) {
         this.isObjectQuerying = isQuerying;
+    }
+
+    @action resetSearchRadius() {
+        let radius = this.searchRadiusInDegree;
+        switch (this.radiusUnits) {
+            case RadiusUnits.ARCMINUTES:
+                radius = radius * 60;
+                break;
+            case RadiusUnits.ARCSECONDS:
+                radius = radius * 3600;
+                break;
+            default:
+                break;
+        }
+        this.setSearchRadius(radius);
+        this.setFrameCenter();
     }
 
     @computed get radiusAsDeg(): number {
@@ -230,20 +282,29 @@ export class CatalogOnlineQueryConfigStore {
         return AppStore.Instance?.activeFrame?.spatialReference ?? AppStore.Instance.activeFrame;
     }
 
-    @action resetSearchRadius() {
-        let radius = this.searchRadiusInDegree;
-        switch (this.radiusUnits) {
-            case RadiusUnits.ARCMINUTES:
-                radius = radius * 60;
-                break;
-            case RadiusUnits.ARCSECONDS:
-                radius = radius * 3600;
-                break;
-            default:
-                break;
-        }
-        this.setSearchRadius(radius);
-        this.setFrameCenter();
+    @computed get showVizierResult(): boolean {
+        return this.vizierResource.size !== 0 && this.catalogDB === CatalogDatabase.VIZIER;
+    }
+
+    @computed get selectedVizierSource(): VizierResource[] {
+        const resources = [];
+        this.vizierSelectedTableName.forEach(table => resources.push(this.vizierResource.get(table.name)));
+        return resources;
+    }
+
+    @computed get enableLoadVizier(): boolean {
+        return this.vizierSelectedTableName.length > 0 && this.showVizierResult;
+    }
+
+    @computed get vizierTable(): VizierItem[] {
+        const tables: VizierItem[] = [];
+        this.vizierResource.forEach(resource => {
+            tables.push({
+                name: resource.table.name,
+                description: resource.description
+            });
+        });
+        return tables;
     }
 
     convertToDeg(pixelCoords: Point2D, system?: SystemType): {x: string; y: string} {

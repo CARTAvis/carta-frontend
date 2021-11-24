@@ -35,8 +35,8 @@ import {
     WidgetsStore
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom, SpectralType} from "models";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom, SpectralType, ToFileListFilterMode} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -76,6 +76,7 @@ export class AppStore {
     readonly tileService: TileService;
     readonly scriptingService: ScriptingService;
     readonly apiService: ApiService;
+    readonly telemetryService: TelemetryService;
 
     // Other stores
     readonly alertStore: AlertStore;
@@ -460,6 +461,7 @@ export class AppStore {
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable
         };
+        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes);
 
         let newFrame = new FrameStore(frameInfo);
 
@@ -710,6 +712,7 @@ export class AppStore {
             this.histogramRequirements.delete(fileId);
 
             this.tileService.handleFileClosed(fileId);
+            this.telemetryService.addFileCloseEntry(fileId);
 
             if (this.backendService.closeFile(fileId)) {
                 frame.clearSpatialReference();
@@ -777,6 +780,7 @@ export class AppStore {
             this.frames.forEach(frame => {
                 frame.clearContours(false);
                 const fileId = frame.frameInfo.fileId;
+                this.telemetryService.addFileCloseEntry(fileId);
                 this.tileService.handleFileClosed(fileId);
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
@@ -957,6 +961,8 @@ export class AppStore {
             }
         } catch (err) {
             console.error(err);
+            this.fileBrowserStore.setImportingRegions(false);
+            this.fileBrowserStore.resetLoadingStates();
             AppToaster.show(ErrorToast(err));
         }
     };
@@ -1267,8 +1273,10 @@ export class AppStore {
     private initCarta = async (isAstReady: boolean, isZfpReady: boolean, isCartaComputeReady: boolean, isApiServiceAuthenticated: boolean) => {
         if (isAstReady && isZfpReady && isCartaComputeReady && isApiServiceAuthenticated) {
             try {
-                await this.connectToServer();
                 await this.preferenceStore.fetchPreferences();
+                await this.telemetryService.checkAndGenerateId();
+                await this.telemetryService.flushTelemetry();
+                await this.connectToServer();
                 await this.fileBrowserStore.restoreStartingDirectory();
                 await this.layoutStore.fetchLayouts();
                 await this.snippetStore.fetchSnippets();
@@ -1293,11 +1301,13 @@ export class AppStore {
         AppStore.staticInstance = this;
         window["app"] = this;
         window["carta"] = this;
+
         // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
         this.scriptingService = ScriptingService.Instance;
         this.apiService = ApiService.Instance;
+        this.telemetryService = TelemetryService.Instance;
 
         // Assign lower level store instances
         this.alertStore = AlertStore.Instance;
@@ -2336,7 +2346,7 @@ export class AppStore {
     };
 
     getFileList = async (directory: string) => {
-        return await this.backendService.getFileList(directory);
+        return await this.backendService.getFileList(directory, ToFileListFilterMode(this.preferenceStore.fileFilterMode));
     };
 
     // region requirements calculations

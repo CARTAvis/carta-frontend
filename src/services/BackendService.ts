@@ -1,9 +1,10 @@
-import {action, observable, makeObservable, runInAction} from "mobx";
+import {action, makeObservable, observable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore, RegionStore} from "stores";
 import {mapToObject} from "utilities";
 import {ApiService} from "./ApiService";
+import {TelemetryAction, TelemetryService} from "./TelemetryService";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -232,11 +233,11 @@ export class BackendService {
         this.endToEndPing = this.lastPongTime - this.lastPingTime;
     };
 
-    async getFileList(directory: string): Promise<CARTA.IFileListResponse> {
+    async getFileList(directory: string, filterMode: CARTA.FileListFilterMode): Promise<CARTA.IFileListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.FileListRequest.create({directory});
+            const message = CARTA.FileListRequest.create({directory, filterMode});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_LIST_REQUEST, CARTA.FileListRequest.encode(message).finish())) {
@@ -249,11 +250,11 @@ export class BackendService {
         }
     }
 
-    async getRegionList(directory: string): Promise<CARTA.IRegionListResponse> {
+    async getRegionList(directory: string, filterMode: CARTA.FileListFilterMode): Promise<CARTA.IRegionListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.RegionListRequest.create({directory});
+            const message = CARTA.RegionListRequest.create({directory, filterMode});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.REGION_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_LIST_REQUEST, CARTA.RegionListRequest.encode(message).finish())) {
@@ -266,11 +267,11 @@ export class BackendService {
         }
     }
 
-    async getCatalogList(directory: string): Promise<CARTA.ICatalogListResponse> {
+    async getCatalogList(directory: string, filterMode: CARTA.FileListFilterMode): Promise<CARTA.ICatalogListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.CatalogListRequest.create({directory});
+            const message = CARTA.CatalogListRequest.create({directory, filterMode});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.CATALOG_LIST_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.CATALOG_LIST_REQUEST, CARTA.CatalogListRequest.encode(message).finish())) {
@@ -852,6 +853,7 @@ export class BackendService {
         this.serverFeatureFlags = ack.serverFeatureFlags;
         this.grpcPort = ack.grpcPort;
 
+        TelemetryService.Instance.addTelemetryEntry(TelemetryAction.Connection, {serverFeatureFlags: ack.serverFeatureFlags, plaformInfo: ack.platformStrings});
         this.onDeferredResponse(eventId, ack);
     }
 
