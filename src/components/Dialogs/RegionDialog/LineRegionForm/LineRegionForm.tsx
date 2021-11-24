@@ -140,12 +140,15 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        const existingValue = this.props.region.size.x;
+        const existingValue = length2D(this.props.region.size);
 
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const rotation = (region.rotation * Math.PI) / 180.0;
-            region.setSize({x: value * Math.cos(rotation), y: value * Math.sin(rotation)});
+            // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
+            // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
+            // cos and sin with a proper +/-1 constant applied.
+            region.setSize({x: value * Math.sin(rotation), y: -1 * value * Math.cos(rotation)});
             return;
         }
 
@@ -164,11 +167,14 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
             return;
         }
         const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
-        const existingValue = this.props.region.size.x;
+        const existingValue = length2D(this.props.region.size);
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const rotation = (region.rotation * Math.PI) / 180.0;
-            region.setSize({x: value * Math.cos(rotation), y: value * Math.sin(rotation)});
+            // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
+            // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
+            // cos and sin with a proper +/-1 constant applied.
+            region.setSize({x: value * Math.sin(rotation), y: -1 * value * Math.cos(rotation)});
             return;
         }
 
