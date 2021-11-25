@@ -136,6 +136,13 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private onGenerateButtonClicked = () => {
+        const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+        this.widgetStore.setFileId(fileId);
+        this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
+        this.widgetStore.requestPV();
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const frame = this.widgetStore.effectiveFrame;
@@ -197,7 +204,7 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <div className="generate-button">
                     <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
-                        <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.widgetStore.requestPV} />
+                        <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
                     </Tooltip2>
                 </div>
             </div>

@@ -133,7 +133,8 @@ export class FrameStore {
     @observable secondarySpectralImages: FrameStore[];
     @observable secondaryRasterScalingImages: FrameStore[];
     @observable momentImages: FrameStore[];
-    @observable pvImages: FrameStore[];
+    @observable pvImage: FrameStore;
+    @observable generatedPVRegionId: number;
 
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
@@ -815,7 +816,7 @@ export class FrameStore {
         this.secondarySpectralImages = [];
         this.secondaryRasterScalingImages = [];
         this.momentImages = [];
-        this.pvImages = [];
+        this.pvImage = null;
 
         this.isRequestingMoments = false;
         this.requestingMomentsProgress = 0;
@@ -2069,13 +2070,13 @@ export class FrameStore {
     };
 
     @action addPvImage = (frame: FrameStore) => {
-        if (frame && !this.pvImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
-            this.pvImages.push(frame);
+        if (frame && (!this.pvImage || this.pvImage.frameInfo.fileId !== frame.frameInfo.fileId)) {
+            this.pvImage = frame;
         }
     };
 
     @action removePvImage = () => {
-        this.pvImages = [];
+        this.pvImage = null;
     };
 
     @action setIsRequestingPV = (val: boolean) => {
@@ -2089,5 +2090,9 @@ export class FrameStore {
     @action resetPvRequestState = () => {
         this.setIsRequestingPV(false);
         this.updateRequestingPvProgress(0);
+    };
+
+    @action setGeneratedPVRegionId = (regionId: number) => {
+        this.generatedPVRegionId = regionId;
     };
 }

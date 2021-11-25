@@ -1074,8 +1074,8 @@ export class AppStore {
 
         this.startFileLoading();
         // clear previously generated moment images under this frame
-        if (frame.pvImages && frame.pvImages.length > 0) {
-            frame.pvImages.forEach(pvFrame => this.closeFile(pvFrame));
+        if (frame.pvImage) {
+            this.closeFile(frame.pvImage);
         }
         frame.removePvImage();
 
