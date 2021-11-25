@@ -44,7 +44,7 @@ import {
     ZoomPoint,
     POLARIZATION_LABELS
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, subtract2D, getFormattedWCSPoint, getPixelSize, scale2D} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, subtract2D, getFormattedWCSPoint, getPixelSize, multiply2D} from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec, ProtobufProcessing} from "utilities";
@@ -75,7 +75,7 @@ export class FrameStore {
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
     private readonly initialCenter: Point2D;
-    private readonly regionUnitSize: number;
+    private readonly regionUnitSize: Point2D;
 
     private spectralTransformAST: AST.FrameSet;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
@@ -1210,7 +1210,8 @@ export class FrameStore {
         if (crpix1 && crpix2) {
             const crpix1Val = getHeaderNumericValue(crpix1);
             const crpix2Val = getHeaderNumericValue(crpix2);
-            return AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val + 1, crpix2Val);
+            return {x: Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val + 1, crpix2Val) * 1e6) / 1e6,
+                    y: Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val, crpix2Val + 1) * 1e6) / 1e6};
         }
         return null;
     };
@@ -1364,15 +1365,22 @@ export class FrameStore {
     }
 
     public getWcsSizeInArcsec(size: Point2D): Point2D {
-        if (size && isFinite(this.regionUnitSize)) {
-            return scale2D(size, this.regionUnitSize);
+        if (size && this.regionUnitSize) {
+            return multiply2D(size, this.regionUnitSize);
         }
         return null;
     }
 
-    public getImageValueFromArcsec(arcsecValue: number): number {
-        if (isFinite(arcsecValue) && isFinite(this.regionUnitSize)) {
-            return arcsecValue / this.regionUnitSize;
+    public getImageXValueFromArcsec(arcsecValue: number): number {
+        if (isFinite(arcsecValue) && isFinite(this.regionUnitSize?.x)) {
+            return arcsecValue / this.regionUnitSize.x;
+        }
+        return null;
+    }
+
+    public getImageYValueFromArcsec(arcsecValue: number): number {
+        if (isFinite(arcsecValue) && isFinite(this.regionUnitSize?.y)) {
+            return arcsecValue / this.regionUnitSize.y;
         }
         return null;
     }

@@ -166,8 +166,8 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (wcsString === this.lengthWCS) {
             return;
         }
-        const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = length2D(this.props.region.size);
+        const value = existingValue * getValueFromArcsecString(wcsString) / length2D(this.props.frame.getWcsSizeInArcsec(this.props.region.size));
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const rotation = (region.rotation * Math.PI) / 180.0;
