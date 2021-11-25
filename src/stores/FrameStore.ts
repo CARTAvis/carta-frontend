@@ -1210,8 +1210,10 @@ export class FrameStore {
         if (crpix1 && crpix2) {
             const crpix1Val = getHeaderNumericValue(crpix1);
             const crpix2Val = getHeaderNumericValue(crpix2);
-            return {x: Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val + 1, crpix2Val) * 1e6) / 1e6,
-                    y: Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val, crpix2Val + 1) * 1e6) / 1e6};
+            return {
+                x: Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val + 1, crpix2Val) * 1e6) / 1e6,
+                y: Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val, crpix2Val + 1) * 1e6) / 1e6
+            };
         }
         return null;
     };
