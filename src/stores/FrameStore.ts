@@ -1205,15 +1205,19 @@ export class FrameStore {
     };
 
     private getRegionUnitSize = () => {
+        if (this.isPVImage || this.isUVImage) {
+            return null;
+        }
         const crpix1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CRPIX1") !== -1);
         const crpix2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CRPIX2") !== -1);
         if (crpix1 && crpix2) {
             const crpix1Val = getHeaderNumericValue(crpix1);
             const crpix2Val = getHeaderNumericValue(crpix2);
-            return {
-                x: Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val + 1, crpix2Val) * 1e6) / 1e6,
-                y: Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val, crpix2Val + 1) * 1e6) / 1e6
-            };
+            const xUnitSize = Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val + 1, crpix2Val) * 1e6) / 1e6;
+            const yUnitSize = Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val, crpix2Val + 1) * 1e6) / 1e6;
+            if (isFinite(xUnitSize) && isFinite(yUnitSize)) {
+                return {x: xUnitSize, y: yUnitSize};
+            }
         }
         return null;
     };
