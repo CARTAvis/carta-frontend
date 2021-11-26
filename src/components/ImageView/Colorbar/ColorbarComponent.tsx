@@ -120,8 +120,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let rectY = colorbarSettings.yOffset - (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset) ? 0.5 / devicePixelRatio : 0));
         let rectWidth = colorbarSettings.width;
         let rectHeight = colorbarSettings.height + (isOnePixBorder && (!isIntPosition(colorbarSettings.height) ? (isIntPosition(colorbarSettings.yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
-        let rectGradientStart = {x: 0, y: colorbarSettings.yOffset};
-        let rectGradientEnd = {x: 0, y: colorbarSettings.yOffset + colorbarSettings.height};
+        let rectGradientStart = {x: 0, y: 0};
+        let rectGradientEnd = {x: 0, y: colorbarSettings.height};
         let labelXPos = colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap;
         let labelYPos = colorbarSettings.yOffset;
         let hoverBarPosition = [colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY];
