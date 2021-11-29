@@ -7,7 +7,7 @@ import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
 import {FindIntensityUnitType, GetFreqInGHz, GetIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
-import {clamp, getColorForTheme, getHeaderNumericValue, isAutoColor} from "utilities";
+import {clamp, getAngleInRad, getColorForTheme, getHeaderNumericValue, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -348,11 +348,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     config["freqGHz"] = GetFreqInGHz(frame.spectralAxis.type.unit, frame.spectralAxis.value);
                 }
             }
+
             const cdelta1 = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT1");
+            const cunit1 = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CUNIT1");
             const cdelta2 = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CDELT2");
-            if (cdelta1 && cdelta2) {
-                config["cdelta1"] = Math.abs(getHeaderNumericValue(cdelta1));
-                config["cdelta2"] = getHeaderNumericValue(cdelta2);
+            const cunit2 = frame.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "CUNIT2");
+            if (cdelta1 && cdelta2 && cunit1 && cunit2) {
+                config["cdelta1"] = getAngleInRad(Math.abs(getHeaderNumericValue(cdelta1)), cunit1.value);
+                config["cdelta2"] = getAngleInRad(getHeaderNumericValue(cdelta2), cunit2.value);
             }
             return config;
         }
