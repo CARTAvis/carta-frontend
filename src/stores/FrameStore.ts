@@ -296,7 +296,7 @@ export class FrameStore {
         }
     }
 
-    @computed get beamProperties(): {x: number; y: number; angle: number; overlayBeamSettings: OverlayBeamStore} {
+    @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} {
         const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
 
@@ -322,6 +322,8 @@ export class FrameStore {
                         return {
                             x: beam.majorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta),
                             y: beam.minorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta),
+                            majorAxis: beam.majorAxis,
+                            minorAxis: beam.minorAxis,
                             angle: beam.pa,
                             overlayBeamSettings: this.overlayBeamSettings
                         };

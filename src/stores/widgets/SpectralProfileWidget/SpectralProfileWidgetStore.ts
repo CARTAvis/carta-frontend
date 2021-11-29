@@ -340,10 +340,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const frame = this.effectiveFrame;
         if (frame) {
             let config: IntensityConfig = {nativeIntensityUnit: frame.unit};
-            if (frame.frameInfo?.beamTable?.length > 0) {
-                const beam = frame.frameInfo.beamTable[0];
-                config["bmaj"] = beam.majorAxis;
-                config["bmin"] = beam.minorAxis;
+            if (frame.beamProperties) {
+                config["bmaj"] = frame.beamProperties.majorAxis;
+                config["bmin"] = frame.beamProperties.minorAxis;
                 if (frame.spectralAxis?.type?.code === "FREQ") {
                     config["freqGHz"] = GetFreqInGHz(frame.spectralAxis.type.unit, frame.spectralAxis.value);
                 }
