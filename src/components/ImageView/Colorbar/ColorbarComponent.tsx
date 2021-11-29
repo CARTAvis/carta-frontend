@@ -107,7 +107,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         };
 
         // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary
-        const isOnePixBorder = colorbarSettings.borderWidth * devicePixelRatio * appStore.imageRatio <= 1;
+        const isOnePixBorder = colorbarSettings.borderWidth * appStore.imageRatio <= 1;
         let isIntPosition = (position: number): boolean => {
             return (position * devicePixelRatio) % 1 === 0;
         };
@@ -120,8 +120,8 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let rectY = colorbarSettings.yOffset - (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset) ? 0.5 / devicePixelRatio : 0));
         let rectWidth = colorbarSettings.width;
         let rectHeight = colorbarSettings.height + (isOnePixBorder && (!isIntPosition(colorbarSettings.height) ? (isIntPosition(colorbarSettings.yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
-        let rectGradientStart = {x: 0, y: colorbarSettings.yOffset};
-        let rectGradientEnd = {x: 0, y: colorbarSettings.yOffset + colorbarSettings.height};
+        let rectGradientStart = {x: 0, y: 0};
+        let rectGradientEnd = {x: 0, y: colorbarSettings.height};
         let labelXPos = colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap;
         let labelYPos = colorbarSettings.yOffset;
         let hoverBarPosition = [colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY];
@@ -177,7 +177,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             for (let i = 0; i < positions.length; i++) {
                 if (colorbarSettings.tickVisible) {
                     // to avoid blurry ticks when width <= 1px, offset to .5 px position
-                    const position = positions[i] - (colorbarSettings.tickWidth * devicePixelRatio * appStore.imageRatio <= 1 && positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio);
+                    const position = positions[i] - (colorbarSettings.tickWidth * appStore.imageRatio <= 1 && positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio);
                     let tickPoints = [colorbarSettings.rightBorderPos - colorbarSettings.tickLen, position, colorbarSettings.rightBorderPos, position];
                     if (colorbarSettings.position !== "right") {
                         // rotate to horizontal by swapping
