@@ -1092,9 +1092,11 @@ export class AppStore {
                 }
             }
             frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
         } catch (err) {
             frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
             console.error(err);
             AppToaster.show(ErrorToast(err));

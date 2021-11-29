@@ -225,6 +225,7 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
                     cancellable={true}
                     onCancel={this.widgetStore.requestingPVCancelled}
                     text={"Generating PV"}
+                    isCancelling={frame?.isRequestPVCancelling}
                 />
             </div>
         );

@@ -44,6 +44,7 @@ export class PVGeneratorWidgetStore extends RegionWidgetStore {
         const frame = this.effectiveFrame;
         if (frame) {
             AppStore.Instance.cancelRequestingPV(frame.frameInfo.fileId);
+            frame.setIsRequestPVCancelling(true);
         }
     };
 

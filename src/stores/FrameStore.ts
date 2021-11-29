@@ -140,6 +140,7 @@ export class FrameStore {
     @observable requestingMomentsProgress: number;
     @observable isRequestingPV: boolean;
     @observable requestingPVProgress: number;
+    @observable isRequestPVCancelling: boolean;
 
     @observable stokesFiles: CARTA.StokesFile[];
 
@@ -2094,5 +2095,9 @@ export class FrameStore {
 
     @action setGeneratedPVRegionId = (regionId: number) => {
         this.generatedPVRegionId = regionId;
+    };
+
+    @action setIsRequestPVCancelling = (val: boolean) => {
+        this.isRequestPVCancelling = val;
     };
 }
