@@ -84,12 +84,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             },
             (reference, prevReferece) => {
                 const frame = this.props.frame;
-                if (
-                    reference &&
-                    (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) &&
-                    frame &&
-                    frame !== AppStore.Instance.activeFrame
-                ) {
+                if (reference && (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) && frame) {
                     // Only update those stages that are not moved/zoomed by mouse directly(activeFrame).
                     this.syncStage(reference.centerMovement, reference.zoom);
                 }
