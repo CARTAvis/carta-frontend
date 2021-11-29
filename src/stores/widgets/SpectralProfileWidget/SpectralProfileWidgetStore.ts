@@ -313,8 +313,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
 
-        this.intensityUnit = undefined;
         this.intensityConversion = undefined;
+        this.setIntensityUnit(this.effectiveFrame?.unit);
 
         reaction(
             () => this.effectiveFrame,
