@@ -266,7 +266,9 @@ const JyBeamToKelvin = (freqGHz: number, bmaj: number, bmin: number, forward: bo
 };
 
 const JyBeamToJySr = (bmaj: number, bmin: number, forward: boolean = true): number => {
-    const omega = (Math.PI * bmaj * bmin) / (4 * Math.log(2));
+    const bmajRad = (bmaj * Math.PI) / 648000;
+    const bminRad = (bmin * Math.PI) / 648000;
+    const omega = (Math.PI * bmajRad * bminRad) / (4 * Math.LN2);
     return forward ? 1 / omega : omega;
 };
 
