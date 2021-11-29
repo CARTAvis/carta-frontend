@@ -107,7 +107,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         };
 
         // to avoid blurry border when width <= 1px, add 0.5 px offset to the colorbar if necessary
-        const isOnePixBorder = colorbarSettings.borderWidth * devicePixelRatio * appStore.imageRatio <= 1;
+        const isOnePixBorder = colorbarSettings.borderWidth * appStore.imageRatio <= 1;
         let isIntPosition = (position: number): boolean => {
             return (position * devicePixelRatio) % 1 === 0;
         };
@@ -177,7 +177,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             for (let i = 0; i < positions.length; i++) {
                 if (colorbarSettings.tickVisible) {
                     // to avoid blurry ticks when width <= 1px, offset to .5 px position
-                    const position = positions[i] - (colorbarSettings.tickWidth * devicePixelRatio * appStore.imageRatio <= 1 && positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio);
+                    const position = positions[i] - (colorbarSettings.tickWidth * appStore.imageRatio <= 1 && positions[i] - Math.floor(positions[i]) - 0.5 / devicePixelRatio);
                     let tickPoints = [colorbarSettings.rightBorderPos - colorbarSettings.tickLen, position, colorbarSettings.rightBorderPos, position];
                     if (colorbarSettings.position !== "right") {
                         // rotate to horizontal by swapping
