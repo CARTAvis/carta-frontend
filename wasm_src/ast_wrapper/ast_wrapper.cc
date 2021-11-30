@@ -508,6 +508,19 @@ EMSCRIPTEN_KEEPALIVE double axDistance(AstFrameSet* wcsinfo, int axis, double v1
     return astAxDistance(wcsinfo, axis, v1, v2);
 }
 
+EMSCRIPTEN_KEEPALIVE double geodesicDistance(AstFrameSet* wcsinfo, double x1, double y1, double x2, double y2)
+{
+    const double x[] = {x1, x2};
+    const double y[] = {y1, y2};
+    double xtran[2];
+    double ytran[2];
+    astTran2(wcsinfo, 2, x, y, 1, xtran, ytran);
+
+    double start[] = {xtran[0], ytran[0]};
+    double finish[] = {xtran[1], ytran[1]};
+    return astDistance(wcsinfo, start, finish) * 180.0 / M_PI * 3600.0;
+}
+
 EMSCRIPTEN_KEEPALIVE AstFrame* frame(int naxes, const char* options)
 {
     return astFrame(naxes, options);
