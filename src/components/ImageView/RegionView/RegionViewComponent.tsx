@@ -71,13 +71,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         reaction(
             () => {
                 const frame = this.props.frame;
-                if (frame.spatialReference) {
-                    // Update stage when spatial reference move/zoom(frame is sibling),
-                    // tracking spatial reference's centerMovement/zoomLevel to move/zoom stage.
-                    return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.zoomLevel};
-                } else {
+                if (frame) {
+                    if (frame.spatialReference) {
+                        // Update stage when spatial reference move/zoom(frame is sibling),
+                        // tracking spatial reference's centerMovement/zoomLevel to move/zoom stage.
+                        return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.zoomLevel};
+                    }
                     return {centerMovement: frame.centerMovement, zoom: frame.zoomLevel};
                 }
+                return undefined;
             },
             (reference, prevReferece) => {
                 const frame = this.props.frame;
