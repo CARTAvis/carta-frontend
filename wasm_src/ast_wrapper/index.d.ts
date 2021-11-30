@@ -25,6 +25,7 @@ export function getString(obj: AstObject, attrib: string): string;
 export function dump(obj: AstObject): void;
 // Not exported norm()
 export function axDistance(frameSet: FrameSet, axis: number, v1: number, v2: number);
+export function geodesicDistance(frameSet: FrameSet, x1: number, y1: number, x2: number, y2: number): number;
 export function format(frameSet: FrameSet, axis: number, value: number): string;
 // Not exported unformat()
 // Not exported transform(), transform3D(), spectralTransform()
