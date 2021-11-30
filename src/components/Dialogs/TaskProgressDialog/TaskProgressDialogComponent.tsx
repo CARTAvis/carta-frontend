@@ -48,6 +48,7 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
                 {this.props.cancellable && (
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                            <span>{this.props.isCancelling && `(cancellation in progress${".".repeat(Math.floor(performance.now() / 1000) % 4).concat("\xa0".repeat(3 - (Math.floor(performance.now() / 1000) % 4)))} )`}</span>
                             <Tooltip2 content="Cancel the current task">
                                 <AnchorButton onClick={this.props.onCancel} disabled={this.props.isCancelling}>
                                     Cancel
