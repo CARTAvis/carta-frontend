@@ -13,7 +13,7 @@ import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {AppStore, FrameStore} from "stores";
-import {CursorInfo, CursorInfoVisibility} from "models";
+import {CursorInfo, CursorInfoVisibility, Zoom} from "models";
 import "./ImagePanelComponent.scss";
 
 interface ImagePanelComponentProps {
@@ -43,6 +43,30 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
         this.activeLayer = AppStore.Instance.activeLayer;
     }
+
+    componentDidMount() {
+        this.fitZoomOfLoadingMultipleFiles();
+    }
+
+    componentDidUpdate() {
+        this.fitZoomOfLoadingMultipleFiles();
+    }
+
+    private fitZoomOfLoadingMultipleFiles = () => {
+        if (AppStore.Instance.isLoadingMultipleFiles && AppStore.Instance.preferenceStore.zoomMode === Zoom.FIT) {
+            this.fitZoomFrameAndRegion();
+        }
+    };
+
+    public fitZoomFrameAndRegion = () => {
+        const frame = this.props.frame;
+        if (frame) {
+            const zoom = frame.fitZoom();
+            if (zoom) {
+                this.onRegionViewZoom(zoom, true);
+            }
+        }
+    };
 
     private getRegionViewRef = ref => {
         this.regionViewRef = ref;
@@ -165,7 +189,15 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         docked={this.props.docked && this.activeLayer !== ImageViewLayer.Catalog}
                     />
-                    <ToolbarComponent docked={this.props.docked} visible={this.imageToolbarVisible} frame={frame} activeLayer={this.activeLayer} onActiveLayerChange={appStore.updateActiveLayer} onRegionViewZoom={this.onRegionViewZoom} />
+                    <ToolbarComponent
+                        docked={this.props.docked}
+                        visible={this.imageToolbarVisible}
+                        frame={frame}
+                        activeLayer={this.activeLayer}
+                        onActiveLayerChange={appStore.updateActiveLayer}
+                        onRegionViewZoom={this.onRegionViewZoom}
+                        onZoomToFit={this.fitZoomFrameAndRegion}
+                    />
                 </div>
             );
         } else {

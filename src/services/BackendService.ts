@@ -853,7 +853,7 @@ export class BackendService {
         this.serverFeatureFlags = ack.serverFeatureFlags;
         this.grpcPort = ack.grpcPort;
 
-        TelemetryService.Instance.addTelemetryEntry(TelemetryAction.Connection, {serverFeatureFlags: ack.serverFeatureFlags, plaformInfo: ack.platformStrings});
+        TelemetryService.Instance.addTelemetryEntry(TelemetryAction.Connection, {serverFeatureFlags: ack.serverFeatureFlags, platformInfo: ack.platformStrings});
         this.onDeferredResponse(eventId, ack);
     }
 

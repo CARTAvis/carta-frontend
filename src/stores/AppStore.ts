@@ -36,7 +36,7 @@ import {
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom, SpectralType, ToFileListFilterMode} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -146,20 +146,19 @@ export class AppStore {
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
-        const requiresAutoFit = this.preferenceStore.zoomMode === Zoom.FIT && this.overlayStore.fullViewWidth <= 1 && this.overlayStore.fullViewHeight <= 1;
         this.overlayStore.setViewDimension(w, h);
-
-        if (requiresAutoFit) {
-            for (const frame of this.frames) {
-                frame.fitZoom();
-            }
-        }
     };
 
     // Auth
     @observable username: string = "";
     @action setUsername = (username: string) => {
         this.username = username;
+    };
+
+    // Batch opening files
+    @observable isLoadingMultipleFiles: boolean = false;
+    @action setLoadingMultipleFiles = (isLoadingMultipleFiles: boolean) => {
+        this.isLoadingMultipleFiles = isLoadingMultipleFiles;
     };
 
     private connectToServer = async () => {
@@ -211,15 +210,11 @@ export class AppStore {
 
         try {
             if (fileList?.length) {
-                const frames: FrameStore[] = [];
+                this.setLoadingMultipleFiles(true);
                 for (const file of fileList) {
-                    frames.push(await this.loadFile(folderSearchParam, file, ""));
+                    await this.loadFile(folderSearchParam, file, "");
                 }
-
-                // Auto-fit loaded frames after panel configuration has been updated.
-                if (this.preferenceStore.zoomMode === Zoom.FIT) {
-                    this.autoFitImages(frames);
-                }
+                this.setLoadingMultipleFiles(false);
             } else if (this.preferenceStore.autoLaunch) {
                 if (folderSearchParam) {
                     this.fileBrowserStore.setStartingDirectory(folderSearchParam);
@@ -230,15 +225,6 @@ export class AppStore {
             console.error(err);
         }
     };
-
-    @action autoFitImages(frames: FrameStore[]) {
-        // Frames that have a spatial reference are not auto-fitted.
-        for (const frame of frames) {
-            if (frame && !frame.spatialReference) {
-                frame.fitZoom();
-            }
-        }
-    }
 
     @action handleThemeChange = (darkMode: boolean) => {
         this.systemTheme = darkMode ? "dark" : "light";

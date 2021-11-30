@@ -19,6 +19,10 @@
 
 extern "C" {
 
+int EMSCRIPTEN_KEEPALIVE linearRegression(const double *x, const double *y, size_t n, double *c0, double *c1, double *cov00, double *cov01, double *cov11, double *sumsq) {
+    return gsl_fit_linear(x, 1, y, 1, n, c0, c1, cov00, cov01, cov11, sumsq);
+}
+
 int EMSCRIPTEN_KEEPALIVE filterBoxcar(double* yInArray, const int N, double* yOutArray, const int kernel) {
     int status = 0;    /* return value: 0 = success */
     gsl_vector_view yIn = gsl_vector_view_array(yInArray, N);

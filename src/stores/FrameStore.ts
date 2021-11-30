@@ -1896,7 +1896,7 @@ export class FrameStore {
         if (this.spatialReference) {
             this.frameRegionSet.migrateRegionsFromExistingSet(this.spatialReference.frameRegionSet, this.spatialTransformAST);
             this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
-            this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale;
+            this.zoomLevel = this.spatialReference.zoomLevel;
             this.spatialReference.removeSecondarySpatialImage(this);
             this.spatialReference = null;
         }
