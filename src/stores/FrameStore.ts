@@ -44,7 +44,7 @@ import {
     ZoomPoint,
     POLARIZATION_LABELS
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, subtract2D, getFormattedWCSPoint, getPixelSize} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, subtract2D, getFormattedWCSPoint, getPixelSize, multiply2D} from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec, ProtobufProcessing} from "utilities";
@@ -75,6 +75,7 @@ export class FrameStore {
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
     private readonly initialCenter: Point2D;
+    private readonly regionUnitSize: Point2D;
 
     private spectralTransformAST: AST.FrameSet;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
@@ -953,6 +954,7 @@ export class FrameStore {
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
+        this.regionUnitSize = this.getRegionUnitSize();
 
         // init spectral settings
         if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
@@ -1207,6 +1209,24 @@ export class FrameStore {
         );
     };
 
+    private getRegionUnitSize = () => {
+        if (this.isPVImage || this.isUVImage) {
+            return null;
+        }
+        const crpix1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CRPIX1") !== -1);
+        const crpix2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CRPIX2") !== -1);
+        if (crpix1 && crpix2) {
+            const crpix1Val = getHeaderNumericValue(crpix1);
+            const crpix2Val = getHeaderNumericValue(crpix2);
+            const xUnitSize = Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val + 1, crpix2Val) * 1e6) / 1e6;
+            const yUnitSize = Math.round(AST.geodesicDistance(this.wcsInfo, crpix1Val, crpix2Val, crpix1Val, crpix2Val + 1) * 1e6) / 1e6;
+            if (isFinite(xUnitSize) && isFinite(yUnitSize)) {
+                return {x: xUnitSize, y: yUnitSize};
+            }
+        }
+        return null;
+    };
+
     public getRegion = (regionId: number): RegionStore => {
         return this.regionSet?.regions?.find(r => r.regionId === regionId);
     };
@@ -1356,30 +1376,22 @@ export class FrameStore {
     }
 
     public getWcsSizeInArcsec(size: Point2D): Point2D {
-        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
-        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
-        if (size && deltaHeader && unitHeader) {
-            const delta = getHeaderNumericValue(deltaHeader);
-            const unit = unitHeader.value.trim();
-            if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
-                return {
-                    x: size.x * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600) / Math.PI),
-                    y: size.y * Math.abs(delta) * (unit === "deg" ? 3600 : (180 * 3600) / Math.PI)
-                };
-            }
+        if (size && this.regionUnitSize) {
+            return multiply2D(size, this.regionUnitSize);
         }
         return null;
     }
 
-    public getImageValueFromArcsec(arcsecValue: number): number {
-        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
-        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
-        if (isFinite(arcsecValue) && deltaHeader && unitHeader) {
-            const delta = getHeaderNumericValue(deltaHeader);
-            const unit = unitHeader.value.trim();
-            if (isFinite(delta) && delta !== 0 && (unit === "deg" || unit === "rad")) {
-                return arcsecValue / Math.abs(delta) / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI);
-            }
+    public getImageXValueFromArcsec(arcsecValue: number): number {
+        if (isFinite(arcsecValue) && isFinite(this.regionUnitSize?.x)) {
+            return arcsecValue / this.regionUnitSize.x;
+        }
+        return null;
+    }
+
+    public getImageYValueFromArcsec(arcsecValue: number): number {
+        if (isFinite(arcsecValue) && isFinite(this.regionUnitSize?.y)) {
+            return arcsecValue / this.regionUnitSize.y;
         }
         return null;
     }
