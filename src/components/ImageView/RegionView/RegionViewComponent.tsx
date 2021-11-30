@@ -76,16 +76,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 if (frame.spatialReference) {
                     // frame is sibling
                     return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.zoomLevel};
-                } else if (frame.spatialSiblings?.length > 0) {
-                    // frame is spatial reference
+                } else {
                     return {centerMovement: frame.centerMovement, zoom: frame.zoomLevel};
                 }
-                return undefined;
             },
             (reference, prevReferece) => {
                 const frame = this.props.frame;
                 if (reference && (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) && frame) {
-                    // Only update those stages that are not moved/zoomed by mouse directly(activeFrame).
                     this.syncStage(reference.centerMovement, reference.zoom);
                 }
             }
