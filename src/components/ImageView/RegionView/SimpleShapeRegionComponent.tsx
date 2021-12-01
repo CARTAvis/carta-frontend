@@ -313,17 +313,18 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
     private getDragBoundedDiagonalAnchorPos = (region: RegionStore, anchorName: string): Point2D => {
         // Handle keep-aspect drag bound of diagonal anchors
-        if (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right") {
+        const frame = this.props.frame;
+        if (frame && (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right")) {
             const size = {x: region.size.x / devicePixelRatio, y: region.size.y / devicePixelRatio};
             const offset = rotate2D(scale2D(size, region.regionType === CARTA.RegionType.RECTANGLE ? 0.5 : 1), (region.rotation * Math.PI) / 180.0);
             if (anchorName === "top-left") {
-                return add2D(this.centerCanvasPos, {x: -offset.y, y: -offset.x});
+                return add2D(this.centerCanvasPos, {x: -offset.y * frame.aspectRatio, y: -offset.x});
             } else if (anchorName === "bottom-left") {
-                return add2D(this.centerCanvasPos, {x: -offset.x, y: offset.y});
+                return add2D(this.centerCanvasPos, {x: -offset.x * frame.aspectRatio, y: offset.y});
             } else if (anchorName === "top-right") {
-                return add2D(this.centerCanvasPos, {x: offset.x, y: -offset.y});
+                return add2D(this.centerCanvasPos, {x: offset.x * frame.aspectRatio, y: -offset.y});
             } else {
-                return add2D(this.centerCanvasPos, {x: offset.y, y: offset.x});
+                return add2D(this.centerCanvasPos, {x: offset.y * frame.aspectRatio, y: offset.x});
             }
         }
         return undefined;
