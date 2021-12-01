@@ -93,7 +93,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     componentDidMount() {
         const frame = this.props.frame;
         if (frame) {
-            this.stageZoomToPoint(this.props.width / 2, this.props.height / 2, frame.zoomLevel);
+            this.syncStage(frame.centerMovement, frame.zoomLevel);
         }
     }
 
@@ -628,10 +628,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 firstControlPoint = transformPoint(frame.spatialTransformAST, firstControlPoint, false);
                 lastControlPoint = transformPoint(frame.spatialTransformAST, lastControlPoint, false);
             }
-            let lineStart = transformedImageToCanvasPos(firstControlPoint.x, firstControlPoint.y, frame, this.props.width, this.props.height);
-            lineStart = adjustPosToMutatedStage(lineStart, this.stageRef.current);
-            let lineEnd = transformedImageToCanvasPos(lastControlPoint.x, lastControlPoint.y, frame, this.props.width, this.props.height);
-            lineEnd = adjustPosToMutatedStage(lineEnd, this.stageRef.current);
+            const lineStart = transformedImageToCanvasPos(firstControlPoint, frame, this.props.width, this.props.height, this.stageRef.current);
+            const lineEnd = transformedImageToCanvasPos(lastControlPoint, frame, this.props.width, this.props.height, this.stageRef.current);
             const cusorCanvasPos = adjustPosToMutatedStage(this.currentCursorPos, this.stageRef.current);
             let points: number[];
             if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE) {
