@@ -954,7 +954,7 @@ export class FrameStore {
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
-        this.pixelUnitSizeArcsec = this.getRegionUnitSize();
+        this.pixelUnitSizeArcsec = this.getPixelUnitSize();
 
         // init spectral settings
         if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
@@ -1209,7 +1209,7 @@ export class FrameStore {
         );
     };
 
-    private getRegionUnitSize = () => {
+    private getPixelUnitSize = () => {
         if (this.isPVImage || this.isUVImage) {
             return null;
         }
