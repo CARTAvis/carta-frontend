@@ -75,7 +75,7 @@ export class FrameStore {
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
     private readonly initialCenter: Point2D;
-    private readonly regionUnitSize: Point2D;
+    public readonly pixelUnitSizeArcsec: Point2D;
 
     private spectralTransformAST: AST.FrameSet;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
@@ -954,7 +954,7 @@ export class FrameStore {
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
-        this.regionUnitSize = this.getRegionUnitSize();
+        this.pixelUnitSizeArcsec = this.getRegionUnitSize();
 
         // init spectral settings
         if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
@@ -1376,22 +1376,22 @@ export class FrameStore {
     }
 
     public getWcsSizeInArcsec(size: Point2D): Point2D {
-        if (size && this.regionUnitSize) {
-            return multiply2D(size, this.regionUnitSize);
+        if (size && this.pixelUnitSizeArcsec) {
+            return multiply2D(size, this.pixelUnitSizeArcsec);
         }
         return null;
     }
 
     public getImageXValueFromArcsec(arcsecValue: number): number {
-        if (isFinite(arcsecValue) && isFinite(this.regionUnitSize?.x)) {
-            return arcsecValue / this.regionUnitSize.x;
+        if (isFinite(arcsecValue) && isFinite(this.pixelUnitSizeArcsec?.x)) {
+            return arcsecValue / this.pixelUnitSizeArcsec.x;
         }
         return null;
     }
 
     public getImageYValueFromArcsec(arcsecValue: number): number {
-        if (isFinite(arcsecValue) && isFinite(this.regionUnitSize?.y)) {
-            return arcsecValue / this.regionUnitSize.y;
+        if (isFinite(arcsecValue) && isFinite(this.pixelUnitSizeArcsec?.y)) {
+            return arcsecValue / this.pixelUnitSizeArcsec.y;
         }
         return null;
     }
