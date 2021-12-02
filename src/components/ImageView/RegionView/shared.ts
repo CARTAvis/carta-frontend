@@ -50,7 +50,7 @@ export function transformedImageToCanvasPos(imagePos: Point2D, frame: FrameStore
             return {x: (canvasPos.x - origin.x) / zoom, y: (canvasPos.y - origin.y) / zoom};
         }
     }
-    return undefined;
+    return {x: undefined, y: undefined};
 }
 
 // Adjust the position in the stage of {origin: o', scale: z'} to the stage of {origin: (0, 0), scale: 1}.
