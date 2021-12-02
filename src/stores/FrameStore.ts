@@ -75,7 +75,7 @@ export class FrameStore {
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
     private readonly initialCenter: Point2D;
-    private readonly regionUnitSize: Point2D;
+    public readonly pixelUnitSizeArcsec: Point2D;
 
     private spectralTransformAST: AST.FrameSet;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
@@ -318,7 +318,7 @@ export class FrameStore {
         }
     }
 
-    @computed get beamProperties(): {x: number; y: number; angle: number; overlayBeamSettings: OverlayBeamStore} {
+    @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} {
         const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
 
@@ -344,6 +344,8 @@ export class FrameStore {
                         return {
                             x: beam.majorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta),
                             y: beam.minorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta),
+                            majorAxis: beam.majorAxis,
+                            minorAxis: beam.minorAxis,
                             angle: beam.pa,
                             overlayBeamSettings: this.overlayBeamSettings
                         };
@@ -528,7 +530,7 @@ export class FrameStore {
         return undefined;
     }
 
-    @computed get spectralAxis(): {valid: boolean; dimension: number; type: SpectralTypeSet; specsys: string} {
+    @computed get spectralAxis(): {valid: boolean; dimension: number; type: SpectralTypeSet; specsys: string; value: number} {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
 
@@ -561,6 +563,7 @@ export class FrameStore {
                 const spectralHeader = entries.find(entry => entry.name.includes(`CTYPE${dimension}`));
                 const spectralValue = spectralHeader?.value.trim().toUpperCase();
                 const spectralType = STANDARD_SPECTRAL_TYPE_SETS.find(type => spectralValue === type.code);
+                const valueHeader = entries.find(entry => entry.name.includes(`CRVAL${dimension}`));
                 const unitHeader = entries.find(entry => entry.name.includes(`CUNIT${dimension}`));
                 const specSysHeader = entries.find(entry => entry.name.includes("SPECSYS"));
                 const specsys = specSysHeader?.value ? trimFitsComment(specSysHeader.value)?.toUpperCase() : undefined;
@@ -569,14 +572,16 @@ export class FrameStore {
                         valid: true,
                         dimension: dimension,
                         type: {name: spectralType.name, code: spectralType.code, unit: unitHeader?.value?.trim() ?? spectralType.unit},
-                        specsys: specsys
+                        specsys: specsys,
+                        value: getHeaderNumericValue(valueHeader)
                     };
                 } else {
                     return {
                         valid: false,
                         dimension: dimension,
                         type: {name: spectralValue, code: spectralValue, unit: unitHeader?.value?.trim() ?? undefined},
-                        specsys: specsys
+                        specsys: specsys,
+                        value: getHeaderNumericValue(valueHeader)
                     };
                 }
             }
@@ -970,7 +975,7 @@ export class FrameStore {
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preferenceStore.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
-        this.regionUnitSize = this.getRegionUnitSize();
+        this.pixelUnitSizeArcsec = this.getPixelUnitSize();
 
         // init spectral settings
         if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
@@ -1225,7 +1230,7 @@ export class FrameStore {
         );
     };
 
-    private getRegionUnitSize = () => {
+    private getPixelUnitSize = () => {
         if (this.isPVImage || this.isUVImage) {
             return null;
         }
@@ -1392,22 +1397,22 @@ export class FrameStore {
     }
 
     public getWcsSizeInArcsec(size: Point2D): Point2D {
-        if (size && this.regionUnitSize) {
-            return multiply2D(size, this.regionUnitSize);
+        if (size && this.pixelUnitSizeArcsec) {
+            return multiply2D(size, this.pixelUnitSizeArcsec);
         }
         return null;
     }
 
     public getImageXValueFromArcsec(arcsecValue: number): number {
-        if (isFinite(arcsecValue) && isFinite(this.regionUnitSize?.x)) {
-            return arcsecValue / this.regionUnitSize.x;
+        if (isFinite(arcsecValue) && isFinite(this.pixelUnitSizeArcsec?.x)) {
+            return arcsecValue / this.pixelUnitSizeArcsec.x;
         }
         return null;
     }
 
     public getImageYValueFromArcsec(arcsecValue: number): number {
-        if (isFinite(arcsecValue) && isFinite(this.regionUnitSize?.y)) {
-            return arcsecValue / this.regionUnitSize.y;
+        if (isFinite(arcsecValue) && isFinite(this.pixelUnitSizeArcsec?.y)) {
+            return arcsecValue / this.pixelUnitSizeArcsec.y;
         }
         return null;
     }
