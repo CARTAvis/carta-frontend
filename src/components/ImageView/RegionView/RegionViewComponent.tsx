@@ -91,7 +91,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 
     componentDidMount() {
-        const frame = this.props.frame;
+        const frame = this.props.frame?.spatialReference ?? this.props.frame;
         if (frame) {
             this.syncStage(frame.centerMovement, frame.zoomLevel);
         }
