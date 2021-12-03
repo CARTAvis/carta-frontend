@@ -18,7 +18,7 @@ import {
     StokesAnalysisComponent,
     CatalogOverlayComponent,
     CatalogPlotComponent,
-    PVGeneratorComponent,
+    PvGeneratorComponent,
     // setting Panel
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
@@ -46,7 +46,7 @@ import {
     ACTIVE_FILE_ID,
     CatalogPlotType,
     LayerListWidgetStore,
-    PVGeneratorWidgetStore
+    PvGeneratorWidgetStore
 } from "./widgets";
 import {PreferenceKeys, PreferenceStore} from "./PreferenceStore";
 import {ImagePanelMode} from "models";
@@ -65,7 +65,7 @@ export enum WidgetType {
     Catalog = "Catalog Widget",
     SpectralLineQuery = "Spectral Line Query Widget",
     CursorInfo = "Cursor Info Widget",
-    PVGenerator = "PV Generator"
+    PvGenerator = "PV Generator"
 }
 
 export interface DefaultWidgetConfig {
@@ -166,7 +166,7 @@ export class WidgetsStore {
     @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore>;
     @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
     @observable cursorInfoWidgets: Map<string, EmptyWidgetStore>;
-    @observable pvGeneratorWidgets: Map<string, PVGeneratorWidgetStore>;
+    @observable pvGeneratorWidgets: Map<string, PvGeneratorWidgetStore>;
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
@@ -282,12 +282,12 @@ export class WidgetsStore {
             }
         ],
         [
-            WidgetType.PVGenerator,
+            WidgetType.PvGenerator,
             {
                 isCustomIcon: true,
                 icon: "pv",
-                onClick: () => WidgetsStore.Instance.createFloatingPVGeneratorWidget(),
-                widgetConfig: PVGeneratorComponent.WIDGET_CONFIG
+                onClick: () => WidgetsStore.Instance.createFloatingPvGeneratorWidget(),
+                widgetConfig: PvGeneratorComponent.WIDGET_CONFIG
             }
         ]
     ]);
@@ -349,7 +349,7 @@ export class WidgetsStore {
         this.catalogPlotWidgets = new Map<string, CatalogPlotWidgetStore>();
         this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
         this.cursorInfoWidgets = new Map<string, EmptyWidgetStore>();
-        this.pvGeneratorWidgets = new Map<string, PVGeneratorWidgetStore>();
+        this.pvGeneratorWidgets = new Map<string, PvGeneratorWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -366,7 +366,7 @@ export class WidgetsStore {
             [CatalogPlotComponent.WIDGET_CONFIG.type, this.catalogPlotWidgets],
             [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets],
             [CursorInfoComponent.WIDGET_CONFIG.type, this.cursorInfoWidgets],
-            [PVGeneratorComponent.WIDGET_CONFIG.type, this.pvGeneratorWidgets]
+            [PvGeneratorComponent.WIDGET_CONFIG.type, this.pvGeneratorWidgets]
         ]);
 
         this.floatingWidgets = [];
@@ -405,8 +405,8 @@ export class WidgetsStore {
                 return SpectralLineQueryComponent.WIDGET_CONFIG;
             case CursorInfoComponent.WIDGET_CONFIG.type:
                 return CursorInfoComponent.WIDGET_CONFIG;
-            case PVGeneratorComponent.WIDGET_CONFIG.type:
-                return PVGeneratorComponent.WIDGET_CONFIG;
+            case PvGeneratorComponent.WIDGET_CONFIG.type:
+                return PvGeneratorComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -556,8 +556,8 @@ export class WidgetsStore {
             case CursorInfoComponent.WIDGET_CONFIG.type:
                 itemId = this.addCursorInfoWidget();
                 break;
-            case PVGeneratorComponent.WIDGET_CONFIG.type:
-                itemId = this.addPVGeneratorWidget();
+            case PvGeneratorComponent.WIDGET_CONFIG.type:
+                itemId = this.addPvGeneratorWidget();
                 break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
@@ -662,7 +662,7 @@ export class WidgetsStore {
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("layer-list", LayerListComponent);
         layout.registerComponent("cursor-info", CursorInfoComponent);
-        layout.registerComponent("pv-generator", PVGeneratorComponent);
+        layout.registerComponent("pv-generator", PvGeneratorComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
@@ -1392,17 +1392,17 @@ export class WidgetsStore {
         return id;
     }
 
-    createFloatingPVGeneratorWidget = () => {
-        this.addFloatingWidget(new WidgetConfig(this.addPVGeneratorWidget(), PVGeneratorComponent.WIDGET_CONFIG));
+    createFloatingPvGeneratorWidget = () => {
+        this.addFloatingWidget(new WidgetConfig(this.addPvGeneratorWidget(), PvGeneratorComponent.WIDGET_CONFIG));
     };
 
-    @action addPVGeneratorWidget(id: string = null) {
+    @action addPvGeneratorWidget(id: string = null) {
         if (!id) {
-            id = this.getNextId(PVGeneratorComponent.WIDGET_CONFIG.type);
+            id = this.getNextId(PvGeneratorComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.pvGeneratorWidgets.set(id, new PVGeneratorWidgetStore());
+            this.pvGeneratorWidgets.set(id, new PvGeneratorWidgetStore());
         }
         return id;
     }

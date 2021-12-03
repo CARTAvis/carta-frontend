@@ -1,10 +1,10 @@
 import {action, observable, makeObservable, computed} from "mobx";
+import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
-import {IOptionProps} from "@blueprintjs/core";
 import {RegionWidgetStore, RegionsType, RegionId} from "./RegionWidgetStore";
 
-export class PVGeneratorWidgetStore extends RegionWidgetStore {
+export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;
 
     @computed get regionOptions(): IOptionProps[] {

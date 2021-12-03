@@ -5,20 +5,20 @@ import {FormGroup, Tabs, Tab, TabId, HTMLSelect, AnchorButton, Position} from "@
 import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {PVGeneratorWidgetStore, RegionId} from "stores/widgets";
+import {PvGeneratorWidgetStore, RegionId} from "stores/widgets";
 import {SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {Point2D} from "models";
-import "./PVGeneratorComponent.scss";
+import "./PvGeneratorComponent.scss";
 
-export enum PVGeneratorComponentTabs {
+export enum PvGeneratorComponentTabs {
     PV_IMAGE,
     PREVIEW_CUBE
 }
 
 @observer
-export class PVGeneratorComponent extends React.Component<WidgetProps> {
-    @observable selectedTabId: TabId = PVGeneratorComponentTabs.PV_IMAGE;
+export class PvGeneratorComponent extends React.Component<WidgetProps> {
+    @observable selectedTabId: TabId = PvGeneratorComponentTabs.PV_IMAGE;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTabId = tab;
@@ -41,7 +41,7 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
     @observable width: number;
     @observable height: number;
 
-    @computed get widgetStore(): PVGeneratorWidgetStore {
+    @computed get widgetStore(): PvGeneratorWidgetStore {
         const widgetsStore = WidgetsStore.Instance;
         if (widgetsStore.pvGeneratorWidgets) {
             const widgetStore = widgetsStore.pvGeneratorWidgets.get(this.props.id);
@@ -50,7 +50,7 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
             }
         }
         console.log("can't find store for widget");
-        return new PVGeneratorWidgetStore();
+        return new PvGeneratorWidgetStore();
     }
 
     @computed get isLineIntersectedWithImage(): boolean {
@@ -101,14 +101,14 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
 
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === PVGeneratorComponent.WIDGET_CONFIG.type) {
+        if (!props.docked && props.id === PvGeneratorComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
-            const id = appStore.widgetsStore.addPVGeneratorWidget();
+            const id = appStore.widgetsStore.addPvGeneratorWidget();
             appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
             if (!appStore.widgetsStore.pvGeneratorWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                appStore.widgetsStore.pvGeneratorWidgets.set(this.props.id, new PVGeneratorWidgetStore());
+                appStore.widgetsStore.pvGeneratorWidgets.set(this.props.id, new PvGeneratorWidgetStore());
             }
         }
     }
@@ -119,8 +119,7 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
+        if (this.widgetStore.effectiveFrame) {
             const selectedFileId = parseInt(changeEvent.target.value);
             this.widgetStore.setFileId(selectedFileId);
             this.widgetStore.setRegionId(this.widgetStore.effectiveFrame.frameInfo.fileId, RegionId.ACTIVE);
@@ -128,8 +127,7 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const appStore = AppStore.Instance;
-        if (appStore.activeFrame) {
+        if (this.widgetStore.effectiveFrame) {
             const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             this.widgetStore.setFileId(fileId);
             this.widgetStore.setRegionId(fileId, parseInt(changeEvent.target.value));
@@ -214,7 +212,7 @@ export class PVGeneratorComponent extends React.Component<WidgetProps> {
             <div className="pv-generator-widget">
                 <div className="pv-generator-panel">
                     <Tabs id="pvGeneratorTabs" selectedTabId={this.selectedTabId} onChange={this.setSelectedTab} animate={false}>
-                        <Tab id={PVGeneratorComponentTabs.PV_IMAGE} title="Generate PV image" panel={pvImagePanel} />
+                        <Tab id={PvGeneratorComponentTabs.PV_IMAGE} title="Generate PV image" panel={pvImagePanel} />
                     </Tabs>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>

@@ -11,4 +11,4 @@ export * from "./CatalogPlotWidgetStore";
 export * from "./SpectralProfileWidget/SpectralProfileWidgetStore";
 export * from "./SpectralProfileWidget/SpectralProfileSelectionStore";
 export * from "./LayerListWidgetStore";
-export * from "./PVGeneratorWidgetStore";
+export * from "./PvGeneratorWidgetStore";

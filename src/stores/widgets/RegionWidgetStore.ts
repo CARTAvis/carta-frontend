@@ -1,7 +1,7 @@
 import {action, observable, computed, makeObservable} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
-import {AppStore, FrameStore, RegionStore} from "..";
 import {CARTA} from "carta-protobuf";
+import {AppStore, FrameStore, RegionStore} from "..";
 
 export const ACTIVE_FILE_ID = -1;
 
@@ -58,21 +58,6 @@ export class RegionWidgetStore {
         return this.effectiveFrame && this.appStore.activeFrame.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId;
     }
 
-    // @computed get effectiveRegionId(): number {
-    //     if (this.effectiveFrame) {
-    //         const regionId = this.regionIdMap.get(this.fileId);
-    //         if (regionId !== RegionId.ACTIVE && regionId !== undefined) {
-    //             return regionId;
-    //         } else {
-    //             const selectedRegion = this.effectiveFrame.regionSet.selectedRegion;
-    //             if (selectedRegion) {
-    //                 return this.type === RegionsType.CLOSED && !selectedRegion.isClosedRegion ? RegionId.IMAGE : selectedRegion.regionId;
-    //             }
-    //         }
-    //     }
-    //     return this.type === RegionsType.CLOSED ? RegionId.IMAGE : RegionId.CURSOR;
-    // }
-
     @computed get effectiveRegionId(): number {
         if (this.effectiveFrame) {
             const regionId = this.regionIdMap.get(this.fileId);
@@ -86,7 +71,6 @@ export class RegionWidgetStore {
                             return selectedRegion.isClosedRegion ? selectedRegion.regionId : this.defaultRegionId();
                         case RegionsType.CLOSED_AND_POINT:
                             return selectedRegion.regionId;
-                        // return selectedRegion.isClosedRegion || selectedRegion.regionType === CARTA.RegionType.POINT ? selectedRegion.regionId : this.defaultRegionId();
                         case RegionsType.LINE:
                         default:
                             return selectedRegion.regionType === CARTA.RegionType.LINE ? selectedRegion.regionId : this.defaultRegionId();

@@ -28,7 +28,7 @@ import {
 } from "components";
 import {WidgetConfig, WidgetsStore, CatalogStore} from "stores";
 import {ImageViewSettingsPanelComponent} from "components/ImageView/ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
-import {PVGeneratorComponent} from "components/PVGenerator/PVGeneratorComponent";
+import {PvGeneratorComponent} from "components/PvGenerator/PvGeneratorComponent";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
@@ -93,8 +93,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <CatalogOverlayComponent id={widgetConfig.componentId} docked={false} />;
             case CatalogPlotComponent.WIDGET_CONFIG.type:
                 return <CatalogPlotComponent id={widgetConfig.id} docked={false} />;
-            case PVGeneratorComponent.WIDGET_CONFIG.type:
-                return <PVGeneratorComponent id={widgetConfig.id} docked={false} />;
+            case PvGeneratorComponent.WIDGET_CONFIG.type:
+                return <PvGeneratorComponent id={widgetConfig.id} docked={false} />;
             default:
                 return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title} />;
         }
