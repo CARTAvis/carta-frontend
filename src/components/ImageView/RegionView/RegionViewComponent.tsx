@@ -463,7 +463,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private syncStage = (refCenterMovement: Point2D, refFrameZoom: number) => {
         const stage = this.stageRef.current;
         if (stage && refCenterMovement && isFinite(refCenterMovement.x) && isFinite(refCenterMovement.y) && isFinite(refFrameZoom)) {
-            stage.scale({x: refFrameZoom, y: refFrameZoom});
+            stage.scale({x: refFrameZoom / AppStore.Instance.imageRatio, y: refFrameZoom / AppStore.Instance.imageRatio});
             const origin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - refFrameZoom);
             const centerMovementCanvas = scale2D({x: refCenterMovement.x, y: -refCenterMovement.y}, refFrameZoom / devicePixelRatio);
             const newOrigin = add2D(origin, centerMovementCanvas);
