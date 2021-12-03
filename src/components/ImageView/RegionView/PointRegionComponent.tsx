@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import Konva from "konva";
 import {AppStore, FrameStore, RegionStore} from "stores";
-import {adjustPosToMutatedStage, adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
 import {transformPoint} from "utilities";
 import {Point} from "./InvariantShapes";
@@ -70,13 +70,12 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         if (frame.spatialReference) {
             const pointReferenceImage = region.center;
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pointReferenceImage, false);
-            centerPixelSpace = transformedImageToCanvasPos(pointSecondaryImage.x, pointSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
+            centerPixelSpace = transformedImageToCanvasPos(pointSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
-            centerPixelSpace = transformedImageToCanvasPos(region.center.x, region.center.y, frame, this.props.layerWidth, this.props.layerHeight);
+            centerPixelSpace = transformedImageToCanvasPos(region.center, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             rotation = 0;
         }
-        centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.current);
 
         return (
             <Point

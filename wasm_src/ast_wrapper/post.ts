@@ -108,6 +108,7 @@ Module.getString = Module.cwrap("getString", "string", ["number", "string"]);
 Module.dump = Module.cwrap("dump", null, ["number"]);
 Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
 Module.axDistance = Module.cwrap("axDistance", "number", ["number", "number", "number", "number"]);
+Module.geodesicDistance = Module.cwrap("geodesicDistance", "number", ["number", "number", "number", "number", "number"]);
 Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
 Module.unformat = Module.cwrap("unformat", "number", ["number", "number", "string", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);

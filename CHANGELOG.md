@@ -13,12 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Circular/linear polarizations are supported in polarization dropdowns for saving subimages and generating hypercubes.
 * The ability to export high resolution png images for publication quality in journals.
 * The ability to use a custom rest freqency for spectral matching, spectral axis display, and PV image x/y axis display.
-* Added PV generator(static).
+* Added PV generator (static).
 
+### Changed
+* Applied a new approach to calculate the sizes and lengths of a region ([#1572](https://github.com/CARTAvis/carta-frontend/issues/1572)).
 ### Fixed
 * Fixed crash when opening the image view configuration dialog before opening an image [(#1705)](https://github.com/CARTAvis/carta-frontend/issues/1705).
 * Fixed panning and zooming when opening a new image in distance measuring mode [(#1665)](https://github.com/CARTAvis/carta-frontend/issues/1665).
-* Fixed incorrent color gradient of the colorbar ([#1717](https://github.com/CARTAvis/carta-frontend/issues/1717) and [#1718](https://github.com/CARTAvis/carta-frontend/issues/1718)).
+* Fixed incorrect color gradient of the colorbar ([#1717](https://github.com/CARTAvis/carta-frontend/issues/1717) and [#1718](https://github.com/CARTAvis/carta-frontend/issues/1718)).
 
 ## [3.0.0-beta.1b]
 
