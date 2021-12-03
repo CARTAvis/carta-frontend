@@ -182,6 +182,27 @@ export class FrameStore {
         return false;
     }
 
+    // Frame view of center = initial center && zoom = 1
+    @computed get unitFrameView(): FrameView {
+        const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
+        // Required image dimensions
+        const imageWidth = (pixelRatio * this.renderWidth) / this.aspectRatio;
+        const imageHeight = pixelRatio * this.renderHeight;
+
+        const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
+        const mipExact = Math.max(1.0, mipAdjustment);
+        const mipLog2 = Math.log2(mipExact);
+        const mipLog2Rounded = Math.round(mipLog2);
+        const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
+        return {
+            xMin: this.initialCenter.x - imageWidth / 2.0,
+            xMax: this.initialCenter.x + imageWidth / 2.0,
+            yMin: this.initialCenter.y - imageHeight / 2.0,
+            yMax: this.initialCenter.y + imageHeight / 2.0,
+            mip: mipRoundedPow2
+        };
+    }
+
     @computed get requiredFrameView(): FrameView {
         // use spatial reference frame to calculate frame view, if it exists
         if (this.spatialReference) {

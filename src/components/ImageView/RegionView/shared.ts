@@ -33,14 +33,24 @@ export function canvasToTransformedImagePos(canvasX: number, canvasY: number, fr
     return imagePos;
 }
 
-export function transformedImageToCanvasPos(imageX: number, imageY: number, frame: FrameStore, layerWidth: number, layerHeight: number) {
-    let imagePos = {x: imageX, y: imageY};
-    if (frame.spatialReference) {
-        imagePos = frame.spatialTransform.transformCoordinate(imagePos, true);
-        return imageToCanvasPos(imagePos.x, imagePos.y, frame.spatialReference.requiredFrameViewForRegionRender, layerWidth, layerHeight, frame.spatialTransform);
+export function transformedImageToCanvasPos(imagePos: Point2D, frame: FrameStore, layerWidth: number, layerHeight: number, stage: any) {
+    const origin = stage?.getPosition();
+    const zoom = stage?.scaleX();
+    if (origin && isFinite(zoom)) {
+        let canvasPos;
+        if (frame.spatialReference) {
+            const transformtedImagePos = frame.spatialTransform.transformCoordinate(imagePos, true);
+            const frameView = origin.x === 0 && origin.y === 0 && zoom === 1 ? frame.spatialReference.unitFrameView : frame.spatialReference.requiredFrameViewForRegionRender;
+            canvasPos = imageToCanvasPos(transformtedImagePos.x, transformtedImagePos.y, frameView, layerWidth, layerHeight);
+        } else {
+            const frameView = origin.x === 0 && origin.y === 0 && zoom === 1 ? frame.unitFrameView : frame.requiredFrameViewForRegionRender;
+            canvasPos = imageToCanvasPos(imagePos.x, imagePos.y, frameView, layerWidth, layerHeight);
+        }
+        if (canvasPos) {
+            return {x: (canvasPos.x - origin.x) / zoom, y: (canvasPos.y - origin.y) / zoom};
+        }
     }
-
-    return imageToCanvasPos(imagePos.x, imagePos.y, frame.requiredFrameViewForRegionRender, layerWidth, layerHeight, frame.spatialTransform);
+    return {x: undefined, y: undefined};
 }
 
 // Adjust the position in the stage of {origin: o', scale: z'} to the stage of {origin: (0, 0), scale: 1}.

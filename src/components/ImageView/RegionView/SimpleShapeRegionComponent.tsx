@@ -6,7 +6,7 @@ import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {adjustPosToMutatedStage, adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
 import {Anchor} from "./InvariantShapes";
 
@@ -62,8 +62,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (frame.spatialReference) {
             centerImagePos = transformPoint(frame.spatialTransformAST, centerImagePos, false);
         }
-        let centerCanvasPos = transformedImageToCanvasPos(centerImagePos.x, centerImagePos.y, frame, this.props.layerWidth, this.props.layerHeight);
-        centerCanvasPos = adjustPosToMutatedStage(centerCanvasPos, this.props.stageRef.current);
+        const centerCanvasPos = transformedImageToCanvasPos(centerImagePos, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
         this.centerCanvasPos = centerCanvasPos;
 
         let w: number, h: number;
@@ -102,8 +101,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (frame.spatialReference) {
             editOppositeAnchorImagePos = transformPoint(frame.spatialTransformAST, editOppositeAnchorImagePos, false);
         }
-        let editOppositeAnchorCanvasPos = transformedImageToCanvasPos(editOppositeAnchorImagePos.x, editOppositeAnchorImagePos.y, frame, this.props.layerWidth, this.props.layerHeight);
-        editOppositeAnchorCanvasPos = adjustPosToMutatedStage(editOppositeAnchorCanvasPos, this.props.stageRef.current);
+        const editOppositeAnchorCanvasPos = transformedImageToCanvasPos(editOppositeAnchorImagePos, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
         this.editOppositeAnchorCanvasPos = editOppositeAnchorCanvasPos;
 
         this.props.region.beginEditing();
@@ -401,8 +399,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 posImage = transformPoint(frame.spatialTransformAST, posImage, false);
             }
 
-            let posCanvas = transformedImageToCanvasPos(posImage.x, posImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            posCanvas = adjustPosToMutatedStage(posCanvas, this.props.stageRef.current);
+            const posCanvas = transformedImageToCanvasPos(posImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             return (
                 <Anchor
                     key={config.anchor}
@@ -434,14 +431,12 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         if (frame.spatialReference) {
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
-            let centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.current);
+            const centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const N = pointsSecondaryImage.length;
             const pointArray = new Array<number>(N * 2);
             for (let i = 0; i < N; i++) {
-                let approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
-                approxPointPixelSpace = adjustPosToMutatedStage(approxPointPixelSpace, this.props.stageRef.current);
+                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
             }
@@ -474,8 +469,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             const height = region.size.y / devicePixelRatio;
             const rotation = region.rotation;
 
-            let centerPixelSpace = transformedImageToCanvasPos(centerReferenceImage.x, centerReferenceImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            centerPixelSpace = adjustPosToMutatedStage(centerPixelSpace, this.props.stageRef.current);
+            const centerPixelSpace = transformedImageToCanvasPos(centerReferenceImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
 
             // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
             // TODO: Is this needed anywhere?
