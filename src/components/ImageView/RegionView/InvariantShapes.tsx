@@ -157,7 +157,7 @@ export const CursorMarker = (props: CursorMarkerProps) => {
     };
 
     return (
-        <Group x={Math.floor(props.x) + 0.5} y={Math.floor(props.y) + 0.5} rotation={-props.rotation}>
+        <Group x={props.x} y={props.y} rotation={-props.rotation}>
             <Shape listening={false} strokeScaleEnabled={false} strokeWidth={1} stroke={"black"} sceneFunc={handleSquareDraw} />
             <Shape listening={false} strokeScaleEnabled={false} fill={"white"} strokeWidth={1} stroke={"black"} sceneFunc={handleCrossDraw} />
         </Group>
