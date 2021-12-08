@@ -674,7 +674,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 >
                     <Layer ref={this.layerRef}>
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
-                        <CursorRegionComponent frame={frame} region={frame.regionSet?.cursorRegion} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
+                        <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}
                     </Layer>
                 </Stage>
