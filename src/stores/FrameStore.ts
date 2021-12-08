@@ -44,7 +44,23 @@ import {
     ZoomPoint,
     POLARIZATION_LABELS
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, transformPoint, minMax2D, rotate2D, toFixed, trimFitsComment, round2D, subtract2D, getFormattedWCSPoint, getPixelSize, multiply2D} from "utilities";
+import {
+    clamp,
+    formattedFrequency,
+    getHeaderNumericValue,
+    getTransformedChannel,
+    transformPoint,
+    minMax2D,
+    rotate2D,
+    toFixed,
+    trimFitsComment,
+    round2D,
+    subtract2D,
+    getFormattedWCSPoint,
+    getPixelSize,
+    multiply2D,
+    isAstBadPoint
+} from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec, ProtobufProcessing} from "utilities";
@@ -263,8 +279,17 @@ export class FrameStore {
     }
 
     @computed get spatialTransform() {
-        const imageCenter = {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5};
-        return this.spatialReference && this.spatialTransformAST ? new Transform2D(this.spatialTransformAST, imageCenter) : null;
+        if (this.spatialReference && this.spatialTransformAST) {
+            const center = transformPoint(this.spatialTransformAST, this.spatialReference.center, false);
+            // Try use center of the screen as a reference point
+            if (!isAstBadPoint(center)) {
+                return new Transform2D(this.spatialTransformAST, center);
+            } else {
+                // Otherwise use the center of the image
+                return new Transform2D(this.spatialTransformAST, {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5});
+            }
+        }
+        return null;
     }
 
     @computed get transformedWcsInfo() {
