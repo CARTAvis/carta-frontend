@@ -60,10 +60,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             const width = this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.width;
             const height = this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.height;
             const imageCorners: Point2D[] = [
-                {x: 0, y: 0},
-                {x: width - 1, y: 0},
-                {x: 0, y: height - 1},
-                {x: width - 1, y: height - 1}
+                {x: -0.5, y: -0.5},
+                {x: width - 0.5, y: -0.5},
+                {x: -0.5, y: height - 0.5},
+                {x: width - 0.5, y: height - 0.5}
             ];
 
             // check if image corners are on the same side of the line region. from https://stackoverflow.com/a/1560510
@@ -74,7 +74,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
             if (sideValue <= 2 && sideValue >= -2) {
                 // check if start/end points are outside image
-                if ((startPoint.x < 0 && endPoint.x < 0) || (startPoint.y < 0 && endPoint.y < 0) || (startPoint.x > width && endPoint.x > width) || (startPoint.y > height && endPoint.y > height)) {
+                if ((startPoint.x < -0.5 && endPoint.x < -0.5) || (startPoint.y < -0.5 && endPoint.y < -0.5) || (startPoint.x > width - 0.5 && endPoint.x > width - 0.5) || (startPoint.y > height - 0.5 && endPoint.y > height - 0.5)) {
                     return false;
                 }
 
