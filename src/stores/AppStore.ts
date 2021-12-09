@@ -1053,6 +1053,49 @@ export class AppStore {
         }
     };
 
+    @action requestPV = async (message: CARTA.IPvRequest, frame: FrameStore) => {
+        if (!message || !frame) {
+            return;
+        }
+
+        this.startFileLoading();
+        // clear previously generated moment images under this frame
+        if (frame.pvImage) {
+            this.closeFile(frame.pvImage);
+        }
+        frame.removePvImage();
+
+        this.restartTaskProgress();
+
+        try {
+            const ack = await this.backendService.requestPV(message);
+            if (!ack.cancel && ack.openFileAck) {
+                if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, "")) {
+                    this.fileCounter++;
+                    frame.addPvImage(this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId));
+                } else {
+                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                }
+            }
+            frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+        } catch (err) {
+            frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+            console.error(err);
+            AppToaster.show(ErrorToast(err));
+        }
+    };
+
+    @action cancelRequestingPV = (fileId: number = -1) => {
+        const frame = this.getFrame(fileId);
+        if (frame && frame.requestingPVProgress < 1.0) {
+            this.backendService.cancelRequestingPV(fileId);
+        }
+    };
+
     @action setAstReady = (val: boolean) => {
         this.astReady = val;
     };
@@ -1464,6 +1507,7 @@ export class AppStore {
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
+        this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1688,6 +1732,17 @@ export class AppStore {
         this.fileBrowserStore.updateLoadingState(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
         this.fileBrowserStore.showLoadingDialog();
         this.updateTaskProgress(fileProgress.percentage);
+    };
+
+    handlePvProgressStream = (pvProgress: CARTA.PvProgress) => {
+        if (!pvProgress) {
+            return;
+        }
+        const frame = this.getFrame(pvProgress.fileId);
+        if (frame) {
+            frame.updateRequestingPvProgress(pvProgress.progress);
+            this.updateTaskProgress(pvProgress.progress);
+        }
     };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {

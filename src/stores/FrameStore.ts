@@ -134,9 +134,14 @@ export class FrameStore {
     @observable secondarySpectralImages: FrameStore[];
     @observable secondaryRasterScalingImages: FrameStore[];
     @observable momentImages: FrameStore[];
+    @observable pvImage: FrameStore;
+    @observable generatedPVRegionId: number;
 
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
+    @observable isRequestingPV: boolean;
+    @observable requestingPVProgress: number;
+    @observable isRequestPVCancelling: boolean;
 
     @observable stokesFiles: CARTA.StokesFile[];
 
@@ -839,9 +844,12 @@ export class FrameStore {
         this.secondarySpectralImages = [];
         this.secondaryRasterScalingImages = [];
         this.momentImages = [];
+        this.pvImage = null;
 
         this.isRequestingMoments = false;
         this.requestingMomentsProgress = 0;
+        this.isRequestingPV = false;
+        this.requestingPVProgress = 0;
         this.cursorMovementHandle = null;
 
         this.stokesFiles = [];
@@ -2098,5 +2106,36 @@ export class FrameStore {
 
     @action setStokesFiles = (stokesFiles: CARTA.StokesFile[]) => {
         this.stokesFiles = stokesFiles;
+    };
+
+    @action addPvImage = (frame: FrameStore) => {
+        if (frame && (!this.pvImage || this.pvImage.frameInfo.fileId !== frame.frameInfo.fileId)) {
+            this.pvImage = frame;
+        }
+    };
+
+    @action removePvImage = () => {
+        this.pvImage = null;
+    };
+
+    @action setIsRequestingPV = (val: boolean) => {
+        this.isRequestingPV = val;
+    };
+
+    @action updateRequestingPvProgress = (progress: number) => {
+        this.requestingPVProgress = progress;
+    };
+
+    @action resetPvRequestState = () => {
+        this.setIsRequestingPV(false);
+        this.updateRequestingPvProgress(0);
+    };
+
+    @action setGeneratedPVRegionId = (regionId: number) => {
+        this.generatedPVRegionId = regionId;
+    };
+
+    @action setIsRequestPVCancelling = (val: boolean) => {
+        this.isRequestPVCancelling = val;
     };
 }

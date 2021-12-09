@@ -48,7 +48,8 @@ export enum HelpType {
     CATALOG_SETTINGS_COLOR = "Catalog Color Settings",
     CATALOG_SETTINGS_SIZE = "Catalog Size Settings",
     CATALOG_SETTINGS_ORIENTATION = "Catalog Orientation Settings",
-    SPECTRAL_LINE_QUERY = "Spectral Line Query"
+    SPECTRAL_LINE_QUERY = "Spectral Line Query",
+    PV_GENERATOR = "PV Generator"
 }
 
 export class HelpStore {

@@ -1,0 +1,53 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.pv-generator-widget {
+    margin: 20px;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+
+    .bp3-numeric-input {
+        .bp3-input-group {
+            width: 80px;
+        }
+    }
+
+    .bp3-non-ideal-state {
+        flex: auto;
+        padding: 5px 5px 1px;
+        margin: 0;
+    }
+
+    .pv-generator-panel {
+        flex: auto;
+        padding: 5px 5px 1px;
+        margin: 0;
+
+        .bp3-form-group {
+            margin-right: 10px;
+            .bp3-label {
+                margin: 0px;
+                width: 12em;
+            }
+        }
+
+        .label-info-group {
+            .bp3-html-select {
+                width: 150px;
+            }
+
+            .label-info {
+                max-width: calc(100% - 55px);
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: bottom;
+            }
+        }
+
+        .generate-button {
+            float: right;
+        }
+    }
+}
