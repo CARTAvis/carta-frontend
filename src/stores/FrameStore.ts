@@ -826,6 +826,36 @@ export class FrameStore {
         return this.requiredStokes >= 0 && this.requiredStokes < this.stokesInfo?.length ? this.stokesInfo[this.requiredStokes] : String(this.requiredStokes);
     }
 
+    // standard stokes and computed polarization
+    @computed get coordinateOptions(): IOptionProps[] {
+        const fullStokesOptions = Array.from(this.stokesOptions);
+        const hasI: boolean = this.stokesOptions.findIndex(stokes => stokes.label === "Stokes I") !== -1;
+        const hasQ: boolean = this.stokesOptions.findIndex(stokes => stokes.label === "Stokes Q") !== -1;
+        const hasU: boolean = this.stokesOptions.findIndex(stokes => stokes.label === "Stokes U") !== -1;
+        const hasV: boolean = this.stokesOptions.findIndex(stokes => stokes.label === "Stokes V") !== -1;
+
+        if (hasQ && hasU) {
+            fullStokesOptions.push({value: "Plinear", label: "Plinear"});
+            fullStokesOptions.push({value: "Pangle", label: "Pangle"});
+            if (hasV) {
+                fullStokesOptions.push({value: "Ptotal", label: "Ptotal"});
+            }
+            if (hasI) {
+                fullStokesOptions.push({value: "PFlinear", label: "PFlinear"});
+            }
+            if (hasI && hasV) {
+                fullStokesOptions.push({value: "PFtotal", label: "PFtotal"});
+            }
+        }
+        return fullStokesOptions;
+    }
+
+    @computed get coordinateInfo(): string[] {
+        return this.coordinateOptions?.map(option => {
+            return option?.label;
+        });
+    }
+
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
         this.overlayStore = OverlayStore.Instance;

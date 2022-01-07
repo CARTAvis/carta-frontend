@@ -325,7 +325,7 @@ export class SpectralProfileSelectionStore {
     @computed get coordinateOptions(): LineOption[] {
         let options = [{value: "z", label: "Current"}];
         if (this.selectedFrame?.hasStokes) {
-            this.selectedFrame.stokesInfo?.forEach(stokes => options.push({value: `${stokes.replace("Stokes ", "")}z`, label: stokes}));
+            this.selectedFrame.coordinateInfo?.forEach(coordinate => options.push({value: `${coordinate.replace("Stokes ", "")}z`, label: coordinate}));
         }
         return options;
     }

@@ -149,7 +149,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @computed get stokesOptions(): LineOption[] {
         let options = [{value: DEFAULT_STOKES, label: "Current"}];
         if (this.effectiveFrame?.hasStokes) {
-            this.effectiveFrame.stokesInfo?.forEach(stokes => options.push({value: `${stokes}`, label: stokes}));
+            this.effectiveFrame.coordinateInfo?.forEach(coordinate => options.push({value: `${coordinate}`, label: coordinate}));
         }
         return options;
     }
