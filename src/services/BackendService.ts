@@ -149,7 +149,8 @@ export class BackendService {
             [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.PV_PROGRESS, {messageClass: CARTA.PvProgress, handler: this.onStreamedPvProgress}],
-            [CARTA.EventType.PV_RESPONSE, {messageClass: CARTA.PvResponse, handler: this.onDeferredResponse}]
+            [CARTA.EventType.PV_RESPONSE, {messageClass: CARTA.PvResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.FITTING_RESPONSE, {messageClass: CARTA.FittingResponse, handler: this.onDeferredResponse}]
         ]);
 
         // check ping every 5 seconds
@@ -780,6 +781,22 @@ export class BackendService {
                 return true;
             }
             return throwError(new Error("Could not send event"));
+        }
+    }
+
+    async requestFitting(message: CARTA.IFittingRequest): Promise<CARTA.IFittingResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.FITTING_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.FITTING_REQUEST, CARTA.FittingRequest.encode(message).finish())) {
+                const deferredResponse = new Deferred<CARTA.IFittingResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
+            } else {
+                throw new Error("Could not send event");
+            }
         }
     }
 

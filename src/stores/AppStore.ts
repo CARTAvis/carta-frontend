@@ -1096,6 +1096,23 @@ export class AppStore {
         }
     };
 
+    requestFitting = async (message: CARTA.IFittingRequest) => {
+        if (!message) {
+            return;
+        }
+
+        try {
+            const ack = await this.backendService.requestFitting(message);
+            if (ack.success) {
+                this.getFrame(message.fileId).setFittingResult(ack.result);
+            } else {
+                console.log(ack.message);
+            }
+        } catch (err) {
+            AppToaster.show(ErrorToast(err));
+        }
+    };
+
     @action setAstReady = (val: boolean) => {
         this.astReady = val;
     };

@@ -1,0 +1,41 @@
+.fitting-dialog {
+
+    .bp3-label {
+        min-width: 10em;
+    }
+
+    .bp3-control-group {
+        display: inline-block;
+        margin-right: 10px;
+
+        .bp3-input-group .bp3-input {
+            width: 125px;
+        }
+    }
+
+    .fitting-result-form {
+
+        .bp3-form-group {
+            margin: 0;
+        }
+
+        .fitting-result {
+            display: block;
+            flex-direction: column;
+            height: 240px;
+            width: 410px;
+    
+            .fitting-result-pre {
+                overflow: auto;
+                height: 100%;
+                flex: 1;
+                user-select: text;
+                margin: 0;
+    
+                .fitting-result-text {
+                    font-size: 14px;
+                }
+            }
+        }
+    }
+}
