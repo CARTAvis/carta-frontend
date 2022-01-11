@@ -14,7 +14,6 @@ import "./FittingDialogComponent.scss";
 
 @observer
 export class FittingDialogComponent extends React.Component {
-
     @observable selectedFileId: number;
     @observable center: Point2D;
     @observable amplitude: number;
@@ -24,7 +23,7 @@ export class FittingDialogComponent extends React.Component {
 
     @action setSelectedFileId = (id: number) => {
         this.selectedFileId = id;
-    }
+    };
 
     @action setCenterX = (val: number) => {
         this.center.x = val;
@@ -61,7 +60,7 @@ export class FittingDialogComponent extends React.Component {
     @computed get effectiveFrame(): FrameStore {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.frames?.length > 0) {
-            return this.selectedFileId === ACTIVE_FILE_ID ? appStore.activeFrame : (appStore.getFrame(this.selectedFileId) ?? appStore.activeFrame);
+            return this.selectedFileId === ACTIVE_FILE_ID ? appStore.activeFrame : appStore.getFrame(this.selectedFileId) ?? appStore.activeFrame;
         }
         return null;
     }
@@ -94,7 +93,7 @@ export class FittingDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        
+
         const dialogProps: IDialogProps = {
             icon: "regression-chart",
             className: "fitting-dialog",
@@ -113,60 +112,26 @@ export class FittingDialogComponent extends React.Component {
                 </DraggableDialogComponent>
             );
         }
-        
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup label="Data Source" inline={true}>
-                        <HTMLSelect
-                            value={this.selectedFileId}
-                            options={[{value: ACTIVE_FILE_ID, label: "Active"}, ...(appStore.frameNames ?? [])]}
-                            onChange={ev => this.setSelectedFileId(parseInt(ev.target.value))}
-                        />
+                        <HTMLSelect value={this.selectedFileId} options={[{value: ACTIVE_FILE_ID, label: "Active"}, ...(appStore.frameNames ?? [])]} onChange={ev => this.setSelectedFileId(parseInt(ev.target.value))} />
                     </FormGroup>
                     <FormGroup label="Center" inline={true} labelInfo="(px)">
-                        <SafeNumericInput
-                            value={this.center?.x ?? ""}
-                            onValueChange={this.setCenterX}
-                            buttonPosition="none"
-                            placeholder="Center X"
-                        />
-                        <SafeNumericInput
-                            value={this.center?.y ?? ""}
-                            onValueChange={this.setCenterY}
-                            buttonPosition="none"
-                            placeholder="Center Y"
-                        />
+                        <SafeNumericInput value={this.center?.x ?? ""} onValueChange={this.setCenterX} buttonPosition="none" placeholder="Center X" />
+                        <SafeNumericInput value={this.center?.y ?? ""} onValueChange={this.setCenterY} buttonPosition="none" placeholder="Center Y" />
                     </FormGroup>
                     <FormGroup label="Amplitude" inline={true} labelInfo={`(${this.effectiveFrame?.unit})`}>
-                        <SafeNumericInput
-                            value={this.amplitude ?? ""}
-                            onValueChange={this.setAmplitude}
-                            buttonPosition="none"
-                            placeholder="Amplitude"
-                        />
+                        <SafeNumericInput value={this.amplitude ?? ""} onValueChange={this.setAmplitude} buttonPosition="none" placeholder="Amplitude" />
                     </FormGroup>
                     <FormGroup label="FWHM" inline={true} labelInfo="(arcsec)">
-                        <SafeNumericInput
-                            value={this.majorAxis ?? ""}
-                            onValueChange={this.setMajorAxis}
-                            buttonPosition="none"
-                            placeholder="Major Axis"
-                        />
-                        <SafeNumericInput
-                            value={this.minorAxis ?? ""}
-                            onValueChange={this.setMinorAxis}
-                            buttonPosition="none"
-                            placeholder="Minor Axis"
-                        />
+                        <SafeNumericInput value={this.majorAxis ?? ""} onValueChange={this.setMajorAxis} buttonPosition="none" placeholder="Major Axis" />
+                        <SafeNumericInput value={this.minorAxis ?? ""} onValueChange={this.setMinorAxis} buttonPosition="none" placeholder="Minor Axis" />
                     </FormGroup>
                     <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                        <SafeNumericInput
-                            value={this.pa ?? ""}
-                            onValueChange={this.setPa}
-                            buttonPosition="none"
-                            placeholder="Position Angle"
-                        />
+                        <SafeNumericInput value={this.pa ?? ""} onValueChange={this.setPa} buttonPosition="none" placeholder="Position Angle" />
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
@@ -175,7 +140,7 @@ export class FittingDialogComponent extends React.Component {
                             <AnchorButton intent={Intent.WARNING} onClick={this.clearParams} text="Clear" />
                         </Tooltip2>
                         <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM}>
-                            <AnchorButton intent={Intent.PRIMARY} onClick={this.fitImage} text="Fit" disabled={this.fitDisabled}/>
+                            <AnchorButton intent={Intent.PRIMARY} onClick={this.fitImage} text="Fit" disabled={this.fitDisabled} />
                         </Tooltip2>
                     </div>
                 </div>
