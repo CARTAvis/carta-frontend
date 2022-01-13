@@ -12,26 +12,29 @@
         }
     }
 
-    .fitting-result-form {
-        .bp3-form-group {
-            margin: 0;
-        }
+    .fitting-result {
+        .bp3-tabs {
+            width: 100%;
+            height: 100%;
 
-        .fitting-result {
-            display: block;
-            flex-direction: column;
-            height: 240px;
-            width: 410px;
-
-            .fitting-result-pre {
-                overflow: auto;
+            .bp3-tab-panel {
+                width: calc(100% - 125px);
                 height: 100%;
-                flex: 1;
-                user-select: text;
-                margin: 0;
 
-                .fitting-result-text {
-                    font-size: 14px;
+                .fitting-result-pre {
+                    overflow: auto;
+                    width: 100%;
+                    height: 100%;
+                    user-select: text;
+                    margin: 0;
+
+                    .fitting-result-text {
+                        font-size: 14px;
+                    }
+
+                    .log-text {
+                        font-size: 12px;
+                    }
                 }
             }
         }

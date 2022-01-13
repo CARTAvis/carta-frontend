@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable} from "mobx";
-import {AnchorButton, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Position, Pre, Text} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Position, Pre, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {CARTA} from "carta-protobuf";
@@ -12,14 +12,24 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {SafeNumericInput} from "components/Shared";
 import "./FittingDialogComponent.scss";
 
+enum FittingResultTabs {
+    RESULT,
+    LOG
+}
+
 @observer
 export class FittingDialogComponent extends React.Component {
+    @observable fittingResultTabId: FittingResultTabs;
     @observable selectedFileId: number;
     @observable center: Point2D;
     @observable amplitude: number;
     @observable majorAxis: number;
     @observable minorAxis: number;
     @observable pa: number;
+
+    @action setFittingResultTabId = (tabId: FittingResultTabs) => {
+        this.fittingResultTabId = tabId;
+    };
 
     @action setSelectedFileId = (id: number) => {
         this.selectedFileId = id;
@@ -74,6 +84,7 @@ export class FittingDialogComponent extends React.Component {
     constructor(props: any) {
         super(props);
         makeObservable(this);
+        this.fittingResultTabId = FittingResultTabs.LOG;
         this.selectedFileId = ACTIVE_FILE_ID;
         this.clearParams();
     }
@@ -113,6 +124,18 @@ export class FittingDialogComponent extends React.Component {
             );
         }
 
+        const fittingResultPanel = (
+            <Pre className="fitting-result-pre">
+                <Text className="fitting-result-text">TBD</Text>
+            </Pre>
+        );
+
+        const fullLogPanel = (
+            <Pre className="fitting-result-pre">
+                <Text className="log-text">{this.effectiveFrame?.fittingResult ?? ""}</Text>
+            </Pre>
+        );
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
@@ -144,14 +167,11 @@ export class FittingDialogComponent extends React.Component {
                         </Tooltip2>
                     </div>
                 </div>
-                <div className={classNames(Classes.DIALOG_BODY, "fitting-result-form")}>
-                    <FormGroup label="Fitting Result" inline={true}>
-                        <div className="fitting-result">
-                            <Pre className="fitting-result-pre">
-                                <Text className="fitting-result-text">{this.effectiveFrame?.fittingResult ?? ""}</Text>
-                            </Pre>
-                        </div>
-                    </FormGroup>
+                <div className={classNames(Classes.DIALOG_BODY, "fitting-result")}>
+                    <Tabs id="fittingResultTabs" vertical={true} selectedTabId={this.fittingResultTabId} onChange={this.setFittingResultTabId}>
+                        <Tab id={FittingResultTabs.RESULT} title="Fitting Result" panel={fittingResultPanel} />
+                        <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
+                    </Tabs>
                 </div>
             </DraggableDialogComponent>
         );
