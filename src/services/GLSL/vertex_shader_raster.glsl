@@ -32,11 +32,11 @@ void main(void) {
     tilePosition = scaleAboutPoint2D(tilePosition, uRotationOrigin, uScaleAdjustment);
 
     // Handle pixel rounding while respecting pixel aspect ratios
-    vec2 roundindVector = vec2(1.0, 1.0);
+    vec2 roundingVector = vec2(1.0, 1.0);
     if (uPixelAspectRatio > 1.0) {
-        vec2 roundingVector = vec2(uPixelAspectRatio, 1.0);
+        roundingVector = vec2(uPixelAspectRatio, 1.0);
     } else if (uPixelAspectRatio < 1.0) {
-        vec2 roundingVector = vec2(1.0, 1.0/uPixelAspectRatio);
+        roundingVector = vec2(1.0, 1.0/uPixelAspectRatio);
     }
     tilePosition = floor(tilePosition * roundingVector) / roundingVector;
 
