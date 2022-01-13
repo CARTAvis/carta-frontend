@@ -827,33 +827,27 @@ export class FrameStore {
     }
 
     // standard stokes and computed polarization
-    @computed get coordinateOptions(): IOptionProps[] {
-        const fullStokesOptions = Array.from(this.stokesOptions);
-        const hasI: boolean = this.stokesOptions.findIndex(stokes => stokes.label === "Stokes I") !== -1;
-        const hasQ: boolean = this.stokesOptions.findIndex(stokes => stokes.label === "Stokes Q") !== -1;
-        const hasU: boolean = this.stokesOptions.findIndex(stokes => stokes.label === "Stokes U") !== -1;
-        const hasV: boolean = this.stokesOptions.findIndex(stokes => stokes.label === "Stokes V") !== -1;
+    @computed get polarizationInfo(): string[] {
+        let polarizationInfo = Array.from(this.stokesInfo);
+        const hasI: boolean = polarizationInfo.includes("Stokes I");
+        const hasQ: boolean = polarizationInfo.includes("Stokes Q");
+        const hasU: boolean = polarizationInfo.includes("Stokes U");
+        const hasV: boolean = polarizationInfo.includes("Stokes V");
 
         if (hasQ && hasU) {
-            fullStokesOptions.push({value: "Plinear", label: "Plinear"});
-            fullStokesOptions.push({value: "Pangle", label: "Pangle"});
+            polarizationInfo.push("Plinear");
+            polarizationInfo.push("Pangle");
             if (hasV) {
-                fullStokesOptions.push({value: "Ptotal", label: "Ptotal"});
+                polarizationInfo.push("Ptotal");
             }
             if (hasI) {
-                fullStokesOptions.push({value: "PFlinear", label: "PFlinear"});
+                polarizationInfo.push("PFlinear");
             }
             if (hasI && hasV) {
-                fullStokesOptions.push({value: "PFtotal", label: "PFtotal"});
+                polarizationInfo.push("PFtotal");
             }
         }
-        return fullStokesOptions;
-    }
-
-    @computed get coordinateInfo(): string[] {
-        return this.coordinateOptions?.map(option => {
-            return option?.label;
-        });
+        return polarizationInfo;
     }
 
     constructor(frameInfo: FrameInfo) {

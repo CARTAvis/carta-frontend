@@ -131,7 +131,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         // When frame is changed(coordinateOptions changes), coordinate stays unchanged if new frame also supports it, otherwise defaults to 'z'
         autorun(() => {
-            if (this.widgetStore.effectiveFrame && (!this.widgetStore.effectiveFrame.stokesInfo.find(stokes => `${stokes.replace("Stokes ", "")}z` === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.stokesInfo)) {
+            if (
+                this.widgetStore.effectiveFrame &&
+                (!this.widgetStore.effectiveFrame.polarizationInfo.find(polarization => `${polarization.replace("Stokes ", "")}z` === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.polarizationInfo)
+            ) {
                 this.widgetStore.setCoordinate("z");
             }
         });
@@ -223,10 +226,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         if (widgetStore.effectiveFrame?.regionSet) {
             enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
-            const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
-            stokesInfo.forEach(stokes => coordinateOptions.push({value: `${stokes.replace("Stokes ", "")}z`, label: stokes}));
+            const polarizationInfo = widgetStore.effectiveFrame.polarizationInfo;
+            polarizationInfo.forEach(polarization => coordinateOptions.push({value: `${polarization.replace("Stokes ", "")}z`, label: polarization}));
 
-            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z") {
+            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === polarizationInfo[widgetStore.effectiveFrame.requiredStokes] + "z") {
                 stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.darkTheme});
             }
         }
