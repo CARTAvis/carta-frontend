@@ -21,6 +21,7 @@ import {
     FrameInfo,
     FrameStore,
     HelpStore,
+    ImageFittingStore,
     LayoutStore,
     LogEntry,
     LogStore,
@@ -91,6 +92,7 @@ export class AppStore {
     readonly overlayStore: OverlayStore;
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
+    readonly imageFittingStore: ImageFittingStore;
 
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -1327,6 +1329,7 @@ export class AppStore {
         this.preferenceStore = PreferenceStore.Instance;
         this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
+        this.imageFittingStore = ImageFittingStore.Instance;
 
         this.astReady = false;
         this.cartaComputeReady = false;
