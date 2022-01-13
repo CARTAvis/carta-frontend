@@ -9,6 +9,8 @@ uniform float uCanvasHeight;
 uniform vec2 uRotationOrigin;
 uniform float uRotationAngle;
 uniform float uScaleAdjustment;
+uniform float uPixelAspectRatio;
+
 // Tiling parameters
 uniform vec2 uTileSize;
 uniform vec2 uTileScaling;
@@ -27,9 +29,19 @@ void main(void) {
     vec2 tilePosition = aVertexPosition.xy * uTileScaling * uTileSize + uTileOffset;
     tilePosition = rotateAboutPoint2D(tilePosition, uRotationOrigin, uRotationAngle);
     // adjust based on pixel scales
-    tilePosition = floor(scaleAboutPoint2D(tilePosition, uRotationOrigin, uScaleAdjustment));
+    tilePosition = scaleAboutPoint2D(tilePosition, uRotationOrigin, uScaleAdjustment);
+
+    // Handle pixel rounding while respecting pixel aspect ratios
+    vec2 roundindVector = vec2(1.0, 1.0);
+    if (uPixelAspectRatio > 1.0) {
+        vec2 roundingVector = vec2(uPixelAspectRatio, 1.0);
+    } else if (uPixelAspectRatio < 1.0) {
+        vec2 roundingVector = vec2(1.0, 1.0/uPixelAspectRatio);
+    }
+    tilePosition = floor(tilePosition * roundingVector) / roundingVector;
+
     // convert XY from canvas space to [-1, 1]
-    vec2 adjustedPosition = vec2(tilePosition.x / uCanvasWidth, tilePosition.y / uCanvasHeight) * 2.0 - 1.0;
+    vec2 adjustedPosition = vec2(tilePosition.x / (uCanvasWidth / uPixelAspectRatio), tilePosition.y / uCanvasHeight) * 2.0 - 1.0;
     gl_Position = vec4(adjustedPosition.x, adjustedPosition.y, aVertexPosition.z, 1.0);
     vUV = aVertexUV * uTileSize / uTileTextureSize;
 }
