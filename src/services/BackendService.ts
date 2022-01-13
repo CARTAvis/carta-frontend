@@ -66,7 +66,6 @@ export class BackendService {
     public animationId: number;
     public sessionId: number;
     public serverFeatureFlags: number;
-    public grpcPort: number;
     public serverUrl: string;
 
     private connection: WebSocket;
@@ -817,7 +816,6 @@ export class BackendService {
     private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
         this.sessionId = ack.sessionId;
         this.serverFeatureFlags = ack.serverFeatureFlags;
-        this.grpcPort = ack.grpcPort;
 
         this.onDeferredResponse(eventId, ack);
     }
