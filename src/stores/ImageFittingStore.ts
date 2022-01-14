@@ -135,7 +135,15 @@ export class ImageFittingIndividualStore {
     }
 
     @computed get validParams() {
-        return Number.isFinite(this.center.x) && Number.isFinite(this.center.y) && Number.isFinite(this.amplitude) && Number.isFinite(this.majorAxis) && Number.isFinite(this.minorAxis) && Number.isFinite(this.pa) && this.majorAxis >= this.minorAxis;
+        return (
+            Number.isFinite(this.center.x) &&
+            Number.isFinite(this.center.y) &&
+            Number.isFinite(this.amplitude) &&
+            Number.isFinite(this.majorAxis) &&
+            Number.isFinite(this.minorAxis) &&
+            Number.isFinite(this.pa) &&
+            this.majorAxis >= this.minorAxis
+        );
     }
 
     getParamsString = () => {
