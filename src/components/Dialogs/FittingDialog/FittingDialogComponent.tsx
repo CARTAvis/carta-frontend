@@ -31,7 +31,7 @@ export class FittingDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const fittingStore = appStore.imageFittingStore;
-        const component = fittingStore.components[fittingStore.selectedComponentIndex];
+        let component = fittingStore.components[fittingStore.selectedComponentIndex];
 
         const dialogProps: IDialogProps = {
             icon: "regression-chart",
@@ -84,24 +84,24 @@ export class FittingDialogComponent extends React.Component {
                                     disabled={fittingStore.components.length <= 1}
                                 />
                                 <Tooltip2 content="Delete current component.">
-                                    <AnchorButton icon={"trash"} onClick={fittingStore.deleteComponent} />
+                                    <AnchorButton icon={"trash"} onClick={fittingStore.deleteSelectedComponent} />
                                 </Tooltip2>
                             </>
                         )}
                     </FormGroup>
                     <FormGroup label="Center" inline={true} labelInfo="(px)">
-                        <SafeNumericInput value={component.center?.x ?? ""} onValueChange={component.setCenterX} buttonPosition="none" placeholder="Center X" />
-                        <SafeNumericInput value={component.center?.y ?? ""} onValueChange={component.setCenterY} buttonPosition="none" placeholder="Center Y" />
+                        <SafeNumericInput value={component?.center?.x ?? ""} onValueChange={component?.setCenterX} buttonPosition="none" placeholder="Center X" />
+                        <SafeNumericInput value={component?.center?.y ?? ""} onValueChange={component?.setCenterY} buttonPosition="none" placeholder="Center Y" />
                     </FormGroup>
                     <FormGroup label="Amplitude" inline={true} labelInfo={`(${fittingStore.effectiveFrame?.unit})`}>
-                        <SafeNumericInput value={component.amplitude ?? ""} onValueChange={component.setAmplitude} buttonPosition="none" placeholder="Amplitude" />
+                        <SafeNumericInput value={component?.amplitude ?? ""} onValueChange={component?.setAmplitude} buttonPosition="none" placeholder="Amplitude" />
                     </FormGroup>
                     <FormGroup label="FWHM" inline={true} labelInfo="(arcsec)">
-                        <SafeNumericInput value={component.majorAxis ?? ""} onValueChange={component.setMajorAxis} buttonPosition="none" placeholder="Major Axis" />
-                        <SafeNumericInput value={component.minorAxis ?? ""} onValueChange={component.setMinorAxis} buttonPosition="none" placeholder="Minor Axis" />
+                        <SafeNumericInput value={component?.majorAxis ?? ""} onValueChange={component?.setMajorAxis} buttonPosition="none" placeholder="Major Axis" />
+                        <SafeNumericInput value={component?.minorAxis ?? ""} onValueChange={component?.setMinorAxis} buttonPosition="none" placeholder="Minor Axis" />
                     </FormGroup>
                     <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                        <SafeNumericInput value={component.pa ?? ""} onValueChange={component.setPa} buttonPosition="none" placeholder="Position Angle" />
+                        <SafeNumericInput value={component?.pa ?? ""} onValueChange={component?.setPa} buttonPosition="none" placeholder="Position Angle" />
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>

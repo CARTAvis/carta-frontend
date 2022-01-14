@@ -29,14 +29,18 @@ export class ImageFittingStore {
             }
         } else if (num < this.components.length) {
             this.components = this.components.slice(0, num);
+            if (this.selectedComponentIndex >= this.components.length) {
+                this.selectedComponentIndex = this.components.length - 1;
+            }
         }
     };
 
     @action clearComponents = () => {
         this.components = [new ImageFittingIndividualStore()];
+        this.selectedComponentIndex = 0;
     };
 
-    @action deleteComponent = () => {
+    @action deleteSelectedComponent = () => {
         if (this.components.length > 1) {
             this.components.splice(this.selectedComponentIndex, 1);
             this.selectedComponentIndex = this.selectedComponentIndex === 0 ? 0 : this.selectedComponentIndex - 1;
@@ -61,7 +65,7 @@ export class ImageFittingStore {
 
     @computed get fitDisabled() {
         const validFileId = this.effectiveFrame?.frameInfo && this.effectiveFrame?.frameInfo?.fileId >= 0;
-        const validParams = this.components.every(c => c.validParams === false);
+        const validParams = this.components.every(c => c.validParams === true);
         return !(validFileId && validParams);
     }
 
@@ -73,7 +77,7 @@ export class ImageFittingStore {
     }
 
     getParamsString = () => {
-        return this.components.map(c => c.getParamsString()).join('\n');
+        return this.components.map(c => c.getParamsString()).join("\n");
     };
 
     fitImage = () => {
@@ -131,7 +135,7 @@ export class ImageFittingIndividualStore {
     }
 
     @computed get validParams() {
-        return !(Number.isFinite(this.center.x) && Number.isFinite(this.center.y) && Number.isFinite(this.amplitude) && Number.isFinite(this.majorAxis) && Number.isFinite(this.minorAxis) && Number.isFinite(this.pa));
+        return Number.isFinite(this.center.x) && Number.isFinite(this.center.y) && Number.isFinite(this.amplitude) && Number.isFinite(this.majorAxis) && Number.isFinite(this.minorAxis) && Number.isFinite(this.pa) && this.majorAxis >= this.minorAxis;
     }
 
     getParamsString = () => {
