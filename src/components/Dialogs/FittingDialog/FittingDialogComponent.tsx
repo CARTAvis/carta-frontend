@@ -1,10 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Position, Pre, Tab, Tabs, Text} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
-import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {SafeNumericInput} from "components/Shared";
@@ -14,11 +13,12 @@ enum FittingResultTabs {
     RESULT,
     LOG
 }
+
 @observer
 export class FittingDialogComponent extends React.Component {
-    @observable fittingResultTabId: FittingResultTabs;
+    @observable private fittingResultTabId: FittingResultTabs;
 
-    @action setFittingResultTabId = (tabId: FittingResultTabs) => {
+    @action private setFittingResultTabId = (tabId: FittingResultTabs) => {
         this.fittingResultTabId = tabId;
     };
 
@@ -28,23 +28,10 @@ export class FittingDialogComponent extends React.Component {
         this.fittingResultTabId = FittingResultTabs.LOG;
     }
 
-    private fitImage = () => {
-        const fittingStore = AppStore.Instance.imageFittingStore;
-        if (fittingStore.fitDisabled) {
-            return;
-        }
-
-        const message: CARTA.IFittingRequest = {
-            fileId: fittingStore.effectiveFrame.frameInfo.fileId,
-            regionId: 0,
-            estimates: fittingStore.getParamString()
-        };
-        AppStore.Instance.requestFitting(message);
-    };
-
     render() {
         const appStore = AppStore.Instance;
         const fittingStore = appStore.imageFittingStore;
+        const component = fittingStore.components[fittingStore.selectedComponentIndex];
 
         const dialogProps: IDialogProps = {
             icon: "regression-chart",
@@ -83,28 +70,47 @@ export class FittingDialogComponent extends React.Component {
                     <FormGroup label="Data Source" inline={true}>
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
                     </FormGroup>
+                    <FormGroup label="Components" inline={true}>
+                        <SafeNumericInput className="components-input" value={fittingStore.components.length} min={1} max={20} stepSize={1} onValueChange={val => fittingStore.setComponents(Math.round(val))} />
+                        {fittingStore.components.length > 1 && (
+                            <>
+                                <Slider
+                                    value={fittingStore.selectedComponentIndex + 1}
+                                    min={1}
+                                    stepSize={1}
+                                    max={fittingStore.components.length}
+                                    showTrackFill={false}
+                                    onChange={val => fittingStore.setSelectedComponentIndex(val - 1)}
+                                    disabled={fittingStore.components.length <= 1}
+                                />
+                                <Tooltip2 content="Delete current component.">
+                                    <AnchorButton icon={"trash"} onClick={fittingStore.deleteComponent} />
+                                </Tooltip2>
+                            </>
+                        )}
+                    </FormGroup>
                     <FormGroup label="Center" inline={true} labelInfo="(px)">
-                        <SafeNumericInput value={fittingStore.center?.x ?? ""} onValueChange={fittingStore.setCenterX} buttonPosition="none" placeholder="Center X" />
-                        <SafeNumericInput value={fittingStore.center?.y ?? ""} onValueChange={fittingStore.setCenterY} buttonPosition="none" placeholder="Center Y" />
+                        <SafeNumericInput value={component.center?.x ?? ""} onValueChange={component.setCenterX} buttonPosition="none" placeholder="Center X" />
+                        <SafeNumericInput value={component.center?.y ?? ""} onValueChange={component.setCenterY} buttonPosition="none" placeholder="Center Y" />
                     </FormGroup>
                     <FormGroup label="Amplitude" inline={true} labelInfo={`(${fittingStore.effectiveFrame?.unit})`}>
-                        <SafeNumericInput value={fittingStore.amplitude ?? ""} onValueChange={fittingStore.setAmplitude} buttonPosition="none" placeholder="Amplitude" />
+                        <SafeNumericInput value={component.amplitude ?? ""} onValueChange={component.setAmplitude} buttonPosition="none" placeholder="Amplitude" />
                     </FormGroup>
                     <FormGroup label="FWHM" inline={true} labelInfo="(arcsec)">
-                        <SafeNumericInput value={fittingStore.majorAxis ?? ""} onValueChange={fittingStore.setMajorAxis} buttonPosition="none" placeholder="Major Axis" />
-                        <SafeNumericInput value={fittingStore.minorAxis ?? ""} onValueChange={fittingStore.setMinorAxis} buttonPosition="none" placeholder="Minor Axis" />
+                        <SafeNumericInput value={component.majorAxis ?? ""} onValueChange={component.setMajorAxis} buttonPosition="none" placeholder="Major Axis" />
+                        <SafeNumericInput value={component.minorAxis ?? ""} onValueChange={component.setMinorAxis} buttonPosition="none" placeholder="Minor Axis" />
                     </FormGroup>
                     <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                        <SafeNumericInput value={fittingStore.pa ?? ""} onValueChange={fittingStore.setPa} buttonPosition="none" placeholder="Position Angle" />
+                        <SafeNumericInput value={component.pa ?? ""} onValueChange={component.setPa} buttonPosition="none" placeholder="Position Angle" />
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Tooltip2 content="Clear fitting parameters." position={Position.BOTTOM}>
-                            <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearParams} text="Clear" />
+                            <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
                         </Tooltip2>
                         <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM}>
-                            <AnchorButton intent={Intent.PRIMARY} onClick={this.fitImage} text="Fit" disabled={fittingStore.fitDisabled} />
+                            <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} />
                         </Tooltip2>
                     </div>
                 </div>
