@@ -421,7 +421,6 @@ export class RootMenuComponent extends React.Component {
                 </Tooltip2>
                 <div id="hidden-status-info">
                     <span id="info-session-id">{appStore.backendService.sessionId}</span>
-                    <span id="info-server-url">{appStore.backendService.serverUrl}</span>
                 </div>
             </div>
         );
