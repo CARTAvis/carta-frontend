@@ -42,7 +42,8 @@ import {
     STANDARD_POLARIZATIONS,
     Transform2D,
     ZoomPoint,
-    POLARIZATION_LABELS
+    POLARIZATION_LABELS,
+    COMPUTED_POLARIZATIONS
 } from "models";
 import {
     clamp,
@@ -1704,7 +1705,11 @@ export class FrameStore {
             stokes += this.frameInfo.fileInfoExtended.stokes;
         }
         if (stokes >= this.frameInfo.fileInfoExtended.stokes) {
-            stokes = 0;
+            if (stokes < this.polarizationInfo.length) {
+                stokes = COMPUTED_POLARIZATIONS.get(this.polarizationInfo[stokes]) ?? 0;
+            } else {
+                stokes = 0;
+            }
         }
 
         const sanitizedChannel = this.sanitizeChannelNumber(channel);

@@ -14,12 +14,12 @@ export const STANDARD_POLARIZATIONS = new Map<number, string>([
     [4, "V"]
 ]);
 
-export const COMPUTED_POLARIZATIONS = new Map<number, string>([
-    [13, "Ptotal"],
-    [14, "Plinear"],
-    [15, "PFtotal"],
-    [16, "PFlinear"],
-    [17, "Pangle"]
+export const COMPUTED_POLARIZATIONS = new Map<string, number>([
+    ["Ptotal", 13],
+    ["Plinear", 14],
+    ["PFtotal", 15],
+    ["PFlinear", 16],
+    ["Pangle", 17]
 ]);
 
 export const POLARIZATION_LABELS = new Map<string, string>([
@@ -43,12 +43,12 @@ export const POLARIZATION_LABELS = new Map<string, string>([
     ["Pangle", "Pangle"]
 ]);
 
-export const VALID_COORDINATES: string[] = ["z", ...Array.from(STANDARD_POLARIZATIONS.values()).map(val => `${val}z`), ...Array.from(COMPUTED_POLARIZATIONS.values()).map(val => `${val}z`)];
+export const VALID_COORDINATES: string[] = ["z", ...Array.from(STANDARD_POLARIZATIONS.values()).map(val => `${val}z`), ...Array.from(COMPUTED_POLARIZATIONS.keys()).map(val => `${val}z`)];
 export const VALID_XY_COORDINATES: string[] = [
     "x",
     "y",
     ...Array.from(STANDARD_POLARIZATIONS.values()).map(val => `${val}x`),
     ...Array.from(STANDARD_POLARIZATIONS.values()).map(val => `${val}y`),
-    ...Array.from(COMPUTED_POLARIZATIONS.values()).map(val => `${val}x`),
-    ...Array.from(COMPUTED_POLARIZATIONS.values()).map(val => `${val}y`)
+    ...Array.from(COMPUTED_POLARIZATIONS.keys()).map(val => `${val}x`),
+    ...Array.from(COMPUTED_POLARIZATIONS.keys()).map(val => `${val}y`)
 ];
