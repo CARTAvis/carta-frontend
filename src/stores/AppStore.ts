@@ -644,6 +644,10 @@ export class AppStore {
         } else {
             this.removeFrame(frame);
         }
+
+        if (!this.activeFrame) {
+            this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+        }
     };
 
     /**
