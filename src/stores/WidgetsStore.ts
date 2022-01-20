@@ -709,6 +709,11 @@ export class WidgetsStore {
                         const previousPageButton = $(`<li class="lm-image-panel-previous" title="previous ${imagePanelMode === ImagePanelMode.None ? "image" : "page"}"><span class="bp3-icon-standard bp3-icon-step-backward" style/></li>`);
                         previousPageButton.on("click", this.onPreviousPageClick);
                         stack.header.controlsContainer.prepend(previousPageButton);
+                        this.updateImagePanelPageButtons();
+                    } else if (component && component !== "image-view" && stackHeaderControlButtons?.childElementCount > 5) {
+                        stackHeaderControlButtons.children[0].remove();
+                        stackHeaderControlButtons.children[0].remove();
+                        stackHeaderControlButtons.children[0].remove();
                     }
 
                     // disable unpin button when active tab is image-view
