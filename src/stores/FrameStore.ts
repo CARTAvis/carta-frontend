@@ -153,6 +153,7 @@ export class FrameStore {
     @observable pvImage: FrameStore;
     @observable generatedPVRegionId: number;
     @observable fittingResult: string;
+    @observable fittingLog: string;
 
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
@@ -872,6 +873,7 @@ export class FrameStore {
         this.momentImages = [];
         this.pvImage = null;
         this.fittingResult = "";
+        this.fittingLog = "";
 
         this.isRequestingMoments = false;
         this.requestingMomentsProgress = 0;
@@ -2168,5 +2170,9 @@ export class FrameStore {
 
     @action setFittingResult = (result: string) => {
         this.fittingResult = result;
+    };
+
+    @action setFittingLog = (log: string) => {
+        this.fittingLog = log;
     };
 }

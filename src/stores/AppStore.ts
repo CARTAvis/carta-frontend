@@ -1106,7 +1106,8 @@ export class AppStore {
         try {
             const ack = await this.backendService.requestFitting(message);
             if (ack.success) {
-                this.getFrame(message.fileId).setFittingResult(ack.result);
+                this.getFrame(message.fileId).setFittingResult(ack.results);
+                this.getFrame(message.fileId).setFittingLog(ack.log);
             } else {
                 console.log(ack.message);
             }

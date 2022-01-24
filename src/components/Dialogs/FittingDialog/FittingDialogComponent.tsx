@@ -25,7 +25,7 @@ export class FittingDialogComponent extends React.Component {
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        this.fittingResultTabId = FittingResultTabs.LOG;
+        this.fittingResultTabId = FittingResultTabs.RESULT;
     }
 
     render() {
@@ -54,13 +54,13 @@ export class FittingDialogComponent extends React.Component {
 
         const fittingResultPanel = (
             <Pre className="fitting-result-pre">
-                <Text className="fitting-result-text">TBD</Text>
+                <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
             </Pre>
         );
 
         const fullLogPanel = (
             <Pre className="fitting-result-pre">
-                <Text className="log-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
+                <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
             </Pre>
         );
 
@@ -96,9 +96,9 @@ export class FittingDialogComponent extends React.Component {
                     <FormGroup label="Amplitude" inline={true} labelInfo={`(${fittingStore.effectiveFrame?.unit})`}>
                         <SafeNumericInput value={component?.amplitude ?? ""} onValueChange={component?.setAmplitude} buttonPosition="none" placeholder="Amplitude" />
                     </FormGroup>
-                    <FormGroup label="FWHM" inline={true} labelInfo="(arcsec)">
-                        <SafeNumericInput value={component?.majorAxis ?? ""} onValueChange={component?.setMajorAxis} buttonPosition="none" placeholder="Major Axis" />
-                        <SafeNumericInput value={component?.minorAxis ?? ""} onValueChange={component?.setMinorAxis} buttonPosition="none" placeholder="Minor Axis" />
+                    <FormGroup label="FWHM" inline={true} labelInfo="(px)">
+                        <SafeNumericInput value={component?.fwhm?.x ?? ""} onValueChange={component?.setFwhmX} buttonPosition="none" placeholder="FWHM X" />
+                        <SafeNumericInput value={component?.fwhm?.y ?? ""} onValueChange={component?.setFwhmY} buttonPosition="none" placeholder="FWHM Y" />
                     </FormGroup>
                     <FormGroup label="P.A." inline={true} labelInfo="(deg)">
                         <SafeNumericInput value={component?.pa ?? ""} onValueChange={component?.setPa} buttonPosition="none" placeholder="Position Angle" />

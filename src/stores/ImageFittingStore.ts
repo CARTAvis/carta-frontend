@@ -76,19 +76,31 @@ export class ImageFittingStore {
         this.selectedComponentIndex = 0;
     }
 
-    getParamsString = () => {
-        return this.components.map(c => c.getParamsString()).join("\n");
-    };
-
     fitImage = () => {
         if (this.fitDisabled) {
             return;
         }
+        const initialValues = [];
+        for (const c of this.components) {
+            initialValues.push({
+                centerX: c.center.x,
+                centerY: c.center.y,
+                amp: c.amplitude,
+                fwhmX: c.fwhm.x,
+                fwhmY: c.fwhm.y,
+                pa: c.pa,
+                fixedCenterX: false,
+                fixedCenterY: false,
+                fixedAmp: false,
+                fixedFwhmX: false,
+                fixedFwhmY: false,
+                fixedPa: false
+            });
+        }
 
         const message: CARTA.IFittingRequest = {
             fileId: this.effectiveFrame.frameInfo.fileId,
-            regionId: 0,
-            estimates: this.getParamsString()
+            initialValues: initialValues
         };
         AppStore.Instance.requestFitting(message);
     };
@@ -97,8 +109,7 @@ export class ImageFittingStore {
 export class ImageFittingIndividualStore {
     @observable center: Point2D;
     @observable amplitude: number;
-    @observable majorAxis: number;
-    @observable minorAxis: number;
+    @observable fwhm: Point2D;
     @observable pa: number;
 
     @action setCenterX = (val: number) => {
@@ -113,12 +124,12 @@ export class ImageFittingIndividualStore {
         this.amplitude = val;
     };
 
-    @action setMajorAxis = (val: number) => {
-        this.majorAxis = val;
+    @action setFwhmX = (val: number) => {
+        this.fwhm.x = val;
     };
 
-    @action setMinorAxis = (val: number) => {
-        this.minorAxis = val;
+    @action setFwhmY = (val: number) => {
+        this.fwhm.y = val;
     };
 
     @action setPa = (val: number) => {
@@ -129,24 +140,11 @@ export class ImageFittingIndividualStore {
         makeObservable(this);
         this.center = {x: null, y: null};
         this.amplitude = null;
-        this.majorAxis = null;
-        this.minorAxis = null;
+        this.fwhm = {x: null, y: null};
         this.pa = null;
     }
 
     @computed get validParams() {
-        return (
-            Number.isFinite(this.center.x) &&
-            Number.isFinite(this.center.y) &&
-            Number.isFinite(this.amplitude) &&
-            Number.isFinite(this.majorAxis) &&
-            Number.isFinite(this.minorAxis) &&
-            Number.isFinite(this.pa) &&
-            this.majorAxis >= this.minorAxis
-        );
+        return (Number.isFinite(this.center.x) && Number.isFinite(this.center.y) && Number.isFinite(this.amplitude) && Number.isFinite(this.fwhm.x) && Number.isFinite(this.fwhm.y) && Number.isFinite(this.pa));
     }
-
-    getParamsString = () => {
-        return `${this.amplitude}, ${this.center.x}, ${this.center.y}, ${this.majorAxis}arcsec, ${this.minorAxis}arcsec, ${this.pa}deg`;
-    };
 }
