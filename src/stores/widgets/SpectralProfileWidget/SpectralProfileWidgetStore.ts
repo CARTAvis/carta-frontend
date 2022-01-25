@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable, makeObservable, override} from "mobx";
+import {action, autorun, computed, observable, makeObservable, override, reaction} from "mobx";
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
@@ -316,10 +316,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.intensityConversion = undefined;
         this.setIntensityUnit(this.effectiveFrame?.unit);
 
+        reaction(
+            () => this.effectiveFrame,
+            frame => {
+                if (frame) {
+                    this.setIntensityUnit(frame.unit);
+                }
+            }
+        );
+
         autorun(() => {
             if (this.effectiveFrame) {
                 this.updateRanges();
-                this.momentRegionId = RegionId.ACTIVE;
+                this.selectMomentRegion(RegionId.ACTIVE)
             }
         });
 
