@@ -328,7 +328,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         autorun(() => {
             if (this.effectiveFrame) {
                 this.updateRanges();
-                this.selectMomentRegion(RegionId.ACTIVE)
+                this.selectMomentRegion(RegionId.ACTIVE);
             }
         });
 
