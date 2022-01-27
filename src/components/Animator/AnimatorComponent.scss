@@ -81,12 +81,12 @@
         .playback-numeric-control {
             min-width: 180px;
             flex: 1 1 180px;
+            .bp3-html-select {
+                width: 120px
+            }
             .bp3-numeric-input {
                 .bp3-input-group {
                     width: 35px;
-                }
-                .bp3-button-group {
-                    margin-right: 20px;
                 }
             }
         }
