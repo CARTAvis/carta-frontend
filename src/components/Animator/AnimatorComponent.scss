@@ -79,15 +79,16 @@
         }
 
         .playback-numeric-control {
-            margin: 0 3px 0 3px;
             min-width: 180px;
             flex: 1 1 180px;
             .bp3-numeric-input {
                 .bp3-input-group {
                     width: 35px;
                 }
+                .bp3-button-group {
+                    margin-right: 20px;
+                }
             }
-
         }
 
         &.wrap {
