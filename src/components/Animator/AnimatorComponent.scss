@@ -79,13 +79,14 @@
         }
 
         .playback-numeric-control {
-            min-width: 185px;
-            flex: 1 1 185px;
+            min-width: 183px;
+            flex: 1 1 183px;
             .bp3-numeric-input {
                 .bp3-input-group {
                     width: 35px;
                 }
             }
+
         }
 
         &.wrap {
