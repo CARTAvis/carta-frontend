@@ -8,7 +8,7 @@ import {Colors} from "@blueprintjs/core";
 import {AppStore, FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, subtract2D, angle2D} from "utilities";
-import {adjustPosToMutatedStage, adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Anchor, NonEditableAnchor} from "./InvariantShapes";
 
 interface LineSegmentRegionComponentProps {
@@ -267,14 +267,12 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         if (frame.spatialReference) {
             const centerReferenceImage = average2D(controlPoints);
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
-            centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage.x, centerSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-            centerPointCanvasSpace = adjustPosToMutatedStage(centerPointCanvasSpace, this.props.stageRef.current);
+            centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
             const N = pointsSecondaryImage.length;
             pointArray = new Array<number>(N * 2);
             for (let i = 0; i < N; i++) {
-                let approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i].x, pointsSecondaryImage[i].y, frame, this.props.layerWidth, this.props.layerHeight);
-                approxPointPixelSpace = adjustPosToMutatedStage(approxPointPixelSpace, this.props.stageRef.current);
+                const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 pointArray[i * 2] = approxPointPixelSpace.x - centerPointCanvasSpace.x;
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPointCanvasSpace.y;
             }
@@ -283,8 +281,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             if (this.props.selected && this.props.listening && !region.locked) {
                 anchors = controlPoints.map((p, i) => {
                     const pSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
-                    let pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-                    pCanvasPos = adjustPosToMutatedStage(pCanvasPos, this.props.stageRef.current);
+                    const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                     return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i);
                 });
 
@@ -297,16 +294,14 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
             if (this.hoverIntersection && !region.locked) {
                 const pSecondaryImage = transformPoint(frame.spatialTransformAST, this.hoverIntersection, false);
-                let pCanvasPos = transformedImageToCanvasPos(pSecondaryImage.x, pSecondaryImage.y, frame, this.props.layerWidth, this.props.layerHeight);
-                pCanvasPos = adjustPosToMutatedStage(pCanvasPos, this.props.stageRef.current);
+                const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
             }
 
             rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
             controlPoints = controlPoints.map(p => {
-                const canvasPos = transformedImageToCanvasPos(p.x, p.y, frame, this.props.layerWidth, this.props.layerHeight);
-                return adjustPosToMutatedStage(canvasPos, this.props.stageRef.current);
+                return transformedImageToCanvasPos(p, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             });
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
@@ -324,8 +319,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             }
 
             if (this.hoverIntersection && !region.locked) {
-                let anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
-                anchorPositionPixelSpace = adjustPosToMutatedStage(anchorPositionPixelSpace, this.props.stageRef.current);
+                const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
             }
 

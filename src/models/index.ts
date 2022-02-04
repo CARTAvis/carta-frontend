@@ -28,3 +28,4 @@ export * from "./CatalogControlMap";
 export * from "./AbstractCatalogProfile";
 export * from "./ImagePanelMode";
 export * from "./PolarizationDefinition";
+export * from "./FileFilterMode";

@@ -165,7 +165,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         if (wcsString === this.sizeWCS.x) {
             return;
         }
-        const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
+        const value = this.props.frame.getImageXValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = this.props.region.size.x;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setSize({x: value, y: this.props.region.size.y});
@@ -202,7 +202,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         if (wcsString === this.sizeWCS.y) {
             return;
         }
-        const value = this.props.frame.getImageValueFromArcsec(getValueFromArcsecString(wcsString));
+        const value = this.props.frame.getImageYValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = this.props.region.size.y;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setSize({x: this.props.region.size.x, y: value});

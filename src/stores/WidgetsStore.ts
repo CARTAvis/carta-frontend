@@ -18,6 +18,7 @@ import {
     StokesAnalysisComponent,
     CatalogOverlayComponent,
     CatalogPlotComponent,
+    PvGeneratorComponent,
     // setting Panel
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
@@ -43,7 +44,9 @@ import {
     CatalogPlotWidgetStore,
     CatalogPlotWidgetStoreProps,
     ACTIVE_FILE_ID,
-    CatalogPlotType
+    CatalogPlotType,
+    LayerListWidgetStore,
+    PvGeneratorWidgetStore
 } from "./widgets";
 import {PreferenceKeys, PreferenceStore} from "./PreferenceStore";
 import {ImagePanelMode} from "models";
@@ -61,7 +64,8 @@ export enum WidgetType {
     ImageList = "Image List Widget",
     Catalog = "Catalog Widget",
     SpectralLineQuery = "Spectral Line Query Widget",
-    CursorInfo = "Cursor Info Widget"
+    CursorInfo = "Cursor Info Widget",
+    PvGenerator = "PV Generator"
 }
 
 export interface DefaultWidgetConfig {
@@ -152,7 +156,7 @@ export class WidgetsStore {
     @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore>;
     @observable statsWidgets: Map<string, StatsWidgetStore>;
     @observable histogramWidgets: Map<string, HistogramWidgetStore>;
-    @observable layerListWidgets: Map<string, EmptyWidgetStore>;
+    @observable layerListWidgets: Map<string, LayerListWidgetStore>;
     @observable logWidgets: Map<string, EmptyWidgetStore>;
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
@@ -162,6 +166,7 @@ export class WidgetsStore {
     @observable catalogPlotWidgets: Map<string, CatalogPlotWidgetStore>;
     @observable spectralLineQueryWidgets: Map<string, SpectralLineQueryWidgetStore>;
     @observable cursorInfoWidgets: Map<string, EmptyWidgetStore>;
+    @observable pvGeneratorWidgets: Map<string, PvGeneratorWidgetStore>;
 
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
@@ -275,6 +280,15 @@ export class WidgetsStore {
                 onClick: () => WidgetsStore.Instance.createFloatingCursorInfoWidget(),
                 widgetConfig: CursorInfoComponent.WIDGET_CONFIG
             }
+        ],
+        [
+            WidgetType.PvGenerator,
+            {
+                isCustomIcon: true,
+                icon: "pv",
+                onClick: () => WidgetsStore.Instance.createFloatingPvGeneratorWidget(),
+                widgetConfig: PvGeneratorComponent.WIDGET_CONFIG
+            }
         ]
     ]);
 
@@ -326,7 +340,7 @@ export class WidgetsStore {
         this.histogramWidgets = new Map<string, HistogramWidgetStore>();
         this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
         this.animatorWidgets = new Map<string, EmptyWidgetStore>();
-        this.layerListWidgets = new Map<string, EmptyWidgetStore>();
+        this.layerListWidgets = new Map<string, LayerListWidgetStore>();
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
@@ -335,6 +349,7 @@ export class WidgetsStore {
         this.catalogPlotWidgets = new Map<string, CatalogPlotWidgetStore>();
         this.spectralLineQueryWidgets = new Map<string, SpectralLineQueryWidgetStore>();
         this.cursorInfoWidgets = new Map<string, EmptyWidgetStore>();
+        this.pvGeneratorWidgets = new Map<string, PvGeneratorWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -350,7 +365,8 @@ export class WidgetsStore {
             [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogWidgets],
             [CatalogPlotComponent.WIDGET_CONFIG.type, this.catalogPlotWidgets],
             [SpectralLineQueryComponent.WIDGET_CONFIG.type, this.spectralLineQueryWidgets],
-            [CursorInfoComponent.WIDGET_CONFIG.type, this.cursorInfoWidgets]
+            [CursorInfoComponent.WIDGET_CONFIG.type, this.cursorInfoWidgets],
+            [PvGeneratorComponent.WIDGET_CONFIG.type, this.pvGeneratorWidgets]
         ]);
 
         this.floatingWidgets = [];
@@ -389,6 +405,8 @@ export class WidgetsStore {
                 return SpectralLineQueryComponent.WIDGET_CONFIG;
             case CursorInfoComponent.WIDGET_CONFIG.type:
                 return CursorInfoComponent.WIDGET_CONFIG;
+            case PvGeneratorComponent.WIDGET_CONFIG.type:
+                return PvGeneratorComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -538,6 +556,9 @@ export class WidgetsStore {
             case CursorInfoComponent.WIDGET_CONFIG.type:
                 itemId = this.addCursorInfoWidget();
                 break;
+            case PvGeneratorComponent.WIDGET_CONFIG.type:
+                itemId = this.addPvGeneratorWidget();
+                break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
                 itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
                 CatalogStore.Instance.catalogProfiles.set(itemId, 1);
@@ -641,6 +662,7 @@ export class WidgetsStore {
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("layer-list", LayerListComponent);
         layout.registerComponent("cursor-info", CursorInfoComponent);
+        layout.registerComponent("pv-generator", PvGeneratorComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
@@ -1350,7 +1372,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            this.layerListWidgets.set(id, new EmptyWidgetStore());
+            this.layerListWidgets.set(id, new LayerListWidgetStore());
         }
         return id;
     }
@@ -1366,6 +1388,21 @@ export class WidgetsStore {
 
         if (id) {
             this.cursorInfoWidgets.set(id, new EmptyWidgetStore());
+        }
+        return id;
+    }
+
+    createFloatingPvGeneratorWidget = () => {
+        this.addFloatingWidget(new WidgetConfig(this.addPvGeneratorWidget(), PvGeneratorComponent.WIDGET_CONFIG));
+    };
+
+    @action addPvGeneratorWidget(id: string = null) {
+        if (!id) {
+            id = this.getNextId(PvGeneratorComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.pvGeneratorWidgets.set(id, new PvGeneratorWidgetStore());
         }
         return id;
     }

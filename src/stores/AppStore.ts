@@ -35,8 +35,8 @@ import {
     WidgetsStore
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, Zoom, SpectralType} from "models";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -76,6 +76,7 @@ export class AppStore {
     readonly tileService: TileService;
     readonly scriptingService: ScriptingService;
     readonly apiService: ApiService;
+    readonly telemetryService: TelemetryService;
 
     // Other stores
     readonly alertStore: AlertStore;
@@ -145,20 +146,19 @@ export class AppStore {
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
-        const requiresAutoFit = this.preferenceStore.zoomMode === Zoom.FIT && this.overlayStore.fullViewWidth <= 1 && this.overlayStore.fullViewHeight <= 1;
         this.overlayStore.setViewDimension(w, h);
-
-        if (requiresAutoFit) {
-            for (const frame of this.frames) {
-                frame.fitZoom();
-            }
-        }
     };
 
     // Auth
     @observable username: string = "";
     @action setUsername = (username: string) => {
         this.username = username;
+    };
+
+    // Batch opening files
+    @observable isLoadingMultipleFiles: boolean = false;
+    @action setLoadingMultipleFiles = (isLoadingMultipleFiles: boolean) => {
+        this.isLoadingMultipleFiles = isLoadingMultipleFiles;
     };
 
     private connectToServer = async () => {
@@ -210,15 +210,11 @@ export class AppStore {
 
         try {
             if (fileList?.length) {
-                const frames: FrameStore[] = [];
+                this.setLoadingMultipleFiles(true);
                 for (const file of fileList) {
-                    frames.push(await this.loadFile(folderSearchParam, file, ""));
+                    await this.loadFile(folderSearchParam, file, "");
                 }
-
-                // Auto-fit loaded frames after panel configuration has been updated.
-                if (this.preferenceStore.zoomMode === Zoom.FIT) {
-                    this.autoFitImages(frames);
-                }
+                this.setLoadingMultipleFiles(false);
             } else if (this.preferenceStore.autoLaunch) {
                 if (folderSearchParam) {
                     this.fileBrowserStore.setStartingDirectory(folderSearchParam);
@@ -229,15 +225,6 @@ export class AppStore {
             console.error(err);
         }
     };
-
-    @action autoFitImages(frames: FrameStore[]) {
-        // Frames that have a spatial reference are not auto-fitted.
-        for (const frame of frames) {
-            if (frame && !frame.spatialReference) {
-                frame.fitZoom();
-            }
-        }
-    }
 
     @action handleThemeChange = (darkMode: boolean) => {
         this.systemTheme = darkMode ? "dark" : "light";
@@ -460,6 +447,7 @@ export class AppStore {
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable
         };
+        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes);
 
         let newFrame = new FrameStore(frameInfo);
 
@@ -710,6 +698,7 @@ export class AppStore {
             this.histogramRequirements.delete(fileId);
 
             this.tileService.handleFileClosed(fileId);
+            this.telemetryService.addFileCloseEntry(fileId);
 
             if (this.backendService.closeFile(fileId)) {
                 frame.clearSpatialReference();
@@ -777,6 +766,7 @@ export class AppStore {
             this.frames.forEach(frame => {
                 frame.clearContours(false);
                 const fileId = frame.frameInfo.fileId;
+                this.telemetryService.addFileCloseEntry(fileId);
                 this.tileService.handleFileClosed(fileId);
                 if (this.catalogNum) {
                     CatalogStore.Instance.closeAssociatedCatalog(fileId);
@@ -957,6 +947,8 @@ export class AppStore {
             }
         } catch (err) {
             console.error(err);
+            this.fileBrowserStore.setImportingRegions(false);
+            this.fileBrowserStore.resetLoadingStates();
             AppToaster.show(ErrorToast(err));
         }
     };
@@ -1058,6 +1050,49 @@ export class AppStore {
         const frame = this.getFrame(fileId);
         if (frame && frame.requestingMomentsProgress < 1.0) {
             this.backendService.cancelRequestingMoment(fileId);
+        }
+    };
+
+    @action requestPV = async (message: CARTA.IPvRequest, frame: FrameStore) => {
+        if (!message || !frame) {
+            return;
+        }
+
+        this.startFileLoading();
+        // clear previously generated moment images under this frame
+        if (frame.pvImage) {
+            this.closeFile(frame.pvImage);
+        }
+        frame.removePvImage();
+
+        this.restartTaskProgress();
+
+        try {
+            const ack = await this.backendService.requestPV(message);
+            if (!ack.cancel && ack.openFileAck) {
+                if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, "")) {
+                    this.fileCounter++;
+                    frame.addPvImage(this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId));
+                } else {
+                    AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
+                }
+            }
+            frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+        } catch (err) {
+            frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+            console.error(err);
+            AppToaster.show(ErrorToast(err));
+        }
+    };
+
+    @action cancelRequestingPV = (fileId: number = -1) => {
+        const frame = this.getFrame(fileId);
+        if (frame && frame.requestingPVProgress < 1.0) {
+            this.backendService.cancelRequestingPV(fileId);
         }
     };
 
@@ -1226,8 +1261,10 @@ export class AppStore {
     private initCarta = async (isAstReady: boolean, isZfpReady: boolean, isCartaComputeReady: boolean, isApiServiceAuthenticated: boolean) => {
         if (isAstReady && isZfpReady && isCartaComputeReady && isApiServiceAuthenticated) {
             try {
-                await this.connectToServer();
                 await this.preferenceStore.fetchPreferences();
+                await this.telemetryService.checkAndGenerateId();
+                await this.telemetryService.flushTelemetry();
+                await this.connectToServer();
                 await this.fileBrowserStore.restoreStartingDirectory();
                 await this.layoutStore.fetchLayouts();
                 await this.snippetStore.fetchSnippets();
@@ -1252,11 +1289,13 @@ export class AppStore {
         AppStore.staticInstance = this;
         window["app"] = this;
         window["carta"] = this;
+
         // Assign service instances
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
         this.scriptingService = ScriptingService.Instance;
         this.apiService = ApiService.Instance;
+        this.telemetryService = TelemetryService.Instance;
 
         // Assign lower level store instances
         this.alertStore = AlertStore.Instance;
@@ -1468,6 +1507,7 @@ export class AppStore {
         this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
+        this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1692,6 +1732,17 @@ export class AppStore {
         this.fileBrowserStore.updateLoadingState(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
         this.fileBrowserStore.showLoadingDialog();
         this.updateTaskProgress(fileProgress.percentage);
+    };
+
+    handlePvProgressStream = (pvProgress: CARTA.PvProgress) => {
+        if (!pvProgress) {
+            return;
+        }
+        const frame = this.getFrame(pvProgress.fileId);
+        if (frame) {
+            frame.updateRequestingPvProgress(pvProgress.progress);
+            this.updateTaskProgress(pvProgress.progress);
+        }
     };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {
@@ -2283,7 +2334,7 @@ export class AppStore {
     };
 
     getFileList = async (directory: string) => {
-        return await this.backendService.getFileList(directory);
+        return await this.backendService.getFileList(directory, ToFileListFilterMode(this.preferenceStore.fileFilterMode));
     };
 
     // region requirements calculations

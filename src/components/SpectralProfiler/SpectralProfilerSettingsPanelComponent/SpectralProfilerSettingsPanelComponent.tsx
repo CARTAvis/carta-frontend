@@ -1,7 +1,7 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Tab, Tabs} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -180,12 +180,17 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                         panelClassName="conversion-tab-panel"
                         title="Conversion"
                         panel={
-                            <SpectralSettingsComponent
-                                frame={widgetStore.effectiveFrame}
-                                onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
-                                onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                disable={widgetStore.effectiveFrame?.isPVImage}
-                            />
+                            <React.Fragment>
+                                <SpectralSettingsComponent
+                                    frame={widgetStore.effectiveFrame}
+                                    onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                    onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                    disable={widgetStore.effectiveFrame?.isPVImage}
+                                />
+                                <FormGroup label={"Intensity unit"} inline={true}>
+                                    <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
+                                </FormGroup>
+                            </React.Fragment>
                         }
                     />
                     <Tab id={SpectralProfilerSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />

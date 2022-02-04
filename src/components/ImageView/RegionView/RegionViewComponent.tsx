@@ -68,29 +68,22 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
         );
 
-        // Update stage when spatial reference move/zoom,
-        // tracking spatial reference's centerMovement/zoomLevel to move/zoom stage.
         reaction(
             () => {
                 const frame = this.props.frame;
-                if (frame.spatialReference) {
-                    // frame is sibling
-                    return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.zoomLevel};
-                } else if (frame.spatialSiblings?.length > 0) {
-                    // frame is spatial reference
+                if (frame) {
+                    if (frame.spatialReference) {
+                        // Update stage when spatial reference move/zoom(frame is sibling),
+                        // tracking spatial reference's centerMovement/zoomLevel to move/zoom stage.
+                        return {centerMovement: frame.spatialReference.centerMovement, zoom: frame.spatialReference.zoomLevel};
+                    }
                     return {centerMovement: frame.centerMovement, zoom: frame.zoomLevel};
                 }
                 return undefined;
             },
             (reference, prevReferece) => {
                 const frame = this.props.frame;
-                if (
-                    reference &&
-                    (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) &&
-                    frame &&
-                    frame !== AppStore.Instance.activeFrame
-                ) {
-                    // Only update those stages that are not moved/zoomed by mouse directly(activeFrame).
+                if (reference && (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) && frame) {
                     this.syncStage(reference.centerMovement, reference.zoom);
                 }
             }
@@ -98,9 +91,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }
 
     componentDidMount() {
-        const frame = this.props.frame;
+        const frame = this.props.frame?.spatialReference ?? this.props.frame;
         if (frame) {
-            this.stageZoomToPoint(this.props.width / 2, this.props.height / 2, frame.zoomLevel);
+            this.syncStage(frame.centerMovement, frame.zoomLevel);
         }
     }
 
@@ -458,21 +451,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (frame.wcsInfo && this.props.onClickToCenter && ((!this.props.dragPanningEnabled && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring) || isSecondaryClick)) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             this.props.onClickToCenter(frame.getCursorInfo(cursorPosImageSpace));
-
-            // Move stage origin according to center moving track
-            const centerOffset = subtract2D({x: mouseEvent.offsetX, y: mouseEvent.offsetY}, {x: this.props.width / 2, y: this.props.height / 2});
-            const stage = this.stageRef.current;
-            const newStageOrigin = subtract2D(stage.getPosition(), centerOffset);
-            stage.position(newStageOrigin);
         }
     };
 
     private syncStage = (refCenterMovement: Point2D, refFrameZoom: number) => {
         const stage = this.stageRef.current;
         if (stage && refCenterMovement && isFinite(refCenterMovement.x) && isFinite(refCenterMovement.y) && isFinite(refFrameZoom)) {
-            stage.scale({x: refFrameZoom, y: refFrameZoom});
+            stage.scale({x: refFrameZoom / AppStore.Instance.imageRatio, y: refFrameZoom / AppStore.Instance.imageRatio});
             const origin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - refFrameZoom);
-            const centerMovementCanvas = scale2D({x: refCenterMovement.x, y: -refCenterMovement.y}, refFrameZoom);
+            const centerMovementCanvas = scale2D({x: refCenterMovement.x, y: -refCenterMovement.y}, refFrameZoom / devicePixelRatio);
             const newOrigin = add2D(origin, centerMovementCanvas);
             // Correct the origin if region view is ever resized
             const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, refFrameZoom));
@@ -635,10 +622,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 firstControlPoint = transformPoint(frame.spatialTransformAST, firstControlPoint, false);
                 lastControlPoint = transformPoint(frame.spatialTransformAST, lastControlPoint, false);
             }
-            let lineStart = transformedImageToCanvasPos(firstControlPoint.x, firstControlPoint.y, frame, this.props.width, this.props.height);
-            lineStart = adjustPosToMutatedStage(lineStart, this.stageRef.current);
-            let lineEnd = transformedImageToCanvasPos(lastControlPoint.x, lastControlPoint.y, frame, this.props.width, this.props.height);
-            lineEnd = adjustPosToMutatedStage(lineEnd, this.stageRef.current);
+            const lineStart = transformedImageToCanvasPos(firstControlPoint, frame, this.props.width, this.props.height, this.stageRef.current);
+            const lineEnd = transformedImageToCanvasPos(lastControlPoint, frame, this.props.width, this.props.height, this.stageRef.current);
             const cusorCanvasPos = adjustPosToMutatedStage(this.currentCursorPos, this.stageRef.current);
             let points: number[];
             if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE) {
@@ -683,7 +668,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 >
                     <Layer ref={this.layerRef}>
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
-                        <CursorRegionComponent frame={frame} region={frame.regionSet?.cursorRegion} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
+                        <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}
                     </Layer>
                 </Stage>

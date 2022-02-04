@@ -39,8 +39,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     updateImageDimensions() {
-        this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
-        this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+        if (this.canvas) {
+            this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+        }
     }
 
     renderCanvas = () => {
@@ -50,7 +52,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        if (wcsInfo && frameView) {
+        if (wcsInfo && frameView && this.canvas) {
             // Take aspect ratio scaling into account
             const tempWcsInfo = AST.copy(wcsInfo);
             if (!tempWcsInfo) {
@@ -164,7 +166,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 `${frame.spectralType ? `System(2)=${frame.spectralType},` : ""}` +
                     `${frame.spectralUnit ? `Unit(2)=${frame.spectralUnit},` : ""}` +
                     `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
-                    `${frame.customRestFreq ? `RestFreq=${frame.customRestFreq} Hz,` : ""}` +
+                    `${frame.restFreqStore.restFreq ? `RestFreq=${frame.restFreqStore.restFreq} Hz,` : ""}` +
                     `${frame.spectralType && frame.spectralSystem ? `Label(2)=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
         }

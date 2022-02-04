@@ -48,5 +48,24 @@
         }
     }
 
+    .telemetry-callout {
+        margin: 0 10px 20px 10px;
+
+        .telemetry-id-text {
+            display: flex;
+            p {
+                font-style: italic;
+                padding-top: 12px;
+                padding-right: 5px;
+            }
+        }
+    }
+
+    .telemetry-mode-form-group {
+        .bp3-form-helper-text {
+            width: 275px;
+        }
+    }
+
     user-select: none !important;
 }

@@ -1,6 +1,7 @@
 declare var Module: any;
 declare var addOnPostRun: any;
 
+Module.linearRegression = Module.cwrap("linearRegression", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number"]);
 Module.filterBoxcar = Module.cwrap("filterBoxcar", "number", ["number", "number", "number", "number"]);
 Module.filterGaussian = Module.cwrap("filterGaussian", "number", ["number", "number", "number", "number", "number"]);
 Module.filterHanning = Module.cwrap("filterHanning", "number", ["number", "number", "number", "number"]);
@@ -8,6 +9,45 @@ Module.filterDecimation = Module.cwrap("filterDecimation", "number", ["number", 
 Module.filterBinning = Module.cwrap("filterBinning", "number", ["number", "number", "number", "number"]);
 Module.filterSavitzkyGolay = Module.cwrap("filterSavitzkyGolay", "number", ["number", "number", "number", "number", "number", "number"]);
 Module.fittingGaussian = Module.cwrap("fitting", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+
+Module.getFittingParameters = function (x: Float64Array, y: Float64Array) {
+    const N = x.length;
+    Module.xIn = Module._malloc(N * 8);
+    Module.yIn = Module._malloc(N * 8);
+    const c0Out = Module._malloc(8);
+    const c1Out = Module._malloc(8);
+    const cov00Out = Module._malloc(8);
+    const cov01Out = Module._malloc(8);
+    const cov11Out = Module._malloc(8);
+    const sumsqOut = Module._malloc(8);
+
+    Module.HEAPF64.set(x, Module.xIn / 8);
+    Module.HEAPF64.set(y, Module.yIn / 8);
+    Module.linearRegression(Module.xIn, Module.yIn, N, c0Out, c1Out, cov00Out, cov01Out, cov11Out, sumsqOut);
+    
+
+    const c0 = Module.getValue(c0Out, "double");
+    const c1 = Module.getValue(c1Out, "double");
+    const cov00 = Module.getValue(cov00Out, "double");
+    const cov01 = Module.getValue(cov01Out, "double");
+    const cov11 = Module.getValue(cov11Out, "double");
+    const sumsq = Module.getValue(sumsqOut, "double");
+
+    Module._free(c0Out);
+    Module._free(c1Out);
+    Module._free(cov00Out);
+    Module._free(cov01Out);
+    Module._free(cov11Out);
+    Module._free(sumsqOut);
+    Module._free(Module.xIn);
+    Module._free(Module.yIn);
+
+    // Y = c0 + c1*X  
+    // c0, c1 - coefficients
+    // cov00, cov01, cov11 - variance-covariance matrix of c0 and c1
+    // sumsq - sum of squares of residuals 
+    return {intercept: c0, slope: c1, cov00: cov00, cov01: cov01, cov11: cov11, rss:sumsq};
+}
 
 Module.boxcarSmooth = function (yIn: Float64Array | Float32Array, kernelSize: number) {
     // Return empty array if arguments are invalid
