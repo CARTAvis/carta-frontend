@@ -13,6 +13,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable minY: number;
     @observable maxY: number;
     @observable cursorX: number;
+    @observable isMouseMoveIntoLinePlots: boolean;
 
     // settings
     @observable logScaleY: boolean;
@@ -76,6 +77,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     @action setCursor = (cursorVal: number) => {
         this.cursorX = cursorVal;
+    };
+
+    @action setMouseMoveIntoLinePlots = (val: boolean) => {
+        this.isMouseMoveIntoLinePlots = val;
     };
 
     @computed get isAutoScaledX() {
