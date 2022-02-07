@@ -1118,12 +1118,8 @@ export class FrameStore {
             return null;
         }
 
-        console.log(`Converting ${N} spectral values`);
-        const spectralArray = new Array<number>(N);
-        for (let i = 0; i < N; i++) {
-            spectralArray[i] = this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, values[i]);
-        }
-        return spectralArray;
+        const convertedArray = AST.transformSpectralPointArray(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, values);
+        return Array.from(convertedArray);
     };
 
     private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
