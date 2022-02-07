@@ -7,109 +7,85 @@
     .region-editing {
     }
 
-    .row {
-        padding-left: 5px;
-        padding-right: 5px;
-        display: flex;
-        &.selected {
-            background: lighten($blue5, 30);
-        }
 
-        div {
-            padding: 3px;
-            font-size: 12px;
-            cursor: pointer;
-            border-left: 1px solid $gray5;
-            border-bottom: 1px solid $gray4;
-            vertical-align: middle;
 
-            &:last-of-type {
-                border-right: 1px solid $gray5;
-            }
-        }
-    }
+    .region-list-table {
+        margin: 5px;
+        border: 1px solid $gray4;
+        &.bp3-dark {
+            border-color:  $dark-gray2;
 
-    table {
-        padding: 5px 5px 0;
-        overflow: auto;
-        display: block;
-
-        thead {
-            &.dark-theme {
-                tr {
-                    th {
-                        border-top: 1px solid $dark-gray4;
-                        border-bottom: 1px solid $dark-gray5;
-                        border-left: 1px solid $dark-gray4;
-
-                        &:last-of-type {
-                            border-right: 1px solid $dark-gray4;
-                        }
-                    }
-                }
-            }
-
-            tr {
-                display: block;
-
-                th {
-                    padding: 3px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    cursor: default;
-                    border-top: 1px solid $gray5;
-                    border-bottom: 1px solid $gray4;
-                    border-left: 1px solid $gray5;
-
-                    &:last-of-type {
-                        border-right: 1px solid $gray5;
-                    }
-                }
+            .row {
+                background: $dark-gray2;
             }
         }
 
-        tbody {
-            display: block;
+        .row {
             background: $white;
 
-            &.dark-theme {
-                background: $dark-gray2;
 
-                tr {
-                    td {
-                        border-left: 1px solid $dark-gray3;
-                        border-bottom: 1px solid $dark-gray5;
-                        vertical-align: middle;
+            display: flex;
+            &.selected {
+                background: lighten($blue5, 25);
+            }
 
-                        &:last-of-type {
-                            border-right: 1px solid $dark-gray3;
-                        }
-                    }
+            .cell {
+                padding: 3px;
+                font-size: 12px;
+                cursor: pointer;
+                border-left: 1px solid $gray5;
+                border-bottom: 1px solid $gray4;
+                vertical-align: middle;
 
-                    &.selected {
-                        background: $blue2;
-                    }
+                &:last-of-type {
+                    border-right: 1px solid $gray5;
                 }
             }
 
-            tr {
-                &.selected {
-                    background: lighten($blue5, 30);
+            &.bp3-dark {
+                background: $dark-gray3;
+                .cell {
+                    border-color: $dark-gray2;
                 }
+                &.selected {
+                    background: #3c5066;
+                }
+            }
 
-                td {
-                    padding: 3px;
-                    font-size: 12px;
-                    cursor: pointer;
-                    border-left: 1px solid $gray5;
-                    border-bottom: 1px solid $gray4;
-                    vertical-align: middle;
-
-                    &:last-of-type {
-                        border-right: 1px solid $gray5;
-                    }
+            &:last-of-type {
+                .cell {
+                    border-bottom-color: transparent;
                 }
             }
         }
+
+        .row-header {
+            display: flex;
+            background: $light-gray5;
+            font-weight: bold;
+
+            .cell {
+                padding: 3px;
+                font-size: 12px;
+                cursor: pointer;
+                border-left: 1px solid $gray5;
+                border-bottom: 1px solid $gray4;
+                vertical-align: middle;
+
+                &:last-of-type {
+                    border-right: 1px solid $gray5;
+                }
+            }
+
+            &.bp3-dark {
+                background: $dark-gray4;
+                .cell {
+                    border-color: $dark-gray2;
+                }
+            }
+        }
+
     }
+
+
 }
