@@ -208,9 +208,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         numberString += ` ${frame.unit}`;
                     }
                     if (nearest.point.y <= 1) {
-                        valueLabel += ` Count`
+                        valueLabel += ` Count`;
                     } else {
-                        valueLabel += ` Counts`
+                        valueLabel += ` Counts`;
                     }
                     profilerInfo.push(`Cursor: ${numberString}, ${valueLabel}`);
                 }
