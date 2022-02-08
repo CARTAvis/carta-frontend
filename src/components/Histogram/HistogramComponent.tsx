@@ -11,7 +11,8 @@ import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
 import {FrameStore, WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
-import {clamp, getColorForTheme, toExponential, toFixed, formattedExponential} from "utilities";
+import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
+
 import {Point2D} from "models";
 import "./HistogramComponent.scss";
 
@@ -190,27 +191,31 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
-        if (this.widgetStore.isMouseMoveIntoLinePlots) {
-            let numberString;
-            // Switch between standard and scientific notation
-            if (this.widgetStore.cursorX < 1e-2) {
-                numberString = toExponential(this.widgetStore.cursorX, 2);
-            } else {
-                numberString = toFixed(this.widgetStore.cursorX, 2);
-            }
+        if (this.plotData) {
+            if (this.widgetStore.isMouseMoveIntoLinePlots) {
+                let numberString;
+                // Switch between standard and scientific notation
+                if (this.widgetStore.cursorX < 1e-2) {
+                    numberString = toExponential(this.widgetStore.cursorX, 5);
+                } else {
+                    numberString = toFixed(this.widgetStore.cursorX, 5);
+                }
+                const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
+                if (nearest?.point) {
+                    let valueLabel = `${nearest.point.y !== 0.5 ? nearest.point.y : 0}`;
 
-            const frame = AppStore.Instance.activeFrame;
-            if (frame.unit) {
-                numberString += ` ${frame.unit}`;
+                    const frame = AppStore.Instance.activeFrame;
+                    if (frame.unit) {
+                        numberString += ` ${frame.unit}`;
+                    }
+                    if (nearest.point.y <= 1) {
+                        valueLabel += ` Count`
+                    } else {
+                        valueLabel += ` Counts`
+                    }
+                    profilerInfo.push(`Cursor: ${numberString}, ${valueLabel}`);
+                }
             }
-            profilerInfo.push(`Cursor: ${numberString}`);
-        } else {
-            // get value directly from cursor Value
-            const frame = AppStore.Instance.activeFrame;
-            const cursorX = `${frame.cursorValue.position.x} px`;
-            const cursorY = `${frame.cursorValue.position.y} px`;
-            const cursorValue = `${formattedExponential(frame.cursorValue.value, 5)}`;
-            profilerInfo.push("Data: (" + cursorX + ", " + cursorY + ", " + cursorValue + ")");
         }
         return profilerInfo;
     };
