@@ -212,6 +212,10 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     } else {
                         valueLabel += ` Counts`;
                     }
+
+                    if (this.widgetStore.cursorX > this.plotData.xMax || this.widgetStore.cursorX < this.plotData.xMin) {
+                        valueLabel = `NaN`;
+                    }
                     profilerInfo.push(`Cursor: ${numberString}, ${valueLabel}`);
                 }
             }
