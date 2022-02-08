@@ -12,7 +12,6 @@ import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent"
 import {HistogramWidgetStore} from "stores/widgets";
 import {FrameStore, WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
-
 import {Point2D} from "models";
 import "./HistogramComponent.scss";
 
