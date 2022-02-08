@@ -194,7 +194,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 let numberString;
                 // Switch between standard and scientific notation
-                if (this.widgetStore.cursorX < 1e-2) {
+                if (this.widgetStore.cursorX < 1e-5) {
                     numberString = toExponential(this.widgetStore.cursorX, 5);
                 } else {
                     numberString = toFixed(this.widgetStore.cursorX, 5);
