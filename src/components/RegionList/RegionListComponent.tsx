@@ -3,15 +3,15 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {FixedSizeList} from "react-window";
+import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
 import ReactResizeDetector from "react-resize-detector";
-import {CARTA} from "carta-protobuf";
-import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION, FileBrowserStore, BrowserMode} from "stores";
-import {toFixed, getFormattedWCSPoint, formattedArcsec, length2D} from "utilities";
-import {CustomIcon} from "icons/CustomIcons";
-import "./RegionListComponent.scss";
 import {CSSProperties} from "react";
 import classNames from "classnames";
+import {CARTA} from "carta-protobuf";
+import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION, FileBrowserStore, BrowserMode} from "stores";
+import {toFixed, getFormattedWCSPoint, formattedArcsec, length2D, clamp} from "utilities";
+import {CustomIcon} from "icons/CustomIcons";
+import "./RegionListComponent.scss";
 
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
@@ -49,6 +49,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 0;
     @observable height: number = 0;
+    @observable firstVisibleRow: number = 0;
+    @observable lastVisibleRow: number = 0;
 
     constructor(props: any) {
         super(props);
@@ -84,6 +86,14 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private handleRegionListDoubleClick = () => {
         DialogStore.Instance.showRegionDialog();
+    };
+
+    @action private onListRendered = (view: ListOnItemsRenderedProps) => {
+        // Update view bounds
+        if (view && this.firstVisibleRow !== view.overscanStopIndex && this.lastVisibleRow !== view.overscanStopIndex) {
+            this.firstVisibleRow = view.overscanStartIndex;
+            this.lastVisibleRow = view.overscanStopIndex;
+        }
     };
 
     render() {
@@ -146,6 +156,18 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
         }
 
+        // Dummy values to trigger re-rendering of visible rows when region properties change from an external source
+        const firstVisibleRegion = clamp(this.firstVisibleRow, 0, frame.regionSet.regions.length - 1);
+        const lastVisibleRegion = clamp(this.lastVisibleRow, firstVisibleRegion, frame.regionSet.regions.length - 1);
+        for (let i = firstVisibleRegion; i < lastVisibleRegion; i++) {
+            const region = frame.regionSet.regions[i];
+            /* eslint-disable @typescript-eslint/no-unused-vars */
+            const _isLocked = region.locked;
+            const _name = region.name;
+            const _angle = region.rotation;
+            /* eslint-enable @typescript-eslint/no-unused-vars */
+        }
+
         const selectedRegion = frame.regionSet.selectedRegion;
 
         const headerRenderer = (props: {index: number; style: CSSProperties}) => {
@@ -172,8 +194,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <div className="cell" style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>
                         {frame.validWcs ? "Center" : "Pixel Center"}
                     </div>
-                    {showSizeColumn && <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{frame.validWcs ? "Size" : "Size (px)"}</div>}
-                    {showRotationColumn && <div className="cell" style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>P.A. (deg)</div>}
+                    {showSizeColumn && (
+                        <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>
+                            {frame.validWcs ? "Size" : "Size (px)"}
+                        </div>
+                    )}
+                    {showRotationColumn && (
+                        <div className="cell" style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>
+                            P.A. (deg)
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -183,7 +213,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (!region) {
                 return null;
             }
-            const className = classNames("row", {"bp3-dark": darkTheme, "selected": selectedRegion?.regionId === region.regionId});
+            const className = classNames("row", {"bp3-dark": darkTheme, selected: selectedRegion?.regionId === region.regionId});
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
@@ -315,7 +345,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <FixedSizeList itemSize={25} height={25} itemCount={1} width="100%" className="list-header" style={{overflow: "hidden"}}>
                         {headerRenderer}
                     </FixedSizeList>
-                    <FixedSizeList height={tableHeight - 35} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width={"100%"}>
+                    <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - 35} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width={"100%"}>
                         {rowRenderer}
                     </FixedSizeList>
                 </div>

@@ -7,13 +7,11 @@
     .region-editing {
     }
 
-
-
     .region-list-table {
         margin: 5px;
         border: 1px solid $gray4;
         &.bp3-dark {
-            border-color:  $dark-gray2;
+            border-color: $dark-gray2;
 
             .row {
                 background: $dark-gray2;
@@ -22,7 +20,6 @@
 
         .row {
             background: $white;
-
 
             display: flex;
             &.selected {
@@ -84,8 +81,5 @@
                 }
             }
         }
-
     }
-
-
 }
