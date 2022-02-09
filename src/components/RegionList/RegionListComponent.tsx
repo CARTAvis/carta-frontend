@@ -343,10 +343,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return (
             <div className="region-list-widget">
                 <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
-                    <FixedSizeList itemSize={25} height={25} itemCount={1} width="100%" className="list-header" style={{overflow: "hidden"}}>
+                    <FixedSizeList itemSize={25} height={25} itemCount={1} width={650} className="list-header">
                         {headerRenderer}
                     </FixedSizeList>
-                    <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - 35} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width={"100%"}>
+                    <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - 35} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width={665}>
                         {rowRenderer}
                     </FixedSizeList>
                 </div>
