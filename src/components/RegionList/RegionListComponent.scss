@@ -1,17 +1,17 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
 .region-list-widget {
-    max-width: 650px;
-    min-width: 350px;
     width: 100%;
     height: 100%;
     user-select: none;
+
     .region-editing {
     }
 
     .region-list-table {
         margin: 5px;
         border: 1px solid $gray4;
+
         &.bp3-dark {
             border-color: $dark-gray2;
 
@@ -20,15 +20,11 @@
             }
         }
 
-        .row {
-            background: $white;
-
-            display: flex;
-            &.selected {
-                background: lighten($blue5, 25);
-            }
-
+        .row,
+        .row-header {
             .cell {
+                flex-grow: 0;
+                flex-shrink: 0;
                 padding: 3px;
                 font-size: 12px;
                 cursor: pointer;
@@ -40,12 +36,23 @@
                     border-right: 1px solid $gray5;
                 }
             }
+        }
+
+        .row {
+            background: $white;
+            display: flex;
+
+            &.selected {
+                background: lighten($blue5, 25);
+            }
 
             &.bp3-dark {
                 background: $dark-gray3;
+
                 .cell {
                     border-color: $dark-gray2;
                 }
+
                 &.selected {
                     background: #3c5066;
                 }
@@ -63,22 +70,11 @@
             display: flex;
             background: $light-gray5;
             font-weight: bold;
-
-            .cell {
-                padding: 3px;
-                font-size: 12px;
-                cursor: pointer;
-                border-left: 1px solid $gray5;
-                border-bottom: 1px solid $gray4;
-                vertical-align: middle;
-
-                &:last-of-type {
-                    border-right: 1px solid $gray5;
-                }
-            }
+            overflow-x: hidden;
 
             &.bp3-dark {
                 background: $dark-gray4;
+
                 .cell {
                     border-color: $dark-gray2;
                 }

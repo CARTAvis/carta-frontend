@@ -135,7 +135,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         let showSizeColumn = true;
         let showRotationColumn = true;
-
         // Dynamically hide size column if name size is too short
         if (nameWidth < RegionListComponent.NAME_COLUMN_MIN_WIDTH) {
             showSizeColumn = false;
@@ -144,7 +143,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 nameWidth = availableWidth - fixedWidth;
             }
 
-            // If its still too short, hide the rotation column as well
+            // If it's still too short, hide the rotation column as well
             if (nameWidth < RegionListComponent.NAME_COLUMN_MIN_WIDTH) {
                 showRotationColumn = false;
                 fixedWidth -= RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH;
@@ -209,8 +208,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
-        const rowRenderer = (props: {index: number; style: CSSProperties}) => {
-            const region = this.validRegions?.[props.index];
+        const rowRenderer = (props: {region: RegionStore, style: CSSProperties}) => {
+            const region = props.region;
             if (!region) {
                 return null;
             }
@@ -315,7 +314,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
 
             const style = {...props.style};
-            style.width = "calc(100% - 10px)";
             style.overflowX = "hidden";
 
             return (
@@ -340,14 +338,19 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
+        const regionRowRenderer = (props: {index: number, style: CSSProperties}) => {
+            const region = this.validRegions?.[props.index];
+            return rowRenderer({region, style: props.style});
+        }
+
         return (
             <div className="region-list-widget">
                 <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
-                    <FixedSizeList itemSize={25} height={25} itemCount={1} width={650} className="list-header">
+                    <FixedSizeList itemSize={25} height={25} itemCount={1} width="100%" className="list-header">
                         {headerRenderer}
                     </FixedSizeList>
-                    <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - 35} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width={665}>
-                        {rowRenderer}
+                    <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - 35} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width="100%">
+                        {regionRowRenderer}
                     </FixedSizeList>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
