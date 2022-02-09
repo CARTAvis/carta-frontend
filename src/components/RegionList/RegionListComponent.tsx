@@ -208,8 +208,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
-        const rowRenderer = (props: {region: RegionStore, style: CSSProperties}) => {
-            const region = props.region;
+        const rowRenderer = (props: {index: number; style: CSSProperties}) => {
+            const region = this.validRegions?.[props.index];
             if (!region) {
                 return null;
             }
@@ -338,11 +338,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
-        const regionRowRenderer = (props: {index: number, style: CSSProperties}) => {
-            const region = this.validRegions?.[props.index];
-            return rowRenderer({region, style: props.style});
-        }
-
         return (
             <div className="region-list-widget">
                 <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
@@ -350,7 +345,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         {headerRenderer}
                     </FixedSizeList>
                     <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - 35} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width="100%">
-                        {regionRowRenderer}
+                        {rowRenderer}
                     </FixedSizeList>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
