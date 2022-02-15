@@ -1114,7 +1114,7 @@ export class FrameStore {
 
     private convertSpectral = (values: Array<number>): Array<number> => {
         const N = values?.length;
-        if (!N) {
+        if (!N || !this.spectralFrame) {
             return null;
         }
 
