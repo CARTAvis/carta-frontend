@@ -19,6 +19,7 @@ export class ToolbarComponentProps {
     activeLayer: ImageViewLayer;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
     onRegionViewZoom: (zoom: number, isZoomToFit?: boolean) => void;
+    onZoomToFit: () => void;
 }
 
 @observer
@@ -40,13 +41,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.Ecliptic, "Ecliptic coordinates"],
         [SystemType.ICRS, "International Celestial Reference System"]
     ]);
-
-    handleZoomToFitClicked = () => {
-        const zoom = this.props.frame?.fitZoom();
-        if (zoom) {
-            this.props.onRegionViewZoom(zoom, true);
-        }
-    };
 
     handleZoomToActualSizeClicked = () => {
         const zoom = 1.0;
@@ -290,7 +284,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             </AnchorButton>
                         </Tooltip2>
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
-                            <AnchorButton icon="zoom-to-fit" onClick={this.handleZoomToFitClicked} />
+                            <AnchorButton icon="zoom-to-fit" onClick={this.props.onZoomToFit} />
                         </Tooltip2>
                         <Tooltip2
                             position={tooltipPosition}

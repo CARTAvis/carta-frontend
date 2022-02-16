@@ -5,6 +5,7 @@ import {AnchorButton, Classes, Dialog, ProgressBar} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {AppStore} from "stores";
 import {toFixed} from "utilities";
+import "./TaskProgressDialogComponent.scss";
 
 interface TaskProgressDialogComponentProps {
     progress: number;
@@ -14,6 +15,7 @@ interface TaskProgressDialogComponentProps {
     onCancel?: () => void;
     text: string;
     contentText?: string;
+    isCancelling?: boolean;
 }
 
 @observer
@@ -37,6 +39,7 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
         }
 
         const className = classNames("task-progress-dialog", {"bp3-dark": AppStore.Instance.darkTheme});
+        const cancellingText = this.props.isCancelling ? `cancellation in progress${".".repeat(Math.floor(performance.now() / 1000) % 4)}` : "";
 
         return (
             <Dialog portalClassName="dialog-portal" className={className} icon={"time"} canEscapeKeyClose={false} canOutsideClickClose={false} isCloseButtonShown={false} title={titleText} isOpen={this.props.isOpen}>
@@ -46,9 +49,12 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
                 </div>
                 {this.props.cancellable && (
                     <div className={Classes.DIALOG_FOOTER}>
-                        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <div className="footer-text">{cancellingText}</div>
+                        <div className="footer-button">
                             <Tooltip2 content="Cancel the current task">
-                                <AnchorButton onClick={this.props.onCancel}>Cancel</AnchorButton>
+                                <AnchorButton onClick={this.props.onCancel} disabled={this.props.isCancelling}>
+                                    Cancel
+                                </AnchorButton>
                             </Tooltip2>
                         </div>
                     </div>

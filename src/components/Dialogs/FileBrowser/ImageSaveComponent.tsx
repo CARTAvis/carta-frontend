@@ -15,7 +15,7 @@ export class ImageSaveComponent extends React.Component {
 
         autorun(() => {
             const appStore = AppStore.Instance;
-            if (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd) {
+            if (appStore.activeFrame?.numChannels <= 1 || (this.validSaveSpectralRangeStart && this.validSaveSpectralRangeEnd)) {
                 appStore.endFileSaving();
             } else {
                 appStore.startFileSaving();
@@ -36,7 +36,7 @@ export class ImageSaveComponent extends React.Component {
         const fileBrowser = FileBrowserStore.Instance;
         const spectralRange = appStore.activeFrame?.channelValueBounds;
         const valueAsNumber = parseFloat(fileBrowser.saveSpectralRange[1]);
-        return parseFloat(fileBrowser.saveSpectralRange[0]) <= valueAsNumber && valueAsNumber <= spectralRange.max;
+        return parseFloat(fileBrowser.saveSpectralRange[0]) <= valueAsNumber && valueAsNumber <= spectralRange?.max;
     }
 
     private onChangeShouldDropDegenerateAxes = () => {

@@ -89,7 +89,7 @@ export const Anchor = (props: AnchorProps) => {
     const handleCircleDraw = (ctx, shape) => {
         const reverseScale = 1 / shape.getStage().scaleX();
         const radius = CIRCLE_ANCHOR_RADIUS * reverseScale;
-        const offsetY = (-ROTATOR_ANCHOR_HEIGHT / shape.getStage().scaleX()) * devicePixelRatio;
+        const offsetY = -ROTATOR_ANCHOR_HEIGHT / shape.getStage().scaleX();
         ctx.beginPath();
         ctx.arc(0, offsetY, radius, 0, 2 * Math.PI, false);
         ctx.fillStrokeShape(shape);
@@ -157,7 +157,7 @@ export const CursorMarker = (props: CursorMarkerProps) => {
     };
 
     return (
-        <Group x={Math.floor(props.x) + 0.5} y={Math.floor(props.y) + 0.5} rotation={-props.rotation}>
+        <Group x={props.x} y={props.y} rotation={-props.rotation}>
             <Shape listening={false} strokeScaleEnabled={false} strokeWidth={1} stroke={"black"} sceneFunc={handleSquareDraw} />
             <Shape listening={false} strokeScaleEnabled={false} fill={"white"} strokeWidth={1} stroke={"black"} sceneFunc={handleCrossDraw} />
         </Group>

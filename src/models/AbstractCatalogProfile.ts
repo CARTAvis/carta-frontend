@@ -404,7 +404,7 @@ export abstract class AbstractCatalogProfileStore {
                 selectedData[i] = 1.0;
             }
             CatalogWebGLService.Instance.updateDataTexture(this.catalogFileId, selectedData, CatalogTextureType.SelectedSource);
-            if (autoPanZoom) {
+            if (autoPanZoom && this.updateMode === CatalogUpdateMode.ViewUpdate) {
                 const appStore = AppStore.Instance;
                 const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
                 const selectedDataLength = selectedX.length;

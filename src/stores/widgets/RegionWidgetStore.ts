@@ -1,5 +1,6 @@
 import {action, observable, computed, makeObservable} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, RegionStore} from "..";
 
 export const ACTIVE_FILE_ID = -1;
@@ -12,7 +13,8 @@ export enum RegionId {
 
 export enum RegionsType {
     CLOSED,
-    CLOSED_AND_POINT
+    CLOSED_AND_POINT,
+    LINE
 }
 
 export class RegionWidgetStore {
@@ -64,15 +66,47 @@ export class RegionWidgetStore {
             } else {
                 const selectedRegion = this.effectiveFrame.regionSet.selectedRegion;
                 if (selectedRegion) {
-                    return this.type === RegionsType.CLOSED && !selectedRegion.isClosedRegion ? RegionId.IMAGE : selectedRegion.regionId;
+                    switch (this.type) {
+                        case RegionsType.CLOSED:
+                            return selectedRegion.isClosedRegion ? selectedRegion.regionId : this.defaultRegionId();
+                        case RegionsType.CLOSED_AND_POINT:
+                            return selectedRegion.regionId;
+                        case RegionsType.LINE:
+                        default:
+                            return selectedRegion.regionType === CARTA.RegionType.LINE ? selectedRegion.regionId : this.defaultRegionId();
+                    }
                 }
             }
         }
-        return this.type === RegionsType.CLOSED ? RegionId.IMAGE : RegionId.CURSOR;
+
+        return this.defaultRegionId();
+    }
+
+    private defaultRegionId(): number {
+        switch (this.type) {
+            case RegionsType.CLOSED:
+                return RegionId.IMAGE;
+            case RegionsType.CLOSED_AND_POINT:
+                return RegionId.CURSOR;
+            case RegionsType.LINE:
+            default:
+                return null;
+        }
     }
 
     @computed get effectiveRegion(): RegionStore {
         return this.effectiveFrame?.getRegion(this.effectiveRegionId);
+    }
+
+    @computed get effectiveRegionInfo(): string {
+        if (this.effectiveFrame) {
+            if (this.effectiveRegionId === RegionId.IMAGE) {
+                return "Image";
+            } else {
+                return this.effectiveRegion?.nameString ?? undefined;
+            }
+        }
+        return undefined;
     }
 
     @computed get matchesSelectedRegion(): boolean {

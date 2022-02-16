@@ -1,13 +1,13 @@
-import {action, autorun, computed, observable, makeObservable, override} from "mobx";
+import {action, autorun, computed, observable, makeObservable, override, reaction} from "mobx";
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {LineKey, Point2D, SpectralSystem} from "models";
+import {FindIntensityUnitType, GetFreqInGHz, GetIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
-import {clamp, getColorForTheme, isAutoColor, ProcessedSpectralProfile} from "utilities";
+import {clamp, getAngleInRad, getColorForTheme, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -49,6 +49,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isStreamingData: boolean;
     @observable isHighlighted: boolean;
     @observable private spectralLinesMHz: SpectralLine[];
+    @observable intensityUnit: string;
+    @observable intensityConversion: IntensityConversion;
 
     // style settings
     @observable plotType: PlotType;
@@ -89,6 +91,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setSpectralSystem = (specsys: SpectralSystem) => {
         if (this.effectiveFrame.setSpectralSystem(specsys)) {
             this.clearXBounds();
+        }
+    };
+
+    @action setIntensityUnit = (intensityUnitStr: string) => {
+        if (IsIntensitySupported(intensityUnitStr)) {
+            this.intensityUnit = intensityUnitStr;
+            this.intensityConversion = GetIntensityConversion(this.intensityConfig, this.intensityUnit);
         }
     };
 
@@ -304,10 +313,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
 
+        this.intensityConversion = undefined;
+        this.setIntensityUnit(this.effectiveFrame?.unit);
+
+        reaction(
+            () => this.effectiveFrame,
+            frame => {
+                if (frame) {
+                    this.setIntensityUnit(frame.unit);
+                }
+            }
+        );
+
         autorun(() => {
             if (this.effectiveFrame) {
                 this.updateRanges();
-                this.momentRegionId = RegionId.ACTIVE;
+                this.selectMomentRegion(RegionId.ACTIVE);
             }
         });
 
@@ -318,6 +339,35 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 this.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
             }
         });
+    }
+
+    @computed private get intensityConfig(): IntensityConfig {
+        const frame = this.effectiveFrame;
+        if (frame) {
+            let config: IntensityConfig = {nativeIntensityUnit: frame.unit};
+            if (frame.beamProperties) {
+                config["bmaj"] = frame.beamProperties.majorAxis;
+                config["bmin"] = frame.beamProperties.minorAxis;
+                if (frame.spectralAxis?.type?.code === "FREQ") {
+                    config["freqGHz"] = GetFreqInGHz(frame.spectralAxis.type.unit, frame.spectralAxis.value);
+                }
+            }
+
+            if (isFinite(frame.pixelUnitSizeArcsec?.x) && isFinite(frame.pixelUnitSizeArcsec?.y)) {
+                config["cdelta1"] = getAngleInRad(frame.pixelUnitSizeArcsec.x, "arcsec");
+                config["cdelta2"] = getAngleInRad(frame.pixelUnitSizeArcsec.y, "arcsec");
+            }
+            return config;
+        }
+        return undefined;
+    }
+
+    @computed get isIntensityConvertible(): boolean {
+        return IsIntensitySupported(this.intensityConfig?.nativeIntensityUnit);
+    }
+
+    @computed get intensityOptions(): string[] {
+        return GetIntensityOptions(this.intensityConfig);
     }
 
     @computed get profileNum(): number {
@@ -352,13 +402,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
         profiles.forEach(profile => {
-            if (profile) {
+            if (profile?.data) {
                 numProfiles++;
                 colors.push(getColorForTheme(profileColorMap.get(profile.colorKey)));
                 labels.push(profile.label);
                 comments.push(profile.comments);
 
-                const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, profile.data, wantMeanRms);
+                const intensityValues = this.intensityConversion ? this.intensityConversion(profile.data.values) : profile.data.values;
+                const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
                 data.push(pointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
                 if (pointsAndProperties) {
@@ -387,7 +438,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let fittingData: {x: number[]; y: Float32Array | Float64Array};
         if (profiles.length === 1 && startEndIndexes.length === 1) {
             let x = profiles[0].channelValues.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
-            let y = profiles[0].data.values.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
+            const intensityValues = this.intensityConversion ? this.intensityConversion(profiles[0].data.values) : profiles[0].data.values;
+            let y = intensityValues.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE) {
                 const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
                 x = smoothedData.x;
@@ -536,20 +588,18 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get yUnit(): string {
-        let yUnit = "";
-        const frame = this.effectiveFrame;
-        if (frame?.unit) {
+        if (this.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit) {
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly) {
-                    yUnit = "Jy";
+                    return FindIntensityUnitType(this.intensityUnit) === IntensityUnitType.Kelvin ? "K" : "Jy";
                 } else if (this.profileSelectionStore.isStatsTypeSumSqOnly) {
-                    yUnit = `(${frame.unit})^2`;
+                    return `(${this.intensityUnit})^2`;
                 } else {
-                    yUnit = `${frame.unit}`;
+                    return this.intensityUnit;
                 }
             }
         }
-        return yUnit;
+        return "";
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {
@@ -791,7 +841,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     private getDataPointsAndProperties = (
         frameChannelValues: number[],
-        profile: ProcessedSpectralProfile,
+        intensityValues: Float32Array | Float64Array,
         wantMeanRms: boolean
     ): {
         points: Point2D[];
@@ -810,7 +860,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let yMean = undefined;
         let yRms = undefined;
 
-        if (profile?.values?.length > 0 && frameChannelValues?.length > 0 && profile.values.length === frameChannelValues.length) {
+        if (intensityValues?.length > 0 && frameChannelValues?.length > 0 && intensityValues.length === frameChannelValues.length) {
             // Variables for mean and RMS calculations
             let ySum = 0;
             let ySum2 = 0;
@@ -818,7 +868,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             let startIndex, endIndex;
             for (let i = 0; i < frameChannelValues.length; i++) {
                 const x = frameChannelValues[i];
-                const y = profile.values[i];
+                const y = intensityValues[i];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xBound?.xMin || x > xBound?.xMax) {
@@ -847,7 +897,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     }
                 }
             }
-            smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, profile.values));
+            smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, intensityValues));
 
             if (wantMeanRms && yCount > 0) {
                 yMean = ySum / yCount;

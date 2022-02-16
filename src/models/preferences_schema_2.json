@@ -307,6 +307,22 @@
             "minimum": 0,
             "default": 0
         },
+        "telemetryUuid": {
+            "type": "string"
+        },
+        "telemetryMode": {
+            "type": "string",
+            "enum": ["none", "minimal", "usage"],
+            "default": "usage"
+        },
+        "telemetryConsentShown": {
+            "type": "boolean",
+            "default": false
+        },
+        "telemetryLogging": {
+            "type": "boolean",
+            "default": false
+        },
         "fileFilterMode": {
             "type": "string",
             "enum": ["content", "extension", "all"],

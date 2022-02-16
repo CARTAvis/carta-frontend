@@ -11,7 +11,6 @@ import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, FrameStore, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
-import {Zoom} from "models";
 import "./FileBrowserDialogComponent.scss";
 
 @observer
@@ -37,21 +36,15 @@ export class FileBrowserDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
         if (fileBrowserStore.selectedFiles.length > 1) {
-            const frames: FrameStore[] = [];
+            appStore.setLoadingMultipleFiles(true);
             for (let i = 0; i < fileBrowserStore.selectedFiles.length; i++) {
                 try {
-                    const frame = await this.loadFile(fileBrowserStore.selectedFiles[i], i > 0);
-                    if (frame) {
-                        frames.push(frame);
-                    }
+                    await this.loadFile(fileBrowserStore.selectedFiles[i], i > 0);
                 } catch (err) {
                     console.log(err);
                 }
             }
-            // Auto-fit images after all have been loaded to account for multi-panel changes
-            if (appStore.preferenceStore.zoomMode === Zoom.FIT) {
-                appStore.autoFitImages(frames);
-            }
+            appStore.setLoadingMultipleFiles(false);
         } else {
             await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
         }

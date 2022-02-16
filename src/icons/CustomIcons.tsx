@@ -174,6 +174,17 @@ const polylineSvg = (
     />
 );
 
+const pvSvg = (
+    <>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M 0.10806581 2.6739215 H 4.3993143 q 1.2724428 0 2.0514895,0.794923 0.7790466 0.787763 0.7790466 2.220058 0,1.231773 -0.6946498 2.148442 -0.69465 0.909507 -2.1358863,0.909507 H 1.3999848 V 13.194128 H 0.10806581 Z m 5.81688139,3.022142 q 0 -1.160159 -0.7790465 -1.575524 Q 4.717425 3.8985335 3.9708386 3.8985335 H 1.3999848 v 3.645191 h 2.5708538 q 0.8699355 0 1.408776 -0.408204 0.5453326 -0.408205 0.5453326 -1.439457 Z"
+        />
+        <path fillRule="evenodd" clipRule="evenodd" d="m 8.6774259,2.6739215 2.8316891,8.9590055 2.798138,-8.9590055 h 1.496366 L 12.206973,13.194128 H 10.791128 L 7.2011905,2.6739215 Z" />
+    </>
+);
+
 const icons = {
     contour: contourSvg,
     center: centerSvg,
@@ -187,5 +198,6 @@ const icons = {
     distanceMeasuring: distanceMeasuringSvg,
     cursor: cursorSvg,
     line: lineSvg,
-    polyline: polylineSvg
+    polyline: polylineSvg,
+    pv: pvSvg
 };
