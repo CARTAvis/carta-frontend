@@ -145,6 +145,6 @@ export class ImageFittingIndividualStore {
     }
 
     @computed get validParams() {
-        return (Number.isFinite(this.center.x) && Number.isFinite(this.center.y) && Number.isFinite(this.amplitude) && Number.isFinite(this.fwhm.x) && Number.isFinite(this.fwhm.y) && Number.isFinite(this.pa));
+        return Number.isFinite(this.center.x) && Number.isFinite(this.center.y) && Number.isFinite(this.amplitude) && Number.isFinite(this.fwhm.x) && Number.isFinite(this.fwhm.y) && Number.isFinite(this.pa);
     }
 }
