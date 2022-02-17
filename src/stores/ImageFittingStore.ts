@@ -17,6 +17,7 @@ export class ImageFittingStore {
     @observable selectedFileId: number;
     @observable components: ImageFittingIndividualStore[];
     @observable selectedComponentIndex: number;
+    @observable isFitting: boolean;
 
     @action setSelectedFileId = (id: number) => {
         this.selectedFileId = id;
@@ -51,6 +52,10 @@ export class ImageFittingStore {
         this.selectedComponentIndex = index;
     };
 
+    @action setIsFitting = (isFitting: boolean) => {
+        this.isFitting = isFitting;
+    };
+
     @computed get frameOptions() {
         return [{value: ACTIVE_FILE_ID, label: "Active"}, ...(AppStore.Instance.frameNames ?? [])];
     }
@@ -66,7 +71,7 @@ export class ImageFittingStore {
     @computed get fitDisabled() {
         const validFileId = this.effectiveFrame?.frameInfo && this.effectiveFrame?.frameInfo?.fileId >= 0;
         const validParams = this.components.every(c => c.validParams === true);
-        return !(validFileId && validParams);
+        return !(validFileId && validParams) || this.isFitting;
     }
 
     constructor() {
@@ -80,6 +85,7 @@ export class ImageFittingStore {
         if (this.fitDisabled) {
             return;
         }
+        this.setIsFitting(true);
         const initialValues = [];
         for (const c of this.components) {
             initialValues.push({

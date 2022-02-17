@@ -1114,6 +1114,8 @@ export class AppStore {
         } catch (err) {
             AppToaster.show(ErrorToast(err));
         }
+
+        this.imageFittingStore.setIsFitting(false);
     };
 
     @action setAstReady = (val: boolean) => {
