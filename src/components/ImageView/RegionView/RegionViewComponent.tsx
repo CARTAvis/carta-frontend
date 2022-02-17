@@ -451,12 +451,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (frame.wcsInfo && this.props.onClickToCenter && ((!this.props.dragPanningEnabled && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring) || isSecondaryClick)) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
             this.props.onClickToCenter(frame.getCursorInfo(cursorPosImageSpace));
-
-            // Move stage origin according to center moving track
-            const centerOffset = subtract2D({x: mouseEvent.offsetX, y: mouseEvent.offsetY}, {x: this.props.width / 2, y: this.props.height / 2});
-            const stage = this.stageRef.current;
-            const newStageOrigin = subtract2D(stage.getPosition(), centerOffset);
-            stage.position(newStageOrigin);
         }
     };
 

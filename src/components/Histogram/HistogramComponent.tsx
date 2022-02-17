@@ -7,11 +7,11 @@ import {observer} from "mobx-react";
 import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
-import {LinePlotComponent, LinePlotComponentProps} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
 import {FrameStore, WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
-import {clamp, getColorForTheme} from "utilities";
+import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.scss";
 
@@ -188,6 +188,41 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 100);
 
+    private genProfilerInfo = (): string[] => {
+        let profilerInfo: string[] = [];
+        if (this.plotData) {
+            if (this.widgetStore.isMouseMoveIntoLinePlots) {
+                let numberString;
+                // Switch between standard and scientific notation
+                if (this.widgetStore.cursorX < 1e-5) {
+                    numberString = toExponential(this.widgetStore.cursorX, 5);
+                } else {
+                    numberString = toFixed(this.widgetStore.cursorX, 5);
+                }
+                const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
+                if (nearest?.point) {
+                    let valueLabel = `${nearest.point.y !== 0.5 ? nearest.point.y : 0}`;
+
+                    const frame = AppStore.Instance.activeFrame;
+                    if (frame.unit) {
+                        numberString += ` ${frame.unit}`;
+                    }
+                    if (nearest.point.y <= 1) {
+                        valueLabel += ` Count`;
+                    } else {
+                        valueLabel += ` Counts`;
+                    }
+
+                    if (this.widgetStore.cursorX > this.plotData.xMax || this.widgetStore.cursorX < this.plotData.xMin) {
+                        valueLabel = `NaN`;
+                    }
+                    profilerInfo.push(`Cursor: ${numberString}, ${valueLabel}`);
+                }
+            }
+        }
+        return profilerInfo;
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const frame = this.widgetStore.effectiveFrame;
@@ -222,6 +257,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2
@@ -269,6 +305,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     <HistogramToolbarComponent widgetStore={this.widgetStore} />
                     <div className="histogram-plot">
                         <LinePlotComponent {...linePlotProps} />
+                    </div>
+                    <div>
+                        <ProfilerInfoComponent info={this.genProfilerInfo()} />
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
