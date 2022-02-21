@@ -20,6 +20,8 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable debouncedFilterString: string = "";
     @observable defaultWidth: number;
     @observable defaultHeight: number;
+    @observable enableImageArithmetic: boolean = false;
+    @observable imageArithmeticString: string = "";
 
     constructor(props: any) {
         super(props);
@@ -170,6 +172,10 @@ export class FileBrowserDialogComponent extends React.Component {
     @action handleFilterStringInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.fileFilterString = ev.target.value;
         this.setFilterString(this.fileFilterString);
+    };
+
+    @action handleImageArithmeticStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        this.imageArithmeticString = ev.target.value;
     };
 
     setFilterString = _.debounce(
@@ -408,12 +414,37 @@ export class FileBrowserDialogComponent extends React.Component {
             </Popover2>
         );
 
-        return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftIcon="search" rightElement={filterTypeMenu} />;
+        const inputTypeMenu = (
+            <Popover2
+                minimal={true}
+                content={
+                    <Menu>
+                        <MenuItem text="List filtering" onClick={() => this.setEnableImageArithmetic(false)} />
+                        <MenuItem text="Image arithmetic" onClick={() => this.setEnableImageArithmetic(true)} />
+                    </Menu>
+                }
+                position={Position.BOTTOM}
+            >
+                <Button minimal={true} icon={this.enableImageArithmetic ? "calculator" : "search"} rightIcon="caret-down">
+                    {this.enableImageArithmetic ? "Image arithmetic" : "Filter"}
+                </Button>
+            </Popover2>
+        );
+
+        if (this.enableImageArithmetic) {
+            return <InputGroup autoFocus={false} placeholder="Enter an image arithmetic expression" value={this.imageArithmeticString} onChange={this.handleImageArithmeticStringChanged} leftElement={inputTypeMenu} />;
+        } else {
+            return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftElement={inputTypeMenu} rightElement={filterTypeMenu} />;
+        }
     }
 
     @action setFilterType = (type: FileFilteringType) => {
         this.clearFilterString();
         PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_FILTERING_TYPE, type);
+    };
+
+    @action setEnableImageArithmetic = (val: boolean) => {
+        this.enableImageArithmetic = val;
     };
 
     // Refresh file list to trigger the Breadcrumb re-rendering
