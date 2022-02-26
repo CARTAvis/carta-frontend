@@ -452,7 +452,16 @@ export class FileBrowserDialogComponent extends React.Component {
                 </Popover2>
             );
             if (this.enableImageArithmetic) {
-                return <InputGroup autoFocus={false} placeholder="Enter an image arithmetic expression" value={this.imageArithmeticString} onChange={this.handleImageArithmeticStringChanged} leftElement={inputTypeMenu} />;
+                return (
+                    <InputGroup
+                        autoFocus={false}
+                        placeholder="Enter an image arithmetic expression"
+                        value={this.imageArithmeticString}
+                        onChange={this.handleImageArithmeticStringChanged}
+                        leftElement={inputTypeMenu}
+                        onKeyDown={this.handleImageArithmeticKeyDown}
+                    />
+                );
             } else {
                 return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftElement={inputTypeMenu} rightElement={filterTypeMenu} />;
             }
@@ -468,6 +477,15 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @action setEnableImageArithmetic = (val: boolean) => {
         this.enableImageArithmetic = val;
+        if (val) {
+            this.clearFilterString();
+        }
+    };
+
+    private handleImageArithmeticKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
+        if (ev.key === "Enter") {
+            this.loadExpression();
+        }
     };
 
     // Refresh file list to trigger the Breadcrumb re-rendering
