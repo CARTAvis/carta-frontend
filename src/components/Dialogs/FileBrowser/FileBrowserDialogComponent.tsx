@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable, runInAction} from "mobx";
-import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, BreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
@@ -22,16 +22,43 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable defaultHeight: number;
     @observable enableImageArithmetic: boolean = false;
     @observable imageArithmeticString: string = "";
+    private readonly imageArithmeticInputRef: React.RefObject<HTMLInputElement>;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
         this.defaultWidth = 1200;
         this.defaultHeight = 600;
+        this.imageArithmeticInputRef = React.createRef<HTMLInputElement>();
     }
 
     private handleTabChange = (newId: TabId) => {
         FileBrowserStore.Instance.setSelectedTab(newId);
+    };
+
+    @action private handleFileClicked = (file: ISelectedFile) => {
+        FileBrowserStore.Instance.selectFile(file);
+        if (this.enableImageArithmetic) {
+            // Check if the existing string has a trailing quote or not
+            const quoteRegex = /(["'])+/gm;
+            const quoteCount = this.imageArithmeticString.match(quoteRegex)?.length;
+            const trailingQuote = quoteCount % 2 !== 0;
+
+            const operatorRegex = /(\+|-|\*|\/\()$/gm;
+            const trailingOperator = this.imageArithmeticString.match(operatorRegex)?.length > 0;
+
+            // Append the file name if there's a trailing operator or quote, otherwise just replace
+            if (trailingOperator) {
+                this.imageArithmeticString += `"${file.fileInfo.name}"`;
+            } else if (this.imageArithmeticString?.endsWith('"') && trailingQuote) {
+                this.imageArithmeticString += `${file.fileInfo.name}"`;
+            } else if (this.imageArithmeticString?.endsWith("'") && trailingQuote) {
+                this.imageArithmeticString += `${file.fileInfo.name}'`;
+            } else {
+                this.imageArithmeticString = `"${file.fileInfo.name}"`;
+            }
+            this.imageArithmeticInputRef.current?.focus();
+        }
     };
 
     private loadSelectedFiles = async () => {
@@ -64,6 +91,7 @@ export class FileBrowserDialogComponent extends React.Component {
             frame = await appStore.openFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
         }
         fileBrowserStore.saveStartingDirectory();
+        this.clearArithmeticString();
         return frame;
     };
 
@@ -204,6 +232,10 @@ export class FileBrowserDialogComponent extends React.Component {
     @action clearFilterString = () => {
         this.fileFilterString = "";
         this.debouncedFilterString = "";
+    };
+
+    @action clearArithmeticString = () => {
+        this.imageArithmeticString = "";
     };
 
     @action handleFolderClicked = (folderName: string) => {
@@ -426,7 +458,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <MenuItem text="Regular expression" onClick={() => this.setFilterType(FileFilteringType.Regex)} />
                     </Menu>
                 }
-                position={Position.BOTTOM_RIGHT}
+                placement="bottom-end"
             >
                 <Button minimal={true} icon="filter" rightIcon="caret-down">
                     {filterName}
@@ -444,7 +476,7 @@ export class FileBrowserDialogComponent extends React.Component {
                             <MenuItem text="Image arithmetic" onClick={() => this.setEnableImageArithmetic(true)} />
                         </Menu>
                     }
-                    position={Position.BOTTOM}
+                    placement="bottom-start"
                 >
                     <Button minimal={true} icon={this.enableImageArithmetic ? "calculator" : "search"} rightIcon="caret-down">
                         {this.enableImageArithmetic ? "Image arithmetic" : "Filter"}
@@ -454,7 +486,8 @@ export class FileBrowserDialogComponent extends React.Component {
             if (this.enableImageArithmetic) {
                 return (
                     <InputGroup
-                        autoFocus={false}
+                        inputRef={this.imageArithmeticInputRef}
+                        autoFocus={true}
                         placeholder="Enter an image arithmetic expression"
                         value={this.imageArithmeticString}
                         onChange={this.handleImageArithmeticStringChanged}
@@ -595,7 +628,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 filterType={appStore.preferenceStore.fileFilteringType}
                                 sortingString={appStore.preferenceStore.fileSortingString}
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
-                                onFileClicked={fileBrowserStore.selectFile}
+                                onFileClicked={this.handleFileClicked}
                                 onSelectionChanged={fileBrowserStore.setSelectedFiles}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}
@@ -659,7 +692,7 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.hideFileBrowser();
     };
 
-    private renderBreadcrumb = (props: IBreadcrumbProps) => {
+    private renderBreadcrumb = (props: BreadcrumbProps) => {
         return (
             <Breadcrumb onClick={props.onClick} className="folder-breadcrumb">
                 {props.icon && <Icon iconSize={14} icon={props.icon} />}
@@ -685,7 +718,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @computed get pathItems() {
         const fileBrowserStore = FileBrowserStore.Instance;
-        let pathItems: IBreadcrumbProps[] = [
+        let pathItems: BreadcrumbProps[] = [
             {
                 icon: "desktop",
                 onClick: () => this.handleBreadcrumbClicked("")
