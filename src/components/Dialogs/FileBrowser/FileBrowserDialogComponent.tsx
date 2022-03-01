@@ -88,10 +88,11 @@ export class FileBrowserDialogComponent extends React.Component {
         if (!fileBrowserStore.appendingFrame || !frames.length) {
             frame = await appStore.openFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
         } else {
-            frame = await appStore.openFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
+            frame = await appStore.appendFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
         }
         fileBrowserStore.saveStartingDirectory();
         this.clearArithmeticString();
+        this.setEnableImageArithmetic(false);
         return frame;
     };
 
@@ -271,7 +272,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 if (appending) {
                     let actionText: string;
                     if (this.enableImageArithmetic) {
-                        actionText = "Load expression";
+                        actionText = "Append expression";
                     } else if (fileBrowserStore.selectedFiles?.length > 1) {
                         actionText = "Append selected";
                     } else {
