@@ -44,7 +44,7 @@ export class FileBrowserDialogComponent extends React.Component {
             const quoteCount = this.imageArithmeticString.match(quoteRegex)?.length;
             const trailingQuote = quoteCount % 2 !== 0;
 
-            const operatorRegex = /(\+|-|\*|\/\()$/gm;
+            const operatorRegex = /([+\-*/(,])\s*$/gm;
             const trailingOperator = this.imageArithmeticString.match(operatorRegex)?.length > 0;
 
             // Append the file name if there's a trailing operator or quote, otherwise just replace
