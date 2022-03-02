@@ -801,6 +801,12 @@ export class FrameStore {
                 const crpixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${index}`) !== -1);
                 const crvalHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${index}`) !== -1);
                 const cdeltHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
+
+                // Skip if any headers are missing
+                if (!naxisHeader || !crpixHeader || !crvalHeader || !cdeltHeader) {
+                    return [];
+                }
+
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (STANDARD_POLARIZATIONS.has(stokesVal)) {
@@ -1107,7 +1113,13 @@ export class FrameStore {
     };
 
     private convertSpectral = (values: Array<number>): Array<number> => {
-        return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, value)) : null;
+        const N = values?.length;
+        if (!N || !this.spectralFrame) {
+            return null;
+        }
+
+        const convertedArray = AST.transformSpectralPointArray(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, values);
+        return Array.from(convertedArray);
     };
 
     private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {

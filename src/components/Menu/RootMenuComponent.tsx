@@ -311,8 +311,6 @@ export class RootMenuComponent extends React.Component {
                                     Latency: {latencyString}
                                     <br />
                                     Session ID: {appStore.backendService.sessionId}
-                                    <br />
-                                    {appStore.backendService.grpcPort > 0 && <span>GRPC Port: {appStore.backendService.grpcPort}</span>}
                                 </small>
                             </i>
                         </span>
@@ -423,8 +421,6 @@ export class RootMenuComponent extends React.Component {
                 </Tooltip2>
                 <div id="hidden-status-info">
                     <span id="info-session-id">{appStore.backendService.sessionId}</span>
-                    <span id="info-grpc-port">{appStore.backendService.grpcPort}</span>
-                    <span id="info-server-url">{appStore.backendService.serverUrl}</span>
                 </div>
             </div>
         );

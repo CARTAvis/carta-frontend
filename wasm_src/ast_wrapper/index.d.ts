@@ -51,6 +51,7 @@ export function transformPointArrays(frameSet: FrameSet, xIn: Float64Array, yIn:
 export function transformPoint(frameSet: FrameSet, x: number, y: number, forward?: boolean): {x: number, y: number};
 export function transform3DPoint(frameSet: FrameSet, x: number, y: number, z: number, forward?: boolean): {x: number, y: number, z: number};
 export function transformSpectralPoint(specFrame: SpecFrame, specType: string, specUnit: string, specSys: string, z: number, forward?: boolean);
+export function transformSpectralPointArray(specFrame: SpecFrame, specType: string, specUnit: string, specSys: string, zIn: Float64Array | Array<number>, forward?: boolean): Float64Array;
 export function normalizeCoordinates(frameSet: FrameSet, x: number, y: number): {x: number, y: number};
 export function getTransformGrid(transformFrameSet: FrameSet, xMin: number, xMax: number, numX: number, yMin: number, yMax: number, numY: number, forward: boolean);
 

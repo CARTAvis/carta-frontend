@@ -320,12 +320,17 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             () => this.effectiveFrame,
             frame => {
                 if (frame) {
-                    this.momentRegionId = RegionId.ACTIVE;
                     this.setIntensityUnit(frame.unit);
-                    this.updateRanges();
                 }
             }
         );
+
+        autorun(() => {
+            if (this.effectiveFrame) {
+                this.updateRanges();
+                this.selectMomentRegion(RegionId.ACTIVE);
+            }
+        });
 
         // Update boundaries
         autorun(() => {

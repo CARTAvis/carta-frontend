@@ -2241,8 +2241,8 @@ export class AppStore {
                     composedCanvas.toBlob(blob => {
                         const link = document.createElement("a") as HTMLAnchorElement;
                         const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
-                        // Trim filename to 230 characters in total to prevent browser errors
-                        link.download = `${joinedNames}-image-${getTimestamp()}`.substring(0, 225) + ".png";
+                        // Trim filename before timestamp to 200 characters to prevent browser errors
+                        link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
                         link.href = URL.createObjectURL(blob);
                         link.dispatchEvent(new MouseEvent("click"));
                     }, "image/png");
