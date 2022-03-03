@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
+// import {CARTA} from "carta-protobuf";
 import {AppStore, RegionStore, FrameStore} from "stores";
 import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID} from "stores/widgets";
 import "./RegionSelectorComponent.scss";
@@ -55,12 +55,12 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
             let regions = widgetStore.effectiveFrame.regionSet.regions;
 
             switch (widgetStore.type) {
-                case RegionsType.CLOSED:
-                    fiteredRegions = regions.filter(r => !r.isTemporary && r.isClosedRegion);
-                    break;
-                case RegionsType.CLOSED_AND_POINT:
-                    fiteredRegions = regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
-                    break;
+                // case RegionsType.CLOSED:
+                //     fiteredRegions = regions.filter(r => !r.isTemporary && r.isClosedRegion);
+                //     break;
+                // case RegionsType.CLOSED_AND_POINT:
+                //     fiteredRegions = regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
+                //     break;
                 default:
                     fiteredRegions = regions;
             }
