@@ -93,6 +93,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 xMax = clamp(this.widgetStore.maxX, 0, this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height);
             }
 
+            if (this.widgetStore.effectiveRegion.regionType === CARTA.RegionType.LINE) {
+                xMax = coordinateData.values.length;
+            }
+
             xMin = Math.floor(xMin);
             xMax = Math.floor(xMax);
             let yMin = Number.MAX_VALUE;
@@ -180,6 +184,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const range = yMax - yMin;
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
+            }
+
+            if (this.widgetStore.effectiveRegion.regionType === CARTA.RegionType.LINE) {
+                for (let i = 0; i < N; i++) {
+                    const y = coordinateData.values[i + xMin];
+                    const x = coordinateData.start + i + xMin;
+                    values[i] = {x, y};
+                }
             }
             return {values: values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
         }
