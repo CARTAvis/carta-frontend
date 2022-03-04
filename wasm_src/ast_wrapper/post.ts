@@ -223,6 +223,31 @@ Module.transformSpectralPoint = function (spectralFrameFrom: number, specType: s
     return zOut[0];
 };
 
+Module.transformSpectralPointArray = function (spectralFrameFrom: number, specType: string, specUnit: string, specSys: string, zIn: Float64Array | Array<number>, forward: boolean = true) {
+    // Allocate and assign WASM memory
+    const N = zIn?.length;
+
+    if (!N) {
+        return new Float64Array([]);
+    }
+
+    const zInPtr = Module._malloc(N * 8);
+    const zOutPtr = Module._malloc(N * 8);
+    Module.HEAPF64.set(zIn, zInPtr / 8);
+
+    // Perform the AST transform
+    Module.spectralTransform(spectralFrameFrom, specType, specUnit, specSys, N, zInPtr, forward, zOutPtr);
+
+    // Copy result out to an object
+    const zOut = new Float64Array(Module.HEAPF64.buffer, zOutPtr, N);
+    const result = zOut.slice(0);
+
+    // Free WASM memory
+    Module._free(zInPtr);
+    Module._free(zOutPtr);
+    return result;
+};
+
 Module.normalizeCoordinates = function (wcsInfo, xIn, yIn) {
     Module.HEAPF64.set(new Float64Array([xIn, yIn]), Module.xIn / 8);
     Module.norm(wcsInfo, Module.xIn);
