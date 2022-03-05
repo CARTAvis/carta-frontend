@@ -677,47 +677,50 @@ export class WidgetsStore {
         });
 
         layout.on("stackCreated", stack => {
-            const unpinButton = this.getControlButton("lm-pin", "detach", "unpin").on("click", () => this.unpinWidget(stack.getActiveContentItem()));
-            const helpButton = this.getControlButton("lm-help", "help", "help").on("click", ev => this.onHelpPinedClick(ev, stack.getActiveContentItem()));
-            const cogPinedButton = this.getControlButton("lm_settings", "settings", "cog").on("click", ev => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
-            const nextPageButton = this.getControlButton("lm-image-panel-next", "next image", "step-forward").on("click", this.onNextPageClick);
-            const imagePanelButton = this.getControlButton("lm-image-panel", "switch to multi-panel", "square").on("click", this.onImagePanelButtonClick);
-            const previousPageButton = this.getControlButton("lm-image-panel-previous", "previous image", "step-backward").on("click", this.onPreviousPageClick);
-            stack.header.controlsContainer.prepend([previousPageButton, imagePanelButton, nextPageButton, cogPinedButton, helpButton, unpinButton]);
+            const unpinButton = $(`<li class="lm-pin" title="detach"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
+            unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
+            stack.header.controlsContainer.prepend(unpinButton);
+            const helpButton = $(`<li class="lm-help" title="help"><span class="bp3-icon-standard bp3-icon-help"/></li>`);
+            helpButton.on("click", ev => this.onHelpPinedClick(ev, stack.getActiveContentItem()));
+            stack.header.controlsContainer.prepend(helpButton);
 
             stack.on("activeContentItemChanged", (contentItem: any) => {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
-                    const component = stack.getActiveContentItem().config.component;
+                    const activeTabItem = stack.getActiveContentItem();
+                    const component = activeTabItem.config.component;
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
+                    if (component && showCogWidgets.includes(component) && stackHeaderControlButtons?.childElementCount < 5) {
+                        const cogPinedButton = $(`<li class="lm_settings" title="settings"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
+                        cogPinedButton.on("click", () => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
+                        stack.header.controlsContainer.prepend(cogPinedButton);
+                    } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons?.childElementCount === 5) {
+                        stackHeaderControlButtons.children[0].remove();
+                    }
 
-                    // show/hide cog button
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm_settings")
-                        ?.attr("style", showCogWidgets.includes(component) ? "" : "display:none;");
-
-                    // show/hide image panel buttons
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm-image-panel-next, li.lm-image-panel, li.lm-image-panel-previous")
-                        ?.attr("style", component === "image-view" ? "" : "display:none;");
+                    // add image panel control buttons when tab is image-view
+                    if (component === "image-view") {
+                        const imagePanelMode = AppStore.Instance.imagePanelMode;
+                        const nextPageButton = $(`<li class="lm-image-panel-next" title="next ${imagePanelMode === ImagePanelMode.None ? "image" : "page"}"><span class="bp3-icon-standard bp3-icon-step-forward" style/></li>`);
+                        nextPageButton.on("click", this.onNextPageClick);
+                        stack.header.controlsContainer.prepend(nextPageButton);
+                        const imagePanelButton = $(`<li class="lm-image-panel" title="${this.getImagePanelButtonTooltip(imagePanelMode)}"><span class="bp3-icon-standard ${this.getImagePanelButtonIcon(imagePanelMode)}"/></li>`);
+                        imagePanelButton.on("click", this.onImagePanelButtonClick);
+                        stack.header.controlsContainer.prepend(imagePanelButton);
+                        const previousPageButton = $(`<li class="lm-image-panel-previous" title="previous ${imagePanelMode === ImagePanelMode.None ? "image" : "page"}"><span class="bp3-icon-standard bp3-icon-step-backward" style/></li>`);
+                        previousPageButton.on("click", this.onPreviousPageClick);
+                        stack.header.controlsContainer.prepend(previousPageButton);
+                    }
 
                     // disable unpin button when active tab is image-view
                     $(stackHeaderControlButtons)
                         ?.find("li.lm-pin")
                         ?.attr("style", component === "image-view" ? "display:none;" : "");
-
-                    if (component === "image-view") {
-                        this.updateImagePanelPageButtons();
-                    }
                 }
             });
         });
         layout.on("componentCreated", this.handleItemCreation);
         layout.on("itemDestroyed", this.handleItemRemoval);
         layout.on("stateChanged", this.handleStateUpdates);
-    };
-
-    private getControlButton = (className: string, title: string, icon: string) => {
-        return $(`<li class="${className}" title="${title}"><span class="bp3-icon-standard bp3-icon-${icon}" style/></li>`);
     };
 
     public toWidgetSettingsConfig = (widgetType: string, widgetID: string) => {
