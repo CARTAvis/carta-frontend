@@ -424,7 +424,7 @@ export class AppStore {
         return frameMap;
     }
 
-    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string): boolean => {
+    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string, generated: boolean = false): boolean => {
         if (!ack) {
             return false;
         }
@@ -447,7 +447,7 @@ export class AppStore {
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable
         };
-        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes);
+        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
 
@@ -1029,7 +1029,7 @@ export class AppStore {
             const ack = await this.backendService.requestMoment(message);
             if (!ack.cancel && ack.openFileAcks) {
                 for (const openFileAck of ack.openFileAcks) {
-                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "")) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "", true)) {
                         this.fileCounter++;
                         frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
                     } else {
@@ -1070,7 +1070,7 @@ export class AppStore {
         try {
             const ack = await this.backendService.requestPV(message);
             if (!ack.cancel && ack.openFileAck) {
-                if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, "")) {
+                if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, "", true)) {
                     this.fileCounter++;
                     frame.addPvImage(this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId));
                 } else {
