@@ -177,26 +177,23 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                     coordinate,
                     mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
                     start: Math.floor(clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width)),
-                    end: Math.ceil(clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width))
+                    end: Math.ceil(clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width)),
+                    width: LineRegionSampleWidth
                 };
             } else {
                 return {
                     coordinate,
                     mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
                     start: Math.floor(clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height)),
-                    end: Math.ceil(clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height))
+                    end: Math.ceil(clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height)),
+                    width: LineRegionSampleWidth
                 };
             }
-        } else if (isLine) {
+        } else {
             return {
                 coordinate,
                 mip: 1,
                 width: LineRegionSampleWidth
-            };
-        }else {
-            return {
-                coordinate,
-                mip: 1
             };
         }
     }
