@@ -53,14 +53,8 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
 
             let fiteredRegions: RegionStore[];
             let regions = widgetStore.effectiveFrame.regionSet.regions;
-
+            
             switch (widgetStore.type) {
-                // case RegionsType.CLOSED:
-                //     fiteredRegions = regions.filter(r => !r.isTemporary && r.isClosedRegion);
-                //     break;
-                // case RegionsType.CLOSED_AND_POINT:
-                //     fiteredRegions = regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
-                //     break;
                 default:
                     fiteredRegions = regions;
             }
