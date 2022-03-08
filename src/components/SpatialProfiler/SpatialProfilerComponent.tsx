@@ -93,7 +93,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 xMax = clamp(this.widgetStore.maxX, 0, this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height);
             }
 
-            if (this.widgetStore.effectiveRegion.regionType === CARTA.RegionType.LINE) {
+            if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE) {
                 xMax = coordinateData.values.length;
             }
 
@@ -186,7 +186,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
 
-            if (this.widgetStore.effectiveRegion.regionType === CARTA.RegionType.LINE) {
+            if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE) {
                 for (let i = 0; i < N; i++) {
                     const y = coordinateData.values[i + xMin];
                     const x = coordinateData.start + i + xMin;
@@ -425,11 +425,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.yLabel = `Value (${this.frame.unit})`;
                 }
 
-                if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
-                    linePlotProps.showTopAxis = true;
-                    linePlotProps.topAxisTickFormatter = this.formatProfileAst;
-                } else {
-                    linePlotProps.showTopAxis = false;
+                if (this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.LINE) {
+                    if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
+                        linePlotProps.showTopAxis = true;
+                        linePlotProps.topAxisTickFormatter = this.formatProfileAst;
+                    } else {
+                        linePlotProps.showTopAxis = false;
+                    }
                 }
 
                 const currentPlotData = this.plotData;
