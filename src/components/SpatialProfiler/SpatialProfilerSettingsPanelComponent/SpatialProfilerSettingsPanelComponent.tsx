@@ -1,8 +1,8 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Tabs, Tab} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent} from "components/Shared";
+import {Tabs, Tab, FormGroup} from "@blueprintjs/core";
+import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent, SafeNumericInput} from "components/Shared";
 import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
@@ -13,7 +13,8 @@ const KEYCODE_ENTER = 13;
 
 export enum SpatialProfilerSettingsTabs {
     STYLING,
-    SMOOTHING
+    SMOOTHING,
+    COMPUTATION
 }
 
 @observer
@@ -191,6 +192,10 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                 <Tabs id="spatialSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
                     <Tab id={SpatialProfilerSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
                     <Tab id={SpatialProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} />} />
+                    <Tab id={SpatialProfilerSettingsTabs.COMPUTATION} title="Computation" panel={
+                    <FormGroup label={"Width"} inline={true}> 
+                    <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.LineRegionSampleWidth} onValueChange={value => this.widgetStore.setLineRegionSampleWidth(value)} /> 
+                    </FormGroup>}/>
                 </Tabs>
             </div>
         );
