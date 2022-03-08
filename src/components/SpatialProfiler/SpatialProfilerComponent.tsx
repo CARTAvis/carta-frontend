@@ -93,10 +93,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 xMax = clamp(this.widgetStore.maxX, 0, this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height);
             }
 
-            if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE) {
-                xMax = coordinateData.values.length;
-            }
-
             xMin = Math.floor(xMin);
             xMax = Math.floor(xMax);
             let yMin = Number.MAX_VALUE;
@@ -186,11 +182,27 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
 
+            // redefine if the region is line and polyline
             if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE) {
+                xMax = coordinateData.values.length;
+                xMin = 0
+                yMean = 0;
+                yRms = 0;
+                let ySum = 0;
+                let ySum2 = 0;
+                let yCount = 0;
                 for (let i = 0; i < N; i++) {
                     const y = coordinateData.values[i + xMin];
-                    const x = coordinateData.start + i + xMin;
+                    const x = i + xMin;
+                    yCount++;
+                    ySum += y;
+                    ySum2 += y * y;
                     values[i] = {x, y};
+                }
+
+                if (yCount > 0) {
+                    yMean = ySum / yCount;
+                    yRms = Math.sqrt(ySum2 / yCount - yMean * yMean);
                 }
             }
             return {values: values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
