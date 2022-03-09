@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, PreferenceStore} from "stores";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
-import {FrameView, Point2D} from "models";
+import {FrameView, Point2D, COMPUTED_POLARIZATIONS} from "models";
 
 export enum AnimationMode {
     CHANNEL = 0,
@@ -109,7 +109,10 @@ export class AnimatorStore {
             looping: true,
             reverse: this.playMode === PlayMode.BOUNCING,
             frameRate: this.frameRate,
-            matchedFrames: mapToObject(matchedFrames)
+            matchedFrames: mapToObject(matchedFrames),
+            stokesIndices: frame.polarizations.map((polarization, i) => {
+                return i < frame.frameInfo.fileInfoExtended.stokes && i >= 0 ? i : polarization;
+            })
         };
 
         this.animationActive = true;
@@ -198,6 +201,16 @@ export class AnimatorStore {
         return this.animationActive && this.animationMode !== AnimationMode.FRAME;
     }
 
+    @computed get polarizationValue() {
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
+        if (COMPUTED_POLARIZATIONS.has(frame.requiredStokes) && frame.polarizations.includes(frame.requiredStokes)) {
+            return frame.polarizations.indexOf(frame.requiredStokes);
+        } else {
+            return frame.requiredStokes;
+        }
+    }
+
     private genAnimationFrames = (
         frame: FrameStore
     ): {
@@ -212,7 +225,7 @@ export class AnimatorStore {
 
         let startFrame: CARTA.IAnimationFrame = {
             channel: frame.channel,
-            stokes: frame.stokes
+            stokes: COMPUTED_POLARIZATIONS.has(frame.stokes) && frame.polarizations.includes(frame.stokes) ? frame.polarizations.indexOf(frame.stokes) : frame.stokes
         };
         let firstFrame: CARTA.IAnimationFrame, lastFrame: CARTA.IAnimationFrame, deltaFrame: CARTA.IAnimationFrame;
 
@@ -236,7 +249,7 @@ export class AnimatorStore {
             };
             lastFrame = {
                 channel: frame.channel,
-                stokes: frame.frameInfo.fileInfoExtended.stokes - 1
+                stokes: frame.polarizations.length - 1
             };
             deltaFrame = {
                 channel: 0,

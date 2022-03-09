@@ -170,7 +170,7 @@ export class RenderConfigStore {
         makeObservable(this);
         this.frame = frame;
         const percentile = preference.percentile;
-        this.selectedPercentile = [percentile, percentile, percentile, percentile];
+        this.selectedPercentile = new Array(17).fill(percentile); // [percentile, percentile, percentile, percentile]
         this.bias = 0;
         this.contrast = 1;
         this.alpha = preference.scalingAlpha;
@@ -180,8 +180,8 @@ export class RenderConfigStore {
         this.cubeHistogramProgress = 0;
         this.setColorMap(preference.colormap);
         this.stokes = 0;
-        this.scaleMin = [0, 0, 0, 0];
-        this.scaleMax = [1, 1, 1, 1];
+        this.scaleMin = new Array(17).fill(0); // [0, 0, 0, 0]
+        this.scaleMax = new Array(17).fill(1); // [1, 1, 1, 1]
         this.visible = true;
     }
 

@@ -73,7 +73,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     onStokesChanged = (val: number) => {
         const frame = AppStore.Instance.activeFrame;
-        frame?.setChannels(frame.requiredChannel, val, true);
+        frame?.setChannels(frame.requiredChannel, frame.frameInfo.fileInfoExtended.stokes > val && val >= 0 ? val : frame.polarizations[val], true);
     };
 
     onFrameChanged = (val: number) => {
@@ -293,13 +293,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {!hideSliders && (
                         <React.Fragment>
                             <Slider
-                                value={activeFrame.requiredStokes}
+                                value={appStore.animatorStore.polarizationValue}
                                 min={0}
                                 showTrackFill={false}
-                                // max={activeFrame.frameInfo.fileInfoExtended.stokes - 1}
-                                max={activeFrame.polarizationInfo.length - 1}
+                                max={activeFrame.polarizations.length - 1}
                                 labelRenderer={(val: number) => {
-                                    // return isFinite(val) && val >= 0 && val < activeFrame?.stokesInfo?.length ? activeFrame.stokesInfo[val] : `${val}`;
                                     return isFinite(val) && val >= 0 && val < activeFrame?.polarizationInfo?.length ? activeFrame.polarizationInfo[val] : `${val}`;
                                 }}
                                 onChange={this.onStokesChanged}

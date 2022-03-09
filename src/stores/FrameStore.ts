@@ -1,5 +1,5 @@
 import {action, autorun, computed, observable, makeObservable, runInAction, reaction} from "mobx";
-import {IOptionProps, NumberRange} from "@blueprintjs/core";
+import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {
@@ -40,10 +40,12 @@ import {
     SpectralUnit,
     STANDARD_SPECTRAL_TYPE_SETS,
     STANDARD_POLARIZATIONS,
+    COMPUTED_POLARIZATIONS,
+    FULL_POLARIZATIONS,
     Transform2D,
     ZoomPoint,
     POLARIZATION_LABELS,
-    COMPUTED_POLARIZATIONS
+    POLARIZATIONS
 } from "models";
 import {
     clamp,
@@ -792,7 +794,7 @@ export class FrameStore {
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
     }
 
-    @computed get stokesOptions(): IOptionProps[] {
+    @computed get stokesOptions(): {value: number; label: string}[] {
         let stokesOptions = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
             const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value.toUpperCase() === "STOKES");
@@ -811,7 +813,7 @@ export class FrameStore {
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (STANDARD_POLARIZATIONS.has(stokesVal)) {
-                        stokesOptions.push({value: i, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
+                        stokesOptions.push({value: stokesVal, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
                     }
                 }
             }
@@ -820,7 +822,7 @@ export class FrameStore {
     }
 
     @computed get requiredStokesName(): string {
-        return this.stokesOptions?.find(stokesOption => stokesOption.value === this.requiredStokes)?.label;
+        return this.stokesOptions?.[this.requiredStokes]?.label;
     }
 
     @computed get stokesInfo(): string[] {
@@ -834,27 +836,36 @@ export class FrameStore {
     }
 
     // standard stokes and computed polarization
-    @computed get polarizationInfo(): string[] {
-        let polarizationInfo = Array.from(this.stokesInfo);
-        const hasI: boolean = polarizationInfo.includes("Stokes I");
-        const hasQ: boolean = polarizationInfo.includes("Stokes Q");
-        const hasU: boolean = polarizationInfo.includes("Stokes U");
-        const hasV: boolean = polarizationInfo.includes("Stokes V");
+    @computed get polarizations(): number[] {
+        const polarizations = this.stokesOptions.map(option => {
+            return option.value;
+        });
+        const hasI: boolean = polarizations.includes(POLARIZATIONS.I);
+        const hasQ: boolean = polarizations.includes(POLARIZATIONS.Q);
+        const hasU: boolean = polarizations.includes(POLARIZATIONS.U);
+        const hasV: boolean = polarizations.includes(POLARIZATIONS.V);
 
         if (hasQ && hasU) {
-            polarizationInfo.push("Plinear");
-            polarizationInfo.push("Pangle");
             if (hasV) {
-                polarizationInfo.push("Ptotal");
+                polarizations.push(POLARIZATIONS.Ptotal);
+            }
+            polarizations.push(POLARIZATIONS.Plinear);
+            if (hasI && hasV) {
+                polarizations.push(POLARIZATIONS.PFtotal);
             }
             if (hasI) {
-                polarizationInfo.push("PFlinear");
+                polarizations.push(POLARIZATIONS.PFlinear);
             }
-            if (hasI && hasV) {
-                polarizationInfo.push("PFtotal");
-            }
+            polarizations.push(POLARIZATIONS.Pangle);
         }
-        return polarizationInfo;
+
+        return polarizations;
+    }
+
+    @computed get polarizationInfo(): string[] {
+        return this.polarizations.map(polarization => {
+            return POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization));
+        });
     }
 
     constructor(frameInfo: FrameInfo) {
@@ -1716,12 +1727,8 @@ export class FrameStore {
         if (stokes < 0) {
             stokes += this.frameInfo.fileInfoExtended.stokes;
         }
-        if (stokes >= this.frameInfo.fileInfoExtended.stokes) {
-            if (stokes < this.polarizationInfo.length) {
-                stokes = COMPUTED_POLARIZATIONS.get(this.polarizationInfo[stokes]) ?? 0;
-            } else {
-                stokes = 0;
-            }
+        if (stokes >= this.frameInfo.fileInfoExtended.stokes && !COMPUTED_POLARIZATIONS.get(stokes)) {
+            stokes = 0;
         }
 
         const sanitizedChannel = this.sanitizeChannelNumber(channel);
