@@ -645,9 +645,7 @@ export class AppStore {
             this.removeFrame(frame);
         }
 
-        if (!this.activeFrame) {
-            this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
-        }
+        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
     };
 
     /**
