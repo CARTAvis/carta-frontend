@@ -62,6 +62,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
     @observable settingsTabId: SpectralProfilerSettingsTabs;
 
+    @observable optionalSpectralAxisVisible: boolean;
+    
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
@@ -77,6 +79,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     readonly profileSelectionStore: SpectralProfileSelectionStore;
     readonly fittingStore: ProfileFittingStore;
 
+    @action setOptionalSpectralAxisVisible = (val: boolean) => {
+        this.optionalSpectralAxisVisible = val;
+    };
+
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
         this.clearXYBounds();
@@ -87,6 +93,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.clearXBounds();
         }
     };
+
+    @action setSpectralCoordinateOpt = (coordStr: string) => {
+        if (this.effectiveFrame.setSpectralCoordinateOpt(coordStr)) {
+            this.clearXBounds();
+        }
+    };
+
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
         if (this.effectiveFrame.setSpectralSystem(specsys)) {
@@ -295,6 +308,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
         this.meanRmsVisible = false;
+        this.optionalSpectralAxisVisible = false;
         this.markerTextVisible = false;
         this.primaryLineColor = "auto-blue";
         this.lineColorMap = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor]]);

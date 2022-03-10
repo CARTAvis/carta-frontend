@@ -379,7 +379,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     max: this.props.xMax,
                     afterBuildTicks: (axis: Scale) => this.filterLinearTicks(axis, false),
                     type: "linear",
-                    display: this.props.showTopAxis !== undefined,
+                    display: this.props.showTopAxis,
+                    title: {
+                        color: labelColor,
+                        display: this.props.showXAxisLabel === undefined ? true : this.props.showXAxisLabel,
+                        text: this.props.xLabel
+                    },
                     ticks: {
                         includeBounds: false,
                         color: labelColor,
@@ -466,6 +471,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
             // line data point background color
             if (this.props.dataBackgroundColor) {
+
                 datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
             }
             plotData.push(datasetConfig);

@@ -8,9 +8,11 @@ import {SpectralSystem} from "models";
 export class SpectralSettingsComponent extends React.Component<{
     frame: FrameStore;
     onSpectralCoordinateChange: (cooridnate: string) => void;
+    onSpectralCoordinateChangeOpt?: (cooridnate: string) => void;
     onSpectralSystemChange: (system: string) => void;
     disable: boolean;
     disableChannelOption?: boolean;
+    optionalAxisVisible?: boolean;
 }> {
     render() {
         const frame = this.props.frame;
@@ -38,7 +40,15 @@ export class SpectralSettingsComponent extends React.Component<{
                         options={spectralCoordinateOptions}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralCoordinateChange(event.currentTarget.value as string)}
                     />
-                </FormGroup>
+                </FormGroup>{this.props.optionalAxisVisible && (
+                <FormGroup label={"Top Coord."} inline={true} disabled={disableCoordinateSetting}>
+                    <HTMLSelect
+                        disabled={disableCoordinateSetting}
+                        value={frame && frame.spectralCoordinateOpt ? frame.spectralCoordinateOpt : ""}
+                        options={spectralCoordinateOptions}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralCoordinateChangeOpt(event.currentTarget.value as string)}
+                    />
+                </FormGroup>)}
                 <FormGroup label={"System"} inline={true} disabled={disableSystemSetting}>
                     <HTMLSelect
                         disabled={disableSystemSetting}

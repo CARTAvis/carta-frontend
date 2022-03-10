@@ -1,8 +1,10 @@
 import * as React from "react";
 import * as _ from "lodash";
+import * as AST from "ast_wrapper";
 import classNames from "classnames";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
+import {Tick} from "chart.js";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
@@ -10,10 +12,10 @@ import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelecting
 import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
-import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
+import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, FrameStore, SpectralProfileStore, AppStore, DefaultWidgetConfig/*, ASTSettingsString, OverlayStore*/} from "stores";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
-import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
+import {Point2D,SpectralType, SpectralUnit, SpectralSystem} from "models";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme, /*transformPoint*/} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
 
@@ -35,6 +37,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
     }
 
+    private cachedFormattedCoordinates: string[];
+
     @observable width: number;
     @observable height: number;
 
@@ -48,6 +52,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
         console.log("can't find store for widget");
         return new SpectralProfileWidgetStore();
+    }
+    // not sure if I need this
+    @computed get profileStore(): SpectralProfileStore {
+        const widgetStore = this.widgetStore;
+        if (widgetStore.effectiveFrame) {
+            //const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
+            //return AppStore.Instance.spectralProfiles.get(widgetStore.effectiveFrame.frameInfo.fileId);
+        }
+        return undefined;
     }
 
     @computed get plotData(): MultiPlotData {
@@ -108,6 +121,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             frame.setChannels(nearestIndex, frame.requiredStokes, true);
         }
     };
+
+    @computed get frame(): FrameStore {
+        if (this.widgetStore) {
+            return AppStore.Instance.getFrame(this.widgetStore.fileId);
+        } else {
+            return undefined;
+        }
+    }
 
     @computed get currentChannelValue(): number {
         const frame = this.widgetStore.effectiveFrame;
@@ -259,6 +280,100 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return spectralLineMarkers;
     };
 
+    private convertSpectral = (values: Array<number>): Array<number> => {
+        return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.frame.spectralTypeOpt, this.frame.spectralUnitOpt, this.frame.spectralSystem, value)) : null;
+    };
+
+    private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
+        if (!this.frame || !isFinite(value)) {
+            return undefined;
+        }
+        return AST.transformSpectralPoint(this.frame, type, unit, system, value);
+    };
+
+    private formatProfile = (v: number, i: number, values: Tick[]) => {
+        if (i === 0) {
+            this.calculateFormattedValues(values);
+        } 
+        
+        return this.cachedFormattedCoordinates[i];
+    }
+
+    private calculateFormattedValues(ticks: Tick[]) {
+        if (!this.cachedFormattedCoordinates || this.cachedFormattedCoordinates.length !== ticks.length) {
+            this.cachedFormattedCoordinates = new Array(ticks.length);
+        }
+
+        if (this.frame.channelInfo) {
+            for(let i = 0; i < ticks.length; i++){
+                if (!this.frame.spectralTypeOpt && !this.frame.spectralUnitOpt) {
+
+                    this.cachedFormattedCoordinates[i] = this.frame.channelInfo.values[i].toString();
+                } else if (this.frame.spectralTypeOpt === SpectralType.CHANNEL) {
+                    console.log('formatProfile: coordChannel: ' + this.frame.channelInfo.indexes);
+
+                    this.cachedFormattedCoordinates[i] = this.frame.channelInfo.indexes[i].toString();
+                } else{
+                    const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, ticks[i].value, false);
+                    const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeOpt, this.frame.spectralUnitOpt, this.frame.spectralSystem, nativeCoord);
+                    this.cachedFormattedCoordinates[i] = coord.toString();
+                }
+            }
+        }this.trimDecimals();
+    }
+
+    // Trims unnecessary decimals from the list of formatted coordinates
+    private trimDecimals() {
+        if (!this.cachedFormattedCoordinates || !this.cachedFormattedCoordinates.length) {
+            console.log('Nope: First order');
+            return;
+        }
+        // If the existing tick list has repeats, don't trim
+        if (SpectralProfilerComponent.hasRepeats(this.cachedFormattedCoordinates)) {
+            console.log('Nope: Second order - repeater');
+        //    return;
+        }
+        const decimalIndex = this.cachedFormattedCoordinates[0].indexOf(".");
+        // Skip lists without decimals. This assumes that all ticks have the same number of decimals
+        if (decimalIndex === -1) {
+            console.log('Nope: Third order - decimal');
+            return;
+        }
+        const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex;
+        for (let trim = initialTrimLength; trim > 0; trim--) {
+            let trimmedArray = this.cachedFormattedCoordinates.slice();
+            for (let i = 0; i < trimmedArray.length; i++) {
+                trimmedArray[i] = trimmedArray[i].slice(0, -trim);
+            }
+            if (!SpectralProfilerComponent.hasRepeats(trimmedArray)) {
+                this.cachedFormattedCoordinates = trimmedArray;
+                console.log('Nope: Fourth order - repeating trimmed: ' + trimmedArray);
+                return;
+            }
+
+            // Skip an extra character after the first check, because of the decimal indicator
+            if (trim === initialTrimLength) {
+                console.log('Nope: Fifth order - the trimmining');
+                trim--;
+            }
+        }
+    }
+
+    private static hasRepeats(ticks: string[]): boolean {
+        if (!ticks || ticks.length < 2) {
+            return false;
+        }
+        let prevTick = ticks[0];
+        for (let i = 1; i < ticks.length; i++) {
+            const nextTick = ticks[i];
+            if (prevTick === nextTick) {
+                return true;
+            }
+            prevTick = nextTick;
+        }
+        return false;
+    }
+
     render() {
         const appStore = AppStore.Instance;
         if (!this.widgetStore) {
@@ -267,6 +382,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
+            xLabelOpt: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
             tickTypeY: TickType.Scientific,
@@ -284,6 +400,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             selectingMode: this.linePlotSelectingMode,
             setSelectedRange: this.setSelectedRange,
             isSelectingInsideBox: this.widgetStore.fittingStore.isCursorSelectingComponent,
+            showTopAxis: this.widgetStore.optionalSpectralAxisVisible,
             setSelectedInsideBox: this.setSelectedBox,
             setSelectedLine: this.setSelectedLine,
             insideBoxes: this.widgetStore.fittingStore.componentPlottingBoxes,
@@ -297,11 +414,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (frame) {
             if (frame.spectralAxis && !frame.isCoordChannel) {
                 linePlotProps.xLabel = frame.spectralLabel;
+                
             }
             if (this.widgetStore.yUnit) {
                 linePlotProps.yLabel = `Value (${this.widgetStore.yUnit})`;
             }
-
+            if (linePlotProps.showTopAxis){
+                linePlotProps.topAxisTickFormatter = this.formatProfile;
+            }
             const currentPlotData = this.plotData;
             const fittingStore = this.widgetStore.fittingStore;
             if (currentPlotData?.numProfiles > 0) {
@@ -312,7 +432,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const smoothingStore = this.widgetStore.smoothingStore;
                     const imageName = currentPlotData.labels[i]?.image;
                     const plotName = `Z-profile-${currentPlotData.labels[i]?.plot}`.replace(/,\s/g, "-")?.replace(/\s/g, "_");
-                    if (i < currentPlotData.data?.length) {
+                    if (i < currentPlotData.data?.length) {                      
                         linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
                             imageName: imageName,
                             plotName: plotName,

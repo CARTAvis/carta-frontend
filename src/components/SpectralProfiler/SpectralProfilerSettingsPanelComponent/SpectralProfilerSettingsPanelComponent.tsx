@@ -76,6 +76,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
     };
 
+    handleOptionalSpectralAxisChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.widgetStore.setOptionalSpectralAxisVisible(changeEvent.target.checked);
+    };
+
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -157,6 +161,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
+            optionalSpectralAxisVisible: widgetStore.optionalSpectralAxisVisible,
+            handleOptionalSpectralAxisChanged: this.handleOptionalSpectralAxisChanged,
             meanRmsVisible: widgetStore.meanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             isAutoScaledX: widgetStore.isAutoScaledX,
@@ -169,7 +175,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             yMinVal: parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
             handleYMinChange: this.handleYMinChange,
             yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
-            handleYMaxChange: this.handleYMaxChange
+            handleYMaxChange: this.handleYMaxChange,
+            
         };
 
         return (
@@ -181,11 +188,14 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                         title="Conversion"
                         panel={
                             <React.Fragment>
+                                
                                 <SpectralSettingsComponent
                                     frame={widgetStore.effectiveFrame}
                                     onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                    onSpectralCoordinateChangeOpt={widgetStore.setSpectralCoordinateOpt}
                                     onSpectralSystemChange={widgetStore.setSpectralSystem}
                                     disable={widgetStore.effectiveFrame?.isPVImage}
+                                    optionalAxisVisible={widgetStore.optionalSpectralAxisVisible}
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
                                     <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
