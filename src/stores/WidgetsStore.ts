@@ -682,6 +682,7 @@ export class WidgetsStore {
             const cogPinedButton = this.getControlButton("lm_settings", "settings", "cog").on("click", ev => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
             const nextPageButton = this.getControlButton("lm-image-panel-next", "next image", "step-forward").on("click", this.onNextPageClick);
             const imagePanelButton = this.getControlButton("lm-image-panel", "switch to multi-panel", "square").on("click", this.onImagePanelButtonClick);
+            this.updateImagePanelButton();
             const previousPageButton = this.getControlButton("lm-image-panel-previous", "previous image", "step-backward").on("click", this.onPreviousPageClick);
             stack.header.controlsContainer.prepend([previousPageButton, imagePanelButton, nextPageButton, cogPinedButton, helpButton, unpinButton]);
 
@@ -851,10 +852,11 @@ export class WidgetsStore {
 
     setImageMultiPanelEnabled = (multiPanelEnabled: boolean) => {
         PreferenceStore.Instance.setPreference(PreferenceKeys.IMAGE_MULTI_PANEL_ENABLED, multiPanelEnabled);
-        this.updateImagePanelButton(AppStore.Instance.imagePanelMode);
+        this.updateImagePanelButton();
     };
 
-    updateImagePanelButton = (imagePanelMode: ImagePanelMode) => {
+    private updateImagePanelButton = () => {
+        const imagePanelMode = AppStore.Instance.imagePanelMode;
         const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel");
         if (imagePanelButton) {
             imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
