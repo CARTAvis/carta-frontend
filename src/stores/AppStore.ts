@@ -1112,7 +1112,7 @@ export class AppStore {
                 console.log(ack.message);
             }
         } catch (err) {
-            AppToaster.show(ErrorToast(err));
+            AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
         this.imageFittingStore.setIsFitting(false);
