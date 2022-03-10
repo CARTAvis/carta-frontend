@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable, runInAction} from "mobx";
-import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, BreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
@@ -20,16 +20,45 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable debouncedFilterString: string = "";
     @observable defaultWidth: number;
     @observable defaultHeight: number;
+    @observable enableImageArithmetic: boolean = false;
+    @observable imageArithmeticString: string = "";
+    private readonly imageArithmeticInputRef: React.RefObject<HTMLInputElement>;
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
         this.defaultWidth = 1200;
         this.defaultHeight = 600;
+        this.imageArithmeticInputRef = React.createRef<HTMLInputElement>();
     }
 
     private handleTabChange = (newId: TabId) => {
         FileBrowserStore.Instance.setSelectedTab(newId);
+    };
+
+    @action private handleFileClicked = (file: ISelectedFile) => {
+        FileBrowserStore.Instance.selectFile(file);
+        if (this.enableImageArithmetic) {
+            // Check if the existing string has a trailing quote or not
+            const quoteRegex = /(["'])+/gm;
+            const quoteCount = this.imageArithmeticString.match(quoteRegex)?.length;
+            const trailingQuote = quoteCount % 2 !== 0;
+
+            const operatorRegex = /([+\-*/(,])\s*$/gm;
+            const trailingOperator = this.imageArithmeticString.match(operatorRegex)?.length > 0;
+
+            // Append the file name if there's a trailing operator or quote, otherwise just replace
+            if (trailingOperator) {
+                this.imageArithmeticString += `"${file.fileInfo.name}"`;
+            } else if (this.imageArithmeticString?.endsWith('"') && trailingQuote) {
+                this.imageArithmeticString += `${file.fileInfo.name}"`;
+            } else if (this.imageArithmeticString?.endsWith("'") && trailingQuote) {
+                this.imageArithmeticString += `${file.fileInfo.name}'`;
+            } else {
+                this.imageArithmeticString = `"${file.fileInfo.name}"`;
+            }
+            this.imageArithmeticInputRef.current?.focus();
+        }
     };
 
     private loadSelectedFiles = async () => {
@@ -48,6 +77,23 @@ export class FileBrowserDialogComponent extends React.Component {
         } else {
             await this.loadFile({fileInfo: fileBrowserStore.selectedFile, hdu: fileBrowserStore.selectedHDU});
         }
+    };
+
+    private loadExpression = async () => {
+        const appStore = AppStore.Instance;
+        const frames = appStore.frames;
+        const fileBrowserStore = appStore.fileBrowserStore;
+        let frame: FrameStore;
+
+        if (!fileBrowserStore.appendingFrame || !frames.length) {
+            frame = await appStore.openFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
+        } else {
+            frame = await appStore.appendFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
+        }
+        fileBrowserStore.saveStartingDirectory();
+        this.clearArithmeticString();
+        this.setEnableImageArithmetic(false);
+        return frame;
     };
 
     private loadFile = async (file: ISelectedFile, forceAppend: boolean = false) => {
@@ -172,6 +218,10 @@ export class FileBrowserDialogComponent extends React.Component {
         this.setFilterString(this.fileFilterString);
     };
 
+    @action handleImageArithmeticStringChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        this.imageArithmeticString = ev.target.value;
+    };
+
     setFilterString = _.debounce(
         (filterString: string) =>
             runInAction(() => {
@@ -183,6 +233,10 @@ export class FileBrowserDialogComponent extends React.Component {
     @action clearFilterString = () => {
         this.fileFilterString = "";
         this.debouncedFilterString = "";
+    };
+
+    @action clearArithmeticString = () => {
+        this.imageArithmeticString = "";
     };
 
     @action handleFolderClicked = (folderName: string) => {
@@ -206,48 +260,53 @@ export class FileBrowserDialogComponent extends React.Component {
 
         switch (browserMode) {
             case BrowserMode.File:
+                let actionDisabled: boolean;
+                let actionFunction: () => void;
+                if (this.enableImageArithmetic) {
+                    actionDisabled = appStore.fileLoading || !this.imageArithmeticString;
+                    actionFunction = this.loadExpression;
+                } else {
+                    actionDisabled = appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo;
+                    actionFunction = this.loadSelectedFiles;
+                }
                 if (appending) {
+                    let actionText: string;
+                    if (this.enableImageArithmetic) {
+                        actionText = "Append expression";
+                    } else if (fileBrowserStore.selectedFiles?.length > 1) {
+                        actionText = "Append selected";
+                    } else {
+                        actionText = "Append";
+                    }
                     return (
                         <div>
                             <Tooltip2 content={"Append this image while keeping other images open"}>
-                                <AnchorButton
-                                    intent={Intent.PRIMARY}
-                                    disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                    onClick={this.loadSelectedFiles}
-                                    text={fileBrowserStore.selectedFiles?.length > 1 ? "Append selected" : "Append"}
-                                />
+                                <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
                             </Tooltip2>
-                            {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
+                            {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
                                 <Tooltip2 content={"Append this image while keeping other images open"}>
-                                    <AnchorButton
-                                        intent={Intent.PRIMARY}
-                                        disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                        onClick={appStore.dialogStore.showStokesDialog}
-                                        text={"Load as hypercube"}
-                                    />
+                                    <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={appStore.dialogStore.showStokesDialog} text={"Load as hypercube"} />
                                 </Tooltip2>
                             )}
                         </div>
                     );
                 } else {
+                    let actionText: string;
+                    if (this.enableImageArithmetic) {
+                        actionText = "Load expression";
+                    } else if (fileBrowserStore.selectedFiles?.length > 1) {
+                        actionText = "Load selected";
+                    } else {
+                        actionText = "Load";
+                    }
                     return (
                         <div>
                             <Tooltip2 content={"Close any existing images and load this image"}>
-                                <AnchorButton
-                                    intent={Intent.PRIMARY}
-                                    disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                    onClick={this.loadSelectedFiles}
-                                    text={fileBrowserStore.selectedFiles?.length > 1 ? "Load selected" : "Load"}
-                                />
+                                <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
                             </Tooltip2>
-                            {fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
+                            {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
                                 <Tooltip2 content={"Close any existing images and load this image"}>
-                                    <AnchorButton
-                                        intent={Intent.PRIMARY}
-                                        disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                        onClick={appStore.dialogStore.showStokesDialog}
-                                        text={"Load as hypercube"}
-                                    />
+                                    <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={appStore.dialogStore.showStokesDialog} text={"Load as hypercube"} />
                                 </Tooltip2>
                             )}
                         </div>
@@ -367,7 +426,7 @@ export class FileBrowserDialogComponent extends React.Component {
         return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.saveFilename} onChange={this.handleSaveFileNameChanged} rightElement={fileTypeMenu} />;
     }
 
-    private renderOpenFilenameInput() {
+    private renderOpenFilenameInput(browserMode: BrowserMode) {
         const preferenceStore = PreferenceStore.Instance;
 
         let filterName: string;
@@ -400,7 +459,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <MenuItem text="Regular expression" onClick={() => this.setFilterType(FileFilteringType.Regex)} />
                     </Menu>
                 }
-                position={Position.BOTTOM_RIGHT}
+                placement="bottom-end"
             >
                 <Button minimal={true} icon="filter" rightIcon="caret-down">
                     {filterName}
@@ -408,12 +467,59 @@ export class FileBrowserDialogComponent extends React.Component {
             </Popover2>
         );
 
-        return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftIcon="search" rightElement={filterTypeMenu} />;
+        if (browserMode === BrowserMode.File) {
+            const inputTypeMenu = (
+                <Popover2
+                    minimal={true}
+                    content={
+                        <Menu>
+                            <MenuItem text="List filtering" onClick={() => this.setEnableImageArithmetic(false)} />
+                            <MenuItem text="Image arithmetic" onClick={() => this.setEnableImageArithmetic(true)} />
+                        </Menu>
+                    }
+                    placement="bottom-start"
+                >
+                    <Button minimal={true} icon={this.enableImageArithmetic ? "calculator" : "search"} rightIcon="caret-down">
+                        {this.enableImageArithmetic ? "Image arithmetic" : "Filter"}
+                    </Button>
+                </Popover2>
+            );
+            if (this.enableImageArithmetic) {
+                return (
+                    <InputGroup
+                        inputRef={this.imageArithmeticInputRef}
+                        autoFocus={true}
+                        placeholder="Enter an image arithmetic expression"
+                        value={this.imageArithmeticString}
+                        onChange={this.handleImageArithmeticStringChanged}
+                        leftElement={inputTypeMenu}
+                        onKeyDown={this.handleImageArithmeticKeyDown}
+                    />
+                );
+            } else {
+                return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftElement={inputTypeMenu} rightElement={filterTypeMenu} />;
+            }
+        } else {
+            return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftIcon="search" rightElement={filterTypeMenu} />;
+        }
     }
 
     @action setFilterType = (type: FileFilteringType) => {
         this.clearFilterString();
         PreferenceStore.Instance.setPreference(PreferenceKeys.SILENT_FILE_FILTERING_TYPE, type);
+    };
+
+    @action setEnableImageArithmetic = (val: boolean) => {
+        this.enableImageArithmetic = val;
+        if (val) {
+            this.clearFilterString();
+        }
+    };
+
+    private handleImageArithmeticKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
+        if (ev.key === "Enter") {
+            this.loadExpression();
+        }
     };
 
     // Refresh file list to trigger the Breadcrumb re-rendering
@@ -462,7 +568,7 @@ export class FileBrowserDialogComponent extends React.Component {
         } else if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
             fileInput = this.renderExportFilenameInput();
         } else {
-            fileInput = this.renderOpenFilenameInput();
+            fileInput = this.renderOpenFilenameInput(fileBrowserStore.browserMode);
         }
 
         let tableProps: SimpleTableComponentProps = null;
@@ -523,7 +629,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 filterType={appStore.preferenceStore.fileFilteringType}
                                 sortingString={appStore.preferenceStore.fileSortingString}
                                 onSortingChanged={fileBrowserStore.setSortingConfig}
-                                onFileClicked={fileBrowserStore.selectFile}
+                                onFileClicked={this.handleFileClicked}
                                 onSelectionChanged={fileBrowserStore.setSelectedFiles}
                                 onFileDoubleClicked={this.loadFile}
                                 onFolderClicked={this.handleFolderClicked}
@@ -587,7 +693,7 @@ export class FileBrowserDialogComponent extends React.Component {
         fileBrowserStore.hideFileBrowser();
     };
 
-    private renderBreadcrumb = (props: IBreadcrumbProps) => {
+    private renderBreadcrumb = (props: BreadcrumbProps) => {
         return (
             <Breadcrumb onClick={props.onClick} className="folder-breadcrumb">
                 {props.icon && <Icon iconSize={14} icon={props.icon} />}
@@ -613,7 +719,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @computed get pathItems() {
         const fileBrowserStore = FileBrowserStore.Instance;
-        let pathItems: IBreadcrumbProps[] = [
+        let pathItems: BreadcrumbProps[] = [
             {
                 icon: "desktop",
                 onClick: () => this.handleBreadcrumbClicked("")
