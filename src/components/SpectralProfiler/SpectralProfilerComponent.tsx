@@ -295,7 +295,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (i === 0) {
             this.calculateFormattedValues(values);
         } 
-        
+
         return this.cachedFormattedCoordinates[i];
     }
 
@@ -310,8 +310,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
                     this.cachedFormattedCoordinates[i] = this.frame.channelInfo.values[i].toString();
                 } else if (this.frame.spectralTypeOpt === SpectralType.CHANNEL) {
-                    console.log('formatProfile: coordChannel: ' + this.frame.channelInfo.indexes);
-
                     this.cachedFormattedCoordinates[i] = this.frame.channelInfo.indexes[i].toString();
                 } else{
                     const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, ticks[i].value, false);
@@ -325,18 +323,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     // Trims unnecessary decimals from the list of formatted coordinates
     private trimDecimals() {
         if (!this.cachedFormattedCoordinates || !this.cachedFormattedCoordinates.length) {
-            console.log('Nope: First order');
             return;
         }
         // If the existing tick list has repeats, don't trim
         if (SpectralProfilerComponent.hasRepeats(this.cachedFormattedCoordinates)) {
-            console.log('Nope: Second order - repeater');
-        //    return;
+            return;
         }
         const decimalIndex = this.cachedFormattedCoordinates[0].indexOf(".");
         // Skip lists without decimals. This assumes that all ticks have the same number of decimals
         if (decimalIndex === -1) {
-            console.log('Nope: Third order - decimal');
             return;
         }
         const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex;
@@ -347,13 +342,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
             if (!SpectralProfilerComponent.hasRepeats(trimmedArray)) {
                 this.cachedFormattedCoordinates = trimmedArray;
-                console.log('Nope: Fourth order - repeating trimmed: ' + trimmedArray);
                 return;
             }
 
             // Skip an extra character after the first check, because of the decimal indicator
             if (trim === initialTrimLength) {
-                console.log('Nope: Fifth order - the trimmining');
                 trim--;
             }
         }
@@ -363,6 +356,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (!ticks || ticks.length < 2) {
             return false;
         }
+
         let prevTick = ticks[0];
         for (let i = 1; i < ticks.length; i++) {
             const nextTick = ticks[i];
