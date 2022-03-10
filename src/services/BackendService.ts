@@ -54,7 +54,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 25;
+    private static readonly IcdVersion = 26;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     private static readonly MaxConnectionAttempts = 15;
     private static readonly ConnectionAttemptDelay = 1000;
@@ -67,7 +67,6 @@ export class BackendService {
     public animationId: number;
     public sessionId: number;
     public serverFeatureFlags: number;
-    public grpcPort: number;
     public serverUrl: string;
 
     private connection: WebSocket;
@@ -868,7 +867,6 @@ export class BackendService {
     private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
         this.sessionId = ack.sessionId;
         this.serverFeatureFlags = ack.serverFeatureFlags;
-        this.grpcPort = ack.grpcPort;
 
         TelemetryService.Instance.addTelemetryEntry(TelemetryAction.Connection, {serverFeatureFlags: ack.serverFeatureFlags, platformInfo: ack.platformStrings});
         this.onDeferredResponse(eventId, ack);
