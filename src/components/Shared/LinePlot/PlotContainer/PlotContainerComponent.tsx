@@ -476,7 +476,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
             // line data point background color
             if (this.props.dataBackgroundColor) {
-
                 datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
             }
             plotData.push(datasetConfig);

@@ -12,10 +12,10 @@ import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelecting
 import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
-import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, FrameStore, SpectralProfileStore, AppStore, DefaultWidgetConfig/*, ASTSettingsString, OverlayStore*/} from "stores";
+import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, FrameStore, SpectralProfileStore, AppStore, DefaultWidgetConfig /*, ASTSettingsString, OverlayStore*/} from "stores";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
-import {Point2D,SpectralType, SpectralUnit, SpectralSystem} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme, /*transformPoint*/} from "utilities";
+import {Point2D, SpectralType, SpectralUnit, SpectralSystem} from "models";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme /*transformPoint*/} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
 
@@ -294,10 +294,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private formatProfile = (v: number, i: number, values: Tick[]) => {
         if (i === 0) {
             this.calculateFormattedValues(values);
-        } 
+        }
 
         return this.cachedFormattedCoordinates[i];
-    }
+    };
 
     private calculateFormattedValues(ticks: Tick[]) {
         if (!this.cachedFormattedCoordinates || this.cachedFormattedCoordinates.length !== ticks.length) {
@@ -305,19 +305,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         if (this.frame.channelInfo) {
-            for(let i = 0; i < ticks.length; i++){
+            for (let i = 0; i < ticks.length; i++) {
                 if (!this.frame.spectralTypeOpt && !this.frame.spectralUnitOpt) {
-
                     this.cachedFormattedCoordinates[i] = this.frame.channelInfo.values[i].toString();
                 } else if (this.frame.spectralTypeOpt === SpectralType.CHANNEL) {
                     this.cachedFormattedCoordinates[i] = this.frame.channelInfo.indexes[i].toString();
-                } else{
+                } else {
                     const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, ticks[i].value, false);
                     const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeOpt, this.frame.spectralUnitOpt, this.frame.spectralSystem, nativeCoord);
                     this.cachedFormattedCoordinates[i] = coord.toString();
                 }
             }
-        }this.trimDecimals();
+        }
+        this.trimDecimals();
     }
 
     // Trims unnecessary decimals from the list of formatted coordinates
@@ -408,12 +408,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (frame) {
             if (frame.spectralAxis && !frame.isCoordChannel) {
                 linePlotProps.xLabel = frame.spectralLabel;
-                
             }
             if (this.widgetStore.yUnit) {
                 linePlotProps.yLabel = `Value (${this.widgetStore.yUnit})`;
             }
-            if (linePlotProps.showTopAxis){
+            if (linePlotProps.showTopAxis) {
                 linePlotProps.topAxisTickFormatter = this.formatProfile;
             }
             const currentPlotData = this.plotData;
@@ -426,7 +425,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const smoothingStore = this.widgetStore.smoothingStore;
                     const imageName = currentPlotData.labels[i]?.image;
                     const plotName = `Z-profile-${currentPlotData.labels[i]?.plot}`.replace(/,\s/g, "-")?.replace(/\s/g, "_");
-                    if (i < currentPlotData.data?.length) {                      
+                    if (i < currentPlotData.data?.length) {
                         linePlotProps.multiPlotPropsMap.set(`profile${i}`, {
                             imageName: imageName,
                             plotName: plotName,

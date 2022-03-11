@@ -1161,7 +1161,7 @@ export class FrameStore {
     private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
         if (!this.spectralFrame || !isFinite(value)) {
             return undefined;
-        } 
+        }
         return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
     };
 
@@ -1666,7 +1666,6 @@ export class FrameStore {
 
     @action setSpectralCoordinate = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
         if (this.spectralCoordsSupported?.has(coordStr)) {
-
             const coord: {type: SpectralType; unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
             this.spectralType = coord.type;
             this.spectralUnit = coord.unit;
@@ -1678,17 +1677,16 @@ export class FrameStore {
         }
         return false;
     };
-    
+
     // optional axis
     @action setSpectralCoordinateOpt = (coordStr: string, alignSpectralSiblings: boolean = false): boolean => {
         if (this.spectralCoordsSupported?.has(coordStr)) {
-
             const coord: {type: SpectralType; unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
             this.spectralTypeOpt = coord.type;
             this.spectralUnitOpt = coord.unit;
 
             if (alignSpectralSiblings) {
-              (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
+                (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
             }
             return true;
         }

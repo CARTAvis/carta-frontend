@@ -159,7 +159,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     @observable selectionBoxEnd = {x: 0, y: 0};
     @observable isMouseEntered = false;
     @observable isMarkerDragging = false;
-    
+
     @observable showTopAxis = false;
 
     @computed get isSelecting() {

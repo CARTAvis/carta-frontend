@@ -63,7 +63,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable settingsTabId: SpectralProfilerSettingsTabs;
 
     @observable optionalSpectralAxisVisible: boolean;
-    
+
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
@@ -99,7 +99,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.clearXBounds();
         }
     };
-
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
         if (this.effectiveFrame.setSpectralSystem(specsys)) {

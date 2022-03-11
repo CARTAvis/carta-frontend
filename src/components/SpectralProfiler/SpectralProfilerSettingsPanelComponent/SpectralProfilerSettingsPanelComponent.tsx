@@ -175,8 +175,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             yMinVal: parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
             handleYMinChange: this.handleYMinChange,
             yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
-            handleYMaxChange: this.handleYMaxChange,
-            
+            handleYMaxChange: this.handleYMaxChange
         };
 
         return (
@@ -188,7 +187,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                         title="Conversion"
                         panel={
                             <React.Fragment>
-                                
                                 <SpectralSettingsComponent
                                     frame={widgetStore.effectiveFrame}
                                     onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
