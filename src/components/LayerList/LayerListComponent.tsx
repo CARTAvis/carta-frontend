@@ -96,7 +96,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell />;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredStokesInfo}</Cell>;
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredPolarizationInfo}</Cell>;
     };
 
     private typeRenderer = (rowIndex: number) => {

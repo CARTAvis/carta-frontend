@@ -293,7 +293,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {!hideSliders && (
                         <React.Fragment>
                             <Slider
-                                value={appStore.animatorStore.polarizationValue}
+                                value={activeFrame.requiredAnimationStokes}
                                 min={0}
                                 showTrackFill={false}
                                 max={activeFrame.polarizations.length - 1}

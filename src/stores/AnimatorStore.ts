@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore, PreferenceStore} from "stores";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
-import {FrameView, Point2D, COMPUTED_POLARIZATIONS} from "models";
+import {FrameView, Point2D} from "models";
 
 export enum AnimationMode {
     CHANNEL = 0,
@@ -201,16 +201,6 @@ export class AnimatorStore {
         return this.animationActive && this.animationMode !== AnimationMode.FRAME;
     }
 
-    @computed get polarizationValue() {
-        const appStore = AppStore.Instance;
-        const frame = appStore.activeFrame;
-        if (COMPUTED_POLARIZATIONS.has(frame.requiredStokes) && frame.polarizations.includes(frame.requiredStokes)) {
-            return frame.polarizations.indexOf(frame.requiredStokes);
-        } else {
-            return frame.requiredStokes;
-        }
-    }
-
     private genAnimationFrames = (
         frame: FrameStore
     ): {
@@ -225,7 +215,7 @@ export class AnimatorStore {
 
         let startFrame: CARTA.IAnimationFrame = {
             channel: frame.channel,
-            stokes: COMPUTED_POLARIZATIONS.has(frame.stokes) && frame.polarizations.includes(frame.stokes) ? frame.polarizations.indexOf(frame.stokes) : frame.stokes
+            stokes: frame.requiredAnimationStokes
         };
         let firstFrame: CARTA.IAnimationFrame, lastFrame: CARTA.IAnimationFrame, deltaFrame: CARTA.IAnimationFrame;
 

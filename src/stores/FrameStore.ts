@@ -837,7 +837,7 @@ export class FrameStore {
 
     // standard stokes and computed polarization
     @computed get polarizations(): number[] {
-        const polarizations = this.stokesOptions.map(option => {
+        const polarizations = this.stokesOptions?.map(option => {
             return option.value;
         });
         const hasI: boolean = polarizations.includes(POLARIZATIONS.I);
@@ -866,6 +866,18 @@ export class FrameStore {
         return this.polarizations.map(polarization => {
             return POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization));
         });
+    }
+
+    @computed get requiredPolarizationInfo(): string {
+        return this.polarizationInfo?.[this.requiredAnimationStokes] ?? String(this.requiredStokes);
+    }
+
+    @computed get requiredAnimationStokes(): number {
+        if (COMPUTED_POLARIZATIONS.has(this.requiredStokes) && this.polarizations.includes(this.requiredStokes)) {
+            return this.polarizations.indexOf(this.requiredStokes);
+        } else {
+            return this.requiredStokes;
+        }
     }
 
     constructor(frameInfo: FrameInfo) {

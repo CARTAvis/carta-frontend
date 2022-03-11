@@ -36,7 +36,7 @@ import {
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -1611,15 +1611,13 @@ export class AppStore {
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
         if (this.animatorStore.serverAnimationActive) {
             const frame = this.getFrame(tileStreamDetails.fileId);
-            const stokes = tileStreamDetails.stokes;
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
                 fileId: tileStreamDetails.fileId,
                 animationId: 0,
                 receivedFrame: {
                     channel: tileStreamDetails.channel,
-                    // stokes: tileStreamDetails.stokes
-                    stokes: frame?.polarizations.includes(stokes) && COMPUTED_POLARIZATIONS.has(stokes) ? frame?.polarizations.indexOf(stokes) : stokes
+                    stokes: frame?.requiredAnimationStokes ?? tileStreamDetails.stokes
                 },
                 timestamp: Long.fromNumber(Date.now())
             };
