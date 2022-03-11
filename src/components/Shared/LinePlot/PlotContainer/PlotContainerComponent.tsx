@@ -232,6 +232,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
     // replace log(0) with log(0.5)
     private static ConvertLogData(data: {x: number; y: number; z?: number}[]) {
+        // Skip undefined or empty arrays
+        if (!data?.length) {
+            return data;
+        }
+
         for (let index = 0; index < data.length; index++) {
             const point = data[index];
             if (point.y === 0) {

@@ -4,88 +4,80 @@
     width: 100%;
     height: 100%;
     user-select: none;
+
     .region-editing {
     }
 
-    table {
-        padding: 5px;
-        overflow: auto;
-        display: block;
+    .region-list-table {
+        margin: 5px;
+        border: 1px solid $gray4;
 
-        thead {
-            &.dark-theme {
-                tr {
-                    th {
-                        border-top: 1px solid $dark-gray4;
-                        border-bottom: 1px solid $dark-gray5;
-                        border-left: 1px solid $dark-gray4;
+        &.bp3-dark {
+            border-color: $dark-gray2;
 
-                        &:last-of-type {
-                            border-right: 1px solid $dark-gray4;
-                        }
-                    }
-                }
+            .row {
+                background: $dark-gray2;
             }
+        }
 
-            tr {
-                display: block;
+        .row,
+        .row-header {
+            .cell {
+                flex-grow: 0;
+                flex-shrink: 0;
+                padding: 3px;
+                display: flex;
+                align-items: center;
+                font-size: 12px;
+                cursor: pointer;
+                border-left: 1px solid $gray5;
+                border-bottom: 1px solid $gray4;
 
-                th {
-                    padding: 3px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    cursor: default;
-                    border-top: 1px solid $gray5;
-                    border-bottom: 1px solid $gray4;
-                    border-left: 1px solid $gray5;
-
-                    &:last-of-type {
-                        border-right: 1px solid $gray5;
-                    }
+                &:last-of-type {
+                    border-right: 1px solid $gray5;
                 }
             }
         }
 
-        tbody {
-            display: block;
+        .row {
             background: $white;
+            display: flex;
 
-            &.dark-theme {
-                background: $dark-gray2;
+            &.selected {
+                background: lighten($blue5, 25);
+            }
 
-                tr {
-                    td {
-                        border-left: 1px solid $dark-gray3;
-                        border-bottom: 1px solid $dark-gray5;
-                        vertical-align: middle;
+            &.bp3-dark {
+                background: $dark-gray3;
 
-                        &:last-of-type {
-                            border-right: 1px solid $dark-gray3;
-                        }
-                    }
+                .cell {
+                    border-color: $dark-gray2;
+                }
 
-                    &.selected {
-                        background: $blue2;
-                    }
+                &.selected {
+                    background: #3c5066;
                 }
             }
 
-            tr {
-                &.selected {
-                    background: lighten($blue5, 30);
+            &:last-of-type {
+                .cell {
+                    border-bottom-color: transparent;
                 }
+            }
+        }
 
-                td {
-                    padding: 3px;
-                    font-size: 12px;
-                    cursor: pointer;
-                    border-left: 1px solid $gray5;
-                    border-bottom: 1px solid $gray4;
-                    vertical-align: middle;
+        .row-header {
+            border-bottom: 1px solid $gray4;
+            display: flex;
+            background: $light-gray5;
+            font-weight: bold;
+            overflow-x: hidden;
 
-                    &:last-of-type {
-                        border-right: 1px solid $gray5;
-                    }
+            &.bp3-dark {
+                background: $dark-gray4;
+
+                .cell {
+                    border-color: $dark-gray2;
                 }
             }
         }

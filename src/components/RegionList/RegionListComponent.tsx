@@ -1,12 +1,15 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {HTMLTable, Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
+import {Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
+import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
 import ReactResizeDetector from "react-resize-detector";
+import {CSSProperties} from "react";
+import classNames from "classnames";
 import {CARTA} from "carta-protobuf";
 import {RegionStore, DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FrameStore, WCS_PRECISION, FileBrowserStore, BrowserMode} from "stores";
-import {toFixed, getFormattedWCSPoint, formattedArcsec, length2D} from "utilities";
+import {toFixed, getFormattedWCSPoint, formattedArcsec, length2D, clamp} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.scss";
 
@@ -20,6 +23,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly CENTER_COLUMN_DEFAULT_WIDTH = 140;
     private static readonly SIZE_COLUMN_DEFAULT_WIDTH = 160;
     private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 80;
+    private static readonly ROW_HEIGHT = 35;
+    private static readonly HEADER_ROW_HEIGHT = 25;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -45,6 +50,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 0;
     @observable height: number = 0;
+    @observable firstVisibleRow: number = 0;
+    @observable lastVisibleRow: number = 0;
 
     constructor(props: any) {
         super(props);
@@ -56,17 +63,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    private handleRegionLockClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
+    private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         region.toggleLock();
         ev.stopPropagation();
     };
 
-    private handleFocusClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
+    private handleFocusClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         region.focusCenter();
         ev.stopPropagation();
     };
 
-    private handleRegionExportClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
+    private handleRegionExportClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         FileBrowserStore.Instance.showExportRegions(region.regionId);
     };
 
@@ -82,9 +89,18 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         DialogStore.Instance.showRegionDialog();
     };
 
+    @action private onListRendered = (view: ListOnItemsRenderedProps) => {
+        // Update view bounds
+        if (view && this.firstVisibleRow !== view.overscanStopIndex && this.lastVisibleRow !== view.overscanStopIndex) {
+            this.firstVisibleRow = view.overscanStartIndex;
+            this.lastVisibleRow = view.overscanStopIndex;
+        }
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
+        const darkTheme = appStore.darkTheme;
 
         if (!frame) {
             return (
@@ -105,8 +121,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         }
 
         const padding = 5;
-        const rowSize = 41;
-        const requiredTableHeight = 1 + padding * 2 + rowSize * (this.validRegions.length + 1);
+        const requiredTableHeight = RegionListComponent.ROW_HEIGHT * (this.validRegions.length + 1);
         const tableHeight = isFinite(this.height) ? Math.min(requiredTableHeight, this.height) : requiredTableHeight;
 
         let nameWidth = RegionListComponent.NAME_COLUMN_DEFAULT_WIDTH;
@@ -121,7 +136,6 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         let showSizeColumn = true;
         let showRotationColumn = true;
-
         // Dynamically hide size column if name size is too short
         if (nameWidth < RegionListComponent.NAME_COLUMN_MIN_WIDTH) {
             showSizeColumn = false;
@@ -130,7 +144,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 nameWidth = availableWidth - fixedWidth;
             }
 
-            // If its still too short, hide the rotation column as well
+            // If it's still too short, hide the rotation column as well
             if (nameWidth < RegionListComponent.NAME_COLUMN_MIN_WIDTH) {
                 showRotationColumn = false;
                 fixedWidth -= RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH;
@@ -142,9 +156,66 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
         }
 
+        // Dummy values to trigger re-rendering of visible rows when region properties change from an external source
+        const firstVisibleRegion = clamp(this.firstVisibleRow, 0, frame.regionSet.regions.length - 1);
+        const lastVisibleRegion = clamp(this.lastVisibleRow, firstVisibleRegion, frame.regionSet.regions.length - 1);
+        for (let i = firstVisibleRegion; i <= lastVisibleRegion; i++) {
+            const region = frame.regionSet.regions[i];
+            /* eslint-disable @typescript-eslint/no-unused-vars */
+            const _isLocked = region.locked;
+            const _name = region.name;
+            const _angle = region.rotation;
+            const _size = region.size.x + region.size.y;
+            /* eslint-enable @typescript-eslint/no-unused-vars */
+        }
+
         const selectedRegion = frame.regionSet.selectedRegion;
 
-        const rows = this.validRegions.map(region => {
+        const headerRenderer = (props: {index: number; style: CSSProperties}) => {
+            const className = classNames("row-header", {"bp3-dark": darkTheme});
+
+            return (
+                <div className={className} style={props.style}>
+                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                        <Icon icon={"blank"} style={{width: 16}} />
+                        <Tooltip2 content="Import regions" position={Position.BOTTOM}>
+                            <Icon icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
+                        </Tooltip2>
+                        <Icon icon={"blank"} style={{width: 5}} />
+                        <Tooltip2 content="Export all regions" position={Position.BOTTOM}>
+                            {this.validRegions.length > 1 ? <Icon icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} /> : <Icon icon="cloud-upload" style={{opacity: 0.4}} />}
+                        </Tooltip2>
+                    </div>
+                    <div className="cell" style={{width: nameWidth}}>
+                        Name
+                    </div>
+                    <div className="cell" style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>
+                        Type
+                    </div>
+                    <div className="cell" style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>
+                        {frame.validWcs ? "Center" : "Pixel Center"}
+                    </div>
+                    {showSizeColumn && (
+                        <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>
+                            {frame.validWcs ? "Size" : "Size (px)"}
+                        </div>
+                    )}
+                    {showRotationColumn && (
+                        <div className="cell" style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>
+                            P.A. (deg)
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const rowRenderer = (props: {index: number; style: CSSProperties}) => {
+            const region = this.validRegions?.[props.index];
+            if (!region) {
+                return null;
+            }
+            const className = classNames("row", {"bp3-dark": darkTheme, selected: selectedRegion?.regionId === region.regionId});
+
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
                 if (frame.validWcs) {
@@ -160,9 +231,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 centerContent = "Invalid";
             }
             const centerEntry = (
-                <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                <div className="cell" style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
                     {centerContent}
-                </td>
+                </div>
             );
 
             let sizeEntry: React.ReactNode;
@@ -196,104 +267,94 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         tooltipContent = "Width and height";
                 }
                 sizeEntry = (
-                    <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                    <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {region.regionType !== CARTA.RegionType.POINT && (
                             <Tooltip2 content={tooltipContent} position={Position.BOTTOM}>
                                 {sizeContent}
                             </Tooltip2>
                         )}
-                    </td>
+                    </div>
                 );
             }
 
             let lockEntry: React.ReactNode;
             if (region.regionId) {
                 lockEntry = (
-                    <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionLockClicked(ev, region)}>
+                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionLockClicked(ev, region)}>
                         <Icon icon={region.locked ? "lock" : "unlock"} />
-                    </td>
+                    </div>
                 );
             } else {
                 lockEntry = (
-                    <td colSpan={3} style={{width: RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH}}>
+                    <div className="cell" style={{width: RegionListComponent.ACTIONS_COLUMN_DEFAULT_WIDTH}}>
                         <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
                         <Icon icon={"blank"} />
-                    </td>
+                    </div>
                 );
             }
 
             let focusEntry: React.ReactNode;
             if (region.regionId) {
                 focusEntry = (
-                    <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleFocusClicked(ev, region)}>
+                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleFocusClicked(ev, region)}>
                         <CustomIcon icon="center" />
-                    </td>
+                    </div>
                 );
             }
 
             let exportEntry: React.ReactNode;
             if (region.regionId) {
                 exportEntry = (
-                    <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionExportClicked(ev, region)}>
+                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionExportClicked(ev, region)}>
                         <Tooltip2 content="Export region" position={Position.BOTTOM}>
                             <Icon icon="cloud-upload" />
                         </Tooltip2>
-                    </td>
+                    </div>
                 );
             }
 
+            const style = {...props.style};
+            style.overflowX = "hidden";
+
             return (
-                <tr className={selectedRegion && selectedRegion.regionId === region.regionId ? "selected" : ""} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)}>
+                <div className={className} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)} style={style}>
                     {lockEntry}
                     {focusEntry}
                     {exportEntry}
-                    <td style={{width: nameWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
+                    <div className="cell" style={{width: nameWidth}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {region.nameString}
-                    </td>
-                    <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                    </div>
+                    <div className="cell" style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
                         {RegionStore.RegionTypeString(region.regionType)}
-                    </td>
+                    </div>
                     {centerEntry}
                     {showSizeColumn && sizeEntry}
                     {showRotationColumn && (
-                        <td style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
+                        <div className="cell" style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.handleRegionListDoubleClick}>
                             {toFixed(region.rotation, 1)}
-                        </td>
+                        </div>
                     )}
-                </tr>
+                </div>
             );
-        });
+        };
 
         return (
             <div className="region-list-widget">
-                <HTMLTable style={{height: tableHeight}}>
-                    <thead className={appStore.darkTheme ? "dark-theme" : ""}>
-                        <tr>
-                            <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
-                                <Icon icon={"blank"} style={{width: 16}} />
-                                <Tooltip2 content="Import regions" position={Position.BOTTOM}>
-                                    <Icon icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
-                                </Tooltip2>
-                                <Icon icon={"blank"} style={{width: 5}} />
-                                <Tooltip2 content="Export all regions" position={Position.BOTTOM}>
-                                    {this.validRegions.length > 1 ? <Icon icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} /> : <Icon icon="cloud-upload" style={{opacity: 0.4}} />}
-                                </Tooltip2>
-                            </th>
-                            <th style={{width: nameWidth}}>Name</th>
-                            <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
-                            <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>{frame.validWcs ? "Center" : "Pixel Center"}</th>
-                            {showSizeColumn && <th style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{frame.validWcs ? "Size" : "Size (px)"}</th>}
-                            {showRotationColumn && <th style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>P.A. (deg)</th>}
-                        </tr>
-                    </thead>
-                    <tbody className={appStore.darkTheme ? "dark-theme" : ""}>{rows}</tbody>
-                </HTMLTable>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
+                <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
+                    <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
+                        {headerRenderer}
+                    </FixedSizeList>
+                    <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width="100%">
+                        {rowRenderer}
+                    </FixedSizeList>
+                </div>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
             </div>
         );
     }
 }
+
 @observer
 export class RegionWcsCenter extends React.Component<{region: RegionStore; frame: FrameStore}> {
     public render() {

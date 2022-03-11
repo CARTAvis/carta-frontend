@@ -632,7 +632,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         composedCanvas.toBlob(blob => {
             const link = document.createElement("a") as HTMLAnchorElement;
-            link.download = `${imageName}-${plotName.replace(" ", "-")}-${getTimestamp()}.png`;
+            // Trim filename before timestamp to 200 characters to prevent browser errors
+            link.download = `${imageName}-${plotName.replace(" ", "-")}`.substring(0, 200) + `-${getTimestamp()}.png`;
             link.href = URL.createObjectURL(blob);
             link.dispatchEvent(new MouseEvent("click"));
         }, "image/png");
