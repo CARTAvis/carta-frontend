@@ -250,8 +250,8 @@ export class TelemetryService {
         return this.db;
     }
 
-    addFileOpenEntry(id: number, width: number, height: number, depth: number, stokes: number) {
-        return this.addTelemetryEntry(TelemetryAction.FileOpen, {id, width, height, depth, stokes});
+    addFileOpenEntry(id: number, width: number, height: number, depth: number, stokes: number, generated: boolean) {
+        return this.addTelemetryEntry(TelemetryAction.FileOpen, {id, width, height, depth, stokes, generated});
     }
 
     addFileCloseEntry(id: number) {
