@@ -1436,11 +1436,6 @@ export class AppStore {
                     }
                 }
                 throttledSetViews(viewUpdates);
-
-                // TODO: this should be separate
-                if (!this.activeFrame) {
-                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
-                }
             }
         });
 
