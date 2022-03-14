@@ -27,6 +27,7 @@ export class ImageFittingStore {
         if (num > this.components.length) {
             for (let i = this.components.length; i < num; i++) {
                 this.components.push(new ImageFittingIndividualStore());
+                this.selectedComponentIndex = this.components.length - 1;
             }
         } else if (num < this.components.length) {
             this.components = this.components.slice(0, num);
