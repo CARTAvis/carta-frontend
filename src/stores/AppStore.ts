@@ -36,7 +36,7 @@ import {
 } from ".";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -1642,7 +1642,8 @@ export class AppStore {
             const updatedFrame = this.getFrame(pendingHistogram.fileId);
             const channelHist = pendingHistogram.histograms;
             if (updatedFrame && channelHist) {
-                updatedFrame.renderConfig.setStokes(pendingHistogram.stokes);
+                const stokes = COMPUTED_POLARIZATIONS.has(pendingHistogram.stokes) && updatedFrame.polarizations.includes(pendingHistogram.stokes) ? updatedFrame.polarizations.indexOf(pendingHistogram.stokes) : pendingHistogram.stokes;
+                updatedFrame.renderConfig.setStokes(stokes);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 updatedFrame.channel = tileStreamDetails.channel;

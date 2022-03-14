@@ -159,7 +159,7 @@ export class RenderConfigStore {
     @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number[];
     @observable histChannel: number;
-    @observable stokes: number;
+    @observable stokesIndex: number;
     @observable scaleMin: number[];
     @observable scaleMax: number[];
     @observable visible: boolean;
@@ -170,7 +170,7 @@ export class RenderConfigStore {
         makeObservable(this);
         this.frame = frame;
         const percentile = preference.percentile;
-        this.selectedPercentile = new Array(18).fill(percentile); // [percentile, percentile, percentile, percentile]
+        this.selectedPercentile = new Array(this.frame.polarizations.length).fill(percentile);
         this.bias = 0;
         this.contrast = 1;
         this.alpha = preference.scalingAlpha;
@@ -179,9 +179,9 @@ export class RenderConfigStore {
         this.inverted = false;
         this.cubeHistogramProgress = 0;
         this.setColorMap(preference.colormap);
-        this.stokes = 0;
-        this.scaleMin = new Array(18).fill(0); // [0, 0, 0, 0]
-        this.scaleMax = new Array(18).fill(1); // [1, 1, 1, 1]
+        this.stokesIndex = 0;
+        this.scaleMin = new Array(this.frame.polarizations.length).fill(0);
+        this.scaleMax = new Array(this.frame.polarizations.length).fill(1);
         this.visible = true;
     }
 
@@ -268,15 +268,15 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMinVal() {
-        return this.scaleMin[this.stokes];
+        return this.scaleMin[this.stokesIndex];
     }
 
     @computed get scaleMaxVal() {
-        return this.scaleMax[this.stokes];
+        return this.scaleMax[this.stokesIndex];
     }
 
     @computed get selectedPercentileVal() {
-        return this.selectedPercentile[this.stokes];
+        return this.selectedPercentile[this.stokesIndex];
     }
 
     @action setHistChannel = (val: number) => {
@@ -284,14 +284,14 @@ export class RenderConfigStore {
     };
 
     @action setStokes = (val: number) => {
-        this.stokes = val;
+        this.stokesIndex = val;
     };
 
     @action setUseCubeHistogram = (val: boolean) => {
         if (val !== this.useCubeHistogram) {
             this.useCubeHistogram = val;
-            if (this.selectedPercentile[this.stokes] > 0) {
-                this.setPercentileRank(this.selectedPercentile[this.stokes]);
+            if (this.selectedPercentile[this.stokesIndex] > 0) {
+                this.setPercentileRank(this.selectedPercentile[this.stokesIndex]);
             }
         }
     };
@@ -315,11 +315,11 @@ export class RenderConfigStore {
     }
 
     @action setPercentileRank = (rank: number) => {
-        this.selectedPercentile[this.stokes] = rank;
+        this.selectedPercentile[this.stokesIndex] = rank;
         // Find max and min if the rank is 100%
         if (rank === 100) {
-            this.scaleMin[this.stokes] = this.histogramMin;
-            this.scaleMax[this.stokes] = this.histogramMax;
+            this.scaleMin[this.stokesIndex] = this.histogramMin;
+            this.scaleMax[this.stokesIndex] = this.histogramMax;
             this.updateSiblings();
             return true;
         }
@@ -331,8 +331,8 @@ export class RenderConfigStore {
         const rankComplement = 100 - rank;
         const percentiles = getPercentiles(this.histogram, [rankComplement, rank]);
         if (percentiles.length === 2) {
-            this.scaleMin[this.stokes] = percentiles[0];
-            this.scaleMax[this.stokes] = percentiles[1];
+            this.scaleMin[this.stokesIndex] = percentiles[0];
+            this.scaleMax[this.stokesIndex] = percentiles[1];
             this.updateSiblings();
             return true;
         } else {
@@ -342,23 +342,23 @@ export class RenderConfigStore {
 
     @action updateChannelHistogram = (histogram: CARTA.IHistogram) => {
         this.channelHistogram = histogram;
-        if (this.selectedPercentile[this.stokes] > 0 && !this.useCubeHistogram) {
-            this.setPercentileRank(this.selectedPercentile[this.stokes]);
+        if (this.selectedPercentile[this.stokesIndex] > 0 && !this.useCubeHistogram) {
+            this.setPercentileRank(this.selectedPercentile[this.stokesIndex]);
         }
     };
 
     @action updateCubeHistogram = (histogram: CARTA.IHistogram, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
-        if (this.selectedPercentile[this.stokes] > 0 && this.useCubeHistogram) {
-            this.setPercentileRank(this.selectedPercentile[this.stokes]);
+        if (this.selectedPercentile[this.stokesIndex] > 0 && this.useCubeHistogram) {
+            this.setPercentileRank(this.selectedPercentile[this.stokesIndex]);
         }
     };
 
     @action setCustomScale = (minVal: number, maxVal: number) => {
-        this.scaleMin[this.stokes] = minVal;
-        this.scaleMax[this.stokes] = maxVal;
-        this.selectedPercentile[this.stokes] = -1;
+        this.scaleMin[this.stokesIndex] = minVal;
+        this.scaleMax[this.stokesIndex] = maxVal;
+        this.selectedPercentile[this.stokesIndex] = -1;
         this.updateSiblings();
     };
 
@@ -431,8 +431,8 @@ export class RenderConfigStore {
         this.gamma = other.gamma;
         this.bias = other.bias;
         this.contrast = other.contrast;
-        this.scaleMin[this.stokes] = other.scaleMinVal;
-        this.scaleMax[this.stokes] = other.scaleMaxVal;
-        this.selectedPercentile[this.stokes] = -1;
+        this.scaleMin[this.stokesIndex] = other.scaleMinVal;
+        this.scaleMax[this.stokesIndex] = other.scaleMaxVal;
+        this.selectedPercentile[this.stokesIndex] = -1;
     };
 }
