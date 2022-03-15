@@ -1,6 +1,13 @@
 .fitting-dialog {
     .bp3-label {
+        display: flex;
         min-width: 10em;
+
+        .bp3-text-muted {
+            margin-left: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     }
 
     .bp3-form-content {
