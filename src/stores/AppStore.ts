@@ -650,6 +650,8 @@ export class AppStore {
         } else {
             this.removeFrame(frame);
         }
+
+        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
     };
 
     /**
@@ -1457,11 +1459,6 @@ export class AppStore {
                     }
                 }
                 throttledSetViews(viewUpdates);
-
-                // TODO: this should be separate
-                if (!this.activeFrame) {
-                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
-                }
             }
         });
 
