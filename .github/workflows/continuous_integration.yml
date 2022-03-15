@@ -16,4 +16,4 @@ jobs:
           node-version: '16'
           cache: 'npm'
       - run: npm install
-      - run: npm checkformat
+      - run: npm run checkformat
