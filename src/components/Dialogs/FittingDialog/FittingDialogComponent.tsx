@@ -93,7 +93,7 @@ export class FittingDialogComponent extends React.Component {
                         <SafeNumericInput value={component?.center?.x ?? ""} onValueChange={component?.setCenterX} buttonPosition="none" placeholder="Center X" />
                         <SafeNumericInput value={component?.center?.y ?? ""} onValueChange={component?.setCenterY} buttonPosition="none" placeholder="Center Y" />
                     </FormGroup>
-                    <FormGroup label="Amplitude" inline={true} labelInfo={`(${fittingStore.effectiveFrame?.unit})`}>
+                    <FormGroup label="Amplitude" inline={true} labelInfo={fittingStore.effectiveFrame?.unit ? `(${fittingStore.effectiveFrame?.unit})` : ""}>
                         <SafeNumericInput value={component?.amplitude ?? ""} onValueChange={component?.setAmplitude} buttonPosition="none" placeholder="Amplitude" />
                     </FormGroup>
                     <FormGroup label="FWHM" inline={true} labelInfo="(px)">
