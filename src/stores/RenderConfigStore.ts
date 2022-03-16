@@ -169,8 +169,9 @@ export class RenderConfigStore {
     constructor(readonly preference: PreferenceStore, frame: FrameStore) {
         makeObservable(this);
         this.frame = frame;
+        const stokesLength = this.frame.polarizations.length !== 0 ? this.frame.polarizations.length : 1;
         const percentile = preference.percentile;
-        this.selectedPercentile = new Array(this.frame.polarizations.length).fill(percentile);
+        this.selectedPercentile = new Array<number>(stokesLength).fill(percentile);
         this.bias = 0;
         this.contrast = 1;
         this.alpha = preference.scalingAlpha;
@@ -180,8 +181,8 @@ export class RenderConfigStore {
         this.cubeHistogramProgress = 0;
         this.setColorMap(preference.colormap);
         this.stokesIndex = 0;
-        this.scaleMin = new Array(this.frame.polarizations.length).fill(0);
-        this.scaleMax = new Array(this.frame.polarizations.length).fill(1);
+        this.scaleMin = new Array<number>(stokesLength).fill(0);
+        this.scaleMax = new Array<number>(stokesLength).fill(1);
         this.visible = true;
     }
 

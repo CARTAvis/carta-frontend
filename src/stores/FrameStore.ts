@@ -835,7 +835,7 @@ export class FrameStore {
         return this.requiredStokes >= 0 && this.requiredStokes < this.stokesInfo?.length ? this.stokesInfo[this.requiredStokes] : String(this.requiredStokes);
     }
 
-    // standard stokes and computed polarization
+    // including standard and computed polarizations eg.[1, 2, 3, 4, 13, 14, 15, 16, 17]
     @computed get polarizations(): number[] {
         const polarizations = this.stokesOptions?.map(option => {
             return option.value;
