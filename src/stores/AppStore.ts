@@ -1621,7 +1621,7 @@ export class AppStore {
                 animationId: 0,
                 receivedFrame: {
                     channel: tileStreamDetails.channel,
-                    stokes: frame?.requiredAnimationStokes ?? tileStreamDetails.stokes
+                    stokes: frame?.requiredPolarizationIndex ?? tileStreamDetails.stokes
                 },
                 timestamp: Long.fromNumber(Date.now())
             };
@@ -1642,8 +1642,8 @@ export class AppStore {
             const updatedFrame = this.getFrame(pendingHistogram.fileId);
             const channelHist = pendingHistogram.histograms;
             if (updatedFrame && channelHist) {
-                const stokes = COMPUTED_POLARIZATIONS.has(pendingHistogram.stokes) && updatedFrame.polarizations.includes(pendingHistogram.stokes) ? updatedFrame.polarizations.indexOf(pendingHistogram.stokes) : pendingHistogram.stokes;
-                updatedFrame.renderConfig.setStokes(stokes);
+                const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogram.stokes) && updatedFrame.polarizations.includes(pendingHistogram.stokes) ? updatedFrame.polarizations.indexOf(pendingHistogram.stokes) : pendingHistogram.stokes;
+                updatedFrame.renderConfig.setStokesIndex(stokesIndex);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 updatedFrame.channel = tileStreamDetails.channel;

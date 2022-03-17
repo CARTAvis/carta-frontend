@@ -73,7 +73,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     onStokesChanged = (val: number) => {
         const frame = AppStore.Instance.activeFrame;
-        frame?.setChannels(frame.requiredChannel, frame.frameInfo.fileInfoExtended.stokes > val && val >= 0 ? val : frame.polarizations[val], true);
+        const isComputedPolarization = val >= frame.frameInfo.fileInfoExtended.stokes;
+        // request standard polarization by the stokes index of image. (eg. "I": 0)
+        // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
+        frame?.setChannels(frame.requiredChannel, isComputedPolarization ? frame.polarizations[val] : val, true);
     };
 
     onFrameChanged = (val: number) => {
@@ -293,7 +296,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {!hideSliders && (
                         <React.Fragment>
                             <Slider
-                                value={activeFrame.requiredAnimationStokes}
+                                value={activeFrame.requiredPolarizationIndex}
                                 min={0}
                                 showTrackFill={false}
                                 max={activeFrame.polarizations.length - 1}

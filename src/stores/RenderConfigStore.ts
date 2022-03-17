@@ -284,7 +284,7 @@ export class RenderConfigStore {
         this.histChannel = val;
     };
 
-    @action setStokes = (val: number) => {
+    @action setStokesIndex = (val: number) => {
         this.stokesIndex = val;
     };
 

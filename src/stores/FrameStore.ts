@@ -869,10 +869,10 @@ export class FrameStore {
     }
 
     @computed get requiredPolarizationInfo(): string {
-        return this.polarizationInfo?.[this.requiredAnimationStokes] ?? String(this.requiredStokes);
+        return this.polarizationInfo?.[this.requiredPolarizationIndex] ?? String(this.requiredStokes);
     }
 
-    @computed get requiredAnimationStokes(): number {
+    @computed get requiredPolarizationIndex(): number {
         if (COMPUTED_POLARIZATIONS.has(this.requiredStokes) && this.polarizations.includes(this.requiredStokes)) {
             return this.polarizations.indexOf(this.requiredStokes);
         } else {

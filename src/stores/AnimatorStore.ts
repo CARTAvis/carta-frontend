@@ -215,7 +215,7 @@ export class AnimatorStore {
 
         let startFrame: CARTA.IAnimationFrame = {
             channel: frame.channel,
-            stokes: frame.requiredAnimationStokes
+            stokes: frame.requiredPolarizationIndex
         };
         let firstFrame: CARTA.IAnimationFrame, lastFrame: CARTA.IAnimationFrame, deltaFrame: CARTA.IAnimationFrame;
 
