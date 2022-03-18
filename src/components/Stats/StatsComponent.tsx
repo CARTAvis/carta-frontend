@@ -10,6 +10,7 @@ import {StatsWidgetStore} from "stores/widgets";
 import {toExponential, exportTsvFile} from "utilities";
 import {RegionSelectorComponent} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
+import {FULL_POLARIZATIONS} from "models";
 import "./StatsComponent.scss";
 
 @observer
@@ -132,10 +133,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         // When frame is changed(coordinateOptions changes), coordinate stays unchanged if new frame also supports it, otherwise defaults to 'z'
         autorun(() => {
-            if (
-                this.widgetStore.effectiveFrame &&
-                (!this.widgetStore.effectiveFrame.polarizationInfo.find(polarization => `${polarization.replace("Stokes ", "")}z` === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.polarizationInfo)
-            ) {
+            if (this.widgetStore.effectiveFrame && (!this.widgetStore.effectiveFrame.coordinateOptionsZ.find(option => option.value === this.widgetStore.coordinate) || !this.widgetStore.effectiveFrame.polarizationInfo)) {
                 this.widgetStore.setCoordinate("z");
             }
         });
@@ -227,10 +225,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         if (widgetStore.effectiveFrame?.regionSet) {
             enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
-            const polarizationInfo = widgetStore.effectiveFrame.polarizationInfo;
-            polarizationInfo.forEach(polarization => coordinateOptions.push({value: `${polarization.replace("Stokes ", "")}z`, label: polarization}));
+            coordinateOptions.push(...widgetStore.effectiveFrame.coordinateOptionsZ);
 
-            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === polarizationInfo[widgetStore.effectiveFrame.requiredStokes] + "z") {
+            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requredPolarization) + "z") {
                 stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.darkTheme});
             }
         }

@@ -149,7 +149,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @computed get stokesOptions(): LineOption[] {
         let options = [{value: DEFAULT_STOKES, label: "Current"}];
         if (this.effectiveFrame?.hasStokes) {
-            this.effectiveFrame.polarizationInfo?.forEach(polarization => options.push({value: `${polarization}`, label: polarization}));
+            options.push(...this.effectiveFrame.coordinateOptions);
         }
         return options;
     }
@@ -159,7 +159,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         const frame = this.effectiveFrame;
         let stokes = undefined;
         if (frame?.hasStokes) {
-            stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName : this.selectedStokes;
+            stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredPolarizationInfo : this.selectedStokes;
         }
         return `${stokes?.replace("Stokes ", "") ?? ""}${this.coordinate}`;
     }

@@ -821,10 +821,6 @@ export class FrameStore {
         return stokesOptions;
     }
 
-    @computed get requiredStokesName(): string {
-        return this.stokesOptions?.[this.requiredStokes]?.label;
-    }
-
     @computed get stokesInfo(): string[] {
         return this.stokesOptions?.map(option => {
             return option?.label;
@@ -863,9 +859,25 @@ export class FrameStore {
     }
 
     @computed get polarizationInfo(): string[] {
-        return this.polarizations.map(polarization => {
+        return this.polarizations?.map(polarization => {
             return POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization));
         });
+    }
+
+    @computed get coordinateOptions(): {value: string; label: string}[] {
+        return this.polarizations?.map(polarization => {
+            return {value: FULL_POLARIZATIONS.get(polarization), label: POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization))};
+        });
+    }
+
+    @computed get coordinateOptionsZ(): {value: string; label: string}[] {
+        return this.polarizations?.map(polarization => {
+            return {value: FULL_POLARIZATIONS.get(polarization) + "z", label: POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization))};
+        });
+    }
+
+    @computed get requredPolarization(): number {
+        return this.polarizations?.[this.requiredPolarizationIndex];
     }
 
     @computed get requiredPolarizationInfo(): string {
