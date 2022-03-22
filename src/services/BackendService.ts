@@ -67,7 +67,6 @@ export class BackendService {
     public animationId: number;
     public sessionId: number;
     public serverFeatureFlags: number;
-    public grpcPort: number;
     public serverUrl: string;
 
     private connection: WebSocket;
@@ -369,11 +368,18 @@ export class BackendService {
         }
     }
 
-    async loadFile(directory: string, file: string, hdu: string, fileId: number, renderMode: CARTA.RenderMode): Promise<CARTA.IOpenFileAck> {
+    async loadFile(directory: string, file: string, hdu: string, fileId: number, imageArithmetic: boolean): Promise<CARTA.IOpenFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const message = CARTA.OpenFile.create({directory, file, hdu, fileId, renderMode});
+            const message = CARTA.OpenFile.create({
+                directory,
+                file,
+                hdu,
+                fileId,
+                lelExpr: imageArithmetic,
+                renderMode: CARTA.RenderMode.RASTER
+            });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.OPEN_FILE, CARTA.OpenFile.encode(message).finish())) {
@@ -851,7 +857,6 @@ export class BackendService {
     private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
         this.sessionId = ack.sessionId;
         this.serverFeatureFlags = ack.serverFeatureFlags;
-        this.grpcPort = ack.grpcPort;
 
         TelemetryService.Instance.addTelemetryEntry(TelemetryAction.Connection, {serverFeatureFlags: ack.serverFeatureFlags, platformInfo: ack.platformStrings});
         this.onDeferredResponse(eventId, ack);

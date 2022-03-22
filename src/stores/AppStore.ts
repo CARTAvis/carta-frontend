@@ -212,7 +212,7 @@ export class AppStore {
             if (fileList?.length) {
                 this.setLoadingMultipleFiles(true);
                 for (const file of fileList) {
-                    await this.loadFile(folderSearchParam, file, "");
+                    await this.loadFile(folderSearchParam, file, "", false);
                 }
                 this.setLoadingMultipleFiles(false);
             } else if (this.preferenceStore.autoLaunch) {
@@ -424,7 +424,7 @@ export class AppStore {
         return frameMap;
     }
 
-    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string): boolean => {
+    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string, generated: boolean = false): boolean => {
         if (!ack) {
             return false;
         }
@@ -447,7 +447,7 @@ export class AppStore {
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable
         };
-        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes);
+        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
 
@@ -498,10 +498,12 @@ export class AppStore {
         return true;
     };
 
-    loadFile = async (path: string, filename: string, hdu: string) => {
+    loadFile = async (path: string, filename: string, hdu: string, imageArithmetic: boolean) => {
         this.startFileLoading();
 
-        if (!filename) {
+        if (imageArithmetic) {
+            hdu = "";
+        } else if (!filename) {
             const lastDirSeparator = path.lastIndexOf("/");
             if (lastDirSeparator >= 0) {
                 filename = path.substring(lastDirSeparator + 1);
@@ -527,7 +529,7 @@ export class AppStore {
         }
 
         try {
-            const ack = await this.backendService.loadFile(path, filename, hdu, this.fileCounter, CARTA.RenderMode.RASTER);
+            const ack = await this.backendService.loadFile(path, filename, hdu, this.fileCounter, imageArithmetic);
             this.fileCounter++;
             if (!this.addFrame(ack, path, hdu)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
@@ -588,12 +590,13 @@ export class AppStore {
      * @param path - path to the parent directory of the file to open, or of the file itself
      * @param {string=} filename - filename of the file to open
      * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
+     * @param {boolean=} imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string
      * @return {Promise<FrameStore>} [async] the FrameStore the opened file
      */
-    @action appendFile = async (path: string, filename: string, hdu: string) => {
+    @action appendFile = async (path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) => {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        return this.loadFile(path, filename, hdu);
+        return this.loadFile(path, filename, hdu, imageArithmetic);
     };
 
     /**
@@ -601,11 +604,12 @@ export class AppStore {
      * @param path - path to the parent directory of the file to open, or of the file itself
      * @param {string=} filename - filename of the file to open
      * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
+     * @param {boolean=} imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string
      * @return {Promise<FrameStore>} [async] the FrameStore of the opened file
      */
-    @action openFile = (path: string, filename?: string, hdu?: string) => {
+    @action openFile = (path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) => {
         this.removeAllFrames();
-        return this.loadFile(path, filename, hdu);
+        return this.loadFile(path, filename, hdu, imageArithmetic);
     };
 
     saveFile = async (directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean) => {
@@ -644,6 +648,8 @@ export class AppStore {
         } else {
             this.removeFrame(frame);
         }
+
+        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
     };
 
     /**
@@ -1029,7 +1035,7 @@ export class AppStore {
             const ack = await this.backendService.requestMoment(message);
             if (!ack.cancel && ack.openFileAcks) {
                 for (const openFileAck of ack.openFileAcks) {
-                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "")) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "", true)) {
                         this.fileCounter++;
                         frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
                     } else {
@@ -1070,7 +1076,7 @@ export class AppStore {
         try {
             const ack = await this.backendService.requestPV(message);
             if (!ack.cancel && ack.openFileAck) {
-                if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, "")) {
+                if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, "", true)) {
                     this.fileCounter++;
                     frame.addPvImage(this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId));
                 } else {
@@ -1430,11 +1436,6 @@ export class AppStore {
                     }
                 }
                 throttledSetViews(viewUpdates);
-
-                // TODO: this should be separate
-                if (!this.activeFrame) {
-                    this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
-                }
             }
         });
 
@@ -2237,8 +2238,8 @@ export class AppStore {
                     composedCanvas.toBlob(blob => {
                         const link = document.createElement("a") as HTMLAnchorElement;
                         const joinedNames = this.visibleFrames.map(f => f.filename).join("-");
-                        // Trim filename to 230 characters in total to prevent browser errors
-                        link.download = `${joinedNames}-image-${getTimestamp()}`.substring(0, 225) + ".png";
+                        // Trim filename before timestamp to 200 characters to prevent browser errors
+                        link.download = `${joinedNames}-image`.substring(0, 200) + `-${getTimestamp()}.png`;
                         link.href = URL.createObjectURL(blob);
                         link.dispatchEvent(new MouseEvent("click"));
                     }, "image/png");
@@ -2425,12 +2426,14 @@ export class AppStore {
                     const stats = new Stats();
                     stats.showPanel(this.preferenceStore.statsPanelMode); // 0: fps, 1: ms, 2: mb, 3+: custom
                     document.body.appendChild(stats.dom);
+
                     function animate() {
                         stats.begin();
                         // monitored code goes here
                         stats.end();
                         requestAnimationFrame(animate);
                     }
+
                     requestAnimationFrame(animate);
                     stats.dom.style.right = "0";
                     stats.dom.style.left = "initial";
