@@ -14,12 +14,8 @@ import {
     CatalogProfileStore,
     CatalogStore,
     CatalogUpdateMode,
-    CURSOR_REGION_ID,
     DialogStore,
-    DistanceMeasuringStore,
     FileBrowserStore,
-    FrameInfo,
-    FrameStore,
     HelpStore,
     LayoutStore,
     LogEntry,
@@ -28,12 +24,12 @@ import {
     PreferenceKeys,
     PreferenceStore,
     RegionFileType,
-    RegionStore,
     SnippetStore,
     SpatialProfileStore,
     SpectralProfileStore,
     WidgetsStore
 } from ".";
+import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "./Frame";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
 import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode} from "models";

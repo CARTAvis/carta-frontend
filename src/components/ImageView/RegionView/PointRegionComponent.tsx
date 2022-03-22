@@ -1,7 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import Konva from "konva";
-import {AppStore, FrameStore, RegionStore} from "stores";
+import {AppStore} from "stores";
+import {FrameStore, RegionStore} from "stores/Frame";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
 import {transformPoint} from "utilities";

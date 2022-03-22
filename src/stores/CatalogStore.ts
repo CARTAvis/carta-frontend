@@ -1,6 +1,7 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap, computed, makeObservable} from "mobx";
-import {AppStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, FrameStore, WidgetsStore} from "stores";
+import {AppStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, WidgetsStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {CatalogWebGLService} from "services";
 import {CatalogSystemType} from "models";
 import {CatalogWidgetStore} from "stores/widgets";

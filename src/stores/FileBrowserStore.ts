@@ -1,8 +1,9 @@
-import {IOptionProps, TabId} from "@blueprintjs/core";
 import {action, computed, observable, makeObservable, runInAction, autorun} from "mobx";
+import {IOptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import {AppStore, DialogStore, PreferenceKeys, PreferenceStore, RegionStore} from "stores";
+import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
+import {RegionStore} from "stores/Frame";
 import {RegionId} from "stores/widgets";
 import {AppToaster, ErrorToast} from "components/Shared";
 import {FileInfoType} from "components";

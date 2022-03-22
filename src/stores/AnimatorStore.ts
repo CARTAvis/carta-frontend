@@ -1,6 +1,7 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore, PreferenceStore} from "stores";
+import {AppStore, PreferenceStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
 import {FrameView, Point2D} from "models";
 
