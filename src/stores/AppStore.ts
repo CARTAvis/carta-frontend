@@ -1114,8 +1114,9 @@ export class AppStore {
             if (ack.success) {
                 this.getFrame(message.fileId).setFittingResult(ack.results);
                 this.getFrame(message.fileId).setFittingLog(ack.log);
-            } else {
-                console.log(ack.message);
+            }
+            if (ack.message) {
+                AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
             }
         } catch (err) {
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
