@@ -1,11 +1,5 @@
-name: Continuous Integration
-
-on:
-  pull_request:
-  push:
-    branches:
-      - dev
-
+name: CI
+on: push
 jobs:
   check-formatting:
     runs-on: ubuntu-latest
