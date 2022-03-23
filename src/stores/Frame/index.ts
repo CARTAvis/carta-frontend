@@ -1,7 +1,6 @@
 export * from "./ColorbarStore";
 export * from "./ContourStore";
 export * from "./ContourConfigStore";
-export * from "./ContourConfigStore";
 export * from "./DistanceMeasuringStore";
 export * from "./FrameStore";
 export * from "./OverlayBeamStore";
