@@ -124,6 +124,15 @@ export class FittingDialogComponent extends React.Component {
                         <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
                     </Tabs>
                 </div>
+                {/* <Dialog className={classNames(Classes.ALERT, {"bp3-dark": appStore.darkTheme})} isOpen={fittingStore.isFitting} >
+                    <div className={Classes.ALERT_BODY}>
+                        <Icon icon="time" iconSize={40} />
+                        <div className={Classes.ALERT_CONTENTS}>
+                            <p>Image fitting processing ...</p>
+                            <p>Calculation may take a long time, depending on the size of the file and the number of Gaussian components.</p>
+                        </div>
+                    </div>
+                </Dialog> */}
             </DraggableDialogComponent>
         );
     }
