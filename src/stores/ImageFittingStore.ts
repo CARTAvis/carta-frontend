@@ -145,13 +145,13 @@ export class ImageFittingIndividualStore {
 
     constructor() {
         makeObservable(this);
-        this.center = {x: null, y: null};
-        this.amplitude = null;
-        this.fwhm = {x: null, y: null};
-        this.pa = null;
+        this.center = {x: NaN, y: NaN};
+        this.amplitude = NaN;
+        this.fwhm = {x: NaN, y: NaN};
+        this.pa = NaN;
     }
 
     @computed get validParams() {
-        return Number.isFinite(this.center.x) && Number.isFinite(this.center.y) && Number.isFinite(this.amplitude) && Number.isFinite(this.fwhm.x) && Number.isFinite(this.fwhm.y) && Number.isFinite(this.pa);
+        return isFinite(this.center?.x) && isFinite(this.center?.y) && isFinite(this.amplitude) && isFinite(this.fwhm?.x) && isFinite(this.fwhm?.y) && isFinite(this.pa);
     }
 }

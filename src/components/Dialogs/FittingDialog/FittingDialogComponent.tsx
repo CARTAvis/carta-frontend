@@ -28,6 +28,10 @@ export class FittingDialogComponent extends React.Component {
         this.fittingResultTabId = FittingResultTabs.RESULT;
     }
 
+    private renderParamInput = (value: number, placeholder: string, onValueChange) => {
+        return <SafeNumericInput value={isFinite(value) ? value : ""} placeholder={placeholder} onValueChange={onValueChange} buttonPosition="none" />;
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const fittingStore = appStore.imageFittingStore;
@@ -90,18 +94,18 @@ export class FittingDialogComponent extends React.Component {
                         )}
                     </FormGroup>
                     <FormGroup label="Center" inline={true} labelInfo="(px)">
-                        <SafeNumericInput value={component?.center?.x ?? ""} onValueChange={component?.setCenterX} buttonPosition="none" placeholder="Center X" />
-                        <SafeNumericInput value={component?.center?.y ?? ""} onValueChange={component?.setCenterY} buttonPosition="none" placeholder="Center Y" />
+                        {this.renderParamInput(component?.center?.x, "Center X", component?.setCenterX)}
+                        {this.renderParamInput(component?.center?.y, "Center Y", component?.setCenterY)}
                     </FormGroup>
                     <FormGroup label="Amplitude" inline={true} labelInfo={fittingStore.effectiveFrame?.unit ? `(${fittingStore.effectiveFrame?.unit})` : ""}>
-                        <SafeNumericInput value={component?.amplitude ?? ""} onValueChange={component?.setAmplitude} buttonPosition="none" placeholder="Amplitude" />
+                        {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
                     </FormGroup>
                     <FormGroup label="FWHM" inline={true} labelInfo="(px)">
-                        <SafeNumericInput value={component?.fwhm?.x ?? ""} onValueChange={component?.setFwhmX} buttonPosition="none" placeholder="FWHM X" />
-                        <SafeNumericInput value={component?.fwhm?.y ?? ""} onValueChange={component?.setFwhmY} buttonPosition="none" placeholder="FWHM Y" />
+                        {this.renderParamInput(component?.fwhm?.x, "FWHM X", component?.setFwhmX)}
+                        {this.renderParamInput(component?.fwhm?.y, "FWHM Y", component?.setFwhmY)}
                     </FormGroup>
                     <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                        <SafeNumericInput value={component?.pa ?? ""} onValueChange={component?.setPa} buttonPosition="none" placeholder="Position Angle" />
+                        {this.renderParamInput(component?.pa, "Position Angle", component?.setPa)}
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>

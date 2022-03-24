@@ -2,6 +2,7 @@
     .bp3-label {
         display: flex;
         min-width: 10em;
+        user-select: none;
 
         .bp3-text-muted {
             margin-left: 5px;
@@ -13,6 +14,7 @@
     .bp3-form-content {
         display: flex;
         width: 100%;
+        user-select: none;
     }
 
     .bp3-control-group {
