@@ -90,11 +90,9 @@ export class ImageFittingStore {
         const initialValues = [];
         for (const c of this.components) {
             initialValues.push({
-                centerX: c.center.x,
-                centerY: c.center.y,
+                center: c.center,
                 amp: c.amplitude,
-                fwhmX: c.fwhm.x,
-                fwhmY: c.fwhm.y,
+                fwhm: c.fwhm,
                 pa: c.pa,
                 fixedCenterX: false,
                 fixedCenterY: false,
