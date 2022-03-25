@@ -170,7 +170,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         return `${stokes?.replace("Stokes ", "") ?? ""}${this.coordinate}`;
     }
 
-    private static GetSpatialConfig(frame: FrameStore, coordinate: string, isCursor: boolean, isLine: boolean, LineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
+    private static GetSpatialConfig(frame: FrameStore, coordinate: string, isCursor: boolean, LineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
         if (frame.cursorMoving && !AppStore.Instance.cursorFrozen && isCursor) {
             if (coordinate.includes("x")) {
                 return {
@@ -231,7 +231,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                 if (existingConfig) {
                     // TODO: Merge existing configs, rather than only allowing a single one
                 } else {
-                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, widgetStore.fullCoordinate, regionId === RegionId.CURSOR, region.regionType === CARTA.RegionType.LINE, widgetStore.LineRegionSampleWidth));
+                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, widgetStore.fullCoordinate, regionId === RegionId.CURSOR, widgetStore.LineRegionSampleWidth));
                 }
             }
         });
