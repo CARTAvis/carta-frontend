@@ -192,10 +192,15 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                 <Tabs id="spatialSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
                     <Tab id={SpatialProfilerSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
                     <Tab id={SpatialProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} />} />
-                    <Tab id={SpatialProfilerSettingsTabs.COMPUTATION} title="Computation" panel={
-                    <FormGroup label={"Width"} inline={true}> 
-                    <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.LineRegionSampleWidth} onValueChange={value => this.widgetStore.setLineRegionSampleWidth(value)} /> 
-                    </FormGroup>}/>
+                    <Tab
+                        id={SpatialProfilerSettingsTabs.COMPUTATION}
+                        title="Computation"
+                        panel={
+                            <FormGroup label={"Width"} inline={true}>
+                                <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.LineRegionSampleWidth} onValueChange={value => this.widgetStore.setLineRegionSampleWidth(value)} />
+                            </FormGroup>
+                        }
+                    />
                 </Tabs>
             </div>
         );

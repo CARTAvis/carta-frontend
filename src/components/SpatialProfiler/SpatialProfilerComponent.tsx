@@ -185,7 +185,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             // redefine if the region is line and polyline
             if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
                 xMax = coordinateData.values.length;
-                xMin = 0
+                xMin = 0;
                 yMean = 0;
                 yRms = 0;
                 let ySum = 0;

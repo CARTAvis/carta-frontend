@@ -52,7 +52,7 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
 
             let fiteredRegions: RegionStore[];
             let regions = widgetStore.effectiveFrame.regionSet.regions;
-            
+
             switch (widgetStore.type) {
                 default:
                     fiteredRegions = regions;
