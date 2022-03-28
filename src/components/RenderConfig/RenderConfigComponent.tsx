@@ -11,7 +11,8 @@ import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComp
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {FrameStore, RenderConfigStore, DefaultWidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore} from "stores";
+import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore} from "stores";
+import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed, getColorForTheme, scaleValue} from "utilities";
 import "./RenderConfigComponent.scss";

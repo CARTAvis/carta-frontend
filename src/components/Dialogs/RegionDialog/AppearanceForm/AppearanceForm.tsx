@@ -3,9 +3,9 @@ import {observer} from "mobx-react";
 import * as _ from "lodash";
 import {ColorResult} from "react-color";
 import {FormGroup, H5} from "@blueprintjs/core";
-import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {RegionStore} from "stores";
 import {CARTA} from "carta-protobuf";
+import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {RegionStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import "./AppearanceForm.scss";
 

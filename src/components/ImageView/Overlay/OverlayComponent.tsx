@@ -3,7 +3,8 @@ import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {AppStore, FrameStore, OverlayStore, PreferenceStore} from "stores";
+import {AppStore, OverlayStore, PreferenceStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
 import "./OverlayComponent.scss";
 

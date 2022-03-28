@@ -1,5 +1,6 @@
 import {computed, makeObservable} from "mobx";
-import {FrameStore, OverlayStore} from "stores";
+import {OverlayStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {clamp} from "utilities";
 
 export class ColorbarStore {
