@@ -2,7 +2,8 @@ import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {Classes, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
-import {AppStore, BrowserMode, RegionMode} from "./stores";
+import {AppStore, BrowserMode} from "./stores";
+import {RegionMode} from "stores/Frame";
 import {ImageViewLayer} from "components";
 
 // There are some issues with the Blueprint hotkey target decorator, so this rather hacky workaround is needed for now

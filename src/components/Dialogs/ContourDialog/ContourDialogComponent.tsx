@@ -9,7 +9,8 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
-import {AppStore, FrameStore, HelpType} from "stores";
+import {AppStore, HelpType} from "stores";
+import {FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed, getColorForTheme} from "utilities";

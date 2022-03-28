@@ -6,7 +6,8 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent} from "components/Shared";
 import {formattedExponential, toFixed} from "utilities";
-import {AppStore, DefaultWidgetConfig, FrameStore, HelpType, WidgetProps} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
+import {FrameStore} from "stores/Frame";
 import "./CursorInfoComponent.scss";
 
 @observer

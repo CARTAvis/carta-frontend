@@ -3,7 +3,8 @@ import {action, autorun, computed, observable, override, makeObservable} from "m
 import * as _ from "lodash";
 import {RegionWidgetStore, RegionId, RegionsType} from "./RegionWidgetStore";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore, ProfileSmoothingStore} from "stores";
+import {AppStore, ProfileSmoothingStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {PlotType, LineSettings} from "components/Shared";
 import {SpatialProfilerSettingsTabs} from "components";
 import {clamp, isAutoColor} from "utilities";
