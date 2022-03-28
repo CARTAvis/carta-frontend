@@ -1,5 +1,5 @@
 import {FrameView, Point2D, Transform2D} from "models";
-import {FrameStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {rotate2D, scale2D} from "utilities";
 
 export function canvasToImagePos(canvasX: number, canvasY: number, frameView: FrameView, layerWidth: number, layerHeight: number, spatialTransform: Transform2D = null): Point2D {

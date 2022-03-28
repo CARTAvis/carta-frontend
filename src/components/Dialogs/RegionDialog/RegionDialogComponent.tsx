@@ -4,7 +4,8 @@ import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState} from "@bluep
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, RegionStore, HelpType} from "stores";
+import {AppStore, HelpType} from "stores";
+import {RegionStore} from "stores/Frame";
 import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";

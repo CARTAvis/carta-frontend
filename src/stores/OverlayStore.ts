@@ -1,8 +1,9 @@
 import * as AST from "ast_wrapper";
-import {action, autorun, computed, observable, makeObservable} from "mobx";
-import {AppStore, FrameStore, PreferenceStore, WCS_PRECISION} from "stores";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {AppStore, PreferenceStore} from "stores";
+import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
 import {WCSType} from "models";
-import {toFixed, clamp, getColorForTheme} from "utilities";
+import {clamp, getColorForTheme, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";
 const COLORBAR_TICK_NUM_MIN = 3;
@@ -930,49 +931,6 @@ export class OverlayColorbarSettings {
         // total width + base
         return this.totalWidth + 5;
     }
-}
-
-export class OverlayBeamStore {
-    @observable visible: boolean;
-    @observable color: string;
-    @observable type: BeamType;
-    @observable width: number;
-    @observable shiftX: number;
-    @observable shiftY: number;
-
-    constructor() {
-        makeObservable(this);
-        const preference = PreferenceStore.Instance;
-        this.visible = preference.beamVisible;
-        this.color = preference.beamColor;
-        this.type = preference.beamType;
-        this.width = preference.beamWidth;
-        this.shiftX = this.shiftY = 0;
-    }
-
-    @action setVisible = (visible: boolean) => {
-        this.visible = visible;
-    };
-
-    @action setColor = (color: string) => {
-        this.color = color;
-    };
-
-    @action setType = (type: BeamType) => {
-        this.type = type;
-    };
-
-    @action setWidth = (width: number) => {
-        this.width = width;
-    };
-
-    @action setShiftX = (shift: number) => {
-        this.shiftX = shift;
-    };
-
-    @action setShiftY = (shift: number) => {
-        this.shiftY = shift;
-    };
 }
 
 export class OverlayBeamSettings {

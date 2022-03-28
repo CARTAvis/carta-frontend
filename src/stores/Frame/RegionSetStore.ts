@@ -1,10 +1,11 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {CURSOR_REGION_ID, FrameStore, PreferenceStore, RegionStore} from "stores";
+import {PreferenceStore} from "stores";
+import {CURSOR_REGION_ID, FrameStore, RegionStore} from "stores/Frame";
 import {Point2D, Transform2D} from "models";
-import {BackendService} from "../services";
-import {isAstBadPoint, scale2D, transformPoint} from "../utilities";
+import {BackendService} from "services";
+import {isAstBadPoint, scale2D, transformPoint} from "utilities";
 
 export enum RegionMode {
     MOVING,
