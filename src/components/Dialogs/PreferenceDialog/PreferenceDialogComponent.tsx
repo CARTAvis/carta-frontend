@@ -30,7 +30,7 @@ import {
     ZoomPoint
 } from "models";
 import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
-import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
+import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore, VectorOverlayMode} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import {TelemetryMode} from "services";
 import "./PreferenceDialogComponent.scss";
@@ -39,7 +39,8 @@ enum PreferenceDialogTabs {
     GLOBAL,
     RENDER_CONFIG,
     CONTOUR_CONFIG,
-    OVERLAY_CONFIG,
+    VECTOR_OVERLAY_CONFIG,
+    WCS_OVERLAY_CONFIG,
     REGION,
     PERFORMANCE,
     LOG_EVENT,
@@ -91,7 +92,10 @@ export class PreferenceDialogComponent extends React.Component {
             case PreferenceDialogTabs.CONTOUR_CONFIG:
                 preference.resetContourConfigSettings();
                 break;
-            case PreferenceDialogTabs.OVERLAY_CONFIG:
+            case PreferenceDialogTabs.VECTOR_OVERLAY_CONFIG:
+                preference.resetVectorOverlayConfigSettings();
+                break;
+            case PreferenceDialogTabs.WCS_OVERLAY_CONFIG:
                 preference.resetOverlayConfigSettings();
                 break;
             case PreferenceDialogTabs.REGION:
@@ -338,6 +342,65 @@ export class PreferenceDialogComponent extends React.Component {
                         color={preference.contourColor}
                         presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLOR, color.hex)}
+                        disableAlpha={true}
+                        darkTheme={appStore.darkTheme}
+                    />
+                </FormGroup>
+            </React.Fragment>
+        );
+
+        const vectorOverlayConfigPanel = (
+            <React.Fragment>
+                <FormGroup inline={true} label="Mode">
+                    <HTMLSelect value={preference.vectorOverlayMode} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_MODE, ev.currentTarget.value as VectorOverlayMode)}>
+                        <option value={VectorOverlayMode.IntensityAndAngle}>Intensity and Angle</option>
+                        <option value={VectorOverlayMode.AngleOnly}>Angle Only (Lines)</option>
+                        <option value={VectorOverlayMode.IntensityOnly}>Intensity Only (Blocks)</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Default Pixel Averaging">
+                    <SafeNumericInput
+                        placeholder="Default Pixel Averaging"
+                        min={2}
+                        max={32}
+                        value={preference.vectorOverlayPixelAveraging}
+                        majorStepSize={2}
+                        stepSize={2}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, Math.floor(value * 0.5) * 2.0)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Use Fractional Intensity">
+                    <Switch checked={preference.vectorOverlayFractionalIntensity} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY, ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Thickness">
+                    <SafeNumericInput
+                        placeholder="Thickness"
+                        min={0.5}
+                        max={10}
+                        value={preference.vectorOverlayThickness}
+                        majorStepSize={0.5}
+                        stepSize={0.5}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_THICKNESS, value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Default Color Mode">
+                    <HTMLSelect value={preference.vectorOverlayColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
+                        <option key={0} value={0}>
+                            Constant Color
+                        </option>
+                        <option key={1} value={1}>
+                            Color-mapped
+                        </option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Default Color Map">
+                    <ColormapComponent inverted={false} selectedItem={preference.vectorOverlayColormap} onItemSelect={selected => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLORMAP, selected)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Default Color">
+                    <ColorPickerComponent
+                        color={preference.vectorOverlayColor}
+                        presetColors={SWATCH_COLORS}
+                        setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_COLOR, color.hex)}
                         disableAlpha={true}
                         darkTheme={appStore.darkTheme}
                     />
@@ -730,7 +793,8 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.GLOBAL} title="Global" panel={globalPanel} />
                         <Tab id={PreferenceDialogTabs.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel} />
                         <Tab id={PreferenceDialogTabs.CONTOUR_CONFIG} title="Contour Configuration" panel={contourConfigPanel} />
-                        <Tab id={PreferenceDialogTabs.OVERLAY_CONFIG} title="Overlay Configuration" panel={overlayConfigPanel} />
+                        <Tab id={PreferenceDialogTabs.VECTOR_OVERLAY_CONFIG} title="Vector Overlay Configuration" panel={vectorOverlayConfigPanel} />
+                        <Tab id={PreferenceDialogTabs.WCS_OVERLAY_CONFIG} title="WCS and Image Overlay" panel={overlayConfigPanel} />
                         <Tab id={PreferenceDialogTabs.CATALOG} title="Catalog" panel={catalogPanel} />
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={regionSettingsPanel} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={performancePanel} />

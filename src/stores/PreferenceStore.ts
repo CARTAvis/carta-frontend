@@ -2,11 +2,10 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, FileFilteringType} from "stores";
-import {ContourGeneratorType, FrameScaling} from "stores/Frame";
+import {ContourGeneratorType, FrameScaling, VectorOverlayMode} from "stores/Frame";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService, TelemetryMode} from "services";
-import {VectorOverlayMode} from "./Frame/VectorOverlayConfigStore";
 
 export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
