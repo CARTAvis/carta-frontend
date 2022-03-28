@@ -391,9 +391,11 @@ export class PreferenceStore {
     @computed get vectorOverlayMode(): VectorOverlayMode {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_MODE) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayMode;
     }
+
     @computed get vectorOverlayThickness(): number {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayThickness;
     }
+
     @computed get vectorOverlayColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
     }
@@ -712,6 +714,18 @@ export class PreferenceStore {
             PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR,
             PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE,
             PreferenceKeys.CONTOUR_CONFIG_THICKNESS
+        ]);
+    };
+
+    @action resetVectorOverlayConfigSettings = () => {
+        this.clearPreferences([
+            PreferenceKeys.VECTOR_OVERLAY_MODE,
+            PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING,
+            PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY,
+            PreferenceKeys.VECTOR_OVERLAY_COLOR,
+            PreferenceKeys.VECTOR_OVERLAY_COLORMAP,
+            PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED,
+            PreferenceKeys.VECTOR_OVERLAY_THICKNESS
         ]);
     };
 
