@@ -1885,6 +1885,54 @@ export class FrameStore {
         this.contourConfig.setEnabled(false);
     };
 
+    @action applyVectorOverlay = () => {
+        const config = this.vectorOverlayConfig;
+        if (!config || !this.renderConfig) {
+            return;
+        }
+
+        const preferenceStore = PreferenceStore.Instance;
+        config.setEnabled(true);
+
+        const parameters: CARTA.ISetVectorOverlayParameters = {
+            fileId: this.frameInfo.fileId,
+            imageBounds: {
+                xMin: 0,
+                xMax: this.frameInfo.fileInfoExtended.width,
+                yMin: 0,
+                yMax: this.frameInfo.fileInfoExtended.height
+            },
+            smoothingFactor: config.pixelAveraging,
+            fractional: config.fractionalIntensity,
+            threshold: config.threshold,
+            debiasing: config.debiasing,
+            qError: config.qError,
+            uError: config.uError,
+            // TODO: Stokes args
+            compressionType: CARTA.CompressionType.ZFP,
+            compressionQuality: preferenceStore.contourCompressionLevel
+        };
+        this.backendService.setVectorOverlayParameters(parameters);
+    };
+
+    @action clearVectorOverlay = (updateBackend: boolean = true) => {
+        // Clear up GPU resources
+        // TODO once the vector overlay stores are added
+        // this.contourStores.forEach(contourStore => contourStore.clearData());
+        // this.contourStores.clear();
+
+        if (updateBackend) {
+            // Send clearing vector overlay parameter message to the backend, to prevent overlay from being automatically updated
+            const parameters: CARTA.ISetVectorOverlayParameters = {
+                fileId: this.frameInfo.fileId,
+                stokesAngle: -1,
+                stokesIntensity: -1
+            };
+            this.backendService.setVectorOverlayParameters(parameters);
+        }
+        this.vectorOverlayConfig.setEnabled(false);
+    };
+
     // Spatial WCS Matching
     @action setSpatialReference = (frame: FrameStore) => {
         if (frame === this) {
