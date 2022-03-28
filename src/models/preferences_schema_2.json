@@ -124,6 +124,36 @@
         "contourColormap": {
             "type": "string"
         },
+        "vectorOverlayPixelAveraging": {
+            "type": "number",
+            "minimum": 2,
+            "default": 4
+        },
+        "vectorOverlayFractionalIntensity": {
+            "type": "boolean",
+            "default": false
+        },
+        "vectorOverlayMode": {
+            "type": "string",
+            "enum": ["intensity-only", "angle-only", "intensity-and-angle"],
+            "default": "intensity-and-angle"
+        },
+        "vectorOverlayThickness": {
+            "type": "number",
+            "minimum": 0
+        },
+        "vectorOverlayColormapEnabled": {
+            "type": "boolean"
+        },
+        "vectorOverlayColor": {
+            "type": "string",
+            "description": "TODO: validate color string",
+            "default": "#ffffff"
+        },
+        "vectorOverlayColormap": {
+            "type": "string",
+            "default": "viridis"
+        },
         "astColor": {
             "type": "string",
             "description": "TODO: validate color string"

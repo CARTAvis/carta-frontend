@@ -6,6 +6,7 @@ import {ContourGeneratorType, FrameScaling} from "stores/Frame";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService, TelemetryMode} from "services";
+import {VectorOverlayMode} from "./Frame/VectorOverlayConfigStore";
 
 export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",
@@ -35,14 +36,22 @@ export enum PreferenceKeys {
     RENDER_CONFIG_NAN_ALPHA = "nanAlpha",
     RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST = "useSmoothedBiasContrast",
 
-    CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE = "contourGeneratorType",
-    CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE = "contourSmoothingMode",
-    CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR = "contourSmoothingFactor",
-    CONTOUR_CONFIG_CONTOUR_NUM_LEVELS = "contourNumLevels",
-    CONTOUR_CONFIG_CONTOUR_THICKNESS = "contourThickness",
-    CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED = "contourColormapEnabled",
-    CONTOUR_CONFIG_CONTOUR_COLOR = "contourColor",
-    CONTOUR_CONFIG_CONTOUR_COLORMAP = "contourColormap",
+    CONTOUR_CONFIG_GENERATOR_TYPE = "contourGeneratorType",
+    CONTOUR_CONFIG_SMOOTHING_MODE = "contourSmoothingMode",
+    CONTOUR_CONFIG_SMOOTHING_FACTOR = "contourSmoothingFactor",
+    CONTOUR_CONFIG_NUM_LEVELS = "contourNumLevels",
+    CONTOUR_CONFIG_THICKNESS = "contourThickness",
+    CONTOUR_CONFIG_COLORMAP_ENABLED = "contourColormapEnabled",
+    CONTOUR_CONFIG_COLOR = "contourColor",
+    CONTOUR_CONFIG_COLORMAP = "contourColormap",
+
+    VECTOR_OVERLAY_PIXEL_AVERAGING = "vectorOverlayPixelAveraging",
+    VECTOR_OVERLAY_FRACTIONAL_INTENSITY = "vectorOverlayFractionalIntensity",
+    VECTOR_OVERLAY_MODE = "vectorOverlayMode",
+    VECTOR_OVERLAY_THICKNESS = "vectorOverlayThickness",
+    VECTOR_OVERLAY_COLORMAP_ENABLED = "vectorOverlayColormapEnabled",
+    VECTOR_OVERLAY_COLOR = "vectorOverlayColor",
+    VECTOR_OVERLAY_COLORMAP = "vectorOverlayColormap",
 
     WCS_OVERLAY_AST_COLOR = "astColor",
     WCS_OVERLAY_AST_GRID_VISIBLE = "astGridVisible",
@@ -145,8 +154,17 @@ const DEFAULTS = {
         contourNumLevels: 5,
         contourThickness: 1,
         contourColormapEnabled: false,
-        contourColor: Colors.GREEN3,
+        contourColor: Colors.WHITE,
         contourColormap: "viridis"
+    },
+    VECTOR_OVERLAY: {
+        vectorOverlayPixelAveraging: 4,
+        vectorOverlayFractionalIntensity: false,
+        vectorOverlayMode: VectorOverlayMode.IntensityAndAngle,
+        vectorOverlayThickness: 1,
+        vectorOverlayColormapEnabled: false,
+        vectorOverlayColor: Colors.WHITE,
+        vectorOverlayColormap: "viridis"
     },
     WCS_OVERLAY: {
         astColor: "auto-blue",
@@ -318,35 +336,35 @@ export class PreferenceStore {
 
     // getters for Contour Config
     @computed get contourGeneratorType(): ContourGeneratorType {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE) ?? DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE) ?? DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
     }
 
     @computed get contourColormapEnabled(): boolean {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED) ?? DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
     }
 
     @computed get contourColormap(): string {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLORMAP) ?? DEFAULTS.CONTOUR_CONFIG.contourColormap;
     }
 
     @computed get contourColor(): string {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR) ?? DEFAULTS.CONTOUR_CONFIG.contourColor;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_COLOR) ?? DEFAULTS.CONTOUR_CONFIG.contourColor;
     }
 
     @computed get contourSmoothingMode(): CARTA.SmoothingMode {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
     }
 
     @computed get contourSmoothingFactor(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR) ?? DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
     }
 
     @computed get contourNumLevels(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS) ?? DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS) ?? DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
     }
 
     @computed get contourThickness(): number {
-        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS) ?? DEFAULTS.CONTOUR_CONFIG.contourThickness;
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_THICKNESS) ?? DEFAULTS.CONTOUR_CONFIG.contourThickness;
     }
 
     @computed get contourDecimation(): number {
@@ -359,6 +377,33 @@ export class PreferenceStore {
 
     @computed get contourChunkSize(): number {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE) ?? DEFAULTS.PERFORMANCE.contourChunkSize;
+    }
+
+    // getters for vector overlay
+    @computed get vectorOverlayPixelAveraging(): number {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayPixelAveraging;
+    }
+
+    @computed get vectorOverlayFractionalIntensity(): boolean {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayFractionalIntensity;
+    }
+
+    @computed get vectorOverlayMode(): VectorOverlayMode {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_MODE) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayMode;
+    }
+    @computed get vectorOverlayThickness(): number {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_THICKNESS) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayThickness;
+    }
+    @computed get vectorOverlayColormapEnabled(): boolean {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP_ENABLED) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormapEnabled;
+    }
+
+    @computed get vectorOverlayColor(): string {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLOR) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColor;
+    }
+
+    @computed get vectorOverlayColormap(): string {
+        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_COLORMAP) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayColormap;
     }
 
     // getters for WCS overlay
@@ -659,14 +704,14 @@ export class PreferenceStore {
 
     @action resetContourConfigSettings = () => {
         this.clearPreferences([
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR,
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP,
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE,
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
-            PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS
+            PreferenceKeys.CONTOUR_CONFIG_COLOR,
+            PreferenceKeys.CONTOUR_CONFIG_COLORMAP,
+            PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED,
+            PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE,
+            PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS,
+            PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR,
+            PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE,
+            PreferenceKeys.CONTOUR_CONFIG_THICKNESS
         ]);
     };
 
@@ -761,9 +806,9 @@ export class PreferenceStore {
                 PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE,
                 PreferenceKeys.RENDER_CONFIG_COLORMAP,
                 PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP,
+                PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE,
+                PreferenceKeys.CONTOUR_CONFIG_COLOR,
+                PreferenceKeys.CONTOUR_CONFIG_COLORMAP,
                 PreferenceKeys.WCS_OVERLAY_WCS_TYPE,
                 PreferenceKeys.WCS_OVERLAY_COLORBAR_POSITION,
                 PreferenceKeys.WCS_OVERLAY_BEAM_COLOR,
@@ -778,9 +823,9 @@ export class PreferenceStore {
             const intKeys = [
                 PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING,
                 PreferenceKeys.RENDER_CONFIG_SCALING,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
+                PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE,
+                PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR,
+                PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS,
                 PreferenceKeys.REGION_DASH_LENGTH,
                 PreferenceKeys.REGION_TYPE,
                 PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
@@ -800,7 +845,7 @@ export class PreferenceStore {
                 PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA,
                 PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA,
                 PreferenceKeys.RENDER_CONFIG_NAN_ALPHA,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS,
+                PreferenceKeys.CONTOUR_CONFIG_THICKNESS,
                 PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH,
                 PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY,
                 PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
@@ -812,7 +857,7 @@ export class PreferenceStore {
                 PreferenceKeys.GLOBAL_DRAG_PANNING,
                 PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND,
                 PreferenceKeys.RENDER_CONFIG_USE_SMOOTHED_BIAS_CONTRAST,
-                PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
+                PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED,
                 PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE,
                 PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE,
                 PreferenceKeys.WCS_OVERLAY_COLORBAR_VISIBLE,

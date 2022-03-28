@@ -47,7 +47,7 @@ export class ContourConfigStore {
         this.colormap = this.preferenceStore.contourColormap;
         this.colormapBias = 0.0;
         this.colormapContrast = 1.0;
-        this.thickness = 1.0;
+        this.thickness = this.preferenceStore.contourThickness;
         this.dashMode = ContourDashMode.NegativeOnly;
         this.visible = true;
     }

@@ -271,11 +271,11 @@ export class PreferenceDialogComponent extends React.Component {
                     <HTMLSelect
                         value={preference.contourGeneratorType}
                         options={Object.keys(ContourGeneratorType).map(key => ({label: ContourGeneratorType[key], value: ContourGeneratorType[key]}))}
-                        onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, ev.currentTarget.value as ContourGeneratorType)}
+                        onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_GENERATOR_TYPE, ev.currentTarget.value as ContourGeneratorType)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Smoothing Mode">
-                    <HTMLSelect value={preference.contourSmoothingMode} onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, Number(ev.currentTarget.value))}>
+                    <HTMLSelect value={preference.contourSmoothingMode} onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_MODE, Number(ev.currentTarget.value))}>
                         <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>
                             No Smoothing
                         </option>
@@ -295,7 +295,7 @@ export class PreferenceDialogComponent extends React.Component {
                         value={preference.contourSmoothingFactor}
                         majorStepSize={1}
                         stepSize={1}
-                        onValueChange={value => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, value)}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_SMOOTHING_FACTOR, value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Contour Levels">
@@ -306,7 +306,7 @@ export class PreferenceDialogComponent extends React.Component {
                         value={preference.contourNumLevels}
                         majorStepSize={1}
                         stepSize={1}
-                        onValueChange={value => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, value)}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS, value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness">
@@ -317,11 +317,11 @@ export class PreferenceDialogComponent extends React.Component {
                         value={preference.contourThickness}
                         majorStepSize={0.5}
                         stepSize={0.5}
-                        onValueChange={value => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS, value)}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_THICKNESS, value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Color Mode">
-                    <HTMLSelect value={preference.contourColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
+                    <HTMLSelect value={preference.contourColormapEnabled ? 1 : 0} onChange={ev => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP_ENABLED, parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>
                             Constant Color
                         </option>
@@ -331,13 +331,13 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default Color Map">
-                    <ColormapComponent inverted={false} selectedItem={preference.contourColormap} onItemSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, selected)} />
+                    <ColormapComponent inverted={false} selectedItem={preference.contourColormap} onItemSelect={selected => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLORMAP, selected)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Color">
                     <ColorPickerComponent
                         color={preference.contourColor}
                         presetColors={SWATCH_COLORS}
-                        setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, color.hex)}
+                        setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_COLOR, color.hex)}
                         disableAlpha={true}
                         darkTheme={appStore.darkTheme}
                     />

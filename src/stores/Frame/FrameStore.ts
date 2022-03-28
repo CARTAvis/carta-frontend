@@ -49,6 +49,7 @@ import {
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
 import {formattedArcsec, ProtobufProcessing} from "utilities";
+import {VectorOverlayConfigStore} from "./VectorOverlayConfigStore";
 
 export interface FrameInfo {
     fileId: number;
@@ -121,6 +122,7 @@ export class FrameStore {
     @observable currentCompressionQuality: number;
     @observable renderConfig: RenderConfigStore;
     @observable contourConfig: ContourConfigStore;
+    @observable vectorOverlayConfig: VectorOverlayConfigStore;
     @observable contourStores: Map<number, ContourStore>;
     @observable moving: boolean;
     @observable zooming: boolean;
@@ -847,6 +849,7 @@ export class FrameStore {
         this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
+        this.vectorOverlayConfig = new VectorOverlayConfigStore(preferenceStore);
         this.moving = false;
         this.zooming = false;
         this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
