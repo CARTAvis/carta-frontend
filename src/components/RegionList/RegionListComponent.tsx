@@ -12,6 +12,7 @@ import {DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FileB
 import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {toFixed, getFormattedWCSPoint, formattedArcsec, length2D, clamp} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
+import ReactScrollableFeed from 'react-scrollable-feed';
 import "./RegionListComponent.scss";
 
 @observer
@@ -320,6 +321,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             return (
                 <div className={className} key={region.regionId} onClick={() => frame.regionSet.selectRegion(region)} style={style}>
+                <ReactScrollableFeed>
                     {lockEntry}
                     {focusEntry}
                     {exportEntry}
@@ -336,6 +338,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                             {toFixed(region.rotation, 1)}
                         </div>
                     )}
+                </ReactScrollableFeed>
                 </div>
             );
         };
