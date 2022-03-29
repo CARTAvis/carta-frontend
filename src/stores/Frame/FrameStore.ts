@@ -1909,6 +1909,8 @@ export class FrameStore {
             qError: config.qError,
             uError: config.uError,
             // TODO: Stokes args
+            stokesIntensity: 0,
+            stokesAngle: -1,
             compressionType: CARTA.CompressionType.ZFP,
             compressionQuality: preferenceStore.contourCompressionLevel
         };
