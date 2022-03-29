@@ -1,7 +1,8 @@
 import {action, observable, computed, makeObservable} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore, RegionStore} from "..";
+import {AppStore} from "stores";
+import {FrameStore, RegionStore} from "stores/Frame";
 
 export const ACTIVE_FILE_ID = -1;
 

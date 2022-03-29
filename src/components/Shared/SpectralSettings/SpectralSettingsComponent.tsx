@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
-import {FrameStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {SpectralSystem} from "models";
 
 @observer

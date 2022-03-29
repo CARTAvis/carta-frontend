@@ -1,8 +1,8 @@
 import {action, computed, observable, makeObservable} from "mobx";
-import {FrameStore, PreferenceStore} from "stores";
 import {CARTA} from "carta-protobuf";
+import {AppStore, PreferenceStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
-import {AppStore} from "./AppStore";
 
 export enum FrameScaling {
     LINEAR = 0,

@@ -1,6 +1,7 @@
 import React from "react";
 import {observer} from "mobx-react";
-import {AppStore, FrameStore} from "stores";
+import {AppStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {transformedImageToCanvasPos} from "./shared";
 import {CursorMarker} from "./InvariantShapes";
 

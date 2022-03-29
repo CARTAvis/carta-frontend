@@ -1,7 +1,8 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {AppStore, ContourDashMode, FrameStore, RenderConfigStore} from "stores";
+import {AppStore} from "stores";
+import {ContourDashMode, FrameStore, RenderConfigStore} from "stores/Frame";
 import {ceilToPower, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 import {ContourWebGLService} from "services";
 import "./ContourViewComponent.scss";
