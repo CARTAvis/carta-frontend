@@ -76,6 +76,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
     };
 
+    handleSecondarySpectralAxisChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.widgetStore.setSpectralAxisVisibleSecondary(changeEvent.target.checked);
+    };
+
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -157,6 +161,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
             setPlotType: widgetStore.setPlotType,
+            optionalSpectralAxisVisible: widgetStore.spectralAxisVisibleSecondary,
+            handleSecondarySpectralAxisChanged: this.handleSecondarySpectralAxisChanged,
             meanRmsVisible: widgetStore.meanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             isAutoScaledX: widgetStore.isAutoScaledX,
@@ -184,8 +190,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                 <SpectralSettingsComponent
                                     frame={widgetStore.effectiveFrame}
                                     onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                    onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
                                     onSpectralSystemChange={widgetStore.setSpectralSystem}
                                     disable={widgetStore.effectiveFrame?.isPVImage}
+                                    optionalAxisVisible={widgetStore.spectralAxisVisibleSecondary}
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
                                     <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />

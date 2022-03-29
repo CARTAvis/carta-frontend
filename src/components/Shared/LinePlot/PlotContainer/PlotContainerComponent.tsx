@@ -384,7 +384,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     max: this.props.xMax,
                     afterBuildTicks: (axis: Scale) => this.filterLinearTicks(axis, false),
                     type: "linear",
-                    display: this.props.showTopAxis !== undefined,
+                    display: this.props.showTopAxis,
+                    title: {
+                        color: labelColor,
+                        display: this.props.showXAxisLabel === undefined ? true : this.props.showXAxisLabel,
+                        text: this.props.xLabel
+                    },
                     ticks: {
                         includeBounds: false,
                         color: labelColor,

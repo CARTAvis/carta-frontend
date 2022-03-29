@@ -37,6 +37,8 @@ export class SpectralProfileSelectionStore {
     @observable selectedStatsTypes: CARTA.StatsType[];
     @observable selectedCoordinates: string[];
 
+    @observable optionalSpectralAxisVisible: boolean;
+
     private readonly widgetStore: SpectralProfileWidgetStore;
     private readonly DEFAULT_COORDINATE: string;
 
