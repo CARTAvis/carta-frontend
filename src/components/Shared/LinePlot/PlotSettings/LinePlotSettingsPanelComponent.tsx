@@ -36,7 +36,7 @@ export class LinePlotSettingsPanelComponentProps {
     clearXYBounds?: () => void;
     handleCoordinateChanged?: (changeEvent: React.ChangeEvent<HTMLSelectElement>) => void;
     handleWcsAxisChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
-    handleOptionalSpectralAxisChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
+    handleSecondarySpectralAxisChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleLogScaleChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleMarkerTextChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleXMinChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
@@ -154,9 +154,9 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             <Switch checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged} />
                         </FormGroup>
                     )}
-                    {typeof props.optionalSpectralAxisVisible !== "undefined" && props.handleOptionalSpectralAxisChanged && (
-                        <FormGroup inline={true} label={"Show Opt. Axis"}>
-                            <Switch checked={props.optionalSpectralAxisVisible} onChange={props.handleOptionalSpectralAxisChanged} />
+                    {typeof props.optionalSpectralAxisVisible !== "undefined" && props.handleSecondarySpectralAxisChanged && (
+                        <FormGroup inline={true} label={"Show Secondary Axis"}>
+                            <Switch checked={props.optionalSpectralAxisVisible} onChange={props.handleSecondarySpectralAxisChanged} />
                         </FormGroup>
                     )}
                     {typeof props.meanRmsVisible !== "undefined" && props.handleMeanRmsChanged && (

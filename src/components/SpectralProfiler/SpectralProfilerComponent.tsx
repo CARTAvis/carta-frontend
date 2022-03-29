@@ -281,7 +281,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private convertSpectral = (values: Array<number>): Array<number> => {
-        return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.frame.spectralTypeOpt, this.frame.spectralUnitOpt, this.frame.spectralSystem, value)) : null;
+        return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, value)) : null;
     };
 
     private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
@@ -306,13 +306,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         if (this.frame.channelInfo) {
             for (let i = 0; i < ticks.length; i++) {
-                if (!this.frame.spectralTypeOpt && !this.frame.spectralUnitOpt) {
+                if (!this.frame.spectralTypeSecondary && !this.frame.spectralUnitSecondary) {
                     this.cachedFormattedCoordinates[i] = this.frame.channelInfo.values[i].toString();
-                } else if (this.frame.spectralTypeOpt === SpectralType.CHANNEL) {
+                } else if (this.frame.spectralTypeSecondary === SpectralType.CHANNEL) {
                     this.cachedFormattedCoordinates[i] = this.frame.channelInfo.indexes[i].toString();
                 } else {
                     const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, ticks[i].value, false);
-                    const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeOpt, this.frame.spectralUnitOpt, this.frame.spectralSystem, nativeCoord);
+                    const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
                     this.cachedFormattedCoordinates[i] = coord.toString();
                 }
             }
@@ -376,7 +376,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
-            xLabelOpt: "Channel",
+            xLabelSecondary: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
             tickTypeY: TickType.Scientific,
@@ -394,7 +394,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             selectingMode: this.linePlotSelectingMode,
             setSelectedRange: this.setSelectedRange,
             isSelectingInsideBox: this.widgetStore.fittingStore.isCursorSelectingComponent,
-            showTopAxis: this.widgetStore.optionalSpectralAxisVisible,
+            showTopAxis: this.widgetStore.spectralAxisVisibleSecondary,
             setSelectedInsideBox: this.setSelectedBox,
             setSelectedLine: this.setSelectedLine,
             insideBoxes: this.widgetStore.fittingStore.componentPlottingBoxes,

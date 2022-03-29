@@ -77,7 +77,7 @@ export class LinePlotComponentProps {
     yMin?: number;
     yMax?: number;
     xLabel?: string;
-    xLabelOpt?: string;
+    xLabelSecondary?: string;
     yLabel?: string;
     logY?: boolean;
     lineColor?: string;

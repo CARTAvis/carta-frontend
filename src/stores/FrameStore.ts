@@ -120,8 +120,8 @@ export class FrameStore {
     @observable renderHiDPI: boolean;
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
-    @observable spectralTypeOpt: SpectralType;
-    @observable spectralUnitOpt: SpectralUnit;
+    @observable spectralTypeSecondary: SpectralType;
+    @observable spectralUnitSecondary: SpectralUnit;
     @observable spectralSystem: SpectralSystem;
     @observable channelValues: Array<number>;
     @observable center: Point2D;
@@ -669,8 +669,8 @@ export class FrameStore {
         return !this.spectralType && !this.spectralUnit ? this.nativeSpectralCoordinate : GenCoordinateLabel(this.spectralType, this.spectralUnit);
     }
 
-    @computed get spectralCoordinateOpt(): string {
-        return !this.spectralTypeOpt && !this.spectralUnitOpt ? this.nativeSpectralCoordinate : GenCoordinateLabel(this.spectralTypeOpt, this.spectralUnitOpt);
+    @computed get spectralCoordinateSecondary(): string {
+        return !this.spectralTypeSecondary && !this.spectralUnitSecondary ? this.nativeSpectralCoordinate : GenCoordinateLabel(this.spectralTypeSecondary, this.spectralUnitSecondary);
     }
 
     @computed get spectralLabel(): string {
@@ -853,8 +853,8 @@ export class FrameStore {
         this.spectralFrame = null;
         this.spectralType = null;
         this.spectralUnit = null;
-        this.spectralTypeOpt = null;
-        this.spectralUnitOpt = null;
+        this.spectralTypeSecondary = null;
+        this.spectralUnitSecondary = null;
         this.spectralSystem = null;
         this.channelValues = null;
         this.spectralCoordsSupported = null;
@@ -1033,13 +1033,13 @@ export class FrameStore {
         if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
             if (this.isPVImage) {
                 this.spectralType = SpectralType.VRAD;
-                this.spectralTypeOpt = SpectralType.VRAD;
+                this.spectralTypeSecondary = SpectralType.VRAD;
             } else {
                 this.spectralType = this.spectralAxis.type.code as SpectralType;
-                this.spectralTypeOpt = this.spectralAxis.type.code as SpectralType;
+                this.spectralTypeSecondary = this.spectralAxis.type.code as SpectralType;
             }
             this.spectralUnit = SPECTRAL_DEFAULT_UNIT.get(this.spectralType);
-            this.spectralUnitOpt = SPECTRAL_DEFAULT_UNIT.get(this.spectralTypeOpt);
+            this.spectralUnitSecondary = SPECTRAL_DEFAULT_UNIT.get(this.spectralTypeSecondary);
         }
         if (this.isSpectralSystemConvertible) {
             this.spectralSystem = this.spectralAxis.specsys as SpectralSystem;
@@ -1113,8 +1113,8 @@ export class FrameStore {
         });
 
         autorun(() => {
-            const type = this.spectralTypeOpt;
-            const unit = this.spectralUnitOpt;
+            const type = this.spectralTypeSecondary;
+            const unit = this.spectralUnitSecondary;
 
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
@@ -1679,11 +1679,11 @@ export class FrameStore {
     };
 
     // optional axis
-    @action setSpectralCoordinateOpt = (coordStr: string, alignSpectralSiblings: boolean = false): boolean => {
+    @action setSpectralCoordinateSecondary = (coordStr: string, alignSpectralSiblings: boolean = false): boolean => {
         if (this.spectralCoordsSupported?.has(coordStr)) {
             const coord: {type: SpectralType; unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
-            this.spectralTypeOpt = coord.type;
-            this.spectralUnitOpt = coord.unit;
+            this.spectralTypeSecondary = coord.type;
+            this.spectralUnitSecondary = coord.unit;
 
             if (alignSpectralSiblings) {
                 (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
