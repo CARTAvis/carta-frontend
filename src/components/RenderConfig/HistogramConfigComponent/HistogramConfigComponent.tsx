@@ -3,7 +3,8 @@ import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, Button, FormGroup, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {AppStore, RenderConfigStore} from "stores";
+import {AppStore} from "stores";
+import {RenderConfigStore} from "stores/Frame";
 import {SCALING_POPOVER_PROPS} from "components/Shared";
 
 const HistogramSelect = Select.ofType<boolean>();

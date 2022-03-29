@@ -10,7 +10,8 @@ import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramTo
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
-import {FrameStore, WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
+import {WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
+import {FrameStore} from "stores/Frame";
 import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.scss";

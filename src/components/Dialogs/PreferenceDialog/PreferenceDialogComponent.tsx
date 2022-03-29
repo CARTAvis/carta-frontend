@@ -29,7 +29,8 @@ import {
     Zoom,
     ZoomPoint
 } from "models";
-import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, PreferenceStore, RegionStore, RenderConfigStore} from "stores";
+import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
+import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import {TelemetryMode} from "services";
 import "./PreferenceDialogComponent.scss";

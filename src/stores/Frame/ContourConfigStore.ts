@@ -1,8 +1,8 @@
 import {action, observable, makeObservable} from "mobx";
 import tinycolor from "tinycolor2";
-import {CARTA} from "carta-protobuf";
-import {PreferenceStore} from "./PreferenceStore";
 import {RGBColor} from "react-color";
+import {CARTA} from "carta-protobuf";
+import {PreferenceStore} from "stores";
 
 export enum ContourGeneratorType {
     StartStepMultiplier = "start-step-multiplier",

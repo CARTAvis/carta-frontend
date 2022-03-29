@@ -1,5 +1,5 @@
 import * as AST from "ast_wrapper";
-import {FrameStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {Point2D} from "./Point2D";
 import {GL2, subtract2D} from "utilities";
 

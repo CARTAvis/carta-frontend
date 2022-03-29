@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {Button, FormGroup, MenuItem, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {ContourGeneratorType, FrameScaling, FrameStore} from "stores";
+import {ContourGeneratorType, FrameScaling, FrameStore} from "stores/Frame";
 import {ScalingSelectComponent, ClearableNumericInputComponent, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
 import {getPercentiles, scaleValue} from "utilities";
 import "./ContourGeneratorPanelComponent.scss";

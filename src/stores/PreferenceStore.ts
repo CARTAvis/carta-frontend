@@ -1,7 +1,8 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {BeamType, ContourGeneratorType, FileFilteringType, FrameScaling} from "stores";
+import {BeamType, FileFilteringType} from "stores";
+import {ContourGeneratorType, FrameScaling} from "stores/Frame";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService, TelemetryMode} from "services";

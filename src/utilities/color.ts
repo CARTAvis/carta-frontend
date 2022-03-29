@@ -1,7 +1,8 @@
 // Static assets
 import allMaps from "static/allmaps.png";
 import {Colors} from "@blueprintjs/core";
-import {RenderConfigStore, AppStore} from "stores";
+import {AppStore} from "stores";
+import {RenderConfigStore} from "stores/Frame";
 
 export const SWATCH_COLORS = [
     Colors.BLUE3,

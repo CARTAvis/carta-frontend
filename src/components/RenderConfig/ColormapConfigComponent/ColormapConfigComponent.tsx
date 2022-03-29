@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
 import {Button, Collapse, FormGroup, Switch} from "@blueprintjs/core";
-import {FrameScaling, RenderConfigStore} from "stores";
+import {FrameScaling, RenderConfigStore} from "stores/Frame";
 import {BiasContrastSelectComponent, ColormapComponent, ScalingSelectComponent, SafeNumericInput} from "components/Shared";
 
 interface ColormapConfigProps {
