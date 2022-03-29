@@ -1,7 +1,7 @@
 import * as React from "react";
 import {MenuItem, IPopoverProps, Button} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {RenderConfigStore} from "stores/RenderConfigStore";
+import {RenderConfigStore} from "stores/Frame";
 
 // Static assets
 import allMaps from "static/allmaps.png";

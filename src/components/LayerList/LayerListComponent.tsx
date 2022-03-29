@@ -7,7 +7,8 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
-import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore, FrameStore} from "stores";
+import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {LayerListSettingsTabs} from "stores/widgets";
 import "./LayerListComponent.scss";
 

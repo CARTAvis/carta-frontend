@@ -5,7 +5,8 @@ import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
-import {AppStore, FrameStore} from "stores";
+import {AppStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {CustomIconName} from "icons/CustomIcons";
 
 export const CURSOR_REGION_ID = 0;

@@ -12,7 +12,8 @@ import {RegionViewComponent} from "../RegionView/RegionViewComponent";
 import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
 import {ImageViewLayer} from "../ImageViewComponent";
-import {AppStore, FrameStore} from "stores";
+import {AppStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {CursorInfo, CursorInfoVisibility, Zoom} from "models";
 import "./ImagePanelComponent.scss";
 

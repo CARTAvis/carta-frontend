@@ -1,6 +1,6 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import * as CARTACompute from "carta_computation";
-import {ContourWebGLService} from "../services";
+import {ContourWebGLService} from "services";
 import {GL2} from "utilities";
 
 export class ContourStore {

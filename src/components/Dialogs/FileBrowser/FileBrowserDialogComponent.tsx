@@ -10,7 +10,8 @@ import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoCompo
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SimpleTableComponentProps} from "components/Shared";
-import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, FrameStore, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import "./FileBrowserDialogComponent.scss";
 
 @observer
