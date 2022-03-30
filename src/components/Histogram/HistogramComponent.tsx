@@ -13,7 +13,7 @@ import {HistogramWidgetStore} from "stores/widgets";
 import {WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {FrameStore} from "stores/Frame";
 import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
-import {Point2D} from "models";
+import {Point2D, POLARIZATIONS} from "models";
 import "./HistogramComponent.scss";
 
 @observer
@@ -205,9 +205,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 if (nearest?.point) {
                     let valueLabel = `${nearest.point.y !== 0.5 ? nearest.point.y : 0}`;
 
-                    const frame = AppStore.Instance.activeFrame;
+                    const frame = this.widgetStore.effectiveFrame;
                     if (frame.unit) {
-                        numberString += ` ${frame.unit}`;
+                        numberString += ` ${this.widgetStore.coordinate === "Panglez" || (this.widgetStore.coordinate === "z" && frame.requredPolarization === POLARIZATIONS.Pangle) ? "degree" : frame.unit}`;
                     }
                     if (nearest.point.y <= 1) {
                         valueLabel += ` Count`;
@@ -239,7 +239,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
         let unitString = "Value";
         if (frame && frame.unit) {
-            unitString = `Value (${frame.unit})`;
+            unitString = `Value (${(this.widgetStore.coordinate === "z" && frame.requredPolarization === POLARIZATIONS.Pangle) || this.widgetStore.coordinate === "Panglez" ? "degree" : frame.unit})`;
         }
 
         const imageName = frame.filename;

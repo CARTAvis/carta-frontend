@@ -336,6 +336,13 @@ export class FrameStore {
         }
     }
 
+    @computed get requiredUnit() {
+        if (this.unit) {
+            return this.requredPolarization === POLARIZATIONS.Pangle ? "degree" : this.unit;
+        }
+        return undefined;
+    }
+
     @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} {
         const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
@@ -909,7 +916,7 @@ export class FrameStore {
         this.contourStores = new Map<number, ContourStore>();
         this.moving = false;
         this.zooming = false;
-        this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
+        this.colorbarLabelCustomText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
         this.titleCustomText = "";
         this.overlayBeamSettings = new OverlayBeamStore();
         this.spatialReference = null;

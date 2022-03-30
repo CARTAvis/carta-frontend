@@ -12,7 +12,7 @@ import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotCon
 import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
-import {Point2D} from "models";
+import {Point2D, POLARIZATIONS} from "models";
 import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme} from "utilities";
 import "./SpatialProfilerComponent.scss";
 
@@ -411,7 +411,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         if (appStore.activeFrame) {
             if (this.profileStore && this.frame) {
                 if (this.frame.unit) {
-                    linePlotProps.yLabel = `Value (${this.frame.unit})`;
+                    linePlotProps.yLabel = `Value (${
+                        (this.widgetStore.selectedStokes === "current" && this.widgetStore.effectiveFrame.requredPolarization === POLARIZATIONS.Pangle) || ["Pangle", "Pangle"].includes(this.widgetStore.selectedStokes)
+                            ? "degree"
+                            : this.frame.unit
+                    })`;
                 }
 
                 if (this.frame.validWcs && widgetStore.wcsAxisVisible) {

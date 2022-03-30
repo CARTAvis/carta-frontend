@@ -170,7 +170,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             left={overlayStore.padding.left}
                             right={overlayStore.padding.right}
                             docked={this.props.docked}
-                            unit={frame.unit}
+                            unit={frame.requiredUnit}
                             top={overlayStore.padding.top}
                             currentStokes={appStore.activeFrame.requiredPolarizationInfo}
                         />

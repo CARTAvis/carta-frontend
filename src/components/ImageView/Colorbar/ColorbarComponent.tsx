@@ -234,7 +234,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
             }
         }
 
-        const frameUnit = frame.unit === undefined || !frame.unit.length ? "arbitrary units" : frame.unit;
+        const frameUnit = frame.requiredUnit === undefined || !frame.requiredUnit.length ? "arbitrary units" : frame.requiredUnit;
         if (colorbarSettings.position === "right") {
             // adjust for rotation
             switch (colorbarSettings.labelRotation) {
@@ -272,7 +272,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const hoverInfo =
             colorbarSettings.interactive && this.isHovering ? (
                 <div className={"colorbar-info"}>
-                    <ProfilerInfoComponent info={[`Colorscale: ${this.hoverInfoText} ${frame.unit}`]} />
+                    <ProfilerInfoComponent info={[`Colorscale: ${this.hoverInfoText} ${frame.requiredUnit}`]} />
                 </div>
             ) : null;
 

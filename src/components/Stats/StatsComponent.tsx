@@ -10,7 +10,7 @@ import {StatsWidgetStore} from "stores/widgets";
 import {toExponential, exportTsvFile} from "utilities";
 import {RegionSelectorComponent} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
-import {FULL_POLARIZATIONS} from "models";
+import {FULL_POLARIZATIONS, POLARIZATIONS} from "models";
 import "./StatsComponent.scss";
 
 @observer
@@ -159,7 +159,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         if (this.statsData && isFinite(index) && index >= 0 && index < this.statsData.statistics?.length) {
             const frame = this.widgetStore.effectiveFrame;
             if (frame && frame.unit) {
-                const unit = frame.unit;
+                const unit = (this.widgetStore.coordinate === "z" && frame.requredPolarization === POLARIZATIONS.Pangle) || this.widgetStore.coordinate === "Panglez" ? "degree" : frame.unit;
                 if (type === CARTA.StatsType.NumPixels) {
                     unitString = "pixel(s)";
                 } else if (type === CARTA.StatsType.SumSq) {

@@ -60,13 +60,13 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         if (!frame.isCursorValueCurrent) {
             valueString += "*";
         }
-        return frame.unit === undefined || !frame.unit.length ? (
+        return frame.requiredUnit === undefined || !frame.requiredUnit.length ? (
             valueString
         ) : (
             <React.Fragment>
                 {valueString}
                 <br />
-                {frame.unit}
+                {frame.requiredUnit}
             </React.Fragment>
         );
     };

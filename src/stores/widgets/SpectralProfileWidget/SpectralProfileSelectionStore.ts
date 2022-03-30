@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/widgets";
-import {LineKey, LineOption, StatsTypeString, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES, POLARIZATION_LABELS} from "models";
+import {LineKey, LineOption, StatsTypeString, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES, POLARIZATION_LABELS, POLARIZATIONS} from "models";
 import {genColorFromIndex, ProcessedSpectralProfile} from "utilities";
 
 export enum MultiProfileCategory {
@@ -388,6 +388,20 @@ export class SpectralProfileSelectionStore {
         if (this.selectedStatsTypes?.length <= 1) {
             return true;
         } else if (this.selectedStatsTypes?.includes(CARTA.StatsType.FluxDensity) || this.selectedStatsTypes?.includes(CARTA.StatsType.SumSq)) {
+            return false;
+        }
+        return true;
+    }
+
+    @computed get isCoordinatesPangleOnly(): boolean {
+        return this.selectedCoordinates?.length === 1 && (this.selectedCoordinates[0] === "Panglez" || (this.selectedCoordinates[0] === "z" && this.widgetStore.effectiveFrame.requredPolarization === POLARIZATIONS.Pangle));
+    }
+
+    @computed get isSameCoordinatesUnit(): boolean {
+        // unit of PolarizationAngle: degree, others: Jy/Beam
+        if (this.selectedCoordinates?.length <= 1) {
+            return true;
+        } else if (this.selectedCoordinates?.includes("Panglez")) {
             return false;
         }
         return true;
