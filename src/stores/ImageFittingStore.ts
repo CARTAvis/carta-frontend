@@ -1,6 +1,7 @@
 import {action, observable, makeObservable, computed} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore} from "stores";
+import {AppStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/widgets";
 import {Point2D} from "models";
 
