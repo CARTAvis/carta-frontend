@@ -1,7 +1,8 @@
 import {action, makeObservable, observable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Subject, throwError} from "rxjs";
-import {AppStore, PreferenceStore, RegionStore} from "stores";
+import {AppStore, PreferenceStore} from "stores";
+import {RegionStore} from "stores/Frame";
 import {mapToObject} from "utilities";
 import {ApiService} from "./ApiService";
 import {TelemetryAction, TelemetryService} from "./TelemetryService";

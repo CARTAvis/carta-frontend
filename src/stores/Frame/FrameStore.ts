@@ -2,23 +2,8 @@ import {action, autorun, computed, observable, makeObservable, runInAction, reac
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {
-    AnimatorStore,
-    AppStore,
-    ASTSettingsString,
-    ColorbarStore,
-    ContourConfigStore,
-    ContourStore,
-    DistanceMeasuringStore,
-    LogStore,
-    OverlayBeamStore,
-    OverlayStore,
-    PreferenceStore,
-    RegionSetStore,
-    RegionStore,
-    RestFreqStore,
-    RenderConfigStore
-} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
+import {ColorbarStore, ContourStore, ContourConfigStore, DistanceMeasuringStore, RegionStore, RegionSetStore, RestFreqStore, RenderConfigStore, OverlayBeamStore} from "stores/Frame";
 import {
     ChannelInfo,
     CatalogControlMap,
