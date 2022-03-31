@@ -101,8 +101,8 @@ export class FittingDialogComponent extends React.Component {
                         {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
                     </FormGroup>
                     <FormGroup label="FWHM" inline={true} labelInfo="(px)">
-                        {this.renderParamInput(component?.fwhm?.x, "FWHM X", component?.setFwhmX)}
-                        {this.renderParamInput(component?.fwhm?.y, "FWHM Y", component?.setFwhmY)}
+                        {this.renderParamInput(component?.fwhm?.x, "Major Axis", component?.setFwhmX)}
+                        {this.renderParamInput(component?.fwhm?.y, "Minor Axis", component?.setFwhmY)}
                     </FormGroup>
                     <FormGroup label="P.A." inline={true} labelInfo="(deg)">
                         {this.renderParamInput(component?.pa, "Position Angle", component?.setPa)}
