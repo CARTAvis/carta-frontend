@@ -201,7 +201,7 @@ export class CatalogApiService {
         } catch (error) {
             if (axios.isCancel(error)) {
                 AppToaster.show(WarningToast(error?.message));
-                CatalogApiService.Instance.resetCancelTokenSource(error);
+                CatalogApiService.Instance.resetCancelTokenSource(CatalogDatabase.SIMBAD);
             } else if (error?.message) {
                 AppToaster.show(ErrorToast(error.message));
             } else {
