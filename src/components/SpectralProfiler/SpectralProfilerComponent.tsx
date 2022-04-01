@@ -12,7 +12,8 @@ import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelecting
 import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
-import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, FrameStore, SpectralProfileStore, AppStore, DefaultWidgetConfig /*, ASTSettingsString, OverlayStore*/} from "stores";
+import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, SpectralProfileStore, AppStore, DefaultWidgetConfig /*, ASTSettingsString, OverlayStore*/} from "stores";
+import {FrameStore} from "stores/Frame";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, SpectralType, SpectralUnit, SpectralSystem} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme /*transformPoint*/} from "utilities";
