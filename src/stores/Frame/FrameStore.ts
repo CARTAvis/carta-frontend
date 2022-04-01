@@ -1767,10 +1767,10 @@ export class FrameStore {
 
     @action incrementChannels(deltaChannel: number, deltaStokes: number, wrap: boolean = true) {
         const depth = Math.max(1, this.frameInfo.fileInfoExtended.depth);
-        const numStokes = Math.max(1, this.frameInfo.fileInfoExtended.stokes);
+        const numStokes = Math.max(1, this.polarizations?.length);
 
         let newChannel = this.requiredChannel + deltaChannel;
-        let newStokes = this.requiredStokes + deltaStokes;
+        let newStokes = this.requiredPolarizationIndex + deltaStokes;
         if (wrap) {
             newChannel = (newChannel + depth) % depth;
             newStokes = (newStokes + numStokes) % numStokes;
@@ -1778,7 +1778,10 @@ export class FrameStore {
             newChannel = clamp(newChannel, 0, depth - 1);
             newStokes = clamp(newStokes, 0, numStokes - 1);
         }
-        this.setChannels(newChannel, newStokes, true);
+        const isComputedPolarization = newStokes >= this.frameInfo.fileInfoExtended.stokes;
+        // request standard polarization by the stokes index of image. (eg. "I": 0)
+        // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
+        this.setChannels(newChannel, isComputedPolarization ? this.polarizations[newStokes] : newStokes, true);
     }
 
     @action setZoom(zoom: number, absolute: boolean = false) {

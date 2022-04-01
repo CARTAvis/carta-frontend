@@ -134,7 +134,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 frame.setChannels(frame.frameInfo.fileInfoExtended.depth - 1, frame.stokes, true);
                 break;
             case AnimationMode.STOKES:
-                frame.setChannels(frame.channel, frame.frameInfo.fileInfoExtended.stokes - 1, true);
+                frame.setChannels(frame.channel, frame.frameInfo.fileInfoExtended.stokes < frame.polarizations.length ? frame.polarizations[frame.polarizations.length - 1] : frame.frameInfo.fileInfoExtended.stokes - 1, true);
                 break;
             default:
                 break;
