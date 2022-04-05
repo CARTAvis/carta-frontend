@@ -3,7 +3,7 @@ import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
-import {ColorbarStore, ContourStore, ContourConfigStore, DistanceMeasuringStore, RegionStore, RegionSetStore, RestFreqStore, RenderConfigStore, OverlayBeamStore, VectorOverlayConfigStore} from "stores/Frame";
+import {ColorbarStore, ContourStore, ContourConfigStore, DistanceMeasuringStore, RegionStore, RegionSetStore, RestFreqStore, RenderConfigStore, OverlayBeamStore, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
 import {
     ChannelInfo,
     CatalogControlMap,
@@ -99,6 +99,11 @@ export class FrameStore {
     public distanceMeasuring: DistanceMeasuringStore;
     public restFreqStore: RestFreqStore;
 
+    public readonly renderConfig: RenderConfigStore;
+    public readonly contourConfig: ContourConfigStore;
+    public readonly vectorOverlayConfig: VectorOverlayConfigStore;
+    public readonly vectorOverlayStore: VectorOverlayStore;
+
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
@@ -119,9 +124,6 @@ export class FrameStore {
     @observable animationChannelRange: NumberRange;
     @observable currentFrameView: FrameView;
     @observable currentCompressionQuality: number;
-    @observable renderConfig: RenderConfigStore;
-    @observable contourConfig: ContourConfigStore;
-    @observable vectorOverlayConfig: VectorOverlayConfigStore;
     @observable contourStores: Map<number, ContourStore>;
     @observable moving: boolean;
     @observable zooming: boolean;
@@ -849,6 +851,7 @@ export class FrameStore {
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
         this.vectorOverlayConfig = new VectorOverlayConfigStore(preferenceStore);
+        this.vectorOverlayStore = new VectorOverlayStore(this);
         this.moving = false;
         this.zooming = false;
         this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
@@ -1674,6 +1677,14 @@ export class FrameStore {
         });
     }
 
+    @action updateFromVectorOverlayData(vectorOverlayData: CARTA.IVectorOverlayTileData) {
+        if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
+            this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.progress);
+        } else {
+            this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.progress);
+        }
+    }
+
     @action setChannels(channel: number, stokes: number, recursive: boolean) {
         if (stokes < 0) {
             stokes += this.frameInfo.fileInfoExtended.stokes;
@@ -1911,7 +1922,7 @@ export class FrameStore {
             // TODO: Stokes args
             stokesIntensity: 0,
             stokesAngle: -1,
-            compressionType: CARTA.CompressionType.ZFP,
+            compressionType: CARTA.CompressionType.NONE,
             compressionQuality: preferenceStore.contourCompressionLevel
         };
         this.backendService.setVectorOverlayParameters(parameters);

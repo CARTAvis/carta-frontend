@@ -1,6 +1,7 @@
 export * from "./ColorbarStore";
 export * from "./ContourStore";
 export * from "./ContourConfigStore";
+export * from "./VectorOverlayStore";
 export * from "./VectorOverlayConfigStore";
 export * from "./DistanceMeasuringStore";
 export * from "./FrameStore";

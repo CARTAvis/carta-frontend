@@ -18,7 +18,7 @@ export class ContourStore {
     // Each vertex is repeated twice
     private static VertexDataElements = 8;
 
-    @computed get hasValidData() {
+    get hasValidData() {
         if (!this.vertexData) {
             return false;
         }

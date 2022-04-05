@@ -420,6 +420,16 @@ export class AppStore {
         return frameMap;
     }
 
+    // Calculates which frames have a vector overlay visible as a function of each visible frame
+    @computed get vectorOverlayFrames(): Map<FrameStore, FrameStore[]> {
+        const frameMap = new Map<FrameStore, FrameStore[]>();
+        for (const frame of this.visibleFrames) {
+            const group = this.spatialGroup(frame).filter(f => f.vectorOverlayConfig.enabled && f.vectorOverlayConfig.visible);
+            frameMap.set(frame, group);
+        }
+        return frameMap;
+    }
+
     @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string, generated: boolean = false): boolean => {
         if (!ack) {
             return false;
@@ -1505,6 +1515,7 @@ export class AppStore {
         this.tileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
+        this.backendService.vectorTileStream.subscribe(this.handleVectorTileStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1739,6 +1750,13 @@ export class AppStore {
         if (frame) {
             frame.updateRequestingPvProgress(pvProgress.progress);
             this.updateTaskProgress(pvProgress.progress);
+        }
+    };
+
+    handleVectorTileStream = (vectorTileData: CARTA.IVectorOverlayTileData) => {
+        const updatedFrame = this.getFrame(vectorTileData.fileId);
+        if (updatedFrame) {
+            updatedFrame.updateFromVectorOverlayData(vectorTileData);
         }
     };
 
