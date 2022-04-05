@@ -2,7 +2,7 @@ import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {FrameStore, VectorOverlayMode} from "stores/Frame";
 import {GL2} from "utilities";
 import {VectorOverlayWebGLService} from "services";
 import "./VectorOverlayView.scss";
@@ -95,6 +95,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
     };
 
     private renderFrameVectorOverlay = (frame: FrameStore, baseFrame: FrameStore) => {
+        const preferences = AppStore.Instance.preferenceStore;
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
         const isActive = frame === baseFrame;
         let lineThickness: number;
@@ -156,13 +157,13 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.CanvasSpaceLineWidth, lineThickness);
         this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.FeatherWidth, 1.0 * devicePixelRatio);
 
-        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.IntensityMin, 200);
-        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.IntensityMax, 1000);
+        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.IntensityMin, 4);
+        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.IntensityMax, 10);
         this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.LengthMin, 0);
-        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.LengthMax, 50);
+        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.LengthMax, 10);
 
-        const timeValue = (performance.now() % 1000.0) / 1000.0;
-        this.gl.uniform1i(this.vectorOverlayWebGLService.shaderUniforms.IntensityPlot, timeValue > 0.5 ? 1 : 0);
+
+        this.gl.uniform1i(this.vectorOverlayWebGLService.shaderUniforms.IntensityPlot, preferences.vectorOverlayMode === VectorOverlayMode.IntensityOnly? 1:0);
 
         // TODO: support non-uniform pixel ratios
         // this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.PixelRatio, frame.aspectRatio);

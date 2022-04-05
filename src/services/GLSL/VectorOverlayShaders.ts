@@ -3,10 +3,9 @@ import pixelShader from "!raw-loader!./pixel_shader_overlay.glsl";
 import utilities from "!raw-loader!./utilities.glsl";
 
 const sharedMacros = `
-
+#define PI radians(180.0)
 `;
 const vertexMacros = `
-#define PI radians(180.0)
 #define SQRT3 sqrt(3.0)
 #define SIN_60 0.86602540378
 `;

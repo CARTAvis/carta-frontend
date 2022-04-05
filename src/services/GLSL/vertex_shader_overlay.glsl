@@ -57,6 +57,10 @@ vec2 getOffsetFromId(int id) {
     }
 }
 
+vec2 imageToGL2(vec2 imageVec) {
+    return 2.0 * (imageVec - uFrameViewMin) / (uFrameViewMax - uFrameViewMin) - 1.0;
+}
+
 void main() {
     int dataPointIndex = gl_VertexID / 6;
     vec4 data = getValueByIndexFromTexture(uDataTexture, dataPointIndex);
@@ -76,7 +80,7 @@ void main() {
     // location vertex attribute is in line space before rotation
     v_location = offset;
     // position is in canvas space
-    gl_Position = vec4(imageToGL(centerPoint + rotate2D(offset, angle)), 0, 1);
+    gl_Position = vec4(imageToGL2(centerPoint + rotate2D(offset, angle)), 0, 1);
     v_length = lineLength;
     v_colour = vec4(hsv2rgb(vec3(cmapVal, 0.7, 0.7)), 1.0);
     v_timeOffset = sin(float(dataPointIndex) * 1.0);
