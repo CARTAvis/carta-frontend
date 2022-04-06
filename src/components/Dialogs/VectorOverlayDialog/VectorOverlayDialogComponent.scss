@@ -1,0 +1,20 @@
+.vector-overlay-dialog {
+    .bp3-dialog-body {
+        user-select: none;
+
+        .bp3-form-group {
+            &:first-of-type {
+                margin-left: 0px;
+            }
+        }
+
+        .vector-overlay-config-panel .bp3-form-group .bp3-label {
+            width: 10em;
+            text-align: left;
+        }
+
+        .bp3-tabs {
+            margin: 2px;
+        }
+    }
+}

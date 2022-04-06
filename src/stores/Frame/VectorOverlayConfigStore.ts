@@ -28,6 +28,8 @@ export class VectorOverlayConfigStore {
     @observable colormap: string;
     @observable colormapContrast: number;
     @observable colormapBias: number;
+    @observable lengthMin: number;
+    @observable lengthMax: number;
 
     private readonly preferenceStore: PreferenceStore;
 
@@ -47,6 +49,8 @@ export class VectorOverlayConfigStore {
         this.colormapBias = 0.0;
         this.colormapContrast = 1.0;
         this.thickness = this.preferenceStore.vectorOverlayThickness;
+        this.lengthMin = 0;
+        this.lengthMax = 10;
         this.visible = true;
     }
 

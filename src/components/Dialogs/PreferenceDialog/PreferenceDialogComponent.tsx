@@ -362,7 +362,7 @@ export class PreferenceDialogComponent extends React.Component {
                     <SafeNumericInput
                         placeholder="Default Pixel Averaging"
                         min={2}
-                        max={32}
+                        max={64}
                         value={preference.vectorOverlayPixelAveraging}
                         majorStepSize={2}
                         stepSize={2}

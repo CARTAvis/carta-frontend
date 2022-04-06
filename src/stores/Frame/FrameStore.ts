@@ -329,7 +329,8 @@ export class FrameStore {
         } else {
             const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.filter(entry => entry.name === "BUNIT");
             if (unitHeader.length) {
-                return trimFitsComment(unitHeader[0].value);
+                // Trim leading/tailing quotation marks
+                return trimFitsComment(unitHeader[0].value)?.replace(/^"+|"+$/g, "");
             } else {
                 return undefined;
             }

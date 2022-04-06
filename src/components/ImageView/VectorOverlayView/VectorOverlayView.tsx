@@ -130,7 +130,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.gl.uniform2f(shaderUniforms.FrameViewMax, baseRequiredView.xMax, baseRequiredView.yMax);
             this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.zoomLevel);
 
-            lineThickness = (pixelRatio * frame.vectorOverlayConfig.thickness) / baseFrame.zoomLevel;
+            lineThickness = pixelRatio * frame.vectorOverlayConfig.thickness;
         }
 
         if (isActive) {
@@ -153,12 +153,12 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
         this.gl.uniform1i(shaderUniforms.DataTexture, 0);
         this.gl.uniform1f(shaderUniforms.CanvasSpaceLineWidth, lineThickness);
-        this.gl.uniform1f(shaderUniforms.FeatherWidth, 1.0 * devicePixelRatio);
+        this.gl.uniform1f(shaderUniforms.FeatherWidth, pixelRatio);
 
-        this.gl.uniform1f(shaderUniforms.IntensityMin, 4);
-        this.gl.uniform1f(shaderUniforms.IntensityMax, 8);
+        this.gl.uniform1f(shaderUniforms.IntensityMin, frame.vectorOverlayStore.intensityMin);
+        this.gl.uniform1f(shaderUniforms.IntensityMax, frame.vectorOverlayStore.intensityMax);
         this.gl.uniform1f(shaderUniforms.LengthMin, 0);
-        this.gl.uniform1f(shaderUniforms.LengthMax, 12);
+        this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax);
 
         this.gl.uniform1i(shaderUniforms.IntensityPlot, preferences.vectorOverlayMode === VectorOverlayMode.IntensityOnly ? 1 : 0);
 

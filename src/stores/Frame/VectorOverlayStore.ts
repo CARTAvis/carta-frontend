@@ -12,6 +12,9 @@ export interface VectorOverlayTile {
 export class VectorOverlayStore {
     @observable progress: number;
     @observable tiles: VectorOverlayTile[];
+    @observable intensityMin: number;
+    @observable intensityMax: number;
+
     private readonly gl: WebGL2RenderingContext;
     private readonly frame: FrameStore;
 
@@ -19,6 +22,8 @@ export class VectorOverlayStore {
         makeObservable(this);
         this.gl = VectorOverlayWebGLService.Instance.gl;
         this.frame = frame;
+        this.intensityMin = Number.MAX_VALUE;
+        this.intensityMax = -Number.MAX_VALUE;
     }
 
     @computed get isComplete() {
@@ -30,9 +35,13 @@ export class VectorOverlayStore {
             for (const tile of this.tiles) {
                 if (tile.texture) {
                     this.gl.deleteTexture(tile.texture);
+                    tile.texture = undefined;
                 }
             }
         }
+        this.tiles = [];
+        this.intensityMin = Number.MAX_VALUE;
+        this.intensityMax = -Number.MAX_VALUE;
     };
 
     @action setData = (tiles: CARTA.ITileData[], progress: number) => {
@@ -42,6 +51,9 @@ export class VectorOverlayStore {
 
     @action addData = (tiles: CARTA.ITileData[], progress: number) => {
         this.progress = progress;
+
+        let localMin = Number.MAX_VALUE;
+        let localMax = -Number.MAX_VALUE;
 
         for (const tile of tiles) {
             if (!tile.imageData) {
@@ -64,6 +76,8 @@ export class VectorOverlayStore {
                         vertexData[numVertices * 3 + 1] = j * tile.mip + offsetY;
                         vertexData[numVertices * 3 + 2] = val;
                         numVertices++;
+                        localMin = Math.min(localMin, val);
+                        localMax = Math.max(localMax, val);
                     }
                 }
             }
@@ -78,5 +92,8 @@ export class VectorOverlayStore {
                 numVertices
             });
         }
+
+        this.intensityMin = Math.min(this.intensityMin, localMin);
+        this.intensityMax = Math.max(this.intensityMax, localMax);
     };
 }

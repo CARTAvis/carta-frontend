@@ -1879,7 +1879,7 @@ export class AppStore {
         this.backendService.connectionDropped = false;
     };
 
-    @action setActiveFrame(frame: FrameStore) {
+    @action setActiveFrame = (frame: FrameStore) => {
         if (!frame) {
             return;
         }
@@ -1890,16 +1890,16 @@ export class AppStore {
         }
 
         this.changeActiveFrame(frame);
-    }
+    };
 
-    @action setActiveFrameById(fileId: number) {
+    @action setActiveFrameById = (fileId: number) => {
         const requiredFrame = this.getFrame(fileId);
         if (requiredFrame) {
             this.setActiveFrame(requiredFrame);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
-    }
+    };
 
     @action setActiveFrameByIndex(index: number) {
         if (index >= 0 && this.frames.length > index) {
