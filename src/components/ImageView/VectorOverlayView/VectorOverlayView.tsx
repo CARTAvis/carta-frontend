@@ -160,8 +160,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         this.gl.uniform1f(shaderUniforms.LengthMin, 0);
         this.gl.uniform1f(shaderUniforms.LengthMax, 12);
 
-
-        this.gl.uniform1i(shaderUniforms.IntensityPlot, preferences.vectorOverlayMode === VectorOverlayMode.IntensityOnly? 1:0);
+        this.gl.uniform1i(shaderUniforms.IntensityPlot, preferences.vectorOverlayMode === VectorOverlayMode.IntensityOnly ? 1 : 0);
 
         // TODO: support non-uniform pixel ratios
         // this.gl.uniform1f(shaderUniforms.PixelRatio, frame.aspectRatio);
