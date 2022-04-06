@@ -186,7 +186,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             // redefine if the region is line and polyline
             if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
                 xMax = coordinateData.values.length;
-                xMin = 0;
                 yMean = 0;
                 yRms = 0;
                 let ySum = 0;
@@ -194,7 +193,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 let yCount = 0;
                 for (let i = 0; i < N; i++) {
                     const y = coordinateData.values[i + xMin];
-                    const x = i + xMin;
+                    const x = coordinateData.start + i + xMin;
                     yCount++;
                     ySum += y;
                     ySum2 += y * y;
@@ -206,6 +205,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     yRms = Math.sqrt(ySum2 / yCount - yMean * yMean);
                 }
             }
+
+            let xArray: number[] = new Array(coordinateData.values.length);
+            for (let i = 0; i < coordinateData.values.length; i++) {
+                xArray[i] = i;
+            }
+            smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values, xMin, xMax);
             return {values: values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
         }
     }
