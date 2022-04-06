@@ -8,7 +8,6 @@ uniform bool uIntensityPlot;
 in vec4 v_colour;
 in vec2 v_location;
 in float v_length;
-in float v_timeOffset;
 
 out vec4 outColor;
 

@@ -52,9 +52,9 @@ export class VectorOverlayStore {
             // TODO: Support angle and intensity
             let vertexData = new Float32Array(tile.width * tile.height * 3);
             let numVertices = 0;
-            // Vertex offsets: Tile offset + half of the block averaging size;
-            let offsetX = tile.mip * (tile.x * 256 + 0.5);
-            let offsetY = tile.mip * (tile.y * 256 + 0.5);
+            // Vertex offsets: Tile offset + half of the block averaging size, and move to middle of the pixel;
+            let offsetX = tile.mip * (tile.x * 256 + 0.5) - 0.5;
+            let offsetY = tile.mip * (tile.y * 256 + 0.5) - 0.5;
             for (let j = 0; j < tile.height; j++) {
                 for (let i = 0; i < tile.width; i++) {
                     const index = i + tile.width * j;

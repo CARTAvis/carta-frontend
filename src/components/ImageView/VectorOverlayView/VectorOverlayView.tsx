@@ -2,7 +2,7 @@ import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AppStore} from "stores";
-import {FrameStore, VectorOverlayMode} from "stores/Frame";
+import {FrameStore, RenderConfigStore, VectorOverlayMode} from "stores/Frame";
 import {GL2} from "utilities";
 import {VectorOverlayWebGLService} from "services";
 import "./VectorOverlayView.scss";
@@ -96,6 +96,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
 
     private renderFrameVectorOverlay = (frame: FrameStore, baseFrame: FrameStore) => {
         const preferences = AppStore.Instance.preferenceStore;
+        const shaderUniforms = this.vectorOverlayWebGLService.shaderUniforms;
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
         const isActive = frame === baseFrame;
         let lineThickness: number;
@@ -123,55 +124,59 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             // this.gl.uniform2f(this.contourWebGLService.shaderUniforms.RotationOrigin, rotationOrigin.x, rotationOrigin.y);
             // this.gl.uniform1f(this.contourWebGLService.shaderUniforms.RotationAngle, -baseFrame.spatialTransform.rotation);
             // this.gl.uniform1f(this.contourWebGLService.shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
-            //
-            // lineThickness = (pixelRatio * frame.contourConfig.thickness) / (baseFrame.spatialReference.zoomLevel * baseFrame.spatialTransform.scale);
-            // dashFactor = ceilToPower(1.0 / baseFrame.spatialReference.zoomLevel, 3.0);
         } else {
             const baseRequiredView = baseFrame.requiredFrameView;
-            this.gl.uniform2f(this.vectorOverlayWebGLService.shaderUniforms.FrameViewMin, baseRequiredView.xMin, baseRequiredView.yMin);
-            this.gl.uniform2f(this.vectorOverlayWebGLService.shaderUniforms.FrameViewMax, baseRequiredView.xMax, baseRequiredView.yMax);
-            this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.ZoomLevel, baseFrame.zoomLevel);
+            this.gl.uniform2f(shaderUniforms.FrameViewMin, baseRequiredView.xMin, baseRequiredView.yMin);
+            this.gl.uniform2f(shaderUniforms.FrameViewMax, baseRequiredView.xMax, baseRequiredView.yMax);
+            this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.zoomLevel);
 
             lineThickness = (pixelRatio * frame.vectorOverlayConfig.thickness) / baseFrame.zoomLevel;
         }
 
         if (isActive) {
-            this.gl.uniform1i(this.vectorOverlayWebGLService.shaderUniforms.ControlMapEnabled, 0);
-            this.gl.uniform1i(this.vectorOverlayWebGLService.shaderUniforms.ControlMapTexture, 0);
+            this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 0);
+            this.gl.uniform1i(shaderUniforms.ControlMapTexture, 0);
         } else {
             const controlMap = frame.getControlMap(baseFrame);
             if (controlMap) {
-                this.gl.uniform1i(this.vectorOverlayWebGLService.shaderUniforms.ControlMapEnabled, 1);
-                this.gl.uniform2f(this.vectorOverlayWebGLService.shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
-                this.gl.uniform2f(this.vectorOverlayWebGLService.shaderUniforms.ControlMapMax, controlMap.maxPoint.x, controlMap.maxPoint.y);
-                this.gl.uniform2f(this.vectorOverlayWebGLService.shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
+                this.gl.uniform1i(shaderUniforms.ControlMapEnabled, 1);
+                this.gl.uniform2f(shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
+                this.gl.uniform2f(shaderUniforms.ControlMapMax, controlMap.maxPoint.x, controlMap.maxPoint.y);
+                this.gl.uniform2f(shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
             } else {
-                console.error("Could not generate control map for contours");
+                console.error("Could not generate control map for vector overlay");
             }
             this.gl.activeTexture(GL2.TEXTURE1);
             this.gl.bindTexture(GL2.TEXTURE_2D, controlMap.getTextureX(this.gl));
-            this.gl.uniform1i(this.vectorOverlayWebGLService.shaderUniforms.ControlMapTexture, 1);
+            this.gl.uniform1i(shaderUniforms.ControlMapTexture, 1);
         }
 
-        this.gl.uniform1i(this.vectorOverlayWebGLService.shaderUniforms.DataTexture, 0);
-        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.CanvasSpaceLineWidth, lineThickness);
-        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.FeatherWidth, 1.0 * devicePixelRatio);
+        this.gl.uniform1i(shaderUniforms.DataTexture, 0);
+        this.gl.uniform1f(shaderUniforms.CanvasSpaceLineWidth, lineThickness);
+        this.gl.uniform1f(shaderUniforms.FeatherWidth, 1.0 * devicePixelRatio);
 
-        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.IntensityMin, 4);
-        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.IntensityMax, 10);
-        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.LengthMin, 0);
-        this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.LengthMax, 10);
+        this.gl.uniform1f(shaderUniforms.IntensityMin, 4);
+        this.gl.uniform1f(shaderUniforms.IntensityMax, 8);
+        this.gl.uniform1f(shaderUniforms.LengthMin, 0);
+        this.gl.uniform1f(shaderUniforms.LengthMax, 12);
 
 
-        this.gl.uniform1i(this.vectorOverlayWebGLService.shaderUniforms.IntensityPlot, preferences.vectorOverlayMode === VectorOverlayMode.IntensityOnly? 1:0);
+        this.gl.uniform1i(shaderUniforms.IntensityPlot, preferences.vectorOverlayMode === VectorOverlayMode.IntensityOnly? 1:0);
 
         // TODO: support non-uniform pixel ratios
-        // this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.PixelRatio, frame.aspectRatio);
-        // this.gl.uniform1i(this.vectorOverlayWebGLService.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
-        if (frame.contourConfig.colormapEnabled) {
-            // this.gl.uniform1i(this.vectorOverlayWebGLService.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
-            // this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.Bias, frame.contourConfig.colormapBias);
-            // this.gl.uniform1f(this.vectorOverlayWebGLService.shaderUniforms.Contrast, frame.contourConfig.colormapContrast);
+        // this.gl.uniform1f(shaderUniforms.PixelRatio, frame.aspectRatio);
+        this.gl.uniform1i(shaderUniforms.CmapEnabled, frame.vectorOverlayConfig.colormapEnabled ? 1 : 0);
+        if (frame.vectorOverlayConfig.colormapEnabled) {
+            this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.vectorOverlayConfig.colormap));
+            this.gl.uniform1f(shaderUniforms.Bias, frame.vectorOverlayConfig.colormapBias);
+            this.gl.uniform1f(shaderUniforms.Contrast, frame.vectorOverlayConfig.colormapContrast);
+        } else {
+            const color = frame.vectorOverlayConfig.color;
+            if (color) {
+                this.gl.uniform4f(shaderUniforms.LineColor, color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a || 1.0);
+            } else {
+                this.gl.uniform4f(shaderUniforms.LineColor, 1, 1, 1, 1);
+            }
         }
 
         if (frame.vectorOverlayStore?.tiles) {
@@ -179,7 +184,6 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
                 this.gl.activeTexture(GL2.TEXTURE0);
                 this.gl.bindTexture(GL2.TEXTURE_2D, tile.texture);
                 this.gl.drawArrays(GL2.TRIANGLES, 0, tile.numVertices * 6);
-                console.log(`Rendering ${tile.numVertices} vector overlay markers`);
             }
         }
     };

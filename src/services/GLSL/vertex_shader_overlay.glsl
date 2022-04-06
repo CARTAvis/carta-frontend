@@ -14,25 +14,29 @@ uniform float uLengthMax;
 uniform float uIntensityMin;
 uniform float uIntensityMax;
 
+// Color
+uniform vec4 uLineColor;
+uniform int uCmapEnabled;
+uniform sampler2D uCmapTexture;
+uniform float uCmapValue;
+uniform int uNumCmaps;
+uniform int uCmapIndex;
+uniform float uBias;
+uniform float uContrast;
+
 out vec4 v_colour;
 out vec2 v_location;
 out float v_length;
-out float v_timeOffset;
 
 #define PI radians(180.0)
 
-float calculateLength(float intensity) {
+float calculateScaledIntensity(float intensity) {
     float intensityRange = uIntensityMax - uIntensityMin;
     float scaledIntensity = (intensity - uIntensityMin) / intensityRange;
-    return mix(uLengthMin, uLengthMax, clamp(scaledIntensity, 0.0, 1.0));
+    return scaledIntensity;
 }
-
-
-vec3 hsv2rgb(vec3 c)
-{
-    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+float calculateLength(float intensity) {
+    return mix(uLengthMin, uLengthMax, clamp(calculateScaledIntensity(intensity), 0.0, 1.0));
 }
 
 // Get vertex offset in units of length, based on the vertex ID
@@ -67,8 +71,7 @@ void main() {
     vec2 centerPoint = data.xy;
     float lineLength = calculateLength(data.z) / uZoomLevel;
     float lineWidth = uCanvasSpaceLineWidth / uZoomLevel;
-    float angle = data.w;
-    float cmapVal = mod(angle, PI);
+    float angle = data.w * PI / 180.0;
 
     if (uIntensityPlot) {
         angle = 0.0;
@@ -82,8 +85,19 @@ void main() {
     // position is in canvas space
     gl_Position = vec4(imageToGL2(centerPoint + rotate2D(offset, angle)), 0, 1);
     v_length = lineLength;
-    v_colour = vec4(hsv2rgb(vec3(cmapVal, 0.7, 0.7)), 1.0);
-    v_timeOffset = sin(float(dataPointIndex) * 1.0);
+
+    if (uCmapEnabled > 0) {
+        float x = calculateScaledIntensity(data.z);
+        // bias mod
+        x = clamp(x - uBias, 0.0, 1.0);
+        // contrast mod
+        x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
+        float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
+        vec2 cmapCoords = vec2(x, cmapYVal);
+        v_colour = texture(uCmapTexture, cmapCoords);
+    } else {
+        v_colour = uLineColor;
+    }
 
     if (lineLength <= 0.0) {
         gl_Position = vec4(0);

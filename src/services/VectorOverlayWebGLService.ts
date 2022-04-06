@@ -14,14 +14,13 @@ interface ShaderUniforms {
     IntensityMin: WebGLUniformLocation;
     IntensityMax: WebGLUniformLocation;
     IntensityPlot: WebGLUniformLocation;
-    // TODO: Support color maps
-    // CmapEnabled: WebGLUniformLocation;
-    // CmapValue: WebGLUniformLocation;
-    // CmapTexture: WebGLUniformLocation;
-    // NumCmaps: WebGLUniformLocation;
-    // CmapIndex: WebGLUniformLocation;
-    // Bias: WebGLUniformLocation;
-    // Contrast: WebGLUniformLocation;
+    CmapEnabled: WebGLUniformLocation;
+    CmapTexture: WebGLUniformLocation;
+    NumCmaps: WebGLUniformLocation;
+    CmapIndex: WebGLUniformLocation;
+    Bias: WebGLUniformLocation;
+    Contrast: WebGLUniformLocation;
+    LineColor: WebGLUniformLocation;
     ControlMapEnabled: WebGLUniformLocation;
     ControlMapSize: WebGLUniformLocation;
     ControlMapTexture: WebGLUniformLocation;
@@ -71,13 +70,13 @@ export class VectorOverlayWebGLService {
             IntensityMin: this.gl.getUniformLocation(shaderProgram, "uIntensityMin"),
             IntensityMax: this.gl.getUniformLocation(shaderProgram, "uIntensityMax"),
             IntensityPlot: this.gl.getUniformLocation(shaderProgram, "uIntensityPlot"),
-            // CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
-            // CmapValue: this.gl.getUniformLocation(shaderProgram, "uCmapValue"),
-            // CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
-            // NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
-            // CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
-            // Contrast: this.gl.getUniformLocation(shaderProgram, "uContrast"),
-            // Bias: this.gl.getUniformLocation(shaderProgram, "uBias"),
+            CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
+            CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
+            NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
+            CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
+            Contrast: this.gl.getUniformLocation(shaderProgram, "uContrast"),
+            Bias: this.gl.getUniformLocation(shaderProgram, "uBias"),
+            LineColor: this.gl.getUniformLocation(shaderProgram, "uLineColor"),
             ControlMapEnabled: this.gl.getUniformLocation(shaderProgram, "uControlMapEnabled"),
             ControlMapSize: this.gl.getUniformLocation(shaderProgram, "uControlMapSize"),
             ControlMapMin: this.gl.getUniformLocation(shaderProgram, "uControlMapMin"),
@@ -86,8 +85,8 @@ export class VectorOverlayWebGLService {
         };
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
-        // this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
-        // this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
+        this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
+        this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
     }
 
     private constructor() {
