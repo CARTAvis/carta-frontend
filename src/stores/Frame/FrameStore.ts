@@ -338,7 +338,13 @@ export class FrameStore {
 
     @computed get requiredUnit() {
         if (this.unit) {
-            return this.requredPolarization === POLARIZATIONS.Pangle ? "degree" : this.unit;
+            if (this.requredPolarization === POLARIZATIONS.Pangle) {
+                return "degree";
+            } else if (this.requredPolarization === POLARIZATIONS.PFtotal || this.requredPolarization === POLARIZATIONS.PFlinear) {
+                return "%";
+            } else {
+                return this.unit;
+            }
         }
         return undefined;
     }

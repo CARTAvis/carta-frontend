@@ -53,7 +53,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             return "-";
         }
 
-        let valueString = formattedExponential(frame.cursorValue.value, 5, "", true, true);
+        let valueString = frame.requiredUnit === "%" ? toFixed(frame.cursorValue.value, 1) : formattedExponential(frame.cursorValue.value, 5, "", true, true);
         if (isNaN(frame.cursorValue.value)) {
             valueString = "NaN";
         }

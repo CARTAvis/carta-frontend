@@ -87,7 +87,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         point = Math.floor(point) + 0.5;
 
         const hoverValue = renderConfig.scaleMinVal + scaledPos * (renderConfig.scaleMaxVal - renderConfig.scaleMinVal);
-        this.setHoverInfoText(hoverValue.toExponential(5));
+        this.setHoverInfoText(this.props.frame?.requiredUnit === "%" ? hoverValue.toFixed(1) : hoverValue.toExponential(5));
         if (colorbarSettings.interactive && this.isHovering) {
             this.props.onCursorHoverValueChanged(hoverValue);
         } else {
