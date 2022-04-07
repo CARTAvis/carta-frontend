@@ -3,7 +3,6 @@ import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
-import * as _ from "lodash";
 import {BackendService} from "services";
 import {booleanFiltering, numericFiltering, stringFiltering, wavelengthToFrequency, SPEED_OF_LIGHT, ProcessedColumnData, ProtobufProcessing} from "utilities";
 
@@ -229,10 +228,13 @@ export class SpectralLineQueryWidgetStore {
     };
 
     @action private updateFilterResult = (rowIndexes: Array<number>) => {
+        let filterResult = new Map<number, ProcessedColumnData>();
         if (rowIndexes?.length === this.numDataRows) {
-            this.filterResult = _.cloneDeep(this.queryResult);
+            this.queryResult.forEach((column, columnIndex) => {
+                filterResult.set(columnIndex, column);
+            });
+            this.filterResult = filterResult;
         } else {
-            let filterResult = new Map<number, ProcessedColumnData>();
             this.queryResult.forEach((column, columnIndex) => {
                 let filteredData = [];
                 rowIndexes.forEach(dataIndex => {
