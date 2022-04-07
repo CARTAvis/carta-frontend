@@ -1109,7 +1109,7 @@ export class AppStore {
             const ack = await this.backendService.requestFitting(message);
             if (ack.success) {
                 const frame = this.getFrame(message.fileId);
-                frame.setFittingResult(ack.results);
+                frame.setFittingResult(ack.resultValues, ack.resultErrors);
                 frame.setFittingLog(ack.log);
             }
             if (ack.message) {

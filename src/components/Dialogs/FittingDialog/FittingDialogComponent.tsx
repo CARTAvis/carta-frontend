@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {AnchorButton, Classes, Dialog, FormGroup, HTMLSelect, Icon, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
@@ -21,6 +21,28 @@ export class FittingDialogComponent extends React.Component {
     @action private setFittingResultTabId = (tabId: FittingResultTabs) => {
         this.fittingResultTabId = tabId;
     };
+
+    @computed get fittingResults(): string {
+        const frame = AppStore.Instance.imageFittingStore.effectiveFrame;
+        const values = frame?.fittingResultValues;
+        const errors = frame?.fittingResultErrors;
+        if (!values || !errors) {
+            return "";
+        }
+
+        let results = "";
+        const unitString = frame.unit ? ` (${frame.unit})` : "";
+        for (let i = 0; i < values.length; i++) {
+            results += `Component #${i + 1}:\n`;
+            results += `Center X  = ${values[i]?.center?.x?.toFixed(6)} +/- ${errors[i]?.center?.x?.toFixed(6)} (px)\n`;
+            results += `Center Y  = ${values[i]?.center?.y?.toFixed(6)} +/- ${errors[i]?.center?.y?.toFixed(6)} (px)\n`;
+            results += `Amplitude = ${values[i]?.amp?.toFixed(6)} +/- ${errors[i]?.amp?.toFixed(6)}${unitString}\n`;
+            results += `FWHM X    = ${values[i]?.fwhm?.x?.toFixed(6)} +/- ${errors[i]?.fwhm?.x?.toFixed(6)} (px)\n`;
+            results += `FWHM Y    = ${values[i]?.fwhm?.y?.toFixed(6)} +/- ${errors[i]?.fwhm?.y?.toFixed(6)} (px)\n`;
+            results += `P.A.      = ${values[i]?.pa?.toFixed(6)} +/- ${errors[i]?.pa?.toFixed(6)} (deg)\n\n`;
+        }
+        return results;
+    }
 
     constructor(props: any) {
         super(props);
@@ -58,7 +80,7 @@ export class FittingDialogComponent extends React.Component {
 
         const fittingResultPanel = (
             <Pre className="fitting-result-pre">
-                <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
+                <Text className="fitting-result-text">{this.fittingResults}</Text>
             </Pre>
         );
 
