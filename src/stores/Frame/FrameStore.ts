@@ -16,6 +16,7 @@ import {
     IsSpectralUnitSupported,
     Point2D,
     SPECTRAL_COORDS_SUPPORTED,
+    SECONDARY_SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
     SPECTRAL_TYPE_STRING,
     SpectralInfo,
@@ -92,6 +93,7 @@ export class FrameStore {
     public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
+    public secondarySpectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
     public spatialTransformAST: AST.FrameSet;
     private cursorMovementHandle: NodeJS.Timeout;
@@ -843,6 +845,7 @@ export class FrameStore {
         this.spectralSystem = null;
         this.channelValues = null;
         this.spectralCoordsSupported = null;
+        this.secondarySpectralCoordsSupported = null;
         this.spectralSystemsSupported = null;
         this.wcsInfo = null;
         this.wcsInfoForTransformation = null;
@@ -1599,6 +1602,31 @@ export class FrameStore {
             this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>([[SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]]);
         }
 
+        if (IsSpectralTypeSupported(spectralType)) {
+            // check RESTFRQ
+            if (isFinite(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue)) {
+                this.secondarySpectralCoordsSupported = SECONDARY_SPECTRAL_COORDS_SUPPORTED;
+            } else {
+                this.secondarySpectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>();
+                Array.from(SECONDARY_SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
+                    const value = SECONDARY_SPECTRAL_COORDS_SUPPORTED.get(key);
+                    const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;
+                    const isValueVolecity = value.type === SpectralType.VRAD || value.type === SpectralType.VOPT;
+                    if (isVolecity && isValueVolecity) {
+                        // VRAD, VOPT
+                        this.secondarySpectralCoordsSupported.set(key, value);
+                    }
+                    if (!isVolecity && !isValueVolecity) {
+                        // FREQ, WAVE, AWAV
+                        this.secondarySpectralCoordsSupported.set(key, value);
+                    }
+                });
+                this.secondarySpectralCoordsSupported.set("None", {type: null, unit: null});
+            }
+        } else {
+            this.secondarySpectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>([[SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]]);
+        }
+
         // generate spectral system options
         const spectralSystem = this.spectralAxis.specsys;
         if (IsSpectralSystemSupported(spectralSystem)) {
@@ -1650,6 +1678,7 @@ export class FrameStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
+        console.trace();
         if (this.spectralCoordsSupported?.has(coordStr)) {
             const coord: {type: SpectralType; unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
             this.spectralType = coord.type;

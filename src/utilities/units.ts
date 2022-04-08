@@ -48,6 +48,24 @@ export function formattedNotation(value: number): string {
     return value < 1e-2 ? toExponential(value, 2) : toFixed(value, 2);
 }
 
+export function trimTrailingDecimals(value:string): string {
+    var splitValue: string[] = value.split(".");
+    for(let i = 0; i < splitValue[1].length; i++){
+        if(splitValue[1][i] !== '0'){
+            return value;
+        }
+    }
+    return splitValue[0];
+}
+
+export function toFormattedNotation(value: number): string {
+    if (value === null || isNaN(value)) {
+        return null;
+    }
+    
+    return value < 1e-2 ? trimTrailingDecimals(value.toPrecision(6)) : trimTrailingDecimals(toFixed(value, 3));
+}
+
 export function formattedExponential(val: number, digits: number, unit: string = "", trim: boolean = true, pad: boolean = false) {
     let valString = toExponential(val, digits);
     if (trim) {

@@ -18,10 +18,18 @@ export class SpectralSettingsComponent extends React.Component<{
         const frame = this.props.frame;
         const nativeSpectralCoordinate = frame?.nativeSpectralCoordinate;
         const spectralTypes = frame?.spectralCoordsSupported ? Array.from(frame.spectralCoordsSupported.keys()) : [];
+        const secondarySpectralTypes = frame?.secondarySpectralCoordsSupported ? Array.from(frame.secondarySpectralCoordsSupported.keys()) : [];
+
         const filteredSpectralTypes = this.props.disableChannelOption ? spectralTypes.filter(type => type !== "Channel") : spectralTypes;
+        const filteredSecondarySpectralTypes = secondarySpectralTypes.filter(type => type !== "Channel");
+
         const spectralCoordinateOptions: IOptionProps[] = filteredSpectralTypes.map((coord: string) => {
             return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord};
         });
+        const secondarySpectralCoordinateOptions: IOptionProps[] = filteredSecondarySpectralTypes.map((coord: string) => {
+            return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord};
+        });
+
         const spectralSystemOptions: IOptionProps[] = frame?.spectralSystemsSupported
             ? frame.spectralSystemsSupported.map(system => {
                   return {value: system, label: system};
@@ -46,7 +54,7 @@ export class SpectralSettingsComponent extends React.Component<{
                         <HTMLSelect
                             disabled={disableCoordinateSetting}
                             value={frame && frame.spectralCoordinateSecondary ? frame.spectralCoordinateSecondary : ""}
-                            options={spectralCoordinateOptions}
+                            options={secondarySpectralCoordinateOptions}
                             onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralCoordinateChangeSecondary(event.currentTarget.value as string)}
                         />
                     </FormGroup>

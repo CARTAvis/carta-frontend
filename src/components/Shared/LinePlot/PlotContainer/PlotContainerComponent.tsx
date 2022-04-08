@@ -424,7 +424,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         };
 
         if (this.props.topAxisTickFormatter) {
-            plotOptions.scales["x-axis-1"].ticks.callback = this.props.topAxisTickFormatter;
+            plotOptions.scales["x-axis-1"].ticks.callback = this.props.topAxisTickFormatter
         }
 
         if (this.props.logY) {

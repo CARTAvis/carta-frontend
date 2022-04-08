@@ -16,7 +16,7 @@ import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, SpectralProfileStore
 import {FrameStore} from "stores/Frame";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, SpectralType, SpectralUnit, SpectralSystem} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme /*transformPoint*/} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toFormattedNotation, toExponential, toFixed, getColorForTheme /*transformPoint*/} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
 
@@ -281,10 +281,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return spectralLineMarkers;
     };
 
-    private convertSpectral = (values: Array<number>): Array<number> => {
-        return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, value)) : null;
-    };
-
     private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
         if (!this.frame || !isFinite(value)) {
             return undefined;
@@ -293,11 +289,17 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private formatProfile = (v: number, i: number, values: Tick[]) => {
+
         if (i === 0) {
             this.calculateFormattedValues(values);
         }
 
         return this.cachedFormattedCoordinates[i];
+    };
+
+    private findNativeCoordinateValues(tick: number): number{
+        const channel = tick;
+        return this.frame.channelInfo.values[channel];
     };
 
     private calculateFormattedValues(ticks: Tick[]) {
@@ -312,61 +314,20 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 } else if (this.frame.spectralTypeSecondary === SpectralType.CHANNEL) {
                     this.cachedFormattedCoordinates[i] = this.frame.channelInfo.indexes[i].toString();
                 } else {
-                    const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, ticks[i].value, false);
-                    const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
-                    this.cachedFormattedCoordinates[i] = coord.toString();
+                    if(this.frame.spectralType === SpectralType.CHANNEL){
+                        const nativeCoord = this.findNativeCoordinateValues(ticks[i].value);
+                        var coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
+                        coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+                        this.cachedFormattedCoordinates[i] = toFormattedNotation(coord);
+                    }else{
+                        const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, ticks[i].value, false);
+                        const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+                        this.cachedFormattedCoordinates[i] = toFormattedNotation(coord);
+                    }
+                    
                 }
             }
-        }
-        this.trimDecimals();
-    }
-
-    // Trims unnecessary decimals from the list of formatted coordinates
-    private trimDecimals() {
-        if (!this.cachedFormattedCoordinates || !this.cachedFormattedCoordinates.length) {
-            return;
-        }
-        // If the existing tick list has repeats, don't trim
-        if (SpectralProfilerComponent.hasRepeats(this.cachedFormattedCoordinates)) {
-            return;
-        }
-        const decimalIndex = this.cachedFormattedCoordinates[0].indexOf(".");
-        // Skip lists without decimals. This assumes that all ticks have the same number of decimals
-        if (decimalIndex === -1) {
-            return;
-        }
-        const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex;
-        for (let trim = initialTrimLength; trim > 0; trim--) {
-            let trimmedArray = this.cachedFormattedCoordinates.slice();
-            for (let i = 0; i < trimmedArray.length; i++) {
-                trimmedArray[i] = trimmedArray[i].slice(0, -trim);
-            }
-            if (!SpectralProfilerComponent.hasRepeats(trimmedArray)) {
-                this.cachedFormattedCoordinates = trimmedArray;
-                return;
-            }
-
-            // Skip an extra character after the first check, because of the decimal indicator
-            if (trim === initialTrimLength) {
-                trim--;
-            }
-        }
-    }
-
-    private static hasRepeats(ticks: string[]): boolean {
-        if (!ticks || ticks.length < 2) {
-            return false;
-        }
-
-        let prevTick = ticks[0];
-        for (let i = 1; i < ticks.length; i++) {
-            const nextTick = ticks[i];
-            if (prevTick === nextTick) {
-                return true;
-            }
-            prevTick = nextTick;
-        }
-        return false;
+        }       
     }
 
     render() {
