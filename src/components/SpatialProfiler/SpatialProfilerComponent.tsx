@@ -86,12 +86,17 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let xMin: number;
             let xMax: number;
 
-            if (this.widgetStore.isAutoScaledX) {
-                xMin = this.autoScaleHorizontalMin;
-                xMax = this.autoScaleHorizontalMax;
+            if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
+                xMin = 0;
+                xMax = coordinateData.values.length;
             } else {
-                xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                xMax = clamp(this.widgetStore.maxX, 0, this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height);
+                if (this.widgetStore.isAutoScaledX) {
+                    xMin = this.autoScaleHorizontalMin;
+                    xMax = this.autoScaleHorizontalMax;
+                } else {
+                    xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
+                    xMax = clamp(this.widgetStore.maxX, 0, this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height);
+                }
             }
 
             xMin = Math.floor(xMin);
@@ -185,7 +190,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
             // redefine if the region is line and polyline
             if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
-                xMax = coordinateData.values.length;
                 yMean = 0;
                 yRms = 0;
                 let ySum = 0;
