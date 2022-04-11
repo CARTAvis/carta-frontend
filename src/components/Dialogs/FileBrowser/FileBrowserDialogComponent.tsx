@@ -360,7 +360,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                 <MenuItem text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadExpressionFromMap(fileBrowserStore.selectedFile.name, "IMAG")} />
                             </Menu>
                         );
-                        
+
                         return (
                             <div>
                                 <Popover2 content={loadMenuItems} placement="right-end">
