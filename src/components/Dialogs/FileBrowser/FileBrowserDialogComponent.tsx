@@ -23,8 +23,6 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable defaultHeight: number;
     @observable enableImageArithmetic: boolean = false;
     @observable imageArithmeticString: string = "";
-    @observable imageArithmeticStringMap: Map<string, string> = new Map<string, string>();
-    @observable isComplexImage: boolean = false;
     private readonly imageArithmeticInputRef: React.RefObject<HTMLInputElement>;
 
     constructor(props: any) {
@@ -131,17 +129,19 @@ export class FileBrowserDialogComponent extends React.Component {
                 break;
         }
 
+        const isComplex = false; // TODO: set this, otherwise won't work.
+
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                if (this.isComplexImage) {
+                if (isComplex) {
                     const imageExpr = `AMPLITUDE("${file.fileInfo.name}")`; // default to amplitude, TODO: could be a preference
                     frame = await appStore.openFile(fileBrowserStore.fileList.directory, imageExpr, file.hdu, true);
                 } else {
                     frame = await appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
                 }
             } else {
-                if (this.isComplexImage) {
+                if (isComplex) {
                     const imageExpr = `AMPLITUDE("${file.fileInfo.name}")`; // default to amplitude, TODO: could be a preference
                     frame = await appStore.appendFile(fileBrowserStore.fileList.directory, imageExpr, file.hdu, true);
                 } else {
