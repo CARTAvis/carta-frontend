@@ -129,24 +129,12 @@ export class FileBrowserDialogComponent extends React.Component {
                 break;
         }
 
-        const isComplex = false; // TODO: set this, otherwise won't work.
-
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                if (isComplex) {
-                    const imageExpr = `AMPLITUDE("${file.fileInfo.name}")`; // default to amplitude, TODO: could be a preference
-                    frame = await appStore.openFile(fileBrowserStore.fileList.directory, imageExpr, file.hdu, true);
-                } else {
-                    frame = await appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
-                }
+                frame = await appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             } else {
-                if (isComplex) {
-                    const imageExpr = `AMPLITUDE("${file.fileInfo.name}")`; // default to amplitude, TODO: could be a preference
-                    frame = await appStore.appendFile(fileBrowserStore.fileList.directory, imageExpr, file.hdu, true);
-                } else {
-                    frame = await appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
-                }
+                frame = await appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
             await appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, file.fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
