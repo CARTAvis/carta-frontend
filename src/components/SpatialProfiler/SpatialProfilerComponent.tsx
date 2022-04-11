@@ -447,7 +447,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.yLabel = `Value (${this.frame.unit})`;
                 }
 
-                if (this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.LINE) {
+                if (this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.LINE && this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.POLYLINE) {
                     if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
                         linePlotProps.showTopAxis = true;
                         linePlotProps.topAxisTickFormatter = this.formatProfileAst;
