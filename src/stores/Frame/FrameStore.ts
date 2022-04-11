@@ -1931,9 +1931,7 @@ export class FrameStore {
 
     @action clearVectorOverlay = (updateBackend: boolean = true) => {
         // Clear up GPU resources
-        // TODO once the vector overlay stores are added
-        // this.contourStores.forEach(contourStore => contourStore.clearData());
-        // this.contourStores.clear();
+        this.vectorOverlayStore.clearData();
 
         if (updateBackend) {
             // Send clearing vector overlay parameter message to the backend, to prevent overlay from being automatically updated
