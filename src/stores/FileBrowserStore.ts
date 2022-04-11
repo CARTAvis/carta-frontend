@@ -532,7 +532,7 @@ export class FileBrowserStore {
     }
 
     @computed get isComplexImage() {
-        const dataTypeEntry = this.fileInfoExtended?.computedEntries?.find(e=>e.name === "Data type");
+        const dataTypeEntry = this.fileInfoExtended?.computedEntries?.find(e => e.name === "Data type");
         return dataTypeEntry?.value === "Complex";
     }
 
