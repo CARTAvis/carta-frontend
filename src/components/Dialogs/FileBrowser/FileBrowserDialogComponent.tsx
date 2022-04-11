@@ -24,7 +24,7 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable enableImageArithmetic: boolean = false;
     @observable imageArithmeticString: string = "";
     @observable imageArithmeticStringMap: Map<string, string> = new Map<string, string>();
-    @observable isComplexImage: boolean = true;
+    @observable isComplexImage: boolean = false;
     private readonly imageArithmeticInputRef: React.RefObject<HTMLInputElement>;
 
     constructor(props: any) {
@@ -62,8 +62,6 @@ export class FileBrowserDialogComponent extends React.Component {
             }
             this.imageArithmeticInputRef.current?.focus();
         }
-
-        // TODO: set isComplexImage here...
     };
 
     private loadSelectedFiles = async () => {
@@ -101,8 +99,8 @@ export class FileBrowserDialogComponent extends React.Component {
         return frame;
     };
 
-    private loadExpressionFromMap = async (filename: string, expression: string) => {
-        this.imageArithmeticString = expression + '("' + filename + '")';
+    private loadComplexImage = async (filename: string, expression: string) => {
+        this.imageArithmeticString = `${expression}("${filename}")`;
         const appStore = AppStore.Instance;
         const frames = appStore.frames;
         const fileBrowserStore = appStore.fileBrowserStore;
@@ -312,13 +310,13 @@ export class FileBrowserDialogComponent extends React.Component {
                         actionText = "Append";
                     }
 
-                    if (this.isComplexImage) {
+                    if (fileBrowserStore.isComplexImage) {
                         const loadMenuItems = (
                             <Menu>
-                                <MenuItem text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadExpressionFromMap(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
-                                <MenuItem text="Phase" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadExpressionFromMap(fileBrowserStore.selectedFile.name, "PHASE")} />
-                                <MenuItem text="Real" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadExpressionFromMap(fileBrowserStore.selectedFile.name, "REAL")} />
-                                <MenuItem text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadExpressionFromMap(fileBrowserStore.selectedFile.name, "IMAG")} />
+                                <MenuItem text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
+                                <MenuItem text="Phase" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "PHASE")} />
+                                <MenuItem text="Real" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "REAL")} />
+                                <MenuItem text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "IMAG")} />
                             </Menu>
                         );
                         return (
@@ -351,13 +349,13 @@ export class FileBrowserDialogComponent extends React.Component {
                     } else {
                         actionText = "Load";
                     }
-                    if (this.isComplexImage) {
+                    if (fileBrowserStore.isComplexImage) {
                         const loadMenuItems = (
                             <Menu>
-                                <MenuItem text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadExpressionFromMap(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
-                                <MenuItem text="Phase" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadExpressionFromMap(fileBrowserStore.selectedFile.name, "PHASE")} />
-                                <MenuItem text="Real" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadExpressionFromMap(fileBrowserStore.selectedFile.name, "REAL")} />
-                                <MenuItem text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadExpressionFromMap(fileBrowserStore.selectedFile.name, "IMAG")} />
+                                <MenuItem text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
+                                <MenuItem text="Phase" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "PHASE")} />
+                                <MenuItem text="Real" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "REAL")} />
+                                <MenuItem text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "IMAG")} />
                             </Menu>
                         );
 

@@ -531,6 +531,11 @@ export class FileBrowserStore {
         return this.HDUfileInfoExtended && this.selectedHDU in this.HDUfileInfoExtended ? this.HDUfileInfoExtended[this.selectedHDU] : null;
     }
 
+    @computed get isComplexImage() {
+        const dataTypeEntry = this.fileInfoExtended?.computedEntries?.find(e=>e.name === "Data type");
+        return dataTypeEntry?.value === "Complex";
+    }
+
     @computed get fileInfo() {
         let fileInfo = "";
         if (this.fileInfoExtended?.computedEntries) {
