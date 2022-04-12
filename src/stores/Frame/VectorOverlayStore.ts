@@ -22,8 +22,8 @@ export class VectorOverlayStore {
         makeObservable(this);
         this.gl = VectorOverlayWebGLService.Instance.gl;
         this.frame = frame;
-        this.intensityMin = Number.MAX_VALUE;
-        this.intensityMax = -Number.MAX_VALUE;
+        this.intensityMin = NaN;
+        this.intensityMax = NaN;
     }
 
     @computed get isComplete() {
@@ -40,8 +40,8 @@ export class VectorOverlayStore {
             }
         }
         this.tiles = [];
-        this.intensityMin = Number.MAX_VALUE;
-        this.intensityMax = -Number.MAX_VALUE;
+        this.intensityMin = NaN;
+        this.intensityMax = NaN;
     };
 
     @action setData = (tiles: CARTA.ITileData[], progress: number) => {
@@ -93,7 +93,7 @@ export class VectorOverlayStore {
             });
         }
 
-        this.intensityMin = Math.min(this.intensityMin, localMin);
-        this.intensityMax = Math.max(this.intensityMax, localMax);
+        this.intensityMin = isFinite(this.intensityMin) ? Math.min(this.intensityMin, localMin) : localMin;
+        this.intensityMax = isFinite(this.intensityMax) ? Math.max(this.intensityMax, localMax) : localMax;
     };
 }

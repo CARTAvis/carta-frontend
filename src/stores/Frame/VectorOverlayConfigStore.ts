@@ -30,8 +30,12 @@ export class VectorOverlayConfigStore {
     @observable colormapBias: number;
     @observable lengthMin: number;
     @observable lengthMax: number;
+    @observable intensityMin: number;
+    @observable intensityMax: number;
 
     private readonly preferenceStore: PreferenceStore;
+    public static DefaultLengthMin = 0;
+    public static DefaultLengthMax = 10;
 
     constructor(preferenceStore: PreferenceStore) {
         makeObservable(this);
@@ -49,8 +53,10 @@ export class VectorOverlayConfigStore {
         this.colormapBias = 0.0;
         this.colormapContrast = 1.0;
         this.thickness = this.preferenceStore.vectorOverlayThickness;
-        this.lengthMin = 0;
-        this.lengthMax = 10;
+        this.lengthMin = VectorOverlayConfigStore.DefaultLengthMin;
+        this.lengthMax = VectorOverlayConfigStore.DefaultLengthMax;
+        this.intensityMin = undefined;
+        this.intensityMax = undefined;
         this.visible = true;
     }
 
@@ -92,6 +98,16 @@ export class VectorOverlayConfigStore {
 
     @action setColormapContrast = (val: number) => {
         this.colormapContrast = val;
+    };
+
+    @action setLengthRange = (min: number, max: number) => {
+        this.lengthMin = min;
+        this.lengthMax = max;
+    };
+
+    @action setIntensityRange = (min: number, max: number) => {
+        this.intensityMin = min;
+        this.intensityMax = max;
     };
 
     @action setVisible = (visible: boolean) => {

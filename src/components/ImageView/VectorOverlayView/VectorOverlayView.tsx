@@ -155,9 +155,12 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         this.gl.uniform1f(shaderUniforms.CanvasSpaceLineWidth, lineThickness);
         this.gl.uniform1f(shaderUniforms.FeatherWidth, pixelRatio);
 
-        this.gl.uniform1f(shaderUniforms.IntensityMin, frame.vectorOverlayStore.intensityMin);
-        this.gl.uniform1f(shaderUniforms.IntensityMax, frame.vectorOverlayStore.intensityMax);
-        this.gl.uniform1f(shaderUniforms.LengthMin, 0);
+        const intensityMin = isFinite(frame.vectorOverlayConfig.intensityMin) ? frame.vectorOverlayConfig.intensityMin : frame.vectorOverlayStore.intensityMin;
+        const intensityMax = isFinite(frame.vectorOverlayConfig.intensityMax) ? frame.vectorOverlayConfig.intensityMax : frame.vectorOverlayStore.intensityMax;
+
+        this.gl.uniform1f(shaderUniforms.IntensityMin, intensityMin);
+        this.gl.uniform1f(shaderUniforms.IntensityMax, intensityMax);
+        this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin);
         this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax);
 
         this.gl.uniform1i(shaderUniforms.IntensityPlot, preferences.vectorOverlayMode === VectorOverlayMode.IntensityOnly ? 1 : 0);
@@ -208,6 +211,10 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
                 const color = config.colormapEnabled ? config.colormap : config.color;
                 const bias = config.colormapBias;
                 const contrast = config.colormapContrast;
+                const intensityMin = isFinite(config.intensityMin) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
+                const intensityMax = isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
+                const lengthMin = config.lengthMin;
+                const lengthMax = config.lengthMax;
                 frame.vectorOverlayStore.tiles?.forEach(t => {
                     const numVertices = t.numVertices;
                 });
