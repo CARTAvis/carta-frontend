@@ -22,6 +22,7 @@ export class PlotContainerProps {
     yMin?: number;
     yMax?: number;
     xLabel?: string;
+    xLabelSecondary?: string;
     yLabel?: string;
     logY?: boolean;
     lineColor?: string;
@@ -388,7 +389,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     title: {
                         color: labelColor,
                         display: this.props.showXAxisLabel === undefined ? true : this.props.showXAxisLabel,
-                        text: this.props.xLabel
+                        text: this.props.xLabelSecondary
                     },
                     ticks: {
                         includeBounds: false,
@@ -424,7 +425,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         };
 
         if (this.props.topAxisTickFormatter) {
-            plotOptions.scales["x-axis-1"].ticks.callback = this.props.topAxisTickFormatter
+            plotOptions.scales["x-axis-1"].ticks.callback = this.props.topAxisTickFormatter;
         }
 
         if (this.props.logY) {

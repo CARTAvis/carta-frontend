@@ -15,7 +15,7 @@ import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfo
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, SpectralProfileStore, AppStore, DefaultWidgetConfig /*, ASTSettingsString, OverlayStore*/} from "stores";
 import {FrameStore} from "stores/Frame";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
-import {Point2D, SpectralType, SpectralUnit, SpectralSystem} from "models";
+import {Point2D, SpectralType, SpectralUnit} from "models";
 import {binarySearchByX, clamp, formattedExponential, formattedNotation, toFormattedNotation, toExponential, toFixed, getColorForTheme /*transformPoint*/} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
@@ -177,6 +177,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
         let cursorInfoString = undefined;
         const nearest = binarySearchByX(data, cursorXValue);
+
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
             let floatXStr = "";
             const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
@@ -281,15 +282,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return spectralLineMarkers;
     };
 
-    private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
-        if (!this.frame || !isFinite(value)) {
-            return undefined;
-        }
-        return AST.transformSpectralPoint(this.frame, type, unit, system, value);
-    };
-
+    
     private formatProfile = (v: number, i: number, values: Tick[]) => {
-
         if (i === 0) {
             this.calculateFormattedValues(values);
         }
@@ -297,10 +291,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return this.cachedFormattedCoordinates[i];
     };
 
-    private findNativeCoordinateValues(tick: number): number{
+    private findNativeCoordinateValues(tick: number): number {
         const channel = tick;
         return this.frame.channelInfo.values[channel];
-    };
+    }
 
     private calculateFormattedValues(ticks: Tick[]) {
         if (!this.cachedFormattedCoordinates || this.cachedFormattedCoordinates.length !== ticks.length) {
@@ -314,20 +308,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 } else if (this.frame.spectralTypeSecondary === SpectralType.CHANNEL) {
                     this.cachedFormattedCoordinates[i] = this.frame.channelInfo.indexes[i].toString();
                 } else {
-                    if(this.frame.spectralType === SpectralType.CHANNEL){
+                    if (this.frame.spectralType === SpectralType.CHANNEL) {
                         const nativeCoord = this.findNativeCoordinateValues(ticks[i].value);
                         var coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
                         coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
                         this.cachedFormattedCoordinates[i] = toFormattedNotation(coord);
-                    }else{
+                    } else {
                         const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, ticks[i].value, false);
                         const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
                         this.cachedFormattedCoordinates[i] = toFormattedNotation(coord);
                     }
-                    
                 }
             }
-        }       
+        }
     }
 
     render() {
@@ -338,7 +331,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
-            xLabelSecondary: "Channel",
+            xLabelSecondary: "None",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
             tickTypeY: TickType.Scientific,
@@ -370,6 +363,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (frame) {
             if (frame.spectralAxis && !frame.isCoordChannel) {
                 linePlotProps.xLabel = frame.spectralLabel;
+                linePlotProps.xLabelSecondary = frame.secondarySpectralLabel;
             }
             if (this.widgetStore.yUnit) {
                 linePlotProps.yLabel = `Value (${this.widgetStore.yUnit})`;

@@ -669,6 +669,15 @@ export class FrameStore {
         return label;
     }
 
+    @computed get secondarySpectralLabel(): string {
+        let label = undefined;
+        if (this.spectralAxis) {
+            const spectralSystem = this.isSpectralSystemConvertible ? this.spectralSystem : this.spectralAxis.specsys;
+            label = `${spectralSystem ? `[${spectralSystem}] ` : ""}${this.spectralCoordinateSecondary ?? ""}`;
+        }
+        return label;
+    }
+
     @computed get spectralUnitStr(): string {
         if (this.spectralAxis && !this.spectralType && !this.spectralUnit) {
             return this.spectralAxis.type.unit;
@@ -1621,7 +1630,6 @@ export class FrameStore {
                         this.secondarySpectralCoordsSupported.set(key, value);
                     }
                 });
-                this.secondarySpectralCoordsSupported.set("None", {type: null, unit: null});
             }
         } else {
             this.secondarySpectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>([[SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]]);
@@ -1678,7 +1686,6 @@ export class FrameStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
-        console.trace();
         if (this.spectralCoordsSupported?.has(coordStr)) {
             const coord: {type: SpectralType; unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
             this.spectralType = coord.type;
