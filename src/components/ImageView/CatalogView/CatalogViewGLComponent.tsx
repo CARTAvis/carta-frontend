@@ -165,11 +165,13 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
         let scaleAdjustment = 1.0;
         const destinationFrame = this.props.frame;
         catalogStore.visibleCatalogFiles.get(destinationFrame)?.forEach(fileId => {
-            const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
-            const isActive = frame === destinationFrame;
             const catalog = catalogStore.catalogGLData.get(fileId);
-            if (catalog) {
-                const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+            const catalogWidgetStore = catalogStore.getCatalogWidgetStore(fileId);
+            const count = catalogStore.catalogCounts.get(fileId);
+            if (catalog && catalogWidgetStore && count > 0) {
+                const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(fileId));
+                const isActive = frame === destinationFrame;
+
                 const shape = catalogWidgetStore.shapeSettings;
                 const featherWidth = shape.featherWidth * devicePixelRatio * AppStore.Instance.imageRatio;
                 const lineThickness = catalogWidgetStore.thickness * shape.thicknessBase * devicePixelRatio * AppStore.Instance.imageRatio;
@@ -292,7 +294,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 }
 
                 const hasBuffer = this.catalogWebGLService.bindBuffer(fileId);
-                if (catalog.x?.length && catalog?.y.length && hasBuffer) {
+                if (hasBuffer) {
                     this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                     this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
                     this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
@@ -300,7 +302,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
 
                     this.gl.vertexAttribPointer(this.catalogWebGLService.vertexPositionAttribute, 2, GL2.FLOAT, false, 0, 0);
 
-                    this.gl.drawArrays(GL2.POINTS, 0, catalog.x.length);
+                    this.gl.drawArrays(GL2.POINTS, 0, count);
                     this.gl.finish();
                 }
             }
