@@ -280,7 +280,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         // Stokes Control
         if (numStokes > 1) {
             stokesSlider = (
-                <div className={`animator-slider stokes-slider ${this.width < 750 ? "tiled-label" : ""}`}>
+                <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})}>
                     <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Polarization" />
                     {hideSliders && (
                         <SafeNumericInput

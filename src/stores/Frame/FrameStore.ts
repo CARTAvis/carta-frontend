@@ -338,9 +338,9 @@ export class FrameStore {
 
     @computed get requiredUnit() {
         if (this.unit) {
-            if (this.requredPolarization === POLARIZATIONS.Pangle) {
+            if (this.requiredPolarization === POLARIZATIONS.Pangle) {
                 return "degree";
-            } else if (this.requredPolarization === POLARIZATIONS.PFtotal || this.requredPolarization === POLARIZATIONS.PFlinear) {
+            } else if (this.requiredPolarization === POLARIZATIONS.PFtotal || this.requiredPolarization === POLARIZATIONS.PFlinear) {
                 return "%";
             } else {
                 return this.unit;
@@ -874,12 +874,12 @@ export class FrameStore {
         });
     }
 
-    @computed get requredPolarization(): number {
+    @computed get requiredPolarization(): number {
         return this.polarizations?.[this.requiredPolarizationIndex];
     }
 
     @computed get requiredPolarizationInfo(): string {
-        return this.polarizationInfo?.[this.requiredPolarizationIndex] ?? String(this.requiredStokes);
+        return this.polarizationInfo?.[this.requiredPolarizationIndex];
     }
 
     @computed get requiredPolarizationIndex(): number {

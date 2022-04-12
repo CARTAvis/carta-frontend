@@ -159,7 +159,15 @@ export class StatsComponent extends React.Component<WidgetProps> {
         if (this.statsData && isFinite(index) && index >= 0 && index < this.statsData.statistics?.length) {
             const frame = this.widgetStore.effectiveFrame;
             if (frame && frame.unit) {
-                const unit = (this.widgetStore.coordinate === "z" && frame.requredPolarization === POLARIZATIONS.Pangle) || this.widgetStore.coordinate === "Panglez" ? "degree" : frame.unit;
+                let unit: string;
+                if (["PFtotalz", "PFlinearz"].includes(this.widgetStore.coordinate) || (this.widgetStore.coordinate === "z" && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(frame.requiredPolarization))) {
+                    unit = "%";
+                } else if (this.widgetStore.coordinate === "Panglez" || (this.widgetStore.coordinate === "z" && frame.requiredPolarization === POLARIZATIONS.Pangle)) {
+                    unit = "degree";
+                } else {
+                    unit = frame.unit;
+                }
+
                 if (type === CARTA.StatsType.NumPixels) {
                     unitString = "pixel(s)";
                 } else if (type === CARTA.StatsType.SumSq) {
@@ -195,7 +203,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 regionInfo += "# full image\n";
             }
             let channelInfo = frame.channelInfo ? `# channel: ${frame.spectralInfo.channel}\n` : "";
-            let stokesInfo = frame.hasStokes ? `# stokes: ${frame.stokesInfo[frame.requiredStokes]}\n` : "";
+            let stokesInfo = frame.hasStokes ? `# stokes: ${frame.requiredPolarizationInfo}\n` : "";
             let comment = `${channelInfo}${stokesInfo}${regionInfo}`;
 
             const header = "# Statistic\tValue\tUnit\n";
@@ -227,7 +235,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
             coordinateOptions.push(...widgetStore.effectiveFrame.coordinateOptionsZ);
 
-            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requredPolarization) + "z") {
+            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
                 stokesClassName = classNames("linked-to-selected-stokes", {"dark-theme": appStore.darkTheme});
             }
         }

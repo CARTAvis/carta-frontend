@@ -254,7 +254,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         let unitString = "Value";
         if (frame && frame.unit) {
-            unitString = `Value (${frame.unit})`;
+            unitString = `Value (${frame.requiredUnit})`;
         }
 
         const imageName = frame.filename;

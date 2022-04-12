@@ -411,11 +411,18 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         if (appStore.activeFrame) {
             if (this.profileStore && this.frame) {
                 if (this.frame.unit) {
-                    linePlotProps.yLabel = `Value (${
-                        (this.widgetStore.selectedStokes === "current" && this.widgetStore.effectiveFrame.requredPolarization === POLARIZATIONS.Pangle) || ["Pangle", "Pangle"].includes(this.widgetStore.selectedStokes)
-                            ? "degree"
-                            : this.frame.unit
-                    })`;
+                    let unit: string;
+                    if (
+                        ["PFtotal", "PFlinear"].includes(this.widgetStore.selectedStokes) ||
+                        (this.widgetStore.selectedStokes === "current" && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectiveFrame.requiredPolarization))
+                    ) {
+                        unit = "%";
+                    } else if (this.widgetStore.selectedStokes === "Pangle" || (this.widgetStore.selectedStokes === "current" && this.widgetStore.effectiveFrame.requiredPolarization === POLARIZATIONS.Pangle)) {
+                        unit = "degree";
+                    } else {
+                        unit = this.frame.unit;
+                    }
+                    linePlotProps.yLabel = `Value (${unit})`;
                 }
 
                 if (this.frame.validWcs && widgetStore.wcsAxisVisible) {

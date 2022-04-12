@@ -590,7 +590,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @computed get yUnit(): string {
         if (this.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit && this.profileSelectionStore.isSameCoordinatesUnit) {
-                const unitString = this.profileSelectionStore.isCoordinatesPangleOnly ? "degree" : this.intensityUnit;
+                let unitString: string;
+                if (this.profileSelectionStore.isCoordinatesPFtotalPFLinearOnly) {
+                    unitString = "%";
+                } else if (this.profileSelectionStore.isCoordinatesPangleOnly) {
+                    unitString = "degree";
+                } else {
+                    unitString = this.intensityUnit;
+                }
+
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
                     return "";
                 } else if (this.profileSelectionStore.isStatsTypeFluxDensityOnly) {

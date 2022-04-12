@@ -394,14 +394,27 @@ export class SpectralProfileSelectionStore {
     }
 
     @computed get isCoordinatesPangleOnly(): boolean {
-        return this.selectedCoordinates?.length === 1 && (this.selectedCoordinates[0] === "Panglez" || (this.selectedCoordinates[0] === "z" && this.widgetStore.effectiveFrame.requredPolarization === POLARIZATIONS.Pangle));
+        return this.selectedCoordinates?.length === 1 && (this.selectedCoordinates[0] === "Panglez" || (this.selectedCoordinates[0] === "z" && this.widgetStore.effectiveFrame.requiredPolarization === POLARIZATIONS.Pangle));
+    }
+
+    @computed get isCoordinatesPFtotalPFLinearOnly(): boolean {
+        if (this.selectedCoordinates?.filter(coordinate => coordinate !== "PFtotalz" && coordinate !== "PFlinearz" && coordinate !== "z")?.length > 0) {
+            return false;
+        }
+        if (this.selectedCoordinates?.includes("z") && this.widgetStore.effectiveFrame.requiredPolarization !== POLARIZATIONS.PFtotal && this.widgetStore.effectiveFrame.requiredPolarization !== POLARIZATIONS.PFlinear) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     @computed get isSameCoordinatesUnit(): boolean {
-        // unit of PolarizationAngle: degree, others: Jy/Beam
+        // unit of Fractional Polarization total/linear: %, unit of Polarization Angle: degree, others: Jy/Beam
         if (this.selectedCoordinates?.length <= 1) {
             return true;
-        } else if (this.selectedCoordinates?.includes("Panglez")) {
+        } else if (this.selectedCoordinates?.length === 2 && this.selectedCoordinates?.includes("PFtotalz") && this.selectedCoordinates?.includes("PFlinearz")) {
+            return true;
+        } else if (this.selectedCoordinates?.includes("PFtotalz") || this.selectedCoordinates?.includes("PFlinearz") || this.selectedCoordinates?.includes("Panglez")) {
             return false;
         }
         return true;

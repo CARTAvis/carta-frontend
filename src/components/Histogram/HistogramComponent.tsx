@@ -207,7 +207,16 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
                     const frame = this.widgetStore.effectiveFrame;
                     if (frame.unit) {
-                        numberString += ` ${this.widgetStore.coordinate === "Panglez" || (this.widgetStore.coordinate === "z" && frame.requredPolarization === POLARIZATIONS.Pangle) ? "degree" : frame.unit}`;
+                        let unit: string;
+                        if (["PFtotalz", "PFlinearz"].includes(this.widgetStore.coordinate) || (this.widgetStore.coordinate === "z" && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(frame.requiredPolarization))) {
+                            unit = "%";
+                        } else if (this.widgetStore.coordinate === "Panglez" || (this.widgetStore.coordinate === "z" && frame.requiredPolarization === POLARIZATIONS.Pangle)) {
+                            unit = "degree";
+                        } else {
+                            unit = frame.unit;
+                        }
+
+                        numberString += ` ${unit}`;
                     }
                     if (nearest.point.y <= 1) {
                         valueLabel += ` Count`;
@@ -239,7 +248,15 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
         let unitString = "Value";
         if (frame && frame.unit) {
-            unitString = `Value (${(this.widgetStore.coordinate === "z" && frame.requredPolarization === POLARIZATIONS.Pangle) || this.widgetStore.coordinate === "Panglez" ? "degree" : frame.unit})`;
+            let unit: string;
+            if (["PFtotalz", "PFlinearz"].includes(this.widgetStore.coordinate) || (this.widgetStore.coordinate === "z" && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(frame.requiredPolarization))) {
+                unit = "%";
+            } else if (this.widgetStore.coordinate === "Panglez" || (this.widgetStore.coordinate === "z" && frame.requiredPolarization === POLARIZATIONS.Pangle)) {
+                unit = "degree";
+            } else {
+                unit = frame.unit;
+            }
+            unitString = `Value (${unit})`;
         }
 
         const imageName = frame.filename;
