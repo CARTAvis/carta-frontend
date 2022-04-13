@@ -4,8 +4,8 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
-import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
+import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table, IMenuContext} from "@blueprintjs/table";
+import classNames from "classnames";
 import ReactResizeDetector from "react-resize-detector";
 import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -30,7 +30,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     @observable width: number = 0;
     @observable height: number = 0;
-    @observable columnWidths = [132, 70, 110, 75, 95];
+    @observable columnWidths = [132, 97, 110, 75, 95];
 
     constructor(props: any) {
         super(props);
@@ -58,7 +58,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private rowHeaderCellRenderer = (rowIndex: number) => {
-        return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === AppStore.Instance.activeFrameIndex ? "active-row-cell" : ""} />;
+        const className = classNames("row-cell", {active: rowIndex === AppStore.Instance.activeFrameIndex});
+        return <RowHeaderCell name={rowIndex.toString()} className={className} />;
     };
 
     private onFileSelected = (frame: FrameStore) => {
@@ -72,9 +73,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         }
 
         const frame = appStore.frames[rowIndex];
+        const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
 
         return (
-            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+            <Cell className={className}>
                 <React.Fragment>
                     <div className="name-cell" onClick={() => this.onFileSelected(frame)}>
                         {frame.filename}
@@ -89,7 +91,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell />;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredChannel}</Cell>;
+        const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
+        return <Cell className={className}>{appStore.frames[rowIndex].requiredChannel}</Cell>;
     };
 
     private stokesRenderer = (rowIndex: number) => {
@@ -97,7 +100,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell />;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredStokesInfo}</Cell>;
+        const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
+        return <Cell className={className}>{appStore.frames[rowIndex].requiredStokesInfo}</Cell>;
     };
 
     private typeRenderer = (rowIndex: number) => {
@@ -107,9 +111,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         }
 
         const frame = appStore.frames[rowIndex];
-
+        const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
         return (
-            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+            <Cell className={className}>
                 <React.Fragment>
                     <Tooltip2
                         position={"bottom"}
@@ -142,6 +146,24 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         >
                             <AnchorButton minimal={true} small={true} active={frame.contourConfig.visible} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>
                                 C
+                            </AnchorButton>
+                        </Tooltip2>
+                    )}
+                    {frame.vectorOverlayConfig.enabled && (
+                        <Tooltip2
+                            position={"bottom"}
+                            content={
+                                <span>
+                                    Vector overlay layer
+                                    <br />
+                                    <i>
+                                        <small>Click to {frame.vectorOverlayConfig.visible ? "hide" : "show"}</small>
+                                    </i>
+                                </span>
+                            }
+                        >
+                            <AnchorButton minimal={true} small={true} active={frame.vectorOverlayConfig.visible} intent={frame.vectorOverlayConfig.visible ? "success" : "none"} onClick={frame.vectorOverlayConfig.toggleVisibility}>
+                                V
                             </AnchorButton>
                         </Tooltip2>
                     )}
@@ -263,8 +285,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
+        const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
         return (
-            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+            <Cell className={className}>
                 <React.Fragment>
                     {spatialMatchingButton}
                     {spectralMatchingButton}
@@ -359,6 +382,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const activeFrameIndex = appStore.activeFrameIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
+        const visibilityOverlay = appStore.frames.map(f => f.vectorOverlayConfig.visible && f.vectorOverlayConfig.enabled);
         const f1 = appStore.frames.map(f => f.spatialReference);
         const f2 = appStore.frames.map(f => f.spectralReference);
         const f3 = appStore.frames.map(f => f.rasterScalingReference);

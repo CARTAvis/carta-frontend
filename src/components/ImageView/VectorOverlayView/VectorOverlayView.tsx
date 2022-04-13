@@ -218,7 +218,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const overlayFrames = appStore.vectorOverlayFrames.get(baseFrame);
         if (overlayFrames) {
             for (const frame of overlayFrames) {
-                let {mode, thickness, color, colormapBias, colormapContrast, colormapEnabled, intensityMin, intensityMax, lengthMin, lengthMax} = frame.vectorOverlayConfig;
+                let {mode, thickness, color, colormapBias, colormapContrast, colormapEnabled, colormap, intensityMin, intensityMax, lengthMin, lengthMax} = frame.vectorOverlayConfig;
                 const config = frame.vectorOverlayConfig;
                 intensityMin = isFinite(intensityMin) ? intensityMin : frame.vectorOverlayStore.intensityMin;
                 intensityMax = isFinite(intensityMax) ? intensityMax : frame.vectorOverlayStore.intensityMax;
