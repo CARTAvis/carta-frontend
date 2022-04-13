@@ -160,20 +160,20 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         if (frame.vectorOverlayConfig.mode === VectorOverlayMode.IntensityOnly) {
             this.gl.uniform1f(shaderUniforms.IntensityMin, intensityMin);
             this.gl.uniform1f(shaderUniforms.IntensityMax, intensityMax);
-            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin);
-            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax);
+            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin * pixelRatio);
+            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * pixelRatio);
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 1);
         } else if (frame.vectorOverlayConfig.mode === VectorOverlayMode.AngleOnly) {
             this.gl.uniform1f(shaderUniforms.IntensityMin, 0);
             this.gl.uniform1f(shaderUniforms.IntensityMax, 1);
-            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMax);
-            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax);
+            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMax * pixelRatio);
+            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * pixelRatio);
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 0);
         } else {
             this.gl.uniform1f(shaderUniforms.IntensityMin, intensityMin);
             this.gl.uniform1f(shaderUniforms.IntensityMax, intensityMax);
-            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin);
-            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax);
+            this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin * pixelRatio);
+            this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * pixelRatio);
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 0);
         }
 
