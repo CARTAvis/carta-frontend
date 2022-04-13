@@ -71,7 +71,7 @@ void main() {
     vec2 centerPoint = data.xy;
     float lineLength = calculateLength(data.z) / uZoomLevel;
     float lineWidth = uCanvasSpaceLineWidth / uZoomLevel;
-    float angle = data.w * PI / 180.0;
+    float angle = data.w;
 
     if (uIntensityPlot) {
         angle = 0.0;

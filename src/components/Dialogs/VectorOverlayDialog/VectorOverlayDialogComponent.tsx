@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Classes, FormGroup, HTMLSelect, DialogProps, Intent, MenuItem, NonIdealState, Tab, Tabs, Radio, RadioGroup, Switch} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -30,7 +30,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     @observable uError: number;
 
     private static readonly DefaultWidth = 500;
-    private static readonly DefaultHeight = 640;
+    private static readonly DefaultHeight = 720;
 
     private cachedFrame: FrameStore;
 
@@ -137,6 +137,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const config = frame.vectorOverlayConfig;
         const intensityMin = isFinite(config.intensityMin) ? config.intensityMin : frame.vectorOverlayStore.intensityMin;
         const intensityMax = isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
+
         return (
             <FormGroup label={`Intensity (${frame.unit})`} inline={true}>
                 <div className="parameter-container">
@@ -144,6 +145,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                         <ClearableNumericInputComponent
                             label="Min"
                             value={intensityMin}
+                            placeholder="Automatic"
                             onValueChanged={val => config.setIntensityRange(val, config.intensityMax)}
                             onValueCleared={() => config.setIntensityRange(undefined, config.intensityMax)}
                             displayExponential={true}
@@ -151,6 +153,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                         <ClearableNumericInputComponent
                             label="Max"
                             value={intensityMax}
+                            placeholder="Automatic"
                             onValueChanged={val => config.setIntensityRange(config.intensityMin, val)}
                             onValueCleared={() => config.setIntensityRange(config.intensityMin, undefined)}
                             displayExponential={true}
@@ -169,11 +172,15 @@ export class VectorOverlayDialogComponent extends React.Component {
         }
 
         const config = frame.vectorOverlayConfig;
+        const angleOnly = frame.vectorOverlayConfig.mode === VectorOverlayMode.AngleOnly;
+        const intensityOnly = frame.vectorOverlayConfig.mode === VectorOverlayMode.IntensityOnly;
+
         return (
-            <FormGroup label="Line Length (px)" inline={true}>
+            <FormGroup label={intensityOnly ? "Block Width (px)" : "Line Length (px)"} inline={true}>
                 <div className="parameter-container">
                     <div className="parameter-line">
                         <ClearableNumericInputComponent
+                            disabled={angleOnly}
                             label="Min"
                             value={config.lengthMin}
                             onValueChanged={val => config.setLengthRange(val, config.lengthMax)}
@@ -222,6 +229,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         }
 
         const dataSource = appStore.activeFrame;
+        const intensityOnly = dataSource.vectorOverlayConfig.mode === VectorOverlayMode.IntensityOnly;
 
         const configPanel = (
             <div className="vector-overlay-config-panel">
@@ -258,8 +266,17 @@ export class VectorOverlayDialogComponent extends React.Component {
 
         const stylingPanel = (
             <div className="vector-overlay-style-panel">
-                <FormGroup inline={true} label="Lne Thickness (px)">
-                    <SafeNumericInput placeholder="Thickness" min={0.5} max={10} value={dataSource.vectorOverlayConfig.thickness} majorStepSize={0.5} stepSize={0.5} onValueChange={dataSource.vectorOverlayConfig.setThickness} />
+                <FormGroup disabled={intensityOnly} inline={true} label="Line Thickness (px)">
+                    <SafeNumericInput
+                        disabled={intensityOnly}
+                        placeholder="Thickness"
+                        min={0.5}
+                        max={10}
+                        value={dataSource.vectorOverlayConfig.thickness}
+                        majorStepSize={0.5}
+                        stepSize={0.5}
+                        onValueChange={dataSource.vectorOverlayConfig.setThickness}
+                    />
                 </FormGroup>
                 {this.renderIntensityParameters()}
                 {this.renderLengthParameters()}

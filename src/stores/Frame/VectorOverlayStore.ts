@@ -2,7 +2,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {VectorOverlayWebGLService} from "services";
 import {FrameStore} from "./FrameStore";
-import {createTextureFromArray} from "utilities";
+import {createTextureFromArray, equalIfBothFinite} from "utilities";
 
 export interface VectorOverlayTile {
     texture: WebGLTexture;
@@ -22,8 +22,8 @@ export class VectorOverlayStore {
         makeObservable(this);
         this.gl = VectorOverlayWebGLService.Instance.gl;
         this.frame = frame;
-        this.intensityMin = NaN;
-        this.intensityMax = NaN;
+        this.intensityMin = undefined;
+        this.intensityMax = undefined;
     }
 
     @computed get isComplete() {
@@ -40,50 +40,90 @@ export class VectorOverlayStore {
             }
         }
         this.tiles = [];
-        this.intensityMin = NaN;
-        this.intensityMax = NaN;
+        this.intensityMin = undefined;
+        this.intensityMax = undefined;
     };
 
-    @action setData = (tiles: CARTA.ITileData[], progress: number) => {
+    @action setData = (intensityTiles: CARTA.ITileData[], angleTiles: CARTA.ITileData[], progress: number) => {
         this.clearData();
-        this.addData(tiles, progress);
+        this.addData(intensityTiles, angleTiles, progress);
     };
 
-    @action addData = (tiles: CARTA.ITileData[], progress: number) => {
+    @action addData = (intensityTiles: CARTA.ITileData[], angleTiles: CARTA.ITileData[], progress: number) => {
         this.progress = progress;
 
         let localMin = Number.MAX_VALUE;
         let localMax = -Number.MAX_VALUE;
 
-        for (const tile of tiles) {
-            if (!tile.imageData) {
+        const numTiles = Math.max(intensityTiles.length, angleTiles.length);
+
+        for (let i = 0; i < numTiles; i++) {
+            let intensityTile = intensityTiles?.[i];
+            let angleTile = angleTiles?.[i];
+            if (!intensityTile?.imageData?.length) {
+                intensityTile = undefined;
+            }
+            if (!angleTile?.imageData?.length) {
+                angleTile = undefined;
+            }
+
+            // Skip sets where both tiles are empty
+            if (!intensityTile && !angleTile) {
                 continue;
             }
+
+            // Skip sets with mismatching dimensions or coordinates
+            if (!equalIfBothFinite(intensityTile?.width, angleTile?.width) || !equalIfBothFinite(intensityTile?.height, angleTile?.height)) {
+                continue;
+            }
+            if (!equalIfBothFinite(intensityTile?.mip, angleTile?.mip) || !equalIfBothFinite(intensityTile?.x, angleTile?.x) || !equalIfBothFinite(intensityTile?.y, angleTile?.y)) {
+                continue;
+            }
+
+            const tileWidth = Math.max(intensityTile?.width ?? 0, angleTile?.width ?? 0);
+            const tileHeight = Math.max(intensityTile?.height ?? 0, angleTile?.height ?? 0);
+            const tileMip = intensityTile?.mip ?? angleTile?.mip;
+            const tileX = intensityTile?.x ?? angleTile?.x;
+            const tileY = intensityTile?.y ?? angleTile?.y;
+
             // TODO: support compressed data and offload this to webassembly and a web worker
-            const decompressedData = new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength));
-            // TODO: Support angle and intensity
-            let vertexData = new Float32Array(tile.width * tile.height * 3);
+            let intensityData: Float32Array;
+            let angleData: Float32Array;
+            if (intensityTile?.imageData) {
+                intensityData = new Float32Array(intensityTile.imageData.buffer.slice(intensityTile.imageData.byteOffset, intensityTile.imageData.byteOffset + intensityTile.imageData.byteLength));
+            } else {
+                intensityData = new Float32Array(tileWidth * tileHeight * 4);
+            }
+            if (angleTile?.imageData?.length) {
+                angleData = new Float32Array(angleTile.imageData.buffer.slice(angleTile.imageData.byteOffset, angleTile.imageData.byteOffset + angleTile.imageData.byteLength));
+            } else {
+                angleData = new Float32Array(tileWidth * tileHeight * 4);
+            }
+
+            let vertexData = new Float32Array(tileWidth * tileHeight * 4);
             let numVertices = 0;
             // Vertex offsets: Tile offset + half of the block averaging size, and move to middle of the pixel;
-            let offsetX = tile.mip * (tile.x * 256 + 0.5) - 0.5;
-            let offsetY = tile.mip * (tile.y * 256 + 0.5) - 0.5;
-            for (let j = 0; j < tile.height; j++) {
-                for (let i = 0; i < tile.width; i++) {
-                    const index = i + tile.width * j;
-                    const val = decompressedData[index];
-                    if (isFinite(val)) {
-                        vertexData[numVertices * 3] = i * tile.mip + offsetX;
-                        vertexData[numVertices * 3 + 1] = j * tile.mip + offsetY;
-                        vertexData[numVertices * 3 + 2] = val;
+            let offsetX = tileMip * (tileX * 256 + 0.5) - 0.5;
+            let offsetY = tileMip * (tileY * 256 + 0.5) - 0.5;
+            for (let j = 0; j < tileHeight; j++) {
+                for (let i = 0; i < tileWidth; i++) {
+                    const index = i + tileWidth * j;
+                    const intensity = intensityData[index];
+                    const angle = angleData[index];
+                    if (isFinite(intensity) && isFinite(angle)) {
+                        vertexData[numVertices * 4] = i * tileMip + offsetX;
+                        vertexData[numVertices * 4 + 1] = j * tileMip + offsetY;
+                        vertexData[numVertices * 4 + 2] = intensity;
+                        vertexData[numVertices * 4 + 3] = angle;
                         numVertices++;
-                        localMin = Math.min(localMin, val);
-                        localMax = Math.max(localMax, val);
+                        localMin = Math.min(localMin, intensity);
+                        localMax = Math.max(localMax, intensity);
                     }
                 }
             }
             // Resize vertex data before creating a texture
-            vertexData = new Float32Array(vertexData.buffer, 0, numVertices * 3);
-            const texture = createTextureFromArray(this.gl, vertexData, WebGLRenderingContext.TEXTURE0, 3);
+            vertexData = new Float32Array(vertexData.buffer, 0, numVertices * 4);
+            const texture = createTextureFromArray(this.gl, vertexData, WebGLRenderingContext.TEXTURE0, 4);
             if (!this.tiles) {
                 this.tiles = [];
             }

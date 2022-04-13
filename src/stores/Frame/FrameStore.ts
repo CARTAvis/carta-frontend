@@ -1,12 +1,25 @@
-import {action, autorun, computed, observable, makeObservable, runInAction, reaction} from "mobx";
-import {IOptionProps, NumberRange} from "@blueprintjs/core";
+import {action, autorun, computed, makeObservable, observable, reaction, runInAction} from "mobx";
+import {OptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
-import {ColorbarStore, ContourStore, ContourConfigStore, DistanceMeasuringStore, RegionStore, RegionSetStore, RestFreqStore, RenderConfigStore, OverlayBeamStore, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
 import {
-    ChannelInfo,
+    ColorbarStore,
+    ContourConfigStore,
+    ContourStore,
+    DistanceMeasuringStore,
+    OverlayBeamStore,
+    RegionSetStore,
+    RegionStore,
+    RenderConfigStore,
+    RestFreqStore,
+    VectorOverlayConfigStore,
+    VectorOverlayMode,
+    VectorOverlayStore
+} from "stores/Frame";
+import {
     CatalogControlMap,
+    ChannelInfo,
     ControlMap,
     CursorInfo,
     FrameView,
@@ -15,6 +28,7 @@ import {
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
     Point2D,
+    POLARIZATION_LABELS,
     SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
     SPECTRAL_TYPE_STRING,
@@ -23,32 +37,32 @@ import {
     SpectralType,
     SpectralTypeSet,
     SpectralUnit,
-    STANDARD_SPECTRAL_TYPE_SETS,
     STANDARD_POLARIZATIONS,
+    STANDARD_SPECTRAL_TYPE_SETS,
     Transform2D,
-    ZoomPoint,
-    POLARIZATION_LABELS
+    ZoomPoint
 } from "models";
 import {
     clamp,
+    formattedArcsec,
     formattedFrequency,
+    getFormattedWCSPoint,
     getHeaderNumericValue,
+    getPixelSize,
     getTransformedChannel,
-    transformPoint,
+    isAstBadPoint,
     minMax2D,
+    multiply2D,
+    ProtobufProcessing,
     rotate2D,
-    toFixed,
-    trimFitsComment,
     round2D,
     subtract2D,
-    getFormattedWCSPoint,
-    getPixelSize,
-    multiply2D,
-    isAstBadPoint
+    toFixed,
+    transformPoint,
+    trimFitsComment
 } from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
-import {formattedArcsec, ProtobufProcessing} from "utilities";
 
 export interface FrameInfo {
     fileId: number;
@@ -780,7 +794,7 @@ export class FrameStore {
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
     }
 
-    @computed get stokesOptions(): IOptionProps[] {
+    @computed get stokesOptions(): OptionProps[] {
         let stokesOptions = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
             const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value.toUpperCase() === "STOKES");
@@ -1680,9 +1694,9 @@ export class FrameStore {
 
     @action updateFromVectorOverlayData(vectorOverlayData: CARTA.IVectorOverlayTileData) {
         if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
-            this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.progress);
+            this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
         } else {
-            this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.progress);
+            this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
         }
     }
 
@@ -1906,6 +1920,18 @@ export class FrameStore {
         const preferenceStore = PreferenceStore.Instance;
         config.setEnabled(true);
 
+        let stokesIntensity = -1;
+        let stokesAngle = -1;
+
+        if (config.mode === VectorOverlayMode.IntensityOnly) {
+            stokesIntensity = 0;
+        } else if (config.mode === VectorOverlayMode.AngleOnly) {
+            stokesAngle = 0;
+        } else {
+            stokesIntensity = 0;
+            stokesAngle = 0;
+        }
+
         const parameters: CARTA.ISetVectorOverlayParameters = {
             fileId: this.frameInfo.fileId,
             imageBounds: {
@@ -1920,9 +1946,8 @@ export class FrameStore {
             debiasing: config.debiasing,
             qError: config.qError,
             uError: config.uError,
-            // TODO: Stokes args
-            stokesIntensity: 0,
-            stokesAngle: -1,
+            stokesIntensity,
+            stokesAngle,
             compressionType: CARTA.CompressionType.NONE,
             compressionQuality: preferenceStore.contourCompressionLevel
         };
