@@ -3,11 +3,11 @@ import {IOptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
-import {RegionStore} from "stores/Frame";
+import {RegionStore, RestFreqStore} from "stores/Frame";
 import {RegionId} from "stores/widgets";
 import {AppToaster, ErrorToast} from "components/Shared";
 import {FileInfoType} from "components";
-import {LineOption, ToFileListFilterMode} from "models";
+import {FrequencyUnit, LineOption, ToFileListFilterMode} from "models";
 import {getDataTypeString, ProcessedColumnData} from "utilities";
 
 export enum BrowserMode {
@@ -76,6 +76,8 @@ export class FileBrowserStore {
     @observable saveSpectralRange: string[] = ["0", "0"];
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
+    @observable saveRestFreqVal: number = 0;
+    @observable saveRestFreqUnit: FrequencyUnit = FrequencyUnit.HZ;
     @observable shouldDropDegenerateAxes: boolean;
 
     private extendedDelayHandle: any;
@@ -93,6 +95,10 @@ export class FileBrowserStore {
 
                 // update regions
                 this.resetExportRegionIndexes();
+
+                // update rest freq
+                this.setRestFreqVal(AppStore.Instance.activeFrame.restFreqStore.customVal);
+                this.setRestFreqUnit(AppStore.Instance.activeFrame.restFreqStore.customUnit);
             }
         });
     }
@@ -512,6 +518,29 @@ export class FileBrowserStore {
             this.resetExportRegionIndexes();
         }
     };
+
+    @action setRestFreqVal = (val: number) => {
+        this.saveRestFreqVal = val;
+    };
+
+    @action setRestFreqUnit = (unit: FrequencyUnit) => {
+        this.saveRestFreqUnit = unit;
+    };
+
+    @action resetRestFreq = () => {
+        const restFreqStore = AppStore.Instance.activeFrame?.restFreqStore;
+        if (restFreqStore) {
+            this.saveRestFreqVal = restFreqStore.headerVal;
+            this.saveRestFreqUnit = restFreqStore.headerUnit;
+        }
+    };
+
+    @computed get saveRestFreq(): number {
+        if (!isFinite(this.saveRestFreqVal)) {
+            return undefined;
+        }
+        return RestFreqStore.convertUnitInverse(this.saveRestFreqVal, this.saveRestFreqUnit);
+    }
 
     @computed get HDUList(): IOptionProps[] {
         return this.HDUfileInfoExtended

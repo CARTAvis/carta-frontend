@@ -4,7 +4,8 @@ import {action, autorun, computed, makeObservable} from "mobx";
 import {Text, Label, FormGroup, IOptionProps, HTMLSelect, ControlGroup, Switch, NumericInput, Intent} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FileBrowserStore} from "stores";
-import {SpectralSystem} from "models";
+import {FrequencyUnit, SpectralSystem} from "models";
+import {ClearableNumericInputComponent} from "components/Shared";
 import "./ImageSaveComponent.scss";
 
 @observer
@@ -45,22 +46,15 @@ export class ImageSaveComponent extends React.Component {
     };
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const fileBrowser = FileBrowserStore.Instance;
-        fileBrowser.setSaveRegionId(parseInt(changeEvent.target.value));
+        FileBrowserStore.Instance?.setSaveRegionId(parseInt(changeEvent.target.value));
     };
 
     private handleSaveSpectralRangeStartChanged = (_valueAsNumber: number, valueAsString: string) => {
-        const fileBrowser = FileBrowserStore.Instance;
-        if (FileBrowserStore) {
-            fileBrowser.setSaveSpectralRangeMin(valueAsString);
-        }
+        FileBrowserStore.Instance?.setSaveSpectralRangeMin(valueAsString);
     };
 
     private handleSaveSpectralRangeEndChanged = (_valueAsNumber: number, valueAsString: string) => {
-        const fileBrowser = FileBrowserStore.Instance;
-        if (FileBrowserStore) {
-            fileBrowser.setSaveSpectralRangeMax(valueAsString);
-        }
+        FileBrowserStore.Instance?.setSaveSpectralRangeMax(valueAsString);
     };
 
     updateSpectralCoordinate(coordStr: string): void {
@@ -133,7 +127,7 @@ export class ImageSaveComponent extends React.Component {
         return [];
     }
 
-    private renderSaveImageControl() {
+    render() {
         const fileBrowser = FileBrowserStore.Instance;
         const activeFrame = AppStore.Instance.activeFrame;
         const closedRegions = activeFrame.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
@@ -157,7 +151,6 @@ export class ImageSaveComponent extends React.Component {
                       return {value: system, label: system};
                   })
                 : [];
-        const stokesOptions: IOptionProps[] = this.stokesOptions;
         // Calculate a small step size
         const numChannels = activeFrame.numChannels;
         const min = activeFrame.channelValueBounds?.min;
@@ -229,22 +222,32 @@ export class ImageSaveComponent extends React.Component {
                             </React.Fragment>
                         )}
                         {activeFrame.hasStokes && (
-                            <React.Fragment>
-                                <div className="stokes-select">
-                                    <FormGroup label={"Polarization"} inline={true}>
-                                        <HTMLSelect value={fileBrowser.saveStokesOption || ""} options={stokesOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))} />
-                                    </FormGroup>
-                                </div>
-                            </React.Fragment>
+                            <div className="stokes-select">
+                                <FormGroup label={"Polarization"} inline={true}>
+                                    <HTMLSelect value={fileBrowser.saveStokesOption || ""} options={this.stokesOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))} />
+                                </FormGroup>
+                            </div>
+                        )}
+                        {activeFrame.isRestFreqEditable && (
+                            <div className="freq-input">
+                                <ClearableNumericInputComponent
+                                    label="Rest frequency"
+                                    value={fileBrowser.saveRestFreqVal}
+                                    placeholder="rest frequency"
+                                    selectAllOnFocus={true}
+                                    onValueChanged={fileBrowser.setRestFreqVal}
+                                    onValueCleared={fileBrowser.resetRestFreq}
+                                    resetDisabled={activeFrame.restFreqStore.resetDisable}
+                                    tooltipContent={activeFrame.restFreqStore.defaultInfo}
+                                    tooltipPlacement={"bottom"}
+                                />
+                                <HTMLSelect options={Object.values(FrequencyUnit)} value={fileBrowser.saveRestFreqUnit} onChange={ev => fileBrowser.setRestFreqUnit(ev.currentTarget.value as FrequencyUnit)} />
+                            </div>
                         )}
                         <Switch className="drop-degenerate" checked={fileBrowser.shouldDropDegenerateAxes} label="Drop degenerate axes" onChange={this.onChangeShouldDropDegenerateAxes} />
                     </div>
                 )}
             </React.Fragment>
         );
-    }
-
-    render() {
-        return this.renderSaveImageControl();
     }
 }

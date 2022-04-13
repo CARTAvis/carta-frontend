@@ -89,4 +89,24 @@
         margin-top: 1em;
         width: 14em;
     }
+
+    .freq-input {
+        display: flex;
+
+        .bp3-form-group .bp3-label {
+            margin-top: 0.7em;
+        }
+
+        .bp3-html-select {
+            margin-top: 0.7em;
+        }
+
+        .bp3-form-group {
+            margin-right: 7px;
+
+            .bp3-input-group {
+                width: 13em;
+            }
+        }
+    }
 }

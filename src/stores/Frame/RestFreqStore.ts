@@ -2,8 +2,8 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {FrequencyUnit} from "models";
 
 export class RestFreqStore {
-    private readonly headerVal: number;
-    private readonly headerUnit: FrequencyUnit;
+    readonly headerVal: number;
+    readonly headerUnit: FrequencyUnit;
 
     @observable customVal: number;
     @observable customUnit: FrequencyUnit;
@@ -65,7 +65,7 @@ export class RestFreqStore {
         }
     };
 
-    private static convertUnitInverse = (value: number, unit: FrequencyUnit) => {
+    static convertUnitInverse = (value: number, unit: FrequencyUnit) => {
         switch (unit) {
             case FrequencyUnit.GHZ:
                 return value * 1e9;
