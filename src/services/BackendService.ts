@@ -444,7 +444,17 @@ export class BackendService {
         return false;
     }
 
-    async saveFile(fileId: number, outputFileDirectory: string, outputFileName: string, outputFileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], keepDegenerate?: boolean, restFreq?: number): Promise<CARTA.ISaveFileAck> {
+    async saveFile(
+        fileId: number,
+        outputFileDirectory: string,
+        outputFileName: string,
+        outputFileType: CARTA.FileType,
+        regionId?: number,
+        channels?: number[],
+        stokes?: number[],
+        keepDegenerate?: boolean,
+        restFreq?: number
+    ): Promise<CARTA.ISaveFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
