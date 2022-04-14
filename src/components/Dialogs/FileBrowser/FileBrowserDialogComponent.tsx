@@ -147,7 +147,10 @@ export class FileBrowserDialogComponent extends React.Component {
             saveChannels = [Math.max(saveChannelStart, 0), Math.min(saveChannelEnd, activeFrame.numChannels - 1), 1];
         }
         const saveStokes = fileBrowserStore.saveStokesRange;
-        await appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegenerateAxes);
+
+        const headerRestFreq = activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue;
+        const restFreq = headerRestFreq === fileBrowserStore.saveRestFreq ? NaN : fileBrowserStore.saveRestFreq;
+        await appStore.saveFile(fileBrowserStore.fileList.directory, filename, fileBrowserStore.saveFileType, fileBrowserStore.saveRegionId, saveChannels, saveStokes, fileBrowserStore.shouldDropDegenerateAxes, restFreq);
     };
 
     private handleSaveFileClicked = () => {
