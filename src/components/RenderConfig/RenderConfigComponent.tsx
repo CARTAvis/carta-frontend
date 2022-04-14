@@ -253,7 +253,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
 
         let unitString = "Value";
-        if (frame && frame.unit) {
+        if (frame && frame.requiredUnit) {
             unitString = `Value (${frame.requiredUnit})`;
         }
 

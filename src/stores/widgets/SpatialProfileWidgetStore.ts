@@ -8,7 +8,7 @@ import {FrameStore} from "stores/Frame";
 import {PlotType, LineSettings} from "components/Shared";
 import {SpatialProfilerSettingsTabs} from "components";
 import {clamp, isAutoColor} from "utilities";
-import {LineOption, VALID_XY_COORDINATES} from "models";
+import {LineOption, VALID_XY_COORDINATES, POLARIZATIONS} from "models";
 
 const DEFAULT_STOKES = "current";
 
@@ -163,6 +163,14 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
             stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredPolarizationInfo : this.selectedStokes;
         }
         return `${stokes?.replace("Stokes ", "") ?? ""}${this.coordinate}`;
+    }
+
+    @computed get effectivePolarization(): POLARIZATIONS {
+        if (this.selectedStokes === DEFAULT_STOKES) {
+            return this.effectiveFrame?.requiredPolarization;
+        } else {
+            return POLARIZATIONS[this.fullCoordinate.substring(0, this.fullCoordinate.length - 1)];
+        }
     }
 
     private static GetSpatialConfig(frame: FrameStore, coordinate: string, isCursor: boolean): CARTA.SetSpatialRequirements.ISpatialConfig {

@@ -158,14 +158,14 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         if (this.statsData && isFinite(index) && index >= 0 && index < this.statsData.statistics?.length) {
             const frame = this.widgetStore.effectiveFrame;
-            if (frame && frame.unit) {
+            if (frame && frame.headerUnit) {
                 let unit: string;
-                if (["PFtotalz", "PFlinearz"].includes(this.widgetStore.coordinate) || (this.widgetStore.coordinate === "z" && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(frame.requiredPolarization))) {
+                if ([POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
                     unit = "%";
-                } else if (this.widgetStore.coordinate === "Panglez" || (this.widgetStore.coordinate === "z" && frame.requiredPolarization === POLARIZATIONS.Pangle)) {
+                } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
                     unit = "degree";
                 } else {
-                    unit = frame.unit;
+                    unit = frame.headerUnit;
                 }
 
                 if (type === CARTA.StatsType.NumPixels) {

@@ -323,7 +323,7 @@ export class FrameStore {
         return this.renderWidth > 0 && this.renderHeight > 0;
     }
 
-    @computed get unit() {
+    get headerUnit() {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
         } else {
@@ -337,13 +337,13 @@ export class FrameStore {
     }
 
     @computed get requiredUnit() {
-        if (this.unit) {
+        if (this.headerUnit) {
             if (this.requiredPolarization === POLARIZATIONS.Pangle) {
                 return "degree";
             } else if (this.requiredPolarization === POLARIZATIONS.PFtotal || this.requiredPolarization === POLARIZATIONS.PFlinear) {
                 return "%";
             } else {
-                return this.unit;
+                return this.headerUnit;
             }
         }
         return undefined;
@@ -823,10 +823,6 @@ export class FrameStore {
         return this.stokesOptions?.map(option => {
             return option?.label;
         });
-    }
-
-    @computed get requiredStokesInfo(): string {
-        return this.requiredStokes >= 0 && this.requiredStokes < this.stokesInfo?.length ? this.stokesInfo[this.requiredStokes] : String(this.requiredStokes);
     }
 
     // including standard and computed polarizations eg.[1, 2, 3, 4, 13, 14, 15, 16, 17]

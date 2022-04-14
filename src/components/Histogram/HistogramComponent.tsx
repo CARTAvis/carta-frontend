@@ -206,14 +206,14 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     let valueLabel = `${nearest.point.y !== 0.5 ? nearest.point.y : 0}`;
 
                     const frame = this.widgetStore.effectiveFrame;
-                    if (frame.unit) {
+                    if (frame.headerUnit) {
                         let unit: string;
-                        if (["PFtotalz", "PFlinearz"].includes(this.widgetStore.coordinate) || (this.widgetStore.coordinate === "z" && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(frame.requiredPolarization))) {
+                        if ([POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
                             unit = "%";
-                        } else if (this.widgetStore.coordinate === "Panglez" || (this.widgetStore.coordinate === "z" && frame.requiredPolarization === POLARIZATIONS.Pangle)) {
+                        } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
                             unit = "degree";
                         } else {
-                            unit = frame.unit;
+                            unit = frame.headerUnit;
                         }
 
                         numberString += ` ${unit}`;
@@ -247,14 +247,14 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
 
         let unitString = "Value";
-        if (frame && frame.unit) {
+        if (frame && frame.headerUnit) {
             let unit: string;
-            if (["PFtotalz", "PFlinearz"].includes(this.widgetStore.coordinate) || (this.widgetStore.coordinate === "z" && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(frame.requiredPolarization))) {
+            if ([POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
                 unit = "%";
-            } else if (this.widgetStore.coordinate === "Panglez" || (this.widgetStore.coordinate === "z" && frame.requiredPolarization === POLARIZATIONS.Pangle)) {
+            } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
                 unit = "degree";
             } else {
-                unit = frame.unit;
+                unit = frame.headerUnit;
             }
             unitString = `Value (${unit})`;
         }

@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {FindIntensityUnitType, GetFreqInGHz, GetIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, SpectralSystem} from "models";
+import {FindIntensityUnitType, GetFreqInGHz, GetIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, SpectralSystem, POLARIZATIONS} from "models";
 import tinycolor from "tinycolor2";
 import {SpectralProfilerSettingsTabs} from "components";
 import {clamp, getAngleInRad, getColorForTheme, isAutoColor} from "utilities";
@@ -314,13 +314,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
 
         this.intensityConversion = undefined;
-        this.setIntensityUnit(this.effectiveFrame?.unit);
+        this.setIntensityUnit(this.effectiveFrame?.headerUnit);
 
         reaction(
             () => this.effectiveFrame,
             frame => {
                 if (frame) {
-                    this.setIntensityUnit(frame.unit);
+                    this.setIntensityUnit(frame.headerUnit);
+                }
+            }
+        );
+
+        reaction(
+            () => this.effectiveFrame?.requiredPolarization,
+            polarization => {
+                if (this.effectiveFrame && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
+                    this.setIntensityUnit(this.effectiveFrame.headerUnit);
                 }
             }
         );
@@ -344,7 +353,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @computed private get intensityConfig(): IntensityConfig {
         const frame = this.effectiveFrame;
         if (frame) {
-            let config: IntensityConfig = {nativeIntensityUnit: frame.unit};
+            let config: IntensityConfig = {nativeIntensityUnit: frame.headerUnit};
             if (frame.beamProperties) {
                 config["bmaj"] = frame.beamProperties.majorAxis;
                 config["bmin"] = frame.beamProperties.minorAxis;
@@ -363,7 +372,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get isIntensityConvertible(): boolean {
-        return IsIntensitySupported(this.intensityConfig?.nativeIntensityUnit);
+        return IsIntensitySupported(this.intensityConfig?.nativeIntensityUnit) && !this.profileSelectionStore.isCoordinatesIncludingNonIntensityUnit;
     }
 
     @computed get intensityOptions(): string[] {
@@ -591,7 +600,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (this.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit && this.profileSelectionStore.isSameCoordinatesUnit) {
                 let unitString: string;
-                if (this.profileSelectionStore.isCoordinatesPFtotalPFLinearOnly) {
+                if (this.profileSelectionStore.isCoordinatesPFtotalPFlinearOnly) {
                     unitString = "%";
                 } else if (this.profileSelectionStore.isCoordinatesPangleOnly) {
                     unitString = "degree";

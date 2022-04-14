@@ -393,31 +393,31 @@ export class SpectralProfileSelectionStore {
         return true;
     }
 
-    @computed get isCoordinatesPangleOnly(): boolean {
-        return this.selectedCoordinates?.length === 1 && (this.selectedCoordinates[0] === "Panglez" || (this.selectedCoordinates[0] === "z" && this.widgetStore.effectiveFrame.requiredPolarization === POLARIZATIONS.Pangle));
+    @computed private get effectivePolarizations(): POLARIZATIONS[] {
+        const polarizations: POLARIZATIONS[] = [];
+        if (this.selectedCoordinates) {
+            this.selectedCoordinates.forEach(coordinate => {
+                polarizations.push(coordinate === "z" ? this.widgetStore.effectiveFrame.requiredPolarization : POLARIZATIONS[coordinate.substring(0, coordinate.length - 1)]);
+            });
+        }
+        return polarizations;
     }
 
-    @computed get isCoordinatesPFtotalPFLinearOnly(): boolean {
-        if (this.selectedCoordinates?.filter(coordinate => coordinate !== "PFtotalz" && coordinate !== "PFlinearz" && coordinate !== "z")?.length > 0) {
-            return false;
-        }
-        if (this.selectedCoordinates?.includes("z") && this.widgetStore.effectiveFrame.requiredPolarization !== POLARIZATIONS.PFtotal && this.widgetStore.effectiveFrame.requiredPolarization !== POLARIZATIONS.PFlinear) {
-            return false;
-        } else {
-            return true;
-        }
+    @computed get isCoordinatesPangleOnly(): boolean {
+        return !this.effectivePolarizations?.some(polarization => POLARIZATIONS.Pangle !== polarization);
+    }
+
+    @computed get isCoordinatesPFtotalPFlinearOnly(): boolean {
+        return !this.effectivePolarizations?.some(polarization => ![POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(polarization));
+    }
+
+    @computed get isCoordinatesIncludingNonIntensityUnit(): boolean {
+        return this.effectivePolarizations.some(polarization => [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization));
     }
 
     @computed get isSameCoordinatesUnit(): boolean {
         // unit of Fractional Polarization total/linear: %, unit of Polarization Angle: degree, others: Jy/Beam
-        if (this.selectedCoordinates?.length <= 1) {
-            return true;
-        } else if (this.selectedCoordinates?.length === 2 && this.selectedCoordinates?.includes("PFtotalz") && this.selectedCoordinates?.includes("PFlinearz")) {
-            return true;
-        } else if (this.selectedCoordinates?.includes("PFtotalz") || this.selectedCoordinates?.includes("PFlinearz") || this.selectedCoordinates?.includes("Panglez")) {
-            return false;
-        }
-        return true;
+        return this.isCoordinatesPFtotalPFlinearOnly || this.isCoordinatesPangleOnly || !this.isCoordinatesIncludingNonIntensityUnit;
     }
 
     @computed get isSingleProfileMode(): boolean {
