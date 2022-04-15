@@ -251,7 +251,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const coordinate = this.widgetStore.coordinate;
                 const currentData = this.plotData;
                 if (appStore && coordinate) {
-                    const coordinateString = `${coordinate.toUpperCase()} Profile`;
+                    const coordinateString =
+                        this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.LINE && this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.POLYLINE ? `${coordinate.toUpperCase()} Profile` : `Profile`;
                     const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
                     appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
                 }
