@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, autorun, computed, makeObservable} from "mobx";
-import {Text, Label, FormGroup, IOptionProps, HTMLSelect, ControlGroup, Switch, NumericInput, Intent} from "@blueprintjs/core";
+import {Text, Label, FormGroup, IOptionProps, HTMLSelect, Switch, NumericInput, Intent} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FileBrowserStore} from "stores";
 import {FrequencyUnit, SpectralSystem} from "models";
@@ -161,16 +161,14 @@ export class ImageSaveComponent extends React.Component {
             <React.Fragment>
                 {activeFrame && (
                     <div className="file-save">
-                        <ControlGroup className="file-name" vertical={false}>
-                            <Label className="label">{"Source"}</Label>
+                        <FormGroup className="file-name" label={"Source"} inline={true}>
                             <Text className="text" ellipsize={true} title={activeFrame.frameInfo.fileInfo.name}>
                                 {activeFrame.frameInfo.fileInfo.name}
                             </Text>
-                        </ControlGroup>
-                        <ControlGroup className="region-select" vertical={false}>
-                            <Label className="label">{"Region"}</Label>
+                        </FormGroup>
+                        <FormGroup className="region-select" label={"Region"} inline={true}>
                             <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
-                        </ControlGroup>
+                        </FormGroup>
                         {numChannels > 1 && (
                             <React.Fragment>
                                 <div className="coordinate-select">
@@ -188,8 +186,7 @@ export class ImageSaveComponent extends React.Component {
                                     </FormGroup>
                                 </div>
                                 <div className="range-select">
-                                    <ControlGroup>
-                                        <Label>{"Range from"}</Label>
+                                    <FormGroup label={"Range from"} inline={true}>
                                         <NumericInput
                                             value={fileBrowser.saveSpectralRange[0]}
                                             buttonPosition="none"
@@ -202,9 +199,8 @@ export class ImageSaveComponent extends React.Component {
                                             intent={this.validSaveSpectralRangeStart ? Intent.NONE : Intent.DANGER}
                                         />
                                         <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
-                                    </ControlGroup>
-                                    <ControlGroup>
-                                        <Label>{"Range to"}</Label>
+                                    </FormGroup>
+                                    <FormGroup label={"Range to"} inline={true}>
                                         <NumericInput
                                             value={fileBrowser.saveSpectralRange[1]}
                                             buttonPosition="none"
@@ -217,7 +213,7 @@ export class ImageSaveComponent extends React.Component {
                                             intent={this.validSaveSpectralRangeEnd ? Intent.NONE : Intent.DANGER}
                                         />
                                         <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
-                                    </ControlGroup>
+                                    </FormGroup>
                                 </div>
                             </React.Fragment>
                         )}
