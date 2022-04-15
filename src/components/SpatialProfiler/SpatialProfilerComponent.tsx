@@ -517,7 +517,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         id: "marker-image-cursor",
                         draggable: false,
                         horizontal: false,
-                        opacity: (this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.LINE && this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.POLYLINE)? 1 : 0.1
+                        opacity: this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.LINE && this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.POLYLINE ? 1 : 0.1
                     }
                 ];
                 linePlotProps.markers.push({
