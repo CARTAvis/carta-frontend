@@ -228,16 +228,16 @@ export class ImageSaveComponent extends React.Component {
                             <div className="freq-input">
                                 <ClearableNumericInputComponent
                                     label="Rest frequency"
-                                    value={fileBrowser.saveRestFreqVal}
+                                    value={fileBrowser.saveRestFreq.value}
                                     placeholder="rest frequency"
                                     selectAllOnFocus={true}
-                                    onValueChanged={fileBrowser.setRestFreqVal}
-                                    onValueCleared={fileBrowser.resetRestFreq}
+                                    onValueChanged={fileBrowser.setSaveRestFreqVal}
+                                    onValueCleared={fileBrowser.resetSaveRestFreq}
                                     resetDisabled={activeFrame.restFreqStore.resetDisable}
                                     tooltipContent={activeFrame.restFreqStore.defaultInfo}
                                     tooltipPlacement={"bottom"}
                                 />
-                                <HTMLSelect options={Object.values(FrequencyUnit)} value={fileBrowser.saveRestFreqUnit} onChange={ev => fileBrowser.setRestFreqUnit(ev.currentTarget.value as FrequencyUnit)} />
+                                <HTMLSelect options={Object.values(FrequencyUnit)} value={fileBrowser.saveRestFreq.unit} onChange={ev => fileBrowser.setSaveRestFreqUnit(ev.currentTarget.value as FrequencyUnit)} />
                             </div>
                         )}
                         <Switch className="drop-degenerate" checked={fileBrowser.shouldDropDegenerateAxes} label="Drop degenerate axes" onChange={this.onChangeShouldDropDegenerateAxes} />

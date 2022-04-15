@@ -1,80 +1,45 @@
 import {action, computed, observable, makeObservable} from "mobx";
-import {FrequencyUnit} from "models";
+import {FrequencyUnit, Freq} from "models";
 
 export class RestFreqStore {
-    readonly headerVal: number;
-    readonly headerUnit: FrequencyUnit;
+    readonly headerRestFreq: Freq;
+    @observable customRestFreq: Freq;
 
-    @observable customVal: number;
-    @observable customUnit: FrequencyUnit;
-
-    @computed get restFreq(): number {
+    @computed get restFreqInHz(): number {
         if (this.inValidInput) {
             return undefined;
         }
-        return RestFreqStore.convertUnitInverse(this.customVal, this.customUnit);
+        return Freq.convertUnitToHz(this.customRestFreq);
     }
 
     @computed get inValidInput(): boolean {
-        return !isFinite(this.customVal);
+        return !isFinite(this.customRestFreq.value);
     }
 
     @computed get resetDisable(): boolean {
-        return !isFinite(this.headerVal);
+        return !isFinite(this.headerRestFreq.value);
     }
 
     @computed get defaultInfo(): string {
-        return isFinite(this.headerVal) ? `Header: ${this.headerVal} ${this.headerUnit}` : undefined;
+        return isFinite(this.headerRestFreq.value) ? `Header: ${this.headerRestFreq.value} ${this.headerRestFreq.unit}` : undefined;
     }
 
     constructor(headerRestFreq: number) {
         makeObservable(this);
-        const defaultRestFreq = RestFreqStore.convertUnit(headerRestFreq);
-        this.headerVal = defaultRestFreq.value;
-        this.headerUnit = defaultRestFreq.unit;
-        this.customVal = defaultRestFreq.value;
-        this.customUnit = defaultRestFreq.unit;
+        const defaultRestFreq = Freq.convertUnitFromHz(headerRestFreq);
+        this.headerRestFreq = defaultRestFreq;
+        this.customRestFreq = defaultRestFreq;
     }
 
     @action setCustomVal = (val: number) => {
-        this.customVal = val;
+        this.customRestFreq.value = val;
     };
 
     @action setCustomUnit = (val: FrequencyUnit) => {
-        this.customUnit = val;
+        this.customRestFreq.unit = val;
     };
 
     @action restoreDefaults = () => {
-        this.customVal = this.headerVal;
-        this.customUnit = this.headerUnit;
-    };
-
-    private static convertUnit = (restFreq: number) => {
-        if (!isFinite(restFreq)) {
-            return {value: undefined, unit: FrequencyUnit.MHZ};
-        }
-
-        if (restFreq >= 1e9) {
-            return {value: restFreq / 1e9, unit: FrequencyUnit.GHZ};
-        } else if (restFreq >= 1e6) {
-            return {value: restFreq / 1e6, unit: FrequencyUnit.MHZ};
-        } else if (restFreq >= 1e3) {
-            return {value: restFreq / 1e3, unit: FrequencyUnit.KHZ};
-        } else {
-            return {value: restFreq, unit: FrequencyUnit.HZ};
-        }
-    };
-
-    static convertUnitInverse = (value: number, unit: FrequencyUnit) => {
-        switch (unit) {
-            case FrequencyUnit.GHZ:
-                return value * 1e9;
-            case FrequencyUnit.MHZ:
-                return value * 1e6;
-            case FrequencyUnit.KHZ:
-                return value * 1e3;
-            default:
-                return value;
-        }
+        this.customRestFreq = this.headerRestFreq;
     };
 }
