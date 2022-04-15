@@ -190,7 +190,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 100);
 
-    private genProfilerInfo = (): string[] => {
+    private genProfilerInfo = (unit: string): string[] => {
         let profilerInfo: string[] = [];
         if (this.plotData) {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
@@ -205,17 +205,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 if (nearest?.point) {
                     let valueLabel = `${nearest.point.y !== 0.5 ? nearest.point.y : 0}`;
 
-                    const frame = this.widgetStore.effectiveFrame;
-                    if (frame.headerUnit) {
-                        let unit: string;
-                        if ([POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
-                            unit = "%";
-                        } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
-                            unit = "degree";
-                        } else {
-                            unit = frame.headerUnit;
-                        }
-
+                    if (unit) {
                         numberString += ` ${unit}`;
                     }
                     if (nearest.point.y <= 1) {
@@ -246,9 +236,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             );
         }
 
-        let unitString = "Value";
+        let unit = "";
         if (frame && frame.headerUnit) {
-            let unit: string;
             if ([POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
                 unit = "%";
             } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
@@ -256,13 +245,12 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             } else {
                 unit = frame.headerUnit;
             }
-            unitString = `Value (${unit})`;
         }
 
         const imageName = frame.filename;
         const plotName = `channel ${frame.channel} histogram`;
         let linePlotProps: LinePlotComponentProps = {
-            xLabel: unitString,
+            xLabel: unit ? `Value (${unit})` : "Value",
             yLabel: "Count",
             darkMode: appStore.darkTheme,
             imageName: imageName,
@@ -326,7 +314,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         <LinePlotComponent {...linePlotProps} />
                     </div>
                     <div>
-                        <ProfilerInfoComponent info={this.genProfilerInfo()} />
+                        <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>
