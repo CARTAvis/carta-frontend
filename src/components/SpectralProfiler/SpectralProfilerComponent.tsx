@@ -282,7 +282,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return spectralLineMarkers;
     };
 
-    
     private formatProfile = (v: number, i: number, values: Tick[]) => {
         if (i === 0) {
             this.calculateFormattedValues(values);
@@ -316,6 +315,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     } else {
                         const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, ticks[i].value, false);
                         const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+
                         this.cachedFormattedCoordinates[i] = toFormattedNotation(coord);
                     }
                 }

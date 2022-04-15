@@ -63,7 +63,7 @@ export function toFormattedNotation(value: number): string {
         return null;
     }
 
-    return value < 1e0 ? trimTrailingDecimals(value.toPrecision(6)) : trimTrailingDecimals(toFixed(value, 3));
+    return value < 1 ? trimTrailingDecimals(value.toPrecision(6)) : trimTrailingDecimals(toFixed(value, 3));
 }
 
 export function formattedExponential(val: number, digits: number, unit: string = "", trim: boolean = true, pad: boolean = false) {
