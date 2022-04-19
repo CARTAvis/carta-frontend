@@ -8,6 +8,7 @@ import {AppStore, HelpType} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {SafeNumericInput} from "components/Shared";
 import "./FittingDialogComponent.scss";
+import {CustomIcon} from "icons/CustomIcons";
 
 enum FittingResultTabs {
     RESULT,
@@ -60,7 +61,7 @@ export class FittingDialogComponent extends React.Component {
         let component = fittingStore.components[fittingStore.selectedComponentIndex];
 
         const dialogProps: IDialogProps = {
-            icon: "regression-chart",
+            icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,
             className: "fitting-dialog",
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
