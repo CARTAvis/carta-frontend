@@ -298,7 +298,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         actionText = "Append";
                     }
 
-                    if (fileBrowserStore.isComplexImage) {
+                    if (fileBrowserStore.isComplexImage && fileBrowserStore.selectedFiles?.length === 1) {
                         const loadMenuItems = (
                             <Menu>
                                 <MenuItem text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
@@ -310,7 +310,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         return (
                             <div>
                                 <Popover2 content={loadMenuItems} placement="right-end">
-                                    <AnchorButton text="Append as" />
+                                    <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} text="Append as" />
                                 </Popover2>
                             </div>
                         );
@@ -337,7 +337,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     } else {
                         actionText = "Load";
                     }
-                    if (fileBrowserStore.isComplexImage) {
+                    if (fileBrowserStore.isComplexImage && fileBrowserStore.selectedFiles?.length === 1) {
                         const loadMenuItems = (
                             <Menu>
                                 <MenuItem text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
@@ -350,7 +350,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         return (
                             <div>
                                 <Popover2 content={loadMenuItems} placement="right-end">
-                                    <AnchorButton text="Load as" />
+                                    <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} text="Load as" />
                                 </Popover2>
                             </div>
                         );
