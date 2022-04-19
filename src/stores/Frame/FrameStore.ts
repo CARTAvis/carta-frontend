@@ -1926,10 +1926,10 @@ export class FrameStore {
         if (config.mode === VectorOverlayMode.IntensityOnly) {
             stokesIntensity = 0;
         } else if (config.mode === VectorOverlayMode.AngleOnly) {
-            stokesAngle = 0;
+            stokesAngle = 1;
         } else {
-            stokesIntensity = 0;
-            stokesAngle = 0;
+            stokesIntensity = 1;
+            stokesAngle = 1;
         }
 
         const parameters: CARTA.ISetVectorOverlayParameters = {

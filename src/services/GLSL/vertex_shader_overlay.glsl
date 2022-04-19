@@ -1,7 +1,9 @@
 precision highp float;
 
-uniform vec2 uFrameViewMin;
-uniform vec2 uFrameViewMax;
+uniform vec2 uRangeScale;
+uniform vec2 uRangeOffset;
+uniform float uRotationAngle;
+uniform float uScaleAdjustment;
 uniform float uZoomLevel;
 uniform float uCanvasSpaceLineWidth;
 uniform float uFeatherWidth;
@@ -13,6 +15,13 @@ uniform float uLengthMin;
 uniform float uLengthMax;
 uniform float uIntensityMin;
 uniform float uIntensityMax;
+
+// Control-map based transformation
+uniform int uControlMapEnabled;
+uniform vec2 uControlMapMin;
+uniform vec2 uControlMapMax;
+uniform vec2 uControlMapSize;
+uniform highp sampler2D uControlMapTexture;
 
 // Color
 uniform vec4 uLineColor;
@@ -61,20 +70,21 @@ vec2 getOffsetFromId(int id) {
     }
 }
 
-vec2 imageToGL2(vec2 imageVec) {
-    return 2.0 * (imageVec - uFrameViewMin) / (uFrameViewMax - uFrameViewMin) - 1.0;
-}
-
 void main() {
     int dataPointIndex = gl_VertexID / 6;
     vec4 data = getValueByIndexFromTexture(uDataTexture, dataPointIndex);
     vec2 centerPoint = data.xy;
-    float lineLength = calculateLength(data.z) / uZoomLevel;
-    float lineWidth = uCanvasSpaceLineWidth / uZoomLevel;
-    float angle = data.w;
+
+    if (uControlMapEnabled > 0) {
+        centerPoint = controlMapLookup(uControlMapTexture, centerPoint, uControlMapSize, uControlMapMin, uControlMapMax);
+    }
+
+    float lineLength = calculateLength(data.z) / (uZoomLevel / uScaleAdjustment);
+    float lineWidth = uCanvasSpaceLineWidth / (uZoomLevel / uScaleAdjustment);
+    float angle = -data.w * PI / 180.0 - uRotationAngle;
 
     if (uIntensityPlot) {
-        angle = 0.0;
+        angle = -uRotationAngle;
         lineWidth = lineLength;
     }
 
@@ -83,7 +93,13 @@ void main() {
     // location vertex attribute is in line space before rotation
     v_location = offset;
     // position is in canvas space
-    gl_Position = vec4(imageToGL2(centerPoint + rotate2D(offset, angle)), 0, 1);
+    // Scale and rotate
+    vec2 posImageSpace = centerPoint + rotate2D(offset, angle);
+    vec2 posRefSpace = scaleAndRotate2D(posImageSpace, uRotationAngle, uScaleAdjustment);
+    // Convert from image space to GL space [-1, 1]
+    vec2 adjustedPosition = (posRefSpace * uRangeScale + uRangeOffset) * 2.0 - 1.0;
+
+    gl_Position = vec4(adjustedPosition.x, adjustedPosition.y, 0, 1);
     v_length = lineLength;
 
     if (uCmapEnabled > 0) {

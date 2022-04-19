@@ -4,8 +4,10 @@ import allMaps from "../static/allmaps.png";
 
 interface ShaderUniforms {
     DataTexture: WebGLUniformLocation;
-    FrameViewMin: WebGLUniformLocation;
-    FrameViewMax: WebGLUniformLocation;
+    RangeScale: WebGLUniformLocation;
+    RangeOffset: WebGLUniformLocation;
+    RotationAngle: WebGLUniformLocation;
+    ScaleAdjustment: WebGLUniformLocation;
     ZoomLevel: WebGLUniformLocation;
     CanvasSpaceLineWidth: WebGLUniformLocation;
     FeatherWidth: WebGLUniformLocation;
@@ -60,8 +62,10 @@ export class VectorOverlayWebGLService {
 
         this.shaderUniforms = {
             DataTexture: this.gl.getUniformLocation(shaderProgram, "uDataTexture"),
-            FrameViewMin: this.gl.getUniformLocation(shaderProgram, "uFrameViewMin"),
-            FrameViewMax: this.gl.getUniformLocation(shaderProgram, "uFrameViewMax"),
+            RangeScale: this.gl.getUniformLocation(shaderProgram, "uRangeScale"),
+            RangeOffset: this.gl.getUniformLocation(shaderProgram, "uRangeOffset"),
+            ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
+            RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
             ZoomLevel: this.gl.getUniformLocation(shaderProgram, "uZoomLevel"),
             CanvasSpaceLineWidth: this.gl.getUniformLocation(shaderProgram, "uCanvasSpaceLineWidth"),
             FeatherWidth: this.gl.getUniformLocation(shaderProgram, "uFeatherWidth"),

@@ -8,6 +8,10 @@ vec2 rotate2D(vec2 vector, float theta) {
     return mat2(cosTheta, -sinTheta, sinTheta, cosTheta) * vector;
 }
 
+vec2 scaleAndRotate2D(vec2 vector, float theta, float scale) {
+    return rotate2D(vector, theta) * scale;
+}
+
 vec2 imageToGL(vec2 imageVec) {
     return 2.0 * imageVec - 1.0;
 }

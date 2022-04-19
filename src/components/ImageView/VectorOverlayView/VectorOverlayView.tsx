@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AppStore} from "stores";
 import {FrameStore, RenderConfigStore, VectorOverlayMode} from "stores/Frame";
-import {GL2} from "utilities";
+import {GL2, rotate2D, scale2D, subtract2D} from "utilities";
 import {VectorOverlayWebGLService} from "services";
 import "./VectorOverlayView.scss";
 
@@ -101,35 +101,47 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         let lineThickness: number;
 
         if (baseFrame.spatialReference) {
-            // TODO: handle spatial matching
-            // let rotationOrigin = baseFrame.spatialTransform.origin;
-            // const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
-            //
-            // const rangeScale = {
-            //     x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
-            //     y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)
-            // };
-            //
-            // // Instead of rotating and scaling about an origin on the GPU (float32), we take this out of the shader, and perform beforehand (float64, and consistent)
-            // const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
-            //
-            // const rangeOffset = {
-            //     x: (baseFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
-            //     y: (baseFrame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
-            // };
-            //
-            // this.gl.uniform2f(this.contourWebGLService.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
-            // this.gl.uniform2f(this.contourWebGLService.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
-            // this.gl.uniform2f(this.contourWebGLService.shaderUniforms.RotationOrigin, rotationOrigin.x, rotationOrigin.y);
-            // this.gl.uniform1f(this.contourWebGLService.shaderUniforms.RotationAngle, -baseFrame.spatialTransform.rotation);
-            // this.gl.uniform1f(this.contourWebGLService.shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
+            const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
+
+            const rangeScale = {
+                x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)
+            };
+
+            // Instead of rotating and scaling about an origin on the GPU (float32), we take this out of the shader, and perform beforehand (float64, and consistent)
+            const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
+
+            const rangeOffset = {
+                x: (baseFrame.spatialTransform.translation.x - baseRequiredView.xMin + originAdjustedOffset.x) * rangeScale.x,
+                y: (baseFrame.spatialTransform.translation.y - baseRequiredView.yMin + originAdjustedOffset.y) * rangeScale.y
+            };
+
+            this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
+            this.gl.uniform2f(shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
+            this.gl.uniform1f(shaderUniforms.RotationAngle, -baseFrame.spatialTransform.rotation);
+            this.gl.uniform1f(shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
+
+            lineThickness = (pixelRatio * frame.vectorOverlayConfig.thickness) / baseFrame.zoomLevel;
+            this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.zoomLevel);
         } else {
             const baseRequiredView = baseFrame.requiredFrameView;
-            this.gl.uniform2f(shaderUniforms.FrameViewMin, baseRequiredView.xMin, baseRequiredView.yMin);
-            this.gl.uniform2f(shaderUniforms.FrameViewMax, baseRequiredView.xMax, baseRequiredView.yMax);
-            this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.zoomLevel);
+            const rangeScale = {
+                x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin)
+            };
+
+            const rangeOffset = {
+                x: -baseRequiredView.xMin * rangeScale.x,
+                y: -baseRequiredView.yMin * rangeScale.y
+            };
+
+            this.gl.uniform2f(shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
+            this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
+            this.gl.uniform1f(shaderUniforms.RotationAngle, 0.0);
+            this.gl.uniform1f(shaderUniforms.ScaleAdjustment, 1.0);
 
             lineThickness = pixelRatio * frame.vectorOverlayConfig.thickness;
+            this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.zoomLevel);
         }
 
         if (isActive) {

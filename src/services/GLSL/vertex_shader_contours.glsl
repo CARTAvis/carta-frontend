@@ -6,7 +6,6 @@ in vec2 aVertexNormal;
 
 uniform vec2 uRangeScale;
 uniform vec2 uRangeOffset;
-uniform vec2 uRotationOrigin;
 uniform float uRotationAngle;
 uniform float uScaleAdjustment;
 uniform float uLineThickness;
@@ -21,10 +20,6 @@ uniform highp sampler2D uControlMapTexture;
 
 out float vLinePosition;
 out float vLineSide;
-
-vec2 scaleAndRotate2D(vec2 vector, float theta, float scale) {
-    return rotate2D(vector, theta) * scale;
-}
 
 void main(void) {
 
