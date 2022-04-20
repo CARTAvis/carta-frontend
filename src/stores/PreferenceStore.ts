@@ -152,7 +152,7 @@ const DEFAULTS = {
         contourNumLevels: 5,
         contourThickness: 1,
         contourColormapEnabled: false,
-        contourColor: Colors.WHITE,
+        contourColor: Colors.GREEN3,
         contourColormap: "viridis"
     },
     VECTOR_OVERLAY: {
@@ -160,7 +160,7 @@ const DEFAULTS = {
         vectorOverlayFractionalIntensity: false,
         vectorOverlayThickness: 1,
         vectorOverlayColormapEnabled: false,
-        vectorOverlayColor: Colors.WHITE,
+        vectorOverlayColor: Colors.GREEN3,
         vectorOverlayColormap: "viridis"
     },
     WCS_OVERLAY: {
