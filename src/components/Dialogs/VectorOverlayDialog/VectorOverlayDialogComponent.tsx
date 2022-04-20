@@ -107,7 +107,17 @@ export class VectorOverlayDialogComponent extends React.Component {
     private handleApplyOverlay = () => {
         const dataSource = AppStore.Instance.activeFrame;
         if (dataSource) {
-            dataSource.vectorOverlayConfig.setVectorOverlayConfiguration(this.angularSource, this.intensitySource, this.pixelAveraging, this.thresholdEnabled, this.threshold, this.debiasing, this.fractionalIntensity);
+            dataSource.vectorOverlayConfig.setVectorOverlayConfiguration(
+                this.angularSource,
+                this.intensitySource,
+                this.pixelAveraging,
+                this.fractionalIntensity,
+                this.thresholdEnabled,
+                this.threshold,
+                this.debiasing,
+                this.qError,
+                this.uError
+            );
             dataSource.applyVectorOverlay();
         }
     };
@@ -275,8 +285,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Pixel Averaging">
                     <SafeNumericInput placeholder="Pixel Averaging" min={2} max={64} value={this.pixelAveraging} majorStepSize={2} stepSize={2} onValueChange={this.handlePixelAveragingChanged} />
                 </FormGroup>
-                <FormGroup inline={true} label="Polarization Intensity">
-                    <RadioGroup inline={true} onChange={this.handleFractionalIntensityChanged} selectedValue={this.fractionalIntensity ? 1 : 0}>
+                <FormGroup inline={true} label="Polarization Intensity" disabled={this.intensitySource === VectorOverlaySource.None}>
+                    <RadioGroup inline={true} onChange={this.handleFractionalIntensityChanged} selectedValue={this.fractionalIntensity ? 1 : 0} disabled={this.intensitySource === VectorOverlaySource.None}>
                         <Radio label={"Absolute"} value={0} />
                         <Radio label={"Fractional"} value={1} />
                     </RadioGroup>

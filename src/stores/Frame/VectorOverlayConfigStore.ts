@@ -78,18 +78,22 @@ export class VectorOverlayConfigStore {
         angularSource: VectorOverlaySource,
         intensitySource: VectorOverlaySource,
         pixelAveraging: number,
+        fractionalIntensity: boolean,
         thresholdEnabled: boolean,
-        threshold: number = 0,
-        debiasing: boolean = false,
-        fractionalIntensity: boolean = false
+        threshold: number,
+        debiasing: boolean,
+        qError: number,
+        uError: number
     ) => {
         this.angularSource = angularSource;
         this.intensitySource = intensitySource;
         this.pixelAveraging = pixelAveraging;
+        this.fractionalIntensity = fractionalIntensity;
         this.thresholdEnabled = thresholdEnabled;
         this.threshold = threshold;
         this.debiasing = debiasing;
-        this.fractionalIntensity = fractionalIntensity;
+        this.qError = qError;
+        this.uError = uError;
     };
 
     // Styling
