@@ -199,6 +199,7 @@ const pvSvg = (
     </>
 );
 
+// Adapted creative commons license icon https://www.svgrepo.com/svg/66474/rainfall
 const vectorOverlaySvg = (
     <g transform="translate(0, -12) scale(0.03, 0.03)">
         <g className="st0">
