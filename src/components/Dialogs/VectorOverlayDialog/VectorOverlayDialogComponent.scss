@@ -14,9 +14,18 @@
                 width: 10em;
                 text-align: left;
             }
+        }
+
+        .parameter-line {
             .bp3-form-group {
-                .bp3-form-group {
-                    width: 6em;
+                width: 6em;
+            }
+        }
+
+        .parameter-length {
+            .bp3-form-group {
+                .bp3-input-group {
+                    max-width: 167px;
                 }
             }
         }

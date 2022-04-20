@@ -6,7 +6,7 @@ import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
-import {FrameStore, VectorOverlayConfigStore, VectorOverlaySource} from "stores/Frame";
+import {FrameStore, VectorOverlaySource} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import "./VectorOverlayDialogComponent.scss";
@@ -176,7 +176,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         return (
             <FormGroup label={`Intensity (${frame.unit})`} inline={true}>
                 <div className="parameter-container">
-                    <div className="parameter-line">
+                    <div className="parameter-line parameter-intensity">
                         <ClearableNumericInputComponent
                             label="Min"
                             value={intensityMin}
@@ -213,20 +213,13 @@ export class VectorOverlayDialogComponent extends React.Component {
         return (
             <FormGroup label={intensityOnly ? "Block Width (px)" : "Line Length (px)"} inline={true}>
                 <div className="parameter-container">
-                    <div className="parameter-line">
-                        <ClearableNumericInputComponent
-                            disabled={angleOnly}
-                            label="Min"
-                            value={config.lengthMin}
-                            onValueChanged={val => config.setLengthRange(val, config.lengthMax)}
-                            onValueCleared={() => config.setLengthRange(VectorOverlayConfigStore.DefaultLengthMin, config.lengthMax)}
-                        />
-                        <ClearableNumericInputComponent
-                            label="Max"
-                            value={config.lengthMax}
-                            onValueChanged={val => config.setLengthRange(config.lengthMin, val)}
-                            onValueCleared={() => config.setLengthRange(config.lengthMin, VectorOverlayConfigStore.DefaultLengthMax)}
-                        />
+                    <div className="parameter-line parameter-length">
+                        <FormGroup inline={true} label="Min">
+                            <SafeNumericInput min={0} max={config.lengthMax} disabled={angleOnly} value={config.lengthMin} onValueChange={val => config.setLengthRange(val, config.lengthMax)} />
+                        </FormGroup>
+                        <FormGroup inline={true} label="Max">
+                            <SafeNumericInput min={config.lengthMin} disabled={angleOnly} value={config.lengthMax} onValueChange={val => config.setLengthRange(config.lengthMin, val)} />
+                        </FormGroup>
                     </div>
                 </div>
             </FormGroup>
