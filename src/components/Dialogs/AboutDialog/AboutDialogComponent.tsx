@@ -68,7 +68,7 @@ export class AboutDialogComponent extends React.Component {
                         {/* tslint:disable-next-line:max-line-length */}
                         <li>
                             Please report bugs or suggestions to the{" "}
-                            <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" rel="noopener noreferrer" target="_blank">
+                            <a href="mailto:support@carta.freshdesk.com" rel="noopener noreferrer" target="_blank">
                                 CARTA helpdesk
                             </a>{" "}
                             or file a{" "}
