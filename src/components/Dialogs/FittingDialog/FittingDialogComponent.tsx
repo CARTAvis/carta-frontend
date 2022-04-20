@@ -7,8 +7,8 @@ import classNames from "classnames";
 import {AppStore, HelpType} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {SafeNumericInput} from "components/Shared";
-import "./FittingDialogComponent.scss";
 import {CustomIcon} from "icons/CustomIcons";
+import "./FittingDialogComponent.scss";
 
 enum FittingResultTabs {
     RESULT,
