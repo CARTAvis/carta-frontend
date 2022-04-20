@@ -2,7 +2,7 @@ import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AppStore} from "stores";
-import {FrameStore, RenderConfigStore, VectorOverlayMode} from "stores/Frame";
+import {FrameStore, RenderConfigStore, VectorOverlaySource} from "stores/Frame";
 import {GL2, rotate2D, scale2D, subtract2D} from "utilities";
 import {VectorOverlayWebGLService} from "services";
 import "./VectorOverlayView.scss";
@@ -165,17 +165,22 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         this.gl.uniform1i(shaderUniforms.DataTexture, 0);
         this.gl.uniform1f(shaderUniforms.CanvasSpaceLineWidth, lineThickness);
         this.gl.uniform1f(shaderUniforms.FeatherWidth, pixelRatio);
+        if (isFinite(frame.vectorOverlayConfig.rotationOffset)) {
+            this.gl.uniform1f(shaderUniforms.RotationOffset, (frame.vectorOverlayConfig.rotationOffset * Math.PI) / 180.0);
+        } else {
+            this.gl.uniform1f(shaderUniforms.RotationOffset, 0);
+        }
 
         const intensityMin = isFinite(frame.vectorOverlayConfig.intensityMin) ? frame.vectorOverlayConfig.intensityMin : frame.vectorOverlayStore.intensityMin;
         const intensityMax = isFinite(frame.vectorOverlayConfig.intensityMax) ? frame.vectorOverlayConfig.intensityMax : frame.vectorOverlayStore.intensityMax;
 
-        if (frame.vectorOverlayConfig.mode === VectorOverlayMode.IntensityOnly) {
+        if (frame.vectorOverlayConfig.angularSource === VectorOverlaySource.None) {
             this.gl.uniform1f(shaderUniforms.IntensityMin, intensityMin);
             this.gl.uniform1f(shaderUniforms.IntensityMax, intensityMax);
             this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMin * pixelRatio);
             this.gl.uniform1f(shaderUniforms.LengthMax, frame.vectorOverlayConfig.lengthMax * pixelRatio);
             this.gl.uniform1i(shaderUniforms.IntensityPlot, 1);
-        } else if (frame.vectorOverlayConfig.mode === VectorOverlayMode.AngleOnly) {
+        } else if (frame.vectorOverlayConfig.intensitySource === VectorOverlaySource.None) {
             this.gl.uniform1f(shaderUniforms.IntensityMin, 0);
             this.gl.uniform1f(shaderUniforms.IntensityMax, 1);
             this.gl.uniform1f(shaderUniforms.LengthMin, frame.vectorOverlayConfig.lengthMax * pixelRatio);
@@ -230,7 +235,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const overlayFrames = appStore.vectorOverlayFrames.get(baseFrame);
         if (overlayFrames) {
             for (const frame of overlayFrames) {
-                let {mode, thickness, color, colormapBias, colormapContrast, colormapEnabled, colormap, intensityMin, intensityMax, lengthMin, lengthMax} = frame.vectorOverlayConfig;
+                let {angularSource, intensitySource, thickness, rotationOffset, color, colormapBias, colormapContrast, colormapEnabled, colormap, intensityMin, intensityMax, lengthMin, lengthMax} = frame.vectorOverlayConfig;
                 const config = frame.vectorOverlayConfig;
                 intensityMin = isFinite(intensityMin) ? intensityMin : frame.vectorOverlayStore.intensityMin;
                 intensityMax = isFinite(intensityMax) ? intensityMax : frame.vectorOverlayStore.intensityMax;

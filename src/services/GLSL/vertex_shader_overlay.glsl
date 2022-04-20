@@ -2,6 +2,7 @@ precision highp float;
 
 uniform vec2 uRangeScale;
 uniform vec2 uRangeOffset;
+uniform float uRotationOffset;
 uniform float uRotationAngle;
 uniform float uScaleAdjustment;
 uniform float uZoomLevel;
@@ -81,7 +82,7 @@ void main() {
 
     float lineLength = calculateLength(data.z) / (uZoomLevel / uScaleAdjustment);
     float lineWidth = uCanvasSpaceLineWidth / (uZoomLevel / uScaleAdjustment);
-    float angle = -data.w * PI / 180.0 - uRotationAngle;
+    float angle = -data.w * PI / 180.0 - uRotationAngle - uRotationOffset;
 
     if (uIntensityPlot) {
         angle = -uRotationAngle;

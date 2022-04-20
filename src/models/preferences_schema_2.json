@@ -133,11 +133,6 @@
             "type": "boolean",
             "default": false
         },
-        "vectorOverlayMode": {
-            "type": "string",
-            "enum": ["intensity-only", "angle-only", "intensity-and-angle"],
-            "default": "intensity-and-angle"
-        },
         "vectorOverlayThickness": {
             "type": "number",
             "minimum": 0

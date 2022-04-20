@@ -30,7 +30,7 @@ import {
     ZoomPoint
 } from "models";
 import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
-import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore, VectorOverlayMode} from "stores/Frame";
+import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import {TelemetryMode} from "services";
 import "./PreferenceDialogComponent.scss";
@@ -351,13 +351,6 @@ export class PreferenceDialogComponent extends React.Component {
 
         const vectorOverlayConfigPanel = (
             <React.Fragment>
-                <FormGroup inline={true} label="Mode">
-                    <HTMLSelect value={preference.vectorOverlayMode} onChange={ev => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_MODE, ev.currentTarget.value as VectorOverlayMode)}>
-                        <option value={VectorOverlayMode.IntensityAndAngle}>Intensity and Angle</option>
-                        <option value={VectorOverlayMode.AngleOnly}>Angle Only (Lines)</option>
-                        <option value={VectorOverlayMode.IntensityOnly}>Intensity Only (Blocks)</option>
-                    </HTMLSelect>
-                </FormGroup>
                 <FormGroup inline={true} label="Default Pixel Averaging">
                     <SafeNumericInput
                         placeholder="Default Pixel Averaging"

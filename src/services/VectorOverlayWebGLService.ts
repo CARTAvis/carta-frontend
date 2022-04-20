@@ -6,6 +6,7 @@ interface ShaderUniforms {
     DataTexture: WebGLUniformLocation;
     RangeScale: WebGLUniformLocation;
     RangeOffset: WebGLUniformLocation;
+    RotationOffset: WebGLUniformLocation;
     RotationAngle: WebGLUniformLocation;
     ScaleAdjustment: WebGLUniformLocation;
     ZoomLevel: WebGLUniformLocation;
@@ -64,6 +65,7 @@ export class VectorOverlayWebGLService {
             DataTexture: this.gl.getUniformLocation(shaderProgram, "uDataTexture"),
             RangeScale: this.gl.getUniformLocation(shaderProgram, "uRangeScale"),
             RangeOffset: this.gl.getUniformLocation(shaderProgram, "uRangeOffset"),
+            RotationOffset: this.gl.getUniformLocation(shaderProgram, "uRotationOffset"),
             ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
             RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
             ZoomLevel: this.gl.getUniformLocation(shaderProgram, "uZoomLevel"),

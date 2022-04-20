@@ -6,7 +6,7 @@ import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
-import {FrameStore, VectorOverlayConfigStore, VectorOverlayMode} from "stores/Frame";
+import {FrameStore, VectorOverlayConfigStore, VectorOverlaySource} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import "./VectorOverlayDialogComponent.scss";
@@ -21,8 +21,10 @@ const DataSourceSelect = Select.ofType<FrameStore>();
 @observer
 export class VectorOverlayDialogComponent extends React.Component {
     @observable currentTab: VectorOverlayDialogTabs = VectorOverlayDialogTabs.Configuration;
-    @observable mode: VectorOverlayMode;
+    @observable angularSource: VectorOverlaySource;
+    @observable intensitySource: VectorOverlaySource;
     @observable pixelAveraging: number;
+    @observable thresholdEnabled: boolean;
     @observable threshold: number;
     @observable fractionalIntensity: boolean;
     @observable debiasing: boolean;
@@ -53,15 +55,19 @@ export class VectorOverlayDialogComponent extends React.Component {
         const config = appStore.activeFrame?.vectorOverlayConfig;
         const preferences = appStore.preferenceStore;
         if (config) {
-            this.mode = config.mode;
+            this.angularSource = config.angularSource;
+            this.intensitySource = config.intensitySource;
             this.pixelAveraging = config.pixelAveraging;
             this.fractionalIntensity = config.fractionalIntensity;
             this.threshold = config.threshold;
+            this.thresholdEnabled = config.thresholdEnabled;
             this.debiasing = config.debiasing;
         } else {
-            this.mode = preferences.vectorOverlayMode;
+            this.angularSource = VectorOverlaySource.Current;
+            this.intensitySource = VectorOverlaySource.Current;
             this.pixelAveraging = preferences.vectorOverlayPixelAveraging;
             this.fractionalIntensity = preferences.vectorOverlayFractionalIntensity;
+            this.thresholdEnabled = false;
             this.threshold = 0;
             this.debiasing = false;
         }
@@ -70,10 +76,21 @@ export class VectorOverlayDialogComponent extends React.Component {
     @computed get configChanged(): boolean {
         const config = AppStore.Instance.activeFrame?.vectorOverlayConfig;
         if (config) {
-            if (config.mode !== this.mode || config.pixelAveraging !== this.pixelAveraging || config.threshold !== this.threshold || config.debiasing !== this.debiasing || config.fractionalIntensity !== this.fractionalIntensity) {
+            if (
+                config.angularSource !== this.angularSource ||
+                config.intensitySource !== this.intensitySource ||
+                config.pixelAveraging !== this.pixelAveraging ||
+                config.thresholdEnabled !== this.thresholdEnabled ||
+                config.debiasing !== this.debiasing ||
+                config.fractionalIntensity !== this.fractionalIntensity
+            ) {
                 return true;
             }
             if (config.debiasing && (config.qError !== this.qError || config.uError !== this.uError)) {
+                return true;
+            }
+
+            if (config.thresholdEnabled && config.threshold !== this.threshold) {
                 return true;
             }
         }
@@ -90,7 +107,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     private handleApplyOverlay = () => {
         const dataSource = AppStore.Instance.activeFrame;
         if (dataSource) {
-            dataSource.vectorOverlayConfig.setVectorOverlayConfiguration(this.mode, this.pixelAveraging, this.threshold, this.debiasing, this.fractionalIntensity);
+            dataSource.vectorOverlayConfig.setVectorOverlayConfiguration(this.angularSource, this.intensitySource, this.pixelAveraging, this.thresholdEnabled, this.threshold, this.debiasing, this.fractionalIntensity);
             dataSource.applyVectorOverlay();
         }
     };
@@ -99,12 +116,20 @@ export class VectorOverlayDialogComponent extends React.Component {
         AppStore.Instance.activeFrame?.clearVectorOverlay();
     };
 
-    @action private handleModeChanged = (ev: React.ChangeEvent<HTMLSelectElement>) => {
-        this.mode = ev.currentTarget.value as VectorOverlayMode;
+    @action private handleAngularSourceChanged = (ev: React.ChangeEvent<HTMLSelectElement>) => {
+        this.angularSource = parseInt(ev.currentTarget.value) as VectorOverlaySource;
+    };
+
+    @action private handleIntensitySourceChanged = (ev: React.ChangeEvent<HTMLSelectElement>) => {
+        this.intensitySource = parseInt(ev.currentTarget.value) as VectorOverlaySource;
     };
 
     @action private handlePixelAveragingChanged = (value: number) => {
         this.pixelAveraging = Math.floor(value * 0.5) * 2.0;
+    };
+
+    @action private handleThresholdEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        this.thresholdEnabled = ev.currentTarget.checked;
     };
 
     @action private handleThresholdChanged = (value: number) => {
@@ -172,8 +197,8 @@ export class VectorOverlayDialogComponent extends React.Component {
         }
 
         const config = frame.vectorOverlayConfig;
-        const angleOnly = frame.vectorOverlayConfig.mode === VectorOverlayMode.AngleOnly;
-        const intensityOnly = frame.vectorOverlayConfig.mode === VectorOverlayMode.IntensityOnly;
+        const angleOnly = frame.vectorOverlayConfig.intensitySource === VectorOverlaySource.None;
+        const intensityOnly = frame.vectorOverlayConfig.angularSource === VectorOverlaySource.None;
 
         return (
             <FormGroup label={intensityOnly ? "Block Width (px)" : "Line Length (px)"} inline={true}>
@@ -229,15 +254,22 @@ export class VectorOverlayDialogComponent extends React.Component {
         }
 
         const dataSource = appStore.activeFrame;
-        const intensityOnly = dataSource.vectorOverlayConfig.mode === VectorOverlayMode.IntensityOnly;
+        const intensityOnly = dataSource.vectorOverlayConfig.angularSource === VectorOverlaySource.None;
 
         const configPanel = (
             <div className="vector-overlay-config-panel">
-                <FormGroup inline={true} label="Mode">
-                    <HTMLSelect value={this.mode} onChange={this.handleModeChanged}>
-                        <option value={VectorOverlayMode.IntensityAndAngle}>Intensity and Angle</option>
-                        <option value={VectorOverlayMode.AngleOnly}>Angle Only (Lines)</option>
-                        <option value={VectorOverlayMode.IntensityOnly}>Intensity Only (Blocks)</option>
+                <FormGroup inline={true} label="Angular source">
+                    <HTMLSelect value={this.angularSource} onChange={this.handleAngularSourceChanged}>
+                        <option value={VectorOverlaySource.None}>None</option>
+                        <option value={VectorOverlaySource.Current}>Current image</option>
+                        <option value={VectorOverlaySource.Computed}>Computed PA (if available)</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Intensity source">
+                    <HTMLSelect value={this.intensitySource} onChange={this.handleIntensitySourceChanged}>
+                        <option value={VectorOverlaySource.None}>None</option>
+                        <option value={VectorOverlaySource.Current}>Current image</option>
+                        <option value={VectorOverlaySource.Computed}>Computed PI (if available)</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Pixel Averaging">
@@ -249,17 +281,28 @@ export class VectorOverlayDialogComponent extends React.Component {
                         <Radio label={"Fractional"} value={1} />
                     </RadioGroup>
                 </FormGroup>
-                <FormGroup inline={true} label={`Threshold (${this.fractionalIntensity ? "%" : dataSource.unit})`}>
-                    <SafeNumericInput placeholder="Threshold" min={this.fractionalIntensity ? 0 : undefined} max={this.fractionalIntensity ? 100 : undefined} value={this.threshold} onValueChange={this.handleThresholdChanged} />
+                <FormGroup inline={true} label="Threshold Enabled">
+                    <Switch checked={this.thresholdEnabled} onChange={this.handleThresholdEnabledChanged} />
+                </FormGroup>
+                <FormGroup disabled={!this.thresholdEnabled} inline={true} label={`Threshold (${this.fractionalIntensity ? "%" : dataSource.unit ?? "No unit"})`}>
+                    <SafeNumericInput
+                        disabled={!this.thresholdEnabled}
+                        placeholder="Threshold"
+                        buttonPosition="none"
+                        min={this.fractionalIntensity ? 0 : undefined}
+                        max={this.fractionalIntensity ? 100 : undefined}
+                        value={this.threshold}
+                        onValueChange={this.handleThresholdChanged}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Debiasing">
                     <Switch checked={this.debiasing} onChange={this.handleDebiasingChanged} />
                 </FormGroup>
                 <FormGroup disabled={!this.debiasing} inline={true} label="Stokes Q Error">
-                    <SafeNumericInput disabled={!this.debiasing} placeholder="Value" value={this.qError} onValueChange={this.handleQErrorChanged} />
+                    <SafeNumericInput disabled={!this.debiasing} buttonPosition="none" placeholder="Value" value={this.qError} onValueChange={this.handleQErrorChanged} />
                 </FormGroup>
                 <FormGroup disabled={!this.debiasing} inline={true} label="Stokes U Error">
-                    <SafeNumericInput disabled={!this.debiasing} placeholder="Value" value={this.uError} onValueChange={this.handleUErrorChanged} />
+                    <SafeNumericInput disabled={!this.debiasing} buttonPosition="none" placeholder="Value" value={this.uError} onValueChange={this.handleUErrorChanged} />
                 </FormGroup>
             </div>
         );
@@ -280,6 +323,12 @@ export class VectorOverlayDialogComponent extends React.Component {
                 </FormGroup>
                 {this.renderIntensityParameters()}
                 {this.renderLengthParameters()}
+                <ClearableNumericInputComponent
+                    label="Rotation offset (deg)"
+                    value={dataSource.vectorOverlayConfig.rotationOffset}
+                    onValueChanged={dataSource.vectorOverlayConfig.setRotationOffset}
+                    onValueCleared={() => dataSource.vectorOverlayConfig.setRotationOffset(0)}
+                />
                 <FormGroup inline={true} label="Color Mode">
                     <HTMLSelect value={dataSource.vectorOverlayConfig.colormapEnabled ? 1 : 0} onChange={ev => dataSource.vectorOverlayConfig.setColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>
@@ -290,43 +339,37 @@ export class VectorOverlayDialogComponent extends React.Component {
                         </option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Color Map" disabled={!dataSource.vectorOverlayConfig.colormapEnabled}>
-                    <ColormapComponent inverted={false} disabled={!dataSource.vectorOverlayConfig.colormapEnabled} selectedItem={dataSource.vectorOverlayConfig.colormap} onItemSelect={dataSource.vectorOverlayConfig.setColormap} />
-                </FormGroup>
-                <FormGroup inline={true} label="Bias" disabled={!dataSource.vectorOverlayConfig.colormapEnabled}>
-                    <SafeNumericInput
-                        disabled={!dataSource.vectorOverlayConfig.colormapEnabled}
-                        placeholder="Bias"
-                        min={-1.0}
-                        max={1.0}
-                        value={dataSource.vectorOverlayConfig.colormapBias}
-                        majorStepSize={0.1}
-                        stepSize={0.1}
-                        onValueChange={dataSource.vectorOverlayConfig.setColormapBias}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Contrast" disabled={!dataSource.vectorOverlayConfig.colormapEnabled}>
-                    <SafeNumericInput
-                        disabled={!dataSource.vectorOverlayConfig.colormapEnabled}
-                        placeholder="Contrast"
-                        min={0.0}
-                        max={3.0}
-                        value={dataSource.vectorOverlayConfig.colormapContrast}
-                        majorStepSize={0.1}
-                        stepSize={0.1}
-                        onValueChange={dataSource.vectorOverlayConfig.setColormapContrast}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Color" disabled={dataSource.vectorOverlayConfig.colormapEnabled}>
-                    <ColorPickerComponent
-                        color={dataSource.vectorOverlayConfig.color}
-                        presetColors={SWATCH_COLORS}
-                        setColor={(color: ColorResult) => dataSource.vectorOverlayConfig.setColor(color.rgb)}
-                        disableAlpha={true}
-                        disabled={dataSource.vectorOverlayConfig.colormapEnabled}
-                        darkTheme={appStore.darkTheme}
-                    />
-                </FormGroup>
+                {dataSource.vectorOverlayConfig.colormapEnabled ? (
+                    <React.Fragment>
+                        <FormGroup inline={true} label="Color Map">
+                            <ColormapComponent inverted={false} selectedItem={dataSource.vectorOverlayConfig.colormap} onItemSelect={dataSource.vectorOverlayConfig.setColormap} />
+                        </FormGroup>
+                        <FormGroup inline={true} label="Bias">
+                            <SafeNumericInput placeholder="Bias" min={-1.0} max={1.0} value={dataSource.vectorOverlayConfig.colormapBias} majorStepSize={0.1} stepSize={0.1} onValueChange={dataSource.vectorOverlayConfig.setColormapBias} />
+                        </FormGroup>
+                        <FormGroup inline={true} label="Contrast">
+                            <SafeNumericInput
+                                placeholder="Contrast"
+                                min={0.0}
+                                max={3.0}
+                                value={dataSource.vectorOverlayConfig.colormapContrast}
+                                majorStepSize={0.1}
+                                stepSize={0.1}
+                                onValueChange={dataSource.vectorOverlayConfig.setColormapContrast}
+                            />
+                        </FormGroup>
+                    </React.Fragment>
+                ) : (
+                    <FormGroup inline={true} label="Color">
+                        <ColorPickerComponent
+                            color={dataSource.vectorOverlayConfig.color}
+                            presetColors={SWATCH_COLORS}
+                            setColor={(color: ColorResult) => dataSource.vectorOverlayConfig.setColor(color.rgb)}
+                            disableAlpha={true}
+                            darkTheme={appStore.darkTheme}
+                        />
+                    </FormGroup>
+                )}
             </div>
         );
 

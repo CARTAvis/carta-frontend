@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, FileFilteringType} from "stores";
-import {ContourGeneratorType, FrameScaling, VectorOverlayMode} from "stores/Frame";
+import {ContourGeneratorType, FrameScaling} from "stores/Frame";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService, TelemetryMode} from "services";
@@ -46,7 +46,6 @@ export enum PreferenceKeys {
 
     VECTOR_OVERLAY_PIXEL_AVERAGING = "vectorOverlayPixelAveraging",
     VECTOR_OVERLAY_FRACTIONAL_INTENSITY = "vectorOverlayFractionalIntensity",
-    VECTOR_OVERLAY_MODE = "vectorOverlayMode",
     VECTOR_OVERLAY_THICKNESS = "vectorOverlayThickness",
     VECTOR_OVERLAY_COLORMAP_ENABLED = "vectorOverlayColormapEnabled",
     VECTOR_OVERLAY_COLOR = "vectorOverlayColor",
@@ -159,7 +158,6 @@ const DEFAULTS = {
     VECTOR_OVERLAY: {
         vectorOverlayPixelAveraging: 4,
         vectorOverlayFractionalIntensity: false,
-        vectorOverlayMode: VectorOverlayMode.IntensityAndAngle,
         vectorOverlayThickness: 1,
         vectorOverlayColormapEnabled: false,
         vectorOverlayColor: Colors.WHITE,
@@ -385,10 +383,6 @@ export class PreferenceStore {
 
     @computed get vectorOverlayFractionalIntensity(): boolean {
         return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayFractionalIntensity;
-    }
-
-    @computed get vectorOverlayMode(): VectorOverlayMode {
-        return this.preferences.get(PreferenceKeys.VECTOR_OVERLAY_MODE) ?? DEFAULTS.VECTOR_OVERLAY.vectorOverlayMode;
     }
 
     @computed get vectorOverlayThickness(): number {
@@ -718,7 +712,6 @@ export class PreferenceStore {
 
     @action resetVectorOverlayConfigSettings = () => {
         this.clearPreferences([
-            PreferenceKeys.VECTOR_OVERLAY_MODE,
             PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING,
             PreferenceKeys.VECTOR_OVERLAY_FRACTIONAL_INTENSITY,
             PreferenceKeys.VECTOR_OVERLAY_COLOR,

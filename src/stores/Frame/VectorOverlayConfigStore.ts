@@ -3,18 +3,20 @@ import tinycolor from "tinycolor2";
 import {RGBColor} from "react-color";
 import {PreferenceStore} from "stores";
 
-export enum VectorOverlayMode {
-    IntensityOnly = "intensity-only", // blocks of non-uniform area
-    AngleOnly = "angle-only", // lines with uniform length
-    IntensityAndAngle = "intensity-and-angle" // lines with non-uniform length
+export enum VectorOverlaySource {
+    None = -1,
+    Current = 0,
+    Computed = 1
 }
 
 export class VectorOverlayConfigStore {
     // Generator config
     @observable enabled: boolean;
-    @observable mode: VectorOverlayMode;
+    @observable angularSource: VectorOverlaySource;
+    @observable intensitySource: VectorOverlaySource;
     @observable fractionalIntensity: boolean;
     @observable pixelAveraging: number;
+    @observable thresholdEnabled: boolean;
     @observable threshold: number;
     @observable debiasing: boolean;
     @observable qError: number;
@@ -32,6 +34,7 @@ export class VectorOverlayConfigStore {
     @observable lengthMax: number;
     @observable intensityMin: number;
     @observable intensityMax: number;
+    @observable rotationOffset: number;
 
     private readonly preferenceStore: PreferenceStore;
     public static DefaultLengthMin = 0;
@@ -41,10 +44,12 @@ export class VectorOverlayConfigStore {
         makeObservable(this);
         this.preferenceStore = preferenceStore;
         this.enabled = false;
-        this.mode = this.preferenceStore.vectorOverlayMode;
+        this.angularSource = VectorOverlaySource.Current;
+        this.intensitySource = VectorOverlaySource.Current;
         this.fractionalIntensity = this.preferenceStore.vectorOverlayFractionalIntensity;
         this.pixelAveraging = this.preferenceStore.vectorOverlayPixelAveraging;
-        this.threshold = 0.0;
+        this.threshold = 0;
+        this.thresholdEnabled = false;
         this.debiasing = false;
 
         this.color = tinycolor(this.preferenceStore.vectorOverlayColor).toRgb();
@@ -57,6 +62,7 @@ export class VectorOverlayConfigStore {
         this.lengthMax = VectorOverlayConfigStore.DefaultLengthMax;
         this.intensityMin = undefined;
         this.intensityMax = undefined;
+        this.rotationOffset = 0;
         this.visible = true;
     }
 
@@ -64,9 +70,23 @@ export class VectorOverlayConfigStore {
         this.enabled = val;
     }
 
-    @action setVectorOverlayConfiguration = (mode: VectorOverlayMode, pixelAveraging: number, threshold: number = 0, debiasing: boolean = false, fractionalIntensity: boolean = false) => {
-        this.mode = mode;
+    @action setThresholdEnabled(val: boolean) {
+        this.thresholdEnabled = val;
+    }
+
+    @action setVectorOverlayConfiguration = (
+        angularSource: VectorOverlaySource,
+        intensitySource: VectorOverlaySource,
+        pixelAveraging: number,
+        thresholdEnabled: boolean,
+        threshold: number = 0,
+        debiasing: boolean = false,
+        fractionalIntensity: boolean = false
+    ) => {
+        this.angularSource = angularSource;
+        this.intensitySource = intensitySource;
         this.pixelAveraging = pixelAveraging;
+        this.thresholdEnabled = thresholdEnabled;
         this.threshold = threshold;
         this.debiasing = debiasing;
         this.fractionalIntensity = fractionalIntensity;
@@ -108,6 +128,10 @@ export class VectorOverlayConfigStore {
     @action setIntensityRange = (min: number, max: number) => {
         this.intensityMin = min;
         this.intensityMax = max;
+    };
+
+    @action setRotationOffset = (val: number) => {
+        this.rotationOffset = val;
     };
 
     @action setVisible = (visible: boolean) => {

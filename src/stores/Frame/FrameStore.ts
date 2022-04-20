@@ -3,20 +3,7 @@ import {OptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
-import {
-    ColorbarStore,
-    ContourConfigStore,
-    ContourStore,
-    DistanceMeasuringStore,
-    OverlayBeamStore,
-    RegionSetStore,
-    RegionStore,
-    RenderConfigStore,
-    RestFreqStore,
-    VectorOverlayConfigStore,
-    VectorOverlayMode,
-    VectorOverlayStore
-} from "stores/Frame";
+import {ColorbarStore, ContourConfigStore, ContourStore, DistanceMeasuringStore, OverlayBeamStore, RegionSetStore, RegionStore, RenderConfigStore, RestFreqStore, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
 import {
     CatalogControlMap,
     ChannelInfo,
@@ -1920,18 +1907,6 @@ export class FrameStore {
         const preferenceStore = PreferenceStore.Instance;
         config.setEnabled(true);
 
-        let stokesIntensity = -1;
-        let stokesAngle = -1;
-
-        if (config.mode === VectorOverlayMode.IntensityOnly) {
-            stokesIntensity = 0;
-        } else if (config.mode === VectorOverlayMode.AngleOnly) {
-            stokesAngle = 1;
-        } else {
-            stokesIntensity = 1;
-            stokesAngle = 1;
-        }
-
         const parameters: CARTA.ISetVectorOverlayParameters = {
             fileId: this.frameInfo.fileId,
             imageBounds: {
@@ -1942,12 +1917,12 @@ export class FrameStore {
             },
             smoothingFactor: config.pixelAveraging,
             fractional: config.fractionalIntensity,
-            threshold: config.threshold,
+            threshold: config.thresholdEnabled ? config.threshold : NaN,
             debiasing: config.debiasing,
             qError: config.qError,
             uError: config.uError,
-            stokesIntensity,
-            stokesAngle,
+            stokesIntensity: config.intensitySource,
+            stokesAngle: config.angularSource,
             compressionType: CARTA.CompressionType.NONE,
             compressionQuality: preferenceStore.contourCompressionLevel
         };
