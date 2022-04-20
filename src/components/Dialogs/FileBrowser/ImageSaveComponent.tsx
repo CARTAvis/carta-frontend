@@ -1,10 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, autorun, computed, makeObservable} from "mobx";
-import {Text, Label, FormGroup, IOptionProps, HTMLSelect, ControlGroup, Switch, NumericInput, Intent} from "@blueprintjs/core";
+import {Text, Label, FormGroup, IOptionProps, HTMLSelect, Switch, NumericInput, Intent} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FileBrowserStore} from "stores";
-import {SpectralSystem} from "models";
+import {FrequencyUnit, SpectralSystem} from "models";
+import {ClearableNumericInputComponent} from "components/Shared";
 import "./ImageSaveComponent.scss";
 
 @observer
@@ -45,22 +46,15 @@ export class ImageSaveComponent extends React.Component {
     };
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const fileBrowser = FileBrowserStore.Instance;
-        fileBrowser.setSaveRegionId(parseInt(changeEvent.target.value));
+        FileBrowserStore.Instance?.setSaveRegionId(parseInt(changeEvent.target.value));
     };
 
     private handleSaveSpectralRangeStartChanged = (_valueAsNumber: number, valueAsString: string) => {
-        const fileBrowser = FileBrowserStore.Instance;
-        if (FileBrowserStore) {
-            fileBrowser.setSaveSpectralRangeMin(valueAsString);
-        }
+        FileBrowserStore.Instance?.setSaveSpectralRangeMin(valueAsString);
     };
 
     private handleSaveSpectralRangeEndChanged = (_valueAsNumber: number, valueAsString: string) => {
-        const fileBrowser = FileBrowserStore.Instance;
-        if (FileBrowserStore) {
-            fileBrowser.setSaveSpectralRangeMax(valueAsString);
-        }
+        FileBrowserStore.Instance?.setSaveSpectralRangeMax(valueAsString);
     };
 
     updateSpectralCoordinate(coordStr: string): void {
@@ -133,7 +127,7 @@ export class ImageSaveComponent extends React.Component {
         return [];
     }
 
-    private renderSaveImageControl() {
+    render() {
         const fileBrowser = FileBrowserStore.Instance;
         const activeFrame = AppStore.Instance.activeFrame;
         const closedRegions = activeFrame.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
@@ -157,7 +151,6 @@ export class ImageSaveComponent extends React.Component {
                       return {value: system, label: system};
                   })
                 : [];
-        const stokesOptions: IOptionProps[] = this.stokesOptions;
         // Calculate a small step size
         const numChannels = activeFrame.numChannels;
         const min = activeFrame.channelValueBounds?.min;
@@ -168,16 +161,14 @@ export class ImageSaveComponent extends React.Component {
             <React.Fragment>
                 {activeFrame && (
                     <div className="file-save">
-                        <ControlGroup className="file-name" vertical={false}>
-                            <Label className="label">{"Source"}</Label>
+                        <FormGroup className="file-name" label={"Source"} inline={true}>
                             <Text className="text" ellipsize={true} title={activeFrame.frameInfo.fileInfo.name}>
                                 {activeFrame.frameInfo.fileInfo.name}
                             </Text>
-                        </ControlGroup>
-                        <ControlGroup className="region-select" vertical={false}>
-                            <Label className="label">{"Region"}</Label>
+                        </FormGroup>
+                        <FormGroup className="region-select" label={"Region"} inline={true}>
                             <HTMLSelect value={fileBrowser.saveRegionId} onChange={this.handleRegionChanged} options={regionOptions} />
-                        </ControlGroup>
+                        </FormGroup>
                         {numChannels > 1 && (
                             <React.Fragment>
                                 <div className="coordinate-select">
@@ -195,8 +186,7 @@ export class ImageSaveComponent extends React.Component {
                                     </FormGroup>
                                 </div>
                                 <div className="range-select">
-                                    <ControlGroup>
-                                        <Label>{"Range from"}</Label>
+                                    <FormGroup label={"Range from"} inline={true}>
                                         <NumericInput
                                             value={fileBrowser.saveSpectralRange[0]}
                                             buttonPosition="none"
@@ -209,9 +199,8 @@ export class ImageSaveComponent extends React.Component {
                                             intent={this.validSaveSpectralRangeStart ? Intent.NONE : Intent.DANGER}
                                         />
                                         <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
-                                    </ControlGroup>
-                                    <ControlGroup>
-                                        <Label>{"Range to"}</Label>
+                                    </FormGroup>
+                                    <FormGroup label={"Range to"} inline={true}>
                                         <NumericInput
                                             value={fileBrowser.saveSpectralRange[1]}
                                             buttonPosition="none"
@@ -224,27 +213,37 @@ export class ImageSaveComponent extends React.Component {
                                             intent={this.validSaveSpectralRangeEnd ? Intent.NONE : Intent.DANGER}
                                         />
                                         <Label>{activeFrame.spectralUnit ? `(${activeFrame.spectralUnit})` : ""}</Label>
-                                    </ControlGroup>
+                                    </FormGroup>
                                 </div>
                             </React.Fragment>
                         )}
                         {activeFrame.hasStokes && (
-                            <React.Fragment>
-                                <div className="stokes-select">
-                                    <FormGroup label={"Polarization"} inline={true}>
-                                        <HTMLSelect value={fileBrowser.saveStokesOption || ""} options={stokesOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))} />
-                                    </FormGroup>
-                                </div>
-                            </React.Fragment>
+                            <div className="stokes-select">
+                                <FormGroup label={"Polarization"} inline={true}>
+                                    <HTMLSelect value={fileBrowser.saveStokesOption || ""} options={this.stokesOptions} onChange={(event: React.FormEvent<HTMLSelectElement>) => this.updateStokes(parseInt(event.currentTarget.value))} />
+                                </FormGroup>
+                            </div>
+                        )}
+                        {activeFrame.isRestFreqEditable && (
+                            <div className="freq-input">
+                                <ClearableNumericInputComponent
+                                    label="Rest frequency"
+                                    value={fileBrowser.saveRestFreq.value}
+                                    placeholder="rest frequency"
+                                    selectAllOnFocus={true}
+                                    onValueChanged={fileBrowser.setSaveRestFreqVal}
+                                    onValueCleared={fileBrowser.resetSaveRestFreq}
+                                    resetDisabled={activeFrame.restFreqStore.resetDisable}
+                                    tooltipContent={activeFrame.restFreqStore.defaultInfo}
+                                    tooltipPlacement={"bottom"}
+                                />
+                                <HTMLSelect options={Object.values(FrequencyUnit)} value={fileBrowser.saveRestFreq.unit} onChange={ev => fileBrowser.setSaveRestFreqUnit(ev.currentTarget.value as FrequencyUnit)} />
+                            </div>
                         )}
                         <Switch className="drop-degenerate" checked={fileBrowser.shouldDropDegenerateAxes} label="Drop degenerate axes" onChange={this.onChangeShouldDropDegenerateAxes} />
                     </div>
                 )}
             </React.Fragment>
         );
-    }
-
-    render() {
-        return this.renderSaveImageControl();
     }
 }
