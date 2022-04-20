@@ -122,7 +122,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.gl.uniform1f(shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
 
             lineThickness = pixelRatio * frame.vectorOverlayConfig.thickness;
-            this.gl.uniform1f(shaderUniforms.ZoomLevel, frame.zoomLevel);
+            this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.spatialReference.zoomLevel);
         } else {
             const baseRequiredView = baseFrame.requiredFrameView;
             const rangeScale = {
