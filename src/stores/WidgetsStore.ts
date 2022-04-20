@@ -857,7 +857,7 @@ export class WidgetsStore {
 
     private updateImagePanelButton = () => {
         const imagePanelMode = AppStore.Instance.imagePanelMode;
-        const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel");
+        const imagePanelButton = $(".lm_goldenlayout")?.find("li.lm-image-panel[style!='display:none;']");
         if (imagePanelButton) {
             imagePanelButton.attr("title", this.getImagePanelButtonTooltip(imagePanelMode));
             imagePanelButton.find(".bp3-icon-standard")?.attr("class", `bp3-icon-standard ${this.getImagePanelButtonIcon(imagePanelMode)}`);
@@ -890,14 +890,14 @@ export class WidgetsStore {
 
     updateImagePanelPageButtons = () => {
         const appStore = AppStore.Instance;
-        const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next");
+        const nextPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-next[style!='display:none;']");
         if (nextPageButton) {
             const firstIndexInNextPage = (appStore.currentImagePage + 1) * appStore.imagesPerPage;
             nextPageButton.attr("style", appStore.frames?.length > firstIndexInNextPage ? "" : "cursor: not-allowed; opacity: 0.2");
             nextPageButton.attr("title", appStore.imagePanelMode === ImagePanelMode.None ? "next image" : "next page");
         }
 
-        const previousPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-previous");
+        const previousPageButton = $(".lm_goldenlayout")?.find("li.lm-image-panel-previous[style!='display:none;']");
         if (previousPageButton) {
             previousPageButton.attr("style", appStore.currentImagePage > 0 ? "" : "cursor: not-allowed; opacity: 0.2");
             previousPageButton.attr("title", appStore.imagePanelMode === ImagePanelMode.None ? "previous image" : "previous page");

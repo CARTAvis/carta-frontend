@@ -482,7 +482,7 @@ export class FrameStore {
                 if (spectralType.code === "FREQ") {
                     // dummy variable to update velocity when the rest freq for spectral transform is changed
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const restFreq = this.restFreqStore.restFreq;
+                    const restFreq = this.restFreqStore.restFreqInHz;
 
                     const freqVal = channelInfo.rawValues[this.channel];
                     // convert frequency value to unit in GHz
@@ -822,6 +822,10 @@ export class FrameStore {
         return this.requiredStokes >= 0 && this.requiredStokes < this.stokesInfo?.length ? this.stokesInfo[this.requiredStokes] : String(this.requiredStokes);
     }
 
+    get headerRestFreq(): number {
+        return this.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "RESTFRQ")?.numericValue;
+    }
+
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
         this.overlayStore = OverlayStore.Instance;
@@ -1001,7 +1005,7 @@ export class FrameStore {
             }
         }
 
-        const headerRestFreq = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue;
+        const headerRestFreq = this.headerRestFreq;
         this.restFreqStore = new RestFreqStore(headerRestFreq);
         this.initSupportedSpectralConversion();
         this.initCenter();
@@ -1027,7 +1031,7 @@ export class FrameStore {
         this.cursorMoving = false;
 
         reaction(
-            () => this.restFreqStore.restFreq,
+            () => this.restFreqStore.restFreqInHz,
             restFreq => {
                 if (this.restFreqStore.inValidInput || !isFinite(restFreq)) {
                     return;
@@ -1074,7 +1078,7 @@ export class FrameStore {
             const unit = this.spectralUnit;
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
-            const restFreq = this.restFreqStore.restFreq;
+            const restFreq = this.restFreqStore.restFreqInHz;
             /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
                 if (!type && !unit) {
@@ -1547,7 +1551,7 @@ export class FrameStore {
         const spectralType = this.spectralAxis.type.code;
         if (IsSpectralTypeSupported(spectralType)) {
             // check RESTFRQ
-            if (isFinite(this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "RESTFRQ")?.numericValue)) {
+            if (isFinite(this.headerRestFreq)) {
                 this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
             } else {
                 this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>();
