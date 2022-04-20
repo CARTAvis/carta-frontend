@@ -4,13 +4,21 @@
 
         .bp3-form-group {
             &:first-of-type {
-                margin-left: 0px;
+                margin-left: 0;
             }
         }
 
-        .vector-overlay-config-panel .bp3-form-group .bp3-label {
-            width: 10em;
-            text-align: left;
+        .vector-overlay-config-panel,
+        .vector-overlay-style-panel {
+            .bp3-form-group .bp3-label {
+                width: 10em;
+                text-align: left;
+            }
+            .bp3-form-group {
+                .bp3-form-group {
+                    width: 6em;
+                }
+            }
         }
 
         .bp3-tabs {

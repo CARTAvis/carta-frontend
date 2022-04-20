@@ -38,7 +38,7 @@ export class VectorOverlayConfigStore {
 
     private readonly preferenceStore: PreferenceStore;
     public static DefaultLengthMin = 0;
-    public static DefaultLengthMax = 10;
+    public static DefaultLengthMax = 20;
 
     constructor(preferenceStore: PreferenceStore) {
         makeObservable(this);
