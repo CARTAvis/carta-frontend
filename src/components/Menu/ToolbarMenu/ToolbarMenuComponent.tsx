@@ -139,7 +139,7 @@ export class ToolbarMenuComponent extends React.Component {
                         <AnchorButton icon={<CustomIcon icon={"contour"} />} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Vector Overlay</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon="slash" onClick={dialogStore.showVectorOverlayDialog} active={dialogStore.vectorOverlayDialogVisible} />
+                        <AnchorButton icon={<CustomIcon icon={"vectorOverlay"} />} onClick={dialogStore.showVectorOverlayDialog} active={dialogStore.vectorOverlayDialogVisible} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Online Catalog Query</span>} position={Position.BOTTOM}>
                         <AnchorButton icon="geosearch" onClick={dialogStore.showCatalogQueryDialog} active={dialogStore.catalogQueryDialogVisible} />

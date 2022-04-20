@@ -9,6 +9,7 @@ import {AppStore, HelpType} from "stores";
 import {FrameStore, VectorOverlaySource} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {CustomIcon} from "icons/CustomIcons";
 import "./VectorOverlayDialogComponent.scss";
 
 enum VectorOverlayDialogTabs {
@@ -230,8 +231,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
 
         const dialogProps: DialogProps = {
-            // TODO: custom icon
-            icon: "slash",
+            icon: <CustomIcon icon="vectorOverlay" size={CustomIcon.SIZE_LARGE} />,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
