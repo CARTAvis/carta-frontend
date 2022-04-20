@@ -80,8 +80,8 @@ void main() {
         centerPoint = controlMapLookup(uControlMapTexture, centerPoint, uControlMapSize, uControlMapMin, uControlMapMax);
     }
 
-    float lineLength = calculateLength(data.z) / (uZoomLevel / uScaleAdjustment);
-    float lineWidth = uCanvasSpaceLineWidth / (uZoomLevel / uScaleAdjustment);
+    float lineLength = calculateLength(data.z) / (uZoomLevel * uScaleAdjustment);
+    float lineWidth = uCanvasSpaceLineWidth / (uZoomLevel * uScaleAdjustment);
     float angle = -data.w * PI / 180.0 - uRotationAngle - uRotationOffset;
 
     if (uIntensityPlot) {
