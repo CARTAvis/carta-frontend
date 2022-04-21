@@ -58,12 +58,69 @@ export function trimTrailingDecimals(value: string): string {
     return splitValue[0];
 }
 
-export function toFormattedNotation(value: number): string {
+export function trimTrailingZeros(value: string): string {
+    // Trims the trailing zeros from the input decimal value. If
+    // all trailing values are '0', we return only the values
+    // left of the decimal
+
+    var decimals = value.split(".");
+    var trimmed = decimals[1];
+    var temp = [];
+
+    if (typeof decimals[1] != "undefined") {
+        temp = decimals[1].split("");
+    } else {
+        return decimals[0];
+    }
+
+    for (var i = decimals[1].length - 1; i >= 0; i--) {
+        // Check if trailing value is 0 and pop() value if so.
+        if (decimals[1][i] == "0") {
+            temp.pop();
+            trimmed = temp.join("");
+        } else {
+            // Once all trailing values are removed, rebuild full value minus
+            // trailing zeros and return.
+
+            trimmed = decimals[0] + "." + trimmed;
+            return trimmed;
+        }
+    }
+    return decimals[0];
+}
+
+export function getVariablePrecision(value: number): number {
+    // Estimates the precision of input tick value. Input provides
+    // delta between neighboring tick values and iterates through
+    // up to 14 decimal places to determine the approxmiate
+    // precision.
+
+    var decimalPlacement = 0.1;
+    var precision = 4;
+
+    for (var i = 0; i < 10; i++) {
+        if (value < decimalPlacement) {
+            decimalPlacement = 0.1 * decimalPlacement;
+            precision++;
+        } else {
+            return precision;
+        }
+    }
+    return precision;
+}
+
+export function toFormattedNotation(value: number, delta: number): string {
     if (value === null || isNaN(value)) {
         return null;
     }
+    // Determine approximate precision
+    var precision = getVariablePrecision(delta);
 
-    return value < 1 ? trimTrailingDecimals(value.toPrecision(6)) : trimTrailingDecimals(toFixed(value, 3));
+    // Trim trailing zeros
+    var trimmedValue = trimTrailingZeros(value.toPrecision(precision));
+
+    // Return trimmed decimal if value is less than zero, otherwise return value with fixed precision
+    return value < 1 ? trimTrailingDecimals(trimmedValue) : trimTrailingDecimals(toFixed(value, 3));
 }
 
 export function formattedExponential(val: number, digits: number, unit: string = "", trim: boolean = true, pad: boolean = false) {

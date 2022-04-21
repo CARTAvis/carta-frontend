@@ -1094,31 +1094,15 @@ export class FrameStore {
             const type = this.spectralType;
             const unit = this.spectralUnit;
 
-            /* eslint-disable @typescript-eslint/no-unused-vars */
-            const specsys = this.spectralSystem;
-            const restFreq = this.restFreqStore.restFreq;
-            /* eslint-enable @typescript-eslint/no-unused-vars */
-            if (this.channelInfo) {
-                if (!type && !unit) {
-                    this.setChannelValues(this.channelInfo.values);
-                } else if (this.isCoordChannel) {
-                    this.setChannelValues(this.channelInfo.indexes);
-                } else {
-                    this.setChannelValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values));
-                }
-            }
-        });
-
-        autorun(() => {
-            const type = this.spectralTypeSecondary;
-            const unit = this.spectralUnitSecondary;
+            const typeSecondary = this.spectralTypeSecondary;
+            const unitSecondary = this.spectralUnitSecondary;
 
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
             const restFreq = this.restFreqStore.restFreq;
             /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
-                if (!type && !unit) {
+                if ((!type && !unit) || (!typeSecondary && !unitSecondary)) {
                     this.setChannelValues(this.channelInfo.values);
                 } else if (this.isCoordChannel) {
                     this.setChannelValues(this.channelInfo.indexes);

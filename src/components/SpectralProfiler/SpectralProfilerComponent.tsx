@@ -292,7 +292,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     private findNativeCoordinateValues(tick: number): number {
         const channel = tick;
-        return this.frame.channelInfo.values[channel];
+        return this.widgetStore.effectiveFrame.channelInfo.values[channel];
     }
 
     private calculateFormattedValues(ticks: Tick[]) {
@@ -305,18 +305,31 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 if (!this.frame.spectralTypeSecondary && !this.frame.spectralUnitSecondary) {
                     this.cachedFormattedCoordinates[i] = this.frame.channelInfo.values[i].toString();
                 } else if (this.frame.spectralTypeSecondary === SpectralType.CHANNEL) {
-                    this.cachedFormattedCoordinates[i] = this.frame.channelInfo.indexes[i].toString();
+                    // Channel on secondary axis is not currently implemented.
+                    //this.cachedFormattedCoordinates[i] = this.frame.channelInfo.indexes[i].toString();
                 } else {
+                    var delta = ticks[1].value - ticks[0].value;
+
                     if (this.frame.spectralType === SpectralType.CHANNEL) {
                         const nativeCoord = this.findNativeCoordinateValues(ticks[i].value);
                         var coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
+
                         coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
-                        this.cachedFormattedCoordinates[i] = toFormattedNotation(coord);
+                        this.cachedFormattedCoordinates[i] = toFormattedNotation(coord, delta);
                     } else {
                         const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, ticks[i].value, false);
-                        const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
 
-                        this.cachedFormattedCoordinates[i] = toFormattedNotation(coord);
+                        const velCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.VRAD, SpectralUnit.KMS, this.frame.spectralSystem, nativeCoord);
+                        if (this.frame.spectralTypeSecondary === SpectralType.VRAD || this.frame.spectralTypeSecondary === SpectralType.VOPT) {
+                            if (this.frame.spectralUnitSecondary === SpectralUnit.MS) {
+                                this.cachedFormattedCoordinates[i] = String(1000 * Math.round(velCoord));
+                            } else {
+                                this.cachedFormattedCoordinates[i] = String(Math.round(velCoord));
+                            }
+                        } else {
+                            const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+                            this.cachedFormattedCoordinates[i] = toFormattedNotation(coord, delta);
+                        }
                     }
                 }
             }
