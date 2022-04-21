@@ -98,20 +98,18 @@ export class FileBrowserDialogComponent extends React.Component {
     };
 
     private loadComplexImage = async (filename: string, expression: string) => {
-        this.imageArithmeticString = `${expression}("${filename}")`;
+        const imageArithmeticString = `${expression}("${filename}")`;
         const appStore = AppStore.Instance;
         const frames = appStore.frames;
         const fileBrowserStore = appStore.fileBrowserStore;
         let frame: FrameStore;
 
         if (!fileBrowserStore.appendingFrame || !frames.length) {
-            frame = await appStore.openFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
+            frame = await appStore.openFile(fileBrowserStore.fileList.directory, imageArithmeticString, "", true);
         } else {
-            frame = await appStore.appendFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
+            frame = await appStore.appendFile(fileBrowserStore.fileList.directory, imageArithmeticString, "", true);
         }
         fileBrowserStore.saveStartingDirectory();
-        this.clearArithmeticString();
-        this.setEnableImageArithmetic(false);
         return frame;
     };
 
