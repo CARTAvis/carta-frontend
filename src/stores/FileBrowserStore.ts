@@ -7,7 +7,7 @@ import {RegionStore} from "stores/Frame";
 import {RegionId} from "stores/widgets";
 import {AppToaster, ErrorToast} from "components/Shared";
 import {FileInfoType} from "components";
-import {LineOption, ToFileListFilterMode} from "models";
+import {Freq, FrequencyUnit, LineOption, ToFileListFilterMode} from "models";
 import {getDataTypeString, ProcessedColumnData} from "utilities";
 
 export enum BrowserMode {
@@ -76,6 +76,7 @@ export class FileBrowserStore {
     @observable saveSpectralRange: string[] = ["0", "0"];
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
+    @observable saveRestFreq: Freq = {value: 0, unit: FrequencyUnit.MHZ};
     @observable shouldDropDegenerateAxes: boolean;
 
     private extendedDelayHandle: any;
@@ -86,13 +87,17 @@ export class FileBrowserStore {
         this.exportFileType = CARTA.FileType.CRTF;
 
         autorun(() => {
-            if (AppStore.Instance.activeFrame) {
+            const activeFrame = AppStore.Instance.activeFrame;
+            if (activeFrame) {
                 // Update channelValueBounds for save image
                 FileBrowserStore.Instance.initialSaveSpectralRange();
-                this.setSaveFileType(AppStore.Instance.activeFrame.frameInfo?.fileInfo.type === CARTA.FileType.CASA ? CARTA.FileType.CASA : CARTA.FileType.FITS);
+                this.setSaveFileType(activeFrame.frameInfo?.fileInfo.type === CARTA.FileType.CASA ? CARTA.FileType.CASA : CARTA.FileType.FITS);
 
                 // update regions
                 this.resetExportRegionIndexes();
+
+                // update rest freq
+                this.setSaveRestFreq(Object.assign({}, activeFrame.restFreqStore.customRestFreq));
             }
         });
     }
@@ -512,6 +517,32 @@ export class FileBrowserStore {
             this.resetExportRegionIndexes();
         }
     };
+
+    @action setSaveRestFreqVal = (val: number) => {
+        this.saveRestFreq.value = val;
+    };
+
+    @action setSaveRestFreqUnit = (unit: FrequencyUnit) => {
+        this.saveRestFreq.unit = unit;
+    };
+
+    @action setSaveRestFreq = (freq: Freq) => {
+        this.saveRestFreq = freq;
+    };
+
+    resetSaveRestFreq = () => {
+        const restFreqStore = AppStore.Instance.activeFrame?.restFreqStore;
+        if (restFreqStore) {
+            this.setSaveRestFreq(restFreqStore.headerRestFreq);
+        }
+    };
+
+    @computed get saveRestFreqInHz(): number {
+        if (!isFinite(this.saveRestFreq.value)) {
+            return undefined;
+        }
+        return Freq.convertUnitToHz(this.saveRestFreq);
+    }
 
     @computed get HDUList(): IOptionProps[] {
         return this.HDUfileInfoExtended

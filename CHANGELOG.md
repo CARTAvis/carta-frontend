@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* The ability to set a custom rest frequency for saving subimages. ([#1653](https://github.com/CARTAvis/carta-frontend/issues/1653)).
 * Added image fitting widget for multiple 2D Gaussian component fitting ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
 
 ## [3.0.0-beta.2]
@@ -17,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added two spectral matching types "Vacuum wavelength" and "Air wavelength."
 * Circular/linear polarizations are supported in polarization dropdowns for saving subimages and generating hypercubes.
 * The ability to export high resolution png images for publication quality in journals.
-* The ability to use a custom rest freqency for spectral matching, spectral axis display, and PV image x/y axis display.
+* The ability to use a custom rest frequency for spectral matching, spectral axis display, and PV image x/y axis display.
 * Added new feature: ability to generate a position-velocity (PV) image from a line region on images with a supported coordinate system. The generated images are loaded as separate images, similar to generated moment maps.
 
 ### Changed
