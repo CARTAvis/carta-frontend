@@ -75,7 +75,7 @@ export function trimTrailingZeros(value: string): string {
 
     for (var i = decimals[1].length - 1; i >= 0; i--) {
         // Check if trailing value is 0 and pop() value if so.
-        if (decimals[1][i] == "0") {
+        if (decimals[1][i] === "0") {
             temp.pop();
             trimmed = temp.join("");
         } else {
