@@ -4,7 +4,7 @@ import * as _ from "lodash";
 import {RegionWidgetStore, RegionId, RegionsType} from "./RegionWidgetStore";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ProfileSmoothingStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {FrameStore, RegionStore} from "stores/Frame";
 import {PlotType, LineSettings} from "components/Shared";
 import {SpatialProfilerSettingsTabs} from "components";
 import {clamp, isAutoColor} from "utilities";
@@ -13,7 +13,6 @@ import {LineOption, VALID_XY_COORDINATES} from "models";
 const DEFAULT_STOKES = "current";
 
 export class SpatialProfileWidgetStore extends RegionWidgetStore {
-    @observable LineRegionSampleWidth: number;
     @observable coordinate: string;
     @observable selectedStokes: string;
     @observable minX: number;
@@ -34,6 +33,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: SpatialProfilerSettingsTabs;
+    @observable lineRegionSampleWidth: number;
 
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -111,14 +111,14 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setLineRegionSampleWidth = (val: number) => {
-        this.LineRegionSampleWidth = val;
+        this.lineRegionSampleWidth = val;
     };
 
     constructor(coordinate: string = "x") {
-        super(RegionsType.CLOSED_AND_POINT);
+        super(RegionsType.POINT_AND_LINES);
         makeObservable(this);
         // Describes which data is being visualised
-        this.LineRegionSampleWidth = 3;
+        this.lineRegionSampleWidth = 3;
         this.coordinate = coordinate;
         this.selectedStokes = DEFAULT_STOKES;
 
@@ -168,33 +168,32 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         if (frame?.hasStokes) {
             stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName : this.selectedStokes;
         }
-        return `${stokes?.replace("Stokes ", "") ?? ""}${this.coordinate}`;
+        const coordinate = this.effectiveRegion.regionType !== CARTA.RegionType.LINE && this.effectiveRegion.regionType !== CARTA.RegionType.POLYLINE ? this.coordinate : "";
+        return `${stokes?.replace("Stokes ", "") ?? ""}${coordinate}`;
     }
 
-    private static GetSpatialConfig(frame: FrameStore, coordinate: string, isCursor: boolean, LineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
-        if (frame.cursorMoving && !AppStore.Instance.cursorFrozen && isCursor) {
+    private static GetSpatialConfig(frame: FrameStore, coordinate: string, region: RegionStore, lineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
+        if (frame.cursorMoving && !AppStore.Instance.cursorFrozen && region?.regionId === RegionId.CURSOR) {
             if (coordinate.includes("x")) {
                 return {
                     coordinate,
                     mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
                     start: Math.floor(clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width)),
-                    end: Math.ceil(clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width)),
-                    width: LineRegionSampleWidth
+                    end: Math.ceil(clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width))
                 };
             } else {
                 return {
                     coordinate,
                     mip: clamp(frame.requiredFrameView.mip, 1, frame.maxMip),
                     start: Math.floor(clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height)),
-                    end: Math.ceil(clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height)),
-                    width: LineRegionSampleWidth
+                    end: Math.ceil(clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height))
                 };
             }
         } else {
             return {
                 coordinate,
                 mip: 1,
-                width: LineRegionSampleWidth
+                width: region?.regionType === CARTA.RegionType.LINE || region?.regionType === CARTA.RegionType.POLYLINE ? lineRegionSampleWidth : undefined
             };
         }
     }
@@ -232,7 +231,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                 if (existingConfig) {
                     // TODO: Merge existing configs, rather than only allowing a single one
                 } else {
-                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, widgetStore.fullCoordinate, regionId === RegionId.CURSOR, widgetStore.LineRegionSampleWidth));
+                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, widgetStore.fullCoordinate, region, widgetStore.lineRegionSampleWidth));
                 }
             }
         });

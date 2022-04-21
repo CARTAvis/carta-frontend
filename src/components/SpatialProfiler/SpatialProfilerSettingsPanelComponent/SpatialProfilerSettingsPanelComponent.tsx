@@ -197,7 +197,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                         title="Computation"
                         panel={
                             <FormGroup label={"Width"} inline={true}>
-                                <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.LineRegionSampleWidth} onValueChange={value => this.widgetStore.setLineRegionSampleWidth(value)} />
+                                <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.lineRegionSampleWidth} onValueChange={value => this.widgetStore.setLineRegionSampleWidth(value)} />
                             </FormGroup>
                         }
                     />

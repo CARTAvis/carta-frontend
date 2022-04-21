@@ -1,13 +1,14 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
 import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID} from "stores/widgets";
 import "./RegionSelectorComponent.scss";
 
 @observer
-export class RegionSelectorComponent extends React.Component<{widgetStore: RegionWidgetStore; disableClosedRegion?: boolean; onFrameChanged?: (newFrame: FrameStore) => void}> {
+export class RegionSelectorComponent extends React.Component<{widgetStore: RegionWidgetStore; onFrameChanged?: (newFrame: FrameStore) => void}> {
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
@@ -55,13 +56,22 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
             let regions = widgetStore.effectiveFrame.regionSet.regions;
 
             switch (widgetStore.type) {
+                case RegionsType.CLOSED:
+                    fiteredRegions = regions.filter(r => !r.isTemporary && r.isClosedRegion);
+                    break;
+                case RegionsType.CLOSED_AND_POINT:
+                    fiteredRegions = regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
+                    break;
+                case RegionsType.POINT_AND_LINES:
+                    fiteredRegions = regions.filter(r => !r.isTemporary && (r.regionType === CARTA.RegionType.POINT || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE));
+                    break;
                 default:
                     fiteredRegions = regions;
             }
 
             regionOptions = regionOptions.concat(
                 fiteredRegions.map(r => {
-                    return {value: r.regionId, label: r.nameString, disabled: this.props.disableClosedRegion ? r.isClosedRegion : false};
+                    return {value: r.regionId, label: r.nameString};
                 })
             );
 
