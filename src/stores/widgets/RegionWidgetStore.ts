@@ -72,11 +72,8 @@ export class RegionWidgetStore {
                         case RegionsType.CLOSED:
                             return selectedRegion.isClosedRegion ? selectedRegion.regionId : this.defaultRegionId();
                         case RegionsType.CLOSED_AND_POINT:
-                            return selectedRegion.isClosedRegion || selectedRegion.regionType === CARTA.RegionType.POINT ? selectedRegion.regionId : this.defaultRegionId();
                         case RegionsType.POINT_AND_LINES:
-                            return selectedRegion.regionType === CARTA.RegionType.POINT || selectedRegion.regionType === CARTA.RegionType.LINE || selectedRegion.regionType === CARTA.RegionType.POLYLINE
-                                ? selectedRegion.regionId
-                                : this.defaultRegionId();
+                            return selectedRegion.regionId;
                         case RegionsType.LINE:
                         default:
                             return selectedRegion.regionType === CARTA.RegionType.LINE ? selectedRegion.regionId : this.defaultRegionId();
