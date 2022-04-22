@@ -68,7 +68,7 @@ export class AboutDialogComponent extends React.Component {
                         {/* tslint:disable-next-line:max-line-length */}
                         <li>
                             Please report bugs or suggestions to the{" "}
-                            <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" rel="noopener noreferrer" target="_blank">
+                            <a href="mailto:support@carta.freshdesk.com" rel="noopener noreferrer" target="_blank">
                                 CARTA helpdesk
                             </a>{" "}
                             or file a{" "}
@@ -78,14 +78,14 @@ export class AboutDialogComponent extends React.Component {
                         </li>
                         <li>
                             Documentation is available{" "}
-                            <a href="https://carta.readthedocs.io/en/2.0" rel="noopener noreferrer" target="_blank">
+                            <a href="https://carta.readthedocs.io/en/3.0" rel="noopener noreferrer" target="_blank">
                                 online
                             </a>
                         </li>
                     </ul>
                     <h3>License</h3>
                     <p className={Classes.TEXT_SMALL}>
-                        Copyright (C) 2018-2021 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
+                        Copyright (C) 2018-2022 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
                         <a href="http://www.gnu.org/copyleft/gpl.html" rel="noopener noreferrer" target="_blank">
                             GNU General Public License version 3
                         </a>
