@@ -420,8 +420,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const isXProfile = widgetStore.isXProfile;
         const imageName = appStore.activeFrame ? appStore.activeFrame.filename : undefined;
         const plotName = `${isXProfile ? "X" : "Y"} profile`;
+        let setxLabel: string;
+        if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE) {
+            setxLabel = "Offset (unit)"
+        } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
+            setxLabel = "Distance (unit)"
+        } else {
+            setxLabel = `${isXProfile ? "X" : "Y"} coordinate`
+        }
         let linePlotProps: LinePlotComponentProps = {
-            xLabel: `${isXProfile ? "X" : "Y"} coordinate`,
+            xLabel: setxLabel,
             yLabel: "Value",
             darkMode: appStore.darkTheme,
             imageName: imageName,
