@@ -58,7 +58,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
             <div className="freq-input">
                 <ClearableNumericInputComponent
                     label="Rest frequency"
-                    value={restFreqStore.customVal}
+                    value={restFreqStore.customRestFreq.value}
                     disabled={frameOption.disable}
                     placeholder="rest frequency"
                     selectAllOnFocus={true}
@@ -74,7 +74,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     tooltipPlacement={"bottom"}
                     focused={frameOption.frameIndex === this.widgetStore.selectedFrameIndex}
                 />
-                <HTMLSelect disabled={frameOption.disable} options={Object.values(FrequencyUnit)} value={restFreqStore.customUnit} onChange={ev => restFreqStore.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
+                <HTMLSelect disabled={frameOption.disable} options={Object.values(FrequencyUnit)} value={restFreqStore.customRestFreq.unit} onChange={ev => restFreqStore.setCustomUnit(ev.currentTarget.value as FrequencyUnit)} />
             </div>
         );
     };
