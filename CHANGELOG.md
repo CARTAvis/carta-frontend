@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Optimisation to loading images with a million channels ([#1774](https://github.com/CARTAvis/carta-frontend/issues/1774)).
 * Limited the filename length of downloaded png files to around 200 characters ([#1501](https://github.com/CARTAvis/carta-frontend/issues/1501)).
 * Enabled text selection for region info and catalog info when loading/saving regions and loading catalogs ([#1795](https://github.com/CARTAvis/carta-frontend/issues/1795)).
-* Tab title of image viewer is reset when all images are closed ([#1686](https://github.com/CARTAvis/carta-frontend/issues/1686)).
 ### Fixed
 * Corrected hard reload shortcut suggestions for macOS ([#1623](https://github.com/CARTAvis/carta-frontend/issues/1623)).
 * Fixed region re-rendering with click to pan method ([#1751](https://github.com/CARTAvis/carta-frontend/issues/1751)).
@@ -24,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed crash when loading file with fewer axes than CDELT entries ([#1769](https://github.com/CARTAvis/carta-frontend/issues/1769)).
 * Fixed crash with empty line plots ([#1772](https://github.com/CARTAvis/carta-frontend/issues/1772)).
 * Fixed issue with PV image rendering ([#1708](https://github.com/CARTAvis/carta-frontend/issues/1708)).
+* Tab title of image viewer is reset when all images are closed ([#1686](https://github.com/CARTAvis/carta-frontend/issues/1686)).
 * Fixed issue with multiple-panel switch of the image viewer ([#1676](https://github.com/CARTAvis/carta-frontend/issues/1676)).
 * Fixed issue with the reset button in the spectral line query widget ([#1741](https://github.com/CARTAvis/carta-frontend/issues/1741)).
 * Fixed issue with catalog SIMBAD query after cancelling ([#1750](https://github.com/CARTAvis/carta-frontend/issues/1750)).
