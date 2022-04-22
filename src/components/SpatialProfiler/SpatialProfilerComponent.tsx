@@ -422,11 +422,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const plotName = `${isXProfile ? "X" : "Y"} profile`;
         let setxLabel: string;
         if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE) {
-            setxLabel = "Offset (unit)"
+            setxLabel = "Offset (unit)";
         } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
-            setxLabel = "Distance (unit)"
+            setxLabel = "Distance (unit)";
         } else {
-            setxLabel = `${isXProfile ? "X" : "Y"} coordinate`
+            setxLabel = `${isXProfile ? "X" : "Y"} coordinate`;
         }
         let linePlotProps: LinePlotComponentProps = {
             xLabel: setxLabel,
