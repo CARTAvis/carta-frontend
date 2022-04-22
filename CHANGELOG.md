@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * The ability to set a custom rest frequency for saving subimages ([#1653](https://github.com/CARTAvis/carta-frontend/issues/1653)).
 * The ability to load complex images with a dropdown menu in the file browser dialog ([#1492](https://github.com/CARTAvis/carta-frontend/issues/1492)).
 ### Changed
-* Optimisation to the region list widget with a large number of regions ([#1252](https://github.com/CARTAvis/carta-frontend/issues/1252)).
-* Optimisation to loading images with a million channels ([#1774](https://github.com/CARTAvis/carta-frontend/issues/1774)).
+* Optimization to the region list widget with a large number of regions ([#1252](https://github.com/CARTAvis/carta-frontend/issues/1252)).
+* Optimization to loading images with a million channels ([#1774](https://github.com/CARTAvis/carta-frontend/issues/1774)).
 * Limited the filename length of downloaded png files to around 200 characters ([#1501](https://github.com/CARTAvis/carta-frontend/issues/1501)).
 * Enabled text selection for region info and catalog info when loading/saving regions and loading catalogs ([#1795](https://github.com/CARTAvis/carta-frontend/issues/1795)).
 ### Fixed
@@ -71,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * The image overlay title can now be customised on a per-image basis.
 * The polarization string (e.g. "Stokes I") is shown instead of the index (e.g. 0).
 * The spectral line query widget now checks the Splatalogue server before displaying.
-* Optimisations to catalog rendering with a large number of data points.
+* Optimizations to catalog rendering with a large number of data points.
 * Directories displayed in the file browser now have item count and modified date entries. 
 ### Fixed
 * Fixed issue with spectral-matched images not being refreshed [(#1571)](https://github.com/CARTAvis/carta-frontend/issues/1571).
