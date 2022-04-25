@@ -197,20 +197,20 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 let yCount = 0;
                 for (let i = 0; i < N; i++) {
                     const y = coordinateData.values[i + xMin];
-                    const x = (i  - coordinateData.lineAxis.crpix)*coordinateData.lineAxis.cdelt;
+                    const x = (i - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt;
                     yCount++;
                     ySum += y;
                     ySum2 += y * y;
                     values[i] = {x, y};
                 }
-                xMax = (coordinateData.end - coordinateData.lineAxis.crpix)*coordinateData.lineAxis.cdelt;
-                xMin = (0 - coordinateData.lineAxis.crpix)*coordinateData.lineAxis.cdelt;
+                xMax = (coordinateData.end - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt;
+                xMin = (0 - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt;
 
                 if (yCount > 0) {
                     yMean = ySum / yCount;
                     yRms = Math.sqrt(ySum2 / yCount - yMean * yMean);
                 }
-            } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE){
+            } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
                 yMean = 0;
                 yRms = 0;
                 let ySum = 0;
@@ -218,13 +218,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 let yCount = 0;
                 for (let i = 0; i < N; i++) {
                     const y = coordinateData.values[i + xMin];
-                    const x = i*coordinateData.lineAxis.cdelt;
+                    const x = i * coordinateData.lineAxis.cdelt;
                     yCount++;
                     ySum += y;
                     ySum2 += y * y;
                     values[i] = {x, y};
                 }
-                xMax = coordinateData.end*coordinateData.lineAxis.cdelt;
+                xMax = coordinateData.end * coordinateData.lineAxis.cdelt;
                 xMin = 0;
 
                 if (yCount > 0) {
