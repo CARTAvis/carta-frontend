@@ -41,7 +41,8 @@ export class ProtobufProcessing {
                 start: profile.start,
                 end: profile.end,
                 mip: profile.mip,
-                values: new Float32Array(profile.rawValuesFp32.slice().buffer)
+                values: new Float32Array(profile.rawValuesFp32.slice().buffer),
+                lineAxis: profile.lineAxis
             };
         }
 
@@ -50,7 +51,8 @@ export class ProtobufProcessing {
             start: profile.start,
             end: profile.end,
             mip: profile.mip,
-            values: null
+            values: null,
+            lineAxis: profile.lineAxis
         };
     }
 
