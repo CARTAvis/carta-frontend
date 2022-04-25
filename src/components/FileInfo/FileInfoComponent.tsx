@@ -7,7 +7,7 @@ import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
-import {ImageSaveComponent,RegionSelectComponent} from "components/Dialogs";
+import {ImageSaveComponent, RegionSelectComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import {exportTxtFile} from "utilities";
 import "./FileInfoComponent.scss";
