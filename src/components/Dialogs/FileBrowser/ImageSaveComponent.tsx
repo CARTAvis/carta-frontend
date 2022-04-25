@@ -130,9 +130,9 @@ export class ImageSaveComponent extends React.Component {
     render() {
         const fileBrowser = FileBrowserStore.Instance;
         const activeFrame = AppStore.Instance.activeFrame;
-        const closedRegions = activeFrame.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
+        const closedRegions = activeFrame?.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
         const regionOptions: IOptionProps[] = [{value: 0, label: "Image"}].concat(
-            closedRegions.map(region => ({
+            closedRegions?.map(region => ({
                 value: region.regionId,
                 label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})`
             }))
@@ -152,9 +152,9 @@ export class ImageSaveComponent extends React.Component {
                   })
                 : [];
         // Calculate a small step size
-        const numChannels = activeFrame.numChannels;
-        const min = activeFrame.channelValueBounds?.min;
-        const max = activeFrame.channelValueBounds?.max;
+        const numChannels = activeFrame?.numChannels;
+        const min = activeFrame?.channelValueBounds?.min;
+        const max = activeFrame?.channelValueBounds?.max;
         const delta = numChannels > 1 ? Math.abs(max - min) / (numChannels - 1) : Math.abs(max - min);
         const majorStepSize = delta * 0.1;
         return (

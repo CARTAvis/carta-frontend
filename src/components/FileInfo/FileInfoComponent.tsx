@@ -7,7 +7,8 @@ import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
 import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
-import {ImageSaveComponent, RegionSelectComponent} from "components/Dialogs";
+import {ImageSaveComponent,RegionSelectComponent} from "components/Dialogs";
+import {AppStore} from "stores";
 import {exportTxtFile} from "utilities";
 import "./FileInfoComponent.scss";
 
@@ -237,6 +238,9 @@ export class FileInfoComponent extends React.Component<{
             // Here is only controls for save, no need to wait file info
             case FileInfoType.SAVE_IMAGE:
             case FileInfoType.SELECT_REGION:
+                if (!AppStore.Instance.activeFrame) {
+                    return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />;
+                }
                 break;
             // Check if loading file
             default:
