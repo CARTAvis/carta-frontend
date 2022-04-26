@@ -153,8 +153,8 @@ export class ImageSaveComponent extends React.Component {
                 : [];
         // Calculate a small step size
         const numChannels = activeFrame?.numChannels;
-        const min = activeFrame?.channelValueBounds?.min;
-        const max = activeFrame?.channelValueBounds?.max;
+        const min = activeFrame?.channelValueBounds?.min ?? 0;
+        const max = activeFrame?.channelValueBounds?.max ?? 1;
         const delta = numChannels > 1 ? Math.abs(max - min) / (numChannels - 1) : Math.abs(max - min);
         const majorStepSize = delta * 0.1;
         return (
