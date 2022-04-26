@@ -245,11 +245,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get exportHeader(): string[] {
-        const appStore = AppStore.Instance;
         const headerString: string[] = [];
-        headerString.push(`region (pixel): Point[${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.x)}, ${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.y)}]`);
-        if (appStore.activeFrame.cursorInfo.infoWCS) {
-            headerString.push(`region (world): Point[${appStore.activeFrame.cursorInfo.infoWCS.x}, ${appStore.activeFrame.cursorInfo.infoWCS.y}]`);
+        const frame = this.widgetStore.effectiveFrame;
+        const region = this.widgetStore.effectiveRegion;
+        if (frame && region) {
+            headerString.push(...frame.getRegionProperties(region.regionId));
         }
         return headerString;
     }

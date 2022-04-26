@@ -168,7 +168,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         if (frame?.hasStokes) {
             stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName : this.selectedStokes;
         }
-        const coordinate = this.effectiveRegion.regionType !== CARTA.RegionType.LINE && this.effectiveRegion.regionType !== CARTA.RegionType.POLYLINE ? this.coordinate : "";
+        const coordinate = this.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE ? "" : this.coordinate;
         return `${stokes?.replace("Stokes ", "") ?? ""}${coordinate}`;
     }
 

@@ -239,6 +239,8 @@ export class RegionStore {
         switch (this.regionType) {
             case CARTA.RegionType.POINT:
                 return `Point (pixel) [${center}]`;
+            case CARTA.RegionType.LINE:
+                return `Line (pixel) [[${this.controlPoints[0].x}, ${this.controlPoints[0].y}], [${this.controlPoints[1].x}, ${this.controlPoints[1].y}]]`;
             case CARTA.RegionType.RECTANGLE:
                 return `rotbox[[${center}], [${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ${toFixed(this.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
@@ -250,6 +252,13 @@ export class RegionStore {
                     polygonProperties += index !== this.controlPoints.length - 1 ? ", " : "]";
                 });
                 return polygonProperties;
+            case CARTA.RegionType.POLYLINE:
+                let polylineProperties = "Polyline (pixel) [";
+                this.controlPoints.forEach((point, index) => {
+                    polylineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}, ${toFixed(point.y, 6)}]` : "[Invalid]";
+                    polylineProperties += index !== this.controlPoints.length - 1 ? ", " : "]";
+                });
+                return polylineProperties;
             default:
                 return "Not Implemented";
         }
