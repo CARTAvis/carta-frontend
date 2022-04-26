@@ -189,6 +189,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             }
 
             // redefine if the region is line and polyline
+            let xArray: number[] = new Array(coordinateData.values.length);
             if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE) {
                 yMean = 0;
                 yRms = 0;
@@ -202,6 +203,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     ySum += y;
                     ySum2 += y * y;
                     values[i] = {x, y};
+                    xArray[i] = x;
                 }
                 xMax = (coordinateData.end - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt;
                 xMin = (0 - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt;
@@ -223,6 +225,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     ySum += y;
                     ySum2 += y * y;
                     values[i] = {x, y};
+                    xArray[i] = x;
                 }
                 xMax = coordinateData.end * coordinateData.lineAxis.cdelt;
                 xMin = 0;
@@ -233,11 +236,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            let xArray: number[] = new Array(coordinateData.values.length);
-            for (let i = 0; i < coordinateData.values.length; i++) {
-                xArray[i] = i;
+            if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
+                smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values);
             }
-            smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values, xMin, xMax);
+
             return {values: values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
         }
     }
