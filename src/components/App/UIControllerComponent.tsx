@@ -13,7 +13,8 @@ import {
     ExternalPageDialogComponent,
     StokesDialogComponent,
     CatalogQueryDialogComponent,
-    TelemetryDialogComponent
+    TelemetryDialogComponent,
+    FittingDialogComponent
 } from "components/Dialogs";
 
 @observer
@@ -36,6 +37,7 @@ export class UIControllerComponent extends React.Component {
                 <StokesDialogComponent />
                 <TelemetryDialogComponent />
                 <SplashScreenComponent />
+                <FittingDialogComponent />
             </React.Fragment>
         );
     }

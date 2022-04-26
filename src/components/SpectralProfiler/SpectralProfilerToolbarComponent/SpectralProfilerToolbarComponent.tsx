@@ -292,7 +292,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
                         <AnchorButton icon={<CustomIcon icon="moments" />} onClick={this.momentsShortcutClick} />
                     </Tooltip2>
                     <Tooltip2 content="Fitting">
-                        <AnchorButton icon="regression-chart" onClick={this.fittingShortcutClick} />
+                        <AnchorButton icon={<CustomIcon icon="lineFitting" />} onClick={this.fittingShortcutClick} />
                     </Tooltip2>
                 </ButtonGroup>
             </div>
