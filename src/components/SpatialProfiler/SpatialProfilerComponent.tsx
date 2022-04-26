@@ -408,7 +408,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const pixelPoint = isXCoordinate ? {x: nearest.point.x, y: this.profileStore.y} : {x: this.profileStore.x, y: nearest.point.x};
                     const cursorInfo = this.frame.getCursorInfo(pixelPoint);
                     const wcsLabel = cursorInfo?.infoWCS ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
-                    const imageLabel = `Image: ${nearest.point.x} px, `;
+                    let imageUnit: string;
+                    const coordinateData = this.profileStore?.getProfile(this.widgetStore.fullCoordinate);
+                    if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
+                        imageUnit = `${coordinateData?.lineAxis.unit}`;
+                    } else {
+                        imageUnit = `px`;
+                    }
+                    const imageLabel = `Image: ${nearest.point.x} ${imageUnit}, `;
                     const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
                     profilerInfo.push("Cursor: (" + wcsLabel + imageLabel + valueLabel + ")");
                 }
