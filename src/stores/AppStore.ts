@@ -17,6 +17,7 @@ import {
     DialogStore,
     FileBrowserStore,
     HelpStore,
+    ImageFittingStore,
     LayoutStore,
     LogEntry,
     LogStore,
@@ -87,6 +88,7 @@ export class AppStore {
     readonly overlayStore: OverlayStore;
     readonly preferenceStore: PreferenceStore;
     readonly widgetsStore: WidgetsStore;
+    readonly imageFittingStore: ImageFittingStore;
 
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -1108,6 +1110,28 @@ export class AppStore {
         }
     };
 
+    requestFitting = async (message: CARTA.IFittingRequest) => {
+        if (!message) {
+            return;
+        }
+
+        try {
+            const ack = await this.backendService.requestFitting(message);
+            if (ack.success) {
+                const frame = this.getFrame(message.fileId);
+                frame.setFittingResult(ack.resultValues, ack.resultErrors);
+                frame.setFittingLog(ack.log);
+            }
+            if (ack.message) {
+                AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
+            }
+        } catch (err) {
+            AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
+        }
+
+        this.imageFittingStore.setIsFitting(false);
+    };
+
     @action setAstReady = (val: boolean) => {
         this.astReady = val;
     };
@@ -1322,6 +1346,7 @@ export class AppStore {
         this.preferenceStore = PreferenceStore.Instance;
         this.overlayStore = OverlayStore.Instance;
         this.widgetsStore = WidgetsStore.Instance;
+        this.imageFittingStore = ImageFittingStore.Instance;
 
         this.astReady = false;
         this.cartaComputeReady = false;

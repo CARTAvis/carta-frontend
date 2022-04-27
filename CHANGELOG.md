@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * The ability to set a custom rest frequency for saving subimages. ([#1653](https://github.com/CARTAvis/carta-frontend/issues/1653)).
+* Added image fitting widget for multiple 2D Gaussian component fitting ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
 
 ## [3.0.0-beta.2]
 

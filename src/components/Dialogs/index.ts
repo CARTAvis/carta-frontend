@@ -15,3 +15,4 @@ export * from "./CodeSnippetDialog/CodeSnippetDialogComponent";
 export * from "./StokesDialog/StokesDialogComponent";
 export * from "./TelemetryDialog/TelemetryDialogComponent";
 export * from "./CatalogQueryDialog/CatalogOnlineQueryDialogComponent";
+export * from "./FittingDialog/FittingDialogComponent";

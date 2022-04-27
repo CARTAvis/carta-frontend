@@ -55,7 +55,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 26;
+    private static readonly IcdVersion = 27;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     private static readonly MaxConnectionAttempts = 15;
     private static readonly ConnectionAttemptDelay = 1000;
@@ -152,6 +152,7 @@ export class BackendService {
             [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.PV_PROGRESS, {messageClass: CARTA.PvProgress, handler: this.onStreamedPvProgress}],
             [CARTA.EventType.PV_RESPONSE, {messageClass: CARTA.PvResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.FITTING_RESPONSE, {messageClass: CARTA.FittingResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.VECTOR_OVERLAY_TILE_DATA, {messageClass: CARTA.VectorOverlayTileData, handler: this.onStreamedVectorOverlayData}]
         ]);
 
@@ -811,6 +812,22 @@ export class BackendService {
                 return true;
             }
             return throwError(new Error("Could not send event"));
+        }
+    }
+
+    async requestFitting(message: CARTA.IFittingRequest): Promise<CARTA.IFittingResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.FITTING_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.FITTING_REQUEST, CARTA.FittingRequest.encode(message).finish())) {
+                const deferredResponse = new Deferred<CARTA.IFittingResponse>();
+                this.deferredMap.set(requestId, deferredResponse);
+                return await deferredResponse.promise;
+            } else {
+                throw new Error("Could not send event");
+            }
         }
     }
 

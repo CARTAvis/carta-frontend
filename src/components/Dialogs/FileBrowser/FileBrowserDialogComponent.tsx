@@ -97,6 +97,22 @@ export class FileBrowserDialogComponent extends React.Component {
         return frame;
     };
 
+    private loadComplexImage = async (filename: string, expression: string) => {
+        const imageArithmeticString = `${expression}("${filename}")`;
+        const appStore = AppStore.Instance;
+        const frames = appStore.frames;
+        const fileBrowserStore = appStore.fileBrowserStore;
+        let frame: FrameStore;
+
+        if (!fileBrowserStore.appendingFrame || !frames.length) {
+            frame = await appStore.openFile(fileBrowserStore.fileList.directory, imageArithmeticString, "", true);
+        } else {
+            frame = await appStore.appendFile(fileBrowserStore.fileList.directory, imageArithmeticString, "", true);
+        }
+        fileBrowserStore.saveStartingDirectory();
+        return frame;
+    };
+
     private loadFile = async (file: ISelectedFile, forceAppend: boolean = false) => {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
@@ -281,18 +297,37 @@ export class FileBrowserDialogComponent extends React.Component {
                     } else {
                         actionText = "Append";
                     }
-                    return (
-                        <div>
-                            <Tooltip2 content={"Append this image while keeping other images open"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
-                            </Tooltip2>
-                            {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
+
+                    if (fileBrowserStore.isComplexImage && fileBrowserStore.selectedFiles?.length === 1) {
+                        const loadMenuItems = (
+                            <Menu>
+                                <MenuItem text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
+                                <MenuItem text="Phase" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "PHASE")} />
+                                <MenuItem text="Real" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "REAL")} />
+                                <MenuItem text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "IMAG")} />
+                            </Menu>
+                        );
+                        return (
+                            <div>
+                                <Popover2 content={loadMenuItems} placement="right-end">
+                                    <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} text="Append as" />
+                                </Popover2>
+                            </div>
+                        );
+                    } else {
+                        return (
+                            <div>
                                 <Tooltip2 content={"Append this image while keeping other images open"}>
-                                    <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={appStore.dialogStore.showStokesDialog} text={"Load as hypercube"} />
+                                    <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
                                 </Tooltip2>
-                            )}
-                        </div>
-                    );
+                                {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
+                                    <Tooltip2 content={"Append this image while keeping other images open"}>
+                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={appStore.dialogStore.showStokesDialog} text={"Load as hypercube"} />
+                                    </Tooltip2>
+                                )}
+                            </div>
+                        );
+                    }
                 } else {
                     let actionText: string;
                     if (this.enableImageArithmetic) {
@@ -302,18 +337,37 @@ export class FileBrowserDialogComponent extends React.Component {
                     } else {
                         actionText = "Load";
                     }
-                    return (
-                        <div>
-                            <Tooltip2 content={"Close any existing images and load this image"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
-                            </Tooltip2>
-                            {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
+                    if (fileBrowserStore.isComplexImage && fileBrowserStore.selectedFiles?.length === 1) {
+                        const loadMenuItems = (
+                            <Menu>
+                                <MenuItem text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
+                                <MenuItem text="Phase" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "PHASE")} />
+                                <MenuItem text="Real" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "REAL")} />
+                                <MenuItem text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "IMAG")} />
+                            </Menu>
+                        );
+
+                        return (
+                            <div>
+                                <Popover2 content={loadMenuItems} placement="right-end">
+                                    <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} text="Load as" />
+                                </Popover2>
+                            </div>
+                        );
+                    } else {
+                        return (
+                            <div>
                                 <Tooltip2 content={"Close any existing images and load this image"}>
-                                    <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={appStore.dialogStore.showStokesDialog} text={"Load as hypercube"} />
+                                    <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={actionFunction} text={actionText} />
                                 </Tooltip2>
-                            )}
-                        </div>
-                    );
+                                {!this.enableImageArithmetic && fileBrowserStore.selectedFiles?.length > 1 && fileBrowserStore.selectedFiles?.length < 5 && (
+                                    <Tooltip2 content={"Close any existing images and load this image"}>
+                                        <AnchorButton intent={Intent.PRIMARY} disabled={actionDisabled} onClick={appStore.dialogStore.showStokesDialog} text={"Load as hypercube"} />
+                                    </Tooltip2>
+                                )}
+                            </div>
+                        );
+                    }
                 }
             case BrowserMode.SaveFile:
                 return (
