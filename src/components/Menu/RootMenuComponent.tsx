@@ -332,7 +332,7 @@ export class RootMenuComponent extends React.Component {
         let loadingTooltipFragment;
         let loadingIndicatorClass = "contour-loading-icon";
 
-        if (tilesLoading || contoursLoading) {
+        if (tilesLoading || contoursLoading || vectorOverlayLoading) {
             let tilesTooltipContent;
             if (tilesLoading) {
                 tilesTooltipContent = <span>Streaming image tiles. {appStore.tileService.remainingTiles} remaining</span>;
