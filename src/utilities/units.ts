@@ -120,7 +120,8 @@ export function toFormattedNotation(value: number, delta: number): string {
     var trimmedValue = trimTrailingZeros(value.toPrecision(precision));
 
     // Return trimmed decimal if value is less than zero, otherwise return value with fixed precision
-    return value < 1 ? trimTrailingDecimals(trimmedValue) : trimTrailingDecimals(toFixed(value, 3));
+    //return value < 1 ? trimTrailingDecimals(trimmedValue) : trimTrailingDecimals(toFixed(value, 3));
+    return value < 1 ? trimTrailingDecimals(trimmedValue) : trimTrailingDecimals(trimmedValue);
 }
 
 export function formattedExponential(val: number, digits: number, unit: string = "", trim: boolean = true, pad: boolean = false) {
