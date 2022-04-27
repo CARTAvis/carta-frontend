@@ -354,12 +354,12 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default Pixel Averaging">
                     <SafeNumericInput
                         placeholder="Default Pixel Averaging"
-                        min={2}
+                        min={1}
                         max={64}
                         value={preference.vectorOverlayPixelAveraging}
                         majorStepSize={2}
                         stepSize={2}
-                        onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, Math.floor(value * 0.5) * 2.0)}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.VECTOR_OVERLAY_PIXEL_AVERAGING, value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Use Fractional Intensity">

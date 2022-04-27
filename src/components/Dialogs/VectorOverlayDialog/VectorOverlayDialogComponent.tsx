@@ -136,7 +136,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     };
 
     @action private handlePixelAveragingChanged = (value: number) => {
-        this.pixelAveraging = Math.floor(value * 0.5) * 2.0;
+        this.pixelAveraging = value;
     };
 
     @action private handleThresholdEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -276,7 +276,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Pixel Averaging">
-                    <SafeNumericInput placeholder="Pixel Averaging" min={2} max={64} value={this.pixelAveraging} majorStepSize={2} stepSize={2} onValueChange={this.handlePixelAveragingChanged} />
+                    <SafeNumericInput placeholder="Pixel Averaging" min={1} max={64} value={this.pixelAveraging} majorStepSize={2} stepSize={2} onValueChange={this.handlePixelAveragingChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label="Polarization Intensity" disabled={this.intensitySource === VectorOverlaySource.None}>
                     <RadioGroup inline={true} onChange={this.handleFractionalIntensityChanged} selectedValue={this.fractionalIntensity ? 1 : 0} disabled={this.intensitySource === VectorOverlaySource.None}>
