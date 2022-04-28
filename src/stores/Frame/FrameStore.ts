@@ -137,8 +137,7 @@ export class FrameStore {
     @observable momentImages: FrameStore[];
     @observable pvImage: FrameStore;
     @observable generatedPVRegionId: number;
-    @observable fittingResultValues: CARTA.IGaussianComponent[];
-    @observable fittingResultErrors: CARTA.IGaussianComponent[];
+    @observable fittingResult: string;
     @observable fittingLog: string;
 
     @observable isRequestingMoments: boolean;
@@ -868,8 +867,7 @@ export class FrameStore {
         this.secondaryRasterScalingImages = [];
         this.momentImages = [];
         this.pvImage = null;
-        this.fittingResultValues = [];
-        this.fittingResultErrors = [];
+        this.fittingResult = "";
         this.fittingLog = "";
 
         this.isRequestingMoments = false;
@@ -2171,9 +2169,29 @@ export class FrameStore {
         this.isRequestPVCancelling = val;
     };
 
-    @action setFittingResult = (values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[]) => {
-        this.fittingResultValues = values;
-        this.fittingResultErrors = errors;
+    public setFittingResults = (values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], log: string) => {
+        if (!values || !errors) {
+            return;
+        }
+
+        let results = "";
+        const unitString = this.unit ? ` (${this.unit})` : "";
+        for (let i = 0; i < values.length; i++) {
+            results += `Component #${i + 1}:\n`;
+            results += `Center X  = ${values[i]?.center?.x?.toFixed(6)} +/- ${errors[i]?.center?.x?.toFixed(6)} (px)\n`;
+            results += `Center Y  = ${values[i]?.center?.y?.toFixed(6)} +/- ${errors[i]?.center?.y?.toFixed(6)} (px)\n`;
+            results += `Amplitude = ${values[i]?.amp?.toFixed(6)} +/- ${errors[i]?.amp?.toFixed(6)}${unitString}\n`;
+            results += `FWHM X    = ${values[i]?.fwhm?.x?.toFixed(6)} +/- ${errors[i]?.fwhm?.x?.toFixed(6)} (px)\n`;
+            results += `FWHM Y    = ${values[i]?.fwhm?.y?.toFixed(6)} +/- ${errors[i]?.fwhm?.y?.toFixed(6)} (px)\n`;
+            results += `P.A.      = ${values[i]?.pa?.toFixed(6)} +/- ${errors[i]?.pa?.toFixed(6)} (deg)\n\n`;
+        }
+        
+        this.setFittingResult(results);
+        this.setFittingLog(log);
+    };
+
+    @action setFittingResult = (results: string) => {
+        this.fittingResult = results;
     };
 
     @action setFittingLog = (log: string) => {
