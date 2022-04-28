@@ -85,10 +85,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         } else {
             let xMin: number;
             let xMax: number;
-
-            if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
-                xMin = 0;
-                xMax = coordinateData.values.length;
+            const regionType = this.widgetStore.effectiveRegion?.regionType;
+            if (this.widgetStore.isLineOrPolyline && coordinateData.lineAxis) {
+                // line and polyline regions display offset/distance in the x axis
+                xMax = regionType === CARTA.RegionType.LINE ? (coordinateData.end - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt : coordinateData.end * coordinateData.lineAxis.cdelt;
+                xMin = regionType === CARTA.RegionType.LINE ? (0 - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt : 0;
             } else {
                 if (this.widgetStore.isAutoScaledX) {
                     xMin = this.autoScaleHorizontalMin;
@@ -97,10 +98,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
                     xMax = clamp(this.widgetStore.maxX, 0, this.widgetStore.isXProfile ? this.frame.frameInfo.fileInfoExtended.width : this.frame.frameInfo.fileInfoExtended.height);
                 }
+                xMin = Math.floor(xMin);
+                xMax = Math.floor(xMax);
             }
 
-            xMin = Math.floor(xMin);
-            xMax = Math.floor(xMax);
             let yMin = Number.MAX_VALUE;
             let yMax = -Number.MAX_VALUE;
             let yMean;
@@ -115,7 +116,32 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let smoothingValues: Array<{x: number; y: number}>;
             let N: number;
 
-            if (coordinateData.mip > 1 || coordinateData.start > 0 || coordinateData.end < xMax) {
+            if (this.widgetStore.isLineOrPolyline && coordinateData.lineAxis) {
+                N = coordinateData.values.length;
+                values = new Array(N);
+                let xArray: number[] = new Array(N);
+                const numPixels = this.width;
+                const decimationFactor = Math.round(N / numPixels);
+                for (let i = 0; i < N; i++) {
+                    const y = coordinateData.values[i];
+                    const x = regionType === CARTA.RegionType.LINE ? (i - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt : i * coordinateData.lineAxis.cdelt;
+                    if (isFinite(y)) {
+                        yMin = Math.min(yMin, y);
+                        yMax = Math.max(yMax, y);
+                        yCount++;
+                        ySum += y;
+                        ySum2 += y * y;
+                    }
+                    xArray[i] = x;
+                    if (decimationFactor <= 1) {
+                        values[i] = {x, y};
+                    }
+                }
+                if (decimationFactor > 1) {
+                    values = this.widgetStore.smoothingStore.getDecimatedPoint2DArray(xArray, coordinateData.values, decimationFactor);
+                }
+                smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values);
+            } else if (coordinateData.mip > 1 || coordinateData.start > 0 || coordinateData.end < xMax) {
                 N = coordinateData.values.length;
                 values = new Array(N);
                 for (let i = 0; i < N; i++) {
@@ -188,68 +214,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
 
-            // redefine if the region is line and polyline
-            let xArray: number[] = new Array(coordinateData.values.length);
-            if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE) {
-                yMean = 0;
-                yRms = 0;
-                let ySum = 0;
-                let ySum2 = 0;
-                let yCount = 0;
-                for (let i = 0; i < N; i++) {
-                    const y = coordinateData.values[i + xMin];
-                    const x = (i - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt;
-                    yCount++;
-                    ySum += y;
-                    ySum2 += y * y;
-                    values[i] = {x, y};
-                    xArray[i] = x;
-                }
-                xMax = (coordinateData.end - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt;
-                xMin = (0 - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt;
-
-                if (yCount > 0) {
-                    yMean = ySum / yCount;
-                    yRms = Math.sqrt(ySum2 / yCount - yMean * yMean);
-                }
-            } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
-                yMean = 0;
-                yRms = 0;
-                let ySum = 0;
-                let ySum2 = 0;
-                let yCount = 0;
-                for (let i = 0; i < N; i++) {
-                    const y = coordinateData.values[i + xMin];
-                    const x = i * coordinateData.lineAxis.cdelt;
-                    yCount++;
-                    ySum += y;
-                    ySum2 += y * y;
-                    values[i] = {x, y};
-                    xArray[i] = x;
-                }
-                xMax = coordinateData.end * coordinateData.lineAxis.cdelt;
-                xMin = 0;
-
-                if (yCount > 0) {
-                    yMean = ySum / yCount;
-                    yRms = Math.sqrt(ySum2 / yCount - yMean * yMean);
-                }
-            }
-
-            if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
-                smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values);
-            }
-
             return {values: values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
         }
     }
 
     @computed get exportHeader(): string[] {
         const headerString: string[] = [];
-        const frame = this.widgetStore.effectiveFrame;
-        const region = this.widgetStore.effectiveRegion;
-        if (frame && region) {
-            headerString.push(...frame.getRegionProperties(region.regionId));
+        if (this.widgetStore.effectiveRegion) {
+            headerString.push(...this.widgetStore.effectiveFrame.getRegionProperties(this.widgetStore.effectiveRegionId));
         }
         return headerString;
     }
@@ -412,7 +384,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const wcsLabel = cursorInfo?.infoWCS ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
                     let imageUnit: string;
                     const coordinateData = this.profileStore?.getProfile(this.widgetStore.fullCoordinate);
-                    if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE) {
+                    if (this.widgetStore.isLineOrPolyline) {
                         imageUnit = `${coordinateData?.lineAxis.unit}`;
                     } else {
                         imageUnit = `px`;

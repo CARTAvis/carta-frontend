@@ -168,8 +168,11 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         if (frame?.hasStokes) {
             stokes = this.selectedStokes === DEFAULT_STOKES ? frame.requiredStokesName : this.selectedStokes;
         }
-        const coordinate = this.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE ? "" : this.coordinate;
-        return `${stokes?.replace("Stokes ", "") ?? ""}${coordinate}`;
+        return `${stokes?.replace("Stokes ", "") ?? ""}${this.isLineOrPolyline ? "" : this.coordinate}`;
+    }
+
+    @computed get isLineOrPolyline(): boolean {
+        return this.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE;
     }
 
     private static GetSpatialConfig(frame: FrameStore, coordinate: string, region: RegionStore, lineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
