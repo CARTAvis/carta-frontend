@@ -28,6 +28,7 @@ export enum HelpType {
     SPATIAL_PROFILER = "Spatial Profiler",
     SPATIAL_PROFILER_SETTINGS_STYLING = "Spatial Profiler Style Settings",
     SPATIAL_PROFILER_SETTINGS_SMOOTHING = "Spatial Profiler Smoothing Settings",
+    SPATIAL_PROFILER_SETTINGS_COMPUTATION = "Spatial Profiler Computation Settings",
     SPECTRAL_PROFILER = "Spectral Profiler",
     SPECTRAL_PROFILER_SETTINGS_CONVERSION = "Spectral Profiler Conversion Settings",
     SPECTRAL_PROFILER_SETTINGS_STYLING = "Spectral Profiler Style Settings",

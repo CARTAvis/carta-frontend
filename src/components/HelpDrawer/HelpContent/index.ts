@@ -19,6 +19,7 @@ export * from "./RenderConfigSettingsHelpContent";
 export * from "./SpatialProfilerHelpContent";
 export * from "./SpatialProfilerSettingsStylingHelpContent";
 export * from "./SpatialProfilerSettingsSmoothingHelpContent";
+export * from "./SpatialProfilerSettingsComputationHelpContent";
 export * from "./SpectralProfilerHelpContent";
 export * from "./SpectralProfilerSettingsConversionHelpContent";
 export * from "./SpectralProfilerSettingsStylingHelpContent";

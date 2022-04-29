@@ -31,7 +31,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             isCloseable: true,
             parentId: "spatial-profiler",
             parentType: "spatial-profiler",
-            helpType: [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING]
+            helpType: [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPATIAL_PROFILER_SETTINGS_COMPUTATION]
         };
     }
 
@@ -55,12 +55,12 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             if (this.widgetStore) {
                 const coordinate = this.widgetStore.coordinate;
                 if (appStore && coordinate) {
-                    const coordinateString = `${coordinate.toUpperCase()} Profile`;
+                    const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
                     const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
                 }
             } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `X Profile Settings: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
             }
         });
     }
