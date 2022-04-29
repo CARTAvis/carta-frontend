@@ -2170,7 +2170,7 @@ export class FrameStore {
         this.isRequestPVCancelling = val;
     };
 
-    public setFittingResults = (values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], log: string) => {
+    public updateFittingResults = (values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], log: string) => {
         if (!values || !errors) {
             return;
         }
