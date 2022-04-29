@@ -57,10 +57,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get profileStore(): SpectralProfileStore {
         const widgetStore = this.widgetStore;
-
+        
         if (widgetStore.effectiveFrame) {
-            //const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
-            //return AppStore.Instance.spectralProfiles.get(widgetStore.effectiveFrame.frameInfo.fileId);
+        //    const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
+        //    return AppStore.Instance.spectralProfiles.get(widgetStore.effectiveFrame.frameInfo.fileId);
         }
         return undefined;
     }

@@ -155,7 +155,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         </FormGroup>
                     )}
                     {typeof props.optionalSpectralAxisVisible !== "undefined" && props.handleSecondarySpectralAxisChanged && (
-                        <FormGroup inline={true} label={"Show Secondary Axis"}>
+                        <FormGroup inline={true} label={"Show Secondary Info"}>
                             <Switch checked={props.optionalSpectralAxisVisible} onChange={props.handleSecondarySpectralAxisChanged} />
                         </FormGroup>
                     )}
