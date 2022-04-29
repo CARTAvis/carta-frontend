@@ -2,7 +2,7 @@ import {action, autorun, computed, observable, makeObservable, runInAction, reac
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AnimatorStore, AppStore, ASTSettingsString, LogStore, NumberFormatType, OverlayStore, PreferenceStore} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
 import {ColorbarStore, ContourStore, ContourConfigStore, DistanceMeasuringStore, RegionStore, RegionSetStore, RestFreqStore, RenderConfigStore, OverlayBeamStore} from "stores/Frame";
 import {
     ChannelInfo,
@@ -44,8 +44,7 @@ import {
     getFormattedWCSPoint,
     getPixelSize,
     multiply2D,
-    isAstBadPoint,
-    toExponential
+    isAstBadPoint
 } from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
@@ -2168,84 +2167,6 @@ export class FrameStore {
 
     @action setIsRequestPVCancelling = (val: boolean) => {
         this.isRequestPVCancelling = val;
-    };
-
-    public updateFittingResults = (values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], log: string) => {
-        if (!values || !errors) {
-            return;
-        }
-
-        let results = "";
-        log += "\n";
-        const toFixFormat = (param: string, value: number | string, error: number, unit: string): string => {
-            return `${param} = ${typeof value === "string" ? value : value?.toFixed(6)} +/- ${error?.toFixed(6)}${unit ? ` (${unit})` : ""}\n`;
-        };
-        const toExpFormat = (param: string, value: number | string, error: number, unit: string): string => {
-            return `${param} = ${typeof value === "string" ? value : toExponential(value, 12)} +/- ${toExponential(error, 12)}${unit ? ` (${unit})` : ""}\n`;
-        };
-        const isFormatXDeg = this.overlayStore.numbers?.formatTypeX === NumberFormatType.Degrees;
-        const isFormatYDeg = this.overlayStore.numbers?.formatTypeY === NumberFormatType.Degrees;
-
-        for (let i = 0; i < values.length; i++) {
-            const value = values[i];
-            const error = errors[i];
-            if (!value || !error) {
-                continue;
-            }
-            results += `Component #${i + 1}:\n`;
-            log += `Component #${i + 1}:\n`;
-            if (!this.wcsInfoForTransformation || !this.pixelUnitSizeArcsec) {
-                results += toFixFormat("Center X ", value.center?.x, error.center?.x, "px");
-                results += toFixFormat("Center Y ", value.center?.y, error.center?.y, "px");
-                results += toFixFormat("Amplitude", value.amp, error.amp, this.unit);
-                results += toFixFormat("FWHM X   ", value.fwhm?.x, error.fwhm?.x, "px");
-                results += toFixFormat("FWHM Y   ", value.fwhm?.y, error.fwhm?.y, "px");
-                results += toFixFormat("P.A.     ", value.pa, error.pa, "deg");
-
-                log += toExpFormat("Center X ", value.center?.x, error.center?.x, "px");
-                log += toExpFormat("Center Y ", value.center?.y, error.center?.y, "px");
-                log += toExpFormat("Amplitude", value.amp, error.amp, this.unit);
-                log += toExpFormat("FWHM X   ", value.fwhm?.x, error.fwhm?.x, "px");
-                log += toExpFormat("FWHM Y   ", value.fwhm?.y, error.fwhm?.y, "px");
-                log += toExpFormat("P.A.     ", value.pa, error.pa, "deg");
-            } else {
-                const centerValueWCS = getFormattedWCSPoint(this.wcsInfoForTransformation, value.center as Point2D);
-                if (isFormatXDeg) {
-                    centerValueWCS.x += " (deg)";
-                }
-                if (isFormatYDeg) {
-                    centerValueWCS.y += " (deg)";
-                }
-                const centerErrorWCS = this.getWcsSizeInArcsec(error.center as Point2D);
-                const fwhmValueWCS = this.getWcsSizeInArcsec(value.fwhm as Point2D);
-                const fwhmErrorWCS = this.getWcsSizeInArcsec(error.fwhm as Point2D);
-
-                results += toFixFormat("Center X ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec");
-                results += toFixFormat("Center Y ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec");
-                results += toFixFormat("Amplitude", value.amp, error.amp, this.unit);
-                results += toFixFormat("FWHM X   ", fwhmValueWCS?.x, fwhmErrorWCS?.x, "arcsec");
-                results += toFixFormat("FWHM Y   ", fwhmValueWCS?.y, fwhmErrorWCS.y, "arcsec");
-                results += toFixFormat("P.A.     ", value.pa, error.pa, "deg");
-
-                log += toExpFormat("Center X ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec");
-                log += toExpFormat("         ", value.center?.x, error.center?.x, "px");
-                log += toExpFormat("Center Y ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec");
-                log += toExpFormat("         ", value.center?.y, error.center?.y, "px");
-                log += toExpFormat("Amplitude", value.amp, error.amp, this.unit);
-                log += toExpFormat("FWHM X   ", fwhmValueWCS?.x, fwhmErrorWCS?.x, "arcsec");
-                log += toExpFormat("         ", value.fwhm?.x, error.fwhm?.x, "px");
-                log += toExpFormat("FWHM Y   ", fwhmValueWCS?.y, fwhmErrorWCS.y, "arcsec");
-                log += toExpFormat("         ", value.fwhm?.y, error.fwhm?.y, "px");
-                log += toExpFormat("P.A.     ", value.pa, error.pa, "deg");
-            }
-            if (i !== values.length - 1) {
-                results += "\n";
-                log += "\n";
-            }
-        }
-
-        this.setFittingResult(results);
-        this.setFittingLog(log);
     };
 
     @action setFittingResult = (results: string) => {
