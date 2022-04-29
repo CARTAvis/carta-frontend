@@ -125,6 +125,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 let xArray: number[] = new Array(N);
                 const numPixels = this.width;
                 const decimationFactor = Math.round(N / numPixels);
+                let startIndex: number;
+                let endIndex: number;
                 for (let i = 0; i < N; i++) {
                     const y = coordinateData.values[i];
                     const x = this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.LINE ? (i - coordinateData.lineAxis.crpix) * coordinateData.lineAxis.cdelt : i * coordinateData.lineAxis.cdelt;
@@ -134,6 +136,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         yCount++;
                         ySum += y;
                         ySum2 += y * y;
+                        if (startIndex === undefined) {
+                            startIndex = i;
+                        }
+                        endIndex = i;
                     }
                     xArray[i] = x;
                     if (decimationFactor <= 1) {
@@ -141,7 +147,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
                 if (decimationFactor > 1) {
-                    values = this.widgetStore.smoothingStore.getDecimatedPoint2DArray(xArray, coordinateData.values, decimationFactor);
+                    values = this.widgetStore.smoothingStore.getDecimatedPoint2DArray(xArray, coordinateData.values, decimationFactor, startIndex, endIndex);
                 }
                 smoothingValues = this.widgetStore.smoothingStore.getSmoothingPoint2DArray(xArray, coordinateData.values);
             } else if (coordinateData.mip > 1 || coordinateData.start > 0 || coordinateData.end < xMax) {
@@ -397,7 +403,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (nearest?.point) {
                     const pixelPoint = isXCoordinate ? {x: nearest.point.x, y: this.profileStore.y} : {x: this.profileStore.x, y: nearest.point.x};
                     const cursorInfo = this.frame.getCursorInfo(pixelPoint);
-                    const wcsLabel = cursorInfo?.infoWCS || !this.lineAxis ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
+                    const wcsLabel = cursorInfo?.infoWCS && !this.lineAxis ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
                     const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(nearest.point.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${nearest.point.x} px, `;
                     const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
                     profilerInfo.push("Cursor: (" + wcsLabel + xLabel + valueLabel + ")");
@@ -462,7 +468,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.yLabel = `Value (${this.frame.unit})`;
                 }
 
-                if (this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.LINE && this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.POLYLINE) {
+                if (!this.widgetStore.isLineOrPolyline) {
                     if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
                         linePlotProps.showTopAxis = true;
                         linePlotProps.topAxisTickFormatter = this.formatProfileAst;
@@ -532,7 +538,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         id: "marker-image-cursor",
                         draggable: false,
                         horizontal: false,
-                        opacity: this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.LINE && this.widgetStore.effectiveRegion?.regionType !== CARTA.RegionType.POLYLINE ? 1 : 0.1
+                        opacity: this.widgetStore.isLineOrPolyline ? 0.1 : 1
                     }
                 ];
                 linePlotProps.markers.push({
