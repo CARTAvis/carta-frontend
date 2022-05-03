@@ -1108,9 +1108,7 @@ export class AppStore {
         try {
             const ack = await this.backendService.requestFitting(message);
             if (ack.success) {
-                const frame = this.getFrame(message.fileId);
-                frame.setFittingResult(ack.resultValues, ack.resultErrors);
-                frame.setFittingLog(ack.log);
+                this.imageFittingStore.setResultString(ack.resultValues, ack.resultErrors, ack.log);
             }
             if (ack.message) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
