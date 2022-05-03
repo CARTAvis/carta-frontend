@@ -16,7 +16,7 @@ import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, SpectralProfileStore
 import {FrameStore} from "stores/Frame";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, SpectralType, SpectralUnit} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toFormattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, /*formattedNotation,*/ toFormattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
 
@@ -179,19 +179,21 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let floatXStr = "";
         const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
 
-        if (diffLeft > 0 && diffLeft < 1e-6) {
+        floatXStr = toFormattedNotation(nearest.point.x, diffLeft);
+        /* if (diffLeft > 0 && diffLeft < 1e-6) {
             floatXStr = formattedNotation(nearest.point.x);
         } else if (diffLeft >= 1e-6 && diffLeft < 1e-3) {
-            floatXStr = toFixed(nearest.point.x, 6);
+            floatXStr = toFixed(nearest.point.x, 7);
         } else {
-            floatXStr = toFixed(nearest.point.x, 3);
+            floatXStr = toFixed(nearest.point.x, 4);
         }
-
+*/
         return floatXStr;
     };
 
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
         let cursorInfoString = undefined;
+        var nearestOpt = undefined;
         const nearest = binarySearchByX(data, cursorXValue);
 
         var optional = [];
@@ -210,12 +212,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const nativeCoord = this.findNativeCoordinateValues(parseInt(cursorXValue.toFixed()));
                 var cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
                 cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
-                var nearestOpt = binarySearchByX(optConverted, cursorXOpt);
+                nearestOpt = binarySearchByX(optConverted, cursorXOpt);
             } else {
                 const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, cursorXValue, false);
                 const cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
 
-                var nearestOpt = binarySearchByX(optConverted, cursorXOpt);
+                nearestOpt = binarySearchByX(optConverted, cursorXOpt);
             }
             const optionalXStr = this.precisionFormatting(nearestOpt, optConverted);
 
