@@ -16,7 +16,7 @@ import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, SpectralProfileStore
 import {FrameStore} from "stores/Frame";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, SpectralType, SpectralUnit} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toFormattedNotation, toExponential, toFixed, getColorForTheme /*transformPoint*/} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, formattedNotation, toFormattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
 
@@ -57,10 +57,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get profileStore(): SpectralProfileStore {
         const widgetStore = this.widgetStore;
-        
+
         if (widgetStore.effectiveFrame) {
-        //    const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
-        //    return AppStore.Instance.spectralProfiles.get(widgetStore.effectiveFrame.frameInfo.fileId);
+            //    const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
+            //    return AppStore.Instance.spectralProfiles.get(widgetStore.effectiveFrame.frameInfo.fileId);
         }
         return undefined;
     }
@@ -175,22 +175,60 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 33);
 
+    private precisionFormatting = (nearest: {point: Point2D; index: number}, data: Point2D[]): string => {
+        let floatXStr = "";
+        const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
+
+        if (diffLeft > 0 && diffLeft < 1e-6) {
+            floatXStr = formattedNotation(nearest.point.x);
+        } else if (diffLeft >= 1e-6 && diffLeft < 1e-3) {
+            floatXStr = toFixed(nearest.point.x, 6);
+        } else {
+            floatXStr = toFixed(nearest.point.x, 3);
+        }
+
+        return floatXStr;
+    };
+
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
         let cursorInfoString = undefined;
         const nearest = binarySearchByX(data, cursorXValue);
 
+        var optional = [];
+        data.forEach(val => {
+            optional.push(Object.assign({}, val));
+        });
+
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
             let floatXStr = "";
-            const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
-            if (diffLeft > 0 && diffLeft < 1e-6) {
-                floatXStr = formattedNotation(nearest.point.x);
-            } else if (diffLeft >= 1e-6 && diffLeft < 1e-3) {
-                floatXStr = toFixed(nearest.point.x, 6);
+            floatXStr = this.precisionFormatting(nearest, data);
+
+            const optionalXUnit = this.frame.spectralUnitSecondary;
+            const optConverted = this.calculateFormattedValues(optional);
+
+            if (this.frame.spectralType === SpectralType.CHANNEL) {
+                const nativeCoord = this.findNativeCoordinateValues(parseInt(cursorXValue.toFixed()));
+                var cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
+                cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+                var nearestOpt = binarySearchByX(optConverted, cursorXOpt);
             } else {
-                floatXStr = toFixed(nearest.point.x, 3);
+                const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, cursorXValue, false);
+                const cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+
+                var nearestOpt = binarySearchByX(optConverted, cursorXOpt);
             }
-            const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
-            cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+            const optionalXStr = this.precisionFormatting(nearestOpt, optConverted);
+
+            if (this.widgetStore.spectralAxisVisibleSecondary) {
+                const xLabel =
+                    cursorXUnit === "Channel"
+                        ? `Channel ${toFixed(nearest.point.x)}${optionalXStr ? `, ${optionalXStr} ${optionalXUnit}` : ""}`
+                        : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${optionalXStr ? `, ${optionalXStr} ${optionalXUnit}` : ""}`;
+                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+            } else {
+                const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
+                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+            }
         }
         return `${label}: ${cursorInfoString ?? "---"}`;
     };
@@ -285,7 +323,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     private formatProfile = (v: number, i: number, values: Tick[]) => {
         if (i === 0) {
-            this.calculateFormattedValues(values);
+            this.calculateFormattedTicks(values);
         }
 
         return this.cachedFormattedCoordinates[i];
@@ -296,7 +334,34 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return this.widgetStore.effectiveFrame.channelInfo.values[channel];
     }
 
-    private calculateFormattedValues(ticks: Tick[]) {
+    private calculateFormattedValues(value: Point2D[]): Point2D[] {
+        for (var i = 0; i < value.length; i++) {
+            if (this.frame.spectralType === SpectralType.CHANNEL) {
+                const nativeCoord = this.findNativeCoordinateValues(value[i].x);
+                var coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
+
+                coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+                value[i].x = coord;
+            } else {
+                const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, value[i].x, false);
+                const velCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.VRAD, SpectralUnit.KMS, this.frame.spectralSystem, nativeCoord);
+                if (this.frame.spectralTypeSecondary === SpectralType.VRAD || this.frame.spectralTypeSecondary === SpectralType.VOPT) {
+                    if (this.frame.spectralUnitSecondary === SpectralUnit.MS) {
+                        value[i].x = 1000 * Math.round(velCoord);
+                    } else {
+                        value[i].x = Math.round(velCoord);
+                    }
+                } else {
+                    const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+                    value[i].x = coord;
+                }
+            }
+        }
+
+        return value;
+    }
+
+    private calculateFormattedTicks(ticks: Tick[]) {
         if (!this.cachedFormattedCoordinates || this.cachedFormattedCoordinates.length !== ticks.length) {
             this.cachedFormattedCoordinates = new Array(ticks.length);
         }

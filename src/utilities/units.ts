@@ -114,13 +114,11 @@ export function toFormattedNotation(value: number, delta: number): string {
         return null;
     }
     // Determine approximate precision
-    var precision = getVariablePrecision(delta);
+    var precision = getVariablePrecision(Math.abs(delta));
 
     // Trim trailing zeros
     var trimmedValue = trimTrailingZeros(value.toPrecision(precision));
 
-    // Return trimmed decimal if value is less than zero, otherwise return value with fixed precision
-    //return value < 1 ? trimTrailingDecimals(trimmedValue) : trimTrailingDecimals(toFixed(value, 3));
     return value < 1 ? trimTrailingDecimals(trimmedValue) : trimTrailingDecimals(trimmedValue);
 }
 
@@ -130,6 +128,7 @@ export function formattedExponential(val: number, digits: number, unit: string =
         // remove unnecessary trailing decimals
         valString = valString.replace(/0+e/, "e");
         valString = valString.replace(".e", ".0e");
+
         // strip unnecessary exponential notation
         valString = valString.replace("e+0", "");
     }
