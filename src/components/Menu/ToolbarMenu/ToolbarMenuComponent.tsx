@@ -138,6 +138,9 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon={"contour"} />} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible} />
                     </Tooltip2>
+                    <Tooltip2 content={<span>Image Fitting</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon={<CustomIcon icon="imageFitting" />} onClick={dialogStore.showFittingDialog} active={dialogStore.fittingDialogVisible} />
+                    </Tooltip2>
                     <Tooltip2 content={<span>Online Catalog Query</span>} position={Position.BOTTOM}>
                         <AnchorButton icon="geosearch" onClick={dialogStore.showCatalogQueryDialog} active={dialogStore.catalogQueryDialogVisible} />
                     </Tooltip2>
