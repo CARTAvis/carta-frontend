@@ -275,14 +275,14 @@ export class VectorOverlayDialogComponent extends React.Component {
                     <HTMLSelect value={this.angularSource} onChange={this.handleAngularSourceChanged}>
                         <option value={VectorOverlaySource.None}>None</option>
                         <option value={VectorOverlaySource.Current}>Current image</option>
-                        {dataSource.hasStokes && <option value={VectorOverlaySource.Computed}>Computed PA</option>}
+                        {dataSource.hasLinearStokes && <option value={VectorOverlaySource.Computed}>Computed PA</option>}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Intensity Source">
                     <HTMLSelect value={this.intensitySource} onChange={this.handleIntensitySourceChanged}>
                         <option value={VectorOverlaySource.None}>None</option>
                         <option value={VectorOverlaySource.Current}>Current image</option>
-                        {dataSource.hasStokes && <option value={VectorOverlaySource.Computed}>Computed PI</option>}
+                        {dataSource.hasLinearStokes && <option value={VectorOverlaySource.Computed}>Computed PI</option>}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Pixel Averaging">

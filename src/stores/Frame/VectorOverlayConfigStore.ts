@@ -2,6 +2,7 @@ import {action, observable, makeObservable} from "mobx";
 import tinycolor from "tinycolor2";
 import {RGBColor} from "react-color";
 import {PreferenceStore} from "stores";
+import {FrameStore} from "./FrameStore";
 
 export enum VectorOverlaySource {
     None = -1,
@@ -41,12 +42,12 @@ export class VectorOverlayConfigStore {
     public static DefaultLengthMin = 0;
     public static DefaultLengthMax = 20;
 
-    constructor(preferenceStore: PreferenceStore) {
+    constructor(preferenceStore: PreferenceStore, frame: FrameStore) {
         makeObservable(this);
         this.preferenceStore = preferenceStore;
         this.enabled = false;
-        this.angularSource = VectorOverlaySource.Current;
-        this.intensitySource = VectorOverlaySource.Current;
+        this.angularSource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
+        this.intensitySource = frame.hasLinearStokes ? VectorOverlaySource.Computed : VectorOverlaySource.Current;
         this.fractionalIntensity = this.preferenceStore.vectorOverlayFractionalIntensity;
         this.pixelAveraging = this.preferenceStore.vectorOverlayPixelAveraging;
         this.pixelAveragingEnabled = this.preferenceStore.vectorOverlayPixelAveraging > 0;

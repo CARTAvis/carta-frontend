@@ -810,6 +810,13 @@ export class FrameStore {
         return stokesOptions;
     }
 
+    @computed get hasLinearStokes(): boolean {
+        const options = this.stokesOptions;
+        const labelQ = POLARIZATION_LABELS.get("Q");
+        const labelU = POLARIZATION_LABELS.get("U");
+        return !!options.find(o => o.label === labelQ) && !!options.find(o => o.label === labelU);
+    }
+
     @computed get requiredStokesName(): string {
         return this.stokesOptions?.find(stokesOption => stokesOption.value === this.requiredStokes)?.label;
     }
@@ -858,7 +865,7 @@ export class FrameStore {
         this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
-        this.vectorOverlayConfig = new VectorOverlayConfigStore(preferenceStore);
+        this.vectorOverlayConfig = new VectorOverlayConfigStore(preferenceStore, this);
         this.vectorOverlayStore = new VectorOverlayStore(this);
         this.moving = false;
         this.zooming = false;
