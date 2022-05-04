@@ -1923,7 +1923,7 @@ export class FrameStore {
                 yMin: 0,
                 yMax: this.frameInfo.fileInfoExtended.height
             },
-            smoothingFactor: config.pixelAveraging,
+            smoothingFactor: config.pixelAveragingEnabled ? config.pixelAveraging : 1,
             fractional: config.fractionalIntensity,
             threshold: config.thresholdEnabled ? config.threshold : NaN,
             debiasing: config.debiasing,

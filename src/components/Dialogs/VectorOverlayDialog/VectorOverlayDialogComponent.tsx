@@ -24,6 +24,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     @observable currentTab: VectorOverlayDialogTabs = VectorOverlayDialogTabs.Configuration;
     @observable angularSource: VectorOverlaySource;
     @observable intensitySource: VectorOverlaySource;
+    @observable pixelAveragingEnabled: boolean;
     @observable pixelAveraging: number;
     @observable thresholdEnabled: boolean;
     @observable threshold: number;
@@ -58,6 +59,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         if (config) {
             this.angularSource = config.angularSource;
             this.intensitySource = config.intensitySource;
+            this.pixelAveragingEnabled = config.pixelAveragingEnabled;
             this.pixelAveraging = config.pixelAveraging;
             this.fractionalIntensity = config.fractionalIntensity;
             this.threshold = config.threshold;
@@ -67,6 +69,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.angularSource = VectorOverlaySource.Current;
             this.intensitySource = VectorOverlaySource.Current;
             this.pixelAveraging = preferences.vectorOverlayPixelAveraging;
+            this.pixelAveragingEnabled = preferences.vectorOverlayPixelAveraging > 0;
             this.fractionalIntensity = preferences.vectorOverlayFractionalIntensity;
             this.thresholdEnabled = false;
             this.threshold = 0;
@@ -80,6 +83,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             if (
                 config.angularSource !== this.angularSource ||
                 config.intensitySource !== this.intensitySource ||
+                config.pixelAveragingEnabled !== this.pixelAveragingEnabled ||
                 config.pixelAveraging !== this.pixelAveraging ||
                 config.thresholdEnabled !== this.thresholdEnabled ||
                 config.debiasing !== this.debiasing ||
@@ -111,6 +115,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             dataSource.vectorOverlayConfig.setVectorOverlayConfiguration(
                 this.angularSource,
                 this.intensitySource,
+                this.pixelAveragingEnabled,
                 this.pixelAveraging,
                 this.fractionalIntensity,
                 this.thresholdEnabled,
@@ -133,6 +138,10 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     @action private handleIntensitySourceChanged = (ev: React.ChangeEvent<HTMLSelectElement>) => {
         this.intensitySource = parseInt(ev.currentTarget.value) as VectorOverlaySource;
+    };
+
+    @action private handlePixelAveragingEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        this.pixelAveragingEnabled = ev.currentTarget.checked;
     };
 
     @action private handlePixelAveragingChanged = (value: number) => {
@@ -175,7 +184,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const intensityMax = isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 
         return (
-            <FormGroup label={`Intensity (${frame.unit})`} inline={true}>
+            <FormGroup label="Intensity" labelInfo={frame.unit ? `{${frame.unit})` : ""} inline={true}>
                 <div className="parameter-container">
                     <div className="parameter-line parameter-intensity">
                         <ClearableNumericInputComponent
@@ -212,7 +221,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const intensityOnly = frame.vectorOverlayConfig.angularSource === VectorOverlaySource.None;
 
         return (
-            <FormGroup label={intensityOnly ? "Block Width (px)" : "Line Length (px)"} inline={true}>
+            <FormGroup label={intensityOnly ? "Block Width" : "Line Length"} labelInfo="(px)" inline={true}>
                 <div className="parameter-container">
                     <div className="parameter-line parameter-length">
                         <FormGroup inline={true} label="Min">
@@ -265,18 +274,21 @@ export class VectorOverlayDialogComponent extends React.Component {
                     <HTMLSelect value={this.angularSource} onChange={this.handleAngularSourceChanged}>
                         <option value={VectorOverlaySource.None}>None</option>
                         <option value={VectorOverlaySource.Current}>Current image</option>
-                        <option value={VectorOverlaySource.Computed}>Computed PA (if available)</option>
+                        {dataSource.hasStokes && <option value={VectorOverlaySource.Computed}>Computed PA</option>}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Intensity source">
                     <HTMLSelect value={this.intensitySource} onChange={this.handleIntensitySourceChanged}>
                         <option value={VectorOverlaySource.None}>None</option>
                         <option value={VectorOverlaySource.Current}>Current image</option>
-                        <option value={VectorOverlaySource.Computed}>Computed PI (if available)</option>
+                        {dataSource.hasStokes && <option value={VectorOverlaySource.Computed}>Computed PI</option>}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Pixel Averaging">
-                    <SafeNumericInput placeholder="Pixel Averaging" min={1} max={64} value={this.pixelAveraging} majorStepSize={2} stepSize={2} onValueChange={this.handlePixelAveragingChanged} />
+                    <Switch checked={this.pixelAveragingEnabled} onChange={this.handlePixelAveragingEnabledChanged} />
+                </FormGroup>
+                <FormGroup inline={true} label="Averaging Width" labelInfo="(px)" disabled={!this.pixelAveragingEnabled}>
+                    <SafeNumericInput placeholder="Width (px)" min={2} max={64} value={this.pixelAveraging} majorStepSize={2} stepSize={2} onValueChange={this.handlePixelAveragingChanged} disabled={!this.pixelAveragingEnabled} />
                 </FormGroup>
                 <FormGroup inline={true} label="Polarization Intensity" disabled={this.intensitySource === VectorOverlaySource.None}>
                     <RadioGroup inline={true} onChange={this.handleFractionalIntensityChanged} selectedValue={this.fractionalIntensity ? 1 : 0} disabled={this.intensitySource === VectorOverlaySource.None}>
@@ -287,7 +299,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Threshold Enabled">
                     <Switch checked={this.thresholdEnabled} onChange={this.handleThresholdEnabledChanged} />
                 </FormGroup>
-                <FormGroup disabled={!this.thresholdEnabled} inline={true} label={`Threshold (${this.fractionalIntensity ? "%" : dataSource.unit ?? "No unit"})`}>
+                <FormGroup disabled={!this.thresholdEnabled} inline={true} label="Threshold" labelInfo={this.fractionalIntensity ? "(%)" : dataSource.unit ? `{${dataSource.unit})` : ""}>
                     <SafeNumericInput
                         disabled={!this.thresholdEnabled}
                         placeholder="Threshold"
@@ -312,7 +324,7 @@ export class VectorOverlayDialogComponent extends React.Component {
 
         const stylingPanel = (
             <div className="vector-overlay-style-panel">
-                <FormGroup disabled={intensityOnly} inline={true} label="Line Thickness (px)">
+                <FormGroup disabled={intensityOnly} inline={true} label="Line Thickness" labelInfo="(px)">
                     <SafeNumericInput
                         disabled={intensityOnly}
                         placeholder="Thickness"
@@ -327,7 +339,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 {this.renderIntensityParameters()}
                 {this.renderLengthParameters()}
                 <ClearableNumericInputComponent
-                    label="Rotation offset (deg)"
+                    label="Rotation offset"
+                    labelInfo="(deg)"
                     value={dataSource.vectorOverlayConfig.rotationOffset}
                     onValueChanged={dataSource.vectorOverlayConfig.setRotationOffset}
                     onValueCleared={() => dataSource.vectorOverlayConfig.setRotationOffset(0)}

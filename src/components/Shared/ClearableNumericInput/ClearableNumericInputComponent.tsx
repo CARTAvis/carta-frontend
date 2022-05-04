@@ -9,6 +9,7 @@ const KEYCODE_ENTER = 13;
 
 export interface ClearableNumericInputProps extends NumericInputProps {
     label: string;
+    labelInfo?: string;
     value: number;
     min?: number;
     max?: number;
@@ -102,7 +103,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
             value = this.props.displayExponential && !this.isFocused ? toExponential(Number(this.props.value), 3) : this.props.value;
         }
         return (
-            <FormGroup className={this.props.className} label={this.props.label} inline={this.props.inline === undefined} disabled={this.props.disabled}>
+            <FormGroup className={this.props.className} label={this.props.label} labelInfo={this.props.labelInfo} inline={this.props.inline === undefined} disabled={this.props.disabled}>
                 <NumericInput
                     inputRef={this.inputRef}
                     asyncControl={true}

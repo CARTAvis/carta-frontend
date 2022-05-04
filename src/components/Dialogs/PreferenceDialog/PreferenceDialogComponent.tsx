@@ -354,7 +354,7 @@ export class PreferenceDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Default Pixel Averaging">
                     <SafeNumericInput
                         placeholder="Default Pixel Averaging"
-                        min={1}
+                        min={0}
                         max={64}
                         value={preference.vectorOverlayPixelAveraging}
                         majorStepSize={2}
