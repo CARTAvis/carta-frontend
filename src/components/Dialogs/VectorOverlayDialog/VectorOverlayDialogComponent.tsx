@@ -271,14 +271,14 @@ export class VectorOverlayDialogComponent extends React.Component {
 
         const configPanel = (
             <div className="vector-overlay-config-panel">
-                <FormGroup inline={true} label="Angular source">
+                <FormGroup inline={true} label="Angular Source">
                     <HTMLSelect value={this.angularSource} onChange={this.handleAngularSourceChanged}>
                         <option value={VectorOverlaySource.None}>None</option>
                         <option value={VectorOverlaySource.Current}>Current image</option>
                         {dataSource.hasStokes && <option value={VectorOverlaySource.Computed}>Computed PA</option>}
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Intensity source">
+                <FormGroup inline={true} label="Intensity Source">
                     <HTMLSelect value={this.intensitySource} onChange={this.handleIntensitySourceChanged}>
                         <option value={VectorOverlaySource.None}>None</option>
                         <option value={VectorOverlaySource.Current}>Current image</option>
