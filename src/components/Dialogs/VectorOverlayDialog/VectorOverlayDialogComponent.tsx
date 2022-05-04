@@ -52,7 +52,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         this.setDefaultVectorOverlayParameters();
     }
 
-    @action setDefaultVectorOverlayParameters() {
+    @action setDefaultVectorOverlayParameters = () => {
         const appStore = AppStore.Instance;
         const config = appStore.activeFrame?.vectorOverlayConfig;
         const preferences = appStore.preferenceStore;
@@ -75,7 +75,7 @@ export class VectorOverlayDialogComponent extends React.Component {
             this.threshold = 0;
             this.debiasing = false;
         }
-    }
+    };
 
     @computed get configChanged(): boolean {
         const config = AppStore.Instance.activeFrame?.vectorOverlayConfig;
@@ -184,7 +184,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const intensityMax = isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 
         return (
-            <FormGroup label="Intensity" labelInfo={frame.unit ? `{${frame.unit})` : ""} inline={true}>
+            <FormGroup label="Intensity" labelInfo={frame.unit ? `(${frame.unit})` : ""} inline={true}>
                 <div className="parameter-container">
                     <div className="parameter-line parameter-intensity">
                         <ClearableNumericInputComponent
@@ -228,7 +228,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                             <SafeNumericInput min={0} max={config.lengthMax} disabled={angleOnly} value={config.lengthMin} onValueChange={val => config.setLengthRange(val, config.lengthMax)} />
                         </FormGroup>
                         <FormGroup inline={true} label="Max">
-                            <SafeNumericInput min={config.lengthMin} disabled={angleOnly} value={config.lengthMax} onValueChange={val => config.setLengthRange(config.lengthMin, val)} />
+                            <SafeNumericInput min={config.lengthMin} value={config.lengthMax} onValueChange={val => config.setLengthRange(config.lengthMin, val)} />
                         </FormGroup>
                     </div>
                 </div>
@@ -267,6 +267,7 @@ export class VectorOverlayDialogComponent extends React.Component {
 
         const dataSource = appStore.activeFrame;
         const intensityOnly = dataSource.vectorOverlayConfig.angularSource === VectorOverlaySource.None;
+        const angleOnly = dataSource.vectorOverlayConfig.intensitySource === VectorOverlaySource.None;
 
         const configPanel = (
             <div className="vector-overlay-config-panel">
@@ -336,7 +337,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                         onValueChange={dataSource.vectorOverlayConfig.setThickness}
                     />
                 </FormGroup>
-                {this.renderIntensityParameters()}
+                {!angleOnly && this.renderIntensityParameters()}
                 {this.renderLengthParameters()}
                 <ClearableNumericInputComponent
                     label="Rotation offset"
@@ -413,7 +414,12 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} onClick={this.handleClearOverlay} disabled={!dataSource.vectorOverlayConfig.enabled} text="Clear" />
-                        <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyOverlay} disabled={!this.configChanged && dataSource.vectorOverlayConfig.enabled} text="Apply" />
+                        <AnchorButton
+                            intent={Intent.SUCCESS}
+                            onClick={this.handleApplyOverlay}
+                            disabled={(this.angularSource === VectorOverlaySource.None && this.intensitySource === VectorOverlaySource.None) || (!this.configChanged && dataSource.vectorOverlayConfig.enabled)}
+                            text="Apply"
+                        />
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideVectorOverlayDialog} text="Close" />
                     </div>
                 </div>
