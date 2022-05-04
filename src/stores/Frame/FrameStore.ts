@@ -141,8 +141,7 @@ export class FrameStore {
     @observable momentImages: FrameStore[];
     @observable pvImage: FrameStore;
     @observable generatedPVRegionId: number;
-    @observable fittingResultValues: CARTA.IGaussianComponent[];
-    @observable fittingResultErrors: CARTA.IGaussianComponent[];
+    @observable fittingResult: string;
     @observable fittingLog: string;
 
     @observable isRequestingMoments: boolean;
@@ -875,8 +874,7 @@ export class FrameStore {
         this.secondaryRasterScalingImages = [];
         this.momentImages = [];
         this.pvImage = null;
-        this.fittingResultValues = [];
-        this.fittingResultErrors = [];
+        this.fittingResult = "";
         this.fittingLog = "";
 
         this.isRequestingMoments = false;
@@ -2233,9 +2231,8 @@ export class FrameStore {
         this.isRequestPVCancelling = val;
     };
 
-    @action setFittingResult = (values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[]) => {
-        this.fittingResultValues = values;
-        this.fittingResultErrors = errors;
+    @action setFittingResult = (results: string) => {
+        this.fittingResult = results;
     };
 
     @action setFittingLog = (log: string) => {
