@@ -144,17 +144,6 @@ export class DialogStore {
         this.stokesDialogVisible = false;
     };
 
-    // Rest frequency
-    @observable restFreqDialogVisible: boolean = false;
-    @observable restFreqDialogFileId: number;
-    @action showRestFreqDialog = (fileId: number) => {
-        this.restFreqDialogVisible = true;
-        this.restFreqDialogFileId = fileId;
-    };
-    @action hideRestFreqDialog = () => {
-        this.restFreqDialogVisible = false;
-    };
-
     // Catalog query dialog
     @observable catalogQueryDialogVisible: boolean = false;
     @action showCatalogQueryDialog = () => {
@@ -162,5 +151,14 @@ export class DialogStore {
     };
     @action hideCatalogQueryDialog = () => {
         this.catalogQueryDialogVisible = false;
+    };
+
+    // Fitting dialog
+    @observable fittingDialogVisible: boolean = false;
+    @action showFittingDialog = () => {
+        this.fittingDialogVisible = true;
+    };
+    @action hideFittingDialog = () => {
+        this.fittingDialogVisible = false;
     };
 }

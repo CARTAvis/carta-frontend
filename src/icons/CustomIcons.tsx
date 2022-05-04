@@ -4,7 +4,22 @@ import {Icon} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import "./CustomIcons.scss";
 
-export declare type CustomIconName = "contour" | "center" | "regionList" | "spatialProfiler" | "spectralProfiler" | "stokes" | "spectralLineQuery" | "smoothing" | "moments" | "distanceMeasuring" | "cursor" | "line" | "polyline";
+export declare type CustomIconName =
+    | "contour"
+    | "center"
+    | "regionList"
+    | "spatialProfiler"
+    | "spectralProfiler"
+    | "stokes"
+    | "spectralLineQuery"
+    | "smoothing"
+    | "moments"
+    | "distanceMeasuring"
+    | "cursor"
+    | "line"
+    | "polyline"
+    | "imageFitting"
+    | "lineFitting";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName; size?: number}> {
     static readonly SIZE_STANDARD = 16;
@@ -185,6 +200,37 @@ const pvSvg = (
     </>
 );
 
+const imageFittingSvg = (
+    <>
+        <path
+            stroke="null"
+            id="svg_2"
+            d="m9.68361,10.28122c0,0.60521 0.48941,1.09375 1.09571,1.09375s1.09571,-0.48854 1.09571,-1.09375s-0.48942,-1.09375 -1.09571,-1.09375s-1.09571,0.48854 -1.09571,1.09375zm-3.28712,-1.09375c0.60629,0 1.09571,-0.48854 1.09571,-1.09375s-0.48942,-1.09375 -1.09571,-1.09375s-1.09571,0.48854 -1.09571,1.09375s0.48942,1.09375 1.09571,1.09375zm0.36524,3.28126c0,0.60521 0.48942,1.09375 1.09571,1.09375s1.09571,-0.48854 1.09571,-1.09375s-0.48942,-1.09375 -1.09571,-1.09375s-1.09571,0.48854 -1.09571,1.09375zm-3.28712,-1.09375c0.60629,0 1.09571,-0.48854 1.09571,-1.09375s-0.48942,-1.09375 -1.09571,-1.09375s-1.09571,0.48854 -1.09571,1.09375s0.48942,1.09375 1.09571,1.09375zm7.66994,2.91667l-8.57572,0l8.78756,-6.26356l-0.42367,-0.59063l-9.28428,6.61356l0,-6.32189c0,-0.40104 -0.32871,-0.72917 -0.73047,-0.72917s-0.73047,0.32813 -0.73047,0.72917l0,7.29169c0,0.40104 0.32871,0.72917 0.73047,0.72917l10.22659,0c0.40176,0 0.73047,-0.32813 0.73047,-0.72917c0,-0.40104 -0.32871,-0.72917 -0.73047,-0.72917z"
+            clipRule="evenodd"
+            fillRule="evenodd"
+        />
+        <text xmlSpace="preserve" textAnchor="start" fontFamily="sans-serif" fontSize="10" id="svg_3" y="5.21879" x="6.26874" strokeWidth="0" stroke="#000">
+            xy
+        </text>
+    </>
+);
+
+const lineFittingSvg = (
+    <>
+        <path
+            stroke="null"
+            id="svg_2"
+            d="m9.68361,10.28122c0,0.60521 0.48941,1.09375 1.09571,1.09375s1.09571,-0.48854 1.09571,-1.09375s-0.48942,-1.09375 -1.09571,-1.09375s-1.09571,0.48854 -1.09571,1.09375zm-3.28712,-1.09375c0.60629,0 1.09571,-0.48854 1.09571,-1.09375s-0.48942,-1.09375 -1.09571,-1.09375s-1.09571,0.48854 -1.09571,1.09375s0.48942,1.09375 1.09571,1.09375zm0.36524,3.28126c0,0.60521 0.48942,1.09375 1.09571,1.09375s1.09571,-0.48854 1.09571,-1.09375s-0.48942,-1.09375 -1.09571,-1.09375s-1.09571,0.48854 -1.09571,1.09375zm-3.28712,-1.09375c0.60629,0 1.09571,-0.48854 1.09571,-1.09375s-0.48942,-1.09375 -1.09571,-1.09375s-1.09571,0.48854 -1.09571,1.09375s0.48942,1.09375 1.09571,1.09375zm7.66994,2.91667l-8.57572,0l8.78756,-6.26356l-0.42367,-0.59063l-9.28428,6.61356l0,-6.32189c0,-0.40104 -0.32871,-0.72917 -0.73047,-0.72917s-0.73047,0.32813 -0.73047,0.72917l0,7.29169c0,0.40104 0.32871,0.72917 0.73047,0.72917l10.22659,0c0.40176,0 0.73047,-0.32813 0.73047,-0.72917c0,-0.40104 -0.32871,-0.72917 -0.73047,-0.72917z"
+            clipRule="evenodd"
+            fillRule="evenodd"
+        />
+        <text xmlSpace="preserve" textAnchor="start" fontFamily="sans-serif" fontSize="10" id="svg_3" y="5.71879" x="6.96874" strokeWidth="0" stroke="#000">
+            {" "}
+            z
+        </text>
+    </>
+);
+
 const icons = {
     contour: contourSvg,
     center: centerSvg,
@@ -199,5 +245,7 @@ const icons = {
     cursor: cursorSvg,
     line: lineSvg,
     polyline: polylineSvg,
-    pv: pvSvg
+    pv: pvSvg,
+    imageFitting: imageFittingSvg,
+    lineFitting: lineFittingSvg
 };

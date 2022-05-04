@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * The ability to load files with LEL (lattice expression language) expressions ([#1264](https://github.com/CARTAvis/carta-frontend/issues/1264)).
 * The ability to set a custom rest frequency for saving subimages ([#1653](https://github.com/CARTAvis/carta-frontend/issues/1653)).
 * The ability to load complex images with a dropdown menu in the file browser dialog ([#1492](https://github.com/CARTAvis/carta-frontend/issues/1492)).
+* Added image fitting widget for multiple 2D Gaussian component fitting ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
 ### Changed
 * Optimization to the region list widget with a large number of regions ([#1252](https://github.com/CARTAvis/carta-frontend/issues/1252)).
 * Optimization to loading images with a million channels ([#1774](https://github.com/CARTAvis/carta-frontend/issues/1774)).

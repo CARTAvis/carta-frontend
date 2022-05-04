@@ -137,6 +137,8 @@ export class FrameStore {
     @observable momentImages: FrameStore[];
     @observable pvImage: FrameStore;
     @observable generatedPVRegionId: number;
+    @observable fittingResult: string;
+    @observable fittingLog: string;
 
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
@@ -865,6 +867,8 @@ export class FrameStore {
         this.secondaryRasterScalingImages = [];
         this.momentImages = [];
         this.pvImage = null;
+        this.fittingResult = "";
+        this.fittingLog = "";
 
         this.isRequestingMoments = false;
         this.requestingMomentsProgress = 0;
@@ -2163,5 +2167,13 @@ export class FrameStore {
 
     @action setIsRequestPVCancelling = (val: boolean) => {
         this.isRequestPVCancelling = val;
+    };
+
+    @action setFittingResult = (results: string) => {
+        this.fittingResult = results;
+    };
+
+    @action setFittingLog = (log: string) => {
+        this.fittingLog = log;
     };
 }

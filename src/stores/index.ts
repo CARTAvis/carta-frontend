@@ -18,3 +18,4 @@ export * from "./ProfileFittingStore";
 export * from "./SnippetStore";
 export * from "./CatalogOnlineQueryProfileStore";
 export * from "./CatalogOnlieQueryConfigStore";
+export * from "./ImageFittingStore";
