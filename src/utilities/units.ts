@@ -51,7 +51,7 @@ export function formattedNotation(value: number): string {
 export function trimTrailingDecimals(value: string): string {
     var splitValue: string[] = value.split(".");
 
-    if (splitValue[1] == undefined) {
+    if (splitValue[1] === undefined) {
         return splitValue[0];
     } else {
         for (let i = 0; i < splitValue[1].length; i++) {
