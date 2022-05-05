@@ -92,7 +92,7 @@ export class VectorOverlayWebGLService {
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
-        this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
+        this.gl.uniform1i(this.shaderUniforms.CmapTexture, 2);
     }
 
     private constructor() {
@@ -102,7 +102,7 @@ export class VectorOverlayWebGLService {
         }
 
         this.initShaders();
-        loadImageTexture(this.gl, allMaps, GL2.TEXTURE1).then(texture => {
+        loadImageTexture(this.gl, allMaps, GL2.TEXTURE2).then(texture => {
             this.cmapTexture = texture;
         });
     }
