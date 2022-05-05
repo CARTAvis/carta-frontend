@@ -50,12 +50,17 @@ export function formattedNotation(value: number): string {
 
 export function trimTrailingDecimals(value: string): string {
     var splitValue: string[] = value.split(".");
-    for (let i = 0; i < splitValue[1].length; i++) {
-        if (splitValue[1][i] !== "0") {
-            return value;
+
+    if (splitValue[1] == undefined) {
+        return splitValue[0];
+    } else {
+        for (let i = 0; i < splitValue[1].length; i++) {
+            if (splitValue[1][i] !== "0") {
+                return value;
+            }
         }
+        return splitValue[0];
     }
-    return splitValue[0];
 }
 
 export function trimTrailingZeros(value: string): string {
