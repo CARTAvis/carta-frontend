@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {isAutoColor} from "utilities";
-import {VALID_COORDINATES} from "models";
+import {POLARIZATIONS, VALID_COORDINATES} from "models";
 import tinycolor from "tinycolor2";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
@@ -89,6 +89,14 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     @computed get isAutoScaledY() {
         return this.minY === undefined || this.maxY === undefined;
+    }
+
+    @computed get effectivePolarization(): POLARIZATIONS {
+        if (this.coordinate === "z") {
+            return this.effectiveFrame?.requiredPolarization;
+        } else {
+            return POLARIZATIONS[this.coordinate.substring(0, this.coordinate.length - 1)];
+        }
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {

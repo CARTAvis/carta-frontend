@@ -53,20 +53,20 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
             return "-";
         }
 
-        let valueString = formattedExponential(frame.cursorValue.value, 5, "", true, true);
+        let valueString = frame.requiredUnit === "%" ? toFixed(frame.cursorValue.value, 1) : formattedExponential(frame.cursorValue.value, 5, "", true, true);
         if (isNaN(frame.cursorValue.value)) {
             valueString = "NaN";
         }
         if (!frame.isCursorValueCurrent) {
             valueString += "*";
         }
-        return frame.unit === undefined || !frame.unit.length ? (
+        return frame.requiredUnit === undefined || !frame.requiredUnit.length ? (
             valueString
         ) : (
             <React.Fragment>
                 {valueString}
                 <br />
-                {frame.unit}
+                {frame.requiredUnit}
             </React.Fragment>
         );
     };
@@ -144,7 +144,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         let imageCoords = Array(frameNum).fill("-");
         const zCoords = appStore.frames.map(frame => this.genZCoordContent(frame));
         const channels = appStore.frames.map(frame => frame.requiredChannel);
-        const stokes = appStore.frames.map(frame => frame.requiredStokesInfo);
+        const stokes = appStore.frames.map(frame => frame.requiredPolarizationInfo);
 
         const showFrames = frame.spatialReference ? [frame.spatialReference, ...frame.spatialReference.secondarySpatialImages] : [frame, ...frame.secondarySpatialImages];
         const showFileIds = showFrames.map(frame => frame.frameInfo.fileId);

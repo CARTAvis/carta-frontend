@@ -1171,10 +1171,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quScatterPlotProps.xLabel = "Q/I (%)";
                 quScatterPlotProps.yLabel = "U/I (%)";
             } else {
-                quLinePlotProps.yLabel = "Value (" + frame.unit + ")";
-                piLinePlotProps.yLabel = "PI (" + frame.unit + ")";
-                quScatterPlotProps.xLabel = "Stokes Q (" + frame.unit + ")";
-                quScatterPlotProps.yLabel = "Stokes U (" + frame.unit + ")";
+                quLinePlotProps.yLabel = "Value (" + frame.headerUnit + ")";
+                piLinePlotProps.yLabel = "PI (" + frame.headerUnit + ")";
+                quScatterPlotProps.xLabel = "Stokes Q (" + frame.headerUnit + ")";
+                quScatterPlotProps.yLabel = "Stokes U (" + frame.headerUnit + ")";
             }
 
             if (frame.spectralAxis && !frame.isCoordChannel) {
