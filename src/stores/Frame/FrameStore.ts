@@ -1,5 +1,5 @@
-import {action, autorun, computed, makeObservable, observable, reaction, runInAction} from "mobx";
-import {OptionProps, NumberRange} from "@blueprintjs/core";
+import {action, autorun, computed, observable, makeObservable, runInAction, reaction} from "mobx";
+import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
@@ -15,7 +15,6 @@ import {
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
     Point2D,
-    POLARIZATION_LABELS,
     SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
     SPECTRAL_TYPE_STRING,
@@ -25,7 +24,11 @@ import {
     SpectralTypeSet,
     SpectralUnit,
     STANDARD_POLARIZATIONS,
+    COMPUTED_POLARIZATIONS,
+    FULL_POLARIZATIONS,
     STANDARD_SPECTRAL_TYPE_SETS,
+    POLARIZATION_LABELS,
+    POLARIZATIONS,
     Transform2D,
     ZoomPoint
 } from "models";
@@ -326,7 +329,7 @@ export class FrameStore {
         return this.renderWidth > 0 && this.renderHeight > 0;
     }
 
-    @computed get unit() {
+    get headerUnit() {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
         } else {
@@ -338,6 +341,19 @@ export class FrameStore {
                 return undefined;
             }
         }
+    }
+
+    @computed get requiredUnit() {
+        if (this.headerUnit) {
+            if (this.requiredPolarization === POLARIZATIONS.Pangle) {
+                return "degree";
+            } else if (this.requiredPolarization === POLARIZATIONS.PFtotal || this.requiredPolarization === POLARIZATIONS.PFlinear) {
+                return "%";
+            } else {
+                return this.headerUnit;
+            }
+        }
+        return undefined;
     }
 
     @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} {
@@ -783,7 +799,7 @@ export class FrameStore {
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
     }
 
-    @computed get stokesOptions(): OptionProps[] {
+    @computed get stokesOptions(): {value: number; label: string}[] {
         let stokesOptions = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
             const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value.toUpperCase() === "STOKES");
@@ -802,7 +818,7 @@ export class FrameStore {
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (STANDARD_POLARIZATIONS.has(stokesVal)) {
-                        stokesOptions.push({value: i, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
+                        stokesOptions.push({value: stokesVal, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
                     }
                 }
             }
@@ -827,8 +843,65 @@ export class FrameStore {
         });
     }
 
-    @computed get requiredStokesInfo(): string {
-        return this.requiredStokes >= 0 && this.requiredStokes < this.stokesInfo?.length ? this.stokesInfo[this.requiredStokes] : String(this.requiredStokes);
+    // including standard and computed polarizations eg.[1, 2, 3, 4, 13, 14, 15, 16, 17]
+    @computed get polarizations(): number[] {
+        const polarizations = this.stokesOptions?.map(option => {
+            return option.value;
+        });
+        const hasI: boolean = polarizations.includes(POLARIZATIONS.I);
+        const hasQ: boolean = polarizations.includes(POLARIZATIONS.Q);
+        const hasU: boolean = polarizations.includes(POLARIZATIONS.U);
+        const hasV: boolean = polarizations.includes(POLARIZATIONS.V);
+
+        if (hasQ && hasU) {
+            if (hasV) {
+                polarizations.push(POLARIZATIONS.Ptotal);
+            }
+            polarizations.push(POLARIZATIONS.Plinear);
+            if (hasI && hasV) {
+                polarizations.push(POLARIZATIONS.PFtotal);
+            }
+            if (hasI) {
+                polarizations.push(POLARIZATIONS.PFlinear);
+            }
+            polarizations.push(POLARIZATIONS.Pangle);
+        }
+
+        return polarizations;
+    }
+
+    @computed get polarizationInfo(): string[] {
+        return this.polarizations?.map(polarization => {
+            return POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization));
+        });
+    }
+
+    @computed get coordinateOptions(): {value: string; label: string}[] {
+        return this.polarizations?.map(polarization => {
+            return {value: FULL_POLARIZATIONS.get(polarization), label: POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization))};
+        });
+    }
+
+    @computed get coordinateOptionsZ(): {value: string; label: string}[] {
+        return this.polarizations?.map(polarization => {
+            return {value: FULL_POLARIZATIONS.get(polarization) + "z", label: POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization))};
+        });
+    }
+
+    @computed get requiredPolarization(): number {
+        return this.polarizations?.[this.requiredPolarizationIndex];
+    }
+
+    @computed get requiredPolarizationInfo(): string {
+        return this.polarizationInfo?.[this.requiredPolarizationIndex];
+    }
+
+    @computed get requiredPolarizationIndex(): number {
+        if (COMPUTED_POLARIZATIONS.has(this.requiredStokes) && this.polarizations.includes(this.requiredStokes)) {
+            return this.polarizations.indexOf(this.requiredStokes);
+        } else {
+            return this.requiredStokes;
+        }
     }
 
     get headerRestFreq(): number {
@@ -869,7 +942,7 @@ export class FrameStore {
         this.vectorOverlayStore = new VectorOverlayStore(this);
         this.moving = false;
         this.zooming = false;
-        this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
+        this.colorbarLabelCustomText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
         this.titleCustomText = "";
         this.overlayBeamSettings = new OverlayBeamStore();
         this.spatialReference = null;
@@ -1706,7 +1779,7 @@ export class FrameStore {
         if (stokes < 0) {
             stokes += this.frameInfo.fileInfoExtended.stokes;
         }
-        if (stokes >= this.frameInfo.fileInfoExtended.stokes) {
+        if (stokes >= this.frameInfo.fileInfoExtended.stokes && !COMPUTED_POLARIZATIONS.get(stokes)) {
             stokes = 0;
         }
 
@@ -1730,10 +1803,10 @@ export class FrameStore {
 
     @action incrementChannels(deltaChannel: number, deltaStokes: number, wrap: boolean = true) {
         const depth = Math.max(1, this.frameInfo.fileInfoExtended.depth);
-        const numStokes = Math.max(1, this.frameInfo.fileInfoExtended.stokes);
+        const numStokes = Math.max(1, this.polarizations?.length);
 
         let newChannel = this.requiredChannel + deltaChannel;
-        let newStokes = this.requiredStokes + deltaStokes;
+        let newStokes = this.requiredPolarizationIndex + deltaStokes;
         if (wrap) {
             newChannel = (newChannel + depth) % depth;
             newStokes = (newStokes + numStokes) % numStokes;
@@ -1741,7 +1814,10 @@ export class FrameStore {
             newChannel = clamp(newChannel, 0, depth - 1);
             newStokes = clamp(newStokes, 0, numStokes - 1);
         }
-        this.setChannels(newChannel, newStokes, true);
+        const isComputedPolarization = newStokes >= this.frameInfo.fileInfoExtended.stokes;
+        // request standard polarization by the stokes index of image. (eg. "I": 0)
+        // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
+        this.setChannels(newChannel, isComputedPolarization ? this.polarizations[newStokes] : newStokes, true);
     }
 
     @action setZoom(zoom: number, absolute: boolean = false) {

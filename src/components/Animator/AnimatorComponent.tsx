@@ -73,7 +73,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     onStokesChanged = (val: number) => {
         const frame = AppStore.Instance.activeFrame;
-        frame?.setChannels(frame.requiredChannel, val, true);
+        const isComputedPolarization = val >= frame.frameInfo.fileInfoExtended.stokes;
+        // request standard polarization by the stokes index of image. (eg. "I": 0)
+        // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
+        frame?.setChannels(frame.requiredChannel, isComputedPolarization ? frame.polarizations[val] : val, true);
     };
 
     onFrameChanged = (val: number) => {
@@ -131,7 +134,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 frame.setChannels(frame.frameInfo.fileInfoExtended.depth - 1, frame.stokes, true);
                 break;
             case AnimationMode.STOKES:
-                frame.setChannels(frame.channel, frame.frameInfo.fileInfoExtended.stokes - 1, true);
+                frame.setChannels(frame.channel, frame.frameInfo.fileInfoExtended.stokes < frame.polarizations.length ? frame.polarizations[frame.polarizations.length - 1] : frame.frameInfo.fileInfoExtended.stokes - 1, true);
                 break;
             default:
                 break;
@@ -277,7 +280,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         // Stokes Control
         if (numStokes > 1) {
             stokesSlider = (
-                <div className="animator-slider">
+                <div className={classNames("animator-slider", "stokes-slider", {"tiled-label": this.width < 750})}>
                     <Radio value={AnimationMode.STOKES} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Polarization" />
                     {hideSliders && (
                         <SafeNumericInput
@@ -293,12 +296,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {!hideSliders && (
                         <React.Fragment>
                             <Slider
-                                value={activeFrame.requiredStokes}
+                                value={activeFrame.requiredPolarizationIndex}
                                 min={0}
                                 showTrackFill={false}
-                                max={activeFrame.frameInfo.fileInfoExtended.stokes - 1}
+                                max={activeFrame.polarizations.length - 1}
                                 labelRenderer={(val: number) => {
-                                    return isFinite(val) && val >= 0 && val < activeFrame?.stokesInfo?.length ? activeFrame.stokesInfo[val] : `${val}`;
+                                    return isFinite(val) && val >= 0 && val < activeFrame?.polarizationInfo?.length ? activeFrame.polarizationInfo[val] : `${val}`;
                                 }}
                                 onChange={this.onStokesChanged}
                                 disabled={appStore.animatorStore.animationActive}

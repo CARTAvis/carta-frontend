@@ -179,7 +179,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 {frame && frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={`(${frame.unit})`}>
+                    <FormGroup label="Range" inline={true} labelInfo={`(${frame.requiredUnit})`}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
                                 <SafeNumericInput value={widgetStore.maskRange[0]} buttonPosition="none" onValueChange={val => this.onMaskFromChanged(val)} />

@@ -13,7 +13,7 @@ import {HistogramWidgetStore} from "stores/widgets";
 import {WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {FrameStore} from "stores/Frame";
 import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
-import {Point2D} from "models";
+import {Point2D, POLARIZATIONS} from "models";
 import "./HistogramComponent.scss";
 
 @observer
@@ -65,7 +65,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             if (!regionMap) {
                 return null;
             }
-            const stokes = this.widgetStore.effectiveFrame.stokesInfo.findIndex(stokes => stokes.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
+            const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
+            const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
             const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
             if (!regionHistogramData) {
                 return null;
@@ -189,7 +190,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 100);
 
-    private genProfilerInfo = (): string[] => {
+    private genProfilerInfo = (unit: string): string[] => {
         let profilerInfo: string[] = [];
         if (this.plotData) {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
@@ -204,9 +205,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 if (nearest?.point) {
                     let valueLabel = `${nearest.point.y !== 0.5 ? nearest.point.y : 0}`;
 
-                    const frame = AppStore.Instance.activeFrame;
-                    if (frame.unit) {
-                        numberString += ` ${frame.unit}`;
+                    if (unit) {
+                        numberString += ` ${unit}`;
                     }
                     if (nearest.point.y <= 1) {
                         valueLabel += ` Count`;
@@ -236,15 +236,21 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             );
         }
 
-        let unitString = "Value";
-        if (frame && frame.unit) {
-            unitString = `Value (${frame.unit})`;
+        let unit = "";
+        if (frame && frame.headerUnit) {
+            if ([POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(this.widgetStore.effectivePolarization)) {
+                unit = "%";
+            } else if (this.widgetStore.effectivePolarization === POLARIZATIONS.Pangle) {
+                unit = "degree";
+            } else {
+                unit = frame.headerUnit;
+            }
         }
 
         const imageName = frame.filename;
         const plotName = `channel ${frame.channel} histogram`;
         let linePlotProps: LinePlotComponentProps = {
-            xLabel: unitString,
+            xLabel: unit ? `Value (${unit})` : "Value",
             yLabel: "Count",
             darkMode: appStore.darkTheme,
             imageName: imageName,
@@ -308,7 +314,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         <LinePlotComponent {...linePlotProps} />
                     </div>
                     <div>
-                        <ProfilerInfoComponent info={this.genProfilerInfo()} />
+                        <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}></ReactResizeDetector>

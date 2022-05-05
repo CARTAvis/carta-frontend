@@ -98,7 +98,7 @@ export class FittingDialogComponent extends React.Component {
                         {this.renderParamInput(component?.center?.x, "Center X", component?.setCenterX)}
                         {this.renderParamInput(component?.center?.y, "Center Y", component?.setCenterY)}
                     </FormGroup>
-                    <FormGroup label="Amplitude" inline={true} labelInfo={fittingStore.effectiveFrame?.unit ? `(${fittingStore.effectiveFrame?.unit})` : ""}>
+                    <FormGroup label="Amplitude" inline={true} labelInfo={fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : ""}>
                         {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
                     </FormGroup>
                     <FormGroup label="FWHM" inline={true} labelInfo="(px)">

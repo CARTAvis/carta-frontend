@@ -135,14 +135,14 @@ export class ImageFittingStore {
             if (!frame.wcsInfoForTransformation || !frame.pixelUnitSizeArcsec) {
                 results += toFixFormat("Center X ", value.center?.x, error.center?.x, "px");
                 results += toFixFormat("Center Y ", value.center?.y, error.center?.y, "px");
-                results += toFixFormat("Amplitude", value.amp, error.amp, frame.unit);
+                results += toFixFormat("Amplitude", value.amp, error.amp, frame.requiredUnit);
                 results += toFixFormat("FWHM X   ", value.fwhm?.x, error.fwhm?.x, "px");
                 results += toFixFormat("FWHM Y   ", value.fwhm?.y, error.fwhm?.y, "px");
                 results += toFixFormat("P.A.     ", value.pa, error.pa, "deg");
 
                 log += toExpFormat("Center X ", value.center?.x, error.center?.x, "px");
                 log += toExpFormat("Center Y ", value.center?.y, error.center?.y, "px");
-                log += toExpFormat("Amplitude", value.amp, error.amp, frame.unit);
+                log += toExpFormat("Amplitude", value.amp, error.amp, frame.requiredUnit);
                 log += toExpFormat("FWHM X   ", value.fwhm?.x, error.fwhm?.x, "px");
                 log += toExpFormat("FWHM Y   ", value.fwhm?.y, error.fwhm?.y, "px");
                 log += toExpFormat("P.A.     ", value.pa, error.pa, "deg");
@@ -160,7 +160,7 @@ export class ImageFittingStore {
 
                 results += toFixFormat("Center X ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec");
                 results += toFixFormat("Center Y ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec");
-                results += toFixFormat("Amplitude", value.amp, error.amp, frame.unit);
+                results += toFixFormat("Amplitude", value.amp, error.amp, frame.requiredUnit);
                 results += toFixFormat("FWHM X   ", fwhmValueWCS?.x, fwhmErrorWCS?.x, "arcsec");
                 results += toFixFormat("FWHM Y   ", fwhmValueWCS?.y, fwhmErrorWCS.y, "arcsec");
                 results += toFixFormat("P.A.     ", value.pa, error.pa, "deg");
@@ -169,7 +169,7 @@ export class ImageFittingStore {
                 log += toExpFormat("         ", value.center?.x, error.center?.x, "px");
                 log += toExpFormat("Center Y ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec");
                 log += toExpFormat("         ", value.center?.y, error.center?.y, "px");
-                log += toExpFormat("Amplitude", value.amp, error.amp, frame.unit);
+                log += toExpFormat("Amplitude", value.amp, error.amp, frame.requiredUnit);
                 log += toExpFormat("FWHM X   ", fwhmValueWCS?.x, fwhmErrorWCS?.x, "arcsec");
                 log += toExpFormat("         ", value.fwhm?.x, error.fwhm?.x, "px");
                 log += toExpFormat("FWHM Y   ", fwhmValueWCS?.y, fwhmErrorWCS.y, "arcsec");

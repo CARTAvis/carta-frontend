@@ -33,7 +33,7 @@ import {
 import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "./Frame";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -1641,20 +1641,20 @@ export class AppStore {
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
         if (this.animatorStore.serverAnimationActive) {
+            const frame = this.getFrame(tileStreamDetails.fileId);
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
                 fileId: tileStreamDetails.fileId,
                 animationId: 0,
                 receivedFrame: {
                     channel: tileStreamDetails.channel,
-                    stokes: tileStreamDetails.stokes
+                    stokes: frame?.requiredPolarizationIndex ?? tileStreamDetails.stokes
                 },
                 timestamp: Long.fromNumber(Date.now())
             };
 
             this.backendService.sendAnimationFlowControl(flowControlMessage);
 
-            const frame = this.getFrame(tileStreamDetails.fileId);
             if (frame) {
                 frame.setChannels(tileStreamDetails.channel, tileStreamDetails.stokes, false);
                 frame.channel = tileStreamDetails.channel;
@@ -1669,7 +1669,8 @@ export class AppStore {
             const updatedFrame = this.getFrame(pendingHistogram.fileId);
             const channelHist = pendingHistogram.histograms;
             if (updatedFrame && channelHist) {
-                updatedFrame.renderConfig.setStokes(pendingHistogram.stokes);
+                const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogram.stokes) && updatedFrame.polarizations.includes(pendingHistogram.stokes) ? updatedFrame.polarizations.indexOf(pendingHistogram.stokes) : pendingHistogram.stokes;
+                updatedFrame.renderConfig.setStokesIndex(stokesIndex);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 updatedFrame.channel = tileStreamDetails.channel;

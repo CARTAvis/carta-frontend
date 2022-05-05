@@ -110,7 +110,10 @@ export class AnimatorStore {
             looping: true,
             reverse: this.playMode === PlayMode.BOUNCING,
             frameRate: this.frameRate,
-            matchedFrames: mapToObject(matchedFrames)
+            matchedFrames: mapToObject(matchedFrames),
+            stokesIndices: frame.polarizations.map((polarization, i) => {
+                return i < frame.frameInfo.fileInfoExtended.stokes && i >= 0 ? i : polarization;
+            })
         };
 
         this.animationActive = true;
@@ -213,7 +216,7 @@ export class AnimatorStore {
 
         let startFrame: CARTA.IAnimationFrame = {
             channel: frame.channel,
-            stokes: frame.stokes
+            stokes: frame.requiredPolarizationIndex
         };
         let firstFrame: CARTA.IAnimationFrame, lastFrame: CARTA.IAnimationFrame, deltaFrame: CARTA.IAnimationFrame;
 
@@ -237,7 +240,7 @@ export class AnimatorStore {
             };
             lastFrame = {
                 channel: frame.channel,
-                stokes: frame.frameInfo.fileInfoExtended.stokes - 1
+                stokes: frame.polarizations.length - 1
             };
             deltaFrame = {
                 channel: 0,

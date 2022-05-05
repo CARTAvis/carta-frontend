@@ -184,7 +184,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const intensityMax = isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 
         return (
-            <FormGroup label="Intensity" labelInfo={config.fractionalIntensity ? "(%)" : frame.unit ? `(${frame.unit})` : ""} inline={true}>
+            <FormGroup label="Intensity" labelInfo={config.fractionalIntensity ? "(%)" : frame.headerUnit ? `(${frame.headerUnit})` : ""} inline={true}>
                 <div className="parameter-container">
                     <div className="parameter-line parameter-intensity">
                         <ClearableNumericInputComponent
@@ -300,7 +300,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Threshold Enabled">
                     <Switch checked={this.thresholdEnabled} onChange={this.handleThresholdEnabledChanged} />
                 </FormGroup>
-                <FormGroup disabled={!this.thresholdEnabled} inline={true} label="Threshold" labelInfo={dataSource.unit ? `(${dataSource.unit})` : ""}>
+                <FormGroup disabled={!this.thresholdEnabled} inline={true} label="Threshold" labelInfo={dataSource.headerUnit ? `(${dataSource.headerUnit})` : ""}>
                     <SafeNumericInput disabled={!this.thresholdEnabled} placeholder="Threshold" buttonPosition="none" value={this.threshold} onValueChange={this.handleThresholdChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label="Debiasing">

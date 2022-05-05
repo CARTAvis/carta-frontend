@@ -20,6 +20,7 @@ class CursorOverlayProps {
     height?: number;
     unit?: string;
     currentStokes?: string;
+    cursorValueToPercentage?: boolean;
 }
 
 @observer
@@ -34,7 +35,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             infoStrings.push(`Image:\u00a0(${toFixed(cursorInfo.posImageSpace.x)},\u00a0${toFixed(cursorInfo.posImageSpace.y)})`);
         }
         if (this.props.cursorValue !== undefined) {
-            let valueString = `Value:\u00a0${formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
+            let valueString = `Value:\u00a0${this.props.cursorValueToPercentage ? toFixed(this.props.cursorValue, 1) + " %" : formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
             if (isNaN(this.props.cursorValue)) {
                 valueString = "NaN";
             }

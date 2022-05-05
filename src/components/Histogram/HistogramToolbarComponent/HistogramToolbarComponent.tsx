@@ -6,6 +6,7 @@ import {AppStore} from "stores";
 import {HistogramWidgetStore} from "stores/widgets";
 import {RegionSelectorComponent} from "components/Shared";
 import "./HistogramToolbarComponent.scss";
+import {FULL_POLARIZATIONS} from "models";
 
 @observer
 export class HistogramToolbarComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
@@ -18,7 +19,7 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
         const widgetStore = this.props.widgetStore;
         // When frame is changed(coordinateOptions changes), coordinate stays unchanged if new frame also supports it, otherwise defaults to 'z'
         autorun(() => {
-            if (widgetStore.effectiveFrame && (!widgetStore.effectiveFrame.stokesInfo.find(stokes => `${stokes.replace("Stokes ", "")}z` === widgetStore.coordinate) || !widgetStore.effectiveFrame.stokesInfo)) {
+            if (widgetStore.effectiveFrame && (!widgetStore.effectiveFrame.coordinateOptionsZ.find(option => option.value === widgetStore.coordinate) || !widgetStore.effectiveFrame.polarizationInfo)) {
                 widgetStore.setCoordinate("z");
             }
         });
@@ -33,10 +34,9 @@ export class HistogramToolbarComponent extends React.Component<{widgetStore: His
 
         if (widgetStore.effectiveFrame?.regionSet) {
             enableStokesSelect = widgetStore.effectiveFrame.hasStokes;
-            const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
-            stokesInfo.forEach(stokes => coordinateOptions.push({value: `${stokes.replace("Stokes ", "")}z`, label: stokes}));
+            coordinateOptions.push(...widgetStore.effectiveFrame.coordinateOptionsZ);
 
-            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === stokesInfo[widgetStore.effectiveFrame.requiredStokes] + "z") {
+            if (enableStokesSelect && widgetStore.isEffectiveFrameEqualToActiveFrame && widgetStore.coordinate === FULL_POLARIZATIONS.get(widgetStore.effectiveFrame.requiredPolarization) + "z") {
                 const linkedClass = "linked-to-selected-stokes";
                 stokesClassName = AppStore.Instance.darkTheme ? `${linkedClass} dark-theme` : linkedClass;
             }

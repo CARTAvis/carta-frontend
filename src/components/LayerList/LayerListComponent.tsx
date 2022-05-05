@@ -101,7 +101,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return <Cell />;
         }
         const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
-        return <Cell className={className}>{appStore.frames[rowIndex].requiredStokesInfo}</Cell>;
+        return <Cell className={className}>{appStore.frames[rowIndex].requiredPolarizationInfo}</Cell>;
     };
 
     private typeRenderer = (rowIndex: number) => {
@@ -202,7 +202,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={frame === appStore.spatialReference ? "outlined" : ""}
+                        className={classNames({outlined: frame === appStore.spatialReference})}
                         minimal={true}
                         small={true}
                         active={!!frame.spatialReference}
@@ -237,7 +237,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={frame === appStore.spectralReference ? "outlined" : ""}
+                        className={classNames({outlined: frame === appStore.spectralReference})}
                         minimal={true}
                         small={true}
                         active={!!frame.spectralReference}
@@ -272,7 +272,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={frame === appStore.rasterScalingReference ? "outlined" : ""}
+                        className={classNames({outlined: frame === appStore.rasterScalingReference})}
                         minimal={true}
                         small={true}
                         active={!!frame.rasterScalingReference}

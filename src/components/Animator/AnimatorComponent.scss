@@ -30,6 +30,19 @@
                 max-width: 80px;
             }
 
+            &.tiled-label {
+                .bp3-slider-axis {
+                    .bp3-slider-label {
+                        transform: matrix(0.866, 0.5, -0.5, 0.866, -25, 25);
+                    }
+                }
+                .bp3-slider-handle {
+                    .bp3-slider-label {
+                        transform: matrix(0.866, 0.5, -0.5, 0.866, -25, 25);
+                    }
+                }
+            }
+
             .slider-info {
                 overflow-x: hidden;
                 flex: 1 1 180px;
