@@ -184,7 +184,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         const intensityMax = isFinite(config.intensityMax) ? config.intensityMax : frame.vectorOverlayStore.intensityMax;
 
         return (
-            <FormGroup label="Intensity" labelInfo={frame.unit ? `(${frame.unit})` : ""} inline={true}>
+            <FormGroup label="Intensity" labelInfo={config.fractionalIntensity ? "(%)" : frame.unit ? `(${frame.unit})` : ""} inline={true}>
                 <div className="parameter-container">
                     <div className="parameter-line parameter-intensity">
                         <ClearableNumericInputComponent
@@ -300,16 +300,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Threshold Enabled">
                     <Switch checked={this.thresholdEnabled} onChange={this.handleThresholdEnabledChanged} />
                 </FormGroup>
-                <FormGroup disabled={!this.thresholdEnabled} inline={true} label="Threshold" labelInfo={this.fractionalIntensity ? "(%)" : dataSource.unit ? `{${dataSource.unit})` : ""}>
-                    <SafeNumericInput
-                        disabled={!this.thresholdEnabled}
-                        placeholder="Threshold"
-                        buttonPosition="none"
-                        min={this.fractionalIntensity ? 0 : undefined}
-                        max={this.fractionalIntensity ? 100 : undefined}
-                        value={this.threshold}
-                        onValueChange={this.handleThresholdChanged}
-                    />
+                <FormGroup disabled={!this.thresholdEnabled} inline={true} label="Threshold" labelInfo={dataSource.unit ? `(${dataSource.unit})` : ""}>
+                    <SafeNumericInput disabled={!this.thresholdEnabled} placeholder="Threshold" buttonPosition="none" value={this.threshold} onValueChange={this.handleThresholdChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label="Debiasing">
                     <Switch checked={this.debiasing} onChange={this.handleDebiasingChanged} />
