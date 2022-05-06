@@ -2240,6 +2240,7 @@ export class AppStore {
                         link.dispatchEvent(new MouseEvent("click"));
                     }, "image/png");
                 }
+            }).then(() => {
                 this.setIsExportingImage(false);
             });
         }
