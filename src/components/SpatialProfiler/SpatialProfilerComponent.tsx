@@ -439,7 +439,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const isXProfile = widgetStore.isXProfile;
         const xLabel = this.lineAxis ? `${this.lineAxis.label} (${this.lineAxis.unit ?? ""})` : `${isXProfile ? "X" : "Y"} coordinate`;
         const imageName = appStore.activeFrame ? appStore.activeFrame.filename : undefined;
-        const plotName = `${this.lineAxis ? "" : isXProfile ? "X" : "Y"} profile`;
+        const plotName = `${this.lineAxis ? "" : isXProfile ? "X " : "Y "}profile`;
         let linePlotProps: LinePlotComponentProps = {
             xLabel: xLabel,
             yLabel: "Value",
