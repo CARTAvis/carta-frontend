@@ -101,7 +101,7 @@ export function getVariablePrecision(value: number): number {
     // precision.
 
     var decimalPlacement = 0.1;
-    var precision = 2;
+    var precision = 1;
 
     for (var i = 0; i < 10; i++) {
         if (value < decimalPlacement) {
@@ -121,8 +121,11 @@ export function toFormattedNotation(value: number, delta: number): string {
     // Determine approximate precision
     var precision = getVariablePrecision(Math.abs(delta));
 
+    var frontDecimalLength = value.toString().split(".")[0].length;
+    var totalPrecision = frontDecimalLength + precision;
+
     // Trim trailing zeros
-    var trimmedValue = trimTrailingZeros(value.toPrecision(precision));
+    var trimmedValue = trimTrailingZeros(value.toPrecision(totalPrecision));
 
     return value < 1 ? trimTrailingDecimals(trimmedValue) : trimTrailingDecimals(trimmedValue);
 }
