@@ -244,7 +244,7 @@ export class RegionStore {
                 this.controlPoints.forEach((point, index) => {
                     lineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
                     lineProperties += index !== this.controlPoints.length - 1 ? ", " : "]";
-                })
+                });
                 return lineProperties;
             case CARTA.RegionType.RECTANGLE:
                 return `rotbox[[${center}], [${toFixed(this.size.x, 6)}pix, ${toFixed(this.size.y, 6)}pix], ${toFixed(this.rotation, 6)}deg]`;
