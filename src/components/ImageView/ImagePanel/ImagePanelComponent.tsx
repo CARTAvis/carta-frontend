@@ -170,9 +170,10 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             left={overlayStore.padding.left}
                             right={overlayStore.padding.right}
                             docked={this.props.docked}
-                            unit={frame.unit}
+                            unit={frame.requiredUnit}
                             top={overlayStore.padding.top}
-                            currentStokes={appStore.activeFrame.requiredStokes >= 0 && appStore.activeFrame.requiredStokes < appStore.activeFrame.stokesInfo?.length ? appStore.activeFrame.requiredStokesInfo : ""}
+                            currentStokes={appStore.activeFrame.requiredPolarizationInfo}
+                            cursorValueToPercentage={frame.requiredUnit === "%"}
                         />
                     )}
                     {overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}

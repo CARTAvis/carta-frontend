@@ -294,8 +294,8 @@ export class ContourDialogComponent extends React.Component {
         const dataSource = appStore.contourDataSource;
 
         let unitString = "Value";
-        if (dataSource.unit) {
-            unitString = `Value (${dataSource.unit})`;
+        if (dataSource.headerUnit) {
+            unitString = `Value (${dataSource.headerUnit})`;
         }
 
         const linePlotProps: LinePlotComponentProps = {

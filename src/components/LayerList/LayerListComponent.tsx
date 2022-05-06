@@ -1,4 +1,5 @@
 import * as React from "react";
+import classNames from "classnames";
 import {CSSProperties} from "react";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -58,7 +59,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private rowHeaderCellRenderer = (rowIndex: number) => {
-        return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === AppStore.Instance.activeFrameIndex ? "active-row-cell" : ""} />;
+        return <RowHeaderCell name={rowIndex.toString()} className={classNames({"active-row-cell": rowIndex === AppStore.Instance.activeFrameIndex})} />;
     };
 
     private onFileSelected = (frame: FrameStore) => {
@@ -74,7 +75,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const frame = appStore.frames[rowIndex];
 
         return (
-            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+            <Cell className={classNames({"active-row-cell": rowIndex === appStore.activeFrameIndex})}>
                 <React.Fragment>
                     <div className="name-cell" onClick={() => this.onFileSelected(frame)}>
                         {frame.filename}
@@ -89,7 +90,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell />;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredChannel}</Cell>;
+        return <Cell className={classNames({"active-row-cell": rowIndex === appStore.activeFrameIndex})}>{appStore.frames[rowIndex].requiredChannel}</Cell>;
     };
 
     private stokesRenderer = (rowIndex: number) => {
@@ -97,7 +98,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell />;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredStokesInfo}</Cell>;
+        return <Cell className={classNames({"active-row-cell": rowIndex === appStore.activeFrameIndex})}>{appStore.frames[rowIndex].requiredPolarizationInfo}</Cell>;
     };
 
     private typeRenderer = (rowIndex: number) => {
@@ -109,7 +110,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const frame = appStore.frames[rowIndex];
 
         return (
-            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+            <Cell className={classNames({"active-row-cell": rowIndex === appStore.activeFrameIndex})}>
                 <React.Fragment>
                     <Tooltip2
                         position={"bottom"}
@@ -180,7 +181,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={frame === appStore.spatialReference ? "outlined" : ""}
+                        className={classNames({outlined: frame === appStore.spatialReference})}
                         minimal={true}
                         small={true}
                         active={!!frame.spatialReference}
@@ -215,7 +216,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={frame === appStore.spectralReference ? "outlined" : ""}
+                        className={classNames({outlined: frame === appStore.spectralReference})}
                         minimal={true}
                         small={true}
                         active={!!frame.spectralReference}
@@ -250,7 +251,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     }
                 >
                     <AnchorButton
-                        className={frame === appStore.rasterScalingReference ? "outlined" : ""}
+                        className={classNames({outlined: frame === appStore.rasterScalingReference})}
                         minimal={true}
                         small={true}
                         active={!!frame.rasterScalingReference}
@@ -264,7 +265,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+            <Cell className={classNames({"active-row-cell": rowIndex === appStore.activeFrameIndex})}>
                 <React.Fragment>
                     {spatialMatchingButton}
                     {spectralMatchingButton}
