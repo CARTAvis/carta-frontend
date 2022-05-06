@@ -175,10 +175,6 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         return this.effectiveRegion?.regionType === CARTA.RegionType.LINE || this.effectiveRegion?.regionType === CARTA.RegionType.POLYLINE;
     }
 
-<<<<<<< HEAD
-    private static GetSpatialConfig(frame: FrameStore, coordinate: string, region: RegionStore, lineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
-        if (frame.cursorMoving && !AppStore.Instance.cursorFrozen && region?.regionId === RegionId.CURSOR) {
-=======
     @computed get effectivePolarization(): POLARIZATIONS {
         if (this.selectedStokes === DEFAULT_STOKES) {
             return this.effectiveFrame?.requiredPolarization;
@@ -189,7 +185,6 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
 
     private static GetSpatialConfig(frame: FrameStore, coordinate: string, region: RegionStore, lineRegionSampleWidth: number): CARTA.SetSpatialRequirements.ISpatialConfig {
         if (frame.cursorMoving && !AppStore.Instance.cursorFrozen && region?.regionId === RegionId.CURSOR) {
->>>>>>> dev
             if (coordinate.includes("x")) {
                 return {
                     coordinate,
