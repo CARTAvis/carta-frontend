@@ -23,6 +23,14 @@ export function closeTo(a: number, b: number, limit: number = 1.0e-6) {
     return Math.abs(a - b) < limit;
 }
 
+export function equalIfBothFinite(a: number | undefined, b: number | undefined) {
+    if (!isFinite(a) || !isFinite(b)) {
+        return true;
+    }
+
+    return a === b;
+}
+
 // sqrt(q^2 + u^2)
 export function polarizedIntensity(q: number, u: number) {
     return Math.sqrt(Math.pow(q, 2) + Math.pow(u, 2));

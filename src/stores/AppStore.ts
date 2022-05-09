@@ -422,6 +422,16 @@ export class AppStore {
         return frameMap;
     }
 
+    // Calculates which frames have a vector overlay visible as a function of each visible frame
+    @computed get vectorOverlayFrames(): Map<FrameStore, FrameStore[]> {
+        const frameMap = new Map<FrameStore, FrameStore[]>();
+        for (const frame of this.visibleFrames) {
+            const group = this.spatialGroup(frame).filter(f => f.vectorOverlayConfig.enabled && f.vectorOverlayConfig.visible);
+            frameMap.set(frame, group);
+        }
+        return frameMap;
+    }
+
     @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string, generated: boolean = false): boolean => {
         if (!ack) {
             return false;
@@ -1528,6 +1538,7 @@ export class AppStore {
         this.tileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
+        this.backendService.vectorTileStream.subscribe(this.handleVectorTileStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1766,6 +1777,13 @@ export class AppStore {
         }
     };
 
+    handleVectorTileStream = (vectorTileData: CARTA.IVectorOverlayTileData) => {
+        const updatedFrame = this.getFrame(vectorTileData.fileId);
+        if (updatedFrame) {
+            updatedFrame.updateFromVectorOverlayData(vectorTileData);
+        }
+    };
+
     handleErrorStream = (errorData: CARTA.ErrorData) => {
         if (errorData) {
             const logEntry: LogEntry = {
@@ -1885,7 +1903,7 @@ export class AppStore {
         this.backendService.connectionDropped = false;
     };
 
-    @action setActiveFrame(frame: FrameStore) {
+    @action setActiveFrame = (frame: FrameStore) => {
         if (!frame) {
             return;
         }
@@ -1896,16 +1914,16 @@ export class AppStore {
         }
 
         this.changeActiveFrame(frame);
-    }
+    };
 
-    @action setActiveFrameById(fileId: number) {
+    @action setActiveFrameById = (fileId: number) => {
         const requiredFrame = this.getFrame(fileId);
         if (requiredFrame) {
             this.setActiveFrame(requiredFrame);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
-    }
+    };
 
     @action setActiveFrameByIndex(index: number) {
         if (index >= 0 && this.frames.length > index) {

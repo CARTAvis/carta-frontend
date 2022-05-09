@@ -89,6 +89,7 @@ export class BackendService {
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     readonly listProgressStream: Subject<CARTA.ListProgress>;
     readonly pvProgressStream: Subject<CARTA.PvProgress>;
+    readonly vectorTileStream: Subject<CARTA.VectorOverlayTileData>;
     private readonly decoderMap: Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>;
 
     private constructor() {
@@ -114,6 +115,7 @@ export class BackendService {
         this.momentProgressStream = new Subject<CARTA.MomentProgress>();
         this.listProgressStream = new Subject<CARTA.ListProgress>();
         this.pvProgressStream = new Subject<CARTA.PvProgress>();
+        this.vectorTileStream = new Subject<CARTA.VectorOverlayTileData>();
 
         // Construct handler and decoder maps
         this.decoderMap = new Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>([
@@ -150,7 +152,8 @@ export class BackendService {
             [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.PV_PROGRESS, {messageClass: CARTA.PvProgress, handler: this.onStreamedPvProgress}],
             [CARTA.EventType.PV_RESPONSE, {messageClass: CARTA.PvResponse, handler: this.onDeferredResponse}],
-            [CARTA.EventType.FITTING_RESPONSE, {messageClass: CARTA.FittingResponse, handler: this.onDeferredResponse}]
+            [CARTA.EventType.FITTING_RESPONSE, {messageClass: CARTA.FittingResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.VECTOR_OVERLAY_TILE_DATA, {messageClass: CARTA.VectorOverlayTileData, handler: this.onStreamedVectorOverlayData}]
         ]);
 
         // check ping every 5 seconds
@@ -674,6 +677,17 @@ export class BackendService {
         return false;
     }
 
+    @action("set vector overlay parameters")
+    setVectorOverlayParameters(message: CARTA.ISetVectorOverlayParameters) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.SET_VECTOR_OVERLAY_PARAMETERS, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_VECTOR_OVERLAY_PARAMETERS, CARTA.SetVectorOverlayParameters.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     async resumeSession(message: CARTA.IResumeSession): Promise<CARTA.IResumeSessionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
@@ -925,6 +939,10 @@ export class BackendService {
 
     private onStreamedContourData(_eventId: number, contourData: CARTA.ContourImageData) {
         this.contourStream.next(contourData);
+    }
+
+    private onStreamedVectorOverlayData(_eventId: number, overlayData: CARTA.VectorOverlayTileData) {
+        this.vectorTileStream.next(overlayData);
     }
 
     private onScriptingRequest(_eventId: number, scriptingRequest: CARTA.ScriptingRequest) {

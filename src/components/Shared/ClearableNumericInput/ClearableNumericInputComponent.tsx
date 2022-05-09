@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, FormGroup, NumericInput, INumericInputProps} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, NumericInput, NumericInputProps} from "@blueprintjs/core";
 import {Tooltip2, Placement} from "@blueprintjs/popover2";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
@@ -7,8 +7,9 @@ import {toExponential} from "utilities";
 
 const KEYCODE_ENTER = 13;
 
-export interface ClearableNumericInputProps extends INumericInputProps {
+export interface ClearableNumericInputProps extends NumericInputProps {
     label: string;
+    labelInfo?: string;
     value: number;
     min?: number;
     max?: number;
@@ -97,15 +98,18 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
     };
 
     render() {
-        let value = this.props.displayExponential && !this.isFocused ? toExponential(Number(this.props.value), 3) : this.props.value;
+        let value: number | string = this.props.value;
+        if (value !== undefined) {
+            value = this.props.displayExponential && !this.isFocused ? toExponential(Number(this.props.value), 3) : this.props.value;
+        }
         return (
-            <FormGroup className={this.props.className} label={this.props.label} inline={this.props.inline === undefined} disabled={this.props.disabled}>
+            <FormGroup className={this.props.className} label={this.props.label} labelInfo={this.props.labelInfo} inline={this.props.inline === undefined} disabled={this.props.disabled}>
                 <NumericInput
                     inputRef={this.inputRef}
                     asyncControl={true}
                     stepSize={this.props.stepSize}
                     value={value}
-                    minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : ClearableNumericInputComponent.minorStepSize}
+                    minorStepSize={this.props.minorStepSize ?? ClearableNumericInputComponent.minorStepSize}
                     onFocus={this.handleOnFocus}
                     onBlur={this.handleOnBlur}
                     onKeyDown={this.handleChange}
@@ -116,6 +120,7 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
                             <AnchorButton icon="refresh" minimal={true} onClick={this.props.onValueCleared} disabled={this.props.disabled || this.props.resetDisabled} />
                         </Tooltip2>
                     }
+                    placeholder={this.props.placeholder}
                 />
             </FormGroup>
         );
