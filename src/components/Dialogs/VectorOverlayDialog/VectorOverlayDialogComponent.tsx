@@ -145,7 +145,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     };
 
     @action private handlePixelAveragingChanged = (value: number) => {
-        this.pixelAveraging = value;
+        this.pixelAveraging = Math.floor(value * 0.5) * 2.0;
     };
 
     @action private handleThresholdEnabledChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {

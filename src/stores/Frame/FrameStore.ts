@@ -833,10 +833,6 @@ export class FrameStore {
         return !!options.find(o => o.label === labelQ) && !!options.find(o => o.label === labelU);
     }
 
-    @computed get requiredStokesName(): string {
-        return this.stokesOptions?.find(stokesOption => stokesOption.value === this.requiredStokes)?.label;
-    }
-
     @computed get stokesInfo(): string[] {
         return this.stokesOptions?.map(option => {
             return option?.label;

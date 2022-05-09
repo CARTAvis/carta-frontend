@@ -98,7 +98,6 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         const shaderUniforms = this.vectorOverlayWebGLService.shaderUniforms;
         const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
         const isActive = frame === baseFrame;
-        let lineThickness: number;
 
         if (baseFrame.spatialReference) {
             const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
@@ -120,8 +119,6 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.gl.uniform2f(shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
             this.gl.uniform1f(shaderUniforms.RotationAngle, -baseFrame.spatialTransform.rotation);
             this.gl.uniform1f(shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
-
-            lineThickness = pixelRatio * frame.vectorOverlayConfig.thickness;
             this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.spatialReference.zoomLevel);
         } else {
             const baseRequiredView = baseFrame.requiredFrameView;
@@ -139,8 +136,6 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
             this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
             this.gl.uniform1f(shaderUniforms.RotationAngle, 0.0);
             this.gl.uniform1f(shaderUniforms.ScaleAdjustment, 1.0);
-
-            lineThickness = pixelRatio * frame.vectorOverlayConfig.thickness;
             this.gl.uniform1f(shaderUniforms.ZoomLevel, baseFrame.zoomLevel);
         }
 
@@ -163,7 +158,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         }
 
         this.gl.uniform1i(shaderUniforms.DataTexture, 0);
-        this.gl.uniform1f(shaderUniforms.CanvasSpaceLineWidth, lineThickness);
+        this.gl.uniform1f(shaderUniforms.CanvasSpaceLineWidth, pixelRatio * frame.vectorOverlayConfig.thickness);
         this.gl.uniform1f(shaderUniforms.FeatherWidth, pixelRatio);
         if (isFinite(frame.vectorOverlayConfig.rotationOffset)) {
             this.gl.uniform1f(shaderUniforms.RotationOffset, (frame.vectorOverlayConfig.rotationOffset * Math.PI) / 180.0);
