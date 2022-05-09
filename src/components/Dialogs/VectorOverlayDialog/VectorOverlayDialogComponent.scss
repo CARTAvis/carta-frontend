@@ -1,0 +1,37 @@
+.vector-overlay-dialog {
+    .bp3-dialog-body {
+        user-select: none;
+
+        .bp3-form-group {
+            &:first-of-type {
+                margin-left: 0;
+            }
+        }
+
+        .vector-overlay-config-panel,
+        .vector-overlay-style-panel {
+            .bp3-form-group .bp3-label {
+                width: 10em;
+                text-align: left;
+            }
+        }
+
+        .parameter-line {
+            .bp3-form-group {
+                width: 6em;
+            }
+        }
+
+        .parameter-length {
+            .bp3-form-group {
+                .bp3-input-group {
+                    max-width: 167px;
+                }
+            }
+        }
+
+        .bp3-tabs {
+            margin: 2px;
+        }
+    }
+}

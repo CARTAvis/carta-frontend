@@ -40,7 +40,7 @@
         .bp3-form-content {
             display: flex;
             flex-wrap: wrap;
-
+            box-sizing: content-box;
             .log-event-checkbox {
                 width: 265px;
                 margin-bottom: 0;

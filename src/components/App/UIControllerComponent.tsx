@@ -1,19 +1,20 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {RootMenuComponent, SplashScreenComponent, HelpDrawerComponent} from "components";
+import {HelpDrawerComponent, RootMenuComponent, SplashScreenComponent} from "components";
 import {
     AboutDialogComponent,
+    CatalogQueryDialogComponent,
+    CodeSnippetDialogComponent,
+    ContourDialogComponent,
+    ExternalPageDialogComponent,
     FileBrowserDialogComponent,
+    FileInfoDialogComponent,
     PreferenceDialogComponent,
     RegionDialogComponent,
     SaveLayoutDialogComponent,
-    FileInfoDialogComponent,
-    ContourDialogComponent,
-    CodeSnippetDialogComponent,
-    ExternalPageDialogComponent,
     StokesDialogComponent,
-    CatalogQueryDialogComponent,
     TelemetryDialogComponent,
+    VectorOverlayDialogComponent,
     FittingDialogComponent
 } from "components/Dialogs";
 
@@ -26,6 +27,7 @@ export class UIControllerComponent extends React.Component {
                 <RegionDialogComponent />
                 <CatalogQueryDialogComponent />
                 <ContourDialogComponent />
+                <VectorOverlayDialogComponent />
                 <FileInfoDialogComponent />
                 <FileBrowserDialogComponent />
                 <PreferenceDialogComponent />

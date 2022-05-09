@@ -1,5 +1,5 @@
-import catalogVertexShader from "!raw-loader!./vertex_shader_catalog.glsl";
-import catalogPixelShader from "!raw-loader!./pixel_shader_catalog.glsl";
+import vertexShader from "!raw-loader!./vertex_shader_catalog.glsl";
+import pixelShader from "!raw-loader!./pixel_shader_catalog.glsl";
 import utilities from "!raw-loader!./utilities.glsl";
 
 const sharedMacros = `
@@ -49,6 +49,6 @@ const pixelMacros = `
 `;
 
 export const catalogShaders = {
-    vertexShader: `#version 300 es\n${sharedMacros}\n${vertexMacros}\n${utilities}\n${catalogVertexShader}`,
-    fragmentShader: `#version 300 es\n${sharedMacros}\n${pixelMacros}\n${catalogPixelShader}`
+    vertexShader: `#version 300 es\n${sharedMacros}\n${vertexMacros}\n${utilities}\n${vertexShader}`,
+    fragmentShader: `#version 300 es\n${sharedMacros}\n${pixelMacros}\n${pixelShader}`
 };

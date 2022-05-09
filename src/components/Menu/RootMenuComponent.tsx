@@ -327,11 +327,12 @@ export class RootMenuComponent extends React.Component {
         }
 
         const tilesLoading = appStore.tileService.remainingTiles > 0;
-        const contoursLoading = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+        const contoursLoading = appStore.activeFrame?.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+        const vectorOverlayLoading = appStore.activeFrame?.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;
         let loadingIndicatorClass = "contour-loading-icon";
 
-        if (tilesLoading || contoursLoading) {
+        if (tilesLoading || contoursLoading || vectorOverlayLoading) {
             let tilesTooltipContent;
             if (tilesLoading) {
                 tilesTooltipContent = <span>Streaming image tiles. {appStore.tileService.remainingTiles} remaining</span>;
@@ -341,11 +342,17 @@ export class RootMenuComponent extends React.Component {
                 contourTooltipContent = <span>Streaming contours. {toFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
             }
 
+            let vectorOverlayTooltipContent;
+            if (vectorOverlayLoading) {
+                vectorOverlayTooltipContent = <span>Streaming vector overlay. {toFixed(100 * appStore.activeFrame.vectorOverlayStore.progress, 1)}% complete</span>;
+            }
+
             loadingTooltipFragment = (
                 <React.Fragment>
                     {tilesTooltipContent}
                     {contoursLoading && tilesLoading && <br />}
                     {contourTooltipContent}
+                    {vectorOverlayTooltipContent}
                 </React.Fragment>
             );
 

@@ -3,10 +3,10 @@ import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
-import {ColorbarStore, ContourStore, ContourConfigStore, DistanceMeasuringStore, RegionStore, RegionSetStore, RestFreqStore, RenderConfigStore, OverlayBeamStore} from "stores/Frame";
+import {ColorbarStore, ContourConfigStore, ContourStore, DistanceMeasuringStore, OverlayBeamStore, RegionSetStore, RegionStore, RenderConfigStore, RestFreqStore, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
 import {
-    ChannelInfo,
     CatalogControlMap,
+    ChannelInfo,
     ControlMap,
     CursorInfo,
     FrameView,
@@ -23,35 +23,36 @@ import {
     SpectralType,
     SpectralTypeSet,
     SpectralUnit,
-    STANDARD_SPECTRAL_TYPE_SETS,
     STANDARD_POLARIZATIONS,
     COMPUTED_POLARIZATIONS,
     FULL_POLARIZATIONS,
-    Transform2D,
-    ZoomPoint,
+    STANDARD_SPECTRAL_TYPE_SETS,
     POLARIZATION_LABELS,
-    POLARIZATIONS
+    POLARIZATIONS,
+    Transform2D,
+    ZoomPoint
 } from "models";
 import {
     clamp,
+    formattedArcsec,
     formattedFrequency,
+    getFormattedWCSPoint,
     getHeaderNumericValue,
+    getPixelSize,
     getTransformedChannel,
-    transformPoint,
+    isAstBadPoint,
     minMax2D,
+    multiply2D,
+    ProtobufProcessing,
     rotate2D,
-    toFixed,
-    trimFitsComment,
     round2D,
     subtract2D,
-    getFormattedWCSPoint,
-    getPixelSize,
-    multiply2D,
-    isAstBadPoint
+    toFixed,
+    transformPoint,
+    trimFitsComment
 } from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
-import {formattedArcsec, ProtobufProcessing} from "utilities";
 
 export interface FrameInfo {
     fileId: number;
@@ -102,6 +103,11 @@ export class FrameStore {
     public distanceMeasuring: DistanceMeasuringStore;
     public restFreqStore: RestFreqStore;
 
+    public readonly renderConfig: RenderConfigStore;
+    public readonly contourConfig: ContourConfigStore;
+    public readonly vectorOverlayConfig: VectorOverlayConfigStore;
+    public readonly vectorOverlayStore: VectorOverlayStore;
+
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
@@ -122,8 +128,6 @@ export class FrameStore {
     @observable animationChannelRange: NumberRange;
     @observable currentFrameView: FrameView;
     @observable currentCompressionQuality: number;
-    @observable renderConfig: RenderConfigStore;
-    @observable contourConfig: ContourConfigStore;
     @observable contourStores: Map<number, ContourStore>;
     @observable moving: boolean;
     @observable zooming: boolean;
@@ -331,7 +335,8 @@ export class FrameStore {
         } else {
             const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.filter(entry => entry.name === "BUNIT");
             if (unitHeader.length) {
-                return trimFitsComment(unitHeader[0].value);
+                // Trim leading/tailing quotation marks
+                return trimFitsComment(unitHeader[0].value)?.replace(/^"+|"+$/g, "");
             } else {
                 return undefined;
             }
@@ -821,6 +826,13 @@ export class FrameStore {
         return stokesOptions;
     }
 
+    @computed get hasLinearStokes(): boolean {
+        const options = this.stokesOptions;
+        const labelQ = POLARIZATION_LABELS.get("Q");
+        const labelU = POLARIZATION_LABELS.get("U");
+        return !!options.find(o => o.label === labelQ) && !!options.find(o => o.label === labelU);
+    }
+
     @computed get stokesInfo(): string[] {
         return this.stokesOptions?.map(option => {
             return option?.label;
@@ -922,6 +934,8 @@ export class FrameStore {
         this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
+        this.vectorOverlayConfig = new VectorOverlayConfigStore(preferenceStore, this);
+        this.vectorOverlayStore = new VectorOverlayStore(this);
         this.moving = false;
         this.zooming = false;
         this.colorbarLabelCustomText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
@@ -1749,6 +1763,14 @@ export class FrameStore {
         });
     }
 
+    @action updateFromVectorOverlayData(vectorOverlayData: CARTA.IVectorOverlayTileData) {
+        if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
+            this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
+        } else {
+            this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
+        }
+    }
+
     @action setChannels(channel: number, stokes: number, recursive: boolean) {
         if (stokes < 0) {
             stokes += this.frameInfo.fileInfoExtended.stokes;
@@ -1961,6 +1983,53 @@ export class FrameStore {
             this.backendService.setContourParameters(contourParameters);
         }
         this.contourConfig.setEnabled(false);
+    };
+
+    @action applyVectorOverlay = () => {
+        const config = this.vectorOverlayConfig;
+        if (!config || !this.renderConfig) {
+            return;
+        }
+
+        const preferenceStore = PreferenceStore.Instance;
+        config.setEnabled(true);
+
+        const parameters: CARTA.ISetVectorOverlayParameters = {
+            fileId: this.frameInfo.fileId,
+            imageBounds: {
+                xMin: 0,
+                xMax: this.frameInfo.fileInfoExtended.width,
+                yMin: 0,
+                yMax: this.frameInfo.fileInfoExtended.height
+            },
+            smoothingFactor: config.pixelAveragingEnabled ? config.pixelAveraging : 1,
+            fractional: config.fractionalIntensity,
+            threshold: config.thresholdEnabled ? config.threshold : NaN,
+            debiasing: config.debiasing,
+            qError: config.qError,
+            uError: config.uError,
+            stokesIntensity: config.intensitySource,
+            stokesAngle: config.angularSource,
+            compressionType: CARTA.CompressionType.NONE,
+            compressionQuality: preferenceStore.contourCompressionLevel
+        };
+        this.backendService.setVectorOverlayParameters(parameters);
+    };
+
+    @action clearVectorOverlay = (updateBackend: boolean = true) => {
+        // Clear up GPU resources
+        this.vectorOverlayStore.clearData();
+
+        if (updateBackend) {
+            // Send clearing vector overlay parameter message to the backend, to prevent overlay from being automatically updated
+            const parameters: CARTA.ISetVectorOverlayParameters = {
+                fileId: this.frameInfo.fileId,
+                stokesAngle: -1,
+                stokesIntensity: -1
+            };
+            this.backendService.setVectorOverlayParameters(parameters);
+        }
+        this.vectorOverlayConfig.setEnabled(false);
     };
 
     // Spatial WCS Matching

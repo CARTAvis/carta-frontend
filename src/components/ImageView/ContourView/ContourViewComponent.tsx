@@ -101,7 +101,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         let dashFactor: number;
 
         if (baseFrame.spatialReference) {
-            let rotationOrigin = baseFrame.spatialTransform.origin;
             const baseRequiredView = baseFrame.spatialReference.requiredFrameView;
 
             const rangeScale = {
@@ -119,7 +118,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
             this.gl.uniform2f(this.contourWebGLService.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
             this.gl.uniform2f(this.contourWebGLService.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
-            this.gl.uniform2f(this.contourWebGLService.shaderUniforms.RotationOrigin, rotationOrigin.x, rotationOrigin.y);
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.RotationAngle, -baseFrame.spatialTransform.rotation);
             this.gl.uniform1f(this.contourWebGLService.shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
 

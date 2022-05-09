@@ -101,6 +101,15 @@ export class DialogStore {
         this.contourDialogVisible = false;
     };
 
+    // Vector overlay dialog
+    @observable vectorOverlayDialogVisible: boolean = false;
+    @action showVectorOverlayDialog = () => {
+        this.vectorOverlayDialogVisible = true;
+    };
+    @action hideVectorOverlayDialog = () => {
+        this.vectorOverlayDialogVisible = false;
+    };
+
     // Code snippet dialog
     @observable codeSnippetDialogVisible: boolean = false;
     @action showExistingCodeSnippet = (snippet: Snippet, name: string) => {
