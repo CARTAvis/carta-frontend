@@ -1,8 +1,8 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Tabs, Tab} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent} from "components/Shared";
+import {Tabs, Tab, FormGroup} from "@blueprintjs/core";
+import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent, SafeNumericInput} from "components/Shared";
 import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
@@ -13,7 +13,8 @@ const KEYCODE_ENTER = 13;
 
 export enum SpatialProfilerSettingsTabs {
     STYLING,
-    SMOOTHING
+    SMOOTHING,
+    COMPUTATION
 }
 
 @observer
@@ -30,7 +31,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             isCloseable: true,
             parentId: "spatial-profiler",
             parentType: "spatial-profiler",
-            helpType: [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING]
+            helpType: [HelpType.SPATIAL_PROFILER_SETTINGS_STYLING, HelpType.SPATIAL_PROFILER_SETTINGS_SMOOTHING, HelpType.SPATIAL_PROFILER_SETTINGS_COMPUTATION]
         };
     }
 
@@ -54,12 +55,12 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             if (this.widgetStore) {
                 const coordinate = this.widgetStore.coordinate;
                 if (appStore && coordinate) {
-                    const coordinateString = `${coordinate.toUpperCase()} Profile`;
+                    const coordinateString = this.widgetStore.isLineOrPolyline ? "" : coordinate.toUpperCase();
                     const regionString = this.widgetStore.effectiveRegionId === RegionId.CURSOR ? "Cursor" : `Region #${this.widgetStore.effectiveRegionId}`;
-                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Spatial Profile Settings: ${regionString}`);
                 }
             } else {
-                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `X Profile Settings: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `X Spatial Profile Settings: Cursor`);
             }
         });
     }
@@ -191,6 +192,15 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                 <Tabs id="spatialSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
                     <Tab id={SpatialProfilerSettingsTabs.STYLING} title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
                     <Tab id={SpatialProfilerSettingsTabs.SMOOTHING} title="Smoothing" panel={<SmoothingSettingsComponent smoothingStore={widgetStore.smoothingStore} />} />
+                    <Tab
+                        id={SpatialProfilerSettingsTabs.COMPUTATION}
+                        title="Computation"
+                        panel={
+                            <FormGroup label={"Width"} inline={true}>
+                                <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.lineRegionSampleWidth} onValueChange={value => this.widgetStore.setLineRegionSampleWidth(value)} />
+                            </FormGroup>
+                        }
+                    />
                 </Tabs>
             </div>
         );

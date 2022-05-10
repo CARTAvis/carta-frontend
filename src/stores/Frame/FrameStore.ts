@@ -1589,6 +1589,10 @@ export class FrameStore {
         switch (region.regionType) {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
+            case CARTA.RegionType.LINE:
+                const wcsStartPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, region.controlPoints[0]);
+                const wcsEndPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, region.controlPoints[1]);
+                return `Line (wcs:${systemType}) [[${wcsStartPoint.x}, ${wcsStartPoint.y}], [${wcsEndPoint.x}, ${wcsEndPoint.y}]]`;
             case CARTA.RegionType.RECTANGLE:
                 return `rotbox(wcs:${systemType})[[${center}], [${size.x ?? ""}, ${size.y ?? ""}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
@@ -1601,6 +1605,14 @@ export class FrameStore {
                     polygonWcsProperties += index !== region.controlPoints.length - 1 ? ", " : "]";
                 });
                 return polygonWcsProperties;
+            case CARTA.RegionType.POLYLINE:
+                let polylineWcsProperties = `Polyline (wcs:${systemType})[`;
+                region.controlPoints.forEach((point, index) => {
+                    const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
+                    polylineWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
+                    polylineWcsProperties += index !== region.controlPoints.length - 1 ? ", " : "]";
+                });
+                return polylineWcsProperties;
             default:
                 return "Not Implemented";
         }
