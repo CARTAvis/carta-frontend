@@ -1,7 +1,15 @@
+precision highp usampler2D;
+precision highp int;
+precision highp float;
+
 vec2 rotate2D(vec2 vector, float theta) {
     float sinTheta = sin(theta);
     float cosTheta = cos(theta);
     return mat2(cosTheta, -sinTheta, sinTheta, cosTheta) * vector;
+}
+
+vec2 scaleAndRotate2D(vec2 vector, float theta, float scale) {
+    return rotate2D(vector, theta) * scale;
 }
 
 vec2 imageToGL(vec2 imageVec) {
@@ -68,4 +76,18 @@ vec2 controlMapLookup(sampler2D controlMapTexture, vec2 pos, vec2 controlMapSize
     vec2 shiftedPoint = pos - controlMapMin;
     vec2 index = shiftedPoint / range * controlMapSize;
     return bicubicFilter(controlMapTexture, index, controlMapSize).rg;
+}
+
+vec4 getValueByIndexFromTexture(sampler2D texture, int index) {
+    ivec2 size = textureSize(texture, 0);
+    int row = index / size.x;
+    int col = index - row * size.x;
+    return texelFetch(texture, ivec2(col, row), 0);
+}
+
+uvec4 getValueByIndexFromTextureU(usampler2D texture, int index) {
+    ivec2 size = textureSize(texture, 0);
+    int row = index / size.x;
+    int col = index - row * size.x;
+    return texelFetch(texture, ivec2(col, row), 0);
 }

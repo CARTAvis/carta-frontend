@@ -5,7 +5,6 @@ import allMaps from "../static/allmaps.png";
 interface ShaderUniforms {
     RangeScale: WebGLUniformLocation;
     RangeOffset: WebGLUniformLocation;
-    RotationOrigin: WebGLUniformLocation;
     RotationAngle: WebGLUniformLocation;
     ScaleAdjustment: WebGLUniformLocation;
     DashLength: WebGLUniformLocation;
@@ -68,7 +67,6 @@ export class ContourWebGLService {
             RangeScale: this.gl.getUniformLocation(shaderProgram, "uRangeScale"),
             RangeOffset: this.gl.getUniformLocation(shaderProgram, "uRangeOffset"),
             ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
-            RotationOrigin: this.gl.getUniformLocation(shaderProgram, "uRotationOrigin"),
             RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
             DashLength: this.gl.getUniformLocation(shaderProgram, "uDashLength"),
             LineColor: this.gl.getUniformLocation(shaderProgram, "uLineColor"),

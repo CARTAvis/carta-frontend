@@ -1,8 +1,8 @@
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType} from "stores/widgets";
-import {action, observable, makeObservable} from "mobx";
-import {VALID_COORDINATES} from "models";
+import {action, observable, makeObservable, computed} from "mobx";
+import {VALID_COORDINATES, POLARIZATIONS} from "models";
 
 export class StatsWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -13,6 +13,14 @@ export class StatsWidgetStore extends RegionWidgetStore {
             this.coordinate = coordinate;
         }
     };
+
+    @computed get effectivePolarization(): POLARIZATIONS {
+        if (this.coordinate === "z") {
+            return this.effectiveFrame?.requiredPolarization;
+        } else {
+            return POLARIZATIONS[this.coordinate.substring(0, this.coordinate.length - 1)];
+        }
+    }
 
     constructor() {
         super(RegionsType.CLOSED);

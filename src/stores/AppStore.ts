@@ -33,7 +33,7 @@ import {
 import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "./Frame";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -417,6 +417,16 @@ export class AppStore {
         const frameMap = new Map<FrameStore, FrameStore[]>();
         for (const frame of this.visibleFrames) {
             const group = this.spatialGroup(frame).filter(f => f.contourConfig.enabled && f.contourConfig.visible);
+            frameMap.set(frame, group);
+        }
+        return frameMap;
+    }
+
+    // Calculates which frames have a vector overlay visible as a function of each visible frame
+    @computed get vectorOverlayFrames(): Map<FrameStore, FrameStore[]> {
+        const frameMap = new Map<FrameStore, FrameStore[]>();
+        for (const frame of this.visibleFrames) {
+            const group = this.spatialGroup(frame).filter(f => f.vectorOverlayConfig.enabled && f.vectorOverlayConfig.visible);
             frameMap.set(frame, group);
         }
         return frameMap;
@@ -1108,9 +1118,7 @@ export class AppStore {
         try {
             const ack = await this.backendService.requestFitting(message);
             if (ack.success) {
-                const frame = this.getFrame(message.fileId);
-                frame.setFittingResult(ack.resultValues, ack.resultErrors);
-                frame.setFittingLog(ack.log);
+                this.imageFittingStore.setResultString(ack.resultValues, ack.resultErrors, ack.log);
             }
             if (ack.message) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
@@ -1530,6 +1538,7 @@ export class AppStore {
         this.tileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
+        this.backendService.vectorTileStream.subscribe(this.handleVectorTileStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1632,20 +1641,20 @@ export class AppStore {
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
         if (this.animatorStore.serverAnimationActive) {
+            const frame = this.getFrame(tileStreamDetails.fileId);
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
                 fileId: tileStreamDetails.fileId,
                 animationId: 0,
                 receivedFrame: {
                     channel: tileStreamDetails.channel,
-                    stokes: tileStreamDetails.stokes
+                    stokes: frame?.requiredPolarizationIndex ?? tileStreamDetails.stokes
                 },
                 timestamp: Long.fromNumber(Date.now())
             };
 
             this.backendService.sendAnimationFlowControl(flowControlMessage);
 
-            const frame = this.getFrame(tileStreamDetails.fileId);
             if (frame) {
                 frame.setChannels(tileStreamDetails.channel, tileStreamDetails.stokes, false);
                 frame.channel = tileStreamDetails.channel;
@@ -1660,7 +1669,8 @@ export class AppStore {
             const updatedFrame = this.getFrame(pendingHistogram.fileId);
             const channelHist = pendingHistogram.histograms;
             if (updatedFrame && channelHist) {
-                updatedFrame.renderConfig.setStokes(pendingHistogram.stokes);
+                const stokesIndex = COMPUTED_POLARIZATIONS.has(pendingHistogram.stokes) && updatedFrame.polarizations.includes(pendingHistogram.stokes) ? updatedFrame.polarizations.indexOf(pendingHistogram.stokes) : pendingHistogram.stokes;
+                updatedFrame.renderConfig.setStokesIndex(stokesIndex);
                 updatedFrame.renderConfig.setHistChannel(pendingHistogram.channel);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 updatedFrame.channel = tileStreamDetails.channel;
@@ -1764,6 +1774,13 @@ export class AppStore {
         if (frame) {
             frame.updateRequestingPvProgress(pvProgress.progress);
             this.updateTaskProgress(pvProgress.progress);
+        }
+    };
+
+    handleVectorTileStream = (vectorTileData: CARTA.IVectorOverlayTileData) => {
+        const updatedFrame = this.getFrame(vectorTileData.fileId);
+        if (updatedFrame) {
+            updatedFrame.updateFromVectorOverlayData(vectorTileData);
         }
     };
 
@@ -1886,7 +1903,7 @@ export class AppStore {
         this.backendService.connectionDropped = false;
     };
 
-    @action setActiveFrame(frame: FrameStore) {
+    @action setActiveFrame = (frame: FrameStore) => {
         if (!frame) {
             return;
         }
@@ -1897,16 +1914,16 @@ export class AppStore {
         }
 
         this.changeActiveFrame(frame);
-    }
+    };
 
-    @action setActiveFrameById(fileId: number) {
+    @action setActiveFrameById = (fileId: number) => {
         const requiredFrame = this.getFrame(fileId);
         if (requiredFrame) {
             this.setActiveFrame(requiredFrame);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
-    }
+    };
 
     @action setActiveFrameByIndex(index: number) {
         if (index >= 0 && this.frames.length > index) {

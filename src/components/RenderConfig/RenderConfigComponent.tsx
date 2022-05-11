@@ -231,8 +231,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             }
 
             const frame = AppStore.Instance.activeFrame;
-            if (frame.unit) {
-                numberString += ` ${frame.unit}`;
+            if (frame.requiredUnit) {
+                numberString += ` ${frame.requiredUnit}`;
             }
 
             profilerInfo.push(`Cursor: ${numberString}`);
@@ -253,8 +253,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
 
         let unitString = "Value";
-        if (frame && frame.unit) {
-            unitString = `Value (${frame.unit})`;
+        if (frame && frame.requiredUnit) {
+            unitString = `Value (${frame.requiredUnit})`;
         }
 
         const imageName = frame.filename;

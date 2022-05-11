@@ -8,7 +8,7 @@ import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID} from "stores/w
 import "./RegionSelectorComponent.scss";
 
 @observer
-export class RegionSelectorComponent extends React.Component<{widgetStore: RegionWidgetStore; disableClosedRegion?: boolean; onFrameChanged?: (newFrame: FrameStore) => void}> {
+export class RegionSelectorComponent extends React.Component<{widgetStore: RegionWidgetStore; onFrameChanged?: (newFrame: FrameStore) => void}> {
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = AppStore.Instance;
         const widgetStore = this.props.widgetStore;
@@ -62,13 +62,16 @@ export class RegionSelectorComponent extends React.Component<{widgetStore: Regio
                 case RegionsType.CLOSED_AND_POINT:
                     fiteredRegions = regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT));
                     break;
+                case RegionsType.POINT_AND_LINES:
+                    fiteredRegions = regions.filter(r => !r.isTemporary && (r.regionType === CARTA.RegionType.POINT || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE));
+                    break;
                 default:
                     fiteredRegions = regions;
             }
 
             regionOptions = regionOptions.concat(
                 fiteredRegions.map(r => {
-                    return {value: r.regionId, label: r.nameString, disabled: this.props.disableClosedRegion ? r.isClosedRegion : false};
+                    return {value: r.regionId, label: r.nameString};
                 })
             );
 

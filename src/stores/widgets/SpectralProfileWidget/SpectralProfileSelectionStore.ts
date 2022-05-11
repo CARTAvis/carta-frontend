@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/widgets";
-import {LineKey, LineOption, StatsTypeString, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES, POLARIZATION_LABELS} from "models";
+import {LineKey, LineOption, StatsTypeString, STATISTICS_TEXT, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES, POLARIZATION_LABELS, POLARIZATIONS} from "models";
 import {genColorFromIndex, ProcessedSpectralProfile} from "utilities";
 
 export enum MultiProfileCategory {
@@ -326,7 +326,7 @@ export class SpectralProfileSelectionStore {
     @computed get coordinateOptions(): LineOption[] {
         let options = [{value: "z", label: "Current"}];
         if (this.selectedFrame?.hasStokes) {
-            this.selectedFrame.stokesInfo?.forEach(stokes => options.push({value: `${stokes.replace("Stokes ", "")}z`, label: stokes}));
+            this.selectedFrame.polarizationInfo?.forEach(polarization => options.push({value: `${polarization.replace("Stokes ", "")}z`, label: polarization}));
         }
         return options;
     }
@@ -391,6 +391,33 @@ export class SpectralProfileSelectionStore {
             return false;
         }
         return true;
+    }
+
+    @computed private get effectivePolarizations(): POLARIZATIONS[] {
+        const polarizations: POLARIZATIONS[] = [];
+        if (this.selectedCoordinates) {
+            this.selectedCoordinates.forEach(coordinate => {
+                polarizations.push(coordinate === "z" ? this.widgetStore.effectiveFrame.requiredPolarization : POLARIZATIONS[coordinate.substring(0, coordinate.length - 1)]);
+            });
+        }
+        return polarizations;
+    }
+
+    @computed get isCoordinatesPangleOnly(): boolean {
+        return !this.effectivePolarizations?.some(polarization => POLARIZATIONS.Pangle !== polarization);
+    }
+
+    @computed get isCoordinatesPFtotalPFlinearOnly(): boolean {
+        return !this.effectivePolarizations?.some(polarization => ![POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear].includes(polarization));
+    }
+
+    @computed get isCoordinatesIncludingNonIntensityUnit(): boolean {
+        return this.effectivePolarizations.some(polarization => [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization));
+    }
+
+    @computed get isSameCoordinatesUnit(): boolean {
+        // unit of Fractional Polarization total/linear: %, unit of Polarization Angle: degree, others: Jy/Beam
+        return this.isCoordinatesPFtotalPFlinearOnly || this.isCoordinatesPangleOnly || !this.isCoordinatesIncludingNonIntensityUnit;
     }
 
     @computed get isSingleProfileMode(): boolean {

@@ -1,0 +1,13 @@
+.vector-overlay-div {
+    position: absolute;
+    left: 0;
+
+    &.docked {
+        z-index: 3;
+    }
+
+    .vector-overlay-canvas {
+        position: absolute;
+        z-index: 0;
+    }
+}

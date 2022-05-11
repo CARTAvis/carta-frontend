@@ -1,5 +1,4 @@
 precision highp float;
-precision highp usampler2D;
 precision highp int;
 
 uniform sampler2D uCmapTexture;
@@ -47,20 +46,6 @@ out float v_selected;
 out float v_minorSize;
 out float v_featherWidth;
 
-
-vec4 getValueByIndexFromTexture(sampler2D texture, int index) {
-    ivec2 size = textureSize(texture, 0);
-    int row = index / size.x;
-    int col = index - row * size.x;
-    return texelFetch(texture, ivec2(col, row), 0);
-}
-
-uvec4 getValueByIndexFromTextureU(usampler2D texture, int index) {
-    ivec2 size = textureSize(texture, 0);
-    int row = index / size.x;
-    int col = index - row * size.x;
-    return texelFetch(texture, ivec2(col, row), 0);
-}
 
 float getSquareSideByArea(float area, float minorSize) {
     if (uShapeType == BOX_FILLED || uShapeType == BOX_LINED || uShapeType == RHOMB_FILLED || uShapeType == RHOMB_LINED || uShapeType == CROSS_FILLED || uShapeType == CROSS_LINED || uShapeType == X_FILLED || uShapeType == X_LINED || uShapeType == LineSegment_FILLED) {

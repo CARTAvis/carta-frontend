@@ -48,8 +48,9 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
     const contourCanvas = panelElement.find(".contour-canvas")?.[0] as HTMLCanvasElement;
     const overlayCanvas = panelElement.find(".overlay-canvas")?.[0] as HTMLCanvasElement;
     const catalogCanvas = panelElement.find(".catalog-canvas")?.[0] as HTMLCanvasElement;
+    const vectorOverlayCanvas = panelElement.find(".vector-overlay-canvas")?.[0] as HTMLCanvasElement;
 
-    if (!rasterCanvas || !contourCanvas || !overlayCanvas) {
+    if (!rasterCanvas || !contourCanvas || !overlayCanvas || !vectorOverlayCanvas) {
         return null;
     }
 
@@ -67,6 +68,7 @@ export function getPanelCanvas(column: number, row: number, padding: Padding, co
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
     ctx.drawImage(contourCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
+    ctx.drawImage(vectorOverlayCanvas, padding.left * pixelRatio, padding.top * pixelRatio);
     if (colorbarCanvas) {
         let xPos, yPos;
         switch (colorbarPosition) {

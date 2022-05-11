@@ -6,10 +6,6 @@
     user-select: none;
     padding: 5px;
 
-    .active-row-cell {
-        font-weight: bold;
-    }
-
     .name-cell {
         cursor: pointer;
     }
@@ -20,17 +16,34 @@
 
     .bp3-button {
         font-size: 11px;
+
         &.bp3-small {
             min-height: 13px;
         }
+
         .bp3-button-text {
             line-height: 13px;
         }
+
         &.outlined {
             border: solid 1px;
         }
+
         border: solid 1px transparent;
         padding: 0 4px;
+        margin-right: 2px;
+    }
+
+    .row-cell {
+        &.active {
+            font-weight: bold;
+        }
+
+        .bp3-popover2-target:last-of-type {
+            .bp3-button {
+                margin-right: 0;
+            }
+        }
     }
 
     .bp3-popover-wrapper + .bp3-popover-wrapper {

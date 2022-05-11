@@ -1,9 +1,10 @@
 import {action, observable, makeObservable, computed} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AppStore} from "stores";
+import {AppStore, NumberFormatType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/widgets";
 import {Point2D} from "models";
+import {getFormattedWCSPoint, toExponential} from "utilities";
 
 export class ImageFittingStore {
     private static staticInstance: ImageFittingStore;
@@ -94,21 +95,95 @@ export class ImageFittingStore {
                 center: c.center,
                 amp: c.amplitude,
                 fwhm: c.fwhm,
-                pa: c.pa,
-                fixedCenterX: false,
-                fixedCenterY: false,
-                fixedAmp: false,
-                fixedFwhmX: false,
-                fixedFwhmY: false,
-                fixedPa: false
+                pa: c.pa
             });
         }
 
         const message: CARTA.IFittingRequest = {
             fileId: this.effectiveFrame.frameInfo.fileId,
-            initialValues: initialValues
+            initialValues: initialValues,
+            fixedParams: []
         };
         AppStore.Instance.requestFitting(message);
+    };
+
+    setResultString = (values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], log: string) => {
+        const frame = this.effectiveFrame;
+        if (!frame || !values || !errors) {
+            return;
+        }
+
+        let results = "";
+        log += "\n";
+        const toFixFormat = (param: string, value: number | string, error: number, unit: string): string => {
+            return `${param} = ${typeof value === "string" ? value : value?.toFixed(6)} +/- ${error?.toFixed(6)}${unit ? ` (${unit})` : ""}\n`;
+        };
+        const toExpFormat = (param: string, value: number | string, error: number, unit: string): string => {
+            return `${param} = ${typeof value === "string" ? value : toExponential(value, 12)} +/- ${toExponential(error, 12)}${unit ? ` (${unit})` : ""}\n`;
+        };
+        const isFormatXDeg = AppStore.Instance.overlayStore.numbers?.formatTypeX === NumberFormatType.Degrees;
+        const isFormatYDeg = AppStore.Instance.overlayStore.numbers?.formatTypeY === NumberFormatType.Degrees;
+
+        for (let i = 0; i < values.length; i++) {
+            const value = values[i];
+            const error = errors[i];
+            if (!value || !error) {
+                continue;
+            }
+            results += `Component #${i + 1}:\n`;
+            log += `Component #${i + 1}:\n`;
+            if (!frame.wcsInfoForTransformation || !frame.pixelUnitSizeArcsec) {
+                results += toFixFormat("Center X ", value.center?.x, error.center?.x, "px");
+                results += toFixFormat("Center Y ", value.center?.y, error.center?.y, "px");
+                results += toFixFormat("Amplitude", value.amp, error.amp, frame.requiredUnit);
+                results += toFixFormat("FWHM X   ", value.fwhm?.x, error.fwhm?.x, "px");
+                results += toFixFormat("FWHM Y   ", value.fwhm?.y, error.fwhm?.y, "px");
+                results += toFixFormat("P.A.     ", value.pa, error.pa, "deg");
+
+                log += toExpFormat("Center X ", value.center?.x, error.center?.x, "px");
+                log += toExpFormat("Center Y ", value.center?.y, error.center?.y, "px");
+                log += toExpFormat("Amplitude", value.amp, error.amp, frame.requiredUnit);
+                log += toExpFormat("FWHM X   ", value.fwhm?.x, error.fwhm?.x, "px");
+                log += toExpFormat("FWHM Y   ", value.fwhm?.y, error.fwhm?.y, "px");
+                log += toExpFormat("P.A.     ", value.pa, error.pa, "deg");
+            } else {
+                const centerValueWCS = getFormattedWCSPoint(frame.wcsInfoForTransformation, value.center as Point2D);
+                if (isFormatXDeg) {
+                    centerValueWCS.x += " (deg)";
+                }
+                if (isFormatYDeg) {
+                    centerValueWCS.y += " (deg)";
+                }
+                const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D);
+                const fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
+                const fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
+
+                results += toFixFormat("Center X ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec");
+                results += toFixFormat("Center Y ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec");
+                results += toFixFormat("Amplitude", value.amp, error.amp, frame.requiredUnit);
+                results += toFixFormat("FWHM X   ", fwhmValueWCS?.x, fwhmErrorWCS?.x, "arcsec");
+                results += toFixFormat("FWHM Y   ", fwhmValueWCS?.y, fwhmErrorWCS.y, "arcsec");
+                results += toFixFormat("P.A.     ", value.pa, error.pa, "deg");
+
+                log += toExpFormat("Center X ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec");
+                log += toExpFormat("         ", value.center?.x, error.center?.x, "px");
+                log += toExpFormat("Center Y ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec");
+                log += toExpFormat("         ", value.center?.y, error.center?.y, "px");
+                log += toExpFormat("Amplitude", value.amp, error.amp, frame.requiredUnit);
+                log += toExpFormat("FWHM X   ", fwhmValueWCS?.x, fwhmErrorWCS?.x, "arcsec");
+                log += toExpFormat("         ", value.fwhm?.x, error.fwhm?.x, "px");
+                log += toExpFormat("FWHM Y   ", fwhmValueWCS?.y, fwhmErrorWCS.y, "arcsec");
+                log += toExpFormat("         ", value.fwhm?.y, error.fwhm?.y, "px");
+                log += toExpFormat("P.A.     ", value.pa, error.pa, "deg");
+            }
+            if (i !== values.length - 1) {
+                results += "\n";
+                log += "\n";
+            }
+        }
+
+        frame.setFittingResult(results);
+        frame.setFittingLog(log);
     };
 }
 

@@ -138,6 +138,9 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon={"contour"} />} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible} />
                     </Tooltip2>
+                    <Tooltip2 content={<span>Vector Overlay</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon={<CustomIcon icon={"vectorOverlay"} />} onClick={dialogStore.showVectorOverlayDialog} active={dialogStore.vectorOverlayDialogVisible} />
+                    </Tooltip2>
                     <Tooltip2 content={<span>Image Fitting</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon="imageFitting" />} onClick={dialogStore.showFittingDialog} active={dialogStore.fittingDialogVisible} />
                     </Tooltip2>

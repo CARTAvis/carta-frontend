@@ -15,6 +15,7 @@ export enum RegionId {
 export enum RegionsType {
     CLOSED,
     CLOSED_AND_POINT,
+    POINT_AND_LINES,
     LINE
 }
 
@@ -71,6 +72,7 @@ export class RegionWidgetStore {
                         case RegionsType.CLOSED:
                             return selectedRegion.isClosedRegion ? selectedRegion.regionId : this.defaultRegionId();
                         case RegionsType.CLOSED_AND_POINT:
+                        case RegionsType.POINT_AND_LINES:
                             return selectedRegion.regionId;
                         case RegionsType.LINE:
                         default:
@@ -88,6 +90,7 @@ export class RegionWidgetStore {
             case RegionsType.CLOSED:
                 return RegionId.IMAGE;
             case RegionsType.CLOSED_AND_POINT:
+            case RegionsType.POINT_AND_LINES:
                 return RegionId.CURSOR;
             case RegionsType.LINE:
             default:

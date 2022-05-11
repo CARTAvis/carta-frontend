@@ -1,12 +1,12 @@
 import {action, autorun, computed, observable, makeObservable, runInAction, reaction} from "mobx";
-import {IOptionProps, NumberRange} from "@blueprintjs/core";
+import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
-import {ColorbarStore, ContourStore, ContourConfigStore, DistanceMeasuringStore, RegionStore, RegionSetStore, RestFreqStore, RenderConfigStore, OverlayBeamStore} from "stores/Frame";
+import {ColorbarStore, ContourConfigStore, ContourStore, DistanceMeasuringStore, OverlayBeamStore, RegionSetStore, RegionStore, RenderConfigStore, RestFreqStore, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
 import {
-    ChannelInfo,
     CatalogControlMap,
+    ChannelInfo,
     ControlMap,
     CursorInfo,
     FrameView,
@@ -23,32 +23,36 @@ import {
     SpectralType,
     SpectralTypeSet,
     SpectralUnit,
-    STANDARD_SPECTRAL_TYPE_SETS,
     STANDARD_POLARIZATIONS,
+    COMPUTED_POLARIZATIONS,
+    FULL_POLARIZATIONS,
+    STANDARD_SPECTRAL_TYPE_SETS,
+    POLARIZATION_LABELS,
+    POLARIZATIONS,
     Transform2D,
-    ZoomPoint,
-    POLARIZATION_LABELS
+    ZoomPoint
 } from "models";
 import {
     clamp,
+    formattedArcsec,
     formattedFrequency,
+    getFormattedWCSPoint,
     getHeaderNumericValue,
+    getPixelSize,
     getTransformedChannel,
-    transformPoint,
+    isAstBadPoint,
     minMax2D,
+    multiply2D,
+    ProtobufProcessing,
     rotate2D,
-    toFixed,
-    trimFitsComment,
     round2D,
     subtract2D,
-    getFormattedWCSPoint,
-    getPixelSize,
-    multiply2D,
-    isAstBadPoint
+    toFixed,
+    transformPoint,
+    trimFitsComment
 } from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {RegionId} from "stores/widgets";
-import {formattedArcsec, ProtobufProcessing} from "utilities";
 
 export interface FrameInfo {
     fileId: number;
@@ -99,6 +103,11 @@ export class FrameStore {
     public distanceMeasuring: DistanceMeasuringStore;
     public restFreqStore: RestFreqStore;
 
+    public readonly renderConfig: RenderConfigStore;
+    public readonly contourConfig: ContourConfigStore;
+    public readonly vectorOverlayConfig: VectorOverlayConfigStore;
+    public readonly vectorOverlayStore: VectorOverlayStore;
+
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
@@ -119,8 +128,6 @@ export class FrameStore {
     @observable animationChannelRange: NumberRange;
     @observable currentFrameView: FrameView;
     @observable currentCompressionQuality: number;
-    @observable renderConfig: RenderConfigStore;
-    @observable contourConfig: ContourConfigStore;
     @observable contourStores: Map<number, ContourStore>;
     @observable moving: boolean;
     @observable zooming: boolean;
@@ -137,8 +144,7 @@ export class FrameStore {
     @observable momentImages: FrameStore[];
     @observable pvImage: FrameStore;
     @observable generatedPVRegionId: number;
-    @observable fittingResultValues: CARTA.IGaussianComponent[];
-    @observable fittingResultErrors: CARTA.IGaussianComponent[];
+    @observable fittingResult: string;
     @observable fittingLog: string;
 
     @observable isRequestingMoments: boolean;
@@ -323,17 +329,31 @@ export class FrameStore {
         return this.renderWidth > 0 && this.renderHeight > 0;
     }
 
-    @computed get unit() {
+    get headerUnit() {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
         } else {
             const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.filter(entry => entry.name === "BUNIT");
             if (unitHeader.length) {
-                return trimFitsComment(unitHeader[0].value);
+                // Trim leading/tailing quotation marks
+                return trimFitsComment(unitHeader[0].value)?.replace(/^"+|"+$/g, "");
             } else {
                 return undefined;
             }
         }
+    }
+
+    @computed get requiredUnit() {
+        if (this.headerUnit) {
+            if (this.requiredPolarization === POLARIZATIONS.Pangle) {
+                return "degree";
+            } else if (this.requiredPolarization === POLARIZATIONS.PFtotal || this.requiredPolarization === POLARIZATIONS.PFlinear) {
+                return "%";
+            } else {
+                return this.headerUnit;
+            }
+        }
+        return undefined;
     }
 
     @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} {
@@ -779,7 +799,7 @@ export class FrameStore {
         return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
     }
 
-    @computed get stokesOptions(): IOptionProps[] {
+    @computed get stokesOptions(): {value: number; label: string}[] {
         let stokesOptions = [];
         if (this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.headerEntries) {
             const ctype = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.value.toUpperCase() === "STOKES");
@@ -798,7 +818,7 @@ export class FrameStore {
                 for (let i = 0; i < parseInt(naxisHeader.value); i++) {
                     const stokesVal = getHeaderNumericValue(crvalHeader) + (i + 1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
                     if (STANDARD_POLARIZATIONS.has(stokesVal)) {
-                        stokesOptions.push({value: i, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
+                        stokesOptions.push({value: stokesVal, label: POLARIZATION_LABELS.get(STANDARD_POLARIZATIONS.get(stokesVal))});
                     }
                 }
             }
@@ -806,8 +826,11 @@ export class FrameStore {
         return stokesOptions;
     }
 
-    @computed get requiredStokesName(): string {
-        return this.stokesOptions?.find(stokesOption => stokesOption.value === this.requiredStokes)?.label;
+    @computed get hasLinearStokes(): boolean {
+        const options = this.stokesOptions;
+        const labelQ = POLARIZATION_LABELS.get("Q");
+        const labelU = POLARIZATION_LABELS.get("U");
+        return !!options.find(o => o.label === labelQ) && !!options.find(o => o.label === labelU);
     }
 
     @computed get stokesInfo(): string[] {
@@ -816,8 +839,65 @@ export class FrameStore {
         });
     }
 
-    @computed get requiredStokesInfo(): string {
-        return this.requiredStokes >= 0 && this.requiredStokes < this.stokesInfo?.length ? this.stokesInfo[this.requiredStokes] : String(this.requiredStokes);
+    // including standard and computed polarizations eg.[1, 2, 3, 4, 13, 14, 15, 16, 17]
+    @computed get polarizations(): number[] {
+        const polarizations = this.stokesOptions?.map(option => {
+            return option.value;
+        });
+        const hasI: boolean = polarizations.includes(POLARIZATIONS.I);
+        const hasQ: boolean = polarizations.includes(POLARIZATIONS.Q);
+        const hasU: boolean = polarizations.includes(POLARIZATIONS.U);
+        const hasV: boolean = polarizations.includes(POLARIZATIONS.V);
+
+        if (hasQ && hasU) {
+            if (hasV) {
+                polarizations.push(POLARIZATIONS.Ptotal);
+            }
+            polarizations.push(POLARIZATIONS.Plinear);
+            if (hasI && hasV) {
+                polarizations.push(POLARIZATIONS.PFtotal);
+            }
+            if (hasI) {
+                polarizations.push(POLARIZATIONS.PFlinear);
+            }
+            polarizations.push(POLARIZATIONS.Pangle);
+        }
+
+        return polarizations;
+    }
+
+    @computed get polarizationInfo(): string[] {
+        return this.polarizations?.map(polarization => {
+            return POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization));
+        });
+    }
+
+    @computed get coordinateOptions(): {value: string; label: string}[] {
+        return this.polarizations?.map(polarization => {
+            return {value: FULL_POLARIZATIONS.get(polarization), label: POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization))};
+        });
+    }
+
+    @computed get coordinateOptionsZ(): {value: string; label: string}[] {
+        return this.polarizations?.map(polarization => {
+            return {value: FULL_POLARIZATIONS.get(polarization) + "z", label: POLARIZATION_LABELS.get(FULL_POLARIZATIONS.get(polarization))};
+        });
+    }
+
+    @computed get requiredPolarization(): number {
+        return this.polarizations?.[this.requiredPolarizationIndex];
+    }
+
+    @computed get requiredPolarizationInfo(): string {
+        return this.polarizationInfo?.[this.requiredPolarizationIndex];
+    }
+
+    @computed get requiredPolarizationIndex(): number {
+        if (COMPUTED_POLARIZATIONS.has(this.requiredStokes) && this.polarizations.includes(this.requiredStokes)) {
+            return this.polarizations.indexOf(this.requiredStokes);
+        } else {
+            return this.requiredStokes;
+        }
     }
 
     get headerRestFreq(): number {
@@ -854,9 +934,11 @@ export class FrameStore {
         this.colorbarStore = new ColorbarStore(this);
         this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
+        this.vectorOverlayConfig = new VectorOverlayConfigStore(preferenceStore, this);
+        this.vectorOverlayStore = new VectorOverlayStore(this);
         this.moving = false;
         this.zooming = false;
-        this.colorbarLabelCustomText = this.unit === undefined || !this.unit.length ? "arbitrary units" : this.unit;
+        this.colorbarLabelCustomText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
         this.titleCustomText = "";
         this.overlayBeamSettings = new OverlayBeamStore();
         this.spatialReference = null;
@@ -868,8 +950,7 @@ export class FrameStore {
         this.secondaryRasterScalingImages = [];
         this.momentImages = [];
         this.pvImage = null;
-        this.fittingResultValues = [];
-        this.fittingResultErrors = [];
+        this.fittingResult = "";
         this.fittingLog = "";
 
         this.isRequestingMoments = false;
@@ -1508,6 +1589,10 @@ export class FrameStore {
         switch (region.regionType) {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
+            case CARTA.RegionType.LINE:
+                const wcsStartPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, region.controlPoints[0]);
+                const wcsEndPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, region.controlPoints[1]);
+                return `Line (wcs:${systemType}) [[${wcsStartPoint.x}, ${wcsStartPoint.y}], [${wcsEndPoint.x}, ${wcsEndPoint.y}]]`;
             case CARTA.RegionType.RECTANGLE:
                 return `rotbox(wcs:${systemType})[[${center}], [${size.x ?? ""}, ${size.y ?? ""}], ${toFixed(region.rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
@@ -1520,6 +1605,14 @@ export class FrameStore {
                     polygonWcsProperties += index !== region.controlPoints.length - 1 ? ", " : "]";
                 });
                 return polygonWcsProperties;
+            case CARTA.RegionType.POLYLINE:
+                let polylineWcsProperties = `Polyline (wcs:${systemType})[`;
+                region.controlPoints.forEach((point, index) => {
+                    const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
+                    polylineWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
+                    polylineWcsProperties += index !== region.controlPoints.length - 1 ? ", " : "]";
+                });
+                return polylineWcsProperties;
             default:
                 return "Not Implemented";
         }
@@ -1682,11 +1775,19 @@ export class FrameStore {
         });
     }
 
+    @action updateFromVectorOverlayData(vectorOverlayData: CARTA.IVectorOverlayTileData) {
+        if (!this.vectorOverlayStore.isComplete && vectorOverlayData.progress > 0) {
+            this.vectorOverlayStore.addData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
+        } else {
+            this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
+        }
+    }
+
     @action setChannels(channel: number, stokes: number, recursive: boolean) {
         if (stokes < 0) {
             stokes += this.frameInfo.fileInfoExtended.stokes;
         }
-        if (stokes >= this.frameInfo.fileInfoExtended.stokes) {
+        if (stokes >= this.frameInfo.fileInfoExtended.stokes && !COMPUTED_POLARIZATIONS.get(stokes)) {
             stokes = 0;
         }
 
@@ -1710,10 +1811,10 @@ export class FrameStore {
 
     @action incrementChannels(deltaChannel: number, deltaStokes: number, wrap: boolean = true) {
         const depth = Math.max(1, this.frameInfo.fileInfoExtended.depth);
-        const numStokes = Math.max(1, this.frameInfo.fileInfoExtended.stokes);
+        const numStokes = Math.max(1, this.polarizations?.length);
 
         let newChannel = this.requiredChannel + deltaChannel;
-        let newStokes = this.requiredStokes + deltaStokes;
+        let newStokes = this.requiredPolarizationIndex + deltaStokes;
         if (wrap) {
             newChannel = (newChannel + depth) % depth;
             newStokes = (newStokes + numStokes) % numStokes;
@@ -1721,7 +1822,10 @@ export class FrameStore {
             newChannel = clamp(newChannel, 0, depth - 1);
             newStokes = clamp(newStokes, 0, numStokes - 1);
         }
-        this.setChannels(newChannel, newStokes, true);
+        const isComputedPolarization = newStokes >= this.frameInfo.fileInfoExtended.stokes;
+        // request standard polarization by the stokes index of image. (eg. "I": 0)
+        // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
+        this.setChannels(newChannel, isComputedPolarization ? this.polarizations[newStokes] : newStokes, true);
     }
 
     @action setZoom(zoom: number, absolute: boolean = false) {
@@ -1891,6 +1995,53 @@ export class FrameStore {
             this.backendService.setContourParameters(contourParameters);
         }
         this.contourConfig.setEnabled(false);
+    };
+
+    @action applyVectorOverlay = () => {
+        const config = this.vectorOverlayConfig;
+        if (!config || !this.renderConfig) {
+            return;
+        }
+
+        const preferenceStore = PreferenceStore.Instance;
+        config.setEnabled(true);
+
+        const parameters: CARTA.ISetVectorOverlayParameters = {
+            fileId: this.frameInfo.fileId,
+            imageBounds: {
+                xMin: 0,
+                xMax: this.frameInfo.fileInfoExtended.width,
+                yMin: 0,
+                yMax: this.frameInfo.fileInfoExtended.height
+            },
+            smoothingFactor: config.pixelAveragingEnabled ? config.pixelAveraging : 1,
+            fractional: config.fractionalIntensity,
+            threshold: config.thresholdEnabled ? config.threshold : NaN,
+            debiasing: config.debiasing,
+            qError: config.qError,
+            uError: config.uError,
+            stokesIntensity: config.intensitySource,
+            stokesAngle: config.angularSource,
+            compressionType: CARTA.CompressionType.NONE,
+            compressionQuality: preferenceStore.contourCompressionLevel
+        };
+        this.backendService.setVectorOverlayParameters(parameters);
+    };
+
+    @action clearVectorOverlay = (updateBackend: boolean = true) => {
+        // Clear up GPU resources
+        this.vectorOverlayStore.clearData();
+
+        if (updateBackend) {
+            // Send clearing vector overlay parameter message to the backend, to prevent overlay from being automatically updated
+            const parameters: CARTA.ISetVectorOverlayParameters = {
+                fileId: this.frameInfo.fileId,
+                stokesAngle: -1,
+                stokesIntensity: -1
+            };
+            this.backendService.setVectorOverlayParameters(parameters);
+        }
+        this.vectorOverlayConfig.setEnabled(false);
     };
 
     // Spatial WCS Matching
@@ -2171,9 +2322,8 @@ export class FrameStore {
         this.isRequestPVCancelling = val;
     };
 
-    @action setFittingResult = (values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[]) => {
-        this.fittingResultValues = values;
-        this.fittingResultErrors = errors;
+    @action setFittingResult = (results: string) => {
+        this.fittingResult = results;
     };
 
     @action setFittingLog = (log: string) => {

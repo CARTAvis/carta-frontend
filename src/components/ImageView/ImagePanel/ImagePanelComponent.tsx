@@ -11,6 +11,7 @@ import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOver
 import {RegionViewComponent} from "../RegionView/RegionViewComponent";
 import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
+import {VectorOverlayViewComponent} from "../VectorOverlayView/VectorOverlayView";
 import {ImageViewLayer} from "../ImageViewComponent";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -159,6 +160,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                     <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
                     <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
+                    <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
                     <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />
                     {this.cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
@@ -170,9 +172,10 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                             left={overlayStore.padding.left}
                             right={overlayStore.padding.right}
                             docked={this.props.docked}
-                            unit={frame.unit}
+                            unit={frame.requiredUnit}
                             top={overlayStore.padding.top}
-                            currentStokes={appStore.activeFrame.requiredStokes >= 0 && appStore.activeFrame.requiredStokes < appStore.activeFrame.stokesInfo?.length ? appStore.activeFrame.requiredStokesInfo : ""}
+                            currentStokes={appStore.activeFrame.requiredPolarizationInfo}
+                            cursorValueToPercentage={frame.requiredUnit === "%"}
                         />
                     )}
                     {overlayStore.colorbar.visible && <ColorbarComponent frame={frame} onCursorHoverValueChanged={this.setPixelHighlightValue} />}
