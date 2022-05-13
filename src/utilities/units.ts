@@ -1,3 +1,5 @@
+import {AngularSize, AngularSizeUnit} from "models";
+
 export const SPEED_OF_LIGHT = 299792458;
 
 export function velocityFromFrequency(freq: number, refFreq: number): number {
@@ -108,13 +110,20 @@ export function formattedArcsec(arcsec: number, decimals: number = -1): string {
         return null;
     }
 
-    let arcString = "";
-    if (arcsec < 120) {
-        arcString = `${decimals < 0 ? toFixed(arcsec, 6) : toFixed(arcsec, decimals)}"`;
-    } else if (arcsec >= 120 && arcsec < 7200) {
-        arcString = `${decimals < 0 ? toFixed(arcsec / 60.0, 3) : toFixed(arcsec / 60.0, decimals)}'`;
-    } else {
-        arcString = `${decimals < 0 ? toFixed(arcsec / 3600.0, 3) : toFixed(arcsec / 3600.0, decimals)} deg`;
+    const angularSize = AngularSize.convertFromArcsec(arcsec);
+    let arcString = decimals < 0 ? toFixed(angularSize.value, 6) : toFixed(angularSize.value, decimals);
+    switch (angularSize.unit) {
+        case AngularSizeUnit.ARCSEC:
+            arcString += "\"";
+            break;
+        case AngularSizeUnit.ARCMIN:
+            arcString += "'";
+            break;
+        case AngularSizeUnit.DEG:
+            arcString += " deg";
+            break;
+        default:
+            break;
     }
     return arcString;
 }
