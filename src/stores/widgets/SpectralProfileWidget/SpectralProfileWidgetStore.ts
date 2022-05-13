@@ -363,8 +363,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             }
 
             if (isFinite(frame.pixelUnitSizeArcsec?.x) && isFinite(frame.pixelUnitSizeArcsec?.y)) {
-                config["cdelta1"] = getAngleInRad(frame.pixelUnitSizeArcsec.x, "arcsec");
-                config["cdelta2"] = getAngleInRad(frame.pixelUnitSizeArcsec.y, "arcsec");
+                config["cdelta1"] = getAngleInRad(frame.pixelUnitSizeArcsec.x);
+                config["cdelta2"] = getAngleInRad(frame.pixelUnitSizeArcsec.y);
             }
             return config;
         }

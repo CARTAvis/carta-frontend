@@ -85,23 +85,8 @@ export function formattedFrequency(freqGHz: number): string {
     return freqString;
 }
 
-export function getAngleInRad(value: number, unit: string): number {
-    if (isFinite(value) && unit) {
-        const trimmedUnit = unit.trim()?.toLowerCase();
-        if (trimmedUnit === "rad") {
-            return value;
-        } else if (trimmedUnit === "deg") {
-            return (value * Math.PI) / 180;
-        } else if (trimmedUnit === "arcmin") {
-            return (value * Math.PI) / 10800;
-        } else if (trimmedUnit === "arcsec") {
-            return (value * Math.PI) / 648000;
-        } else if (trimmedUnit === "mas") {
-            return (value * Math.PI) / 648000000;
-        }
-        return undefined;
-    }
-    return undefined;
+export function getAngleInRad(arcsec: number): number {
+    return isFinite(arcsec) ? (arcsec * Math.PI) / 648000 : undefined;
 }
 
 // TODO: possibly move to region class since they are the only callers
