@@ -11,7 +11,7 @@ import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelecting
 import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
-import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, SpectralProfileStore, AppStore, DefaultWidgetConfig} from "stores";
+import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, /*SpectralProfileStore,*/ AppStore, DefaultWidgetConfig} from "stores";
 import {FrameStore} from "stores/Frame";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, SpectralType, SpectralUnit} from "models";
@@ -37,7 +37,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private cachedFormattedCoordinates: string[];
+    private secondaryData: MultiPlotData;
 
     @observable width: number;
     @observable height: number;
@@ -53,7 +53,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         console.log("can't find store for widget");
         return new SpectralProfileWidgetStore();
     }
-
+/*
     @computed get profileStore(): SpectralProfileStore {
         const widgetStore = this.widgetStore;
 
@@ -63,9 +63,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
         return undefined;
     }
-
+*/
     @computed get plotData(): MultiPlotData {
         return this.widgetStore.plotData;
+    }
+
+    @computed get optionalPlotData(): MultiPlotData {
+        console.log('optional changed?');
+        return this.secondaryData;
     }
 
     @computed get isMeanRmsVisible(): boolean {
@@ -94,6 +99,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         autorun(() => {
             let title = "Z Profile";
             const currentData = this.plotData;
+
+            this.secondaryData = Object.assign({}, currentData);
+            
             if (this.widgetStore && currentData && isFinite(currentData.progress)) {
                 if (currentData.progress < 1.0) {
                     const totalProgress = currentData.numProfiles * 100;
@@ -179,46 +187,85 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
 
         floatXStr = toFormattedNotation(nearest.point.x, diffLeft);
-
+/*
+        if (diffLeft > 0 && diffLeft < 1e-6) {
+            floatXStr = formattedNotation(nearest.point.x);
+        } else if (diffLeft >= 1e-6 && diffLeft < 1e-3) {
+            floatXStr = toFixed(nearest.point.x, 6);
+        } else {
+            floatXStr = toFixed(nearest.point.x, 3);
+        }
+*/
         return floatXStr;
     };
 
+
+    private convertSpectralSpecial = (values: Array<number>, toNative: boolean): Array<number> => {
+        const N = values?.length;
+        if (!N || !this.frame.returnSpectralFrame()) {
+            return null;
+        }
+        var convertedArray;
+
+        if(toNative){
+            convertedArray = AST.transformSpectralPointArray(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, values, false);
+        } else {
+            convertedArray = AST.transformSpectralPointArray(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, values);
+        }
+        return Array.from(convertedArray);
+    };
+
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
-        let cursorInfoString = undefined;
+        var cursorInfoString = undefined;
         var nearestOpt = undefined;
         const nearest = binarySearchByX(data, cursorXValue);
 
         var optional = [];
+        var optConverted = [];
+
+        // Need to make a copy of the original data to convert to optional cursor data
         data.forEach(val => {
-            optional.push(Object.assign({}, val));
+            optional.push(val.x);
+            optConverted.push(Object.assign({}, val));
         });
+        
 
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
             let floatXStr = "";
             floatXStr = this.precisionFormatting(nearest, data);
+            
+            if (this.widgetStore.spectralAxisVisibleSecondary){                
 
-            const optionalXUnit = this.frame.spectralUnitSecondary;
-            const optConverted = this.calculateFormattedValues(optional);
+                const optionalXUnit = this.frame.spectralUnitSecondary;
 
-            if (this.frame.spectralType === SpectralType.CHANNEL) {
-                const nativeCoord = this.findNativeCoordinateValues(parseInt(cursorXValue.toFixed()));
-                var cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
-                cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
-                nearestOpt = binarySearchByX(optConverted, cursorXOpt);
-            } else {
-                const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, cursorXValue, false);
-                const cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+                optional = this.convertSpectralSpecial(optional, true);
+                optional = this.convertSpectralSpecial(optional, false);            
 
-                nearestOpt = binarySearchByX(optConverted, cursorXOpt);
-            }
-            const optionalXStr = this.precisionFormatting(nearestOpt, optConverted);
+                if (this.frame.spectralType === SpectralType.CHANNEL) {
+                    const nativeCoord = this.findNativeCoordinateValues(parseInt(cursorXValue.toFixed()));
+                    var cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
+                    
+                    cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
 
-            if (this.widgetStore.spectralAxisVisibleSecondary) {
+                    nearestOpt = binarySearchByX(optConverted, cursorXOpt);
+                } else {
+                    const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, cursorXValue, false);
+                    const cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+
+                    for(let i = 0; i < optConverted.length; ++i){
+                        optConverted[i].x = optional[i];
+                    }
+
+                    nearestOpt = binarySearchByX(optConverted, cursorXOpt);
+                }
+                const optionalXStr = this.precisionFormatting(nearestOpt, optConverted);
+            
                 const xLabel =
                     cursorXUnit === "Channel"
                         ? `Channel ${toFixed(nearest.point.x)}${optionalXStr ? `, ${optionalXStr} ${optionalXUnit}` : ""}`
                         : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${optionalXStr ? `, ${optionalXStr} ${optionalXUnit}` : ""}`;
                 cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+
             } else {
                 const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
                 cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
@@ -321,30 +368,37 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private calculateFormattedValues(value: Point2D[]): Point2D[] {
+        var optional = [];
         for (var i = 0; i < value.length; i++) {
+            optional.push(Object.assign({}, value[i]));
+
             if (this.frame.spectralType === SpectralType.CHANNEL) {
                 const nativeCoord = this.findNativeCoordinateValues(value[i].x);
                 var coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
 
                 coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
-                value[i].x = coord;
+                //value[i].x = coord;
+                optional[i].x = coord;
             } else {
                 const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, value[i].x, false);
                 const velCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.VRAD, SpectralUnit.KMS, this.frame.spectralSystem, nativeCoord);
                 if (this.frame.spectralTypeSecondary === SpectralType.VRAD || this.frame.spectralTypeSecondary === SpectralType.VOPT) {
                     if (this.frame.spectralUnitSecondary === SpectralUnit.MS) {
-                        value[i].x = 1000 * Math.round(velCoord);
+                        //value[i].x = 1000 * Math.round(velCoord);
+                        optional[i].x = 1000 * Math.round(velCoord);
                     } else {
-                        value[i].x = Math.round(velCoord);
+                        //value[i].x = Math.round(velCoord);
+                        optional[i].x = Math.round(velCoord);
                     }
                 } else {
                     const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
-                    value[i].x = coord;
+                    //value[i].x = coord;
+                    optional[i].x = coord;
                 }
             }
         }
 
-        return value;
+        return optional;
     }
 
     render() {
