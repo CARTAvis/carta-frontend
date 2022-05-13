@@ -268,6 +268,8 @@ export class RootMenuComponent extends React.Component {
                 )}
                 <Menu.Item text="File header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
                 <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showContourDialog} />
+                <Menu.Item text="Vector overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showVectorOverlayDialog} />
+                <Menu.Item text="Image fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFittingDialog} />
                 <Menu.Item text="Code snippets" icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} />
                 <Menu.Item text="Online Catalog Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showCatalogQueryDialog} />
             </Menu>
@@ -435,7 +437,7 @@ export class RootMenuComponent extends React.Component {
     }
 
     handleDocumentationClicked = () => {
-        window.open("https://carta.readthedocs.io/en/2.0", "_blank", "width=1024");
+        window.open("https://carta.readthedocs.io/en/3.0", "_blank", "width=1024");
         if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);
