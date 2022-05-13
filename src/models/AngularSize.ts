@@ -25,7 +25,7 @@ export class AngularSize {
             default:
                 return arcsec;
         }
-    }
+    };
 
     public static convertFromArcsec = (arcsec: number, supportMilliarcsec: boolean = false): AngularSize => {
         if (!isFinite(arcsec)) {
@@ -43,5 +43,5 @@ export class AngularSize {
             unit = AngularSizeUnit.DEG;
         }
         return {value: AngularSize.convertValueFromArcsec(arcsec, unit), unit: unit};
-    }
+    };
 }

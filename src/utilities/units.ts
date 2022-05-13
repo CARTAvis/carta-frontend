@@ -99,7 +99,7 @@ export function formattedArcsec(arcsec: number, decimals: number = -1): string {
     let arcString = decimals < 0 ? toFixed(angularSize.value, 6) : toFixed(angularSize.value, decimals);
     switch (angularSize.unit) {
         case AngularSizeUnit.ARCSEC:
-            arcString += "\"";
+            arcString += '"';
             break;
         case AngularSizeUnit.ARCMIN:
             arcString += "'";
