@@ -53,17 +53,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         console.log("can't find store for widget");
         return new SpectralProfileWidgetStore();
     }
-    /*
-    @computed get profileStore(): SpectralProfileStore {
-        const widgetStore = this.widgetStore;
 
-        if (widgetStore.effectiveFrame) {
-            //    const profileKey = `${widgetStore.effectiveFrame.frameInfo.fileId}-${widgetStore.effectiveRegionId}`;
-            //    return AppStore.Instance.spectralProfiles.get(widgetStore.effectiveFrame.frameInfo.fileId);
-        }
-        return undefined;
-    }
-*/
     @computed get plotData(): MultiPlotData {
         return this.widgetStore.plotData;
     }
@@ -223,29 +213,38 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
                 const optionalXUnit = this.frame.spectralUnitSecondary;
 
-                // Need to make a copy of the original data to convert to optional cursor data
-                data.forEach(val => {
-                    optional.push(val.x);
-                    optConverted.push(Object.assign({}, val));
-                });
-
-                // Convert to native coordinates, then convert to desired optional units.
-                optional = this.convertSpectralSpecial(optional, true);
-                optional = this.convertSpectralSpecial(optional, false);
-
                 if (this.frame.spectralType === SpectralType.CHANNEL) {
                     const nativeCoord = this.findNativeCoordinateValues(parseInt(cursorXValue.toFixed()));
-                    var cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
 
+                    var cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
                     cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
 
-                    // Copy converted data into optional point2D array
+                    // Need to make a copy of the original data to convert to optional cursor data. The caveat here is that
+                    // for convertSpectral(...) doesn't work for channel so we must use findNativeCoordinateValues(...) first.
+                    data.forEach(val => {
+                        optional.push(this.findNativeCoordinateValues(val.x));
+                        optConverted.push(Object.assign({}, val));
+                    });
+
+                    optional = this.convertSpectralSpecial(optional, false);
+
+                    // Copy converted data into optional point2D array.
                     for (let i = 0; i < optConverted.length; ++i) {
                         optConverted[i].x = optional[i];
                     }
 
                     nearestOpt = binarySearchByX(optConverted, cursorXOpt);
                 } else {
+                    // Need to make a copy of the original data to convert to optional cursor data
+                    data.forEach(val => {
+                        optional.push(val.x);
+                        optConverted.push(Object.assign({}, val));
+                    });
+
+                    // Convert to native coordinates, then convert to desired optional units.
+                    optional = this.convertSpectralSpecial(optional, true);
+                    optional = this.convertSpectralSpecial(optional, false);
+
                     const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, cursorXValue, false);
                     const cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
 
@@ -362,40 +361,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private findNativeCoordinateValues(tick: number): number {
         const channel = tick;
         return this.widgetStore.effectiveFrame.channelInfo.values[channel];
-    }
-
-    private calculateFormattedValues(value: Point2D[]): Point2D[] {
-        var optional = [];
-        for (var i = 0; i < value.length; i++) {
-            optional.push(Object.assign({}, value[i]));
-
-            if (this.frame.spectralType === SpectralType.CHANNEL) {
-                const nativeCoord = this.findNativeCoordinateValues(value[i].x);
-                var coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
-
-                coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
-                //value[i].x = coord;
-                optional[i].x = coord;
-            } else {
-                const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, value[i].x, false);
-                const velCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.VRAD, SpectralUnit.KMS, this.frame.spectralSystem, nativeCoord);
-                if (this.frame.spectralTypeSecondary === SpectralType.VRAD || this.frame.spectralTypeSecondary === SpectralType.VOPT) {
-                    if (this.frame.spectralUnitSecondary === SpectralUnit.MS) {
-                        //value[i].x = 1000 * Math.round(velCoord);
-                        optional[i].x = 1000 * Math.round(velCoord);
-                    } else {
-                        //value[i].x = Math.round(velCoord);
-                        optional[i].x = Math.round(velCoord);
-                    }
-                } else {
-                    const coord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
-                    //value[i].x = coord;
-                    optional[i].x = coord;
-                }
-            }
-        }
-
-        return optional;
     }
 
     render() {
