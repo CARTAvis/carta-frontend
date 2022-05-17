@@ -13,6 +13,7 @@ export interface RuntimeConfig {
     googleClientId?: string;
     tokenRefreshAddress?: string;
     logoutAddress?: string;
+    oidcClientId?: string;
 }
 
 export class ApiService {
@@ -51,6 +52,7 @@ export class ApiService {
     private _tokenLifetime: number;
     private _tokenExpiryHandler: any;
     private axiosInstance: AxiosInstance;
+    private oidcAxiosInstance: AxiosInstance;
     private authInstance: gapi.auth2.GoogleAuth;
 
     @action setToken = (tokenString: string, tokenLifetime: number = Number.MAX_VALUE) => {
@@ -158,6 +160,39 @@ export class ApiService {
             } catch (e) {
                 return false;
             }
+        } else if (ApiService.RuntimeConfig.oidcClientId) {
+            try {
+                if (!this.oidcAxiosInstance) {
+                    //console.log("Creating OIDC Axios instance")
+                    this.oidcAxiosInstance = axios.create();
+                    this.oidcAxiosInstance.defaults.headers.common["Content-Type"] = "application/x-www-form-urlencoded";
+                    this.oidcAxiosInstance.defaults.headers.common["Accept"] = "application/json";
+                }
+                const usp = new URLSearchParams();
+                usp.set("grant_type", "refresh_token");
+                usp.set("client_id", ApiService.RuntimeConfig.oidcClientId);
+                usp.set("refresh_token", localStorage.getItem("oidc_refresh_token"));
+
+                const response = await this.oidcAxiosInstance.post(ApiService.RuntimeConfig.tokenRefreshAddress, usp.toString());
+
+                if (response?.data?.access_token) {
+                    // If access token does not expire, set lifetime to maximum
+                    this.setToken(response.data.access_token, response.data.expires_in || Number.MAX_VALUE);
+
+                    // Update refresh token
+                    if (response.data.refresh_token) {
+                        localStorage.setItem("oidc_refresh_token", response.data.refresh_token)
+                    }
+                    return true;
+                } else {
+                    this.clearToken();
+                    return false;
+                }
+            } catch (err) {
+                this.clearToken();
+                console.log(err);
+                return false;
+            }
         } else if (ApiService.RuntimeConfig.tokenRefreshAddress) {
             try {
                 const response = await this.axiosInstance.post(ApiService.RuntimeConfig.tokenRefreshAddress);
@@ -183,6 +218,17 @@ export class ApiService {
         this.clearToken();
         if (ApiService.RuntimeConfig.googleClientId) {
             this.authInstance?.signOut();
+        } else if (ApiService.RuntimeConfig.oidcClientId) {
+            let usp = new URLSearchParams();
+            usp.set('id_token_hint', localStorage.getItem("oidc_id_token"))
+            if (ApiService.RuntimeConfig.dashboardAddress) {
+                usp.set('post_logout_redirect_uri', ApiService.RuntimeConfig.dashboardAddress)
+            }
+
+            localStorage.removeItem("oidc_refresh_token")
+            localStorage.removeItem("oidc_id_token")
+
+            window.location.replace(ApiService.RuntimeConfig.logoutAddress + "?" + usp.toString())
         } else if (ApiService.RuntimeConfig.logoutAddress) {
             try {
                 await this.axiosInstance.post(ApiService.RuntimeConfig.logoutAddress);
