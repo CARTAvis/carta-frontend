@@ -181,7 +181,7 @@ export class ApiService {
                     this.setToken(response.data.access_token, response.data.expires_in || Number.MAX_VALUE);
 
                     // Update refresh token
-                    if (response.data.refresh_token?) {
+                    if (response.data.refresh_token) {
                         localStorage.setItem("oidc_refresh_token", response.data.refresh_token)
                     }
                     return true;
@@ -230,6 +230,7 @@ export class ApiService {
 
             localStorage.removeItem("oidc_refresh_token")
             localStorage.removeItem("oidc_id_token")
+            localStorage.removeItem("authenticationType")
 
             window.open(ApiService.RuntimeConfig.logoutAddress + "?" + usp.toString(), "_self")
         } else if (ApiService.RuntimeConfig.logoutAddress) {
