@@ -182,7 +182,7 @@ export class ApiService {
 
                     // Update refresh token
                     if (response.data.refresh_token) {
-                        localStorage.setItem("oidc_refresh_token", response.data.refresh_token)
+                        localStorage.setItem("oidc_refresh_token", response.data.refresh_token);
                     }
                     return true;
                 } else {
@@ -225,14 +225,14 @@ export class ApiService {
             }
         } else if (ApiService.RuntimeConfig.oidcClientId) {
             let usp = new URLSearchParams();
-            usp.set('id_token_hint', localStorage.getItem("oidc_id_token"))
-            usp.set('post_logout_redirect_uri', window.location.href)
+            usp.set("id_token_hint", localStorage.getItem("oidc_id_token"));
+            usp.set("post_logout_redirect_uri", window.location.href);
 
-            localStorage.removeItem("oidc_refresh_token")
-            localStorage.removeItem("oidc_id_token")
-            localStorage.removeItem("authenticationType")
+            localStorage.removeItem("oidc_refresh_token");
+            localStorage.removeItem("oidc_id_token");
+            localStorage.removeItem("authenticationType");
 
-            window.open(ApiService.RuntimeConfig.logoutAddress + "?" + usp.toString(), "_self")
+            window.open(ApiService.RuntimeConfig.logoutAddress + "?" + usp.toString(), "_self");
         } else if (ApiService.RuntimeConfig.logoutAddress) {
             try {
                 await this.axiosInstance.post(ApiService.RuntimeConfig.logoutAddress);
