@@ -274,7 +274,7 @@ const imageFittingSvg = (
             clipRule="evenodd"
             fillRule="evenodd"
         />
-        <text xmlSpace="preserve" textAnchor="start" fontFamily="sans-serif" fontSize="10" id="svg_3" y="5.21879" x="6.26874" strokeWidth="0" stroke="#000">
+        <text xmlSpace="preserve" textAnchor="start" fontFamily="sans-serif" font-size="9.44322px" id="svg_3" y="5.3225346" x="5.1441765" strokeWidth="0" stroke="#000">
             xy
         </text>
     </>
@@ -289,7 +289,7 @@ const lineFittingSvg = (
             clipRule="evenodd"
             fillRule="evenodd"
         />
-        <text xmlSpace="preserve" textAnchor="start" fontFamily="sans-serif" fontSize="10" id="svg_3" y="5.71879" x="6.96874" strokeWidth="0" stroke="#000">
+        <text xmlSpace="preserve" textAnchor="start" fontFamily="sans-serif" font-size="10px" id="svg_3" y="5.7571483" x="7.3132892" strokeWidth="0" stroke="#000">
             {" "}
             z
         </text>

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta.4]
+
+### Fixed
+* Added missing vector overlay and image fitting options in the View menu ([#1848](https://github.com/CARTAvis/carta-frontend/issues/1848))
+* Hide code snippet option in the View menu when code snippet is disabled in the preferences ([#1856](https://github.com/CARTAvis/carta-frontend/issues/1856))
+
 ## [3.0.0-beta.3]
 
 ### Added
