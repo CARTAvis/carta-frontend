@@ -171,6 +171,7 @@ export class ApiService {
                 const usp = new URLSearchParams();
                 usp.set("grant_type", "refresh_token");
                 usp.set("client_id", ApiService.RuntimeConfig.oidcClientId);
+
                 usp.set("refresh_token", localStorage.getItem("oidc_refresh_token"));
 
                 const response = await this.oidcAxiosInstance.post(ApiService.RuntimeConfig.tokenRefreshAddress, usp.toString());
@@ -180,7 +181,7 @@ export class ApiService {
                     this.setToken(response.data.access_token, response.data.expires_in || Number.MAX_VALUE);
 
                     // Update refresh token
-                    if (response.data.refresh_token) {
+                    if (response.data.refresh_token?) {
                         localStorage.setItem("oidc_refresh_token", response.data.refresh_token)
                     }
                     return true;
@@ -218,27 +219,29 @@ export class ApiService {
         this.clearToken();
         if (ApiService.RuntimeConfig.googleClientId) {
             this.authInstance?.signOut();
+            // Redirect to dashboard URL if it exists
+            if (ApiService.RuntimeConfig.dashboardAddress) {
+                window.open(ApiService.RuntimeConfig.dashboardAddress, "_self");
+            }
         } else if (ApiService.RuntimeConfig.oidcClientId) {
             let usp = new URLSearchParams();
             usp.set('id_token_hint', localStorage.getItem("oidc_id_token"))
-            if (ApiService.RuntimeConfig.dashboardAddress) {
-                usp.set('post_logout_redirect_uri', ApiService.RuntimeConfig.dashboardAddress)
-            }
+            usp.set('post_logout_redirect_uri', window.location.href)
 
             localStorage.removeItem("oidc_refresh_token")
             localStorage.removeItem("oidc_id_token")
 
-            window.location.replace(ApiService.RuntimeConfig.logoutAddress + "?" + usp.toString())
+            window.open(ApiService.RuntimeConfig.logoutAddress + "?" + usp.toString(), "_self")
         } else if (ApiService.RuntimeConfig.logoutAddress) {
             try {
                 await this.axiosInstance.post(ApiService.RuntimeConfig.logoutAddress);
             } catch (err) {
                 console.log(err);
             }
-        }
-        // Redirect to dashboard URL if it exists
-        if (ApiService.RuntimeConfig.dashboardAddress) {
-            window.open(ApiService.RuntimeConfig.dashboardAddress, "_self");
+            // Redirect to dashboard URL if it exists
+            if (ApiService.RuntimeConfig.dashboardAddress) {
+                window.open(ApiService.RuntimeConfig.dashboardAddress, "_self");
+            }
         }
     };
 
