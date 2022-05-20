@@ -1,5 +1,5 @@
 **Description**
-linked issues, what is implemented or fixed, how to test it, …
+linked issues and companion PRs (if there are), what is implemented or fixed, how to test it, …
 
 **Checklist**
 - [ ] changelog updated / no changelog update needed
