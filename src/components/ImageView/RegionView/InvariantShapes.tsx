@@ -5,7 +5,7 @@ const POINT_DRAG_WIDTH = 13;
 
 const SQUARE_ANCHOR_WIDTH = 7;
 const CIRCLE_ANCHOR_RADIUS = SQUARE_ANCHOR_WIDTH / Math.sqrt(2);
-const ROTATOR_ANCHOR_HEIGHT = 15;
+export const ROTATOR_ANCHOR_HEIGHT = 15;
 
 const CURSOR_CROSS_LENGTH = 10;
 const CURSOR_CROSS_THICKNESS_WIDE = 3;
@@ -79,6 +79,7 @@ interface AnchorProps {
     onDragEnd: (ev) => void;
     onDragMove: (ev) => void;
     onDblClick?: (ev) => void;
+    isLineRegion?: boolean;
 }
 
 export const Anchor = (props: AnchorProps) => {
@@ -89,7 +90,7 @@ export const Anchor = (props: AnchorProps) => {
     const handleCircleDraw = (ctx, shape) => {
         const reverseScale = 1 / shape.getStage().scaleX();
         const radius = CIRCLE_ANCHOR_RADIUS * reverseScale;
-        const offsetY = -ROTATOR_ANCHOR_HEIGHT / shape.getStage().scaleX();
+        const offsetY = props.isLineRegion ? 0 : -ROTATOR_ANCHOR_HEIGHT / shape.getStage().scaleX();
         ctx.beginPath();
         ctx.arc(0, offsetY, radius, 0, 2 * Math.PI, false);
         ctx.fillStrokeShape(shape);
