@@ -302,8 +302,6 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
             }
-
-            rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
             controlPoints = controlPoints.map(p => {
                 return transformedImageToCanvasPos(p, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
