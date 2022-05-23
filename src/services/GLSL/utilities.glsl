@@ -28,33 +28,37 @@ vec4 cubic(vec4 A, vec4 B, vec4 C, vec4 D, float t) {
     return a * t3 + b * t2 + c * t + d;
 }
 
+ivec2 clampPixel(ivec2 pixel, vec2 controlMapSize) {
+    pixel.x = clamp(pixel.x, 0, int(controlMapSize.x) - 1);
+    pixel.y = clamp(pixel.y, 0, int(controlMapSize.y) - 1);
+    return pixel;
+}
+
 vec4 bicubicFilter(sampler2D textureData, vec2 P, vec2 controlMapSize) {
     // Calculate offset and base pixel coordiante
-    vec2 pixelSize = 1.0 / controlMapSize;
-    vec2 pixel = P * controlMapSize + 0.5;
-    vec2 frac = fract(pixel);
-    pixel = floor(pixel) / controlMapSize - pixelSize / 2.0;
+    vec2 frac = fract(P);
+    ivec2 pixel = ivec2(floor(P));
 
     // Texture lookups
-    vec4 C00 = texture(textureData, pixel + pixelSize * vec2(-1.0, -1.0));
-    vec4 C10 = texture(textureData, pixel + pixelSize * vec2(0.0, -1.0));
-    vec4 C20 = texture(textureData, pixel + pixelSize * vec2(1.0, -1.0));
-    vec4 C30 = texture(textureData, pixel + pixelSize * vec2(2.0, -1.0));
+    vec4 C00 = texelFetch(textureData, clampPixel(pixel + ivec2(-1, -1), controlMapSize), 0);
+    vec4 C10 = texelFetch(textureData, clampPixel(pixel + ivec2(0, -1), controlMapSize), 0);
+    vec4 C20 = texelFetch(textureData, clampPixel(pixel + ivec2(1, -1), controlMapSize), 0);
+    vec4 C30 = texelFetch(textureData, clampPixel(pixel + ivec2(2, -1), controlMapSize), 0);
 
-    vec4 C01 = texture(textureData, pixel + pixelSize * vec2(-1.0, 0.0));
-    vec4 C11 = texture(textureData, pixel + pixelSize * vec2(0.0, 0.0));
-    vec4 C21 = texture(textureData, pixel + pixelSize * vec2(1.0, 0.0));
-    vec4 C31 = texture(textureData, pixel + pixelSize * vec2(2.0, 0.0));
+    vec4 C01 = texelFetch(textureData, clampPixel(pixel + ivec2(-1, 0), controlMapSize), 0);
+    vec4 C11 = texelFetch(textureData, clampPixel(pixel + ivec2(0, 0), controlMapSize), 0);
+    vec4 C21 = texelFetch(textureData, clampPixel(pixel + ivec2(1, 0), controlMapSize), 0);
+    vec4 C31 = texelFetch(textureData, clampPixel(pixel + ivec2(2, 0), controlMapSize), 0);
 
-    vec4 C02 = texture(textureData, pixel + pixelSize * vec2(-1.0, 1.0));
-    vec4 C12 = texture(textureData, pixel + pixelSize * vec2(0.0, 1.0));
-    vec4 C22 = texture(textureData, pixel + pixelSize * vec2(1.0, 1.0));
-    vec4 C32 = texture(textureData, pixel + pixelSize * vec2(2.0, 1.0));
+    vec4 C02 = texelFetch(textureData, clampPixel(pixel + ivec2(-1, 1), controlMapSize), 0);
+    vec4 C12 = texelFetch(textureData, clampPixel(pixel + ivec2(0, 1), controlMapSize), 0);
+    vec4 C22 = texelFetch(textureData, clampPixel(pixel + ivec2(1, 1), controlMapSize), 0);
+    vec4 C32 = texelFetch(textureData, clampPixel(pixel + ivec2(2, 1), controlMapSize), 0);
 
-    vec4 C03 = texture(textureData, pixel + pixelSize * vec2(-1.0, 2.0));
-    vec4 C13 = texture(textureData, pixel + pixelSize * vec2(0.0, 2.0));
-    vec4 C23 = texture(textureData, pixel + pixelSize * vec2(1.0, 2.0));
-    vec4 C33 = texture(textureData, pixel + pixelSize * vec2(2.0, 2.0));
+    vec4 C03 = texelFetch(textureData, clampPixel(pixel + ivec2(-1, 2), controlMapSize), 0);
+    vec4 C13 = texelFetch(textureData, clampPixel(pixel + ivec2(0, 2), controlMapSize), 0);
+    vec4 C23 = texelFetch(textureData, clampPixel(pixel + ivec2(1, 2), controlMapSize), 0);
+    vec4 C33 = texelFetch(textureData, clampPixel(pixel + ivec2(2, 2), controlMapSize), 0);
 
     // Cubic along x
     vec4 CP0X = cubic(C00, C10, C20, C30, frac.x);
@@ -68,10 +72,9 @@ vec4 bicubicFilter(sampler2D textureData, vec2 P, vec2 controlMapSize) {
 // end adapted from https://www.shadertoy.com/view/MllSzX
 
 vec2 controlMapLookup(sampler2D controlMapTexture, vec2 pos, vec2 controlMapSize, vec2 controlMapMin, vec2 controlMapMax) {
-    vec2 texScale = 1.0 / controlMapSize;
     vec2 range = controlMapMax - controlMapMin;
     vec2 shiftedPoint = pos - controlMapMin;
-    vec2 index = shiftedPoint / range + 0.5 / controlMapSize;
+    vec2 index = shiftedPoint / range * controlMapSize;
     return bicubicFilter(controlMapTexture, index, controlMapSize).rg;
 }
 
