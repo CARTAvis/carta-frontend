@@ -266,7 +266,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         // trigger re-render when exporting images
         const imageRatio = AppStore.Instance.imageRatio;
         // trigger rotation anchor re-render when zooming
-        const zoomLevel = frame.spatialReference?.zoomLevel ?? frame.zoomLevel; 
+        const zoomLevel = frame.spatialReference?.zoomLevel ?? frame.zoomLevel;
 
         if (frame.spatialReference) {
             const centerReferenceImage = average2D(controlPoints);
