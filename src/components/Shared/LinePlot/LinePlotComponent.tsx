@@ -122,6 +122,7 @@ export class LinePlotComponentProps {
     insideTexts?: LinePlotInsideTextMarker[];
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
+    exportData?: {x: number; y: number; z?: number}[];
 }
 
 // Maximum time between double clicks
@@ -660,7 +661,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             // data part
             rows.push("# x\ty");
             const useScientificForm = plotName === "histogram" || this.props.tickTypeX === TickType.Scientific;
-            rows = rows.concat(this.props.data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
+            const data = this.props.exportData?.length > 0 ? this.props.exportData : this.props.data;
+            rows = rows.concat(data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
 
             exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);
         }
