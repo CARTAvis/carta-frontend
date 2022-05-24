@@ -262,11 +262,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         let newAnchor = null;
         let pointArray: Array<number>;
 
-        /* eslint-disable @typescript-eslint/no-unused-vars */
         // trigger re-render when exporting images
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const imageRatio = AppStore.Instance.imageRatio;
-        // trigger rotation anchor re-render when zooming
-        const zoomLevel = frame.spatialReference?.zoomLevel ?? frame.zoomLevel;
 
         if (frame.spatialReference) {
             const centerReferenceImage = average2D(controlPoints);
@@ -290,6 +288,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 });
 
                 if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
+                    // trigger rotation anchor re-render when zooming
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const zoomLevel = frame.spatialReference?.zoomLevel;
                     const reverseScale = 1 / this.props.stageRef.current.scaleX();
                     const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * reverseScale;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
@@ -315,6 +316,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 }
 
                 if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
+                    // trigger rotation anchor re-render when zooming
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const zoomLevel = frame.zoomLevel;
                     const reverseScale = 1 / this.props.stageRef.current.scaleX();
                     const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * reverseScale;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
