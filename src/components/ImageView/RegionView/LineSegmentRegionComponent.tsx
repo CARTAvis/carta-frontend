@@ -291,8 +291,8 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     // trigger rotation anchor re-render when zooming
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const zoomLevel = frame.spatialReference?.zoomLevel;
-                    const reverseScale = 1 / this.props.stageRef.current.scaleX();
-                    const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * reverseScale;
+                    const inverseScale = 1 / this.props.stageRef.current.scaleX();
+                    const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
                     anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true));
                 }
@@ -319,8 +319,8 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     // trigger rotation anchor re-render when zooming
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const zoomLevel = frame.zoomLevel;
-                    const reverseScale = 1 / this.props.stageRef.current.scaleX();
-                    const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * reverseScale;
+                    const inverseScale = 1 / this.props.stageRef.current.scaleX();
+                    const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
                     anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true));
                 }
