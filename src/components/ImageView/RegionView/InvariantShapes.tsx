@@ -5,16 +5,16 @@ const POINT_DRAG_WIDTH = 13;
 
 const SQUARE_ANCHOR_WIDTH = 7;
 const CIRCLE_ANCHOR_RADIUS = SQUARE_ANCHOR_WIDTH / Math.sqrt(2);
-const ROTATOR_ANCHOR_HEIGHT = 15;
+export const ROTATOR_ANCHOR_HEIGHT = 15;
 
 const CURSOR_CROSS_LENGTH = 10;
 const CURSOR_CROSS_THICKNESS_WIDE = 3;
 const CURSOR_CROSS_CENTER_SQUARE = 6;
 
 const HandleSquareDraw = (ctx, shape, width) => {
-    const reverseScale = 1 / shape.getStage().scaleX();
-    const offset = -width * 0.5 * reverseScale;
-    const squareSize = width * reverseScale;
+    const inverseScale = 1 / shape.getStage().scaleX();
+    const offset = -width * 0.5 * inverseScale;
+    const squareSize = width * inverseScale;
     ctx.beginPath();
     ctx.rect(offset, offset, squareSize, squareSize);
     ctx.fillStrokeShape(shape);
@@ -79,6 +79,7 @@ interface AnchorProps {
     onDragEnd: (ev) => void;
     onDragMove: (ev) => void;
     onDblClick?: (ev) => void;
+    isLineRegion?: boolean;
 }
 
 export const Anchor = (props: AnchorProps) => {
@@ -87,9 +88,9 @@ export const Anchor = (props: AnchorProps) => {
     };
 
     const handleCircleDraw = (ctx, shape) => {
-        const reverseScale = 1 / shape.getStage().scaleX();
-        const radius = CIRCLE_ANCHOR_RADIUS * reverseScale;
-        const offsetY = -ROTATOR_ANCHOR_HEIGHT / shape.getStage().scaleX();
+        const inverseScale = 1 / shape.getStage().scaleX();
+        const radius = CIRCLE_ANCHOR_RADIUS * inverseScale;
+        const offsetY = props.isLineRegion ? 0 : -ROTATOR_ANCHOR_HEIGHT * inverseScale;
         ctx.beginPath();
         ctx.arc(0, offsetY, radius, 0, 2 * Math.PI, false);
         ctx.fillStrokeShape(shape);
@@ -144,10 +145,10 @@ export const CursorMarker = (props: CursorMarkerProps) => {
     };
 
     const handleCrossDraw = (ctx, shape) => {
-        const reverseScale = 1 / shape.getStage().scaleX();
-        const offset = -CURSOR_CROSS_CENTER_SQUARE * 0.5 * reverseScale;
-        const crossWidth = CURSOR_CROSS_LENGTH * reverseScale;
-        const crossHeight = CURSOR_CROSS_THICKNESS_WIDE * reverseScale;
+        const inverseScale = 1 / shape.getStage().scaleX();
+        const offset = -CURSOR_CROSS_CENTER_SQUARE * 0.5 * inverseScale;
+        const crossWidth = CURSOR_CROSS_LENGTH * inverseScale;
+        const crossHeight = CURSOR_CROSS_THICKNESS_WIDE * inverseScale;
         ctx.beginPath();
         ctx.rect(-offset, offset / 2, crossWidth, crossHeight);
         ctx.rect(offset - crossWidth, offset / 2, crossWidth, crossHeight);
