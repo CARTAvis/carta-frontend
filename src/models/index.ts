@@ -30,3 +30,4 @@ export * from "./ImagePanelMode";
 export * from "./PolarizationDefinition";
 export * from "./FileFilterMode";
 export * from "./Freq";
+export * from "./AngularSize";
