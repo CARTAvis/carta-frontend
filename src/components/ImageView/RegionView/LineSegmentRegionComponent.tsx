@@ -10,7 +10,7 @@ import {FrameStore, RegionStore} from "stores/Frame";
 import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, subtract2D, angle2D} from "utilities";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {Anchor, NonEditableAnchor} from "./InvariantShapes";
+import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
 
 interface LineSegmentRegionComponentProps {
     region: RegionStore;
@@ -246,6 +246,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 onDragEnd={this.handleAnchorDragEnd}
                 onDragMove={this.handleAnchorDrag}
                 onDblClick={this.props.region.regionType === CARTA.RegionType.LINE ? null : this.handleAnchorDoubleClick}
+                isLineRegion={this.props.region.regionType === CARTA.RegionType.LINE}
             />
         );
     }
@@ -287,7 +288,11 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 });
 
                 if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
-                    const rotatorOffset = 1;
+                    // trigger rotation anchor re-render when zooming
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const zoomLevel = frame.spatialReference?.zoomLevel;
+                    const inverseScale = 1 / this.props.stageRef.current.scaleX();
+                    const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
                     anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true));
                 }
@@ -298,8 +303,6 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
             }
-
-            rotation = (-frame.spatialTransform.rotation * 180.0) / Math.PI;
         } else {
             controlPoints = controlPoints.map(p => {
                 return transformedImageToCanvasPos(p, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
@@ -313,7 +316,11 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 }
 
                 if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
-                    const rotatorOffset = 1;
+                    // trigger rotation anchor re-render when zooming
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const zoomLevel = frame.zoomLevel;
+                    const inverseScale = 1 / this.props.stageRef.current.scaleX();
+                    const rotatorOffset = ROTATOR_ANCHOR_HEIGHT * inverseScale;
                     const rotatorAngle = (rotation * Math.PI) / 180.0;
                     anchors.push(this.anchorNode(centerPointCanvasSpace.x + rotatorOffset * Math.sin(rotatorAngle), centerPointCanvasSpace.y - rotatorOffset * Math.cos(rotatorAngle), rotation, 2, true));
                 }
