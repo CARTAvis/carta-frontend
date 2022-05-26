@@ -699,11 +699,7 @@ export class AppStore {
             const fileId = frame.frameInfo.fileId;
 
             // adjust requirements for stores
-            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
-            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
-            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spatialProfileWidgets, fileId);
-            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId);
-            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId);
+            this.widgetsStore.removeFrameFromRegionWidgets(fileId);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(fileId);
@@ -788,11 +784,7 @@ export class AppStore {
             });
             this.frames = [];
             // adjust requirements for stores
-            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets);
-            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets);
-            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spatialProfileWidgets);
-            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets);
-            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets);
+            this.widgetsStore.removeFrameFromRegionWidgets();
         }
     };
 
@@ -2006,11 +1998,8 @@ export class AppStore {
     @action deleteRegion = (region: RegionStore) => {
         if (region) {
             const frame = this.getFrame(region.fileId);
-            const regionId = region.regionId;
-            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.statsWidgets, region.fileId, regionId);
-            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.histogramWidgets, region.fileId, regionId);
-            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, region.fileId, regionId);
-            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, region.fileId, regionId);
+            // adjust requirements for stores
+            this.widgetsStore.removeRegionFromRegionWidgets(region.fileId, region.regionId);
             // delete region
             if (frame) {
                 frame.regionSet.deleteRegion(region);
