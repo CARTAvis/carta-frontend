@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {FrameStore} from "stores/Frame";
 import {Point2D} from "./Point2D";
-import {GL2, subtract2D} from "utilities";
+import {GL2} from "utilities";
 
 export class ControlMap {
     readonly source: FrameStore;
@@ -64,33 +64,6 @@ export class ControlMap {
     hasTextureForContext = (gl: WebGL2RenderingContext) => {
         return gl === this.gl && this.texture && gl.isTexture(this.texture);
     };
-
-    getTransformedCoordinate(point: Point2D) {
-        const range = subtract2D(this.maxPoint, this.minPoint);
-        const shiftedPoint = subtract2D(point, this.minPoint);
-        const index2D: Point2D = {
-            x: (this.width * shiftedPoint.x) / range.x,
-            y: (this.height * shiftedPoint.y) / range.y
-        };
-
-        const indexFloor = {x: Math.floor(index2D.x), y: Math.floor(index2D.y)};
-        const step = {x: index2D.x - indexFloor.x, y: index2D.y - indexFloor.y};
-
-        // Get the four samples for bilinear interpolation
-        const index00 = indexFloor.y * this.width + indexFloor.x;
-        const index01 = (indexFloor.y + 1) * this.width + indexFloor.x;
-        const index10 = indexFloor.y * this.width + indexFloor.x + 1;
-        const index11 = (indexFloor.y + 1) * this.width + indexFloor.x + 1;
-        const f00 = {x: this.grid[index00 * 2], y: this.grid[index00 * 2 + 1]};
-        const f01 = {x: this.grid[index01 * 2], y: this.grid[index01 * 2 + 1]};
-        const f10 = {x: this.grid[index10 * 2], y: this.grid[index10 * 2 + 1]};
-        const f11 = {x: this.grid[index11 * 2], y: this.grid[index11 * 2 + 1]};
-
-        return {
-            x: f00.x * (1 - step.x) * (1 - step.y) + f10.x * step.x * (1 - step.y) + f01.x * (1 - step.x) * step.y + f11.x * step.x * step.y,
-            y: f00.y * (1 - step.x) * (1 - step.y) + f10.y * step.x * (1 - step.y) + f01.y * (1 - step.x) * step.y + f11.y * step.x * step.y
-        };
-    }
 
     static IsWidthValid(width: number) {
         return width >= 128 && width <= 1024;

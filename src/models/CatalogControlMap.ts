@@ -22,26 +22,9 @@ export class CatalogControlMap {
         this.width = width;
         this.height = height;
 
-        let cleanUpTransform: boolean = false;
-
-        if (astTransform < 0) {
-            const copySrc = AST.copy(src.wcsInfo);
-            const copyDest = AST.copy(dst.wcsInfo);
-            AST.invert(copySrc);
-            AST.invert(copyDest);
-            astTransform = AST.convert(copySrc, copyDest, "");
-            AST.deleteObject(copySrc);
-            AST.deleteObject(copyDest);
-            cleanUpTransform = true;
-        }
-
         this.minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
         this.maxPoint = {x: -Number.MAX_VALUE, y: -Number.MAX_VALUE};
         this.boundaryUpdated = false;
-
-        if (cleanUpTransform) {
-            AST.deleteObject(astTransform);
-        }
     }
 
     hasTextureForContext = (gl2: WebGL2RenderingContext) => {
