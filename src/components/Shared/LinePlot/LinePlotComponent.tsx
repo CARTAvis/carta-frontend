@@ -70,7 +70,7 @@ export interface LinePlotInsideTextMarker {
 export class LinePlotComponentProps {
     width?: number;
     height?: number;
-    data?: {x: number; y: number; z?: number}[];
+    data?: Point2D[];
     comments?: string[];
     xMin?: number;
     xMax?: number;
@@ -122,7 +122,7 @@ export class LinePlotComponentProps {
     insideTexts?: LinePlotInsideTextMarker[];
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
-    fullResolutionData?: {x: number; y: number; z?: number}[];
+    fullResolutionData?: Point2D[];
 }
 
 // Maximum time between double clicks
