@@ -2002,6 +2002,9 @@ export class AppStore {
             this.widgetsStore.removeRegionFromRegionWidgets(region.fileId, region.regionId);
             // delete region
             if (frame) {
+                frame.secondarySpatialImages.forEach(image => {
+                    this.widgetsStore.removeRegionFromRegionWidgets(image.frameInfo.fileId, region.regionId);
+                });
                 frame.regionSet.deleteRegion(region);
             }
         }

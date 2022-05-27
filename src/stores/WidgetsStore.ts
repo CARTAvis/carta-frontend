@@ -324,6 +324,18 @@ export class WidgetsStore {
         });
     };
 
+    @action public removeRegionsFromRegionWidgetsByFrame = (fileId: number) => {
+        this.widgetsMap.forEach(widgets => {
+            widgets.forEach(widgetStore => {
+                if (widgetStore instanceof RegionWidgetStore) {
+                    if (widgetStore.regionIdMap.has(fileId)) {
+                        widgetStore.clearFrameEntry(fileId);
+                    }
+                }
+            });
+        });
+    };
+
     public static ResetWidgetPlotXYBounds(storeMap: Map<string, SpatialProfileWidgetStore | SpectralProfileWidgetStore | HistogramWidgetStore | StokesAnalysisWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
         if (fileId === ACTIVE_FILE_ID) {
             storeMap.forEach(widgetStore => {
