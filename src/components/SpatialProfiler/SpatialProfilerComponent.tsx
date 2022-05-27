@@ -115,8 +115,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
-            let values: Array<{x: number; y: number}>;
-            let fullResolutionValues: Array<{x: number; y: number}>;
+            let values: Array<Point2D>;
+            let fullResolutionValues: Array<Point2D>;
             let smoothingValues: Array<{x: number; y: number}>;
             let N: number;
 
