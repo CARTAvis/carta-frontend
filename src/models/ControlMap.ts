@@ -20,16 +20,16 @@ export class ControlMap {
         this.width = width;
         this.height = height;
         if (updateBoudary) {
-            this.setMinMaxPoint(0, 0, this.source.frameInfo.fileInfoExtended.width, this.source.frameInfo.fileInfoExtended.height);
+            this.setMinMaxPoint(0, 0, this.source.frameInfo.fileInfoExtended.width - 1, this.source.frameInfo.fileInfoExtended.height - 1);
             this.setGrid(astTransform);
         }
     }
 
     setMinMaxPoint = (minX, minY, maxX, maxY) => {
-        const paddingX = Math.ceil(this.source.frameInfo.fileInfoExtended.width / this.width);
-        const paddingY = Math.ceil(this.source.frameInfo.fileInfoExtended.height / this.height);
-        this.minPoint = {x: minX - paddingX, y: minY - paddingY};
-        this.maxPoint = {x: maxX + paddingX, y: maxY + paddingY};
+        const deltaX = (maxX - minX) / (this.width - 3);
+        const deltaY = (maxY - minY) / (this.height - 3);
+        this.minPoint = {x: minX - deltaX, y: minY - deltaY};
+        this.maxPoint = {x: maxX + deltaX * 2, y: maxY + deltaY * 2};
     };
 
     setGrid = (astTransform?: AST.FrameSet) => {
