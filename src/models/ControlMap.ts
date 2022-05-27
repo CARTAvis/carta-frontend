@@ -76,8 +76,4 @@ export class ControlMap {
     hasTextureForContext = (gl: WebGL2RenderingContext) => {
         return gl === this.gl && this.texture && gl.isTexture(this.texture);
     };
-
-    static IsWidthValid(width: number) {
-        return width >= 128 && width <= 1024;
-    }
 }
