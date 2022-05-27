@@ -10,17 +10,19 @@ export class ControlMap {
     readonly height: number;
     minPoint: Point2D;
     maxPoint: Point2D;
+    texture: WebGLTexture;
+    gl: WebGL2RenderingContext;
     private grid: Float32Array;
-    private texture: WebGLTexture;
-    private gl: WebGL2RenderingContext;
 
-    constructor(src: FrameStore, dst: FrameStore, astTransform: AST.FrameSet, width: number, height: number) {
+    constructor(src: FrameStore, dst: FrameStore, astTransform: AST.FrameSet, width: number, height: number, updateBoudary: boolean = true) {
         this.source = src;
         this.destination = dst;
         this.width = width;
         this.height = height;
-        this.setMinMaxPoint(0, 0, this.source.frameInfo.fileInfoExtended.width, this.source.frameInfo.fileInfoExtended.height);
-        this.setGrid(astTransform);
+        if (updateBoudary) {
+            this.setMinMaxPoint(0, 0, this.source.frameInfo.fileInfoExtended.width, this.source.frameInfo.fileInfoExtended.height);
+            this.setGrid(astTransform);
+        }
     }
 
     setMinMaxPoint = (minX, minY, maxX, maxY) => {
@@ -31,7 +33,6 @@ export class ControlMap {
     };
 
     setGrid = (astTransform?: AST.FrameSet) => {
-
         let cleanUpTransform: boolean = false;
 
         if (!astTransform || astTransform < 0) {
