@@ -73,7 +73,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get plotData(): {values: Array<Point2D>; smoothingValues: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number; yMean: number; yRms: number} {
+    @computed get plotData(): {values: Array<Point2D>; fullResolutionValues: Array<Point2D>; smoothingValues: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number; yMean: number; yRms: number} {
         if (!this.frame || !this.width || !this.profileStore) {
             return null;
         }
@@ -115,13 +115,15 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
-            let values: Array<{x: number; y: number}>;
+            let values: Array<Point2D>;
+            let fullResolutionValues: Array<Point2D>;
             let smoothingValues: Array<{x: number; y: number}>;
             let N: number;
 
             if (this.lineAxis) {
                 N = coordinateData.values.length;
                 values = new Array(N);
+                fullResolutionValues = new Array(N);
                 let xArray: number[] = new Array(N);
                 const numPixels = this.width;
                 const decimationFactor = Math.round(N / numPixels);
@@ -144,6 +146,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     xArray[i] = x;
                     if (decimationFactor <= 1) {
                         values[i] = {x, y};
+                    } else {
+                        fullResolutionValues[i] = {x, y};
                     }
                 }
                 if (decimationFactor > 1) {
@@ -192,8 +196,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         }
                     } else {
                         // Decimated data
+                        fullResolutionValues = new Array(N);
                         for (let i = 0; i < N; i++) {
                             const val = coordinateData.values[i + xMin];
+                            const x = coordinateData.start + i + xMin;
                             if (isFinite(val)) {
                                 yMin = Math.min(yMin, val);
                                 yMax = Math.max(yMax, val);
@@ -201,6 +207,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                                 ySum += val;
                                 ySum2 += val * val;
                             }
+                            fullResolutionValues[i] = {x, y: val};
                         }
                         values = this.widgetStore.smoothingStore.getDecimatedPoint2DArray(xArray, coordinateData.values, decimationFactor, xMin, xMax);
                     }
@@ -223,7 +230,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
 
-            return {values: values, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
+            return {values: values, fullResolutionValues, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
         }
     }
 
@@ -488,6 +495,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const currentPlotData = this.plotData;
                 if (currentPlotData) {
                     linePlotProps.data = currentPlotData.values;
+                    linePlotProps.fullResolutionData = currentPlotData.fullResolutionValues;
 
                     // set line color
                     let primaryLineColor = getColorForTheme(widgetStore.primaryLineColor);

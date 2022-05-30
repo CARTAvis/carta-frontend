@@ -70,7 +70,7 @@ export interface LinePlotInsideTextMarker {
 export class LinePlotComponentProps {
     width?: number;
     height?: number;
-    data?: {x: number; y: number; z?: number}[];
+    data?: Point2D[];
     comments?: string[];
     xMin?: number;
     xMax?: number;
@@ -122,6 +122,7 @@ export class LinePlotComponentProps {
     insideTexts?: LinePlotInsideTextMarker[];
     order?: number;
     multiPlotPropsMap?: Map<string, MultiPlotProps>;
+    fullResolutionData?: Point2D[];
 }
 
 // Maximum time between double clicks
@@ -660,7 +661,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             // data part
             rows.push("# x\ty");
             const useScientificForm = plotName === "histogram" || this.props.tickTypeX === TickType.Scientific;
-            rows = rows.concat(this.props.data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
+            const data = this.props.fullResolutionData?.length > 0 ? this.props.fullResolutionData : this.props.data;
+            rows = rows.concat(data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
 
             exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);
         }
