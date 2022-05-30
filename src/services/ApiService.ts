@@ -232,7 +232,7 @@ export class ApiService {
             localStorage.removeItem("oidc_id_token");
             localStorage.removeItem("authenticationType");
 
-            window.open(ApiService.RuntimeConfig.logoutAddress + "?" + usp.toString(), "_self");
+            window.open(`${ApiService.RuntimeConfig.logoutAddress}?${usp.toString()}`, "_self");
         } else if (ApiService.RuntimeConfig.logoutAddress) {
             try {
                 await this.axiosInstance.post(ApiService.RuntimeConfig.logoutAddress);
