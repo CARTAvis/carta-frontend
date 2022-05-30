@@ -147,7 +147,6 @@ export class BackendService {
             [CARTA.EventType.MOMENT_PROGRESS, {messageClass: CARTA.MomentProgress, handler: this.onStreamedMomentProgress}],
             [CARTA.EventType.MOMENT_RESPONSE, {messageClass: CARTA.MomentResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.SCRIPTING_REQUEST, {messageClass: CARTA.ScriptingRequest, handler: this.onScriptingRequest}],
-            [CARTA.EventType.SPLATALOGUE_PONG, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.PV_PROGRESS, {messageClass: CARTA.PvProgress, handler: this.onStreamedPvProgress}],
@@ -749,23 +748,6 @@ export class BackendService {
                 return true;
             }
             return throwError(new Error("Could not send event"));
-        }
-    }
-
-    async pingSplatalogue(): Promise<CARTA.ISplataloguePong> {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            throw new Error("Not connected");
-        } else {
-            const message = CARTA.SplataloguePing.create();
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.SPLATALOGUE_PING, requestId, message, false);
-            if (this.sendEvent(CARTA.EventType.SPLATALOGUE_PING, CARTA.SplataloguePing.encode(message).finish())) {
-                const deferredResponse = new Deferred<CARTA.ISplataloguePong>();
-                this.deferredMap.set(requestId, deferredResponse);
-                return await deferredResponse.promise;
-            } else {
-                throw new Error("Could not send event");
-            }
         }
     }
 

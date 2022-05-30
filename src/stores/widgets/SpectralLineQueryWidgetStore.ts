@@ -3,7 +3,7 @@ import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
-import {BackendService} from "services";
+import {BackendService, SplatalogueService} from "services";
 import {booleanFiltering, numericFiltering, stringFiltering, wavelengthToFrequency, SPEED_OF_LIGHT, ProcessedColumnData, ProtobufProcessing} from "utilities";
 
 export enum SplataloguePingStatus {
@@ -558,15 +558,8 @@ export class SpectralLineQueryWidgetStore {
     };
 
     @action pingSplatalogue = async () => {
-        try {
-            this.splataloguePingStatus = SplataloguePingStatus.Checking;
-            const ack = await BackendService.Instance.pingSplatalogue();
-            this.splataloguePingStatus = ack?.success ? SplataloguePingStatus.Success : SplataloguePingStatus.Failure;
-        } catch (err) {
-            this.splataloguePingStatus = SplataloguePingStatus.Failure;
-            AppStore.Instance.alertStore.showAlert(`${err}`);
-            console.error(err);
-        }
+        const isAlive = await SplatalogueService.Instance.aliveCheck();
+        this.splataloguePingStatus = isAlive ? SplataloguePingStatus.Success : SplataloguePingStatus.Failure;
     };
 
     constructor() {
