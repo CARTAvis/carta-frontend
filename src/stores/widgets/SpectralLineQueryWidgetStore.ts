@@ -3,7 +3,7 @@ import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
-import {BackendService, SplatalogueService} from "services";
+import {SplatalogueService} from "services";
 import {booleanFiltering, numericFiltering, stringFiltering, wavelengthToFrequency, SPEED_OF_LIGHT, ProcessedColumnData, ProtobufProcessing} from "utilities";
 
 export enum SplataloguePingStatus {
@@ -298,9 +298,9 @@ export class SpectralLineQueryWidgetStore {
         }
 
         this.isQuerying = true;
-        const backendService = BackendService.Instance;
+        const splatalogueService = SplatalogueService.Instance;
         try {
-            const ack = await backendService.requestSpectralLine(new CARTA.DoubleBounds({min: freqMHzFrom, max: freqMHzTo}), this.intensityLimitEnabled ? this.intensityLimitValue : NaN);
+            const ack = await splatalogueService.query(freqMHzFrom, freqMHzTo, this.intensityLimitEnabled ? this.intensityLimitValue : NaN);
             if (ack.dataSize >= 0) {
                 runInAction(() => {
                     this.numDataRows = ack.dataSize;
