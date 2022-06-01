@@ -350,9 +350,10 @@ export class CatalogStore {
         let minMax = {minX: Number.MAX_VALUE, maxX: -Number.MAX_VALUE, minY: Number.MAX_VALUE, maxY: -Number.MAX_VALUE};
         this.imageAssociatedCatalogId.get(frameId)?.forEach(catalogId => {
             const coords = this.catalogGLData.get(catalogId);
+            const count = this.catalogCounts.get(catalogId);
             if (coords?.x && coords?.y) {
-                const minMaxX = minMaxArray(coords.x);
-                const minMaxY = minMaxArray(coords.y);
+                const minMaxX = minMaxArray(coords.x.slice(0, count));
+                const minMaxY = minMaxArray(coords.y.slice(0, count));
                 if (minMaxX.minVal < minMax.minX) {
                     minMax.minX = minMaxX.minVal;
                 }
