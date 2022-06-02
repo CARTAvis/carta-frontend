@@ -3,8 +3,8 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, NumberFormatType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/widgets";
-import {AngularSize, AngularSizeUnit, Point2D} from "models";
-import {getFormattedWCSPoint, toExponential} from "utilities";
+import {AngularSize, AngularSizeUnit, Point2D, Transform2D} from "models";
+import {getFormattedWCSPoint, isAstBadPoint, scale2D, toExponential, transformPoint} from "utilities";
 
 export class ImageFittingStore {
     private static staticInstance: ImageFittingStore;
@@ -98,11 +98,15 @@ export class ImageFittingStore {
                 pa: c.pa
             });
         }
+        const fovInfo = this.getFovInfo();
+        const regionId = fovInfo ? -1 : 0;
 
         const message: CARTA.IFittingRequest = {
             fileId: this.effectiveFrame.frameInfo.fileId,
-            initialValues: initialValues,
-            fixedParams: []
+            initialValues,
+            fixedParams: [],
+            regionId,
+            fovInfo
         };
         AppStore.Instance.requestFitting(message);
     };
@@ -192,6 +196,40 @@ export class ImageFittingStore {
 
         frame.setFittingResult(results);
         frame.setFittingLog(log);
+    };
+
+    private getFovInfo = () => {
+        const frame = this.effectiveFrame;
+        if (!frame) {
+            return null;
+        }
+
+        let regionInfo;
+        const regionType = CARTA.RegionType.RECTANGLE;
+
+        // field of view of the effective frame or the base frame
+        let rotation = 0;
+        const baseFrame = frame.spatialReference ?? frame;
+        let center = baseFrame.center;
+        const pixelRatio = baseFrame.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
+        const imageWidth = (pixelRatio * baseFrame.renderWidth) / baseFrame.zoomLevel / baseFrame.aspectRatio;
+        const imageHeight = (pixelRatio * baseFrame.renderHeight) / baseFrame.zoomLevel;
+        let size = {x: imageWidth, y: imageHeight};
+        
+        // transform from the base frame to the effective frame
+        if (frame.spatialReference) {
+            center = transformPoint(frame.spatialTransformAST, center, false);
+            if (isAstBadPoint(center)) {
+                return null;
+            }
+            const transform = new Transform2D(frame.spatialTransformAST, center);
+            size = scale2D(size, 1.0 / transform.scale);
+            rotation = -transform.rotation * 180 / Math.PI;
+        }
+
+        const controlPoints = [center, size];
+        regionInfo = {regionType, rotation, controlPoints};
+        return regionInfo;
     };
 }
 
