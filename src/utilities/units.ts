@@ -43,6 +43,90 @@ export function toFixed(val: number, decimals: number = 0): string {
     return String(val);
 }
 
+export function trimTrailingDecimals(value: string): string {
+    var splitValue: string[] = value.split(".");
+
+    if (splitValue[1] === undefined) {
+        return splitValue[0];
+    } else {
+        for (let i = 0; i < splitValue[1].length; i++) {
+            if (splitValue[1][i] !== "0") {
+                return value;
+            }
+        }
+        return splitValue[0];
+    }
+}
+
+export function trimTrailingZeros(value: string): string {
+    // Trims the trailing zeros from the input decimal value. If
+    // all trailing values are '0', we return only the values
+    // left of the decimal
+
+    var decimals = value.split(".");
+    var trimmed = decimals[1];
+    var temp = [];
+
+    if (typeof decimals[1] != "undefined") {
+        temp = decimals[1].split("");
+    } else {
+        return decimals[0];
+    }
+
+    for (var i = decimals[1].length - 1; i >= 0; i--) {
+        // Check if trailing value is 0 and pop() value if so.
+        if (decimals[1][i] === "0") {
+            temp.pop();
+            trimmed = temp.join("");
+        } else {
+            // Once all trailing values are removed, rebuild full value minus
+            // trailing zeros and return.
+
+            trimmed = decimals[0] + "." + trimmed;
+            return trimmed;
+        }
+    }
+    return decimals[0];
+}
+
+export function getVariablePrecision(value: number): number {
+    // Estimates the precision of input tick value. Input provides
+    // delta between neighboring tick values and iterates through
+    // up to 14 decimal places to determine the approxmiate
+    // precision.
+
+    var decimalPlacement = 0.1;
+    var precision = 1;
+
+    for (var i = 0; i < 9; i++) {
+        if (value < decimalPlacement) {
+            decimalPlacement = 0.1 * decimalPlacement;
+            precision++;
+        } else {
+            return precision;
+        }
+    }
+    
+    return precision;
+}
+
+export function toFormattedNotation(value: number, delta: number): string {
+    if (value === null || isNaN(value)) {
+        return null;
+    }
+    // Determine approximate precision
+    var precision = getVariablePrecision(Math.abs(delta));
+    console.log('delta: ' + delta + '\tprecision: ' + precision);
+
+    var frontDecimalLength = value.toString().split(".")[0].length;
+    var totalPrecision = frontDecimalLength + precision;
+
+    // Trim trailing zeros
+    var trimmedValue = trimTrailingZeros(value.toPrecision(totalPrecision));
+
+    return value < 1 ? trimTrailingDecimals(trimmedValue) : trimTrailingDecimals(trimmedValue);
+}
+
 export function formattedNotation(value: number): string {
     if (value === null || isNaN(value)) {
         return null;

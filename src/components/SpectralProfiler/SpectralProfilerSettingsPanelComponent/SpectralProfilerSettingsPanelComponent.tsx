@@ -1,7 +1,7 @@
 import * as React from "react";
-import {computed, autorun} from "mobx";
+import { action, computed, autorun, /*observable,*/ makeObservable } from 'mobx';
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, Tab, Tabs} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -22,6 +22,8 @@ export enum SpectralProfilerSettingsTabs {
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
+    optionalAxisCursorInfoVisible?: boolean;
+    
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler-floating-settings",
@@ -58,6 +60,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     constructor(props: WidgetProps) {
         super(props);
+        makeObservable(this);
+
+        this.optionalAxisCursorInfoVisible = false;
         const appStore = AppStore.Instance;
         autorun(() => {
             if (this.widgetStore) {
@@ -71,6 +76,14 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             }
         });
     }
+
+    @action setCursorInfo(state:boolean){
+        this.optionalAxisCursorInfoVisible = state;
+    }
+
+    handleOptionalAxisCursorInfoChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.optionalAxisCursorInfoVisible = changeEvent.target.checked;
+    };
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
@@ -184,12 +197,18 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                 <SpectralSettingsComponent
                                     frame={widgetStore.effectiveFrame}
                                     onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                    onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
                                     onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                    optionalAxisCursorInfoVisible={widgetStore.optionalAxisCursorInfoVisible}
                                     disable={widgetStore.effectiveFrame?.isPVImage}
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
                                     <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
                                 </FormGroup>
+                                <FormGroup inline={true} label={"Optional Info"}>
+                                    <Switch checked={widgetStore.optionalAxisCursorInfoVisible} onChange={widgetStore.setOptionalAxisCursorInfoVisible} />
+                                </FormGroup>
+                                
                             </React.Fragment>
                         }
                     />

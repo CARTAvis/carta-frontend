@@ -62,6 +62,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
     @observable settingsTabId: SpectralProfilerSettingsTabs;
 
+    @observable optionalAxisCursorInfoVisible: boolean;
+
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
@@ -82,11 +84,23 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.clearXYBounds();
     };
 
+    //@action setCursorInfo(state:boolean){
+    //    this.optionalAxisCursorInfoVisible = state;
+    //}
+
+
     @action setSpectralCoordinate = (coordStr: string) => {
         if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
             this.clearXBounds();
         }
     };
+
+    @action setSpectralCoordinateSecondary = (coordStr: string) => {
+        if (this.effectiveFrame.setSpectralCoordinateSecondary(coordStr)) {
+            this.clearXBounds();
+        }
+    };
+
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
         if (this.effectiveFrame.setSpectralSystem(specsys)) {
@@ -259,7 +273,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action setMeanRmsVisible = (val: boolean) => {
         this.meanRmsVisible = val;
-    };
+    }
 
     @action setPlotType = (val: PlotType) => {
         this.plotType = val;
@@ -285,6 +299,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = tabId;
     };
 
+    @action setOptionalAxisCursorInfoVisible = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.optionalAxisCursorInfoVisible = changeEvent.target.checked;
+    };
+
+
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
@@ -295,6 +314,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
         this.meanRmsVisible = false;
+        this.optionalAxisCursorInfoVisible = false;
         this.markerTextVisible = false;
         this.primaryLineColor = "auto-blue";
         this.lineColorMap = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor]]);

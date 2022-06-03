@@ -8,9 +8,11 @@ import {SpectralSystem} from "models";
 export class SpectralSettingsComponent extends React.Component<{
     frame: FrameStore;
     onSpectralCoordinateChange: (cooridnate: string) => void;
+    onSpectralCoordinateChangeSecondary?: (cooridnate: string) => void;
     onSpectralSystemChange: (system: string) => void;
     disable: boolean;
     disableChannelOption?: boolean;
+    optionalAxisCursorInfoVisible?: boolean;
 }> {
     render() {
         const frame = this.props.frame;
@@ -25,6 +27,7 @@ export class SpectralSettingsComponent extends React.Component<{
                   return {value: system, label: system};
               })
             : [];
+        
         const hasFrameCoordinateSetting = frame && (frame.isSpectralCoordinateConvertible || (frame.spectralAxis && !frame.spectralAxis.valid));
         const disableCoordinateSetting = this.props.disable || !hasFrameCoordinateSetting;
         const disableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
@@ -39,6 +42,17 @@ export class SpectralSettingsComponent extends React.Component<{
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralCoordinateChange(event.currentTarget.value as string)}
                     />
                 </FormGroup>
+                {this.props.optionalAxisCursorInfoVisible && (
+                    <FormGroup label={"Opt. Coord."} inline={true} disabled={disableCoordinateSetting}>
+                        <HTMLSelect
+                            disabled={disableCoordinateSetting}
+                            value={frame && frame.spectralCoordinateSecondary ? frame.spectralCoordinateSecondary : ""}
+                            options={spectralCoordinateOptions}
+                            onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralCoordinateChangeSecondary(event.currentTarget.value as string)}
+                        />
+                    </FormGroup>
+                )}
+                   
                 <FormGroup label={"System"} inline={true} disabled={disableSystemSetting}>
                     <HTMLSelect
                         disabled={disableSystemSetting}
