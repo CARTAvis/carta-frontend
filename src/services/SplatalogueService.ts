@@ -87,7 +87,7 @@ export class SplatalogueService {
         }
 
         const headerLine = lines[0];
-        const headerEntries = headerLine.split("\t");
+        const headerEntries = headerLine.split(":");
         // First row is header, last row might be empty
         let numDataRows = lines.length - 1;
         if (lines[lines.length - 1] === "") {
@@ -125,7 +125,7 @@ export class SplatalogueService {
         }
 
         for (let i = 1; i <= numDataRows; i++) {
-            const dataEntries = lines[i].split("\t");
+            const dataEntries = lines[i].split(":");
             if (dataEntries.length !== numColumns) {
                 console.warn(`Skipping line with ${dataEntries.length} columns`, dataEntries, lines[i]);
                 continue;
@@ -188,7 +188,7 @@ export class SplatalogueService {
             "&displayRecomb=displayRecomb&displayLisa=displayLisa&displayRFI=displayRFI";
         const lineStrengthParameters = "&ls1=ls1&ls2=ls2&ls3=ls3&ls4=ls4&ls5=ls5";
         const energyLevelParameters = "&el1=el1&el2=el2&el3=el3&el4=el4";
-        const miscellaneousParameters = "&show_unres_qn=show_unres_qn&submit=Export&export_type=current&export_delimiter=tab&offset=0&limit=100000&range=on";
+        const miscellaneousParameters = "&show_unres_qn=show_unres_qn&submit=Export&export_type=current&export_delimiter=colon&offset=0&limit=100000&range=on";
 
         // workaround to fix splatalogue frequency range parameter bug
         const freqMinString = freqMin === Math.floor(freqMin) ? freqMin.toFixed(1) : freqMin.toString();
