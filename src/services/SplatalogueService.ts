@@ -127,7 +127,7 @@ export class SplatalogueService {
         for (let i = 1; i <= numDataRows; i++) {
             const dataEntries = lines[i].split("\t");
             if (dataEntries.length !== numColumns) {
-                console.warn(`Skipping line with data entries ${dataEntries}`);
+                console.warn(`Skipping line with ${dataEntries.length} columns`, dataEntries, lines[i]);
                 continue;
             }
 
@@ -144,10 +144,6 @@ export class SplatalogueService {
         const shiftedData = {};
         let counter = 0;
         for (let i = 0; i < responseData.headers.length; i++) {
-            const header = responseData.headers[i];
-            header.columnIndex = counter;
-            shiftedHeaders.push(header);
-            counter++;
             if (i === restFreqColumn) {
                 shiftedHeaders.push({
                     dataType: CARTA.ColumnType.Double,
@@ -156,6 +152,10 @@ export class SplatalogueService {
                 });
                 counter++;
             }
+            const header = responseData.headers[i];
+            header.columnIndex = counter;
+            shiftedHeaders.push(header);
+            counter++;
         }
         for (let i = 0; i < responseData.headers.length; i++) {
             if (i < restFreqColumn) {

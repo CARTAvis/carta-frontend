@@ -298,9 +298,8 @@ export class SpectralLineQueryWidgetStore {
         }
 
         this.isQuerying = true;
-        const splatalogueService = SplatalogueService.Instance;
         try {
-            const ack = await splatalogueService.query(freqMHzFrom, freqMHzTo, this.intensityLimitEnabled ? this.intensityLimitValue : NaN);
+            const ack = await SplatalogueService.Instance.query(freqMHzFrom, freqMHzTo, this.intensityLimitEnabled ? this.intensityLimitValue : NaN);
             if (ack.dataSize >= 0) {
                 runInAction(() => {
                     this.numDataRows = ack.dataSize;
