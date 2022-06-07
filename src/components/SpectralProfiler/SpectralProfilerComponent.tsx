@@ -13,7 +13,7 @@ import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarCompone
 import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
-import {Point2D, SpectralType, SpectralUnit} from "models";
+import {Point2D, SpectralType} from "models";
 import {FrameStore} from "stores/Frame";
 import {binarySearchByX, clamp, formattedExponential, toFormattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
@@ -167,10 +167,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return this.widgetStore.effectiveFrame.channelInfo.values[channel];
     }
 
-    private precisionFormatting = (nearest: {point: Point2D; index: number}, data: Point2D[]): string => {
-        const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
-
-        return toFormattedNotation(nearest.point.x, diffLeft);
+    private precisionFormatting = (nearest: {point: Point2D; index: number}, data: Point2D[], spectralType:SpectralType): string => {
+        
+        if(spectralType === SpectralType.CHANNEL){
+            const channel = this.widgetStore.effectiveFrame.channelInfo.indexes[nearest.index];
+            return toFixed(channel);
+        } else {
+            const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
+            return toFormattedNotation(nearest.point.x, diffLeft);
+        }
     };
 
     private convertSpectralSpecial = (values: Array<number>, toNative: boolean): Array<number> => {
@@ -191,13 +196,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
-        var cursorInfoString = undefined;
-        var nearestOpt = undefined;
+        let cursorInfoString = undefined;
+        let nearestOpt = undefined;
+        let optionalXUnit = "";
+        
         const nearest = binarySearchByX(data, cursorXValue);
 
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
-            let floatXStr = "";
-            floatXStr = this.precisionFormatting(nearest, data);
+            let primaryXStr = "";
+            primaryXStr = this.precisionFormatting(nearest, data, this.frame.spectralType);
 
             if (this.widgetStore.optionalAxisCursorInfoVisible) {
                 // array used to convert cursor-data -> optional-data
@@ -206,30 +213,21 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 // Point2D copy of input data
                 var optConverted = [];
 
-                const optionalXUnit = this.frame.spectralUnitSecondary;
 
-                if (this.frame.spectralType === SpectralType.CHANNEL) {
-                    const nativeCoord = this.findNativeCoordinateValues(parseInt(cursorXValue.toFixed()));
+                if (this.frame.spectralTypeSecondary === SpectralType.CHANNEL) {
+                    //console.log(nearestOpt);
+                    const optionalXStr = this.precisionFormatting(nearest, optConverted, this.frame.spectralTypeSecondary);
 
-                    var cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), SpectralType.FREQ, SpectralUnit.GHZ, this.frame.spectralSystem, nativeCoord, false);
-                    cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
+                    const xLabel =
+                        cursorXUnit === "Channel"
+                            ? `Channel ${primaryXStr}${optionalXStr ? `, Channel ${optionalXStr}${optionalXUnit}` : ""}`
+                            : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${optionalXStr ? `, Channel ${optionalXStr}${optionalXUnit}` : ""}`;
+                    
+                    cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
 
-                    // Need to make a copy of the original data to convert to optional cursor data. The caveat here is that
-                    // for convertSpectral(...) doesn't work for channel so we must use findNativeCoordinateValues(...) first.
-                    data.forEach(val => {
-                        optional.push(this.findNativeCoordinateValues(val.x));
-                        optConverted.push(Object.assign({}, val));
-                    });
-
-                    optional = this.convertSpectralSpecial(optional, false);
-
-                    // Copy converted data into optional point2D array.
-                    for (let i = 0; i < optConverted.length; ++i) {
-                        optConverted[i].x = optional[i];
-                    }
-
-                    nearestOpt = binarySearchByX(optConverted, cursorXOpt);
                 } else {
+                    optionalXUnit = this.frame.spectralUnitSecondary;
+
                     // Need to make a copy of the original data to convert to optional cursor data
                     data.forEach(val => {
                         optional.push(val.x);
@@ -249,16 +247,21 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
 
                     nearestOpt = binarySearchByX(optConverted, cursorXOpt);
-                }
-                const optionalXStr = this.precisionFormatting(nearestOpt, optConverted);
 
-                const xLabel =
-                    cursorXUnit === "Channel"
-                        ? `Channel ${toFixed(nearest.point.x)}${optionalXStr ? `, ${optionalXStr} ${optionalXUnit}` : ""}`
-                        : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${optionalXStr ? `, ${optionalXStr} ${optionalXUnit}` : ""}`;
-                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+                    console.log('opt near: ' + nearestOpt.point.x);
+                    const optionalXStr = this.precisionFormatting(nearestOpt, optConverted, this.frame.spectralTypeSecondary);
+                    console.log('cursor: ' + optionalXStr);
+
+                    const xLabel =
+                        cursorXUnit === "Channel"
+                            ? `Channel ${primaryXStr}${optionalXStr ? `, ${optionalXStr} ${optionalXUnit}` : ""}`
+                            : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${optionalXStr ? `, ${optionalXStr} ${optionalXUnit}` : ""}`;
+                    
+                    cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+                }
+                
             } else {
-                const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
+                const xLabel = cursorXUnit === "Channel" ? `Channel ${primaryXStr}` : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
                 cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
             }
         }

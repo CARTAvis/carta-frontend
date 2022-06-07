@@ -116,8 +116,6 @@ export function toFormattedNotation(value: number, delta: number): string {
     }
     // Determine approximate precision
     var precision = getVariablePrecision(Math.abs(delta));
-    console.log('delta: ' + delta + '\tprecision: ' + precision);
-
     var frontDecimalLength = value.toString().split(".")[0].length;
     var totalPrecision = frontDecimalLength + precision;
 
