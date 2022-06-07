@@ -25,6 +25,7 @@ pipeline {
                             unstash "protobuf"
                             unstash "wasm_libs"
                             sh 'rm -rf node_modules build'
+                            sh 'n 12'
                             sh 'n exec 12 node -v'
                             sh 'n exec 12 npm install'
                             sh 'n exec 12 npm run build-docker'
@@ -40,6 +41,7 @@ pipeline {
                             unstash "protobuf"
                             unstash "wasm_libs"
                             sh 'rm -rf node_modules build'
+                            sh 'n 14' 
                             sh 'n exec 14 node -v'
                             sh 'n exec 14 npm install'
                             sh 'n exec 14 npm run build-docker'
@@ -55,8 +57,9 @@ pipeline {
                             unstash "protobuf"
                             unstash "wasm_libs"
                             sh 'rm -rf node_modules build'
+                            sh 'n 16'
                             sh 'n exec 16 node -v'
-                            sh 'n exec 16 npm install'
+                            sh 'n exec 16 npm install --legacy-peer-deps'
                             sh 'n exec 16 npm run build-docker'
                         }
                     }
