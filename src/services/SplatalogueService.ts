@@ -1,6 +1,12 @@
 import axios, {AxiosInstance} from "axios";
 import {CARTA} from "carta-protobuf";
 
+export interface SpectralLineResponse {
+    headers: CARTA.ICatalogHeader[];
+    spectralLineData: {[key: string]: CARTA.IColumnData};
+    dataSize: number;
+}
+
 export class SplatalogueService {
     private static BaseUrl = "https://splatalogue.online";
     private readonly axiosInstance: AxiosInstance;
@@ -70,7 +76,7 @@ export class SplatalogueService {
         }
     }
 
-    async query(freqMin: number, freqMax: number, intensityLimit?: number): Promise<CARTA.ISpectralLineResponse> {
+    async query(freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> {
         const url = SplatalogueService.ConstructUrl(freqMin, freqMax, intensityLimit);
         const response = await this.axiosInstance.get(url);
         return SplatalogueService.ConvertTable(response.data);
@@ -100,7 +106,7 @@ export class SplatalogueService {
             throw new Error("Unexpected header data received from Splatalogue");
         }
 
-        const responseData: CARTA.ISpectralLineResponse = {
+        const responseData: SpectralLineResponse = {
             headers: new Array<CARTA.ICatalogHeader>(),
             spectralLineData: {},
             dataSize: numDataRows
