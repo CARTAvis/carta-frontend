@@ -101,7 +101,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-
     @action setSpectralSystem = (specsys: SpectralSystem) => {
         if (this.effectiveFrame.setSpectralSystem(specsys)) {
             this.clearXBounds();

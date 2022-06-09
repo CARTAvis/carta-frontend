@@ -135,6 +135,9 @@ export class FrameStore {
     @observable moving: boolean;
     @observable zooming: boolean;
 
+    //@observable channelOptionalValues: Float64Array;
+    @observable channelOptionalValues: Array<number>;
+
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
     @observable overlayBeamSettings: OverlayBeamStore;
@@ -666,6 +669,10 @@ export class FrameStore {
         return this.spectralType === SpectralType.CHANNEL;
     }
 
+    @computed get isCoordChannelOptional(): boolean {
+        return this.spectralTypeSecondary === SpectralType.CHANNEL;
+    }
+
     @computed get isCoordVelocity(): boolean {
         return this.spectralType === SpectralType.VRAD || this.spectralType === SpectralType.VOPT;
     }
@@ -937,6 +944,7 @@ export class FrameStore {
         this.spectralUnit = null;
         this.spectralTypeSecondary = null;
         this.spectralUnitSecondary = null;
+        this.channelOptionalValues = null;
         this.spectralSystem = null;
         this.channelValues = null;
         this.spectralCoordsSupported = null;
@@ -1179,26 +1187,46 @@ export class FrameStore {
             }
         });
 
-        // if type/unit/specsys/restFreq changes, trigger spectral conversion
         autorun(() => {
+
             const type = this.spectralType;
             const unit = this.spectralUnit;
+            
+            /* eslint-disable @typescript-eslint/no-unused-vars */
+            const specsys = this.spectralSystem;
+            const restFreq = this.restFreqStore.restFreqInHz;
 
+            /* eslint-enable @typescript-eslint/no-unused-vars */
+            if (this.channelInfo) {
+                if ( (!type && !unit) ) {
+                    this.setChannelValues(this.channelInfo.values);
+                } else if (this.isCoordChannel) {
+                    this.setChannelValues(this.channelInfo.indexes);
+                } else {
+                    this.setChannelValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values));
+                }
+            }
+        });
+
+        autorun(() => {
             const typeSecondary = this.spectralTypeSecondary;
             const unitSecondary = this.spectralUnitSecondary;
             
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
             const restFreq = this.restFreqStore.restFreqInHz;
+
             /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
-                if ((!type && !unit) || (!typeSecondary && !unitSecondary)) {
-                //if ((!type && !unit)) {
-                    this.setChannelValues(this.channelInfo.values);
-                } else if (this.isCoordChannel) {
-                    this.setChannelValues(this.channelInfo.indexes);
+                if ( (!typeSecondary && !unitSecondary) ) {
+                    
+                    this.setChannelOptionalValues(this.channelInfo.values);
+                } else if (this.isCoordChannelOptional) {
+                    
+                    this.setChannelOptionalValues(this.channelInfo.indexes);
                 } else {
-                    this.setChannelValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values));
+                    
+                    this.setChannelOptionalValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectralOptional(this.channelInfo.values));
                 }
             }
         });
@@ -1227,6 +1255,16 @@ export class FrameStore {
         }
 
         const convertedArray = AST.transformSpectralPointArray(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, values);
+        return Array.from(convertedArray);
+    };
+
+    private convertSpectralOptional = (values: Array<number>): Array<number> => {
+        const N = values?.length;
+        if (!N || !this.spectralFrame) {
+            return null;
+        }
+
+        const convertedArray = AST.transformSpectralPointArray(this.spectralFrame, this.spectralTypeSecondary, this.spectralUnitSecondary, this.spectralSystem, values);
         return Array.from(convertedArray);
     };
 
@@ -1652,6 +1690,11 @@ export class FrameStore {
 
     @action private setChannelValues(values: number[]) {
         this.channelValues = values;
+    }
+
+    @action private setChannelOptionalValues(values: number[]) {
+        //values.forEach(v => console.log('values: ' + v));
+        this.channelOptionalValues = values;
     }
 
     @action private initSupportedSpectralConversion = () => {

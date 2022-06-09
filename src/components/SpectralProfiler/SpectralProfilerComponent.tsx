@@ -162,19 +162,29 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 33);
 
-    private findNativeCoordinateValues(tick: number): number {
-        const channel = tick;
-        return this.widgetStore.effectiveFrame.channelInfo.values[channel];
-    }
+    //private findNativeCoordinateValues(tick: number): number {
+    //    const channel = tick;
+    //    return this.widgetStore.effectiveFrame.channelInfo.values[channel];
+    //}
 
-    private precisionFormatting = (nearest: {point: Point2D; index: number}, data: Point2D[], spectralType:SpectralType): string => {
-        
+    //private precisionFormatting = (nearest: {point: Point2D; index: number}, data: Point2D[], spectralType:SpectralType): string => {        
+    //    if(spectralType === SpectralType.CHANNEL){
+    //        const channel = this.widgetStore.effectiveFrame.channelInfo.indexes[nearest.index];
+    //        return toFixed(channel);
+    //    } else {
+    //        const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
+    //        return toFormattedNotation(nearest.point.x, diffLeft);
+    //    }
+    //};
+
+    private precisionFormatting = (nearest: {point: Point2D; index: number}, data: number, diff: number, spectralType:SpectralType): string => {        
         if(spectralType === SpectralType.CHANNEL){
+
             const channel = this.widgetStore.effectiveFrame.channelInfo.indexes[nearest.index];
             return toFixed(channel);
         } else {
-            const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
-            return toFormattedNotation(nearest.point.x, diffLeft);
+            
+            return toFormattedNotation(data, diff);
         }
     };
 
@@ -196,28 +206,28 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
-        let cursorInfoString = undefined;
-        let nearestOpt = undefined;
-        let optionalXUnit = "";
+        let diffLeft: number = undefined;
+
+        let optionalXUnit: string = "";
+        let cursorInfoString: string = "";
         
         const nearest = binarySearchByX(data, cursorXValue);
 
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
-            let primaryXStr = "";
-            primaryXStr = this.precisionFormatting(nearest, data, this.frame.spectralType);
+            let primaryXStr: string = "";
+
+            diffLeft = nearest.index - 1 >= 0 ? Math.abs(data[nearest.index].x - data[nearest.index - 1].x) : 0;
+            primaryXStr = this.precisionFormatting(nearest, data[nearest.index].x, diffLeft, this.frame.spectralType);
 
             if (this.widgetStore.optionalAxisCursorInfoVisible) {
-                // array used to convert cursor-data -> optional-data
-                var optional = [];
-
-                // Point2D copy of input data
-                var optConverted = [];
-
 
                 if (this.frame.spectralTypeSecondary === SpectralType.CHANNEL) {
-                    //console.log(nearestOpt);
-                    const optionalXStr = this.precisionFormatting(nearest, optConverted, this.frame.spectralTypeSecondary);
-
+                    let optional = this.widgetStore.effectiveFrame.channelOptionalValues;
+                                        
+                    diffLeft = nearest.index - 1 >= 0 ? Math.abs(optional[nearest.index] - optional[nearest.index - 1]) : 0;
+                    
+                    const optionalXStr = this.precisionFormatting(nearest, optional[nearest.index], diffLeft, this.frame.spectralTypeSecondary);
+                    
                     const xLabel =
                         cursorXUnit === "Channel"
                             ? `Channel ${primaryXStr}${optionalXStr ? `, Channel ${optionalXStr}${optionalXUnit}` : ""}`
@@ -228,29 +238,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 } else {
                     optionalXUnit = this.frame.spectralUnitSecondary;
 
-                    // Need to make a copy of the original data to convert to optional cursor data
-                    data.forEach(val => {
-                        optional.push(val.x);
-                        optConverted.push(Object.assign({}, val));
-                    });
+                    let optional = this.widgetStore.effectiveFrame.channelOptionalValues;
 
-                    // Convert to native coordinates, then convert to desired optional units.
-                    optional = this.convertSpectralSpecial(optional, true);
-                    optional = this.convertSpectralSpecial(optional, false);
-
-                    const nativeCoord = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralType, this.frame.spectralUnit, this.frame.spectralSystem, cursorXValue, false);
-                    const cursorXOpt = AST.transformSpectralPoint(this.frame.returnSpectralFrame(), this.frame.spectralTypeSecondary, this.frame.spectralUnitSecondary, this.frame.spectralSystem, nativeCoord);
-
-                    // Copy converted data into optional point2D array
-                    for (let i = 0; i < optConverted.length; ++i) {
-                        optConverted[i].x = optional[i];
-                    }
-
-                    nearestOpt = binarySearchByX(optConverted, cursorXOpt);
-
-                    console.log('opt near: ' + nearestOpt.point.x);
-                    const optionalXStr = this.precisionFormatting(nearestOpt, optConverted, this.frame.spectralTypeSecondary);
-                    console.log('cursor: ' + optionalXStr);
+                    diffLeft = nearest.index - 1 >= 0 ? Math.abs(optional[nearest.index] - optional[nearest.index - 1]) : 0;
+                    const optionalXStr = this.precisionFormatting(nearest, optional[nearest.index], diffLeft, this.frame.spectralTypeSecondary);
 
                     const xLabel =
                         cursorXUnit === "Channel"
