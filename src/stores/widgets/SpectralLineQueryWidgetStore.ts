@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable, makeObservable, runInAction} from "mobx";
+import {action, autorun, computed, observable, makeObservable, flow} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
@@ -267,7 +267,7 @@ export class SpectralLineQueryWidgetStore {
         this.filterNum = 0;
     };
 
-    @action query = async () => {
+    query = flow(function* (this: SpectralLineQueryWidgetStore) {
         let valueMin = 0;
         let valueMax = 0;
         if (this.queryRangeType === SpectralLineQueryRangeType.Range) {
@@ -299,17 +299,15 @@ export class SpectralLineQueryWidgetStore {
 
         this.isQuerying = true;
         try {
-            const ack = await SplatalogueService.Instance.query(freqMHzFrom, freqMHzTo, this.intensityLimitEnabled ? this.intensityLimitValue : NaN);
+            const ack = yield SplatalogueService.Instance.query(freqMHzFrom, freqMHzTo, this.intensityLimitEnabled ? this.intensityLimitValue : NaN);
             if (ack.dataSize >= 0) {
-                runInAction(() => {
-                    this.numDataRows = ack.dataSize;
-                    this.columnHeaders = this.preprocessHeaders(ack.headers);
-                    this.controlHeader = this.initControlHeader(this.columnHeaders);
-                    this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
-                    this.updateFilterResult(this.fullRowIndexes);
-                    this.isDataFiltered = false;
-                    this.filterNum = 0;
-                });
+                this.numDataRows = ack.dataSize;
+                this.columnHeaders = this.preprocessHeaders(ack.headers);
+                this.controlHeader = this.initControlHeader(this.columnHeaders);
+                this.queryResult = this.initColumnData(ack.spectralLineData, ack.dataSize, this.columnHeaders);
+                this.updateFilterResult(this.fullRowIndexes);
+                this.isDataFiltered = false;
+                this.filterNum = 0;
             } else {
                 this.resetQueryContents();
             }
@@ -318,7 +316,7 @@ export class SpectralLineQueryWidgetStore {
             alertStore.showAlert(err);
         }
         this.isQuerying = false;
-    };
+    }).bind(this);
 
     @action setColumnFilter = (filterInput: string, columnName: string) => {
         if (!this.controlHeader.has(columnName)) {
@@ -556,10 +554,11 @@ export class SpectralLineQueryWidgetStore {
         }
     };
 
-    @action pingSplatalogue = async () => {
-        const isAlive = await SplatalogueService.Instance.aliveCheck();
+    pingSplatalogue = flow(function* pingSplatalogue(this: SpectralLineQueryWidgetStore) {
+        this.splataloguePingStatus = SplataloguePingStatus.Checking;
+        const isAlive = yield SplatalogueService.Instance.aliveCheck();
         this.splataloguePingStatus = isAlive ? SplataloguePingStatus.Success : SplataloguePingStatus.Failure;
-    };
+    }).bind(this);
 
     constructor() {
         makeObservable(this);
