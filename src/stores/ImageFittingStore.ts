@@ -3,8 +3,8 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, NumberFormatType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/widgets";
-import {AngularSize, AngularSizeUnit, Point2D, Transform2D} from "models";
-import {getFormattedWCSPoint, isAstBadPoint, scale2D, toExponential, transformPoint} from "utilities";
+import {AngularSize, AngularSizeUnit, Point2D} from "models";
+import {angle2D, getFormattedWCSPoint, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
 
 export class ImageFittingStore {
     private static staticInstance: ImageFittingStore;
@@ -218,13 +218,40 @@ export class ImageFittingStore {
         
         // transform from the base frame to the effective frame
         if (frame.spatialReference) {
-            center = transformPoint(frame.spatialTransformAST, center, false);
-            if (isAstBadPoint(center)) {
+            if (frame.spatialTransform) {
+                center = subtract2D(center, frame.spatialTransform.translation);
+                size = scale2D(size, 1.0 / frame.spatialTransform.scale);
+                rotation = -frame.spatialTransform.rotation * 180 / Math.PI;
+            } else {
+                console.log("failed to find fov of the matched image, fit the entire image instead");
                 return null;
             }
-            const transform = new Transform2D(frame.spatialTransformAST, center);
-            size = scale2D(size, 1.0 / transform.scale);
-            rotation = -transform.rotation * 180 / Math.PI;
+        }
+
+        // set region id to 0 if fov includes the entire image
+        const width = frame.frameInfo?.fileInfoExtended?.width;
+        const height = frame.frameInfo?.fileInfoExtended?.height;
+        const imageCorners: Point2D[] = [
+            {x: -0.5, y: -0.5},
+            {x: width - 0.5, y: -0.5},
+            {x: -0.5, y: height - 0.5},
+            {x: width - 0.5, y: height - 0.5}
+        ];
+        const fovXDir = rotate2D({x: 1, y: 0}, rotation * Math.PI / 180);
+        let isEntireImage = true;
+        for (const imageCorner of imageCorners) {
+            const distToFovCenter = pointDistance(center, imageCorner);
+            const projectionAngle = angle2D(fovXDir, subtract2D(center, imageCorner));
+            const dx = distToFovCenter * Math.cos(projectionAngle);
+            const dy = distToFovCenter * Math.sin(projectionAngle);
+            const isOutsideFov = Math.abs(dx) - size.x * 0.5 > 1e-7 || Math.abs(dy) - size.y * 0.5 > 1e-7;
+            if (isOutsideFov) {
+                isEntireImage = false;
+                break;
+            }
+        }
+        if (isEntireImage) {
+            return null;
         }
 
         const controlPoints = [center, size];
