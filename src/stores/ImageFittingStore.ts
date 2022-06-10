@@ -1,7 +1,7 @@
 import {action, observable, makeObservable, computed} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, NumberFormatType} from "stores";
-import {FrameStore} from "stores/Frame";
+import {FrameStore, RegionStore} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/widgets";
 import {AngularSize, AngularSizeUnit, Point2D} from "models";
 import {angle2D, getFormattedWCSPoint, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
@@ -111,14 +111,19 @@ export class ImageFittingStore {
         AppStore.Instance.requestFitting(message);
     };
 
-    setResultString = (values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], log: string) => {
+    setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], fittingLog: string) => {
         const frame = this.effectiveFrame;
         if (!frame || !values || !errors) {
             return;
         }
 
         let results = "";
-        log += "\n";
+        let log = "";
+
+        log += `Image: ${frame.filename}\n`;
+        log += this.getRegionInfoLog(regionId, fovInfo) + "\n";
+        log += fittingLog + "\n";
+
         const toFixFormat = (param: string, value: number | string, error: number, unit: string): string => {
             return `${param} = ${typeof value === "string" ? value : value?.toFixed(6)} +/- ${error?.toFixed(6)}${unit ? ` (${unit})` : ""}\n`;
         };
@@ -215,13 +220,13 @@ export class ImageFittingStore {
         const imageWidth = (pixelRatio * baseFrame.renderWidth) / baseFrame.zoomLevel / baseFrame.aspectRatio;
         const imageHeight = (pixelRatio * baseFrame.renderHeight) / baseFrame.zoomLevel;
         let size = {x: imageWidth, y: imageHeight};
-        
+
         // transform from the base frame to the effective frame
         if (frame.spatialReference) {
             if (frame.spatialTransform) {
                 center = subtract2D(center, frame.spatialTransform.translation);
                 size = scale2D(size, 1.0 / frame.spatialTransform.scale);
-                rotation = -frame.spatialTransform.rotation * 180 / Math.PI;
+                rotation = (-frame.spatialTransform.rotation * 180) / Math.PI;
             } else {
                 console.log("failed to find fov of the matched image, fit the entire image instead");
                 return null;
@@ -237,7 +242,7 @@ export class ImageFittingStore {
             {x: -0.5, y: height - 0.5},
             {x: width - 0.5, y: height - 0.5}
         ];
-        const fovXDir = rotate2D({x: 1, y: 0}, rotation * Math.PI / 180);
+        const fovXDir = rotate2D({x: 1, y: 0}, (rotation * Math.PI) / 180);
         let isEntireImage = true;
         for (const imageCorner of imageCorners) {
             const distToFovCenter = pointDistance(center, imageCorner);
@@ -257,6 +262,16 @@ export class ImageFittingStore {
         const controlPoints = [center, size];
         regionInfo = {regionType, rotation, controlPoints};
         return regionInfo;
+    };
+
+    private getRegionInfoLog = (regionId: number, fovInfo: CARTA.IRegionInfo): string => {
+        let log = `Region: ${regionId === -1 ? "field of view" : "entire image"}\n`;
+
+        if (regionId === -1) {
+            log += RegionStore.GetRegionProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+            log += this.effectiveFrame.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+        }
+        return log;
     };
 }
 
