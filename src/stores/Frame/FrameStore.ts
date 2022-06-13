@@ -2110,6 +2110,8 @@ export class FrameStore {
         for (const region of this.frameRegionSet.regions) {
             this.frameRegionSet.deleteRegion(region);
         }
+
+        AppStore.Instance.widgetsStore.removeRegionsFromRegionWidgetsByFrame(this.frameInfo.fileId);
         return true;
     };
 
@@ -2154,6 +2156,8 @@ export class FrameStore {
             this.removeCatalogControlMap(frame);
         });
         this.catalogControlMaps.clear();
+
+        AppStore.Instance.widgetsStore.removeRegionsFromRegionWidgetsByFrame(this.frameInfo.fileId);
     };
 
     @action addSecondarySpatialImage = (frame: FrameStore) => {
