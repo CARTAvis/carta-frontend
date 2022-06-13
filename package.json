@@ -49,7 +49,7 @@
         "prettier": "2.6.2",
         "preval.macro": "^5.0.0",
         "prismjs": "^1.23.0",
-        "protobufjs": "6.9.0",
+        "protobufjs": "6.11.3",
         "raw-loader": "^4.0.2",
         "react": "^17.0.1",
         "react-chartjs-2": "^3.1.1",
