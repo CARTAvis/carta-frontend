@@ -59,8 +59,6 @@ pipeline {
                             sh 'rm -rf node_modules build'
                             sh 'n 16'
                             sh 'n exec 16 node -v'
-                            sh 'n exec 16 npm uninstall node-sass --legacy-peer-deps' 
-                            sh 'n exec 16 npm install --save-dev --legacy-peer-deps sass'
                             sh 'n exec 16 npm run build-docker'
                         }
                     }
