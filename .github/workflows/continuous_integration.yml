@@ -8,6 +8,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '14'
-          cache: 'npm'
+          # Disabling temporarily due to https://github.com/actions/setup-node/issues/516
+          # cache: 'npm'
       - run: npm install
       - run: npm run checkformat
