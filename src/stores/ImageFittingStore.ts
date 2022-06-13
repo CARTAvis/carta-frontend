@@ -224,7 +224,7 @@ export class ImageFittingStore {
         // transform from the base frame to the effective frame
         if (frame.spatialReference) {
             if (frame.spatialTransform) {
-                center = subtract2D(center, frame.spatialTransform.translation);
+                center = frame.spatialTransform.transformCoordinate(center, false);
                 size = scale2D(size, 1.0 / frame.spatialTransform.scale);
                 rotation = (-frame.spatialTransform.rotation * 180) / Math.PI;
             } else {

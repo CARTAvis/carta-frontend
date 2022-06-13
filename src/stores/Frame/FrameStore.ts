@@ -1591,7 +1591,6 @@ export class FrameStore {
 
     public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string => {
         const centerPoint = controlPoints[CENTER_POINT_INDEX];
-        const sizePoint = controlPoints[SIZE_POINT_INDEX];
         if (!this.validWcs || !isFinite(centerPoint.x) || !isFinite(centerPoint.y)) {
             return "Invalid";
         }
@@ -1602,8 +1601,6 @@ export class FrameStore {
         }
 
         const center = regionId === RegionId.CURSOR ? `${this.cursorInfo?.infoWCS?.x}, ${this.cursorInfo?.infoWCS?.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
-        const wcsSize = this.getWcsSizeInArcsec(sizePoint);
-        const size = {x: formattedArcsec(wcsSize?.x, WCS_PRECISION), y: formattedArcsec(wcsSize?.y, WCS_PRECISION)};
         const systemType = OverlayStore.Instance.global.explicitSystem;
 
         switch (regionType) {
@@ -1614,9 +1611,15 @@ export class FrameStore {
                 const wcsEndPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[1]);
                 return `Line (wcs:${systemType}) [[${wcsStartPoint.x}, ${wcsStartPoint.y}], [${wcsEndPoint.x}, ${wcsEndPoint.y}]]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x ?? ""}, ${size.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
+                const recSizePoint = controlPoints[SIZE_POINT_INDEX];
+                const recWcsSize = this.getWcsSizeInArcsec(recSizePoint);
+                const recSize = {x: formattedArcsec(recWcsSize?.x, WCS_PRECISION), y: formattedArcsec(recWcsSize?.y, WCS_PRECISION)};
+                return `rotbox(wcs:${systemType})[[${center}], [${recSize.x ?? ""}, ${recSize.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${size.x ?? ""}, ${size.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
+                const ellipseSizePoint = controlPoints[SIZE_POINT_INDEX];
+                const ellipseWcsSize = this.getWcsSizeInArcsec(ellipseSizePoint);
+                const ellipseSize = {x: formattedArcsec(ellipseWcsSize?.x, WCS_PRECISION), y: formattedArcsec(ellipseWcsSize?.y, WCS_PRECISION)};
+                return `ellipse(wcs:${systemType})[[${center}], [${ellipseSize.x ?? ""}, ${ellipseSize.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
                 let polygonWcsProperties = `poly(wcs:${systemType})[`;
                 controlPoints.forEach((point, index) => {
