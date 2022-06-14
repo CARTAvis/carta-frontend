@@ -1,5 +1,5 @@
 import * as React from "react";
-import { action, computed, autorun, /*observable,*/ makeObservable } from 'mobx';
+import {action, computed, autorun, /*observable,*/ makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
@@ -23,7 +23,7 @@ export enum SpectralProfilerSettingsTabs {
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
     optionalAxisCursorInfoVisible?: boolean;
-    
+
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler-floating-settings",
@@ -77,7 +77,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         });
     }
 
-    @action setCursorInfo(state:boolean){
+    @action setCursorInfo(state: boolean) {
         this.optionalAxisCursorInfoVisible = state;
     }
 
@@ -208,7 +208,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                 <FormGroup inline={true} label={"Optional Info"}>
                                     <Switch checked={widgetStore.optionalAxisCursorInfoVisible} onChange={widgetStore.setOptionalAxisCursorInfoVisible} />
                                 </FormGroup>
-                                
                             </React.Fragment>
                         }
                     />

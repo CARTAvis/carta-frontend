@@ -27,7 +27,7 @@ export class SpectralSettingsComponent extends React.Component<{
                   return {value: system, label: system};
               })
             : [];
-        
+
         const hasFrameCoordinateSetting = frame && (frame.isSpectralCoordinateConvertible || (frame.spectralAxis && !frame.spectralAxis.valid));
         const disableCoordinateSetting = this.props.disable || !hasFrameCoordinateSetting;
         const disableSystemSetting = this.props.disable || !frame || !frame.isSpectralSystemConvertible;
@@ -52,7 +52,7 @@ export class SpectralSettingsComponent extends React.Component<{
                         />
                     </FormGroup>
                 )}
-                   
+
                 <FormGroup label={"System"} inline={true} disabled={disableSystemSetting}>
                     <HTMLSelect
                         disabled={disableSystemSetting}

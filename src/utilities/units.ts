@@ -106,7 +106,7 @@ export function getVariablePrecision(value: number): number {
             return precision;
         }
     }
-    
+
     return precision;
 }
 

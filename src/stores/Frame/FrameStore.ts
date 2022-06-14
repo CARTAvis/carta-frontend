@@ -1188,17 +1188,16 @@ export class FrameStore {
         });
 
         autorun(() => {
-
             const type = this.spectralType;
             const unit = this.spectralUnit;
-            
+
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
             const restFreq = this.restFreqStore.restFreqInHz;
 
             /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
-                if ( (!type && !unit) ) {
+                if (!type && !unit) {
                     this.setChannelValues(this.channelInfo.values);
                 } else if (this.isCoordChannel) {
                     this.setChannelValues(this.channelInfo.indexes);
@@ -1211,21 +1210,18 @@ export class FrameStore {
         autorun(() => {
             const typeSecondary = this.spectralTypeSecondary;
             const unitSecondary = this.spectralUnitSecondary;
-            
+
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
             const restFreq = this.restFreqStore.restFreqInHz;
 
             /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
-                if ( (!typeSecondary && !unitSecondary) ) {
-                    
+                if (!typeSecondary && !unitSecondary) {
                     this.setChannelOptionalValues(this.channelInfo.values);
                 } else if (this.isCoordChannelOptional) {
-                    
                     this.setChannelOptionalValues(this.channelInfo.indexes);
                 } else {
-                    
                     this.setChannelOptionalValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectralOptional(this.channelInfo.values));
                 }
             }

@@ -88,7 +88,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     //    this.optionalAxisCursorInfoVisible = state;
     //}
 
-
     @action setSpectralCoordinate = (coordStr: string) => {
         if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
             this.clearXBounds();
@@ -272,7 +271,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action setMeanRmsVisible = (val: boolean) => {
         this.meanRmsVisible = val;
-    }
+    };
 
     @action setPlotType = (val: PlotType) => {
         this.plotType = val;
@@ -301,7 +300,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setOptionalAxisCursorInfoVisible = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.optionalAxisCursorInfoVisible = changeEvent.target.checked;
     };
-
 
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
