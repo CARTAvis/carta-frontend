@@ -6,6 +6,9 @@ import {ACTIVE_FILE_ID} from "stores/widgets";
 import {AngularSize, AngularSizeUnit, Point2D} from "models";
 import {angle2D, getFormattedWCSPoint, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
 
+const FOV_REGION_ID = 0;
+const IMAGE_REGION_ID = -1;
+
 export class ImageFittingStore {
     private static staticInstance: ImageFittingStore;
 
@@ -99,7 +102,7 @@ export class ImageFittingStore {
             });
         }
         const fovInfo = this.getFovInfo();
-        const regionId = fovInfo ? -1 : 0;
+        const regionId = fovInfo ? FOV_REGION_ID : IMAGE_REGION_ID;
 
         const message: CARTA.IFittingRequest = {
             fileId: this.effectiveFrame.frameInfo.fileId,
@@ -265,9 +268,9 @@ export class ImageFittingStore {
     };
 
     private getRegionInfoLog = (regionId: number, fovInfo: CARTA.IRegionInfo): string => {
-        let log = `Region: ${regionId === -1 ? "field of view" : "entire image"}\n`;
+        let log = `Region: ${regionId === FOV_REGION_ID ? "field of view" : "entire image"}\n`;
 
-        if (regionId === -1) {
+        if (regionId === FOV_REGION_ID) {
             log += RegionStore.GetRegionProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
             log += this.effectiveFrame.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
         }
