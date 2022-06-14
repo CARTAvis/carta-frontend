@@ -292,29 +292,47 @@ export class WidgetsStore {
         ]
     ]);
 
-    public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = ACTIVE_FILE_ID) {
-        if (fileId === ACTIVE_FILE_ID) {
-            storeMap.forEach(widgetStore => {
-                widgetStore.clearRegionMap();
-                widgetStore.setFileId(ACTIVE_FILE_ID);
-            });
-        } else {
-            storeMap.forEach(widgetStore => {
-                widgetStore.clearFrameEntry(fileId);
-                if (widgetStore.fileId === fileId) {
-                    widgetStore.setFileId(ACTIVE_FILE_ID);
+    @action public removeFrameFromRegionWidgets(fileId: number = ACTIVE_FILE_ID) {
+        this.widgetsMap.forEach(widgets => {
+            widgets.forEach(widgetStore => {
+                if (widgetStore instanceof RegionWidgetStore) {
+                    if (fileId === ACTIVE_FILE_ID) {
+                        widgetStore.clearRegionMap();
+                        widgetStore.setFileId(ACTIVE_FILE_ID);
+                    } else {
+                        widgetStore.clearFrameEntry(fileId);
+                        if (widgetStore.fileId === fileId) {
+                            widgetStore.setFileId(ACTIVE_FILE_ID);
+                        }
+                    }
                 }
             });
-        }
+        });
     }
 
-    public static RemoveRegionFromRegionWidgets = (storeMap: Map<string, RegionWidgetStore>, fileId, regionId: number) => {
-        storeMap.forEach(widgetStore => {
-            const selectedRegionId = widgetStore.regionIdMap.get(fileId);
-            // remove entry from map if it matches the deleted region
-            if (isFinite(selectedRegionId) && selectedRegionId === regionId) {
-                widgetStore.clearFrameEntry(fileId);
-            }
+    @action public removeRegionFromRegionWidgets = (fileId: number, regionId: number) => {
+        this.widgetsMap.forEach(widgets => {
+            widgets.forEach(widgetStore => {
+                if (widgetStore instanceof RegionWidgetStore) {
+                    const selectedRegionId = widgetStore.regionIdMap.get(fileId);
+                    // remove entry from map if it matches the deleted region
+                    if (isFinite(selectedRegionId) && selectedRegionId === regionId) {
+                        widgetStore.clearFrameEntry(fileId);
+                    }
+                }
+            });
+        });
+    };
+
+    @action public removeRegionsFromRegionWidgetsByFrame = (fileId: number) => {
+        this.widgetsMap.forEach(widgets => {
+            widgets.forEach(widgetStore => {
+                if (widgetStore instanceof RegionWidgetStore) {
+                    if (widgetStore.regionIdMap.has(fileId)) {
+                        widgetStore.clearFrameEntry(fileId);
+                    }
+                }
+            });
         });
     };
 
