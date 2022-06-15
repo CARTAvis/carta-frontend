@@ -55,7 +55,7 @@ export class BackendService {
         return BackendService.staticInstance;
     }
 
-    private static readonly IcdVersion = 27;
+    private static readonly IcdVersion = 28;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     private static readonly MaxConnectionAttempts = 15;
     private static readonly ConnectionAttemptDelay = 1000;
@@ -147,8 +147,6 @@ export class BackendService {
             [CARTA.EventType.MOMENT_PROGRESS, {messageClass: CARTA.MomentProgress, handler: this.onStreamedMomentProgress}],
             [CARTA.EventType.MOMENT_RESPONSE, {messageClass: CARTA.MomentResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.SCRIPTING_REQUEST, {messageClass: CARTA.ScriptingRequest, handler: this.onScriptingRequest}],
-            [CARTA.EventType.SPLATALOGUE_PONG, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
-            [CARTA.EventType.SPECTRAL_LINE_RESPONSE, {messageClass: CARTA.SpectralLineResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.PV_PROGRESS, {messageClass: CARTA.PvProgress, handler: this.onStreamedPvProgress}],
             [CARTA.EventType.PV_RESPONSE, {messageClass: CARTA.PvResponse, handler: this.onDeferredResponse}],
@@ -560,7 +558,7 @@ export class BackendService {
     }
 
     @action("set spatial requirements")
-    setSpatialRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
+    setSpatialRequirements(requirementsMessage: CARTA.ISetSpatialRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
             if (this.sendEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, CARTA.SetSpatialRequirements.encode(requirementsMessage).finish())) {
@@ -749,40 +747,6 @@ export class BackendService {
                 return true;
             }
             return throwError(new Error("Could not send event"));
-        }
-    }
-
-    async pingSplatalogue(): Promise<CARTA.ISplataloguePong> {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            throw new Error("Not connected");
-        } else {
-            const message = CARTA.SplataloguePing.create();
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.SPLATALOGUE_PING, requestId, message, false);
-            if (this.sendEvent(CARTA.EventType.SPLATALOGUE_PING, CARTA.SplataloguePing.encode(message).finish())) {
-                const deferredResponse = new Deferred<CARTA.ISplataloguePong>();
-                this.deferredMap.set(requestId, deferredResponse);
-                return await deferredResponse.promise;
-            } else {
-                throw new Error("Could not send event");
-            }
-        }
-    }
-
-    async requestSpectralLine(frequencyRange: CARTA.DoubleBounds, intensityLimit: number): Promise<CARTA.ISpectralLineResponse> {
-        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-            throw new Error("Not connected");
-        } else {
-            const message = CARTA.SpectralLineRequest.create({frequencyRange: frequencyRange, lineIntensityLowerLimit: intensityLimit});
-            const requestId = this.eventCounter;
-            this.logEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, requestId, message, false);
-            if (this.sendEvent(CARTA.EventType.SPECTRAL_LINE_REQUEST, CARTA.SpectralLineRequest.encode(message).finish())) {
-                const deferredResponse = new Deferred<CARTA.ISpectralLineResponse>();
-                this.deferredMap.set(requestId, deferredResponse);
-                return await deferredResponse.promise;
-            } else {
-                throw new Error("Could not send event");
-            }
         }
     }
 
