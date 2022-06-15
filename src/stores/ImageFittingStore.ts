@@ -212,9 +212,6 @@ export class ImageFittingStore {
             return null;
         }
 
-        let regionInfo;
-        const regionType = CARTA.RegionType.RECTANGLE;
-
         // field of view of the effective frame or the base frame
         let rotation = 0;
         const baseFrame = frame.spatialReference ?? frame;
@@ -236,7 +233,7 @@ export class ImageFittingStore {
             }
         }
 
-        // set region id to 0 if fov includes the entire image
+        // set region id to IMAGE_REGION_ID if fov includes the entire image
         const width = frame.frameInfo?.fileInfoExtended?.width;
         const height = frame.frameInfo?.fileInfoExtended?.height;
         const imageCorners: Point2D[] = [
@@ -263,7 +260,8 @@ export class ImageFittingStore {
         }
 
         const controlPoints = [center, size];
-        regionInfo = {regionType, rotation, controlPoints};
+        const regionType = CARTA.RegionType.RECTANGLE;
+        const regionInfo = {regionType, rotation, controlPoints};
         return regionInfo;
     };
 
