@@ -216,7 +216,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     nearestIndex = channelInfo.getChannelIndexWCS(zIndex);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const nativeX = frame.convertToNativeWCS(x);
+                    const nativeX = frame.convertToNativeWCS(zIndex);
                     if (isFinite(nativeX)) {
                         nearestIndex = channelInfo.getChannelIndexWCS(nativeX);
                     }
