@@ -24,7 +24,7 @@ export class AboutDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={700} enableResizing={false}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={705} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src="carta_logo.png" width={80} />
@@ -80,6 +80,12 @@ export class AboutDialogComponent extends React.Component {
                             Documentation is available{" "}
                             <a href="https://carta.readthedocs.io/en/3.0" rel="noopener noreferrer" target="_blank">
                                 online
+                            </a>
+                        </li>
+                        <li>
+                            User data collection policy is available{" "}
+                            <a href="https://cartavis.org/telemetry" rel="noopener noreferrer" target="_blank">
+                                here
                             </a>
                         </li>
                     </ul>
