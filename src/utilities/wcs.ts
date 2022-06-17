@@ -196,6 +196,9 @@ export function getApproximatePolygonPoints(astTransform: AST.FrameSet, controlP
             const p = add2D(p0, scale2D(dir, j * segmentSubdivisionLength));
             approxPointsOriginalSpace.push(p);
         }
+        if (i === M - 1 && !closed) {
+            approxPointsOriginalSpace.push(p1);
+        }
     }
 
     const N = approxPointsOriginalSpace.length;
