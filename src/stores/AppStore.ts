@@ -806,8 +806,21 @@ export class AppStore {
     };
 
     // Open catalog file
-    appendCatalog = async (directory: string, file: string, previewDataSize: number = CatalogProfileStore.InitTableRows) => {
+    appendCatalog = async (directory: string, filename: string, previewDataSize: number = CatalogProfileStore.InitTableRows) => {
         return new Promise<number>((resolve, reject) => {
+            if (!filename) {
+                const lastDirSeparator = directory.lastIndexOf("/");
+                if (lastDirSeparator >= 0) {
+                    filename = directory.substring(lastDirSeparator + 1);
+                    directory = directory.substring(0, lastDirSeparator);
+                }
+            } else if (!directory && filename.includes("/")) {
+                const lastDirSeparator = filename.lastIndexOf("/");
+                if (lastDirSeparator >= 0) {
+                    directory = filename.substring(0, lastDirSeparator);
+                    filename = filename.substring(lastDirSeparator + 1);
+                }
+            }
             if (!this.activeFrame) {
                 AppToaster.show(ErrorToast("Please load the image file"));
                 throw new Error("No image file");
@@ -817,12 +830,12 @@ export class AppStore {
             const frame = this.activeFrame;
             const fileId = this.catalogNextFileId;
 
-            this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).then(
+            this.backendService.loadCatalogFile(directory, filename, fileId, previewDataSize).then(
                 ack =>
                     runInAction(() => {
                         this.endFileLoading();
                         if (frame && ack.success && ack.dataSize) {
-                            let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                            let catalogInfo: CatalogInfo = {fileId, directory: directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                             const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
                             let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
                             if (catalogWidgetId) {
