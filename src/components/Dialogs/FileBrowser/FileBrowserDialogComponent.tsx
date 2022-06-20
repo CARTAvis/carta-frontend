@@ -10,7 +10,7 @@ import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoCompo
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SimpleTableComponentProps} from "components/Shared";
-import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BrowserMode, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import "./FileBrowserDialogComponent.scss";
 
@@ -135,7 +135,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 frame = await appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
-            await appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, file.fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
+            await appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, file.fileInfo.name);
         } else {
             fileBrowserStore.setImportingRegions(true);
             fileBrowserStore.showLoadingDialog();

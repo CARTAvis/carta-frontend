@@ -806,15 +806,11 @@ export class AppStore {
     };
 
     // Open catalog file
-    appendCatalog = async (directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) => {
+    appendCatalog = async (directory: string, file: string, previewDataSize: number = CatalogProfileStore.InitTableRows) => {
         return new Promise<number>((resolve, reject) => {
             if (!this.activeFrame) {
                 AppToaster.show(ErrorToast("Please load the image file"));
                 throw new Error("No image file");
-            }
-            if (!(type === CARTA.CatalogFileType.VOTable)) {
-                AppToaster.show(ErrorToast("Catalog type not supported"));
-                throw new Error("Catalog type not supported");
             }
             this.startFileLoading();
 
