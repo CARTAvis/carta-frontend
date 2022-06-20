@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import {action, autorun, computed, makeObservable, observable, ObservableMap, runInAction, when} from "mobx";
+import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
 import * as Long from "long";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
@@ -806,61 +806,56 @@ export class AppStore {
     };
 
     // Open catalog file
-    appendCatalog = async (directory: string, filename: string, previewDataSize: number = CatalogProfileStore.InitTableRows) => {
-        return new Promise<number>((resolve, reject) => {
-            if (!filename) {
-                const lastDirSeparator = directory.lastIndexOf("/");
-                if (lastDirSeparator >= 0) {
-                    filename = directory.substring(lastDirSeparator + 1);
-                    directory = directory.substring(0, lastDirSeparator);
-                }
-            } else if (!directory && filename.includes("/")) {
-                const lastDirSeparator = filename.lastIndexOf("/");
-                if (lastDirSeparator >= 0) {
-                    directory = filename.substring(0, lastDirSeparator);
-                    filename = filename.substring(lastDirSeparator + 1);
-                }
+    @flow.bound *appendCatalog(directory: string, filename: string, previewDataSize: number = CatalogProfileStore.InitTableRows) {
+        if (!filename) {
+            const lastDirSeparator = directory.lastIndexOf("/");
+            if (lastDirSeparator >= 0) {
+                filename = directory.substring(lastDirSeparator + 1);
+                directory = directory.substring(0, lastDirSeparator);
             }
-            if (!this.activeFrame) {
-                AppToaster.show(ErrorToast("Please load the image file"));
-                throw new Error("No image file");
+        } else if (!directory && filename.includes("/")) {
+            const lastDirSeparator = filename.lastIndexOf("/");
+            if (lastDirSeparator >= 0) {
+                directory = filename.substring(0, lastDirSeparator);
+                filename = filename.substring(lastDirSeparator + 1);
             }
-            this.startFileLoading();
+        }
+        if (!this.activeFrame) {
+            AppToaster.show(ErrorToast("Please load the image file"));
+            throw new Error("No image file");
+        }
+        this.startFileLoading();
 
-            const frame = this.activeFrame;
-            const fileId = this.catalogNextFileId;
+        const frame = this.activeFrame;
+        const fileId = this.catalogNextFileId;
 
-            this.backendService.loadCatalogFile(directory, filename, fileId, previewDataSize).then(
-                ack =>
-                    runInAction(() => {
-                        this.endFileLoading();
-                        if (frame && ack.success && ack.dataSize) {
-                            let catalogInfo: CatalogInfo = {fileId, directory: directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                            const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
-                            let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
-                            if (catalogWidgetId) {
-                                this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                                this.catalogStore.addCatalog(fileId, ack.dataSize);
-                                this.fileBrowserStore.hideFileBrowser();
-                                const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
-                                this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                                resolve(fileId);
-                            } else {
-                                reject();
-                            }
-                        } else {
-                            reject();
-                        }
-                    }),
-                error => {
-                    console.error(error);
-                    AppToaster.show(ErrorToast(error));
-                    this.endFileLoading();
-                    reject(error);
+        try {
+            const ack = yield this.backendService.loadCatalogFile(directory, filename, fileId, previewDataSize);
+            this.endFileLoading();
+            if (frame && ack.success && ack.dataSize) {
+                let catalogInfo: CatalogInfo = {fileId, directory: directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
+                let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
+                if (catalogWidgetId) {
+                    this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
+                    this.catalogStore.addCatalog(fileId, ack.dataSize);
+                    this.fileBrowserStore.hideFileBrowser();
+                    const catalogProfileStore = new CatalogProfileStore(catalogInfo, ack.headers, columnData, CatalogType.FILE);
+                    this.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+                    return catalogProfileStore;
+                } else {
+                    return undefined;
                 }
-            );
-        });
-    };
+            } else {
+                return undefined;
+            }
+        } catch (error) {
+            console.error(error);
+            AppToaster.show(ErrorToast(error));
+            this.endFileLoading();
+            return undefined;
+        }
+    }
 
     updateCatalogProfile = (fileId: number, frame: FrameStore): string => {
         let catalogWidgetId;
