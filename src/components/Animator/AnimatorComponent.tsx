@@ -203,6 +203,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     public render() {
         const appStore = AppStore.Instance;
+        const numFrames = appStore.frames.length;
         const activeFrame = appStore.activeFrame;
         const numChannels = activeFrame ? activeFrame.frameInfo.fileInfoExtended.depth : 0;
         const numStokes = activeFrame ? activeFrame.frameInfo.fileInfoExtended.stokes : 0;
@@ -214,13 +215,15 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         // Frame Control
         if (appStore.frames.length > 1) {
             const frameIndex = appStore.frames.findIndex(f => f.frameInfo.fileId === activeFrame.frameInfo.fileId);
+            const numIndices = 5;
+            const frameStep = numFrames > 10 ? Math.floor( (numFrames - 1) / (numIndices - 1) ) : 1;
             frameSlider = (
                 <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
-                    {hideSliders && <SafeNumericInput value={frameIndex} min={-1} max={appStore.frames.length} stepSize={1} onValueChange={this.onFrameChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
+                    {hideSliders && <SafeNumericInput value={frameIndex} min={-1} max={numFrames} stepSize={1} onValueChange={this.onFrameChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
                     {!hideSliders && (
                         <React.Fragment>
-                            <Slider value={frameIndex} min={0} max={appStore.frames.length - 1} showTrackFill={false} stepSize={1} onChange={this.onFrameChanged} disabled={appStore.animatorStore.animationActive} />
+                            <Slider value={frameIndex} min={0} max={numFrames - 1} showTrackFill={false} labelStepSize={frameStep} labelPrecision={0} onChange={this.onFrameChanged} disabled={appStore.animatorStore.animationActive} />
                             <div className="slider-info">{activeFrame.filename}</div>
                         </React.Fragment>
                     )}
