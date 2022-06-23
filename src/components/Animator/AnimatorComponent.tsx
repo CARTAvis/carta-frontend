@@ -216,7 +216,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         if (appStore.frames.length > 1) {
             const frameIndex = appStore.frames.findIndex(f => f.frameInfo.fileId === activeFrame.frameInfo.fileId);
             const numIndices = 5;
-            const frameStep = numFrames > 10 ? Math.floor( (numFrames - 1) / (numIndices - 1) ) : 1;
+            const frameStep = numFrames > 10 ? Math.floor((numFrames - 1) / (numIndices - 1)) : 1;
             frameSlider = (
                 <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
