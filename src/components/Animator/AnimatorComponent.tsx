@@ -234,7 +234,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         // Channel Control
         if (numChannels > 1) {
             const numLabels = 5;
-            const channelStep = numChannels > 10 ? (numChannels - 1) / (numLabels - 1) : 1;
+            const channelStep = numChannels > 10 ? Math.floor((numChannels - 1) / (numLabels - 1)) : 1;
             channelSlider = (
                 <div className="animator-slider">
                     <Radio value={AnimationMode.CHANNEL} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL} onChange={this.onAnimationModeChanged} label="Channel" />
