@@ -19,6 +19,7 @@ import "./SpectralProfilerComponent.scss";
 
 const INFO_HEIGHT_MIN = 28;
 const INFO_HEIGHT_MAX = 100;
+
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -34,6 +35,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             helpType: HelpType.SPECTRAL_PROFILER
         };
     }
+
+    private profileIndex: number = 0;
 
     @observable width: number;
     @observable height: number;
@@ -184,8 +187,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             primaryXStr = this.precisionFormatting(nearest, data[nearest.index].x, diffLeft, frame.spectralType);
 
             if (this.widgetStore.optionalAxisCursorInfoVisible) {
+                const start = this.plotData.startEndIndexes[this.profileIndex].startIndex;
+                const end = this.plotData.startEndIndexes[this.profileIndex].endIndex + 1;
+
                 if (frame.spectralTypeSecondary === SpectralType.CHANNEL) {
-                    let optional = this.widgetStore.effectiveFrame.channelOptionalValues;
+                    let optional = this.widgetStore.effectiveFrame.channelOptionalValues.slice(start, end);
 
                     // Use precision to determine the proper rounding and zero suppression for displayed value. Data and optional
                     // are handled idfferently because they have different structures.
@@ -204,7 +210,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     optionalXUnit = frame.spectralUnitSecondary;
 
                     // Optional is a copy of the channelInfo.values which contains the native coordinate values.
-                    let optional = this.widgetStore.effectiveFrame.channelOptionalValues;
+                    let optional = this.widgetStore.effectiveFrame.channelOptionalValues.slice(start, end);
 
                     // We calculate the difference between neighboring values to get and estimate of the precision.
                     diffLeft = nearest.index - 1 >= 0 ? Math.abs(optional[nearest.index] - optional[nearest.index - 1]) : 0;
@@ -239,6 +245,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             if (this.plotData.numProfiles === 1) {
                 // Single profile, Mean/RMS is available
+                this.profileIndex = 0;
+
                 const data = this.plotData.data[0];
                 const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
                 profilerInfo.push({
@@ -246,6 +254,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 });
             } else {
                 for (let i = 0; i < this.plotData.numProfiles; i++) {
+                    this.profileIndex = i;
+
                     const data = this.plotData.data[i];
                     const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
                     profilerInfo.push({
