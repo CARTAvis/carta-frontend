@@ -8,12 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Size conversion in the image fitting results ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
+### Changed
+* Splatalogue queries are now made directly with the server, rather than proxied through the backend ([#1755](https://github.com/CARTAvis/carta-frontend/issues/1755)).
 ### Fixed
 * Added missing vector overlay and image fitting options in the View menu ([#1848](https://github.com/CARTAvis/carta-frontend/issues/1848)).
 * Hide code snippet option in the View menu when code snippet is disabled in the preferences ([#1856](https://github.com/CARTAvis/carta-frontend/issues/1856)).
 * Fixed the rotation anchor offset of line regions ([#1739](https://github.com/CARTAvis/carta-frontend/issues/1739)).
 * Fixed issue with exporting decimated data instead of full resolution data in spatial profiler ([#1546](https://github.com/CARTAvis/carta-frontend/issues/1546))
 * Fixed larger position errors of projected contours, catalog overlays, and vector overlays near the border ([#1843](https://github.com/CARTAvis/carta-frontend/issues/1843)).
+* Fixed no updating of spatial profile after region deleting ([#1831](https://github.com/CARTAvis/carta-frontend/issues/1831), [#1855](https://github.com/CARTAvis/carta-frontend/issues/1855)).
+* Fixed unable to switch channel by clicking scatter plot in stokes analysis widgets ([#1313](https://github.com/CARTAvis/carta-frontend/issues/1313)).
+* Fixed gaps in projected unclosed regions ([#1740](https://github.com/CARTAvis/carta-frontend/issues/1740)).
+* Fixed projection of polygon regions created on spatially matched images ([#1887](https://github.com/CARTAvis/carta-frontend/issues/1887)).
 
 ## [3.0.0-beta.3]
 
