@@ -129,8 +129,8 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     const N = lastChannel - firstChannel + 1;
     const destChannels = new Array<number>(N);
     for (let i = 0; i < N; i++) {
-        // Get spectral value from forward transform. Adjust for 1-based index
-        const sourceSpectralValue = AST.transform3DPoint(srcTransform, 1, 1, firstChannel + i + 1, true);
+        // Get spectral value from forward transform.
+        const sourceSpectralValue = AST.transform3DPoint(srcTransform, 1, 1, firstChannel + i, true);
         if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z) || isAstBad(sourceSpectralValue.z)) {
             destChannels[i] = NaN;
             continue;
@@ -145,8 +145,7 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
             continue;
         }
 
-        // Revert back to 0-based index
-        destChannels[i] = destPixelValue.z - 1;
+        destChannels[i] = destPixelValue.z;
     }
     return destChannels;
 }
