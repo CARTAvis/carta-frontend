@@ -167,7 +167,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string, start:number, end:number): string => {
+    private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string, start: number, end: number): string => {
         let diffLeft: number = undefined;
 
         let optionalXUnit: string = "";
@@ -187,7 +187,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             primaryXStr = this.precisionFormatting(nearest, data[nearest.index].x, diffLeft, frame.spectralType);
 
             if (this.widgetStore.optionalAxisCursorInfoVisible) {
-
                 if (frame.spectralTypeSecondary === SpectralType.CHANNEL) {
                     let optional = this.widgetStore.effectiveFrame.channelOptionalValues.slice(start, end);
 
