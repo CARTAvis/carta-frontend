@@ -166,12 +166,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string, start: number, end: number): string => {
-        let diffLeft: number = undefined;
+        const frame = this.widgetStore.effectiveFrame;
 
-        let secondaryXUnit: string = "";
+        let diffLeft: number = undefined;
+        let secondaryXUnit = "";
         let cursorInfoString: string = "";
 
-        const frame = this.widgetStore.effectiveFrame;
         const nearest = binarySearchByX(data, cursorXValue);
 
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
@@ -185,42 +185,23 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             primaryXStr = this.precisionFormatting(nearest, data[nearest.index].x, diffLeft, frame.spectralType);
 
             if (this.widgetStore.secondaryAxisCursorInfoVisible) {
-                if (frame.spectralTypeSecondary === SpectralType.CHANNEL) {
-                    let secondary = this.widgetStore.effectiveFrame.channelSecondaryValues.slice(start, end);
+                let secondary = this.widgetStore.effectiveFrame.channelSecondaryValues.slice(start, end);
 
-                    // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
-                    // are handled idfferently because they have different structures.
-                    diffLeft = nearest.index - 1 >= 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : 0;
+                // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
+                // are handled idfferently because they have different structures.
+                diffLeft = nearest.index - 1 >= 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : 0;
 
-                    // Use precision to determine the proper rounding and zero suppression for displayed value.
-                    const secondaryXStr = this.precisionFormatting(nearest, secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);
+                // Use precision to determine the proper rounding and zero suppression for displayed value.
+                const secondaryXStr = this.precisionFormatting(nearest, secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);
 
-                    const xLabel =
-                        cursorXUnit === "Channel"
-                            ? `Channel ${primaryXStr}${secondaryXStr ? `, Channel ${secondaryXStr}${secondaryXUnit}` : ""}`
-                            : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${secondaryXStr ? `, Channel ${secondaryXStr}${secondaryXUnit}` : ""}`;
+                if (frame.spectralTypeSecondary !== SpectralType.CHANNEL) secondaryXUnit = frame.spectralUnitSecondary;
 
-                    cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
-                } else {
-                    secondaryXUnit = frame.spectralUnitSecondary;
+                const xLabel =
+                    cursorXUnit === "Channel"
+                        ? `Channel ${primaryXStr}${secondaryXStr ? `, Channel ${secondaryXStr} ${secondaryXUnit}` : ""}`
+                        : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${secondaryXStr ? `, Channel ${secondaryXStr} ${secondaryXUnit}` : ""}`;
 
-                    // secondary is a copy of the channelInfo.values which contains the native coordinate values.
-                    let secondary = this.widgetStore.effectiveFrame.channelSecondaryValues.slice(start, end);
-
-                    // We calculate the difference between neighboring values to get and estimate of the precision.
-                    diffLeft = nearest.index - 1 >= 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : 0;
-
-                    // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
-                    // are handled idfferently because they have different structures.
-                    const secondaryXStr = this.precisionFormatting(nearest, secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);
-
-                    const xLabel =
-                        cursorXUnit === "Channel"
-                            ? `Channel ${primaryXStr}${secondaryXStr ? `, ${secondaryXStr} ${secondaryXUnit}` : ""}`
-                            : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${secondaryXStr ? `, ${secondaryXStr} ${secondaryXUnit}` : ""}`;
-
-                    cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
-                }
+                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
             } else {
                 const xLabel = cursorXUnit === "Channel" ? `Channel ${primaryXStr}` : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
                 cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
