@@ -96,6 +96,8 @@ export function getTransformedChannel(srcTransform: AST.FrameSet, destTransform:
     // Set common spectral
     AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
     AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+
+    // Get spectral value from forward transform
     const sourceSpectralValue = AST.transform3DPoint(srcTransform, 0, 0, srcChannel, true);
     if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z)) {
         return NaN;
@@ -126,18 +128,19 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
     AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
 
+    // Get a sensible pixel coordinate for the reverse transform by forward transforming first pixel in image
+    const dummySpectralValue = AST.transform3DPoint(destTransform, 1, 1, 1, true);
+
     const N = lastChannel - firstChannel + 1;
     const destChannels = new Array<number>(N);
     for (let i = 0; i < N; i++) {
-        // Get spectral value from forward transform.
+        // Get spectral value from forward transform
         const sourceSpectralValue = AST.transform3DPoint(srcTransform, 1, 1, firstChannel + i, true);
         if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z) || isAstBad(sourceSpectralValue.z)) {
             destChannels[i] = NaN;
             continue;
         }
 
-        // Get a sensible pixel coordinate for the reverse transform by forward transforming first pixel in image
-        const dummySpectralValue = AST.transform3DPoint(destTransform, 1, 1, 1, true);
         // Get pixel value from destination transform (reverse)
         const destPixelValue = AST.transform3DPoint(destTransform, dummySpectralValue.x, dummySpectralValue.y, sourceSpectralValue.z, false);
         if (!destPixelValue || !isFinite(destPixelValue.z) || isAstBad(sourceSpectralValue.z)) {
