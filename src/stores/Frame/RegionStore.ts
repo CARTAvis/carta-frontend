@@ -495,6 +495,12 @@ export class RegionStore {
     @action endCreating = async () => {
         this.creating = false;
         this.editing = false;
+
+        // re-calculate projected points when the status changes from unclosed to closed
+        if (this.regionType === CARTA.RegionType.POLYGON) {
+            this.regionApproximationMap.clear();
+        }
+
         if (this.regionType !== CARTA.RegionType.POINT) {
             try {
                 const ack = await this.backendService.setRegion(this.fileId, -1, this);
