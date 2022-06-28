@@ -12,7 +12,7 @@ export class SpectralSettingsComponent extends React.Component<{
     onSpectralSystemChange: (system: string) => void;
     disable: boolean;
     disableChannelOption?: boolean;
-    optionalAxisCursorInfoVisible?: boolean;
+    secondaryAxisCursorInfoVisible?: boolean;
 }> {
     render() {
         const frame = this.props.frame;
@@ -42,7 +42,7 @@ export class SpectralSettingsComponent extends React.Component<{
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralCoordinateChange(event.currentTarget.value as string)}
                     />
                 </FormGroup>
-                {this.props.optionalAxisCursorInfoVisible && (
+                {this.props.secondaryAxisCursorInfoVisible && (
                     <FormGroup label={"Opt. Coord."} inline={true} disabled={disableCoordinateSetting}>
                         <HTMLSelect
                             disabled={disableCoordinateSetting}

@@ -63,7 +63,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
     @observable settingsTabId: SpectralProfilerSettingsTabs;
 
-    @observable optionalAxisCursorInfoVisible: boolean;
+    @observable secondaryAxisCursorInfoVisible: boolean;
 
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
@@ -84,10 +84,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.regionIdMap.set(fileId, regionId);
         this.clearXYBounds();
     };
-
-    //@action setCursorInfo(state:boolean){
-    //    this.optionalAxisCursorInfoVisible = state;
-    //}
 
     @action setSpectralCoordinate = (coordStr: string) => {
         if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
@@ -298,8 +294,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = tabId;
     };
 
-    @action setOptionalAxisCursorInfoVisible = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.optionalAxisCursorInfoVisible = changeEvent.target.checked;
+    @action setSecondaryAxisCursorInfoVisible = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.secondaryAxisCursorInfoVisible = changeEvent.target.checked;
     };
 
     constructor(coordinate: string = "z") {
@@ -312,7 +308,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
         this.meanRmsVisible = false;
-        this.optionalAxisCursorInfoVisible = false;
+        this.secondaryAxisCursorInfoVisible = false;
         this.markerTextVisible = false;
         this.primaryLineColor = "auto-blue";
         this.lineColorMap = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor]]);

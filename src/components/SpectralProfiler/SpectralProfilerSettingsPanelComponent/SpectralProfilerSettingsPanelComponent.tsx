@@ -22,7 +22,7 @@ export enum SpectralProfilerSettingsTabs {
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
-    optionalAxisCursorInfoVisible?: boolean;
+    secondaryAxisCursorInfoVisible?: boolean;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -62,7 +62,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         super(props);
         makeObservable(this);
 
-        this.optionalAxisCursorInfoVisible = false;
+        this.secondaryAxisCursorInfoVisible = false;
         const appStore = AppStore.Instance;
         autorun(() => {
             if (this.widgetStore) {
@@ -78,11 +78,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     }
 
     @action setCursorInfo(state: boolean) {
-        this.optionalAxisCursorInfoVisible = state;
+        this.secondaryAxisCursorInfoVisible = state;
     }
 
-    handleOptionalAxisCursorInfoChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.optionalAxisCursorInfoVisible = changeEvent.target.checked;
+    handleSecondaryAxisCursorInfoChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.secondaryAxisCursorInfoVisible = changeEvent.target.checked;
     };
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,14 +199,14 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
                                     onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
                                     onSpectralSystemChange={widgetStore.setSpectralSystem}
-                                    optionalAxisCursorInfoVisible={widgetStore.optionalAxisCursorInfoVisible}
+                                    secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
                                     disable={widgetStore.effectiveFrame?.isPVImage}
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
                                     <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
                                 </FormGroup>
-                                <FormGroup inline={true} label={"Optional Info"}>
-                                    <Switch checked={widgetStore.optionalAxisCursorInfoVisible} onChange={widgetStore.setOptionalAxisCursorInfoVisible} />
+                                <FormGroup inline={true} label={"Secondary Info"}>
+                                    <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={widgetStore.setSecondaryAxisCursorInfoVisible} />
                                 </FormGroup>
                             </React.Fragment>
                         }

@@ -135,8 +135,7 @@ export class FrameStore {
     @observable moving: boolean;
     @observable zooming: boolean;
 
-    //@observable channelOptionalValues: Float64Array;
-    @observable channelOptionalValues: Array<number>;
+    @observable channelSecondaryValues: Array<number>;
 
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
@@ -669,7 +668,7 @@ export class FrameStore {
         return this.spectralType === SpectralType.CHANNEL;
     }
 
-    @computed get isCoordChannelOptional(): boolean {
+    @computed get isCoordChannelSecondary(): boolean {
         return this.spectralTypeSecondary === SpectralType.CHANNEL;
     }
 
@@ -944,7 +943,7 @@ export class FrameStore {
         this.spectralUnit = null;
         this.spectralTypeSecondary = null;
         this.spectralUnitSecondary = null;
-        this.channelOptionalValues = null;
+        this.channelSecondaryValues = null;
         this.spectralSystem = null;
         this.channelValues = null;
         this.spectralCoordsSupported = null;
@@ -1190,11 +1189,9 @@ export class FrameStore {
         autorun(() => {
             const type = this.spectralType;
             const unit = this.spectralUnit;
-
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
             const restFreq = this.restFreqStore.restFreqInHz;
-
             /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
                 if (!type && !unit) {
@@ -1210,19 +1207,17 @@ export class FrameStore {
         autorun(() => {
             const typeSecondary = this.spectralTypeSecondary;
             const unitSecondary = this.spectralUnitSecondary;
-
             /* eslint-disable @typescript-eslint/no-unused-vars */
             const specsys = this.spectralSystem;
             const restFreq = this.restFreqStore.restFreqInHz;
-
             /* eslint-enable @typescript-eslint/no-unused-vars */
             if (this.channelInfo) {
                 if (!typeSecondary && !unitSecondary) {
-                    this.setChannelOptionalValues(this.channelInfo.values);
-                } else if (this.isCoordChannelOptional) {
-                    this.setChannelOptionalValues(this.channelInfo.indexes);
+                    this.setChannelSecondaryValues(this.channelInfo.values);
+                } else if (this.isCoordChannelSecondary) {
+                    this.setChannelSecondaryValues(this.channelInfo.indexes);
                 } else {
-                    this.setChannelOptionalValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectralOptional(this.channelInfo.values));
+                    this.setChannelSecondaryValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectralSecondary(this.channelInfo.values));
                 }
             }
         });
@@ -1254,7 +1249,7 @@ export class FrameStore {
         return Array.from(convertedArray);
     };
 
-    private convertSpectralOptional = (values: Array<number>): Array<number> => {
+    private convertSpectralSecondary = (values: Array<number>): Array<number> => {
         const N = values?.length;
         if (!N || !this.spectralFrame) {
             return null;
@@ -1688,9 +1683,8 @@ export class FrameStore {
         this.channelValues = values;
     }
 
-    @action private setChannelOptionalValues(values: number[]) {
-        //values.forEach(v => console.log('values: ' + v));
-        this.channelOptionalValues = values;
+    @action private setChannelSecondaryValues(values: number[]) {
+        this.channelSecondaryValues = values;
     }
 
     @action private initSupportedSpectralConversion = () => {

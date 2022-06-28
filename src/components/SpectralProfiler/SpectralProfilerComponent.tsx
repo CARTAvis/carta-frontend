@@ -158,9 +158,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private precisionFormatting = (nearest: {point: Point2D; index: number}, data: number, diff: number, spectralType: SpectralType): string => {
         if (spectralType === SpectralType.CHANNEL) {
             // If value it channel, ie. Int, return integer value.
-            const channel = this.widgetStore.effectiveFrame.channelInfo.indexes[nearest.index];
-
-            return toFixed(channel);
+            return toFixed(data);
         } else {
             // Determine proper rounding and trim trailing zeros from return value.
             return toFormattedNotation(data, diff);
@@ -170,7 +168,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string, start: number, end: number): string => {
         let diffLeft: number = undefined;
 
-        let optionalXUnit: string = "";
+        let secondaryXUnit: string = "";
         let cursorInfoString: string = "";
 
         const frame = this.widgetStore.effectiveFrame;
@@ -182,44 +180,44 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             // We calculate the difference between neighboring values to get and estimate of the precision.
             diffLeft = nearest.index - 1 >= 0 ? Math.abs(data[nearest.index].x - data[nearest.index - 1].x) : 0;
 
-            // Use precision to determine the proper rounding and zero suppression for displayed value. Data and optional
+            // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
             // are handled idfferently because they have different structures.
             primaryXStr = this.precisionFormatting(nearest, data[nearest.index].x, diffLeft, frame.spectralType);
 
-            if (this.widgetStore.optionalAxisCursorInfoVisible) {
+            if (this.widgetStore.secondaryAxisCursorInfoVisible) {
                 if (frame.spectralTypeSecondary === SpectralType.CHANNEL) {
-                    let optional = this.widgetStore.effectiveFrame.channelOptionalValues.slice(start, end);
+                    let secondary = this.widgetStore.effectiveFrame.channelSecondaryValues.slice(start, end);
 
-                    // Use precision to determine the proper rounding and zero suppression for displayed value. Data and optional
+                    // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
                     // are handled idfferently because they have different structures.
-                    diffLeft = nearest.index - 1 >= 0 ? Math.abs(optional[nearest.index] - optional[nearest.index - 1]) : 0;
+                    diffLeft = nearest.index - 1 >= 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : 0;
 
                     // Use precision to determine the proper rounding and zero suppression for displayed value.
-                    const optionalXStr = this.precisionFormatting(nearest, optional[nearest.index], diffLeft, frame.spectralTypeSecondary);
+                    const secondaryXStr = this.precisionFormatting(nearest, secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);
 
                     const xLabel =
                         cursorXUnit === "Channel"
-                            ? `Channel ${primaryXStr}${optionalXStr ? `, Channel ${optionalXStr}${optionalXUnit}` : ""}`
-                            : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${optionalXStr ? `, Channel ${optionalXStr}${optionalXUnit}` : ""}`;
+                            ? `Channel ${primaryXStr}${secondaryXStr ? `, Channel ${secondaryXStr}${secondaryXUnit}` : ""}`
+                            : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${secondaryXStr ? `, Channel ${secondaryXStr}${secondaryXUnit}` : ""}`;
 
                     cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
                 } else {
-                    optionalXUnit = frame.spectralUnitSecondary;
+                    secondaryXUnit = frame.spectralUnitSecondary;
 
-                    // Optional is a copy of the channelInfo.values which contains the native coordinate values.
-                    let optional = this.widgetStore.effectiveFrame.channelOptionalValues.slice(start, end);
+                    // secondary is a copy of the channelInfo.values which contains the native coordinate values.
+                    let secondary = this.widgetStore.effectiveFrame.channelSecondaryValues.slice(start, end);
 
                     // We calculate the difference between neighboring values to get and estimate of the precision.
-                    diffLeft = nearest.index - 1 >= 0 ? Math.abs(optional[nearest.index] - optional[nearest.index - 1]) : 0;
+                    diffLeft = nearest.index - 1 >= 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : 0;
 
-                    // Use precision to determine the proper rounding and zero suppression for displayed value. Data and optional
+                    // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
                     // are handled idfferently because they have different structures.
-                    const optionalXStr = this.precisionFormatting(nearest, optional[nearest.index], diffLeft, frame.spectralTypeSecondary);
+                    const secondaryXStr = this.precisionFormatting(nearest, secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);
 
                     const xLabel =
                         cursorXUnit === "Channel"
-                            ? `Channel ${primaryXStr}${optionalXStr ? `, ${optionalXStr} ${optionalXUnit}` : ""}`
-                            : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${optionalXStr ? `, ${optionalXStr} ${optionalXUnit}` : ""}`;
+                            ? `Channel ${primaryXStr}${secondaryXStr ? `, ${secondaryXStr} ${secondaryXUnit}` : ""}`
+                            : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${secondaryXStr ? `, ${secondaryXStr} ${secondaryXUnit}` : ""}`;
 
                     cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
                 }
@@ -242,9 +240,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             if (this.plotData.numProfiles === 1) {
                 // Single profile, Mean/RMS is available
-                this.profileIndex = 0;
-                const startIndex = this.plotData.startEndIndexes[this.profileIndex].startIndex;
-                const endIndex = this.plotData.startEndIndexes[this.profileIndex].endIndex + 1;
+
+                const startIndex = this.plotData.startEndIndexes[0].startIndex;
+                const endIndex = this.plotData.startEndIndexes[0].endIndex + 1;
 
                 const data = this.plotData.data[0];
                 const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label, startIndex, endIndex);
@@ -253,10 +251,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 });
             } else {
                 for (let i = 0; i < this.plotData.numProfiles; i++) {
-                    this.profileIndex = i;
-
-                    const startIndex = this.plotData.startEndIndexes[this.profileIndex].startIndex;
-                    const endIndex = this.plotData.startEndIndexes[this.profileIndex].endIndex + 1;
+                    const startIndex = this.plotData.startEndIndexes[i].startIndex;
+                    const endIndex = this.plotData.startEndIndexes[i].endIndex + 1;
 
                     const data = this.plotData.data[i];
                     const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label, startIndex, endIndex);
