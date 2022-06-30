@@ -75,6 +75,9 @@ export class FittingDialogComponent extends React.Component {
                     <FormGroup label="Data Source" inline={true}>
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
                     </FormGroup>
+                    <FormGroup label="Region" inline={true}>
+                        <HTMLSelect value={0} options={[{value: 0, label: "Field of View"}]} disabled={true} />
+                    </FormGroup>
                     <FormGroup label="Components" inline={true}>
                         <SafeNumericInput className="components-input" value={fittingStore.components.length} min={1} max={20} stepSize={1} onValueChange={val => fittingStore.setComponents(Math.round(val))} />
                         {fittingStore.components.length > 1 && (
