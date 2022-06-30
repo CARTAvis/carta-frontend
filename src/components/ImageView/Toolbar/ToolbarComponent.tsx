@@ -229,22 +229,22 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             <AnchorButton icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled} />
                         </Tooltip2>
                         {frame.regionSet.mode === RegionMode.CREATING && (
-                            <Tooltip2
-                                position={tooltipPosition}
-                                content={
-                                    <span>
-                                        Create region
-                                        <br />
-                                        <i>
-                                            <small>Click to select region type</small>
-                                        </i>
-                                    </span>
-                                }
-                            >
-                                <Popover2 popoverClassName="region-menu" content={regionMenu} position={Position.TOP} minimal={true}>
+                            <Popover2 popoverClassName="region-menu" content={regionMenu} position={Position.TOP} minimal={true}>
+                                <Tooltip2
+                                    position={tooltipPosition}
+                                    content={
+                                        <span>
+                                            Create region
+                                            <br />
+                                            <i>
+                                                <small>Click to select region type</small>
+                                            </i>
+                                        </span>
+                                    }
+                                >
                                     <AnchorButton icon={regionIcon} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
-                                </Popover2>
-                            </Tooltip2>
+                                </Tooltip2>
+                            </Popover2>
                         )}
                         {frame.regionSet.mode === RegionMode.MOVING && (
                             <Tooltip2
@@ -287,57 +287,57 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
                             <AnchorButton icon="zoom-to-fit" onClick={this.props.onZoomToFit} />
                         </Tooltip2>
-                        <Tooltip2
-                            position={tooltipPosition}
-                            content={
-                                <span>
-                                    WCS Matching <br />
-                                    <small>
-                                        <i>Current: {wcsButtonTooltip}</i>
-                                    </small>
-                                </span>
-                            }
-                        >
-                            <Popover2 content={wcsMatchingMenu} position={Position.TOP} minimal={true}>
+                        <Popover2 content={wcsMatchingMenu} position={Position.TOP} minimal={true}>
+                            <Tooltip2
+                                position={tooltipPosition}
+                                content={
+                                    <span>
+                                        WCS Matching <br />
+                                        <small>
+                                            <i>Current: {wcsButtonTooltip}</i>
+                                        </small>
+                                    </span>
+                                }
+                            >
                                 <AnchorButton icon="link" className="link-button">
                                     {wcsButtonSuperscript}
                                 </AnchorButton>
-                            </Popover2>
-                        </Tooltip2>
-                        <Tooltip2
-                            position={tooltipPosition}
-                            content={
-                                <span>
-                                    Overlay Coordinate <br />
-                                    <small>
-                                        <i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i>
-                                    </small>
-                                </span>
-                            }
-                        >
-                            <Popover2 content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
+                            </Tooltip2>
+                        </Popover2>
+                        <Popover2 content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
+                            <Tooltip2
+                                position={tooltipPosition}
+                                content={
+                                    <span>
+                                        Overlay Coordinate <br />
+                                        <small>
+                                            <i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i>
+                                        </small>
+                                    </span>
+                                }
+                            >
                                 <AnchorButton disabled={!frame.validWcs} text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} />
-                            </Popover2>
-                        </Tooltip2>
+                            </Tooltip2>
+                        </Popover2>
                         <Tooltip2 position={tooltipPosition} content="Toggle grid">
                             <AnchorButton icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} />
                         </Tooltip2>
                         <Tooltip2 position={tooltipPosition} content="Toggle labels">
                             <AnchorButton icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels} />
                         </Tooltip2>
-                        <Tooltip2
-                            position={tooltipPosition}
-                            content={
-                                <span>
-                                    Export image
-                                    {this.exportImageTooltip()}
-                                </span>
-                            }
-                        >
-                            <Popover2 content={exportImageMenu} position={Position.TOP} minimal={true}>
+                        <Popover2 content={exportImageMenu} position={Position.TOP} minimal={true}>
+                            <Tooltip2
+                                position={tooltipPosition}
+                                content={
+                                    <span>
+                                        Export image
+                                        {this.exportImageTooltip()}
+                                    </span>
+                                }
+                            >
                                 <AnchorButton disabled={appStore.isExportingImage} icon="floppy-disk" />
-                            </Popover2>
-                        </Tooltip2>
+                            </Tooltip2>
+                        </Popover2>
                     </React.Fragment>
                 )}
                 <Tooltip2 position={tooltipPosition} content={appStore.toolbarExpanded ? "Hide toolbar" : "Show toolbar"}>
