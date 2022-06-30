@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed issues of crowded Frame idices in the animator and misalignment of channel slider indices ([#940](https://github.com/CARTAvis/carta-frontend/issues/940)), ([#1892]https://github.com/CARTAvis/carta-frontend/issues/1892).
 * Fixed gaps in projected unclosed regions ([#1740](https://github.com/CARTAvis/carta-frontend/issues/1740)).
 * Fixed projection of polygon regions created on spatially matched images ([#1887](https://github.com/CARTAvis/carta-frontend/issues/1887)).
+* Fixed tooltip blocking issue of the toolbar in the image viewer ([#1897](https://github.com/CARTAvis/carta-frontend/issues/1897))
+* Fixed persisent tooltip after exporting a png image ([#1742](https://github.com/CARTAvis/carta-frontend/issues/1742))
 
 ## [3.0.0-beta.3]
 
