@@ -217,8 +217,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const frameIndex = appStore.frames.findIndex(f => f.frameInfo.fileId === activeFrame.frameInfo.fileId);
             const numIndices = 5;
             const frameStep = numFrames > 10 ? Math.floor((numFrames - 1) / (numIndices - 1)) : 1;
-            const tickFrame = numFrames > 10 ? [0, frameStep, 2*frameStep, 3*frameStep, 4*frameStep, numFrames - 1] : Array.from(Array(numFrames).keys())
-            console.log(frameStep)
+            const tickFrame = numFrames > 10 ? [0, frameStep, 2 * frameStep, 3 * frameStep, 4 * frameStep, numFrames - 1] : Array.from(Array(numFrames).keys());
+            console.log(frameStep);
             frameSlider = (
                 <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
@@ -237,7 +237,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         if (numChannels > 1) {
             const numLabels = 5;
             const channelStep = numChannels > 10 ? Math.floor((numChannels - 1) / (numLabels - 1)) : 1;
-            const tickChannels = numChannels > 10 ? [0, channelStep, 2*channelStep, 3*channelStep, 4*channelStep, numChannels - 1] : Array.from(Array(numChannels).keys())
+            const tickChannels = numChannels > 10 ? [0, channelStep, 2 * channelStep, 3 * channelStep, 4 * channelStep, numChannels - 1] : Array.from(Array(numChannels).keys());
             channelSlider = (
                 <div className="animator-slider">
                     <Radio value={AnimationMode.CHANNEL} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL} onChange={this.onAnimationModeChanged} label="Channel" />
