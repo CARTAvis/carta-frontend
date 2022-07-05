@@ -217,13 +217,15 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const frameIndex = appStore.frames.findIndex(f => f.frameInfo.fileId === activeFrame.frameInfo.fileId);
             const numIndices = 5;
             const frameStep = numFrames > 10 ? Math.floor((numFrames - 1) / (numIndices - 1)) : 1;
+            const tickFrame = numFrames > 10 ? [0, frameStep, 2*frameStep, 3*frameStep, 4*frameStep, numFrames - 1] : Array.from(Array(numFrames).keys())
+            console.log(frameStep)
             frameSlider = (
                 <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Image" />
                     {hideSliders && <SafeNumericInput value={frameIndex} min={-1} max={numFrames} stepSize={1} onValueChange={this.onFrameChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
                     {!hideSliders && (
                         <React.Fragment>
-                            <Slider value={frameIndex} min={0} max={numFrames - 1} showTrackFill={false} labelStepSize={frameStep} labelPrecision={0} onChange={this.onFrameChanged} disabled={appStore.animatorStore.animationActive} />
+                            <Slider value={frameIndex} min={0} max={numFrames - 1} showTrackFill={false} labelValues={tickFrame} labelPrecision={0} onChange={this.onFrameChanged} disabled={appStore.animatorStore.animationActive} />
                             <div className="slider-info">{activeFrame.filename}</div>
                         </React.Fragment>
                     )}
@@ -235,6 +237,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         if (numChannels > 1) {
             const numLabels = 5;
             const channelStep = numChannels > 10 ? Math.floor((numChannels - 1) / (numLabels - 1)) : 1;
+            const tickChannels = numChannels > 10 ? [0, channelStep, 2*channelStep, 3*channelStep, 4*channelStep, numChannels - 1] : Array.from(Array(numChannels).keys())
             channelSlider = (
                 <div className="animator-slider">
                     <Radio value={AnimationMode.CHANNEL} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL} onChange={this.onAnimationModeChanged} label="Channel" />
@@ -246,7 +249,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 value={activeFrame.requiredChannel}
                                 min={0}
                                 max={numChannels - 1}
-                                labelStepSize={channelStep}
+                                labelValues={tickChannels}
                                 labelPrecision={0}
                                 showTrackFill={false}
                                 onChange={this.onChannelChanged}
