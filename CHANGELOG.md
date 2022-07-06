@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed gaps in projected unclosed regions ([#1740](https://github.com/CARTAvis/carta-frontend/issues/1740)).
 * Fixed projection of polygon regions created on spatially matched images ([#1887](https://github.com/CARTAvis/carta-frontend/issues/1887)).
 * Fixed incorrect channels of matched images requested for animation ([#569](https://github.com/CARTAvis/carta-frontend/issues/569)).
-* Fixed issue of show last index of animator sliders ([#1893] https://github.com/CARTAvis/carta-frontend/issues/1893)
+* Fixed issue of showing last index of animator sliders ([#1893] (https://github.com/CARTAvis/carta-frontend/issues/1893))
 
 ## [3.0.0-beta.3]
 
