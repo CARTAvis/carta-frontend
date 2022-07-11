@@ -935,7 +935,7 @@ export class AppStore {
         }
 
         // ensure that the same frame is used in the callback, to prevent issues when the active frame changes while the region is being imported
-        const frame = this.activeFrame;
+        const frame = this.activeFrame.spatialReference ?? this.activeFrame;
         try {
             const ack = await this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
@@ -943,7 +943,7 @@ export class AppStore {
                 const regionStyleMap = new Map<string, CARTA.IRegionStyle>(Object.entries(ack.regionStyles));
                 let startIndex = 0;
                 while (startIndex < regions.length) {
-                    this.addRegionsInBatch(regions, regionStyleMap, startIndex, IMPORT_REGION_BATCH_SIZE);
+                    this.addRegionsInBatch(frame, regions, regionStyleMap, startIndex, IMPORT_REGION_BATCH_SIZE);
                     startIndex += IMPORT_REGION_BATCH_SIZE;
                     await this.delay(0);
                 }
@@ -959,12 +959,11 @@ export class AppStore {
         }
     };
 
-    @action addRegionsInBatch = (regions: [string, CARTA.IRegionInfo][], regionStyleMap: Map<string, CARTA.IRegionStyle>, startIndex: number, count: number) => {
-        if (!regions || !regionStyleMap || !isFinite(startIndex)) {
+    @action addRegionsInBatch = (frame: FrameStore, regions: [string, CARTA.IRegionInfo][], regionStyleMap: Map<string, CARTA.IRegionStyle>, startIndex: number, count: number) => {
+        if (!frame || !regions || !regionStyleMap || !isFinite(startIndex)) {
             return;
         }
 
-        const frame = this.activeFrame;
         const batchEnd = Math.min(startIndex + count, regions.length);
         for (let i = startIndex; i < batchEnd; i++) {
             const [regionIdString, regionInfo] = regions[i];
