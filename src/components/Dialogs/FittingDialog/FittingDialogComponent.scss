@@ -44,8 +44,13 @@
         }
     }
 
+    .bp3-dialog-body :last-child {
+        margin-bottom: 0;
+    }
+
     .fitting-result {
-        height: 80%;
+        height: 70%;
+        margin-bottom: 0;
 
         .bp3-tabs {
             width: 100%;

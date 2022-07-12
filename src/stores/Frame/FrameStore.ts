@@ -3,7 +3,21 @@ import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
-import {ColorbarStore, ContourConfigStore, ContourStore, DistanceMeasuringStore, OverlayBeamStore, RegionSetStore, RegionStore, RenderConfigStore, RestFreqStore, VectorOverlayConfigStore, VectorOverlayStore} from "stores/Frame";
+import {
+    CENTER_POINT_INDEX,
+    SIZE_POINT_INDEX,
+    ColorbarStore,
+    ContourConfigStore,
+    ContourStore,
+    DistanceMeasuringStore,
+    OverlayBeamStore,
+    RegionSetStore,
+    RegionStore,
+    RenderConfigStore,
+    RestFreqStore,
+    VectorOverlayConfigStore,
+    VectorOverlayStore
+} from "stores/Frame";
 import {
     CatalogControlMap,
     ChannelInfo,
@@ -1632,52 +1646,61 @@ export class FrameStore {
         return propertyString;
     }
 
-    public getRegionWcsProperties(region: RegionStore): string {
-        if (!this.validWcs || !isFinite(region.center.x) || !isFinite(region.center.y)) {
+    public getRegionWcsProperties = (region: RegionStore): string => {
+        return this.genRegionWcsProperties(region.regionType, region.controlPoints, region.rotation, region.regionId);
+    };
+
+    public genRegionWcsProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number, regionId: number = -1): string => {
+        const centerPoint = controlPoints[CENTER_POINT_INDEX];
+        if (!this.validWcs || !isFinite(centerPoint.x) || !isFinite(centerPoint.y)) {
             return "Invalid";
         }
 
-        const wcsCenter = getFormattedWCSPoint(this.wcsInfoForTransformation, region.center);
+        const wcsCenter = getFormattedWCSPoint(this.wcsInfoForTransformation, centerPoint);
         if (!wcsCenter) {
             return "Invalid";
         }
 
-        const center = region.regionId === RegionId.CURSOR ? `${this.cursorInfo?.infoWCS?.x}, ${this.cursorInfo?.infoWCS?.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
-        const wcsSize = this.getWcsSizeInArcsec(region.size);
-        const size = {x: formattedArcsec(wcsSize?.x, WCS_PRECISION), y: formattedArcsec(wcsSize?.y, WCS_PRECISION)};
+        const center = regionId === RegionId.CURSOR ? `${this.cursorInfo?.infoWCS?.x}, ${this.cursorInfo?.infoWCS?.y}` : `${wcsCenter.x}, ${wcsCenter.y}`;
         const systemType = OverlayStore.Instance.global.explicitSystem;
 
-        switch (region.regionType) {
+        switch (regionType) {
             case CARTA.RegionType.POINT:
                 return `Point (wcs:${systemType}) [${center}]`;
             case CARTA.RegionType.LINE:
-                const wcsStartPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, region.controlPoints[0]);
-                const wcsEndPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, region.controlPoints[1]);
+                const wcsStartPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[0]);
+                const wcsEndPoint = getFormattedWCSPoint(this.wcsInfoForTransformation, controlPoints[1]);
                 return `Line (wcs:${systemType}) [[${wcsStartPoint.x}, ${wcsStartPoint.y}], [${wcsEndPoint.x}, ${wcsEndPoint.y}]]`;
             case CARTA.RegionType.RECTANGLE:
-                return `rotbox(wcs:${systemType})[[${center}], [${size.x ?? ""}, ${size.y ?? ""}], ${toFixed(region.rotation, 6)}deg]`;
+                const recSizePoint = controlPoints[SIZE_POINT_INDEX];
+                const recWcsSize = this.getWcsSizeInArcsec(recSizePoint);
+                const recSize = {x: formattedArcsec(recWcsSize?.x, WCS_PRECISION), y: formattedArcsec(recWcsSize?.y, WCS_PRECISION)};
+                return `rotbox(wcs:${systemType})[[${center}], [${recSize.x ?? ""}, ${recSize.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                return `ellipse(wcs:${systemType})[[${center}], [${size.x ?? ""}, ${size.y ?? ""}], ${toFixed(region.rotation, 6)}deg]`;
+                const ellipseSizePoint = controlPoints[SIZE_POINT_INDEX];
+                const ellipseWcsSize = this.getWcsSizeInArcsec(ellipseSizePoint);
+                const ellipseSize = {x: formattedArcsec(ellipseWcsSize?.x, WCS_PRECISION), y: formattedArcsec(ellipseWcsSize?.y, WCS_PRECISION)};
+                return `ellipse(wcs:${systemType})[[${center}], [${ellipseSize.x ?? ""}, ${ellipseSize.y ?? ""}], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
                 let polygonWcsProperties = `poly(wcs:${systemType})[`;
-                region.controlPoints.forEach((point, index) => {
+                controlPoints.forEach((point, index) => {
                     const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
                     polygonWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
-                    polygonWcsProperties += index !== region.controlPoints.length - 1 ? ", " : "]";
+                    polygonWcsProperties += index !== controlPoints.length - 1 ? ", " : "]";
                 });
                 return polygonWcsProperties;
             case CARTA.RegionType.POLYLINE:
                 let polylineWcsProperties = `Polyline (wcs:${systemType})[`;
-                region.controlPoints.forEach((point, index) => {
+                controlPoints.forEach((point, index) => {
                     const wcsPoint = isFinite(point.x) && isFinite(point.y) ? getFormattedWCSPoint(this.wcsInfoForTransformation, point) : null;
                     polylineWcsProperties += wcsPoint ? `[${wcsPoint.x}, ${wcsPoint.y}]` : "[Invalid]";
-                    polylineWcsProperties += index !== region.controlPoints.length - 1 ? ", " : "]";
+                    polylineWcsProperties += index !== controlPoints.length - 1 ? ", " : "]";
                 });
                 return polylineWcsProperties;
             default:
                 return "Not Implemented";
         }
-    }
+    };
 
     @action private setChannelValues(values: number[]) {
         this.channelValues = values;
