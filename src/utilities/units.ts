@@ -96,7 +96,7 @@ export function getVariablePrecision(value: number): number {
     // precision.
 
     var decimalPlacement = 0.1;
-    var precision = 1;
+    var precision = 3;
 
     for (var i = 0; i < 9; i++) {
         if (value < decimalPlacement) {

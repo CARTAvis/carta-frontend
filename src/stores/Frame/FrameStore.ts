@@ -936,11 +936,6 @@ export class FrameStore {
         }
     }
 
-    // return spectralFrame
-    public returnSpectralFrame(): AST.SpecFrame {
-        return this.spectralFrame;
-    }
-
     get headerRestFreq(): number {
         return this.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "RESTFRQ")?.numericValue;
     }

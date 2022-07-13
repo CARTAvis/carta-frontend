@@ -170,6 +170,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         let diffLeft: number = undefined;
         let secondaryXUnit = "";
+        let channelString = "";
         let cursorInfoString: string = "";
 
         const nearest = binarySearchByX(data, cursorXValue);
@@ -178,7 +179,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let primaryXStr: string = "";
 
             // We calculate the difference between neighboring values to get and estimate of the precision.
-            diffLeft = nearest.index - 1 >= 0 ? Math.abs(data[nearest.index].x - data[nearest.index - 1].x) : 0;
+            diffLeft = nearest.index - 1 >= 0 ? Math.abs(data[nearest.index].x - data[nearest.index - 1].x) : Math.abs(data[nearest.index + 1].x - data[nearest.index].x);
 
             // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
             // are handled idfferently because they have different structures.
@@ -189,17 +190,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
                 // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
                 // are handled idfferently because they have different structures.
-                diffLeft = nearest.index - 1 >= 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : 0;
+                diffLeft = nearest.index - 1 >= 0 ? Math.abs(data[nearest.index].x - data[nearest.index - 1].x) : Math.abs(data[nearest.index + 1].x - data[nearest.index].x);
 
                 // Use precision to determine the proper rounding and zero suppression for displayed value.
                 const secondaryXStr = this.precisionFormatting(nearest, secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);
 
                 if (frame.spectralTypeSecondary !== SpectralType.CHANNEL) secondaryXUnit = frame.spectralUnitSecondary;
+                else channelString = "Channel ";
 
                 const xLabel =
                     cursorXUnit === "Channel"
-                        ? `Channel ${primaryXStr}${secondaryXStr ? `, Channel ${secondaryXStr} ${secondaryXUnit}` : ""}`
-                        : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${secondaryXStr ? `, Channel ${secondaryXStr} ${secondaryXUnit}` : ""}`;
+                        ? `Channel ${primaryXStr}${secondaryXStr ? `, ${channelString}${secondaryXStr} ${secondaryXUnit}` : ""}`
+                        : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${secondaryXStr ? `, ${channelString}${secondaryXStr} ${secondaryXUnit}` : ""}`;
 
                 cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
             } else {
