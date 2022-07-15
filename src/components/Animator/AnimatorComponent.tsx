@@ -217,8 +217,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const frameIndex = appStore.frames.findIndex(f => f.frameInfo.fileId === activeFrame.frameInfo.fileId);
             const numIndices = 5;
             const frameStep = numFrames > 10 ? Math.floor((numFrames - 1) / (numIndices - 1)) : 1;
-            // The purpose of the "frameStep - 1" term in the next line is to add a tolerance to make the shown indices more reasonable.
-            const frameTickPre = numFrames - 1 - 4 * frameStep < frameStep - 1 ? [0, frameStep, 2 * frameStep, 3 * frameStep, numFrames - 1] : [0, frameStep, 2 * frameStep, 3 * frameStep, 4 * frameStep, numFrames - 1];
+            const frameTickPre = numFrames - 1 - 4 * frameStep < frameStep / 2 ? [0, frameStep, 2 * frameStep, 3 * frameStep, numFrames - 1] : [0, frameStep, 2 * frameStep, 3 * frameStep, 4 * frameStep, numFrames - 1];
             const frameTick = numFrames > 10 ? frameTickPre : Array.from(Array(numFrames).keys());
             frameSlider = (
                 <div className="animator-slider">
@@ -238,9 +237,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         if (numChannels > 1) {
             const numLabels = 5;
             const channelStep = numChannels > 10 ? Math.floor((numChannels - 1) / (numLabels - 1)) : 1;
-            // The purpose of the "channelStep - 1" term in the next line is to add a tolerance to make the shown indices more reasonable.
             const channelTickPre =
-                numChannels - 1 - 4 * channelStep < channelStep - 1 ? [0, channelStep, 2 * channelStep, 3 * channelStep, numChannels - 1] : [0, channelStep, 2 * channelStep, 3 * channelStep, 4 * channelStep, numChannels - 1];
+                numChannels - 1 - 4 * channelStep < channelStep / 2 ? [0, channelStep, 2 * channelStep, 3 * channelStep, numChannels - 1] : [0, channelStep, 2 * channelStep, 3 * channelStep, 4 * channelStep, numChannels - 1];
             const channelTick = numChannels > 10 ? channelTickPre : Array.from(Array(numChannels).keys());
             channelSlider = (
                 <div className="animator-slider">
