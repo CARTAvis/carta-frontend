@@ -13,7 +13,7 @@ export class SplashScreenComponent extends React.Component {
         const className = classNames("splash-screen", {"bp3-dark": appStore.darkTheme});
 
         return (
-            <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible} usePortal={true}>
+            <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={false} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible && !appStore.alertStore.alertVisible} usePortal={true}>
                 <div className={className}>
                     <div className={"image-div"}>
                         <img src="carta_logo.png" width={150} />

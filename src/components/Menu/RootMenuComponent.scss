@@ -27,24 +27,11 @@
 
     .contour-loading-icon {
         padding-right: 8px;
-        animation: pulse-green 2s infinite;
         opacity: 0;
-        transition: opacity 0.5s;
+        color: $green3;
 
         &.icon-visible {
             opacity: 1;
-        }
-
-        @keyframes pulse-green {
-            0% {
-                color: $green2;
-            }
-            50% {
-                color: $green4;
-            }
-            100% {
-                color: $green2;
-            }
         }
     }
 
