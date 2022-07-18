@@ -1,5 +1,5 @@
 import * as React from "react";
-import {action, computed, autorun, /*observable,*/ makeObservable} from "mobx";
+import {computed, autorun, /*observable,*/ makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
@@ -22,8 +22,6 @@ export enum SpectralProfilerSettingsTabs {
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
-    secondaryAxisCursorInfoVisible?: boolean;
-
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
             id: "spectral-profiler-floating-settings",
@@ -62,7 +60,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         super(props);
         makeObservable(this);
 
-        this.secondaryAxisCursorInfoVisible = false;
         const appStore = AppStore.Instance;
         autorun(() => {
             if (this.widgetStore) {
@@ -76,14 +73,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             }
         });
     }
-
-    @action setCursorInfo(state: boolean) {
-        this.secondaryAxisCursorInfoVisible = state;
-    }
-
-    handleSecondaryAxisCursorInfoChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.secondaryAxisCursorInfoVisible = changeEvent.target.checked;
-    };
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);

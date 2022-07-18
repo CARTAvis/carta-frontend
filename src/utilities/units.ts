@@ -44,7 +44,7 @@ export function toFixed(val: number, decimals: number = 0): string {
 }
 
 export function trimTrailingDecimals(value: string): string {
-    var splitValue: string[] = value.split(".");
+    let splitValue: string[] = value.split(".");
 
     if (splitValue[1] === undefined) {
         return splitValue[0];

@@ -36,8 +36,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private profileIndex: number = 0;
-
     @observable width: number;
     @observable height: number;
 
@@ -155,14 +153,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 33);
 
-    private precisionFormatting = (nearest: {point: Point2D; index: number}, data: number, diff: number, spectralType: SpectralType): string => {
-        if (spectralType === SpectralType.CHANNEL) {
-            // If value it channel, ie. Int, return integer value.
-            return toFixed(data);
-        } else {
-            // Determine proper rounding and trim trailing zeros from return value.
-            return toFormattedNotation(data, diff);
-        }
+    private precisionFormatting = (data: number, diff: number, spectralType: SpectralType): string => {
+        return spectralType === SpectralType.CHANNEL ? toFixed(data) : toFormattedNotation(data, diff);
     };
 
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string, start: number, end: number): string => {
@@ -170,7 +162,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         let diffLeft: number = undefined;
         let secondaryXUnit = "";
-        let channelString = "";
+        let secondaryChannelString = "";
         let cursorInfoString: string = "";
 
         const nearest = binarySearchByX(data, cursorXValue);
@@ -183,32 +175,28 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
             // are handled idfferently because they have different structures.
-            primaryXStr = this.precisionFormatting(nearest, data[nearest.index].x, diffLeft, frame.spectralType);
+            primaryXStr = this.precisionFormatting(data[nearest.index].x, diffLeft, frame.spectralType);
+
+            let xLabel = cursorXUnit === "Channel" ? `Channel ${primaryXStr}` : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
 
             if (this.widgetStore.secondaryAxisCursorInfoVisible) {
-                let secondary = this.widgetStore.effectiveFrame.channelSecondaryValues.slice(start, end);
+                let secondary = frame.channelSecondaryValues.slice(start, end);
 
                 // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
                 // are handled idfferently because they have different structures.
-                diffLeft = nearest.index - 1 >= 0 ? Math.abs(data[nearest.index].x - data[nearest.index - 1].x) : Math.abs(data[nearest.index + 1].x - data[nearest.index].x);
+                diffLeft = nearest.index - 1 >= 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : Math.abs(secondary[nearest.index + 1] - secondary[nearest.index]);
 
                 // Use precision to determine the proper rounding and zero suppression for displayed value.
-                const secondaryXStr = this.precisionFormatting(nearest, secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);
+                const secondaryXStr = this.precisionFormatting(secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);
 
                 if (frame.spectralTypeSecondary !== SpectralType.CHANNEL) secondaryXUnit = frame.spectralUnitSecondary;
-                else channelString = "Channel ";
+                else secondaryChannelString = "Channel";
 
-                const xLabel =
-                    cursorXUnit === "Channel"
-                        ? `Channel ${primaryXStr}${secondaryXStr ? `, ${channelString}${secondaryXStr} ${secondaryXUnit}` : ""}`
-                        : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}${secondaryXStr ? `, ${channelString}${secondaryXStr} ${secondaryXUnit}` : ""}`;
-
-                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
-            } else {
-                const xLabel = cursorXUnit === "Channel" ? `Channel ${primaryXStr}` : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
-                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+                xLabel += secondaryChannelString === "Channel" ? `, Channel ${secondaryXStr}` : `, ${secondaryXStr}${secondaryXUnit ? ` ${secondaryXUnit}` : ""}`;
             }
+            cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
         }
+
         return `${label}: ${cursorInfoString ?? "---"}`;
     };
 

@@ -110,7 +110,6 @@ export class FrameStore {
     public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
-    public secondarySpectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
     public spatialTransformAST: AST.FrameSet;
     private cursorMovementHandle: NodeJS.Timeout;
@@ -711,15 +710,6 @@ export class FrameStore {
         return label;
     }
 
-    @computed get secondarySpectralLabel(): string {
-        let label = undefined;
-        if (this.spectralAxis) {
-            const spectralSystem = this.isSpectralSystemConvertible ? this.spectralSystem : this.spectralAxis.specsys;
-            label = `${spectralSystem ? `[${spectralSystem}] ` : ""}${this.spectralCoordinateSecondary ?? ""}`;
-        }
-        return label;
-    }
-
     @computed get spectralUnitStr(): string {
         if (this.spectralAxis && !this.spectralType && !this.spectralUnit) {
             return this.spectralAxis.type.unit;
@@ -956,7 +946,6 @@ export class FrameStore {
         this.spectralSystem = null;
         this.channelValues = null;
         this.spectralCoordsSupported = null;
-        this.secondarySpectralCoordsSupported = null;
         this.spectralSystemsSupported = null;
         this.wcsInfo = null;
         this.wcsInfoForTransformation = null;
@@ -1727,10 +1716,8 @@ export class FrameStore {
             // check RESTFRQ
             if (isFinite(this.headerRestFreq)) {
                 this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
-                this.secondarySpectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
             } else {
                 this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>();
-                this.secondarySpectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>();
 
                 Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
                     const value = SPECTRAL_COORDS_SUPPORTED.get(key);
@@ -1739,19 +1726,16 @@ export class FrameStore {
                     if (isVolecity && isValueVolecity) {
                         // VRAD, VOPT
                         this.spectralCoordsSupported.set(key, value);
-                        this.secondarySpectralCoordsSupported.set(key, value);
                     }
                     if (!isVolecity && !isValueVolecity) {
                         // FREQ, WAVE, AWAV
                         this.spectralCoordsSupported.set(key, value);
-                        this.secondarySpectralCoordsSupported.set(key, value);
                     }
                 });
                 this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
             }
         } else {
             this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>([[SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]]);
-            this.secondarySpectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>([[SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]]);
         }
 
         // generate spectral system options

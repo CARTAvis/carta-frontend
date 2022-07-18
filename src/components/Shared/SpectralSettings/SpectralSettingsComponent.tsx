@@ -43,7 +43,7 @@ export class SpectralSettingsComponent extends React.Component<{
                     />
                 </FormGroup>
                 {this.props.secondaryAxisCursorInfoVisible && (
-                    <FormGroup label={"Opt. Coord."} inline={true} disabled={disableCoordinateSetting}>
+                    <FormGroup label={"Secondary Coordinate"} inline={true} disabled={disableCoordinateSetting}>
                         <HTMLSelect
                             disabled={disableCoordinateSetting}
                             value={frame && frame.spectralCoordinateSecondary ? frame.spectralCoordinateSecondary : ""}
