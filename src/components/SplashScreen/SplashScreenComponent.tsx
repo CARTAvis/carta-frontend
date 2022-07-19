@@ -29,7 +29,7 @@ export class SplashScreenComponent extends React.Component {
                     <div className={"loading-info-div"}>
                         <p>{appStore.logStore.newestMsg}</p>
                     </div>
-                    {ApiService.RuntimeConfig.apiAddress ? (
+                    {ApiService.RuntimeConfig?.dashboardAddress ? (
                         <div className="dashboard-info-div">
                             <a href={ApiService.RuntimeConfig.apiAddress}>CARTA dashboard</a>
                         </div>
