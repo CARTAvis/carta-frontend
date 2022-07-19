@@ -12,7 +12,7 @@ export const CATALOG_OVERLAY_HELP_CONTENT = (
             <ImageComponent light={widgetButtonCatalog} dark={widgetButtonCatalog_d} width="90%" />
         </p>
         <p>
-            Source catalog files in VOTable or FITS format can be loaded in CARTA (via <code>File</code>-&gt; <code>Import catalog</code>) for visualization as an image overlay, or a 2D scatter plot, or a histogram. Alternatively, catalogs can be retrieved from <a href="http://simbad.u-strasbg.fr" target="_blank">SIMBAD</a> or <a href="https://vizier.u-strasbg.fr/viz-bin/VizieR" target="_blank">VizieR</a> with the Online Catalog Query dialog. 
+            Source catalog files in VOTable or FITS format can be loaded in CARTA (via <code>File</code>-&gt; <code>Import catalog</code>) for visualization as an image overlay, or a 2D scatter plot, or a histogram. Alternatively, catalogs can be retrieved from <a href="http://simbad.u-strasbg.fr" target="_blank" rel="noreferrer">SIMBAD</a> or <a href="https://vizier.u-strasbg.fr/viz-bin/VizieR" target="_blank" rel="noreferrer">VizieR</a> with the Online Catalog Query dialog. 
         </p>
         <p><ImageComponent light={dialogButtonCatalogQuery} dark={dialogButtonCatalogQuery_d} width="30%" /></p>
         <p>

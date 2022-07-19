@@ -4,7 +4,7 @@ export const FILE_BROWSER_HELP_CONTENT = (
         <ul>
             <li>Load images in CASA, FITS, MIRIAD, or HDF5-IDIA schema format as raster</li>
             <li>Load individual Stokes images as a single Stokes hypercube</li>
-            <li>Load images with the Lattice Expression Language (<a href="https://casadocs.readthedocs.io/en/stable/notebooks/image_analysis.html?highlight=LEL#Lattice-Expression-Language" target="_blank">LEL</a>)</li>
+            <li>Load images with the Lattice Expression Language (<a href="https://casadocs.readthedocs.io/en/stable/notebooks/image_analysis.html?highlight=LEL#Lattice-Expression-Language" target="_blank" rel="noreferrer">LEL</a>)</li>
             <li>Save images or subimages in CASA or FITS format</li>
             <li>Import and export region text files in CASA (.crtf) or ds9 (.reg) format</li>
             <li>Import catalog files in VOTable or FITS format</li>
@@ -17,6 +17,10 @@ export const FILE_BROWSER_HELP_CONTENT = (
             <li>Unix-style search: e.g., *.fits</li>
             <li>Regular expression search: e.g., colou?r</li>
         </ul>
+        <p>
+            By default (<code>Filter by file content</code>), only files met the supported image formats are listed in the image file browser. If you often work with a directory with lots of mixed kinds of files, you may consider to switch to the alternative image file list generation modes, <code>Filter by extension</code> or <code>All files</code> to speed up the process. This is configurable in the <code>Global</code> tab of the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong>).
+        </p>
+
         <h3 id="images">Images</h3>
         <p>
             Images can be loaded as raster via <strong>File</strong> -&gt; <strong>Open image</strong>, or appended as raster via <strong>File</strong> -&gt; <strong>Append image</strong>. All loaded images will be closed if you load an
@@ -34,7 +38,7 @@ export const FILE_BROWSER_HELP_CONTENT = (
             hypercube" button. A popup dialog will display the Stokes labels based on the image headers. If header information is not sufficient to assign a Stokes label per image, image file name will be used to guess a Stokes label per image. If none of the attempts is successful, you will need to assign the Stokes labels manually. Once Stokes labels are set properly, CARTA will load the files and combine them into a single image with multiple Stokes.
         </p>
         <p>
-            Images can be loaded with the Lattice Expression Language (<a href="https://casadocs.readthedocs.io/en/stable/notebooks/image_analysis.html?highlight=LEL#Lattice-Expression-Language" target="_blank">LEL</a>). With LEL,  you can apply image arithmetic and load the resulting image for visualization and analysis. To enable this image loading mode, click the <code>Filter</code> dropdown menu and switch to <code>Image arithmetic</code>. You may click on image files to set up the expression quickly.
+            Images can be loaded with the Lattice Expression Language (<a href="https://casadocs.readthedocs.io/en/stable/notebooks/image_analysis.html?highlight=LEL#Lattice-Expression-Language" target="_blank" rel="noreferrer">LEL</a>). With LEL,  you can apply image arithmetic and load the resulting image for visualization and analysis. To enable this image loading mode, click the <code>Filter</code> dropdown menu and switch to <code>Image arithmetic</code>. You may click on image files to set up the expression quickly.
         </p>
         <h3 id="regions">Regions</h3>
         <p>
