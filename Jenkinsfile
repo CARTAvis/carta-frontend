@@ -1,12 +1,18 @@
 pipeline {
     agent none
+    environment {
+        COMMIT_ID=''
+    }
     stages {
         stage('WebAssembly compilation') {
             agent {
-                label "ubuntu-2004"
+                label "ubuntu2004-agent"
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        COMMIT_ID = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                    }
                     sh "git submodule update --init --recursive"
                     sh "n exec 14 npm run build-libs-docker"
                     stash includes: "protobuf/**/*", name: "protobuf" 
@@ -18,7 +24,7 @@ pipeline {
             parallel {
                 stage('Build with node v12') {
                     agent {
-                        label "ubuntu-2004"
+                        label "ubuntu2004-agent"
                     }
                     steps {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -34,7 +40,7 @@ pipeline {
                 }
                 stage('Build with node v14') {
                     agent {
-                        label "ubuntu-2004"
+                        label "almalinux85-agent"
                     }
                     steps {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -50,7 +56,7 @@ pipeline {
                 }
                 stage('Build with node v16') {
                     agent {
-                       label "ubuntu-2004"
+                       label "macos11-agent"
                     }
                     steps {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -65,6 +71,14 @@ pipeline {
                     }
                 }
             }
+        }
+    }
+    post {
+        success {
+            slackSend color: 'good', message: "carta-frontend - Success - ${env.BRANCH_NAME} ${env.COMMIT_ID} (<${env.RUN_DISPLAY_URL}|open>)";
+        }
+        failure {
+            slackSend color: 'danger', message: "carta-frontend - Fail - ${env.BRANCH_NAME} ${env.COMMIT_ID} (<${env.RUN_DISPLAY_URL}|open>)";
         }
     }
 }
