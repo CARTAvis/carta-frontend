@@ -1,13 +1,3 @@
-void setBuildStatus(String message, String state) {
-  step([
-      $class: "GitHubCommitStatusSetter",
-      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/CARTAvis/carta-frontend"],
-      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
-      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-  ]);
-}
-
 pipeline {
     agent none
     environment {
@@ -27,14 +17,6 @@ pipeline {
                 stash includes: "protobuf/**/*", name: "protobuf" 
                 stash includes: "wasm_libs/built/**/*,wasm_libs/zstd/build/standalone_zstd.bc", name: "wasm_libs"
             }
-            post {
-                success {
-                    setBuildStatus("WebAssembly compilation succeeded", "SUCCESS");
-                }
-                failure {
-                    setBuildStatus("WebAssembly compilation failed", "FAILURE");
-                }
-            }
         }
         stage('Build') {
             parallel {
@@ -51,14 +33,6 @@ pipeline {
                         sh 'n exec 12 npm install'
                         sh 'n exec 12 npm run build-docker'
                     }
-                    post {
-                        success {
-                            setBuildStatus("Build with node v12 succeeded", "SUCCESS");
-                        }
-                        failure {
-                            setBuildStatus("Build with node v12 failed", "FAILURE");
-                        }
-                    }
                 }
                 stage('Build with node v14') {
                     agent {
@@ -73,14 +47,6 @@ pipeline {
                         sh 'n exec 14 npm install'
                         sh 'n exec 14 npm run build-docker'
                     }
-                    post {
-                        success {
-                            setBuildStatus("Build with node v14 succeeded", "SUCCESS");
-                        }
-                        failure {
-                            setBuildStatus("Build with node v14 failed", "FAILURE");
-                        }
-                    }
                 }
                 stage('Build with node v16') {
                     agent {
@@ -94,14 +60,6 @@ pipeline {
                         sh 'n exec 16 node -v'
                         sh 'n exec 16 npm install --legacy-peer-deps'
                         sh 'n exec 16 npm run build-docker'
-                    }
-                    post {
-                        success {
-                            setBuildStatus("Build with node v16 succeeded", "SUCCESS");
-                        }
-                        failure {
-                            setBuildStatus("Build with node v16 failed", "FAILURE");
-                        }
                     }
                 }
             }
