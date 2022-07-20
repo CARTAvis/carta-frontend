@@ -1,6 +1,7 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
+import {CARTA} from "carta-protobuf";
 import {Tabs, Tab, FormGroup} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent, SafeNumericInput} from "components/Shared";
 import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
@@ -165,6 +166,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
             showWCSAxis: widgetStore.wcsAxisVisible,
+            disableShowWCSAxis: this.widgetStore.effectiveRegion ? this.widgetStore.effectiveRegion.regionType !== CARTA.RegionType.POINT : false,
             setLineColor: (lineKey: LineKey, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
