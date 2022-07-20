@@ -196,7 +196,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
                 if (nearest?.point) {
-                    let xValueLabel = (Math.abs(nearest.point.x) < 1e-5 ? `${toExponential(nearest.point.x, 5)}` : `${toFixed(nearest.point.x, 5)}`);
+                    let xValueLabel = Math.abs(nearest.point.x) < 1e-5 ? `${toExponential(nearest.point.x, 5)}` : `${toFixed(nearest.point.x, 5)}`;
                     let yValueLabel = `${nearest.point.y !== 0.5 ? nearest.point.y : 0}`;
                     if (unit) {
                         xValueLabel += ` ${unit}`;
