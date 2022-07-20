@@ -194,30 +194,23 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         let profilerInfo: string[] = [];
         if (this.plotData) {
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
-                let numberString;
-                // Switch between standard and scientific notation
-                if (this.widgetStore.cursorX < 1e-5) {
-                    numberString = toExponential(this.widgetStore.cursorX, 5);
-                } else {
-                    numberString = toFixed(this.widgetStore.cursorX, 5);
-                }
                 const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
                 if (nearest?.point) {
-                    let valueLabel = `${nearest.point.y !== 0.5 ? nearest.point.y : 0}`;
-
+                    let xValueLabel = (Math.abs(nearest.point.x) < 1e-5 ? `${toExponential(nearest.point.x, 5)}` : `${toFixed(nearest.point.x, 5)}`);
+                    let yValueLabel = `${nearest.point.y !== 0.5 ? nearest.point.y : 0}`;
                     if (unit) {
-                        numberString += ` ${unit}`;
+                        xValueLabel += ` ${unit}`;
                     }
                     if (nearest.point.y <= 1) {
-                        valueLabel += ` Count`;
+                        yValueLabel += ` Count`;
                     } else {
-                        valueLabel += ` Counts`;
+                        yValueLabel += ` Counts`;
                     }
-
                     if (this.widgetStore.cursorX > this.plotData.xMax || this.widgetStore.cursorX < this.plotData.xMin) {
-                        valueLabel = `NaN`;
+                        xValueLabel = `NaN`;
+                        yValueLabel = `NaN`;
                     }
-                    profilerInfo.push(`Cursor: ${numberString}, ${valueLabel}`);
+                    profilerInfo.push(`Cursor: ${xValueLabel}, ${yValueLabel}`);
                 }
             }
         }
