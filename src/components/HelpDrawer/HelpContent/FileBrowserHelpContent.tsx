@@ -57,6 +57,7 @@ export const FILE_BROWSER_HELP_CONTENT = (
         <p>
             You can load multiple catalog files at once by selecting multiple catalog files with <code>ctrl/cmd+click</code> or <code>shift+click</code> from the file list, and then clicking the <code>Load Catalog</code> button.
         </p>
+        <br />
         <h4>TIPS</h4>
         <p>CARTA can remeber the directory where you loaded an image and set it as the initial diretory when you launch CARTA next time. This is configurable in the <code>Global</code> tab of the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong>).</p>
     </div>

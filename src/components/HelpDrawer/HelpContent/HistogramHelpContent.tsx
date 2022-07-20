@@ -1,19 +1,23 @@
 import {ImageComponent} from "../ImageComponent";
-import headHistogramButton from "static/help/head_histogram_button.png";
-import headHistogramButton_d from "static/help/head_histogram_button_d.png";
+import widgetButtonHistogram from "static/help/widgetButton_histogram.png";
+import widgetButtonHistogram_d from "static/help/widgetButton_histogram_d.png";
 
 export const HISTOGRAM_HELP_CONTENT = (
     <div>
         <p>
-            <ImageComponent light={headHistogramButton} dark={headHistogramButton_d} width="90%" />
+            <ImageComponent light={widgetButtonHistogram} dark={widgetButtonHistogram_d} width="90%" />
         </p>
-        <p>Histogram widget displays a histogram plot derived from a 2D region. When no region is created or selected, it displays a histogram derived from the current full image in the image viewer.</p>
-        <h3 id="images">Images</h3>
-        <p>The image dropdown defaults to &quot;Active&quot; image which means the current image in the image viewer.</p>
-        <h3 id="regions">Regions</h3>
+        <p>Histogram widget displays a histogram plot based on the selections in the <code>Image</code>, <code>Region</code>, and <code>Polarization</code> dropdown menus. When there is no region or no active region, the entire image is used to compute the histogram.</p>
+        <h3 id="image">Image</h3>
+        <p>The <code>Image</code> dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in the single-panel mode. If it is in the multi-panel mode, the active image is highlighted with a red box.</p>
+        <h3 id="region">Region</h3>
         <p>
-            The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking one in the image viewer, or by clicking a region entry on the region list widget.
-            Histogram plot of the selected region will be updated accordingly.
+            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking one in the image viewer, or by clicking a region entry on the region list widget.
+            Histogram plot of the selected region will be updated accordingly. When there is no region or no region is selected (active), the entire image is used to compute the histogram.
+        </p>
+        <h3 id="polarization">Polarization</h3>
+        <p>
+            The <code>Polarization</code> dropdown menu defaults to &quot;Current&quot; which means the selection as in the animator widget. Beside the Stokes components as defined in the image header, computed components such as linear polarization intensity, or polarization angle, etc. are also available.
         </p>
         <h3 id="interactivity-zoom-and-pan">Interactivity: zoom and pan</h3>
         <p>The x and y ranges of the histogram plot can be modified by</p>
@@ -34,7 +38,7 @@ export const HISTOGRAM_HELP_CONTENT = (
                 <code>double-click</code> to reset x and y ranges
             </li>
             <li>
-                <code>shift + click-and-drag</code> to pan in x
+                <code>shift + drag-and-drop</code> to pan in x
             </li>
         </ul>
         <p>In addition, the x and y ranges can be explicitly set in the histogram settings dialog.</p>
@@ -50,9 +54,7 @@ export const HISTOGRAM_HELP_CONTENT = (
             <li>display y in logarithmic scale (default)</li>
         </ul>
         <br />
-        <h4 id="note">Note</h4>
-        <p>In the current release, the number of histogram bins is automatically derived as the square root of the product of region bound box sizes in x and y. The development team will improve this in future releases.</p>
-        <h4 id="tip">TIP</h4>
-        <p>Multiple histogram widgets can be created to show histograms for different images with different regions.</p>
+        <h4 id="note">NOTE</h4>
+        <p>In the current release, the number of histogram bins is automatically derived as the square root of the product of the region bound box sizes.</p>
     </div>
 );
