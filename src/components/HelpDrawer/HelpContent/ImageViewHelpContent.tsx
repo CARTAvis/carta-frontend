@@ -21,15 +21,15 @@ import headCatalogueButton_d from "static/help/head_catalogue_button_d.png";
 export const IMAGE_VIEW_HELP_CONTENT = (
     <div>
         <p>
-            The image viewer widget serves as the core component of CARTA. It allows you to visualize images in rasters and in contours. Region of interests can be defined interactively with the image viewer and subsequent image analysis
-            can be performed with other widgets. Catalogue files can be loaded and visualized in the image viewer with the Catalogue widget.
+            The image viewer widget serves as the core component of CARTA. It allows you to visualize images as rasters, contours, or vecter fields. Region of interests can be defined interactively with the image viewer and subsequent image analysis
+            can be performed with other widgets. Catalog files can be loaded and visualized in the image viewer as catalog overlays with the catalog widget.
         </p>
         <p>
-            Images can be loaded via <strong>File</strong> -&gt; <strong>Open image</strong> (will close all loaded image first). You may load multiple images via <strong>File</strong> -&gt; <strong>Append image</strong>. All images are
-            loaded as raster by default. Contour layers can be further generated via the contour configuration dialog.
+            Images can be loaded via <strong>File</strong> -&gt; <strong>Open image</strong> (will close all loaded image first). You may append more images via <strong>File</strong> -&gt; <strong>Append image</strong>. All images are
+            loaded and rendered as raster by default. Contour layers can be generated via the contour configuration dialog. Vector field layers can be produced via the vector overlay dialog.
         </p>
         <p>
-            Information of world coordinates and image coordinates at the cursor position is shown at the top of the image viewer. To freeze/unfreeze the cursor position, press <code>F</code> key.
+            Information of world coordinate and image coordinate at the cursor position is shown at the top of the image viewer. Pixel value, spectral information, and polarization information are also displayed. To freeze/unfreeze the cursor position, press <code>F</code> key. Different modes to display the cursor information are available in the <code>WCS and Image Overlay</code> tab of the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong>). The preferences dialog also provides many other options related to the image viewer widget that you can adjust to fit your tastes and workflow. 
         </p>
 
         <h3 id="image-tool-buttons">Image tool buttons</h3>
