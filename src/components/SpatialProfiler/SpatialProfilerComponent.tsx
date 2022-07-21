@@ -9,11 +9,11 @@ import {Tick} from "chart.js";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore, NumberFormatType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D, POLARIZATIONS} from "models";
-import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme, getPixelValueFromWCS, getFormattedWCSPoint} from "utilities";
 import "./SpatialProfilerComponent.scss";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -432,6 +432,113 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return profilerInfo;
     };
 
+    @computed private get genWcsGrid(): {wcs: number; pixel: number}[] {
+        const wcsGrids = [];
+        const format = this.widgetStore.isXProfile ? AppStore.Instance.overlayStore.numbers.formatX : AppStore.Instance.overlayStore.numbers.formatY;
+        if (this.plotData?.values && this.widgetStore.effectiveRegion.regionType === CARTA.RegionType.POINT && format === NumberFormatType.Degrees) {
+            const pointRegionWcs = getFormattedWCSPoint(this.frame.wcsInfo, this.widgetStore.effectiveRegion.center);
+            const pointRegionPixel = this.widgetStore.effectiveRegion.center;
+
+            let initialPixel, finalPixel, initialWcs, finalWcs;
+            if (this.widgetStore.isXProfile) {
+                initialPixel = {x: this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX, y: pointRegionPixel.y};
+                finalPixel = {x: this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX, y: pointRegionPixel.y};
+                initialWcs = parseFloat(getFormattedWCSPoint(this.frame.wcsInfo, initialPixel).x);
+                finalWcs = parseFloat(getFormattedWCSPoint(this.frame.wcsInfo, finalPixel).x);
+            } else {
+                initialPixel = {x: pointRegionPixel.x, y: this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX};
+                finalPixel = {x: pointRegionPixel.x, y: this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX};
+                initialWcs = parseFloat(getFormattedWCSPoint(this.frame.wcsInfo, initialPixel).y);
+                finalWcs = parseFloat(getFormattedWCSPoint(this.frame.wcsInfo, finalPixel).y);
+            }
+
+            if (!initialWcs || !finalWcs) {
+                return null;
+            }
+
+            const minWcs = Math.min(initialWcs, finalWcs);
+            const maxWcs = Math.max(initialWcs, finalWcs);
+
+            if (this.widgetStore.isXProfile) {
+                const originPixel = getPixelValueFromWCS(this.frame.wcsInfo, {x: "0", y: pointRegionWcs.y}).x;
+                const hasZero = originPixel > initialPixel.x && originPixel < finalPixel.x;
+
+                if (hasZero) {
+                    const wcsDist = 360 - maxWcs + minWcs;
+                    const deltaWcs = this.getDeltaWcs(wcsDist, this.widgetStore.isXProfile);
+                    if (!deltaWcs) {
+                        return null;
+                    }
+                    const grid0 = this.getGrids(maxWcs, 360, this.widgetStore.isXProfile, deltaWcs, pointRegionWcs);
+                    const grid1 = this.getGrids(0, minWcs, this.widgetStore.isXProfile, deltaWcs, pointRegionWcs);
+                    wcsGrids.push(...grid0, ...grid1);
+                } else {
+                    const wcsDist = maxWcs - minWcs;
+                    const deltaWcs = this.getDeltaWcs(wcsDist, this.widgetStore.isXProfile);
+                    if (!deltaWcs) {
+                        return null;
+                    }
+                    const grids = this.getGrids(minWcs, maxWcs, this.widgetStore.isXProfile, deltaWcs, pointRegionWcs);
+                    wcsGrids.push(...grids);
+                }
+            } else {
+                const wcsDist = maxWcs - minWcs;
+                const deltaWcs = this.getDeltaWcs(wcsDist, this.widgetStore.isXProfile);
+                if (!deltaWcs) {
+                    return null;
+                }
+                const grids = this.getGrids(minWcs, maxWcs, this.widgetStore.isXProfile, deltaWcs, pointRegionWcs);
+                wcsGrids.push(...grids);
+            }
+        }
+        return wcsGrids;
+    }
+
+    private getGrids = (startWcs: number, endWcs: number, isXProfile: boolean, deltaWcs: number, pointRegionWcs: {x: string; y: string}): {wcs: number; pixel: number}[] => {
+        const grids = [];
+
+        // Round ticks by inter-tick distance.
+        // This is a workaround for the float number bug in Chart.js that the ticks could be like [45.451, 45.4520000001,45.4529999998] when users zoom in.
+        let roundingDecimalDigits = 0;
+        if (deltaWcs < 1) {
+            roundingDecimalDigits = Math.abs(Math.floor(Math.log10(deltaWcs)));
+        }
+
+        const firstWcsGrid = Math.ceil(startWcs / deltaWcs) * deltaWcs;
+        for (var i = 0; ; i++) {
+            const wcsGrid = firstWcsGrid + i * deltaWcs;
+            if (wcsGrid >= endWcs) {
+                break;
+            }
+            const wcs = Number(wcsGrid.toFixed(roundingDecimalDigits));
+            const pixel = isXProfile ? getPixelValueFromWCS(this.frame.wcsInfo, {x: wcsGrid.toString(), y: pointRegionWcs.y}).x : getPixelValueFromWCS(this.frame.wcsInfo, {x: pointRegionWcs.x, y: wcsGrid.toString()}).y;
+            grids.push({wcs, pixel});
+        }
+        return grids;
+    };
+
+    private getDeltaWcs = (wcsDist: number, isXProfile: boolean) => {
+        const wcsDistLog = Math.log10(wcsDist);
+        const wcsDistLogHead = Math.floor(wcsDistLog);
+        const wcsDistLogFraction = wcsDistLog - wcsDistLogHead;
+
+        const format = isXProfile ? AppStore.Instance.overlayStore.numbers.formatX : AppStore.Instance.overlayStore.numbers.formatY;
+
+        let interWcsDist: number;
+        if (format === NumberFormatType.Degrees) {
+            if (wcsDistLogFraction >= Math.log10(6) && wcsDistLogFraction < 1) {
+                interWcsDist = 2 * Math.pow(10, wcsDistLogHead);
+            } else if (wcsDistLogFraction >= Math.log10(3) && wcsDistLogFraction < Math.log10(6)) {
+                interWcsDist = Math.pow(10, wcsDistLogHead);
+            } else if (wcsDistLogFraction >= Math.log10(1.5) && wcsDistLogFraction < Math.log10(3)) {
+                interWcsDist = 5 * Math.pow(10, wcsDistLogHead - 1);
+            } else {
+                interWcsDist = 2 * Math.pow(10, wcsDistLogHead - 1);
+            }
+        }
+        return interWcsDist;
+    };
+
     onGraphCursorMoved = _.throttle(x => {
         this.widgetStore.setCursor(x);
     }, 33);
@@ -483,14 +590,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.yLabel = `Value (${unit})`;
                 }
 
-                if (!this.widgetStore.isLineOrPolyline) {
-                    if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
-                        linePlotProps.showTopAxis = true;
-                        linePlotProps.topAxisTickFormatter = this.formatProfileAst;
-                    } else {
-                        linePlotProps.showTopAxis = false;
-                    }
-                }
+                // if (!this.widgetStore.isLineOrPolyline) {
+                //     if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
+                //         linePlotProps.showTopAxis = true;
+                //         linePlotProps.topAxisTickFormatter = this.formatProfileAst;
+                //     } else {
+                //         linePlotProps.showTopAxis = false;
+                //     }
+                // }
 
                 const currentPlotData = this.plotData;
                 if (currentPlotData) {
@@ -566,6 +673,20 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     opacity: 0.8,
                     isMouseMove: true
                 });
+
+                if (this.genWcsGrid?.length) {
+                    for (var i = 0; i < this.genWcsGrid.length; i++) {
+                        linePlotProps.markers.push({
+                            value: this.genWcsGrid[i].pixel,
+                            label: this.genWcsGrid[i].wcs.toString() + "°",
+                            id: `marker-wcs-grid-${i}`,
+                            draggable: false,
+                            horizontal: false,
+                            color: appStore.darkTheme ? Colors.TURQUOISE4 : Colors.TURQUOISE2,
+                            opacity: 0.6
+                        });
+                    }
+                }
 
                 if (widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.markers.push({
