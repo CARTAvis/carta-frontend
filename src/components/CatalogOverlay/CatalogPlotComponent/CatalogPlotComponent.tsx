@@ -601,11 +601,9 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private formatTickValues = (range: number[]): string => {
-
         const difference = range[1] - range[0];
         const exponential = difference.toExponential(2);
         const power = parseFloat(exponential.split('e')[1]);
-
         return power < 0 ? `.${power * -1 + 3}e`: ".2e";
     };
 
