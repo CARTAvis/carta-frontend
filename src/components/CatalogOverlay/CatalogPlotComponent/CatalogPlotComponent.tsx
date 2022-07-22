@@ -805,7 +805,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 spikemode: "across",
                 spikedash: "solid",
                 spikecolor: markerColor,
-                spikethickness: 1 * ratio,    
+                spikethickness: 1 * ratio
             },
             margin: {
                 t: 5 * ratio,
