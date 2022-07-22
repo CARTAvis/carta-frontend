@@ -782,8 +782,6 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 spikedash: "solid",
                 spikecolor: markerColor,
                 spikethickness: 1 * ratio,
-                // d3 format
-                tickformat: ".2e"
             },
             yaxis: {
                 titlefont: {
@@ -874,8 +872,10 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.yaxis.range = [border.yMin, border.yMax];
             layout.yaxis.title = widgetStore.yColumnName;
             layout.yaxis.tickformat = this.formatTickValues(layout.yaxis.range);
+            layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
         } else {
             data = this.histogramData.data;
+            //layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
             let border;
             if (widgetStore.isHistogramAutoScaledX) {
                 border = this.histogramData.border;
