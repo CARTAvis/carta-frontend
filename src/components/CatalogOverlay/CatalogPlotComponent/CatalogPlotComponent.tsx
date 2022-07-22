@@ -781,7 +781,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 spikemode: "across",
                 spikedash: "solid",
                 spikecolor: markerColor,
-                spikethickness: 1 * ratio,
+                spikethickness: 1 * ratio
             },
             yaxis: {
                 titlefont: {
@@ -805,12 +805,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 spikemode: "across",
                 spikedash: "solid",
                 spikecolor: markerColor,
-                spikethickness: 1 * ratio
+                spikethickness: 1 * ratio,    
             },
             margin: {
                 t: 5 * ratio,
-                b: 40 * ratio,
-                l: 80 * ratio,
+                b: 60 * ratio,
+                l: 100 * ratio,
                 r: 5 * ratio,
                 pad: 0
             },
