@@ -19,6 +19,8 @@ import zoomButton from "static/help/imageTools_zoomButtons.png";
 import zoomButton_d from "static/help/imageTools_zoomButtons_d.png";
 import widgetButtonCatalog from "static/help/widgetButton_catalog.png";
 import widgetButtonCatalog_d from "static/help/widgetButton_catalog_d.png";
+import distanceMeasureButton from "static/help/imageTools_distanceMeasureButton.png";
+import distanceMeasureButton_d from "static/help/imageTools_distanceMeasureButton_d.png";
 import regionButtonSet from "static/help/regionButtonSet.png";
 import regionButtonSet_d from "static/help/regionButtonSet_d.png";
 
@@ -147,6 +149,17 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         <p>Basic image information and full image headers are displayed in the file header dialog.</p>
         <p>
             <ImageComponent light={imageInfoButton} dark={imageInfoButton_d} width="34%" />
+        </p>
+        <h3>Distance measure</h3>
+        <p>
+            This tool allows you to measure a geodesic distance between two locations on an image with mouse clicks. The geodesic line between the two clicks as well as the iso-latitude and iso-longitude lines are visualized.
+        </p>
+        <p>
+            <ImageComponent light={distanceMeasureButton} dark={distanceMeasureButton_d} width="80%" />
+        </p>
+        <h3>Interative colorbar</h3>
+        <p>
+            When you hover over the colorbar, a cutoff value is applied to the raster image temporally. Pixel values below the cutoff are rendered in grey scale. You may disable this feature in the <code>Colorbar</code> tab of the image view settings dialog.
         </p>
     </div>
 );
