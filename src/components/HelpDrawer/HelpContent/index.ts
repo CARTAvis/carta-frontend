@@ -41,3 +41,4 @@ export * from "./CatalogSettingsOrientationHelpContent";
 export * from "./SpectralLineQueryHelpContent";
 export * from "./StokesHypercubeDialogHelpContent";
 export * from "./PvGeneratorHelpComponent";
+export * from "./CursorInfoHelpContent";
