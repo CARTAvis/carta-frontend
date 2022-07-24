@@ -32,7 +32,6 @@ export const STOKES_ANALYSIS_SETTINGS_SMOOTHING_HELP_CONTENT = (
             </li>
         </ul>
         <p>Optionally, the original profile can be overplotted with the smoothed profile. </p>
-        <p>The data of the smoothed profile is appended in the exported tsv file if smoothing is applied. The tsv file of the scatter plot only contains the smoothed data if smoothing is applied.</p>
 
         <h3>Examples</h3>
         <p>Boxcar: Kernel = 2</p>

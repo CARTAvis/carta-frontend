@@ -8,7 +8,7 @@ export const STOKES_ANALYSIS_SETTINGS_SCATTER_PLOT_STYLING_HELP_CONTENT = (
             <li>Colormap</li>
             <li>Symbol size</li>
             <li>Symbol transparency</li>
-            <li>Q-to-U scale ratio as unity</li>
+            <li>Q-to-U axis scale ratio as unity</li>
         </ul>
     </div>
 );
