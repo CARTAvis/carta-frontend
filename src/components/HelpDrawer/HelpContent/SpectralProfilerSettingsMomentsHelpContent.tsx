@@ -6,7 +6,7 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
         </p>
         <ul>
             <li>
-                <b>Image</b>: the image file for moment calculations. &quot;Active&quot; refers to the image displayed in the image viewer.
+                <b>Image</b>: the image file for moment calculations. &quot;Active&quot; refers to the image displayed in the image viewer if it is single panel mode. If it is multi-panel mode, the active image is highlighted with a red box.
             </li>
             <li>
                 <b>Region</b>: a region can be selected so that moment calculations are limited inside the region. &quot;Active&quot; refers to the selected region in the image viewer. If no region is selected, full image is included in the
@@ -46,10 +46,7 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
         <p>
             Once moment images are generated, they will be loaded and displayed in the image viewer. They are named as $image_filename.moment.$keyword. For example, if moment 0, 1 and 2 images are generated from the image M51.fits, they
             will be named as M51.fits.moment.integrated, M51.fits.moment.weighted_coord, and M51.fits.moment.weighted_dispersion_coord, respectively. These images are kept in RAM per session and if there is a new request of moment
-            calculations, these images will be deleted first. Optionally, calculated moment images can be exported in CASA or FITS format via &quot;File&quot; -&gt; &quot;Save image&quot;.
+            calculations, these images will be deleted first. Optionally, calculated moment images can be exported in CASA or FITS format via <strong>File</strong> -&gt; <strong>Save image</strong>&quot;.
         </p>
-
-        <h4>NOTE</h4>
-        <p>Due to a CASA issue, image of &quot;Median coordinate&quot; cannot be generated. The request of &quot;Median coordinate&quot; is ignored automatically.</p>
     </div>
 );

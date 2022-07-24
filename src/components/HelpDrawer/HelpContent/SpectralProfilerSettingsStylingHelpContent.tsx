@@ -9,6 +9,8 @@ export const SPECTRAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT = (
             <li>plot styles including steps (default), lines, and dots</li>
             <li>line width for steps or lines</li>
             <li>point size for dots</li>
+            <li>display mean and RMS</li>
+            <li>x range</li>
         </ul>
         <h4>Profile mean and RMS</h4>
         <p>
