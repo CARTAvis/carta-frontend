@@ -43,3 +43,4 @@ export * from "./StokesHypercubeDialogHelpContent";
 export * from "./PvGeneratorHelpComponent";
 export * from "./CursorInfoHelpContent";
 export * from "./VectorOverlayHelpContent";
+export * from "./ImageFittingHelpContent";

@@ -12,6 +12,7 @@ export enum HelpType {
     STOKES = "Stokes Hypercube Dialog",
     ONLINE_CATALOG_QUERY = "Online Catalog Query",
     VECTOR_OVERLAY = "Vector Overlay Configuration",
+    IMAGE_FITTING = "Image Fitting",
 
     // Widgets
     ANIMATOR = "Animator",
