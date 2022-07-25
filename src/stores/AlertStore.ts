@@ -5,7 +5,8 @@ import {Deferred} from "services";
 export enum AlertType {
     Info,
     Interactive,
-    Retry
+    Retry,
+    NewRelease
 }
 
 export class AlertStore {
@@ -54,12 +55,22 @@ export class AlertStore {
         return this.interactionPromise.promise;
     };
 
+    @action showNewReleaseAlert = () => {
+        this.alertType = AlertType.NewRelease;
+        this.alertVisible = true;
+    };
+
     @action handleInteractiveAlertClosed = (confirmed: boolean) => {
         this.alertVisible = false;
         if (this.interactionPromise) {
             this.interactionPromise.resolve(confirmed);
             this.interactionPromise = null;
         }
+    };
+
+    @action handleNewReleaseAlertCancelled = () => {
+        this.alertVisible = false;
+        // todo: update preference
     };
 
     private constructor() {

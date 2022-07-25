@@ -25,7 +25,7 @@ export class App extends React.Component {
         switch (alertStore.alertType) {
             case AlertType.Info:
                 return (
-                    <Alert icon={alertStore.alertIcon} className={darkTheme ? "bp3-dark" : ""} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                    <Alert icon={alertStore.alertIcon} className={classNames({"bp3-dark": darkTheme})} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
                         <p>{alertStore.alertText}</p>
                     </Alert>
                 );
@@ -33,7 +33,7 @@ export class App extends React.Component {
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
-                        className={darkTheme ? "bp3-dark" : ""}
+                        className={classNames({"bp3-dark": darkTheme})}
                         isOpen={alertStore.alertVisible}
                         confirmButtonText="OK"
                         cancelButtonText="Cancel"
@@ -47,7 +47,7 @@ export class App extends React.Component {
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
-                        className={darkTheme ? "bp3-dark" : ""}
+                        className={classNames({"bp3-dark": darkTheme})}
                         isOpen={alertStore.alertVisible}
                         confirmButtonText="Retry"
                         intent={Intent.DANGER}
@@ -55,6 +55,22 @@ export class App extends React.Component {
                         canEscapeKeyCancel={false}
                     >
                         <p>{alertStore.interactiveAlertText}</p>
+                    </Alert>
+                );
+            case AlertType.NewRelease:
+                return (
+                    <Alert
+                        icon={<img src="carta_logo.png" width={50} />}
+                        className={classNames("new-release", {"bp3-dark": darkTheme})}
+                        isOpen={alertStore.alertVisible}
+                        confirmButtonText="OK"
+                        cancelButtonText="Don't show again"
+                        intent={Intent.PRIMARY}
+                        onConfirm={alertStore.dismissAlert}
+                        onCancel={alertStore.handleNewReleaseAlertCancelled}
+                    >
+                        <p>A new CARTA release is available now!</p>
+                        <p>Visit our <a href="https://cartavis.org" rel="noopener noreferrer" target="_blank">official website</a> for more details.</p>
                     </Alert>
                 );
             default:

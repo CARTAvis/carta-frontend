@@ -1318,7 +1318,7 @@ export class AppStore {
 
                 if (currentVersion !== latestVersion) {
                     console.log("new version available: ", latestVersion);
-                    // todo: show window
+                    this.alertStore.showNewReleaseAlert();
                 }
             })
             .catch(error => {
