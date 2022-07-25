@@ -1,11 +1,11 @@
 import {ImageComponent} from "../ImageComponent";
-import figAnimatorButton from "static/help/widgetButton_animator.png";
-import figAnimatorButton_d from "static/help/widgetButton_animator_d.png";
+import widgetButtonAnimator from "static/help/widgetButton_animator.png";
+import widgetButtonAnimator_d from "static/help/widgetButton_animator_d.png";
 
 export const ANIMATOR_HELP_CONTENT = (
     <div>
         <p>
-            <ImageComponent light={figAnimatorButton} dark={figAnimatorButton_d} width="90%" />
+            <ImageComponent light={widgetButtonAnimator} dark={widgetButtonAnimator_d} width="90%" />
         </p>
         <p>
             The animator widget controls which image, which channel (if there are multiple channels per active image file), and which polarizarion component (if there are multiple Stokes per active image file) to view in the image viewer.
