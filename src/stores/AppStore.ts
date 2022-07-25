@@ -33,7 +33,7 @@ import {
 import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "./Frame";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS, CARTA_INFO} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -1309,6 +1309,23 @@ export class AppStore {
         }
     };
 
+    private checkNewRelease = () => {
+        fetch("https://api.github.com/repos/CARTAvis/carta/releases")
+            .then(response => response.json())
+            .then(releases => {
+                const currentVersion = "v" + CARTA_INFO.version;
+                const latestVersion = releases[0].tag_name;
+
+                if (currentVersion !== latestVersion) {
+                    console.log("new version available: ", latestVersion);
+                    // todo: show window
+                }
+            })
+            .catch(error => {
+                console.error("Failed to check new releases: ", error);
+            });
+    };
+
     private constructor() {
         makeObservable(this);
         AppStore.staticInstance = this;
@@ -1537,6 +1554,8 @@ export class AppStore {
         if (authTokenParam) {
             this.apiService.setToken(authTokenParam);
         }
+
+        this.checkNewRelease();
 
         autorun(() => {
             this.initCarta(this.astReady, this.tileService?.zfpReady, this.cartaComputeReady, this.apiService?.authenticated);
