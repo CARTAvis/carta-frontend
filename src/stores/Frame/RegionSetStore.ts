@@ -172,10 +172,11 @@ export class RegionSetStore {
             return;
         }
 
+        const dstRegionTimestamps = this.regions.map(r => r.modifiedTimestamp);
         let newId = -1;
         for (const region of sourceRegionSet.regions) {
             // skip duplicates
-            const duplicateRegion = this.regions.find(r => r.modifiedTimestamp === region.modifiedTimestamp);
+            const duplicateRegion = dstRegionTimestamps.find(t => t === region.modifiedTimestamp);
             if (duplicateRegion) {
                 continue;
             }
