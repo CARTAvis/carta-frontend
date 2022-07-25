@@ -12,12 +12,24 @@ export const CATALOG_OVERLAY_HELP_CONTENT = (
             <ImageComponent light={widgetButtonCatalog} dark={widgetButtonCatalog_d} width="90%" />
         </p>
         <p>
-            Source catalog files in VOTable or FITS format can be loaded in CARTA (via <code>File</code>-&gt; <code>Import catalog</code>) for visualization as an image overlay, or a 2D scatter plot, or a histogram. Alternatively, catalogs can be retrieved from <a href="http://simbad.u-strasbg.fr" target="_blank" rel="noreferrer">SIMBAD</a> or <a href="https://vizier.u-strasbg.fr/viz-bin/VizieR" target="_blank" rel="noreferrer">VizieR</a> with the Online Catalog Query dialog. 
+            Source catalog files in VOTable or FITS format can be loaded in CARTA (via <code>File</code>-&gt; <code>Import catalog</code>) for visualization as an image overlay, or a 2D scatter plot, or a histogram. Alternatively, catalogs
+            can be retrieved from{" "}
+            <a href="http://simbad.u-strasbg.fr" target="_blank" rel="noreferrer">
+                SIMBAD
+            </a>{" "}
+            or{" "}
+            <a href="https://vizier.u-strasbg.fr/viz-bin/VizieR" target="_blank" rel="noreferrer">
+                VizieR
+            </a>{" "}
+            with the Online Catalog Query dialog.
         </p>
-        <p><ImageComponent light={dialogButtonCatalogQuery} dark={dialogButtonCatalogQuery_d} width="30%" /></p>
+        <p>
+            <ImageComponent light={dialogButtonCatalogQuery} dark={dialogButtonCatalogQuery_d} width="30%" />
+        </p>
         <p>
             Once a source catalog file is loaded, the information of each column will be shown in the upper table, while the actual catalog entries are displayed in the lower table. By default, only the first 10 columns are enabled and
-            displayed. You may configure it to show or hide certain columns to be displayed in the lower table. Catalog entries displayed in the lower table are displayed progressively. When you scroll down the table, more entries will be streamed and displayed.
+            displayed. You may configure it to show or hide certain columns to be displayed in the lower table. Catalog entries displayed in the lower table are displayed progressively. When you scroll down the table, more entries will be
+            streamed and displayed.
         </p>
         <p>The source catalog table accepts sub-filters such as partial string match or value range. For numeric columns, supported operators are:</p>
         <ul>

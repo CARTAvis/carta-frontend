@@ -8,13 +8,19 @@ export const PV_GENERATOR_HELP_CONTENT = (
             <ImageComponent light={widgetButtonPVGenerator} dark={widgetButtonPVGenerator_d} width="90%" />
         </p>
         <p>
-            The PV generator widget allows you to configure how a PV (position-velocity) image is generated. When there are multiple images loaded, you can use the <code>Image</code> dropdown menu to select an image as the data source. If there are multiple line regions, you can use the <code>Region</code> dropdown menu to select a line region as the PV cut. The averaging width along the PV cut can be defined with the <code>Average width</code> spinbox. If the image is considered as <em>flat</em>, the width is defined in image pixel. However, if the image is considered as <em>wide</em> with noticible projection distortion, the width in this case is in unit angular size dervied from the header of the input image.
+            The PV generator widget allows you to configure how a PV (position-velocity) image is generated. When there are multiple images loaded, you can use the <code>Image</code> dropdown menu to select an image as the data source. If
+            there are multiple line regions, you can use the <code>Region</code> dropdown menu to select a line region as the PV cut. The averaging width along the PV cut can be defined with the <code>Average width</code> spinbox. If the
+            image is considered as <em>flat</em>, the width is defined in image pixel. However, if the image is considered as <em>wide</em> with noticible projection distortion, the width in this case is in unit angular size dervied from
+            the header of the input image.
         </p>
         <p>
-            When a PV image is being computed, a progress bar will show up to let you know the progress of the PV image generation. The generation process may be cancelled by clicking the <code>Cancel</code> button. Once the generation process is finished, the resulting PV image will be appended automatically. The PV image is stored in memory. If you would like to keep it for further analysis, you can save it on disk (<strong>File</strong> -&gt; <strong>Save image</strong>). 
+            When a PV image is being computed, a progress bar will show up to let you know the progress of the PV image generation. The generation process may be cancelled by clicking the <code>Cancel</code> button. Once the generation
+            process is finished, the resulting PV image will be appended automatically. The PV image is stored in memory. If you would like to keep it for further analysis, you can save it on disk (<strong>File</strong> -&gt;{" "}
+            <strong>Save image</strong>).
         </p>
         <p>
-            When a line region (aka the PV cut) is re-sampled for the PV image generation, the projection distortion of the input image is considered. If the image is considered as <em>flat</em>, the PV cut is sampled with a regular step in pixels. However, if the image is considered as <em>wide</em> with noticible projection distortion, the PV cut is sampled with a fixed angular increment. The resulting offset axis will still be a linear axis. 
+            When a line region (aka the PV cut) is re-sampled for the PV image generation, the projection distortion of the input image is considered. If the image is considered as <em>flat</em>, the PV cut is sampled with a regular step in
+            pixels. However, if the image is considered as <em>wide</em> with noticible projection distortion, the PV cut is sampled with a fixed angular increment. The resulting offset axis will still be a linear axis.
         </p>
     </div>
 );

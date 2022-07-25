@@ -13,8 +13,8 @@ export const CONTOUR_HELP_CONTENT = (
         <ol>
             <li>
                 <p>
-                    Select an image from the <code>Data Source</code> dropdown menu. A per-channel histogram of the current channel and current Stokes as indicated in the animator will be displayed with visualization of mean (in dashed line) and
-                    mean +/- one standard deviation (in shaded area). Optionally, you can request per-cube histogram if necessary.
+                    Select an image from the <code>Data Source</code> dropdown menu. A per-channel histogram of the current channel and current Stokes as indicated in the animator will be displayed with visualization of mean (in dashed
+                    line) and mean +/- one standard deviation (in shaded area). Optionally, you can request per-cube histogram if necessary.
                 </p>
             </li>
             <li>
@@ -40,7 +40,9 @@ export const CONTOUR_HELP_CONTENT = (
         <p>
             To remove a contour layer, click the <code>Clear</code> button.
         </p>
-        <p>You may use the <code>lock</code> button next to the <code>Data Source</code> dropdown menu to disable or enable synchronization of data source with the active image as specified with the image slider in the animator.</p>
+        <p>
+            You may use the <code>lock</code> button next to the <code>Data Source</code> dropdown menu to disable or enable synchronization of data source with the active image as specified with the image slider in the animator.
+        </p>
         <h3 id="contour-smoothness">Contour smoothness</h3>
         <p>
             By default, the image is Gaussian-smoothed with a kernel size of four by four pixels before contour vertices are calculated. This can be customized in the <code>Configuration</code> tab. Supported smoothing modes are:

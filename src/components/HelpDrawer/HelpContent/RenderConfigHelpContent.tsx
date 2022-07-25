@@ -9,7 +9,8 @@ export const RENDER_CONFIG_HELP_CONTENT = (
         </p>
         <p>
             The render configuration widget controls how a raster image is rendered in the image viewer. The widget contains a set of clip levels as buttons on the top. The clip boundaries are displayed in the <code>Clip Min</code> and{" "}
-            <code>Clip Max</code> fields. These fields can be manually edited and the clip level will be switched to <code>Custom</code>. The clip boundaries are visualized as two vertical lines (draggable) in red in the histogram. The green dashed line represents the mean value of the histogram. The green shaded area represents the +/- one RMS. 
+            <code>Clip Max</code> fields. These fields can be manually edited and the clip level will be switched to <code>Custom</code>. The clip boundaries are visualized as two vertical lines (draggable) in red in the histogram. The
+            green dashed line represents the mean value of the histogram. The green shaded area represents the +/- one RMS.
         </p>
         <p>
             By default, a per-channel histogram is shown, and optionally a per-cube histogram can be displayed via the <code>Histogram</code> dropdown menu.

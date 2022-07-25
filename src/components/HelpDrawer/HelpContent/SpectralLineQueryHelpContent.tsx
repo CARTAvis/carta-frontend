@@ -9,8 +9,11 @@ export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
         </p>
         <h3>Spectral line query</h3>
         <p>
-            CARTA supports spectral line ID overlay on a spectral profile plot with spectral line data from the Splatalogue service (<a href="https://splatalogue.online" target="_blank" rel="noreferrer">https://splatalogue.online</a>). The query is made by
-            defining a range in frequency or wavelength (rest frame) and optionally a lower limit of CDMS/JPL line intensity (log value). The spectral range can be defined as from-to or center-width.
+            CARTA supports spectral line ID overlay on a spectral profile plot with spectral line data from the Splatalogue service (
+            <a href="https://splatalogue.online" target="_blank" rel="noreferrer">
+                https://splatalogue.online
+            </a>
+            ). The query is made by defining a range in frequency or wavelength (rest frame) and optionally a lower limit of CDMS/JPL line intensity (log value). The spectral range can be defined as from-to or center-width.
         </p>
         <h4>QUERY LIMITATION</h4>
         <ul>
@@ -21,12 +24,17 @@ export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
         </ul>
         <h4>NOTE</h4>
         <p>
-            Currently, the Splatalogue query service is under active development. Unexpected query results might happen. If you believe there is something wrong, please contact the{" "}
-            <a href="mailto:support@carta.freshdesk.com">helpdesk</a> or file an issue on <a href="https://github.com/CARTAvis/carta/issues" target="_blank" rel="noreferrer">Github</a>.
+            Currently, the Splatalogue query service is under active development. Unexpected query results might happen. If you believe there is something wrong, please contact the <a href="mailto:support@carta.freshdesk.com">helpdesk</a>{" "}
+            or file an issue on{" "}
+            <a href="https://github.com/CARTAvis/carta/issues" target="_blank" rel="noreferrer">
+                Github
+            </a>
+            .
         </p>
         <h3>Spectral line filtering</h3>
         <p>
-            Once a query is successfully made, the line catalog will be displayed in the tables. The upper table shows the column information in the catalog with options to show or hide a specific column. The actual line catalog is displayed in the lower table.
+            Once a query is successfully made, the line catalog will be displayed in the tables. The upper table shows the column information in the catalog with options to show or hide a specific column. The actual line catalog is
+            displayed in the lower table.
         </p>
         <p>The spectral line catalog table accepts sub-filters such as partial string match or value range. For numeric columns, supported operators are:</p>
         <ul>

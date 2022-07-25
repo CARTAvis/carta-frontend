@@ -20,11 +20,13 @@ export const STOKES_ANALYSIS_HELP_CONTENT = (
         </ul>
         <p>All these plots are inter-linked so that when zooming profiles, data in the visible range will be highlighted in the scatter plot, and vice versa.</p>
         <h3 id="images">Image dropdown menu</h3>
-        <p>The <code>Image</code> dropdown defaults to &quot;Active&quot; image which means the current image in the image viewer if it is single panel mode. If it is multi-panel mode, the active image is highlighted with a red box.</p>
+        <p>
+            The <code>Image</code> dropdown defaults to &quot;Active&quot; image which means the current image in the image viewer if it is single panel mode. If it is multi-panel mode, the active image is highlighted with a red box.
+        </p>
         <h3 id="regions">Region dropdown menu</h3>
         <p>
-            The <code>Region</code> dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking one on the image viewer, or by clicking a region entry on the region list widget.
-            Stokes and polarization profile plots of the selected region will be updated accordingly. If no region is selected, &quot;Active&quot; region defaults to cursor.
+            The <code>Region</code> dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking one on the image viewer, or by clicking a region entry on the region
+            list widget. Stokes and polarization profile plots of the selected region will be updated accordingly. If no region is selected, &quot;Active&quot; region defaults to cursor.
         </p>
         <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
         <p>
@@ -48,8 +50,8 @@ export const STOKES_ANALYSIS_HELP_CONTENT = (
         <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
         <h3 id="data-smoothing">Data smoothing</h3>
         <p>
-            The displayed profiles and the scatter plot can be smoothed via the <code>Smoothing</code> tab of the Stokes analysis settings dialog (the <code>cog</code> button). A shortcut button of the <code>Smoothing</code> tab can be found at the
-            top-right corner of the widget.
+            The displayed profiles and the scatter plot can be smoothed via the <code>Smoothing</code> tab of the Stokes analysis settings dialog (the <code>cog</code> button). A shortcut button of the <code>Smoothing</code> tab can be
+            found at the top-right corner of the widget.
         </p>
         <h3 id="responsive-and-progressive-profile-update">Responsive and progressive profile update</h3>
         <p>

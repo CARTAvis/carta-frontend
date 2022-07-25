@@ -15,11 +15,13 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
                 <li>a line region</li>
                 <li>a polyline region</li>
             </ul>
-            The cursor position may be fixed in the image viewer by pressing <code>F</code> key.
-            Pressing again will unfreeze the cursor. For a line region or a polyline region, an averging width along the region can be set with the <code>Computation</code> tab of the spatial profiler settings dialog (the <code>cog</code> button at the top right corner of the widget).
+            The cursor position may be fixed in the image viewer by pressing <code>F</code> key. Pressing again will unfreeze the cursor. For a line region or a polyline region, an averging width along the region can be set with the{" "}
+            <code>Computation</code> tab of the spatial profiler settings dialog (the <code>cog</code> button at the top right corner of the widget).
         </p>
         <p>
-            When a line region or a polyline region is re-sampled for the spatial profile calculations, the projection distortion of the input image is considered. If the image is considered as <em>flat</em>, the region is sampled with a regular step in pixels. However, if the image is considered as <em>wide</em> with noticible projection distortion, the region is sampled with a fixed angular increment. For a line region, the spatial profile is computed with an <em>offset</em> axis with respect to the center of the line region. For a polyline region, the spatial profile is computed with a <em>distance</em> axis instead. 
+            When a line region or a polyline region is re-sampled for the spatial profile calculations, the projection distortion of the input image is considered. If the image is considered as <em>flat</em>, the region is sampled with a
+            regular step in pixels. However, if the image is considered as <em>wide</em> with noticible projection distortion, the region is sampled with a fixed angular increment. For a line region, the spatial profile is computed with an{" "}
+            <em>offset</em> axis with respect to the center of the line region. For a polyline region, the spatial profile is computed with a <em>distance</em> axis instead.
         </p>
         <p>The cursor position in the image viewer is displayed as a red vertical line in the spatial profile plot.</p>
         <p>
@@ -35,17 +37,27 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
         <p>
             The displayed profile can be smoothed via the <code>Smoothing</code> tab of the spatial profiler settings dialog. CARTA provides the following smoothing methods:
             <ul>
-                <li><b>Boxcar</b>: convolution with a boxcar function</li>
-                <li><b>Gaussian</b>: convolution with a Gaussian function</li>
-                <li><b>Hanning</b>: convolution with a Hanning function</li>
-                <li><b>Binning</b>: averaging channels with a given width</li>
-                <li><b>Savitzky-Golay</b>: fitting successive sub-sets of adjacent data points with a low-degree polynomial by the method of linear least squares</li>
-                <li><b>Decimation</b>: min-max decimation with a given width</li>
+                <li>
+                    <b>Boxcar</b>: convolution with a boxcar function
+                </li>
+                <li>
+                    <b>Gaussian</b>: convolution with a Gaussian function
+                </li>
+                <li>
+                    <b>Hanning</b>: convolution with a Hanning function
+                </li>
+                <li>
+                    <b>Binning</b>: averaging channels with a given width
+                </li>
+                <li>
+                    <b>Savitzky-Golay</b>: fitting successive sub-sets of adjacent data points with a low-degree polynomial by the method of linear least squares
+                </li>
+                <li>
+                    <b>Decimation</b>: min-max decimation with a given width
+                </li>
             </ul>
         </p>
-        <p>
-            Optionally, the original profile can be overplotted with the smoothed profile. The appearance of the smoothed profile, including color, style, width, and size, can be customized.
-        </p>
+        <p>Optionally, the original profile can be overplotted with the smoothed profile. The appearance of the smoothed profile, including color, style, width, and size, can be customized.</p>
         <h3 id="interactivity-zoom-and-pan">Interactivity: zoom and pan</h3>
         <p>The x and y ranges of the spatial profile plot can be modified by</p>
         <ul>

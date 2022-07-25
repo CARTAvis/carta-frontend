@@ -5,7 +5,7 @@ export const SAVE_LAYOUT_HELP_CONTENT = (
         <p>
             Save a custom layout: <strong>View</strong> -&gt; <strong>Layouts</strong> -&gt; <strong>Existing layouts</strong>.
         </p>
-        
+
         <p>
             Load a preset layout or a custom layout: <strong>View</strong> -&gt; <strong>Layouts</strong> -&gt; <strong>Save Layout</strong>.
         </p>

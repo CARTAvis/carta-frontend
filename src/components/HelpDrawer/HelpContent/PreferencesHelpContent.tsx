@@ -22,7 +22,9 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Initial cursor position: fix cursor at the image center or have cursor free to move when CARTA is initialized</li>
             <li>Initial zoom level: view full image or view image with one image pixel to one screen pixel ratio when CARTA is initialized</li>
             <li>Zoom to: control the focus of zooming with scrolling wheel</li>
-            <li>Enable drag-to-pan: when enabled, pan action is achieved by <code>drag-and-drop</code>. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the image viewer.</li>
+            <li>
+                Enable drag-to-pan: when enabled, pan action is achieved by <code>drag-and-drop</code>. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the image viewer.
+            </li>
             <li>WCS matching on append: trigger WCS matching automatically for newly appended images</li>
             <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
             <li>Transparent image background: when this is enabled, the exported png image will have a transparent background. When it is disabled (default), a white or a black background is added depending on the GUI theme.</li>

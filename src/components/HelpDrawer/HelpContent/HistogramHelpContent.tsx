@@ -7,17 +7,24 @@ export const HISTOGRAM_HELP_CONTENT = (
         <p>
             <ImageComponent light={widgetButtonHistogram} dark={widgetButtonHistogram_d} width="90%" />
         </p>
-        <p>Histogram widget displays a histogram plot based on the selections in the <code>Image</code>, <code>Region</code>, and <code>Polarization</code> dropdown menus. When there is no region or no active region, the entire image is used to compute the histogram.</p>
+        <p>
+            Histogram widget displays a histogram plot based on the selections in the <code>Image</code>, <code>Region</code>, and <code>Polarization</code> dropdown menus. When there is no region or no active region, the entire image is
+            used to compute the histogram.
+        </p>
         <h3 id="image">Image</h3>
-        <p>The <code>Image</code> dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in the single-panel mode. If it is in the multi-panel mode, the active image is highlighted with a red box.</p>
+        <p>
+            The <code>Image</code> dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in the single-panel mode. If it is in the multi-panel mode, the active image is highlighted
+            with a red box.
+        </p>
         <h3 id="region">Region</h3>
         <p>
-            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking one in the image viewer, or by clicking a region entry on the region list widget.
-            Histogram plot of the selected region will be updated accordingly. When there is no region or no region is selected (active), the entire image is used to compute the histogram.
+            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking one in the image viewer, or by clicking a region entry on the
+            region list widget. Histogram plot of the selected region will be updated accordingly. When there is no region or no region is selected (active), the entire image is used to compute the histogram.
         </p>
         <h3 id="polarization">Polarization</h3>
         <p>
-            The <code>Polarization</code> dropdown menu defaults to &quot;Current&quot; which means the selection as in the animator widget. Beside the Stokes components as defined in the image header, computed components such as linear polarization intensity, or polarization angle, etc. are also available.
+            The <code>Polarization</code> dropdown menu defaults to &quot;Current&quot; which means the selection as in the animator widget. Beside the Stokes components as defined in the image header, computed components such as linear
+            polarization intensity, or polarization angle, etc. are also available.
         </p>
         <h3 id="interactivity-zoom-and-pan">Interactivity: zoom and pan</h3>
         <p>The x and y ranges of the histogram plot can be modified by</p>

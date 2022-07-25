@@ -21,8 +21,8 @@ export const SPECTRAL_PROFILER_SETTINGS_FITTING_HELP_CONTENT = (
             use the slider for navigation. New components may be added via the <code>Components</code> spinbox. A component may be removed with the <code>delete</code> button.
         </p>
         <p>
-            You may use the GUI to define an initial solution <em>manually</em> by entering the values with the text fields, or by using mouse to draw a <em>box</em> on the plot. The height, width, and center position of the box
-            represent the amplitude, FWHM, and center of a model profile, respectively. The <code>lock</code> button can be used to lock a parameter so that the parameter is fixed during the fitting process. You can define an initial solution of a
+            You may use the GUI to define an initial solution <em>manually</em> by entering the values with the text fields, or by using mouse to draw a <em>box</em> on the plot. The height, width, and center position of the box represent
+            the amplitude, FWHM, and center of a model profile, respectively. The <code>lock</code> button can be used to lock a parameter so that the parameter is fixed during the fitting process. You can define an initial solution of a
             continuum manually by entering the values with the text fields, or by using mouse to draw a <em>line</em> on the plot (recommended).
         </p>
         <h4>NOTE</h4>

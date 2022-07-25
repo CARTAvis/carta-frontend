@@ -23,6 +23,6 @@ export const SPECTRAL_PROFILER_SETTINGS_CONVERSION_HELP_CONTENT = (
         <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
         <br />
         <h4>NOTE</h4>
-        Intensity unit conversion currently works only with a <em>single</em> spectral profile. The support for the multi-profile mode will be implemented in a future release. 
+        Intensity unit conversion currently works only with a <em>single</em> spectral profile. The support for the multi-profile mode will be implemented in a future release.
     </div>
 );
