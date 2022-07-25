@@ -37,7 +37,7 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Default colormap: colormap for rendering a raster image</li>
             <li>Default percentile ranks: clip level to be applied to the pixel value-to-color mapping</li>
             <li>NaN color: color to render a NaN (not a number) pixel</li>
-            <li>Smoothed bias/contrast: when this is enabled (default), smoothed bias and contrast functions are applied, resulting a smooth scaling function. When it is disabled, the final scaling function contains kinks.</li>
+            <li>Smoothed bias/contrast: when this is enabled (default), smoothed bias and contrast functions are applied, resulting in a smooth scaling function. When it is disabled, the final scaling function contains kinks.</li>
         </ul>
         <h3 id="contour-configuration">Contour configuration</h3>
         <p>This section provides customization of how a contour layer is calculated and rendered by default.</p>
@@ -56,7 +56,7 @@ export const PREFERENCES_HELP_CONTENT = (
         <ul>
             <li>Default pixel averaging: square kernel size for averaging before computing the vector field elements</li>
             <li>Use fractional intensity: compute fractional linear polarization intensity instead of linear polarization intensity</li>
-            <li>Thickness: the line thinkness for each vector field element</li>
+            <li>Thickness: the line thickness for each vector field element</li>
             <li>Default color mode: to render a vector field with constant color or to render a color-mapped vector field</li>
             <li>Default color map: the colormap for rendering a color-mapped vector field</li>
             <li>Default color: the color for rendering a vector field in constant color</li>
@@ -74,7 +74,7 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Colorbar position: the position where the colorbar is rendered</li>
             <li>Colorbar width (px): the width of the colorbar in screen pixel</li>
             <li>Colorbar ticks density (per 100px): the ticks density of the colorbar per 100 screen pixels</li>
-            <li>Colorbar lable visible: show a colorbar label</li>
+            <li>Colorbar label visible: show a colorbar label</li>
             <li>Beam visible: beam rendering at the bottom-left corner of the image viewer</li>
             <li>Beam color: the color to render a beam element</li>
             <li>Beam type: render a beam as an open ellipse or a filled ellipse</li>
@@ -101,13 +101,13 @@ export const PREFERENCES_HELP_CONTENT = (
             reduces displayed image resolution and cursor responsiveness.
         </p>
         <h3 id="telemetry">Telemetry</h3>
-        <p>This section provides customization of the telemetry configuration. Anonymous usage data are collected as a reference for future developements only.</p>
+        <p>This section provides customization of the telemetry configuration. Anonymous usage data are collected as a reference for future developments only.</p>
         <ul>
-            <li>Telemetry mode: disable telemetry or enable telemtry in minimal or full mode</li>
+            <li>Telemetry mode: disable telemetry or enable telemetry in minimal or full mode</li>
             <li>Log telemetry output: show telemetry output on console</li>
         </ul>
 
         <h3 id="log-events">Log events</h3>
-        <p>This is for development and debugging purpose. General users do not need to enable anything here. When messages are enabled, they shows up in the browser console when being called.</p>
+        <p>This is for development and debugging purposes. General users do not need to enable anything here. When messages are enabled, they show up in the browser console when being called.</p>
     </div>
 );

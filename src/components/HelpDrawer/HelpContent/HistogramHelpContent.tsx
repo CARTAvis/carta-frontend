@@ -62,6 +62,6 @@ export const HISTOGRAM_HELP_CONTENT = (
         </ul>
         <br />
         <h4 id="note">NOTE</h4>
-        <p>In the current release, the number of histogram bins is automatically derived as the square root of the product of the region bound box sizes.</p>
+        <p>In the current release, the number of histogram bins is automatically derived as the square root of the product of the region bounding box sizes.</p>
     </div>
 );

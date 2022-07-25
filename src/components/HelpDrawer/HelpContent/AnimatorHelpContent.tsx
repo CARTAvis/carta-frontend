@@ -8,7 +8,7 @@ export const ANIMATOR_HELP_CONTENT = (
             <ImageComponent light={widgetButtonAnimator} dark={widgetButtonAnimator_d} width="90%" />
         </p>
         <p>
-            The animator widget controls which image, which channel (if there are multiple channels per active image file), and which polarizarion component (if there are multiple Stokes per active image file) to view in the image viewer.
+            The animator widget controls which image, which channel (if there are multiple channels per active image file), and which polarization component (if there are multiple Stokes per active image file) to view in the image viewer.
             You may also enable animation playback for image, channel, or polarization, via the <code>Play</code> button. The radio buttons control which one to animate through. Playback mode includes
         </p>
         <ul>
@@ -25,7 +25,7 @@ export const ANIMATOR_HELP_CONTENT = (
                 <code>Blink</code>: with index jumping between the boundary
             </li>
         </ul>
-        <p>For channel, you may limit a channel range for animation playback via the double slider.</p>
+        <p>For channels, you may limit a channel range for animation playback via the double slider.</p>
         <p>A desired frame rate per second (fps) can be defined in the frame rate spinbox. Note that the real fps depends on computer performance and network performance.</p>
         <p>
             A step for channel animation playback (default 1) can be set with the step spinbox. Click the frame rate dropdown to select <code>Step</code> and use the spinbox to define a step.

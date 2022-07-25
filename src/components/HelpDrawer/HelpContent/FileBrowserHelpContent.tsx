@@ -24,7 +24,7 @@ export const FILE_BROWSER_HELP_CONTENT = (
             <li>Regular expression search: e.g., colou?r</li>
         </ul>
         <p>
-            By default (<code>Filter by file content</code>), only files met the supported image formats are listed in the image file browser. If you often work with a directory with lots of mixed kinds of files, you may consider to switch
+            By default (<code>Filter by file content</code>), only files that met the supported image formats are listed in the image file browser. If you often work with a directory with lots of mixed kinds of files, you may consider to switch
             to the alternative image file list generation modes, <code>Filter by extension</code> or <code>All files</code> to speed up the process. This is configurable in the <code>Global</code> tab of the preferences dialog (
             <strong>File</strong> -&gt; <strong>Preferences</strong>).
         </p>
@@ -77,7 +77,7 @@ export const FILE_BROWSER_HELP_CONTENT = (
         <br />
         <h4>TIPS</h4>
         <p>
-            CARTA can remeber the directory where you loaded an image and set it as the initial diretory when you launch CARTA next time. This is configurable in the <code>Global</code> tab of the preferences dialog (<strong>File</strong>{" "}
+            CARTA can remember the directory where you loaded an image and set it as the initial directory when you launch CARTA next time. This is configurable in the <code>Global</code> tab of the preferences dialog (<strong>File</strong>{" "}
             -&gt; <strong>Preferences</strong>).
         </p>
     </div>

@@ -13,12 +13,12 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         </p>
         <p>
             When none of the checkboxes is selected, the spectral profiler widget displays one spectrum at a time only. You can view a region spectral profile (via the <code>Region</code> dropdown menu) of an image cube (via the{" "}
-            <code>Image</code> dropdown menu) with a specific statistic (via the <code>Statistic</code> dropdown menu; default as mean). If polarization axis exists, you may view a specific polarization component via the{" "}
+            <code>Image</code> dropdown menu) with a specific statistic (via the <code>Statistic</code> dropdown menu; default as mean). If the polarization axis exists, you may view a specific polarization component via the{" "}
             <code>Polarization</code> dropdown menu. You may have multiple widgets to view spectra side by side.
         </p>
         <p>
             When one of the checkboxes (Image/Region/Statistic/Polarization) is selected, the spectral profiler widget can display multiple spectra in one plot, depending on the selection in the dropdown menu of the selected checkbox. You
-            can compare different spectra with same x and y ranges directly.
+            can compare different spectra with the same x and y ranges directly.
         </p>
         <p>The spectral profiler widget supports four modes of multi-profile plot:</p>
         <ul>
@@ -31,14 +31,14 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
                 statistic.
             </li>
             <li>
-                When the <code>Statistic</code> checkbox is selected: spectra with <em>different statistic quantities</em> from the selected region of the selected image (and the selected polarization if applicable) are displayed.
+                When the <code>Statistic</code> checkbox is selected: spectra with <em>different statistical quantities</em> from the selected region of the selected image (and the selected polarization if applicable) are displayed.
             </li>
             <li>
                 When the <code>Polarization</code> checkbox is selected: spectra with <em>different polarization components</em> from the selected image, the selected region and the selected statistic are displayed.
             </li>
         </ul>
         <p>In short, if multiple spectra are plotted, only one option (Image, Region, Statistic or Polarization) can be varied at a time. All other options are fixed to a single value.</p>
-        <p>The cursor information of each profile is displayed at the bottom-left corner. The cursor information box is resizible when it is necessary.</p>
+        <p>The cursor information of each profile is displayed at the bottom-left corner. The cursor information box is resizable when it is necessary.</p>
 
         <h4>LIMITATION</h4>
         <p>
@@ -66,7 +66,7 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         </p>
         <h3>Statistic dropdown menu</h3>
         <p>
-            The statistic dropdown menu defaults to &quot;Mean&quot;. When the <code>Statistic</code> checkbox is selected, the dropdown menu allows multiple selection. You can select different statistic quantities for region spectral
+            The statistic dropdown menu defaults to &quot;Mean&quot;. When the <code>Statistic</code> checkbox is selected, the dropdown menu allows multiple selection. You can select different statistical quantities for region spectral
             profile calculations.
         </p>
         <h3>Polarization dropdown menu</h3>
@@ -172,7 +172,7 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         <h4 id="note">NOTE</h4>
         <p>
             For performance concerns, a profile is decimated before rendering if the number of points of the profile is greater than the screen resolution of the spectral profiler widget. The kernel size of profile decimation is dynamically
-            adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless the setting in the spectral profiler settings dialog. When no
+            adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless of the setting in the spectral profiler settings dialog. When no
             decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the <code>Styling</code> tab of the settings dialog).
         </p>
     </div>

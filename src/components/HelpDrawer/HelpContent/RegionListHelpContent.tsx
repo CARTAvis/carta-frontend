@@ -25,7 +25,7 @@ export const REGION_LIST_HELP_CONTENT = (
         <p>
             For unmatched images, they can have their own set of regions. If an image is spatially matched to the spatial reference image, a union set of regions is created and registered to the reference image. This new set of regions is
             shared to all spatially matched images. Shared regions are approximated as polygon regions so that on the spatially matched images, we may see region distortion due to projection effect. However, the region sky coverages on the
-            reference and matched images are approximately the same, allowing a fair comparsion of their region analytics. If a matched image is unmatched from the spatial reference image, a copy of the region set from the spatial reference
+            reference and matched images are approximately the same, allowing a fair comparison of their region analytics. If a matched image is unmatched from the spatial reference image, a copy of the region set from the spatial reference
             image is created and registered to the unmatched image.
         </p>
     </div>

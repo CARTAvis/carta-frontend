@@ -14,7 +14,7 @@ export const CONTOUR_HELP_CONTENT = (
             <li>
                 <p>
                     Select an image from the <code>Data Source</code> dropdown menu. A per-channel histogram of the current channel and current Stokes as indicated in the animator will be displayed with visualization of mean (in dashed
-                    line) and mean +/- one standard deviation (in shaded area). Optionally, you can request per-cube histogram if necessary.
+                    line) and mean +/- one standard deviation (in shaded area). Optionally, you can request a per-cube histogram if necessary.
                 </p>
             </li>
             <li>

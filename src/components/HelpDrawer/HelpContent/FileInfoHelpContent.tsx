@@ -8,7 +8,7 @@ export const FILE_INFO_HELP_CONTENT = (
             <ImageComponent light={dialogButtonFileHeader} dark={dialogButtonFileHeader_d} width="39%" />
         </p>
         <p>
-            File header dialog provides full image header (<code>Header</code> tab) and a summary of the properties of the active image (<code>File Information</code> tab). To view the file headers of other images, use the image slider in
+            File header dialog provides a full image header (<code>Header</code> tab) and a summary of the properties of the active image (<code>File Information</code> tab). To view the file headers of other images, use the image slider in
             the animator widget, or use the image list widget.
         </p>
         <p>
@@ -16,6 +16,6 @@ export const FILE_INFO_HELP_CONTENT = (
         </p>
         <h4>NOTE</h4>
         The image coordinate in FITS definition is 1-based, meaning that the image coordinate at the center of the bottom-left corner pixel is (1, 1). In CARTA, image coordinate is 0-based so that the image coordinate at the center of the
-        bottom-left corner pixel is (0, 0). An index shift is applied internally. This applies to spectral axis too.
+        bottom-left corner pixel is (0, 0). An index shift is applied internally. This applies to the spectral axis too.
     </div>
 );

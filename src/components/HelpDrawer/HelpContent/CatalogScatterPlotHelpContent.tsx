@@ -10,7 +10,7 @@ export const CATALOG_SCATTER_PLOT_HELP_CONTENT = (
             entries and the 2D scatter plot will then include all data (after filtering).
         </p>
         <p>
-            You may use the <code>Statistic Source</code> dropdown menu to select a numeric column from a catalog to show basic statistic quantities, including data count, mean, rms, standard deviation, min, and max.
+            You may use the <code>Statistic Source</code> dropdown menu to select a numeric column from a catalog to show basic statistical quantities, including data count, mean, rms, standard deviation, min, and max.
         </p>
         <p>
             You can click on a point or use the selection tools (Box Select or Lasso Select) at the top-right corner of the plot to highlight selected sources in the source catalog table, in the histogram plot (if exists), and in the image

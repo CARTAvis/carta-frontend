@@ -13,19 +13,19 @@ export const VECTOR_OVERLAY_HELP_CONTENT = (
             <code>Angular Source</code> and <code>Intensity Source</code> dropdown menus.
             <ul>
                 <li>
-                    For visualization of linear polarization from a Stokes IQU or QU cube with variable vector length and angle: set the <code>Anguar Source</code> to &quot;Computed PA&quot; and set the <code>Intensity Source</code> to
+                    For visualization of linear polarization from a Stokes IQU or QU cube with variable vector length and angle: set the <code>Angular Source</code> to &quot;Computed PA&quot; and set the <code>Intensity Source</code> to
                     &quot;Computed PI&quot;.
                 </li>
                 <li>
-                    For visualization of linear polarization from a Stokes IQU or QU cube with fixed vector length and variable angle: set the <code>Anguar Source</code> to &quot;Computed PA&quot; and set the <code>Intensity Source</code>{" "}
+                    For visualization of linear polarization from a Stokes IQU or QU cube with fixed vector length and variable angle: set the <code>Angular Source</code> to &quot;Computed PA&quot; and set the <code>Intensity Source</code>{" "}
                     to &quot;None&quot;.
                 </li>
                 <li>
-                    For visualization of linear polarization from a pre-computed position angle image in degree: set the <code>Anguar Source</code> to &quot;Current image&quot; and set the <code>Intensity Source</code> to &quot;None&quot;.
+                    For visualization of linear polarization from a pre-computed position angle image in degree: set the <code>Angular Source</code> to &quot;Current image&quot; and set the <code>Intensity Source</code> to &quot;None&quot;.
                 </li>
                 <li>
-                    For visualization of a scalar field by interpreting pixel value as the strength or intensity: set the <code>Anguar Source</code> to &quot;None&quot; and set the <code>Intensity Source</code> to &quot;Current image&quot;.
-                    With this mode, filled square marker is rendered instead of line segment.
+                    For visualization of a scalar field by interpreting pixel value as the strength or intensity: set the <code>Angular Source</code> to &quot;None&quot; and set the <code>Intensity Source</code> to &quot;Current image&quot;.
+                    With this mode, a filled square marker is rendered instead of a line segment.
                 </li>
             </ul>
         </p>
@@ -35,9 +35,9 @@ export const VECTOR_OVERLAY_HELP_CONTENT = (
         </p>
         <p>
             When the <code>Intensity Source</code> is &quot;Computed PI&quot;, you can select &quot;Absolute&quot; or &quot;Fractional&quot; polarization intensity with the <code>Polarization Intensity</code> radio buttons. A threshold for
-            Stokes I may be applied to mask out noisy parts of the image with the <code>Threshold</code> field when the <code>Threshold Enabled</code> toggle is switched on. If Stokes I is not avaiable (i.e., the input image has Stokes Q
+            Stokes I may be applied to mask out noisy parts of the image with the <code>Threshold</code> field when the <code>Threshold Enabled</code> toggle is switched on. If Stokes I is not available (i.e., the input image has Stokes Q
             and U only), the threshold is applied to Stokes Q and Stokes U to construct a mask. Optionally, you may apply <code>Debiasing</code> to the polarization intensity and angle calculations by enabling the <code>Debiasing</code>{" "}
-            toggle and set errors for Stokes Q and U in the <code>Stokes Q Error</code> and the <code>Stokes U Error</code> fields, respestively.
+            toggle and set errors for Stokes Q and U in the <code>Stokes Q Error</code> and the <code>Stokes U Error</code> fields, respectively.
         </p>
         <p>
             Once the control parameters of how a vector overlay is computed are set, you can click the <code>Apply</code> button to trigger the computation and rendering process. The vector overlay data will be streamed progressively

@@ -19,7 +19,7 @@ export const RENDER_CONFIG_HELP_CONTENT = (
             Different scaling functions and colormaps can be chosen via the <code>Scaling</code> and <code>Color map</code> dropdown menus, respectively. A colormap might be inverted via the <code>Invert color map</code> toggle.
         </p>
         <p>
-            Bias and contrast can be adjusted jointly with the 2D box (x as bias and y as contrast). The effective scaling function is visualized as a grey curve between the two red vertical lines. By default, smooth bias and contrast
+            Bias and contrast can be adjusted jointly with the 2D box (x as bias and y as contrast). The effective scaling function is visualized as a gray curve between the two red vertical lines. By default, smooth bias and contrast
             functions are applied so that the resulting scaling function is a smooth curve. You may disable this feature with the <code>Render configuration</code> tab of the preferences dialog.
         </p>
         <p>The appearance of the histogram plot can be configured through the render configuration settings dialog, including:</p>

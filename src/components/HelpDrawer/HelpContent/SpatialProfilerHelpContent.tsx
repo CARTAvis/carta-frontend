@@ -15,18 +15,18 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
                 <li>a line region</li>
                 <li>a polyline region</li>
             </ul>
-            The cursor position may be fixed in the image viewer by pressing <code>F</code> key. Pressing again will unfreeze the cursor. For a line region or a polyline region, an averging width along the region can be set with the{" "}
+            The cursor position may be fixed in the image viewer by pressing <code>F</code> key. Pressing again will unfreeze the cursor. For a line region or a polyline region, an averaging width along the region can be set with the{" "}
             <code>Computation</code> tab of the spatial profiler settings dialog (the <code>cog</code> button at the top right corner of the widget).
         </p>
         <p>
             When a line region or a polyline region is re-sampled for the spatial profile calculations, the projection distortion of the input image is considered. If the image is considered as <em>flat</em>, the region is sampled with a
-            regular step in pixels. However, if the image is considered as <em>wide</em> with noticible projection distortion, the region is sampled with a fixed angular increment. For a line region, the spatial profile is computed with an{" "}
+            regular step in pixels. However, if the image is considered as <em>wide</em> with noticeable projection distortion, the region is sampled with a fixed angular increment. For a line region, the spatial profile is computed with an{" "}
             <em>offset</em> axis with respect to the center of the line region. For a polyline region, the spatial profile is computed with a <em>distance</em> axis instead.
         </p>
         <p>The cursor position in the image viewer is displayed as a red vertical line in the spatial profile plot.</p>
         <p>
-            When cursor is in the image viewer, the cursor position in image and world coordinates and pointed pixel value are reported at the bottom-left corner of the spatial profiler widget. When cursor moves onto the spatial profile
-            plot (displayed as a grey vertical line), these values derived from the profile data will be reported instead.
+            When the cursor is in the image viewer, the cursor position in image and world coordinates and pointed pixel value are reported at the bottom-left corner of the spatial profiler widget. When the cursor moves onto the spatial profile
+            plot (displayed as a gray vertical line), these values derived from the profile data will be reported instead.
         </p>
         <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
         <p>
@@ -100,7 +100,7 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
         <h4 id="note">NOTE</h4>
         <p>
             For performance reasons, a profile is min-max decimated before rendering if the number of points of the profile is greater than the screen resolution of the spatial profiler widget. The kernel size of profile decimation is
-            dynamically adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless the setting in the spatial profiler settings dialog.
+            dynamically adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless of the setting in the spatial profiler settings dialog.
             When no decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the <code>Styling</code> tab of the settings
             dialog).
         </p>

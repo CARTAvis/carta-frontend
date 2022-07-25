@@ -15,7 +15,7 @@ export const LAYER_LIST_HELP_CONTENT = (
             You may click <code>R</code> to hide/show a raster layer, <code>C</code> to hide/show a contour layer, and <code>V</code> to hide/show a vector field layer.
         </p>
         <p>
-            Per image, you can click the <code>XY</code> button to enable/disable spatial matching and click the <code>Z</code> button to enable/disable spectral matching. To match color range to the reference image, click the{" "}
+            Per image, you can click the <code>XY</code> button to enable/disable spatial matching and click the <code>Z</code> button to enable/disable spectral matching. To match the color range to the reference image, click the{" "}
             <code>R</code> button.
         </p>
         <p>

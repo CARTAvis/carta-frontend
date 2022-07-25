@@ -93,8 +93,8 @@ export const CATALOG_OVERLAY_HELP_CONTENT = (
             <ImageComponent light={demoCatalogMarkerMapping} dark={demoCatalogMarkerMapping_d} width="100%" />
         </p>
         <p>
-            The source catalog table, the image overlay, the 2D scatter plot, and the histogram plot are inter-linked or cross-referenced. This means, for example, selecting a source or a set of source in the catalog table will trigger
-            source highlight in other places. Or, selecting a source or a set of sources in the 2D scatter plot will trigger source highlight in other plots and in the catalog table.
+            The source catalog table, the image overlay, the 2D scatter plot, and the histogram plot are inter-linked or cross-referenced. This means, for example, selecting a source or a set of sources in the catalog table will trigger
+            source highlights in other places. Or, selecting a source or a set of sources in the 2D scatter plot will trigger source highlights in other plots and in the catalog table.
         </p>
         <p>
             Multiple catalog files can be loaded and you may use the <code>File</code> dropdown at the top of the widget to switch in between. Multiple catalog widgets may be launched to display different catalog files. The{" "}

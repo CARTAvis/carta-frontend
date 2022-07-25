@@ -18,7 +18,7 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
                 dragging horizontally in the spectral profiler widget.
             </li>
             <li>
-                <b>Mask and Range</b>: these options define a pixel value range used for moment calculations. If mask is &quot;None&quot;, all pixels are included. If mask is &quot;Include&quot; or &quot;Exclude&quot;, the pixel value range
+                <b>Mask and Range</b>: these options define a pixel value range used for moment calculations. If the <code>Mask</code> is &quot;None&quot;, all pixels are included. If the <code>Mask</code> is &quot;Include&quot; or &quot;Exclude&quot;, the pixel value range
                 defined in the text input fields is included or excluded, respectively. Alternatively, the pixel value range can be defined via the cursor by dragging vertically in the spectral profiler widget.
             </li>
             <li>
@@ -41,13 +41,13 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
             </li>
         </ul>
         <p>
-            When all the parameters are defined, by clicking the <code>Generate</code> button moment calculations will begin. Depending on the file size, moment calculations may take a while. If that happens, you may consider to cancel the
+            When all the parameters are defined, by clicking the <code>Generate</code> button moment calculations will begin. Depending on the file size, moment calculations may take a while. If that happens, you may consider canceling the
             calculations and re-define a proper region and/or spectral range.
         </p>
         <p>
             Once moment images are generated, they will be loaded and displayed in the image viewer. They are named as $image_filename.moment.$keyword. For example, if moment 0, 1 and 2 images are generated from the image M51.fits, they
             will be named as M51.fits.moment.integrated, M51.fits.moment.weighted_coord, and M51.fits.moment.weighted_dispersion_coord, respectively. These images are kept in RAM per session and if there is a new request of moment
-            calculations, these images will be deleted first. Optionally, calculated moment images can be exported in CASA or FITS format via <strong>File</strong> -&gt; <strong>Save image</strong>&quot;.
+            calculations, these images will be deleted first. Optionally, calculated moment images can be exported in CASA or FITS format via <strong>File</strong> -&gt; <strong>Save image</strong>.
         </p>
     </div>
 );

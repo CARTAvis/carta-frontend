@@ -21,9 +21,9 @@ export const SPECTRAL_PROFILER_SETTINGS_FITTING_HELP_CONTENT = (
             use the slider for navigation. New components may be added via the <code>Components</code> spinbox. A component may be removed with the <code>delete</code> button.
         </p>
         <p>
-            You may use the GUI to define an initial solution <em>manually</em> by entering the values with the text fields, or by using mouse to draw a <em>box</em> on the plot. The height, width, and center position of the box represent
+            You may use the GUI to define an initial solution <em>manually</em> by entering the values with the text fields, or by using the mouse to draw a <em>box</em> on the plot. The height, width, and center position of the box represent
             the amplitude, FWHM, and center of a model profile, respectively. The <code>lock</code> button can be used to lock a parameter so that the parameter is fixed during the fitting process. You can define an initial solution of a
-            continuum manually by entering the values with the text fields, or by using mouse to draw a <em>line</em> on the plot (recommended).
+            continuum manually by entering the values with the text fields, or by using the mouse to draw a <em>line</em> on the plot (recommended).
         </p>
         <h4>NOTE</h4>
         <p>
@@ -32,7 +32,7 @@ export const SPECTRAL_PROFILER_SETTINGS_FITTING_HELP_CONTENT = (
         </p>
         <h3>Trigger the fitting engine and view fitting results</h3>
         <p>
-            Once you have set up a good set of initial solution, you can trigger the fitting process by clicking the <code>Fit</code> button. If you would like to trigger the fitter right after set of initial solutions are found by the
+            Once you have set up a good set of initial solutions, you can trigger the fitting process by clicking the <code>Fit</code> button. If you would like to trigger the fitter right after a set of initial solutions are found by the
             auto-detect function, please enable the <code>auto fit</code> toggle. The fitting engine will include all the data in the current profile view. If you would like to include a certain feature in the fit, please try to zoom or pan
             the profile so that only the feature in interest is in the view.
         </p>

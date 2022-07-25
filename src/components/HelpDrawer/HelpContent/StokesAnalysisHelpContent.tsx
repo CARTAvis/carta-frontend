@@ -55,7 +55,7 @@ export const STOKES_ANALYSIS_HELP_CONTENT = (
         </p>
         <h3 id="responsive-and-progressive-profile-update">Responsive and progressive profile update</h3>
         <p>
-            When region Stokes profiles are requested, depending on the performance of the server, you may see profiles are updated piece by piece in regular interval. This feature provides a visual progress update for better user
+            When region Stokes profiles are requested, depending on the performance of the server, you may see profiles are updated piece by piece in regular intervals. This feature provides a visual progress update for better user
             experience. In addition, if you move a region while profiles are updating, the old calculations will be terminated immediately and calculations of the new region Stokes profiles will start. You will see partial profiles in
             seconds.
         </p>
