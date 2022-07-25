@@ -114,7 +114,6 @@ export class HelpDrawerComponent extends React.Component {
         const helpStore = HelpStore.Instance;
         const className = classNames("help-drawer", {"bp3-dark": AppStore.Instance.darkTheme});
 
-        let tmp: React.CSSProperties = {userSelect: "text"};
         const drawerProps: IDrawerProps = {
             icon: "help",
             className: className,
@@ -124,8 +123,7 @@ export class HelpDrawerComponent extends React.Component {
             title: helpStore.type ?? "",
             position: helpStore.position,
             size: "33%",
-            hasBackdrop: false,
-            style: tmp
+            hasBackdrop: false
         };
 
         return (
