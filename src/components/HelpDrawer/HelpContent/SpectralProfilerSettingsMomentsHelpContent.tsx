@@ -18,8 +18,9 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
                 dragging horizontally in the spectral profiler widget.
             </li>
             <li>
-                <b>Mask and Range</b>: these options define a pixel value range used for moment calculations. If the <code>Mask</code> is &quot;None&quot;, all pixels are included. If the <code>Mask</code> is &quot;Include&quot; or &quot;Exclude&quot;, the pixel value range
-                defined in the text input fields is included or excluded, respectively. Alternatively, the pixel value range can be defined via the cursor by dragging vertically in the spectral profiler widget.
+                <b>Mask and Range</b>: these options define a pixel value range used for moment calculations. If the <code>Mask</code> is &quot;None&quot;, all pixels are included. If the <code>Mask</code> is &quot;Include&quot; or
+                &quot;Exclude&quot;, the pixel value range defined in the text input fields is included or excluded, respectively. Alternatively, the pixel value range can be defined via the cursor by dragging vertically in the spectral
+                profiler widget.
             </li>
             <li>
                 <b>Moments</b>: which moment images to be calculated are defined here. Supported options are:

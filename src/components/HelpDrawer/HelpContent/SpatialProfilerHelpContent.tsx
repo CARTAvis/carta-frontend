@@ -25,8 +25,8 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
         </p>
         <p>The cursor position in the image viewer is displayed as a red vertical line in the spatial profile plot.</p>
         <p>
-            When the cursor is in the image viewer, the cursor position in image and world coordinates and pointed pixel value are reported at the bottom-left corner of the spatial profiler widget. When the cursor moves onto the spatial profile
-            plot (displayed as a gray vertical line), these values derived from the profile data will be reported instead.
+            When the cursor is in the image viewer, the cursor position in image and world coordinates and pointed pixel value are reported at the bottom-left corner of the spatial profiler widget. When the cursor moves onto the spatial
+            profile plot (displayed as a gray vertical line), these values derived from the profile data will be reported instead.
         </p>
         <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
         <p>
@@ -100,9 +100,9 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
         <h4 id="note">NOTE</h4>
         <p>
             For performance reasons, a profile is min-max decimated before rendering if the number of points of the profile is greater than the screen resolution of the spatial profiler widget. The kernel size of profile decimation is
-            dynamically adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless of the setting in the spatial profiler settings dialog.
-            When no decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the <code>Styling</code> tab of the settings
-            dialog).
+            dynamically adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless of the setting in the spatial profiler settings
+            dialog. When no decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the <code>Styling</code> tab of the
+            settings dialog).
         </p>
     </div>
 );

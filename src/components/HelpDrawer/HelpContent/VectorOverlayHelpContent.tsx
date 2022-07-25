@@ -24,8 +24,8 @@ export const VECTOR_OVERLAY_HELP_CONTENT = (
                     For visualization of linear polarization from a pre-computed position angle image in degree: set the <code>Angular Source</code> to &quot;Current image&quot; and set the <code>Intensity Source</code> to &quot;None&quot;.
                 </li>
                 <li>
-                    For visualization of a scalar field by interpreting pixel value as the strength or intensity: set the <code>Angular Source</code> to &quot;None&quot; and set the <code>Intensity Source</code> to &quot;Current image&quot;.
-                    With this mode, a filled square marker is rendered instead of a line segment.
+                    For visualization of a scalar field by interpreting pixel value as the strength or intensity: set the <code>Angular Source</code> to &quot;None&quot; and set the <code>Intensity Source</code> to &quot;Current
+                    image&quot;. With this mode, a filled square marker is rendered instead of a line segment.
                 </li>
             </ul>
         </p>

@@ -66,8 +66,8 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         </p>
         <h3 id="zoom-and-pan">Zoom and pan</h3>
         <p>
-            Zoom action can be triggered in different ways. The most common one is to use a mouse and scroll wheel. By scrolling up, the image is zoomed in, while by scrolling down, the image is zoomed out. Alternatively, you may use the tool buttons
-            at the bottom-right corner of the image viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.
+            Zoom action can be triggered in different ways. The most common one is to use a mouse and scroll wheel. By scrolling up, the image is zoomed in, while by scrolling down, the image is zoomed out. Alternatively, you may use the
+            tool buttons at the bottom-right corner of the image viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.
         </p>
         <p>
             <ImageComponent light={zoomButton} dark={zoomButton_d} width="80%" />
