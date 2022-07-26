@@ -1313,7 +1313,7 @@ export class AppStore {
     };
 
     private checkNewRelease = () => {
-        fetch("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {'Accept': 'application/vnd.github+json'}})
+        fetch("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {Accept: "application/vnd.github+json"}})
             .then(response => {
                 if (!response.ok) {
                     throw new Error(response.statusText);

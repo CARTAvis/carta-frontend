@@ -69,7 +69,13 @@ export class App extends React.Component {
                         onClose={alertStore.handleInteractiveAlertClosed}
                     >
                         <p>A new CARTA release is available now!</p>
-                        <p>Visit our <a href="https://cartavis.org" rel="noopener noreferrer" target="_blank">official website</a> for more details.</p>
+                        <p>
+                            Visit our&nbsp;
+                            <a href="https://cartavis.org" rel="noopener noreferrer" target="_blank">
+                                official website
+                            </a>
+                            &nbsp;for more details.
+                        </p>
                     </Alert>
                 );
             default:
