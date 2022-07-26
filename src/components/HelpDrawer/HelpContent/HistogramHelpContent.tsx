@@ -8,8 +8,8 @@ export const HISTOGRAM_HELP_CONTENT = (
             <ImageComponent light={widgetButtonHistogram} dark={widgetButtonHistogram_d} width="90%" />
         </p>
         <p>
-            The histogram widget displays a histogram plot based on the selections in the <code>Image</code>, <code>Region</code>, and <code>Polarization</code> dropdown menus. When there is no region or no active region, the entire image is
-            used to compute the histogram.
+            The histogram widget displays a histogram plot based on the selections in the <code>Image</code>, <code>Region</code>, and <code>Polarization</code> dropdown menus. When there is no region or no active region, the entire image
+            is used to compute the histogram.
         </p>
         <h3 id="image">Image</h3>
         <p>
@@ -18,8 +18,8 @@ export const HISTOGRAM_HELP_CONTENT = (
         </p>
         <h3 id="region">Region</h3>
         <p>
-            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking on one in the image viewer, or by clicking on a region entry in the
-            region list widget. The histogram plot of the selected region will be updated accordingly. When there is no region or no region is selected (active), the entire image is used to compute the histogram.
+            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking on one in the image viewer, or by clicking on a region entry in
+            the region list widget. The histogram plot of the selected region will be updated accordingly. When there is no region or no region is selected (active), the entire image is used to compute the histogram.
         </p>
         <h3 id="polarization">Polarization</h3>
         <p>

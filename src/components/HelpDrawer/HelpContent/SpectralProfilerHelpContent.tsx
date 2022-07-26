@@ -48,8 +48,8 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
 
         <h3 id="images">Image dropdown menu</h3>
         <p>
-            The image dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a red box. You
-            may use the animator widget or the image list widget to change the active image.
+            The image dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a red box. You may
+            use the animator widget or the image list widget to change the active image.
         </p>
         <p>
             When the <code>Image</code> checkbox is selected and if there are spatially and spectrally matched images (apply matching via the image list widget), the dropdown menu will display an image list with information about the

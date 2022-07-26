@@ -24,8 +24,8 @@ export const FILE_BROWSER_HELP_CONTENT = (
             <li>Regular expression search: e.g., colou?r</li>
         </ul>
         <p>
-            By default (<code>Filter by file content</code>), only files that met the supported image formats are listed in the image file browser. If you often work with directories which contain many different types of files, you may wish to
-            switch to the alternative image file list generation modes, <code>Filter by extension</code> or <code>All files</code>, to speed up the process. This is configurable in the <code>Global</code> tab of the preferences dialog (
+            By default (<code>Filter by file content</code>), only files that met the supported image formats are listed in the image file browser. If you often work with directories which contain many different types of files, you may wish
+            to switch to the alternative image file list generation modes, <code>Filter by extension</code> or <code>All files</code>, to speed up the process. This is configurable in the <code>Global</code> tab of the preferences dialog (
             <strong>File</strong> -&gt; <strong>Preferences</strong>).
         </p>
 
@@ -37,8 +37,8 @@ export const FILE_BROWSER_HELP_CONTENT = (
             image cube so that its velocity axis can be re-computed with respect to the new rest frequency.
         </p>
         <p>
-            When an image file is selected, its basic image properties are summarized in the <code>File Information</code> tab on the right-hand side. The full image header is shown in the <code>Header</code> tab. You can search the header or
-            export the header as a text file with the tools at the bottom-right corner of the <code>Header</code> tab.
+            When an image file is selected, its basic image properties are summarized in the <code>File Information</code> tab on the right-hand side. The full image header is shown in the <code>Header</code> tab. You can search the header
+            or export the header as a text file with the tools at the bottom-right corner of the <code>Header</code> tab.
         </p>
         <p>
             You can load or append multiple images at once by selecting multiple images with <code>ctrl/cmd+click</code> or <code>shift+click</code> from the file list, and then clicking the <code>Load selected</code> or the{" "}
@@ -59,9 +59,9 @@ export const FILE_BROWSER_HELP_CONTENT = (
         </p>
         <h3 id="regions">Regions</h3>
         <p>
-            Region files can be imported via <strong>File</strong> -&gt; <strong>Import regions</strong>. When a region file is selected, its content is shown in the <code>Region Information</code> tab. Some or all regions can be
-            exported as a region text file via <strong>File</strong> -&gt; <strong>Export regions</strong>. CASA and ds9 region text file definitions in world or image coordinates are supported. Note that regions can only be exported if
-            appropriate write permissions are configured on the server.
+            Region files can be imported via <strong>File</strong> -&gt; <strong>Import regions</strong>. When a region file is selected, its content is shown in the <code>Region Information</code> tab. Some or all regions can be exported
+            as a region text file via <strong>File</strong> -&gt; <strong>Export regions</strong>. CASA and ds9 region text file definitions in world or image coordinates are supported. Note that regions can only be exported if appropriate
+            write permissions are configured on the server.
         </p>
         <p>
             You can load multiple region files at once by selecting multiple region files with <code>ctrl/cmd+click</code> or <code>shift+click</code> from the file list, and then clicking the <code>Load Region</code> button.

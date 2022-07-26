@@ -13,11 +13,15 @@ export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
             <a href="https://splatalogue.online" target="_blank" rel="noreferrer">
                 https://splatalogue.online
             </a>
-            ). You can make a query by defining a range in frequency or wavelength (rest frame) and optionally a lower limit of <a href="https://cdms.astro.uni-koeln.de" target="_blank" rel="noreferrer">
+            ). You can make a query by defining a range in frequency or wavelength (rest frame) and optionally a lower limit of{" "}
+            <a href="https://cdms.astro.uni-koeln.de" target="_blank" rel="noreferrer">
                 CDMS
-            </a>/<a href="https://spec.jpl.nasa.gov" target="_blank" rel="noreferrer">
+            </a>
+            /
+            <a href="https://spec.jpl.nasa.gov" target="_blank" rel="noreferrer">
                 JPL
-            </a> line intensity (log value). The spectral range can be defined as from-to or center-width.
+            </a>{" "}
+            line intensity (log value). The spectral range can be defined as from-to or center-width.
         </p>
         <h4>QUERY LIMITATION</h4>
         <ul>

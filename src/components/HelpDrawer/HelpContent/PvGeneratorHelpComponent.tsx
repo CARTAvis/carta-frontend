@@ -14,8 +14,8 @@ export const PV_GENERATOR_HELP_CONTENT = (
             the header of the input image.
         </p>
         <p>
-            When a PV image is being computed, a progress bar will appear to let you know the progress of the PV image generation. You may abort the generation process by clicking the <code>Cancel</code> button. Once the generation
-            process is finished, the resulting PV image will be appended automatically. The PV image is stored in memory. If you would like to keep it for further analysis, you can save it to disk (<strong>File</strong> -&gt;{" "}
+            When a PV image is being computed, a progress bar will appear to let you know the progress of the PV image generation. You may abort the generation process by clicking the <code>Cancel</code> button. Once the generation process
+            is finished, the resulting PV image will be appended automatically. The PV image is stored in memory. If you would like to keep it for further analysis, you can save it to disk (<strong>File</strong> -&gt;{" "}
             <strong>Save image</strong>).
         </p>
         <p>

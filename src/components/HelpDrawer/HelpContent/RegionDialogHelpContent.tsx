@@ -16,8 +16,8 @@ export const REGION_DIALOG_HELP_CONTENT = (
             decimal degrees. Region size can be defined in arcsecond with <code>&quot;</code>, in arcminute with <code>&apos;</code>, or in degree with <code>deg</code>.
         </p>
         <p>
-            You can center the selected region in the image viewer by clicking the <code>Focus</code> button at the bottom of the dialog. In addition, you can lock the region to prevent accidental modification by clicking the <code>Lock</code> button.
-            To delete the selected region, click the <code>Delete</code> button or press <code>Delete</code> or <code>Backspace</code> key.
+            You can center the selected region in the image viewer by clicking the <code>Focus</code> button at the bottom of the dialog. In addition, you can lock the region to prevent accidental modification by clicking the{" "}
+            <code>Lock</code> button. To delete the selected region, click the <code>Delete</code> button or press <code>Delete</code> or <code>Backspace</code> key.
         </p>
 
         <br />

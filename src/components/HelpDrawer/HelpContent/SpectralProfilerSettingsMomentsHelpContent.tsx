@@ -6,8 +6,8 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
         </p>
         <ul>
             <li>
-                <b>Image</b>: the image file for moment calculations. &quot;Active&quot; refers to the image displayed in the image viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a red
-                box.
+                <b>Image</b>: the image file for moment calculations. &quot;Active&quot; refers to the image displayed in the image viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a
+                red box.
             </li>
             <li>
                 <b>Region</b>: a region can be selected so that moment calculations are limited inside the region. &quot;Active&quot; refers to the selected region in the image viewer. If no region is selected, full image is included in the

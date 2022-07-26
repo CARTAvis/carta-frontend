@@ -10,11 +10,13 @@ export const STATS_HELP_CONTENT = (
         <p>Statistics widget allows you to view statistical quantities over a 2D region. When no region is created or selected, it displays statistical quantities of the full image in the image viewer.</p>
         <h3 id="images">Image</h3>
         <p>
-            The <code>Image</code> dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a red box.
+            The <code>Image</code> dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a red
+            box.
         </p>
         <h3 id="regions">Region</h3>
         <p>
-            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means the region selected in the image viewer. You can select a region by clicking on one in the image viewer, or by clicking on a region entry in the region list widget. Statistics of the selected region will be updated accordingly.
+            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means the region selected in the image viewer. You can select a region by clicking on one in the image viewer, or by clicking on a region entry in
+            the region list widget. Statistics of the selected region will be updated accordingly.
         </p>
         <h3 id="polarization">Polarization</h3>
         <p>

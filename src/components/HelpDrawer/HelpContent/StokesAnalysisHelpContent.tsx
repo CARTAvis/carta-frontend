@@ -25,8 +25,8 @@ export const STOKES_ANALYSIS_HELP_CONTENT = (
         </p>
         <h3 id="regions">Region dropdown menu</h3>
         <p>
-            The <code>Region</code> dropdown defaults to &quot;Active&quot; region which means the region selected in the image viewer. You can select a region by clicking on one in the image viewer, or by clicking on a region entry in the region
-            list widget. Stokes and polarization profile plots of the selected region will be updated accordingly. If no region is selected, &quot;Active&quot; region defaults to cursor.
+            The <code>Region</code> dropdown defaults to &quot;Active&quot; region which means the region selected in the image viewer. You can select a region by clicking on one in the image viewer, or by clicking on a region entry in the
+            region list widget. Stokes and polarization profile plots of the selected region will be updated accordingly. If no region is selected, &quot;Active&quot; region defaults to cursor.
         </p>
         <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
         <p>

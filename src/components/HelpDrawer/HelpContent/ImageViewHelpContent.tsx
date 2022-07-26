@@ -39,12 +39,13 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         <p>
             There are two modes of the image viewer: single-panel view and multi-panel view (default). You can use the panel mode button at the top right corner of the widget to switch to the other mode. When the current view mode cannot
             show all the loaded images in the view, you can also use the page buttons at the top-right corner of the widget to switch to other pages to view images. The grid layout of the multi-panel view mode can be configured in the{" "}
-            <code>Global</code> tab of the image view settings dialog. The active image is highlighted with a red box in the multi-panel view mode. In the multi-panel view mode, the loaded images are rendered in order from left to right and then from top to bottom. The image order can be rearranged with the image list widget by <code>drag-and-drop</code>.
+            <code>Global</code> tab of the image view settings dialog. The active image is highlighted with a red box in the multi-panel view mode. In the multi-panel view mode, the loaded images are rendered in order from left to right and
+            then from top to bottom. The image order can be rearranged with the image list widget by <code>drag-and-drop</code>.
         </p>
         <h3>Cursor information</h3>
         <p>
-            Information about the world coordinates and image coordinates at the cursor position is shown at the top of the image viewer. Pixel value, spectral information, and polarization information are also displayed. To freeze/unfreeze the
-            cursor position, press the <code>F</code> key. Different modes to display the cursor information are available in the <code>WCS and Image Overlay</code> tab of the preferences dialog (<strong>File</strong> -&gt;{" "}
+            Information about the world coordinates and image coordinates at the cursor position is shown at the top of the image viewer. Pixel value, spectral information, and polarization information are also displayed. To freeze/unfreeze
+            the cursor position, press the <code>F</code> key. Different modes to display the cursor information are available in the <code>WCS and Image Overlay</code> tab of the preferences dialog (<strong>File</strong> -&gt;{" "}
             <strong>Preferences</strong>). Alternatively, you can use the cursor information widget to view cursor information from multiple images in one place.
         </p>
         <h3 id="image-tool-buttons">Image toolbar</h3>
@@ -65,15 +66,15 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         </p>
         <h3 id="zoom-and-pan">Zoom and pan</h3>
         <p>
-            The zoom action can be triggered in different ways. You can use the mouse scroll wheel: scroll up to zoom in, and scroll down to zoom out. Alternatively, you may use the
-            tool buttons at the bottom-right corner of the image viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.
+            The zoom action can be triggered in different ways. You can use the mouse scroll wheel: scroll up to zoom in, and scroll down to zoom out. Alternatively, you may use the tool buttons at the bottom-right corner of the image
+            viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.
         </p>
         <p>
             <ImageComponent light={zoomButton} dark={zoomButton_d} width="80%" />
         </p>
         <p>
-            The pan action is achieved by <code>drag-and-drop</code> as default. This default can be changed via the <code>Global</code> tab of the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong>). The alternative
-            mode is <code>click</code>, which causes the clicked pixel to be centered in the image viewer. When the <code>drag-and-drop</code> pan mode is enabled, you can temporarily switch to the alternative mode with{" "}
+            The pan action is achieved by <code>drag-and-drop</code> as default. This default can be changed via the <code>Global</code> tab of the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong>). The
+            alternative mode is <code>click</code>, which causes the clicked pixel to be centered in the image viewer. When the <code>drag-and-drop</code> pan mode is enabled, you can temporarily switch to the alternative mode with{" "}
             <code>CMD/CTRL + click</code>.
         </p>
         <h3 id="matching-image-spatially-and-spectrally">Match image spatially and spectrally</h3>
