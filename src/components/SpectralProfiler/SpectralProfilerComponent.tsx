@@ -156,7 +156,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let cursorInfoString = undefined;
         const nearest = binarySearchByX(data, cursorXValue);
         const nearestSmooth = smoothedData.length ? binarySearchByX(smoothedData, cursorXValue) : null;
-        console.log(this.widgetStore.smoothingStore)
+        console.log(this.widgetStore.smoothingStore);
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
             let floatXStr = "";
             const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
@@ -168,7 +168,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 floatXStr = toFixed(nearest.point.x, 3);
             }
             const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
-            if(nearestSmooth && this.widgetStore.smoothingStore.isOverlayOn) {
+            if (nearestSmooth && this.widgetStore.smoothingStore.isOverlayOn) {
                 cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}), Smoothed: (${xLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
             } else if (nearestSmooth) {
                 cursorInfoString = `(${xLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
