@@ -152,9 +152,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 33);
 
-    private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
+    private genCursoInfoString = (data: Point2D[], smoothedData: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
         let cursorInfoString = undefined;
         const nearest = binarySearchByX(data, cursorXValue);
+        const nearestSmooth = smoothedData.length ? binarySearchByX(smoothedData, cursorXValue) : null;
+        console.log(this.widgetStore.smoothingStore)
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
             let floatXStr = "";
             const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
@@ -166,7 +168,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 floatXStr = toFixed(nearest.point.x, 3);
             }
             const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
-            cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+            if(nearestSmooth && this.widgetStore.smoothingStore.isOverlayOn) {
+                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}), Smoothed: (${xLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
+            } else if (nearestSmooth) {
+                cursorInfoString = `(${xLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
+            } else {
+                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+            }
+            //cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}) ${nearestSmooth ? `Smoothed: (${xLabel}, ${toExponential(nearestSmooth.point.y, 2)})` : ''}`;
         }
         return `${label}: ${cursorInfoString ?? "---"}`;
     };
@@ -183,14 +192,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (this.plotData.numProfiles === 1) {
                 // Single profile, Mean/RMS is available
                 const data = this.plotData.data[0];
-                const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
+                const smoothedData = this.plotData.smoothedData[0];
+                const cursorInfoString = this.genCursoInfoString(data, smoothedData, cursorXValue, cursorXUnit, label);
                 profilerInfo.push({
                     infoString: this.isMeanRmsVisible ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}` : cursorInfoString
                 });
             } else {
                 for (let i = 0; i < this.plotData.numProfiles; i++) {
                     const data = this.plotData.data[i];
-                    const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
+                    const smoothedData = this.plotData.smoothedData[i];
+                    const cursorInfoString = this.genCursoInfoString(data, smoothedData, cursorXValue, cursorXUnit, label);
                     profilerInfo.push({
                         color: this.plotData.colors?.[i],
                         infoString: `${cursorInfoString}, ${this.plotData.labels?.[i]?.image}, ${this.plotData.labels?.[i]?.plot}`
