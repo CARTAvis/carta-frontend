@@ -70,14 +70,10 @@ body {
     }
 }
 
-.new-release {
-    .bp3-alert-body {
-        .bp3-alert-contents {
-            margin-left: 15px;
+.new-release .bp3-alert-contents {
+    margin-left: 15px;
 
-            p {
-                margin: 5px;
-            }
-        }
+    p {
+        margin: 5px;
     }
 }
