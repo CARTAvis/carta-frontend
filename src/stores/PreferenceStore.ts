@@ -107,7 +107,7 @@ export enum PreferenceKeys {
     TELEMETRY_CONSENT_SHOWN = "telemetryConsentShown",
     TELEMETRY_LOGGING = "telemetryLogging",
 
-    CHECK_NEW_RELEASE = "showNewRelease"
+    CHECK_NEW_RELEASE = "checkNewRelease"
 }
 
 const DEFAULTS = {
