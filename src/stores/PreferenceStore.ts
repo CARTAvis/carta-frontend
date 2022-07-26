@@ -105,7 +105,9 @@ export enum PreferenceKeys {
     TELEMETRY_UUID = "telemetryUuid",
     TELEMETRY_MODE = "telemetryMode",
     TELEMETRY_CONSENT_SHOWN = "telemetryConsentShown",
-    TELEMETRY_LOGGING = "telemetryLogging"
+    TELEMETRY_LOGGING = "telemetryLogging",
+
+    CHECK_NEW_RELEASE = "showNewRelease"
 }
 
 const DEFAULTS = {
@@ -117,7 +119,8 @@ const DEFAULTS = {
         imageMultiPanelEnabled: false,
         imagePanelMode: ImagePanelMode.Dynamic,
         imagePanelColumns: 2,
-        imagePanelRows: 2
+        imagePanelRows: 2,
+        checkNewRelease: true
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -527,6 +530,10 @@ export class PreferenceStore {
     @computed get isSelectingIndeterminateLogEvents(): boolean {
         const selected = this.preferences.get(PreferenceKeys.LOG_EVENT)?.length;
         return selected > 0 && selected < Event.EVENT_NUMBER;
+    }
+
+    @computed get checkNewRelease(): boolean {
+        return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
     }
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {

@@ -58,6 +58,8 @@ export class AlertStore {
     @action showNewReleaseAlert = () => {
         this.alertType = AlertType.NewRelease;
         this.alertVisible = true;
+        this.interactionPromise = new Deferred<boolean>();
+        return this.interactionPromise.promise;
     };
 
     @action handleInteractiveAlertClosed = (confirmed: boolean) => {
@@ -66,11 +68,6 @@ export class AlertStore {
             this.interactionPromise.resolve(confirmed);
             this.interactionPromise = null;
         }
-    };
-
-    @action handleNewReleaseAlertCancelled = () => {
-        this.alertVisible = false;
-        // todo: update preference
     };
 
     private constructor() {

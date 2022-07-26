@@ -66,8 +66,7 @@ export class App extends React.Component {
                         confirmButtonText="OK"
                         cancelButtonText="Don't show again"
                         intent={Intent.PRIMARY}
-                        onConfirm={alertStore.dismissAlert}
-                        onCancel={alertStore.handleNewReleaseAlertCancelled}
+                        onClose={alertStore.handleInteractiveAlertClosed}
                     >
                         <p>A new CARTA release is available now!</p>
                         <p>Visit our <a href="https://cartavis.org" rel="noopener noreferrer" target="_blank">official website</a> for more details.</p>

@@ -1303,6 +1303,9 @@ export class AppStore {
                 await this.loadDefaultFiles();
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
+                if (this.preferenceStore.checkNewRelease) {
+                    this.checkNewRelease();
+                }
             } catch (err) {
                 console.error(err);
             }
@@ -1310,15 +1313,23 @@ export class AppStore {
     };
 
     private checkNewRelease = () => {
-        fetch("https://api.github.com/repos/CARTAvis/carta/releases")
-            .then(response => response.json())
-            .then(releases => {
-                const currentVersion = "v" + CARTA_INFO.version;
-                const latestVersion = releases[0].tag_name;
+        fetch("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {'Accept': 'application/vnd.github+json'}})
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText);
+                }
+                return response.json();
+            })
+            .then(async releases => {
+                const currentRelease = "v" + CARTA_INFO.version;
+                const latestRelease = releases[0].tag_name;
 
-                if (currentVersion !== latestVersion) {
-                    console.log("new version available: ", latestVersion);
-                    this.alertStore.showNewReleaseAlert();
+                if (currentRelease !== latestRelease) {
+                    console.log("new release available: ", latestRelease);
+                    const confirm = await this.alertStore.showNewReleaseAlert();
+                    if (!confirm) {
+                        this.preferenceStore.setPreference(PreferenceKeys.CHECK_NEW_RELEASE, false);
+                    }
                 }
             })
             .catch(error => {
@@ -1554,8 +1565,6 @@ export class AppStore {
         if (authTokenParam) {
             this.apiService.setToken(authTokenParam);
         }
-
-        this.checkNewRelease();
 
         autorun(() => {
             this.initCarta(this.astReady, this.tileService?.zfpReady, this.cartaComputeReady, this.apiService?.authenticated);
