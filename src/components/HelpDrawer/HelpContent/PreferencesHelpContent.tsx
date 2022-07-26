@@ -28,13 +28,13 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>WCS matching on append: trigger WCS matching automatically for newly appended images</li>
             <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
             <li>Transparent image background: when this is enabled, the exported png image will have a transparent background. When it is disabled (default), a white or a black background is added depending on the GUI theme.</li>
-            <li>Save last used directory: when this is enabled, the starting directory of a new CARTA session will be the one used to load an image in the previous CARTA session</li>
+            <li>Save last used directory: when this is enabled, the starting directory of a new CARTA session will be the last one used to load an image in the previous CARTA session.</li>
         </ul>
         <h3 id="render-configuration">Render configuration</h3>
         <p>This section provides customization of how a raster image is rendered by default.</p>
         <ul>
             <li>Default scaling: scaling function to be applied to the pixel value-to-color mapping</li>
-            <li>Default colormap: colormap for rendering a raster image</li>
+            <li>Default color map: color map for rendering a raster image</li>
             <li>Default percentile ranks: clip level to be applied to the pixel value-to-color mapping</li>
             <li>NaN color: color to render a NaN (not a number) pixel</li>
             <li>Smoothed bias/contrast: when this is enabled (default), smoothed bias and contrast functions are applied, resulting in a smooth scaling function. When it is disabled, the final scaling function contains kinks.</li>
@@ -48,7 +48,7 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Default contour levels: number of contour levels to be generated</li>
             <li>Thickness: contour line thickness</li>
             <li>Default color mode: to render contours with constant color or to render color-mapped contours</li>
-            <li>Default color map: the colormap for rendering color-mapped contours</li>
+            <li>Default color map: the color map for rendering color-mapped contours</li>
             <li>Default color: the color for rendering contours in constant color</li>
         </ul>
         <h3 id="vector-overlay-configuration">Vector overlay configuration</h3>
@@ -58,7 +58,7 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Use fractional intensity: compute fractional linear polarization intensity instead of linear polarization intensity</li>
             <li>Thickness: the line thickness for each vector field element</li>
             <li>Default color mode: to render a vector field with constant color or to render a color-mapped vector field</li>
-            <li>Default color map: the colormap for rendering a color-mapped vector field</li>
+            <li>Default color map: the color map for rendering a color-mapped vector field</li>
             <li>Default color: the color for rendering a vector field in constant color</li>
         </ul>
         <h3 id="wcs-image-overlay-configuration">WCS and image overlay</h3>
@@ -92,7 +92,7 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Line width: default line width to render a region</li>
             <li>Dash length: when greater than zero, region is rendered in dashed line</li>
             <li>Region type: default region type</li>
-            <li>Region size (px): the size of a region in screen pixel when it is created with a click</li>
+            <li>Region size (px): the size of a region in screen pixels when it is created with a click</li>
             <li>Creation mode: the way how rectangle and ellipse regions are created with cursor</li>
         </ul>
         <h3 id="performance">Performance</h3>

@@ -24,11 +24,11 @@ export const ONLINE_CATALOG_QUERY_HELP_CONTENT = (
             <code>Set to view</code> button which adopts the field of view of the active image view.
         </p>
         <p>
-            When the database is VizieR, after clicking the <code>Query</code> button, a set of catalog <em>titles</em> will be displayed once you click the <code>VizieR Catalog</code> field. Then you can select the desired catalog titles
+            If the database is VizieR, after you have clicked the <code>Query</code> button, a set of catalog <em>titles</em> will be displayed once you click the <code>VizieR Catalog</code> field. You can then select the desired catalog titles
             (multiple selection) and click the <code>Load selected</code> button to retrieve corresponding source catalogs.
         </p>
         <p>
-            Sometimes the query process takes some time. You may click the <code>Cancel</code> button to abort the query if it is needed.
+            Sometimes the query process takes some time. You may click the <code>Cancel</code> button if you wish to abort the query.
         </p>
     </div>
 );

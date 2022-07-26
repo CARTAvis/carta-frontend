@@ -21,7 +21,7 @@ export const VECTOR_OVERLAY_HELP_CONTENT = (
                     to &quot;None&quot;.
                 </li>
                 <li>
-                    For visualization of linear polarization from a pre-computed position angle image in degree: set the <code>Angular Source</code> to &quot;Current image&quot; and set the <code>Intensity Source</code> to &quot;None&quot;.
+                    For visualization of linear polarization from a pre-computed position angle image in degrees: set the <code>Angular Source</code> to &quot;Current image&quot; and set the <code>Intensity Source</code> to &quot;None&quot;.
                 </li>
                 <li>
                     For visualization of a scalar field by interpreting pixel value as the strength or intensity: set the <code>Angular Source</code> to &quot;None&quot; and set the <code>Intensity Source</code> to &quot;Current
@@ -30,7 +30,7 @@ export const VECTOR_OVERLAY_HELP_CONTENT = (
             </ul>
         </p>
         <p>
-            Usually block smoothing is applied to the image to enhance signal-to-noise ratio before computing vector elements. You can enable the <code>Pixel Averaging</code> toggle (default enabled) and set the{" "}
+            Usually block smoothing is applied to the image to enhance signal-to-noise ratio before computing vector elements. You can enable the <code>Pixel Averaging</code> toggle (enabled by default) and set the{" "}
             <code>Averaging Width (px)</code> (default 4 by 4) to apply pixel averaging.
         </p>
         <p>
@@ -41,7 +41,7 @@ export const VECTOR_OVERLAY_HELP_CONTENT = (
         </p>
         <p>
             Once the control parameters of how a vector overlay is computed are set, you can click the <code>Apply</code> button to trigger the computation and rendering process. The vector overlay data will be streamed progressively
-            similar to the raster rendering with image tiles. Click the <code>Clear</code> button to remove the vector overlay.
+            similarly to the raster rendering with image tiles. Click the <code>Clear</code> button to remove the vector overlay.
         </p>
         <p>On spatially matched images, vector elements are reprojected precisely based on the projection schemes. This behaves the same as the contour overlay and catalog image overlay.</p>
         <h3>Styling</h3>

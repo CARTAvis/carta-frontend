@@ -6,7 +6,7 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
         </p>
         <ul>
             <li>
-                <b>Image</b>: the image file for moment calculations. &quot;Active&quot; refers to the image displayed in the image viewer if it is single panel mode. If it is multi-panel mode, the active image is highlighted with a red
+                <b>Image</b>: the image file for moment calculations. &quot;Active&quot; refers to the image displayed in the image viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a red
                 box.
             </li>
             <li>
@@ -19,7 +19,7 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
             </li>
             <li>
                 <b>Mask and Range</b>: these options define a pixel value range used for moment calculations. If the <code>Mask</code> is &quot;None&quot;, all pixels are included. If the <code>Mask</code> is &quot;Include&quot; or
-                &quot;Exclude&quot;, the pixel value range defined in the text input fields is included or excluded, respectively. Alternatively, the pixel value range can be defined via the cursor by dragging vertically in the spectral
+                &quot;Exclude&quot;, the pixel value range defined in the text input fields is included or excluded, respectively. Alternatively, you can define the pixel value range with the cursor by dragging vertically in the spectral
                 profiler widget.
             </li>
             <li>
@@ -42,7 +42,7 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
             </li>
         </ul>
         <p>
-            When all the parameters are defined, by clicking the <code>Generate</code> button moment calculations will begin. Depending on the file size, moment calculations may take a while. If that happens, you may consider canceling the
+            When all the parameters are defined, click the <code>Generate</code> button to start the moment image calculations. Depending on the file size, moment calculations may take a while. If that happens, you may wish to cancel the
             calculations and re-define a proper region and/or spectral range.
         </p>
         <p>

@@ -35,7 +35,7 @@ export const ANIMATOR_HELP_CONTENT = (
             <strong>File</strong> -&gt; <strong>Preferences</strong>). Maximum playback time is 30 mins.
         </p>
         <p>
-            The polarization slider includes the Stokes components defined in the image header, as well as the <em>computed</em> components from the Stokes components, such as:
+            The polarization slider includes the Stokes components defined in the image header, as well as the components <em>computed</em> from the Stokes components, such as:
             <ul>
                 <li>
                     <code>Ptotal</code>: total polarization intensity (computed from Stokes QU or QUV)

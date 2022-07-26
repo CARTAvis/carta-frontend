@@ -15,7 +15,7 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
                 <li>a line region</li>
                 <li>a polyline region</li>
             </ul>
-            The cursor position may be fixed in the image viewer by pressing <code>F</code> key. Pressing again will unfreeze the cursor. For a line region or a polyline region, an averaging width along the region can be set with the{" "}
+            You can fix the cursor position in the image viewer by pressing the <code>F</code> key. Pressing again will unfreeze the cursor. For a line region or a polyline region, an averaging width along the region can be set with the{" "}
             <code>Computation</code> tab of the spatial profiler settings dialog (the <code>cog</code> button at the top right corner of the widget).
         </p>
         <p>

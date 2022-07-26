@@ -12,8 +12,8 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
             <code>Stokes</code> checkbox.{" "}
         </p>
         <p>
-            When none of the checkboxes is selected, the spectral profiler widget displays one spectrum at a time only. You can view a region spectral profile (via the <code>Region</code> dropdown menu) of an image cube (via the{" "}
-            <code>Image</code> dropdown menu) with a specific statistic (via the <code>Statistic</code> dropdown menu; default as mean). If the polarization axis exists, you may view a specific polarization component via the{" "}
+            When none of the checkboxes is selected, the spectral profiler widget displays only one spectrum at a time. You can view a region spectral profile (via the <code>Region</code> dropdown menu) of an image cube (via the{" "}
+            <code>Image</code> dropdown menu) with a specific statistic (via the <code>Statistic</code> dropdown menu; the default is mean). If the polarization axis exists, you may view a specific polarization component via the{" "}
             <code>Polarization</code> dropdown menu. You may have multiple widgets to view spectra side by side.
         </p>
         <p>
@@ -38,7 +38,7 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
             </li>
         </ul>
         <p>In short, if multiple spectra are plotted, only one option (Image, Region, Statistic or Polarization) can be varied at a time. All other options are fixed to a single value.</p>
-        <p>The cursor information of each profile is displayed at the bottom-left corner. The cursor information box is resizable when it is necessary.</p>
+        <p>The cursor information of each profile is displayed at the bottom-left corner. The cursor information box can be resized.</p>
 
         <h4>LIMITATION</h4>
         <p>
@@ -48,7 +48,7 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
 
         <h3 id="images">Image dropdown menu</h3>
         <p>
-            The image dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is the single-panel mode. If it is the multi-panel mode, the active image is highlighted with a red box. You
+            The image dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a red box. You
             may use the animator widget or the image list widget to change the active image.
         </p>
         <p>
@@ -72,7 +72,7 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         <h3>Polarization dropdown menu</h3>
         <p>
             When the image in the view contains multiple polarization components, you can use this dropdown menu to view profiles from different Stokes as well as computed polarization components such as polarization intensity or
-            polarization angle etc.. The dropdown menu defaults to &quot;Current&quot;, meaning the selected polarization component via the animator.
+            polarization angle, etc.. The dropdown menu defaults to &quot;Current&quot;, meaning the polarization component selected via the animator.
         </p>
         <p>
             When the <code>Polarization</code> checkbox is selected, the dropdown menu allows multiple selection. You can select different polarization components for region spectral profile calculations.
@@ -96,16 +96,16 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
             <li>BARY: barycentric, the rest-frame of the solar-system barycenter</li>
             <li>TOPO: topocentric, the observer's rest-frame on Earth</li>
         </ul>
-        <p>and the intensity unit such as &quot;Jy/beam&quot; &lt;-&gt; &quot;K&quot;, depending on the integrity image header.</p>
+        <p>and the intensity unit such as &quot;Jy/beam&quot; &lt;-&gt; &quot;K&quot;, depending on the integrity of the image header.</p>
         <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
         <h3 id="profile-smoothing">Profile smoothing</h3>
         <p>
-            The displayed profile can be smoothed via the <code>Smoothing</code> tab of the spectral profiler settings dialog (the <code>cog</code> button). A shortcut button of the <code>Smoothing</code> tab can be found at the top-right
+            The displayed profile can be smoothed via the <code>Smoothing</code> tab of the spectral profiler settings dialog (the <code>cog</code> button). A shortcut button to the <code>Smoothing</code> tab can be found at the top-right
             corner of the widget.
         </p>
         <h3 id="moment-image-generator">Moment image generator</h3>
         <p>
-            Moment images can be generated via the <code>Moments</code> tab of the spectral profiler settings dialog (the <code>cog</code> button). A shortcut button of the <code>Moments</code> tab can be found at the top-right corner of
+            Moment images can be generated via the <code>Moments</code> tab of the spectral profiler settings dialog (the <code>cog</code> button). A shortcut button to the <code>Moments</code> tab can be found at the top-right corner of
             the widget.
         </p>
         <h3>Profile fitting</h3>

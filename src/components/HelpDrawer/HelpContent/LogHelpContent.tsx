@@ -16,7 +16,7 @@ export const LOG_HELP_CONTENT = (
             <li>Critical</li>
         </ul>
         <p>
-            When you believe there is something wrong, please contact the <a href="mailto:support@carta.freshdesk.com">helpdesk</a> or file an issue on{" "}
+            If you believe that something is wrong, please contact the <a href="mailto:support@carta.freshdesk.com">helpdesk</a> or file an issue on{" "}
             <a href="https://github.com/CARTAvis/carta/issues" target="_blank" rel="noreferrer">
                 Github
             </a>

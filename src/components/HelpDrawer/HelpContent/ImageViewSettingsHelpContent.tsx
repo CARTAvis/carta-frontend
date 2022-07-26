@@ -16,7 +16,7 @@ export const IMAGE_VIEW_SETTINGS_HELP_CONTENT = (
         <p>A custom title can be added in the image view. Its font type, font size, and color are configurable.</p>
 
         <h3 id="ticks">Ticks</h3>
-        <p>This section allows you to change the ticks properties, including location, density, color, line width, and length of major and minor ticks.</p>
+        <p>This section allows you to change the ticks properties, including location, density, color, line width, and length of major and minor ticks. Setting the line width to 0.001 px effectively hides the ticks.</p>
 
         <h3 id="grid">Grids</h3>
         <p>The appearance of the coordinate grid lines is customizable, including visibility, color, and line width. Optionally, the pixel grid can be visualized at high zoom levels.</p>
@@ -56,11 +56,11 @@ export const IMAGE_VIEW_SETTINGS_HELP_CONTENT = (
         </ul>
 
         <h3 id="beam">Beam</h3>
-        <p>This section allows you to change the appearance of a beam overlay (visibility, color, type, and line width) and adjust its position in the image viewer.</p>
+        <p>This section allows you to change the appearance of the beam overlay (visibility, color, type, and line width) and adjust its position in the image viewer.</p>
 
         <h3>Conversion</h3>
         <p>
-            This allows conversions of the spectral axis of a position-velocity image. For example, if the image header supports required information, the axis labels can be displayed as offset v.s. velocity, offset v.s. frequency, or
+            This allows conversions of the spectral axis of a position-velocity image. For example, if the image header contains the required information, the axis labels can be displayed as offset v.s. velocity, offset v.s. frequency, or
             offset v.s. wavelength, etc..
         </p>
     </div>

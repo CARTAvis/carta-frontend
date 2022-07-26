@@ -10,7 +10,7 @@ export const CATALOG_HISTOGRAM_PLOT_HELP_CONTENT = (
             of all the entries and the histogram plot will then include all data (after filtering). The number of bins and the scale of the y-axis (linear or log) can be customized.
         </p>
         <p>
-            You may use the <code>Statistic Source</code> dropdown menu to select a numeric column from a catalog to show basic statistical quantities, including data count, mean, rms, standard deviation, min, and max.
+            You can use the <code>Statistic Source</code> dropdown menu to select a numeric column from a catalog to show basic statistical quantities, including data count, mean, rms, standard deviation, min, and max.
         </p>
         <p>
             When you click on a specific histogram bin, source entries of that bin will be highlighted in the source catalog table, in the 2D scatter plot (if it exists), and in the image viewer (if the catalog overlay is enabled). A

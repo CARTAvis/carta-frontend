@@ -19,7 +19,7 @@ export const LAYER_LIST_HELP_CONTENT = (
             <code>R</code> button.
         </p>
         <p>
-            To change a reference image, <code>right-click</code> on a row to bring up the context menu. The spatial reference image, the spectral reference image, and the raster scaling reference image can be independently defined. By
+            To change a reference image, <code>right-click</code> on a row to bring up the context menu. The spatial reference image, the spectral reference image, and the raster scaling reference image can be defined independently. By
             default, spectral matching is performed with respect to radio velocity convention. If other spectral conventions (e.g., frequency, channel, etc) are desired, use the <code>Matching</code> tab of the image list settings dialog
             (the <code>cog</code> at the top-right corner of the image list widget).
         </p>
@@ -32,7 +32,7 @@ export const LAYER_LIST_HELP_CONTENT = (
         </p>
         <p>
             The list order reflects the order of the image slider in the animator. When the image viewer is in the multi-panel mode, the list order also determines the image order in the grid layout following the left-right then top-down
-            rule. To change the order, <code>drag-and-drop</code> an image in the list to a desired new order.
+            rule. To change the order, <code>drag-and-drop</code> an image in the list to the desired new position.
         </p>
     </div>
 );

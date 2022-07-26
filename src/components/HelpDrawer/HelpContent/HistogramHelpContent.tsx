@@ -8,7 +8,7 @@ export const HISTOGRAM_HELP_CONTENT = (
             <ImageComponent light={widgetButtonHistogram} dark={widgetButtonHistogram_d} width="90%" />
         </p>
         <p>
-            Histogram widget displays a histogram plot based on the selections in the <code>Image</code>, <code>Region</code>, and <code>Polarization</code> dropdown menus. When there is no region or no active region, the entire image is
+            The histogram widget displays a histogram plot based on the selections in the <code>Image</code>, <code>Region</code>, and <code>Polarization</code> dropdown menus. When there is no region or no active region, the entire image is
             used to compute the histogram.
         </p>
         <h3 id="image">Image</h3>
@@ -18,13 +18,13 @@ export const HISTOGRAM_HELP_CONTENT = (
         </p>
         <h3 id="region">Region</h3>
         <p>
-            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking one in the image viewer, or by clicking a region entry on the
-            region list widget. Histogram plot of the selected region will be updated accordingly. When there is no region or no region is selected (active), the entire image is used to compute the histogram.
+            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking on one in the image viewer, or by clicking on a region entry in the
+            region list widget. The histogram plot of the selected region will be updated accordingly. When there is no region or no region is selected (active), the entire image is used to compute the histogram.
         </p>
         <h3 id="polarization">Polarization</h3>
         <p>
-            The <code>Polarization</code> dropdown menu defaults to &quot;Current&quot; which means the selection as in the animator widget. Beside the Stokes components as defined in the image header, computed components such as linear
-            polarization intensity, or polarization angle, etc. are also available.
+            The <code>Polarization</code> dropdown menu defaults to &quot;Current&quot; which means the selection as in the animator widget. Besides the Stokes components as defined in the image header, computed components such as linear
+            polarization intensity, or polarization angle, etc., are also available.
         </p>
         <h3 id="interactivity-zoom-and-pan">Interactivity: zoom and pan</h3>
         <p>The x and y ranges of the histogram plot can be modified by</p>
@@ -62,6 +62,6 @@ export const HISTOGRAM_HELP_CONTENT = (
         </ul>
         <br />
         <h4 id="note">NOTE</h4>
-        <p>In the current release, the number of histogram bins is automatically derived as the square root of the product of the region bounding box sizes.</p>
+        <p>In the current release, the number of histogram bins is automatically derived from the square root of the product of the region bounding box sizes.</p>
     </div>
 );
