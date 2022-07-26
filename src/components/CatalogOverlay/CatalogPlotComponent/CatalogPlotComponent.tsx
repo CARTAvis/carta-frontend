@@ -604,7 +604,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         const difference = range[1] - range[0];
         const exponential = difference.toExponential(2);
         const power = parseFloat(exponential.split("e")[1]);
-        return power < 0 ? `.${power * -1 + 3}e` : ".2e";
+        if (parseFloat(range[1].toExponential(1).split("e")[1]) <= -5) {
+            return `.2e`;
+        } else {
+            return power <= 0 ? `.${Math.abs(power) + 1}f` : "~f";
+        }
     };
 
     public render() {
