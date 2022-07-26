@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed high CPU/GPU usage when CARTA is idle or attempting to reconnect to server ([#153](https://github.com/CARTAvis/carta/issues/153) and [#1808](https://github.com/CARTAvis/carta-frontend/issues/1808)).
 * Fixed incorrect region positions when importing regions on a spatially matched image ([#1899](https://github.com/CARTAvis/carta-frontend/issues/1899)).
 * Fixed issue when the active frame changes while the region is being imported.
+* Fixed the imprecised catalog plot axis. ([#1884](https://github.com/cartavis/carta-frontend/issues/1884)).
 
 ## [3.0.0-beta.3]
 
