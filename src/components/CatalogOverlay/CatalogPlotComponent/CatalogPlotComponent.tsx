@@ -609,7 +609,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         if (maxPower >= 5) {
             return `e`;
         } else if (minPower <= -5) {
-            return `.${Math.abs(power) - Math.abs(minPower) + 1}e`;
+            console.log(power, minPower, maxPower);
+            return `.${Math.abs(power) - Math.abs(maxPower) + 1}e`;
         } else {
             return power <= 0 ? `.${Math.abs(power) + 1}f` : "~f";
         }
