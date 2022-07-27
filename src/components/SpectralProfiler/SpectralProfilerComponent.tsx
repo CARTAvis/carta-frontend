@@ -156,22 +156,27 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let cursorInfoString = undefined;
         const nearest = binarySearchByX(data, cursorXValue);
         const nearestSmooth = smoothedData.length ? binarySearchByX(smoothedData, cursorXValue) : null;
-        console.log(this.widgetStore.smoothingStore);
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
             let floatXStr = "";
+            let smoothedFloatXStr = "";
             const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
             if (diffLeft > 0 && diffLeft < 1e-6) {
                 floatXStr = formattedNotation(nearest.point.x);
+                smoothedFloatXStr = formattedNotation(nearestSmooth.point.x);
             } else if (diffLeft >= 1e-6 && diffLeft < 1e-3) {
                 floatXStr = toFixed(nearest.point.x, 6);
+                smoothedFloatXStr = toFixed(nearestSmooth?.point.x, 6);
             } else {
                 floatXStr = toFixed(nearest.point.x, 3);
+                smoothedFloatXStr = toFixed(nearestSmooth?.point.x, 3);
             }
             const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
+            const smoothedXLabel = `${smoothedFloatXStr} ${cursorXUnit}`;
+            //console.log(smoothedXLabel, nearestSmooth.point.x)
             if (nearestSmooth && this.widgetStore.smoothingStore.isOverlayOn) {
-                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}), Smoothed: (${xLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
+                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}), Smoothed: (${smoothedXLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
             } else if (nearestSmooth) {
-                cursorInfoString = `(${xLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
+                cursorInfoString = `(${smoothedXLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
             } else {
                 cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
             }
