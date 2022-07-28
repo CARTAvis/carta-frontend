@@ -406,6 +406,9 @@ export class RootMenuComponent extends React.Component {
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {loadingIndicator}
+                {appStore.showNewRelease && (
+                    <Button icon={"envelope"} intent={"warning"} minimal={true} />
+                )}
                 {appStore.preferenceStore.lowBandwidthMode && (
                     <Tooltip2
                         content={

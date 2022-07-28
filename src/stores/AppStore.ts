@@ -159,6 +159,12 @@ export class AppStore {
         this.isLoadingMultipleFiles = isLoadingMultipleFiles;
     };
 
+    // New release notification
+    @observable showNewRelease: boolean = false;
+    @action setShowNewRelease = (val: boolean) => {
+        this.showNewRelease = val;
+    };
+
     private connectToServer = async () => {
         // Remove query parameters, replace protocol and remove trailing /
         let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
@@ -1326,6 +1332,7 @@ export class AppStore {
 
                 if (currentRelease !== latestRelease) {
                     console.log("new release available: ", latestRelease);
+                    this.setShowNewRelease(true);
                 }
             })
             .catch(error => {
