@@ -57,27 +57,6 @@ export class App extends React.Component {
                         <p>{alertStore.interactiveAlertText}</p>
                     </Alert>
                 );
-            case AlertType.NewRelease:
-                return (
-                    <Alert
-                        icon={<img src="carta_logo.png" width={50} />}
-                        className={classNames("new-release", {"bp3-dark": darkTheme})}
-                        isOpen={alertStore.alertVisible}
-                        confirmButtonText="OK"
-                        cancelButtonText="Don't show again"
-                        intent={Intent.PRIMARY}
-                        onClose={alertStore.handleInteractiveAlertClosed}
-                    >
-                        <p>A new CARTA release is available now!</p>
-                        <p>
-                            Visit our{" "}
-                            <a href="https://cartavis.org" rel="noopener noreferrer" target="_blank">
-                                official website
-                            </a>{" "}
-                            for more details.
-                        </p>
-                    </Alert>
-                );
             default:
                 return null;
         }

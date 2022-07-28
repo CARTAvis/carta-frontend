@@ -1326,10 +1326,6 @@ export class AppStore {
 
                 if (currentRelease !== latestRelease) {
                     console.log("new release available: ", latestRelease);
-                    const confirm = await this.alertStore.showNewReleaseAlert();
-                    if (!confirm) {
-                        this.preferenceStore.setPreference(PreferenceKeys.CHECK_NEW_RELEASE, false);
-                    }
                 }
             })
             .catch(error => {

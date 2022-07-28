@@ -6,7 +6,6 @@ export enum AlertType {
     Info,
     Interactive,
     Retry,
-    NewRelease
 }
 
 export class AlertStore {
@@ -50,13 +49,6 @@ export class AlertStore {
         this.interactiveAlertText = text;
         this.alertIcon = icon;
         this.alertType = AlertType.Retry;
-        this.alertVisible = true;
-        this.interactionPromise = new Deferred<boolean>();
-        return this.interactionPromise.promise;
-    };
-
-    @action showNewReleaseAlert = () => {
-        this.alertType = AlertType.NewRelease;
         this.alertVisible = true;
         this.interactionPromise = new Deferred<boolean>();
         return this.interactionPromise.promise;
