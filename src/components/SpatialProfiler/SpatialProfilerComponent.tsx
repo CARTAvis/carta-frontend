@@ -432,112 +432,227 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return profilerInfo;
     };
 
-    @computed private get genWcsGrid(): {wcs: number; pixel: number}[] {
+    @computed private get genWcsGrid(): {wcs: string; pixel: number}[] {
         const wcsGrids = [];
-        const format = this.widgetStore.isXProfile ? AppStore.Instance.overlayStore.numbers.formatX : AppStore.Instance.overlayStore.numbers.formatY;
-        if (this.plotData?.values && this.widgetStore.effectiveRegion.regionType === CARTA.RegionType.POINT && format === NumberFormatType.Degrees) {
+        const isXProfile = this.widgetStore.isXProfile;
+        const format = isXProfile ? AppStore.Instance.overlayStore.numbers.formatX : AppStore.Instance.overlayStore.numbers.formatY;
+        if (this.plotData?.values && this.widgetStore.effectiveRegion.regionType === CARTA.RegionType.POINT) {
             const pointRegionWcs = getFormattedWCSPoint(this.frame.wcsInfo, this.widgetStore.effectiveRegion.center);
             const pointRegionPixel = this.widgetStore.effectiveRegion.center;
 
             let initialPixel, finalPixel, initialWcs, finalWcs;
-            if (this.widgetStore.isXProfile) {
+            if (isXProfile) {
                 initialPixel = {x: this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX, y: pointRegionPixel.y};
                 finalPixel = {x: this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX, y: pointRegionPixel.y};
-                initialWcs = parseFloat(getFormattedWCSPoint(this.frame.wcsInfo, initialPixel).x);
-                finalWcs = parseFloat(getFormattedWCSPoint(this.frame.wcsInfo, finalPixel).x);
+                initialWcs = getFormattedWCSPoint(this.frame.wcsInfo, initialPixel).x;
+                finalWcs = getFormattedWCSPoint(this.frame.wcsInfo, finalPixel).x;
             } else {
                 initialPixel = {x: pointRegionPixel.x, y: this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX};
                 finalPixel = {x: pointRegionPixel.x, y: this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX};
-                initialWcs = parseFloat(getFormattedWCSPoint(this.frame.wcsInfo, initialPixel).y);
-                finalWcs = parseFloat(getFormattedWCSPoint(this.frame.wcsInfo, finalPixel).y);
+                initialWcs = getFormattedWCSPoint(this.frame.wcsInfo, initialPixel).y;
+                finalWcs = getFormattedWCSPoint(this.frame.wcsInfo, finalPixel).y;
             }
 
             if (!initialWcs || !finalWcs) {
                 return null;
             }
 
-            const minWcs = Math.min(initialWcs, finalWcs);
-            const maxWcs = Math.max(initialWcs, finalWcs);
+            let minWcs: string, maxWcs: string;
+            if (format === NumberFormatType.Degrees) {
+                const initialIsMin = parseFloat(initialWcs) < parseFloat(finalWcs);
+                minWcs = initialIsMin ? initialWcs : finalWcs;
+                maxWcs = initialIsMin ? finalWcs : initialWcs;
+            } else {
+                const initialIsMin = this.totalSeconds(initialWcs) < this.totalSeconds(finalWcs);
+                minWcs = initialIsMin ? initialWcs : finalWcs;
+                maxWcs = initialIsMin ? finalWcs : initialWcs;
+            }
 
-            if (this.widgetStore.isXProfile) {
-                const originPixel = getPixelValueFromWCS(this.frame.wcsInfo, {x: "0", y: pointRegionWcs.y}).x;
+            if (isXProfile) {
+                let originPixel;
+                if (format === NumberFormatType.HMS || format === NumberFormatType.DMS) {
+                    originPixel = getPixelValueFromWCS(this.frame.wcsInfo, {x: "0:00:00", y: pointRegionWcs.y}).x;
+                } else if (format === NumberFormatType.Degrees) {
+                    originPixel = getPixelValueFromWCS(this.frame.wcsInfo, {x: "0", y: pointRegionWcs.y}).x;
+                }
                 const hasZero = originPixel > initialPixel.x && originPixel < finalPixel.x;
 
-                if (hasZero) {
-                    const wcsDist = 360 - maxWcs + minWcs;
-                    const deltaWcs = this.getDeltaWcs(wcsDist, this.widgetStore.isXProfile);
-                    if (!deltaWcs) {
-                        return null;
-                    }
-                    const grid0 = this.getGrids(maxWcs, 360, this.widgetStore.isXProfile, deltaWcs, pointRegionWcs);
-                    const grid1 = this.getGrids(0, minWcs, this.widgetStore.isXProfile, deltaWcs, pointRegionWcs);
-                    wcsGrids.push(...grid0, ...grid1);
-                } else {
-                    const wcsDist = maxWcs - minWcs;
-                    const deltaWcs = this.getDeltaWcs(wcsDist, this.widgetStore.isXProfile);
-                    if (!deltaWcs) {
-                        return null;
-                    }
-                    const grids = this.getGrids(minWcs, maxWcs, this.widgetStore.isXProfile, deltaWcs, pointRegionWcs);
-                    wcsGrids.push(...grids);
-                }
-            } else {
-                const wcsDist = maxWcs - minWcs;
-                const deltaWcs = this.getDeltaWcs(wcsDist, this.widgetStore.isXProfile);
+                const deltaWcs = this.getInterWcsDist(initialWcs, finalWcs, format, hasZero);
                 if (!deltaWcs) {
                     return null;
                 }
-                const grids = this.getGrids(minWcs, maxWcs, this.widgetStore.isXProfile, deltaWcs, pointRegionWcs);
-                wcsGrids.push(...grids);
+
+                if (hasZero) {
+                    if (format === NumberFormatType.HMS) {
+                        wcsGrids.push(...this.getGrids(maxWcs, "24:00:00", isXProfile, deltaWcs, pointRegionWcs, format));
+                        wcsGrids.push(...this.getGrids("0:00:00", minWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                    } else if (format === NumberFormatType.DMS) {
+                        wcsGrids.push(...this.getGrids(maxWcs, "360:00:00", isXProfile, deltaWcs, pointRegionWcs, format));
+                        wcsGrids.push(...this.getGrids("0:00:00", minWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                    } else {
+                        wcsGrids.push(...this.getGrids(maxWcs, "360", isXProfile, deltaWcs, pointRegionWcs, format));
+                        wcsGrids.push(...this.getGrids("0", minWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                    }
+                } else {
+                    wcsGrids.push(...this.getGrids(minWcs, maxWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                }
+            } else {
+                const deltaWcs = this.getInterWcsDist(initialWcs, finalWcs, format);
+                if (!deltaWcs) {
+                    return null;
+                }
+                if (format === NumberFormatType.HMS) {
+                    wcsGrids.push(...this.getGrids(minWcs, maxWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                } else if (format === NumberFormatType.DMS) {
+                    wcsGrids.push(...this.getGrids(minWcs, maxWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                } else {
+                    wcsGrids.push(...this.getGrids(minWcs, maxWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                }
             }
         }
         return wcsGrids;
     }
 
-    private getGrids = (startWcs: number, endWcs: number, isXProfile: boolean, deltaWcs: number, pointRegionWcs: {x: string; y: string}): {wcs: number; pixel: number}[] => {
+    private getGrids = (startWcs: string, endWcs: string, isXProfile: boolean, interDist: string, pointRegionWcs: {x: string; y: string}, format: NumberFormatType): {wcs: string; pixel: number}[] => {
         const grids = [];
 
-        // Round ticks by inter-tick distance.
-        // This is a workaround for the float number bug in Chart.js that the ticks could be like [45.451, 45.4520000001,45.4529999998] when users zoom in.
-        let roundingDecimalDigits = 0;
-        if (deltaWcs < 1) {
-            roundingDecimalDigits = Math.abs(Math.floor(Math.log10(deltaWcs)));
-        }
-
-        const firstWcsGrid = Math.ceil(startWcs / deltaWcs) * deltaWcs;
-        for (var i = 0; ; i++) {
-            const wcsGrid = firstWcsGrid + i * deltaWcs;
-            if (wcsGrid >= endWcs) {
-                break;
+        if (format === NumberFormatType.HMS || format === NumberFormatType.DMS) {
+            const hdms = this.getWcsHDMS(interDist);
+            if (hdms.hd !== 0) {
+                const firstWcsGrid = Math.ceil((this.totalSeconds(startWcs) / hdms.hd) * 3600) * hdms.hd;
+                for (var i = 0; ; i++) {
+                    const wcsGrid = firstWcsGrid + i * hdms.hd;
+                    if (wcsGrid * 3600 >= this.totalSeconds(endWcs)) {
+                        break;
+                    }
+                    const wcs = `${wcsGrid}:00:00`;
+                    const pixel = isXProfile ? getPixelValueFromWCS(this.frame.wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(this.frame.wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
+                    grids.push({wcs, pixel});
+                }
             }
-            const wcs = Number(wcsGrid.toFixed(roundingDecimalDigits));
-            const pixel = isXProfile ? getPixelValueFromWCS(this.frame.wcsInfo, {x: wcsGrid.toString(), y: pointRegionWcs.y}).x : getPixelValueFromWCS(this.frame.wcsInfo, {x: pointRegionWcs.x, y: wcsGrid.toString()}).y;
-            grids.push({wcs, pixel});
+
+            if (hdms.m !== 0) {
+                const firstWcsGrid = Math.ceil((this.totalSeconds(startWcs) / hdms.m) * 60) * hdms.m;
+                for (var j = 0; ; j++) {
+                    const wcsGrid = firstWcsGrid + j * hdms.m * 60;
+                    if (wcsGrid * 60 >= this.totalSeconds(endWcs)) {
+                        break;
+                    }
+
+                    const h = Math.floor(wcsGrid / 60);
+                    const m = wcsGrid - h * 60;
+                    const wcs = `${h}:${m < 10 ? "0" : ""}${m}:00`;
+                    const pixel = isXProfile ? getPixelValueFromWCS(this.frame.wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(this.frame.wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
+                    grids.push({wcs, pixel});
+                }
+            }
+
+            if (hdms.s !== 0) {
+                // Round second.
+                let roundingDecimalDigits = 0;
+                if (hdms.s < 1) {
+                    roundingDecimalDigits = Math.abs(Math.floor(Math.log10(hdms.s)));
+                }
+                const firstWcsGrid = Math.ceil(this.totalSeconds(startWcs) / hdms.s) * hdms.s;
+                for (var k = 0; ; k++) {
+                    const wcsGrid = firstWcsGrid + k * hdms.s;
+                    if (wcsGrid >= this.totalSeconds(endWcs)) {
+                        break;
+                    }
+
+                    const h = Math.floor(wcsGrid / 3600);
+                    const m = Math.floor((wcsGrid - h * 3600) / 60);
+                    const s = wcsGrid - h * 3600 - m * 60;
+                    const wcs = `${h}:${m < 10 ? "0" : ""}${m}:${s < 10 ? "0" : ""}${Number(s.toFixed(roundingDecimalDigits))}`;
+                    const pixel = isXProfile ? getPixelValueFromWCS(this.frame.wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(this.frame.wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
+                    grids.push({wcs, pixel});
+                }
+            }
+        } else if (format === NumberFormatType.Degrees) {
+            // round degrees
+            const interDistVal = parseFloat(interDist);
+            let roundingDecimalDigits = 0;
+            if (interDistVal < 1) {
+                roundingDecimalDigits = Math.abs(Math.floor(Math.log10(interDistVal)));
+            }
+
+            const firstWcsGrid = Math.ceil(parseFloat(startWcs) / interDistVal) * interDistVal;
+            for (var i = 0; ; i++) {
+                const wcsGrid = firstWcsGrid + i * interDistVal;
+                if (wcsGrid >= parseFloat(endWcs)) {
+                    break;
+                }
+                const wcs = `${Number(wcsGrid.toFixed(roundingDecimalDigits))}°`;
+                const pixel = isXProfile ? getPixelValueFromWCS(this.frame.wcsInfo, {x: wcsGrid.toString(), y: pointRegionWcs.y}).x : getPixelValueFromWCS(this.frame.wcsInfo, {x: pointRegionWcs.x, y: wcsGrid.toString()}).y;
+                grids.push({wcs, pixel});
+            }
         }
         return grids;
     };
 
-    private getDeltaWcs = (wcsDist: number, isXProfile: boolean) => {
-        const wcsDistLog = Math.log10(wcsDist);
+    private getInterWcsDist = (wcs1: string, wcs2: string, format: NumberFormatType, hasXZero?: boolean): string => {
+        if (format === NumberFormatType.HMS || format === NumberFormatType.DMS) {
+            const totalSeconds1 = this.totalSeconds(wcs1);
+            const totalSeconds2 = this.totalSeconds(wcs2);
+            const min = Math.min(totalSeconds1, totalSeconds2);
+            const max = Math.max(totalSeconds1, totalSeconds2);
+            const deltaSeconds = hasXZero ? min + (format === NumberFormatType.HMS ? 24 * 3600 : 360 * 3600) - max : max - min;
+
+            if (deltaSeconds > 3 * 3600) {
+                return `${this.getDeltaNumber(deltaSeconds / 3600)}:00:00`;
+            } else if (deltaSeconds <= 3 * 3600 && deltaSeconds > 2 * 3600) {
+                return "0:30:00";
+            } else if (deltaSeconds <= 2 * 3600 && deltaSeconds > 3600) {
+                return "0:20:00";
+            } else if (deltaSeconds <= 60 * 60 && deltaSeconds > 3 * 60) {
+                return `0:${this.getDeltaNumber(deltaSeconds / 60)}:00`;
+            } else if (deltaSeconds <= 3 * 60 && deltaSeconds > 2 * 60) {
+                return "0:00:30";
+            } else if (deltaSeconds <= 2 * 60 && deltaSeconds > 60) {
+                return "0:00:20";
+            } else {
+                return `0:00:${this.getDeltaNumber(deltaSeconds)}`;
+            }
+        } else {
+            const degree1 = parseFloat(wcs1);
+            const degree2 = parseFloat(wcs2);
+            const min = Math.min(degree1, degree2);
+            const max = Math.max(degree1, degree2);
+            const deltaDegree = hasXZero ? min + 360 - max : max - min;
+            return this.getDeltaNumber(deltaDegree).toString();
+        }
+    };
+
+    private totalSeconds(wcs: string) {
+        const hdms = this.getWcsHDMS(wcs);
+        return hdms.hd * 60 * 60 + hdms.m * 60 + hdms.s;
+    }
+
+    private getWcsHDMS(wcs: string): {hd: number; m: number; s: number} {
+        const hd = parseInt(wcs.substring(0, wcs.indexOf(":")));
+        const mStr = wcs.substring(wcs.indexOf(":") + 1, wcs.lastIndexOf(":"));
+        const m = mStr.startsWith("0") ? parseInt(mStr.substring(1)) : parseInt(mStr);
+        const sStr = wcs.substring(wcs.lastIndexOf(":") + 1);
+        const s = sStr.startsWith("0") ? parseFloat(sStr.substring(1)) : parseFloat(sStr);
+        return {hd, m, s};
+    }
+
+    private getDeltaNumber(val: number): number {
+        const wcsDistLog = Math.log10(val);
         const wcsDistLogHead = Math.floor(wcsDistLog);
         const wcsDistLogFraction = wcsDistLog - wcsDistLogHead;
-
-        const format = isXProfile ? AppStore.Instance.overlayStore.numbers.formatX : AppStore.Instance.overlayStore.numbers.formatY;
-
         let interWcsDist: number;
-        if (format === NumberFormatType.Degrees) {
-            if (wcsDistLogFraction >= Math.log10(6) && wcsDistLogFraction < 1) {
-                interWcsDist = 2 * Math.pow(10, wcsDistLogHead);
-            } else if (wcsDistLogFraction >= Math.log10(3) && wcsDistLogFraction < Math.log10(6)) {
-                interWcsDist = Math.pow(10, wcsDistLogHead);
-            } else if (wcsDistLogFraction >= Math.log10(1.5) && wcsDistLogFraction < Math.log10(3)) {
-                interWcsDist = 5 * Math.pow(10, wcsDistLogHead - 1);
-            } else {
-                interWcsDist = 2 * Math.pow(10, wcsDistLogHead - 1);
-            }
+        if (wcsDistLogFraction >= Math.log10(6) && wcsDistLogFraction < 1) {
+            interWcsDist = 2 * Math.pow(10, wcsDistLogHead);
+        } else if (wcsDistLogFraction >= Math.log10(3) && wcsDistLogFraction < Math.log10(6)) {
+            interWcsDist = Math.pow(10, wcsDistLogHead);
+        } else if (wcsDistLogFraction >= Math.log10(1.5) && wcsDistLogFraction < Math.log10(3)) {
+            interWcsDist = 5 * Math.pow(10, wcsDistLogHead - 1);
+        } else {
+            interWcsDist = 2 * Math.pow(10, wcsDistLogHead - 1);
         }
         return interWcsDist;
-    };
+    }
 
     onGraphCursorMoved = _.throttle(x => {
         this.widgetStore.setCursor(x);
@@ -678,7 +793,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     for (var i = 0; i < this.genWcsGrid.length; i++) {
                         linePlotProps.markers.push({
                             value: this.genWcsGrid[i].pixel,
-                            label: this.genWcsGrid[i].wcs.toString() + "°",
+                            label: this.genWcsGrid[i].wcs,
                             id: `marker-wcs-grid-${i}`,
                             draggable: false,
                             horizontal: false,
