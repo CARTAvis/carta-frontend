@@ -3,7 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, FileFilteringType} from "stores";
 import {ContourGeneratorType, FrameScaling} from "stores/Frame";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint, CARTA_INFO} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService, TelemetryMode} from "services";
 
@@ -107,7 +107,8 @@ export enum PreferenceKeys {
     TELEMETRY_CONSENT_SHOWN = "telemetryConsentShown",
     TELEMETRY_LOGGING = "telemetryLogging",
 
-    CHECK_NEW_RELEASE = "checkNewRelease"
+    CHECK_NEW_RELEASE = "checkNewRelease",
+    LATEST_RELEASE = "latestRelease"
 }
 
 const DEFAULTS = {
@@ -120,7 +121,8 @@ const DEFAULTS = {
         imagePanelMode: ImagePanelMode.Dynamic,
         imagePanelColumns: 2,
         imagePanelRows: 2,
-        checkNewRelease: true
+        checkNewRelease: true,
+        latestRelease: "v" + CARTA_INFO.version
     },
     GLOBAL: {
         theme: Theme.AUTO,
@@ -532,10 +534,6 @@ export class PreferenceStore {
         return selected > 0 && selected < Event.EVENT_NUMBER;
     }
 
-    @computed get checkNewRelease(): boolean {
-        return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
-    }
-
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         if (Event.isEventTypeValid(eventType)) {
             const logEvents = this.preferences.get(PreferenceKeys.LOG_EVENT);
@@ -621,6 +619,15 @@ export class PreferenceStore {
 
     @computed get telemetryUuid(): string {
         return this.preferences.get(PreferenceKeys.TELEMETRY_UUID);
+    }
+
+    // getters for showing new release
+    @computed get checkNewRelease(): boolean {
+        return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
+    }
+
+    @computed get latestRelease(): string {
+        return this.preferences.get(PreferenceKeys.LATEST_RELEASE) ?? DEFAULTS.SILENT.latestRelease;
     }
 
     @action setPreference = async (key: PreferenceKeys, value: any) => {

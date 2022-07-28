@@ -407,7 +407,9 @@ export class RootMenuComponent extends React.Component {
                 </Alert>
                 {loadingIndicator}
                 {appStore.showNewRelease && (
-                    <Button icon={"envelope"} intent={"warning"} minimal={true} />
+                    <Tooltip2 content="New release available!" position={Position.BOTTOM_RIGHT}>
+                        <Button icon={"envelope"} intent={"warning"} minimal={true} />
+                    </Tooltip2>
                 )}
                 {appStore.preferenceStore.lowBandwidthMode && (
                     <Tooltip2
