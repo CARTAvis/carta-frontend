@@ -28,9 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed persisent tooltip after exporting a png image ([#1742](https://github.com/CARTAvis/carta-frontend/issues/1742)).
 * Fixed high CPU/GPU usage when CARTA is idle or attempting to reconnect to server ([#153](https://github.com/CARTAvis/carta/issues/153) and [#1808](https://github.com/CARTAvis/carta-frontend/issues/1808)).
 * Fixed incorrect region positions when importing regions on a spatially matched image ([#1899](https://github.com/CARTAvis/carta-frontend/issues/1899)).
+* Fixed issue in the spatial profile setting where the "Show WCS Axis" should be disabled for steps and lines plot styles ([#1905](https://github.com/CARTAvis/carta-frontend/issues/1905)).
 * Fixed issue when the active frame changes while the region is being imported.
 * Fixed the displayed values in the cursor info of the histogram widget by adopting binary-searched data x and y values ([#1917](https://github.com/CARTAvis/carta-frontend/issues/1917)) 
 * Fixed missing regions when the image is matched or unmatched to the reference ([#1780](https://github.com/CARTAvis/carta-frontend/issues/1780)).
+
 
 ## [3.0.0-beta.3]
 
