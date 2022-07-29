@@ -440,23 +440,24 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const grids = [];
         const isXProfile = this.widgetStore.isXProfile;
         if (this.plotData?.values && this.widgetStore.effectiveRegion.regionType === CARTA.RegionType.POINT) {
-            const pointRegionWcs = getFormattedWCSPoint(this.frame.wcsInfo, this.widgetStore.effectiveRegion.center);
+            const wcsInfo = this.frame.wcsInfoForTransformation;
+            const pointRegionWcs = getFormattedWCSPoint(wcsInfo, this.widgetStore.effectiveRegion.center);
             const pointRegionPixel = this.widgetStore.effectiveRegion.center;
 
-            let initialPixel, finalPixel, initialWcs, finalWcs;
+            let initialPixel:Point2D, finalPixel:Point2D, initialWcs, finalWcs;
             if (isXProfile) {
                 initialPixel = {x: this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX, y: pointRegionPixel.y};
                 finalPixel = {x: this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX, y: pointRegionPixel.y};
-                initialWcs = getFormattedWCSPoint(this.frame.wcsInfo, initialPixel).x;
-                finalWcs = getFormattedWCSPoint(this.frame.wcsInfo, finalPixel).x;
+                initialWcs = getFormattedWCSPoint(wcsInfo, initialPixel).x;
+                finalWcs = getFormattedWCSPoint(wcsInfo, finalPixel).x;
             } else {
                 initialPixel = {x: pointRegionPixel.x, y: this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX};
                 finalPixel = {x: pointRegionPixel.x, y: this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX};
-                initialWcs = getFormattedWCSPoint(this.frame.wcsInfo, initialPixel).y;
-                finalWcs = getFormattedWCSPoint(this.frame.wcsInfo, finalPixel).y;
+                initialWcs = getFormattedWCSPoint(wcsInfo, initialPixel).y;
+                finalWcs = getFormattedWCSPoint(wcsInfo, finalPixel).y;
             }
 
-            if (!initialWcs || !finalWcs) {
+            if (!initialWcs || !finalWcs || initialWcs === "<bad>" || finalWcs === "<bad>") {
                 return null;
             }
 
@@ -475,9 +476,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (isXProfile) {
                 let originPixel;
                 if (format === NumberFormatType.Degrees) {
-                    originPixel = getPixelValueFromWCS(this.frame.wcsInfo, {x: "0", y: pointRegionWcs.y}).x;
+                    originPixel = getPixelValueFromWCS(wcsInfo, {x: "0", y: pointRegionWcs.y}).x;
                 } else {
-                    originPixel = getPixelValueFromWCS(this.frame.wcsInfo, {x: "0:00:00", y: pointRegionWcs.y}).x;
+                    originPixel = getPixelValueFromWCS(wcsInfo, {x: "0:00:00", y: pointRegionWcs.y}).x;
                 }
                 const hasXOrigin = originPixel > initialPixel.x && originPixel < finalPixel.x;
 
@@ -488,30 +489,30 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                 if (hasXOrigin) {
                     if (format === NumberFormatType.HMS) {
-                        grids.push(...this.getGrids(maxWcs, "24:00:00", isXProfile, deltaWcs, pointRegionWcs, format));
-                        grids.push(...this.getGrids("0:00:00", minWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                        grids.push(...this.getGrids(maxWcs, "24:00:00", wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                        grids.push(...this.getGrids("0:00:00", minWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
                     } else if (format === NumberFormatType.DMS) {
-                        grids.push(...this.getGrids(maxWcs, "360:00:00", isXProfile, deltaWcs, pointRegionWcs, format));
-                        grids.push(...this.getGrids("0:00:00", minWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                        grids.push(...this.getGrids(maxWcs, "360:00:00", wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                        grids.push(...this.getGrids("0:00:00", minWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
                     } else {
-                        grids.push(...this.getGrids(maxWcs, "360", isXProfile, deltaWcs, pointRegionWcs, format));
-                        grids.push(...this.getGrids("0", minWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                        grids.push(...this.getGrids(maxWcs, "360", wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                        grids.push(...this.getGrids("0", minWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
                     }
                 } else {
-                    grids.push(...this.getGrids(minWcs, maxWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                    grids.push(...this.getGrids(minWcs, maxWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
                 }
             } else {
                 const deltaWcs = this.getInterWcsDist(initialWcs, finalWcs, format);
                 if (!deltaWcs) {
                     return null;
                 }
-                grids.push(...this.getGrids(minWcs, maxWcs, isXProfile, deltaWcs, pointRegionWcs, format));
+                grids.push(...this.getGrids(minWcs, maxWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
             }
         }
         return grids;
     }
 
-    private getGrids = (startWcs: string, endWcs: string, isXProfile: boolean, interDist: string, pointRegionWcs: {x: string; y: string}, format: NumberFormatType): {wcs: string; pixel: number}[] => {
+    private getGrids = (startWcs: string, endWcs: string, wcsInfo: AST.FrameSet, isXProfile: boolean, interDist: string, pointRegionWcs: {x: string; y: string}, format: NumberFormatType): {wcs: string; pixel: number}[] => {
         const grids = [];
         if (format === NumberFormatType.HMS || format === NumberFormatType.DMS) {
             const hdms = this.getWcsHDMS(interDist);
@@ -522,26 +523,26 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const firstWcsHD = Math.ceil(startSeconds / (hdms.hd * 3600)) * hdms.hd;
                 for (var i = 0; ; i++) {
                     const wcsHD = firstWcsHD + i * hdms.hd;
-                    if (wcsHD * 3600 >= endSeconds) {
+                    if (wcsHD * 3600 > endSeconds || wcsHD === (format === NumberFormatType.HMS ? 24 : 360)) {
                         break;
                     }
 
                     const wcs = `${wcsHD}:00:00`;
-                    const pixel = isXProfile ? getPixelValueFromWCS(this.frame.wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(this.frame.wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
+                    const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
                     grids.push({wcs, pixel});
                 }
             } else if (hdms.m !== 0) {
                 const firstWcsM = Math.ceil(startSeconds / (hdms.m * 60)) * hdms.m;
                 for (var j = 0; ; j++) {
                     const wcsM = firstWcsM + j * hdms.m;
-                    if (wcsM * 60 >= endSeconds) {
+                    if (wcsM * 60 > endSeconds || wcsM === (format === NumberFormatType.HMS ? 24 : 360) * 60) {
                         break;
                     }
 
                     const h = Math.floor(wcsM / 60);
                     const m = wcsM - h * 60;
                     const wcs = `${h}:${m < 10 ? "0" : ""}${m}:00`;
-                    const pixel = isXProfile ? getPixelValueFromWCS(this.frame.wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(this.frame.wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
+                    const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
                     grids.push({wcs, pixel});
                 }
             } else if (hdms.s !== 0) {
@@ -550,10 +551,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (hdms.s < 1) {
                     roundingDecimalDigits = Math.abs(Math.floor(Math.log10(hdms.s)));
                 }
-                const firstWcsS = Math.ceil(startSeconds / hdms.s) * hdms.s;
+                const interDistS = Number(hdms.s.toFixed(roundingDecimalDigits));
+
+                const firstWcsS = Math.ceil(startSeconds / interDistS) * interDistS;
                 for (var k = 0; ; k++) {
-                    const wcsS = firstWcsS + k * hdms.s;
-                    if (wcsS >= endSeconds) {
+                    const wcsS = Number((firstWcsS + k * interDistS).toFixed(roundingDecimalDigits));
+                    if (wcsS > endSeconds || wcsS === (format === NumberFormatType.HMS ? 24 : 360) * 3600) {
                         break;
                     }
 
@@ -561,7 +564,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const m = Math.floor((wcsS - h * 3600) / 60);
                     const s = wcsS - h * 3600 - m * 60;
                     const wcs = `${h}:${m < 10 ? "0" : ""}${m}:${s < 10 ? "0" : ""}${Number(s.toFixed(roundingDecimalDigits))}`;
-                    const pixel = isXProfile ? getPixelValueFromWCS(this.frame.wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(this.frame.wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
+                    const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
                     grids.push({wcs, pixel});
                 }
             }
@@ -572,16 +575,17 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (interDistVal < 1) {
                 roundingDecimalDigits = Math.abs(Math.floor(Math.log10(interDistVal)));
             }
+            const interDistDegree = Number(interDistVal.toFixed(roundingDecimalDigits));
 
-            const firstWcsDegree = Math.ceil(parseFloat(startWcs) / interDistVal) * interDistVal;
+            const firstWcsDegree = Math.ceil(parseFloat(startWcs) / interDistDegree) * interDistDegree;
             for (var m = 0; ; m++) {
-                const wcsDegree = firstWcsDegree + m * interDistVal;
-                if (wcsDegree >= parseFloat(endWcs)) {
+                const wcsDegree = firstWcsDegree + m * interDistDegree;
+                if (wcsDegree > parseFloat(endWcs) || wcsDegree === 360) {
                     break;
                 }
-                const wcs = Number(wcsDegree.toFixed(roundingDecimalDigits));
-                const pixel = isXProfile ? getPixelValueFromWCS(this.frame.wcsInfo, {x: wcs.toString(), y: pointRegionWcs.y}).x : getPixelValueFromWCS(this.frame.wcsInfo, {x: pointRegionWcs.x, y: wcs.toString()}).y;
-                grids.push({wcs: `${wcs}°`, pixel});
+                const wcs = `${Number(wcsDegree.toFixed(roundingDecimalDigits))}°`;
+                const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs.toString(), y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs.toString()}).y;
+                grids.push({wcs, pixel});
             }
         }
         return grids;
