@@ -161,8 +161,12 @@ export class AppStore {
 
     // New release notification
     @observable showNewRelease: boolean = false;
+    @observable latestRelease: string = "";
     @action setShowNewRelease = (val: boolean) => {
         this.showNewRelease = val;
+    };
+    @action private setLatestRelease = (release: string) => {
+        this.latestRelease = release;
     };
 
     private connectToServer = async () => {
@@ -1331,6 +1335,7 @@ export class AppStore {
 
                 if (this.preferenceStore.latestRelease !== latestRelease) {
                     console.log("new release available: ", latestRelease);
+                    this.setLatestRelease(latestRelease);
                     this.setShowNewRelease(true);
                 }
             })

@@ -1,13 +1,14 @@
 import * as React from "react";
-import {computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Button, Icon, Menu, MenuDivider, Position} from "@blueprintjs/core";
+import {Alert, Button, Classes, Icon, Intent, Menu, MenuDivider, Position, Switch} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import classNames from "classnames";
 import {CARTA} from "carta-protobuf";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {ExportImageMenuComponent} from "../Shared";
-import {PresetLayout, Snippet} from "models";
+import {CARTA_INFO, PresetLayout, Snippet} from "models";
 import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {ApiService, ConnectionStatus} from "services";
@@ -18,6 +19,12 @@ import "./RootMenuComponent.scss";
 @observer
 export class RootMenuComponent extends React.Component {
     @observable documentationAlertVisible: boolean;
+    @observable disableCheckRelease: boolean = false;
+
+    @action toggleDisableCheckRelease = () => {
+        this.disableCheckRelease = !this.disableCheckRelease;
+    }
+
     private documentationAlertTimeoutHandle;
 
     constructor(props: any) {
@@ -372,6 +379,32 @@ export class RootMenuComponent extends React.Component {
             loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass} />;
         }
 
+        const newReleaseMessage = (
+            <div className={classNames(Classes.ALERT, "new-release", {"bp3-dark": appStore.darkTheme})} >
+                <div className={Classes.ALERT_BODY}>
+                    <img src="carta_logo.png"/>
+                    <div className={Classes.ALERT_CONTENTS} >
+                        <p>A new {appStore.latestRelease.includes("beta") ? "beta " : ""}CARTA release is available now!</p>
+                        <p>
+                            Visit {" "}
+                            <a href="https://cartavis.org" rel="noopener noreferrer" target="_blank">
+                                CARTA homepage
+                            </a>{" "}
+                            for more details.
+                        </p>
+                        <div className="release-info">
+                            <p>Current release: v{CARTA_INFO.version}</p>
+                            <p>New release: {appStore.latestRelease}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className={Classes.ALERT_FOOTER}>
+                    <Button intent={Intent.PRIMARY} text="OK" />
+                    <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again."/>
+                </div>
+            </div>
+        );
+
         return (
             <div className="root-menu">
                 <Popover2 autoFocus={false} minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
@@ -407,9 +440,11 @@ export class RootMenuComponent extends React.Component {
                 </Alert>
                 {loadingIndicator}
                 {appStore.showNewRelease && (
-                    <Tooltip2 content="New release available!" position={Position.BOTTOM_RIGHT}>
-                        <Button icon={"envelope"} intent={"warning"} minimal={true} />
-                    </Tooltip2>
+                    <Popover2 content={newReleaseMessage} position={Position.BOTTOM_RIGHT}>
+                        <Tooltip2 content="New release available!" position={Position.BOTTOM_RIGHT}>
+                            <Button icon={"envelope"} intent={"warning"} minimal={true} />
+                        </Tooltip2>
+                    </Popover2>
                 )}
                 {appStore.preferenceStore.lowBandwidthMode && (
                     <Tooltip2
