@@ -15,6 +15,7 @@ export class LinePlotSettingsPanelComponentProps {
     linePlotPointSize: number;
     useWcsValues?: boolean;
     showWCSAxis?: boolean;
+    disableShowWCSAxis?: boolean;
     meanRmsVisible?: boolean;
     isAutoScaledX?: boolean;
     isAutoScaledY?: boolean;
@@ -150,12 +151,12 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         </FormGroup>
                     )}
                     {typeof props.showWCSAxis !== "undefined" && props.handleWcsAxisChanged && (
-                        <FormGroup inline={true} label={"Show WCS Axis"}>
-                            <Switch checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged} />
+                        <FormGroup disabled={props.disableShowWCSAxis} inline={true} label={"Show WCS Axis"}>
+                            <Switch disabled={props.disableShowWCSAxis} checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged} />
                         </FormGroup>
                     )}
                     {props.showWCSAxis && props.setWcsAxisColor && (
-                        <FormGroup inline={true} label={"WCS Axis Color"}>
+                        <FormGroup disabled={props.disableShowWCSAxis} inline={true} label={"WCS Axis Color"}>
                             <AutoColorPickerComponent
                                 color={props.wcsAxisColor ?? DEFAULT_COLOR}
                                 presetColors={[...SWATCH_COLORS, "transparent"]}
@@ -163,6 +164,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                                     props.setWcsAxisColor(color === "transparent" ? "#000000" : color);
                                 }}
                                 disableAlpha={true}
+                                disabled={props.disableShowWCSAxis}
                             />
                         </FormGroup>
                     )}
