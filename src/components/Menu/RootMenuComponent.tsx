@@ -394,7 +394,7 @@ export class RootMenuComponent extends React.Component {
                 <div className={Classes.ALERT_BODY}>
                     <img src="carta_logo.png" />
                     <div className={Classes.ALERT_CONTENTS}>
-                        <p>A new {appStore.newRelease.includes("beta") ? "beta " : ""}CARTA release is available now!</p>
+                        <p>A new {appStore.newRelease.includes("beta") ? "beta " : ""} release is available now!</p>
                         <p>
                             Visit{" "}
                             <a href="https://cartavis.org" rel="noopener noreferrer" target="_blank">
