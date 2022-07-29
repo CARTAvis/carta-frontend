@@ -165,6 +165,8 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
             showWCSAxis: widgetStore.wcsAxisVisible,
+            wcsAxisColor: widgetStore.wcsAxisColor,
+            setWcsAxisColor: widgetStore.setWcsAxisColor,
             setLineColor: (lineKey: LineKey, color: string) => widgetStore.setPrimaryLineColor(color),
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,

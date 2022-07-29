@@ -35,6 +35,8 @@ export class LinePlotSettingsPanelComponentProps {
     clearXYBounds?: () => void;
     handleCoordinateChanged?: (changeEvent: React.ChangeEvent<HTMLSelectElement>) => void;
     handleWcsAxisChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
+    wcsAxisColor?: string;
+    setWcsAxisColor?: (color: string) => void;
     handleLogScaleChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleMarkerTextChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleXMinChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
@@ -150,6 +152,18 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     {typeof props.showWCSAxis !== "undefined" && props.handleWcsAxisChanged && (
                         <FormGroup inline={true} label={"Show WCS Axis"}>
                             <Switch checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged} />
+                        </FormGroup>
+                    )}
+                    {props.showWCSAxis && props.setWcsAxisColor && (
+                        <FormGroup inline={true} label={"WCS Axis Color"}>
+                            <AutoColorPickerComponent
+                                color={props.wcsAxisColor ?? DEFAULT_COLOR}
+                                presetColors={[...SWATCH_COLORS, "transparent"]}
+                                setColor={(color: string) => {
+                                    props.setWcsAxisColor(color === "transparent" ? "#000000" : color);
+                                }}
+                                disableAlpha={true}
+                            />
                         </FormGroup>
                     )}
                     {typeof props.meanRmsVisible !== "undefined" && props.handleMeanRmsChanged && (

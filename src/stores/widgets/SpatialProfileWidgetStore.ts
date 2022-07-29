@@ -25,6 +25,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
 
     // settings
     @observable wcsAxisVisible: boolean;
+    @observable wcsAxisColor: string;
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: string;
@@ -94,6 +95,10 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.wcsAxisVisible = val;
     };
 
+    @action setWcsAxisColor = (color: string) => {
+        this.wcsAxisColor = color;
+    };
+
     @action setPlotType = (val: PlotType) => {
         this.plotType = val;
     };
@@ -127,6 +132,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
         this.wcsAxisVisible = true;
+        this.wcsAxisColor = "auto-turquoise";
         this.primaryLineColor = "auto-blue";
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
@@ -363,6 +369,10 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.wcsAxisVisible === "boolean") {
             this.wcsAxisVisible = widgetSettings.wcsAxisVisible;
         }
+        const wcsAxisColor = tinycolor(widgetSettings.wcsAxisColor);
+        if (wcsAxisColor.isValid() || isAutoColor(widgetSettings.wcsAxisColor)) {
+            this.wcsAxisColor = widgetSettings.wcsAxisColor;
+        }
         if (typeof widgetSettings.meanRmsVisible === "boolean") {
             this.meanRmsVisible = widgetSettings.meanRmsVisible;
         }
@@ -390,6 +400,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
             wcsAxisVisible: this.wcsAxisVisible,
+            wcsAxisColor: this.wcsAxisColor,
             meanRmsVisible: this.meanRmsVisible,
             plotType: this.plotType,
             minXVal: this.linePlotInitXYBoundaries.minXVal,
