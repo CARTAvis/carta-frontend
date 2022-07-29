@@ -5,7 +5,7 @@ import {Deferred} from "services";
 export enum AlertType {
     Info,
     Interactive,
-    Retry,
+    Retry
 }
 
 export class AlertStore {
