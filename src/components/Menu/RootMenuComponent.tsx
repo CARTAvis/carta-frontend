@@ -340,6 +340,7 @@ export class RootMenuComponent extends React.Component {
         const vectorOverlayLoading = appStore.activeFrame?.vectorOverlayStore.progress >= 0 && appStore.activeFrame.vectorOverlayStore.progress < 1;
         let loadingTooltipFragment;
         let loadingIndicatorClass = "contour-loading-icon";
+        let showLoadingIndicator = false;
 
         if (tilesLoading || contoursLoading || vectorOverlayLoading) {
             let tilesTooltipContent;
@@ -365,7 +366,7 @@ export class RootMenuComponent extends React.Component {
                 </React.Fragment>
             );
 
-            loadingIndicatorClass += " icon-visible";
+            showLoadingIndicator = true;
         }
 
         let loadingIndicator;
@@ -444,7 +445,6 @@ export class RootMenuComponent extends React.Component {
                 <Alert className={appStore.darkTheme ? "bp3-dark" : ""} isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
-                {loadingIndicator}
                 {appStore.showNewRelease && (
                     <Popover2 content={newReleaseMessage} position={Position.BOTTOM_RIGHT}>
                         <Tooltip2 content="New release available!" position={Position.BOTTOM_RIGHT}>
@@ -452,6 +452,7 @@ export class RootMenuComponent extends React.Component {
                         </Tooltip2>
                     </Popover2>
                 )}
+                {showLoadingIndicator && loadingIndicator}
                 {appStore.preferenceStore.lowBandwidthMode && (
                     <Tooltip2
                         content={

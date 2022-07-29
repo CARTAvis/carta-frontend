@@ -27,12 +27,11 @@
 
     .contour-loading-icon {
         padding-right: 8px;
-        opacity: 0;
         color: $green3;
+    }
 
-        &.icon-visible {
-            opacity: 1;
-        }
+    .bp3-icon-console {
+        padding-right: 8px;
     }
 
     #hidden-status-info {
