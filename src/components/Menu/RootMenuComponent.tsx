@@ -384,7 +384,7 @@ export class RootMenuComponent extends React.Component {
                 <div className={Classes.ALERT_BODY}>
                     <img src="carta_logo.png"/>
                     <div className={Classes.ALERT_CONTENTS} >
-                        <p>A new {appStore.latestRelease.includes("beta") ? "beta " : ""}CARTA release is available now!</p>
+                        <p>A new {appStore.newRelease.includes("beta") ? "beta " : ""}CARTA release is available now!</p>
                         <p>
                             Visit {" "}
                             <a href="https://cartavis.org" rel="noopener noreferrer" target="_blank">
@@ -394,7 +394,7 @@ export class RootMenuComponent extends React.Component {
                         </p>
                         <div className="release-info">
                             <p>Current release: v{CARTA_INFO.version}</p>
-                            <p>New release: {appStore.latestRelease}</p>
+                            <p>New release: {appStore.newRelease}</p>
                         </div>
                     </div>
                 </div>
@@ -403,7 +403,7 @@ export class RootMenuComponent extends React.Component {
                         if (this.disableCheckRelease) {
                             appStore.preferenceStore.setPreference(PreferenceKeys.CHECK_NEW_RELEASE, false);
                         }
-                        appStore.preferenceStore.setPreference(PreferenceKeys.LATEST_RELEASE, appStore.latestRelease);
+                        appStore.preferenceStore.setPreference(PreferenceKeys.LATEST_RELEASE, appStore.newRelease);
                         appStore.setShowNewRelease(false);
                     }} />
                     <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again."/>

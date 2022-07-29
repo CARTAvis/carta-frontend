@@ -1,6 +1,7 @@
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable, ObservableMap, runInAction, when} from "mobx";
 import * as Long from "long";
+import axios from "axios";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
@@ -161,12 +162,13 @@ export class AppStore {
 
     // New release notification
     @observable showNewRelease: boolean = false;
-    @observable latestRelease: string = "";
+    @observable newRelease: string = "";
     @action setShowNewRelease = (val: boolean) => {
         this.showNewRelease = val;
     };
-    @action private setLatestRelease = (release: string) => {
-        this.latestRelease = release;
+    @action private updateNewRelease = (release: string) => {
+        this.newRelease = release;
+        this.showNewRelease = true;
     };
 
     private connectToServer = async () => {
@@ -1314,7 +1316,7 @@ export class AppStore {
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
                 if (this.preferenceStore.checkNewRelease) {
-                    this.checkNewRelease();
+                    await this.checkNewRelease();
                 }
             } catch (err) {
                 console.error(err);
@@ -1322,21 +1324,14 @@ export class AppStore {
         }
     };
 
-    private checkNewRelease = () => {
-        fetch("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {Accept: "application/vnd.github+json"}})
+    private checkNewRelease = async () => {
+        axios("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {Accept: "application/vnd.github+json"}})
             .then(response => {
-                if (!response.ok) {
-                    throw new Error(response.statusText);
-                }
-                return response.json();
-            })
-            .then(async releases => {
-                const latestRelease = releases[0].tag_name;
+                const latestRelease = response?.data?.[0]?.tag_name;
 
-                if (this.preferenceStore.latestRelease !== latestRelease) {
+                if (latestRelease && this.preferenceStore.latestRelease !== latestRelease) {
                     console.log("new release available: ", latestRelease);
-                    this.setLatestRelease(latestRelease);
-                    this.setShowNewRelease(true);
+                    this.updateNewRelease(latestRelease);
                 }
             })
             .catch(error => {
