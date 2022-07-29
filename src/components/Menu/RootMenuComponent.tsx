@@ -399,7 +399,13 @@ export class RootMenuComponent extends React.Component {
                     </div>
                 </div>
                 <div className={Classes.ALERT_FOOTER}>
-                    <Button intent={Intent.PRIMARY} text="OK" />
+                    <Button intent={Intent.PRIMARY} text="OK" onClick={() => {
+                        if (this.disableCheckRelease) {
+                            appStore.preferenceStore.setPreference(PreferenceKeys.CHECK_NEW_RELEASE, false);
+                        }
+                        appStore.preferenceStore.setPreference(PreferenceKeys.LATEST_RELEASE, appStore.latestRelease);
+                        appStore.setShowNewRelease(false);
+                    }} />
                     <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again."/>
                 </div>
             </div>
