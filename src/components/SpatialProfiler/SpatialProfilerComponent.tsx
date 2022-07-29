@@ -5,15 +5,14 @@ import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
-import {Tick} from "chart.js";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore, NumberFormatType} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, SpatialProfileStore, WidgetProps, WidgetsStore, NumberFormatType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D, POLARIZATIONS} from "models";
-import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme, getPixelValueFromWCS, getFormattedWCSPoint} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, toFixed, getColorForTheme, getPixelValueFromWCS, getFormattedWCSPoint} from "utilities";
 import "./SpatialProfilerComponent.scss";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -315,95 +314,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    private calculateFormattedValues(ticks: Tick[]) {
-        if (!this.cachedFormattedCoordinates || this.cachedFormattedCoordinates.length !== ticks.length) {
-            this.cachedFormattedCoordinates = new Array(ticks.length);
-        }
-        if (!this.frame || !this.profileStore || !this.widgetStore) {
-            return;
-        }
-
-        let astString = new ASTSettingsString();
-        astString.add("System", OverlayStore.Instance.global.explicitSystem);
-
-        if (this.widgetStore.isXProfile) {
-            for (let i = 0; i < ticks.length; i++) {
-                const pointWCS = transformPoint(this.frame.wcsInfo, {x: ticks[i].value, y: this.profileStore.y});
-                const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined, astString.toString(), true).x;
-            }
-        } else {
-            for (let i = 0; i < ticks.length; i++) {
-                const pointWCS = transformPoint(this.frame.wcsInfo, {x: this.profileStore.x, y: ticks[i].value});
-                const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y, astString.toString(), true).y;
-            }
-        }
-        this.trimDecimals();
-    }
-
-    // Trims unnecessary decimals from the list of formatted coordinates
-    private trimDecimals() {
-        if (!this.cachedFormattedCoordinates || !this.cachedFormattedCoordinates.length) {
-            return;
-        }
-        // If the existing tick list has repeats, don't trim
-        if (SpatialProfilerComponent.hasRepeats(this.cachedFormattedCoordinates)) {
-            return;
-        }
-        const decimalIndex = this.cachedFormattedCoordinates[0].indexOf(".");
-        // Skip lists without decimals. This assumes that all ticks have the same number of decimals
-        if (decimalIndex === -1) {
-            return;
-        }
-        const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex;
-        for (let trim = initialTrimLength; trim > 0; trim--) {
-            let trimmedArray = this.cachedFormattedCoordinates.slice();
-            for (let i = 0; i < trimmedArray.length; i++) {
-                trimmedArray[i] = trimmedArray[i].slice(0, -trim);
-            }
-            if (!SpatialProfilerComponent.hasRepeats(trimmedArray)) {
-                this.cachedFormattedCoordinates = trimmedArray;
-                return;
-            }
-            // Skip an extra character after the first check, because of the decimal indicator
-            if (trim === initialTrimLength) {
-                trim--;
-            }
-        }
-    }
-
-    private static hasRepeats(ticks: string[]): boolean {
-        if (!ticks || ticks.length < 2) {
-            return false;
-        }
-        let prevTick = ticks[0];
-        for (let i = 1; i < ticks.length; i++) {
-            const nextTick = ticks[i];
-            if (prevTick === nextTick) {
-                return true;
-            }
-            prevTick = nextTick;
-        }
-        return false;
-    }
-
-    private formatProfileAst = (v: number, i: number, values: Tick[]) => {
-        if (!this.frame || !this.profileStore) {
-            return v;
-        }
-
-        // Cache all formatted values
-        if (i === 0) {
-            this.calculateFormattedValues(values);
-        }
-        return this.cachedFormattedCoordinates[i];
-    };
-
-    private formatBlank = (v: number, i: number, values: Tick[]) => {
-        return "";
-    };
-
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
         if (this.plotData) {
@@ -444,7 +354,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             const pointRegionWcs = getFormattedWCSPoint(wcsInfo, this.widgetStore.effectiveRegion.center);
             const pointRegionPixel = this.widgetStore.effectiveRegion.center;
 
-            let initialPixel:Point2D, finalPixel:Point2D, initialWcs, finalWcs;
+            let initialPixel: Point2D, finalPixel: Point2D, initialWcs, finalWcs;
             if (isXProfile) {
                 initialPixel = {x: this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX, y: pointRegionPixel.y};
                 finalPixel = {x: this.widgetStore.isAutoScaledX ? this.plotData.xMax : this.widgetStore.maxX, y: pointRegionPixel.y};
@@ -787,7 +697,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (!this.widgetStore.isLineOrPolyline) {
                     if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
                         linePlotProps.showTopAxis = true;
-                        linePlotProps.topAxisTickFormatter = this.formatBlank;
+                        linePlotProps.topAxisTickFormatter = () => "";
                         if (this.wcsGrid?.length) {
                             for (var i = 0; i < this.wcsGrid.length; i++) {
                                 linePlotProps.markers.push({
