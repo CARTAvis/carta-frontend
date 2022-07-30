@@ -1902,18 +1902,16 @@ export class FrameStore {
     }
 
     @action updateCursorRegion = (pos: Point2D) => {
+        const aroundImage = pos.x + 1 >= 0 && pos.x - 0.5 <= this.frameInfo.fileInfoExtended.width && pos.y + 1 >= 0 && pos.y - 0.5 <= this.frameInfo.fileInfoExtended.height;
         if (this.spatialReference) {
             const pointRefImage = transformPoint(this.spatialTransformAST, pos, true);
             this.spatialReference.updateCursorRegion(pointRefImage);
-        } else {
-            if (pos.x >= 0 && pos.x <= this.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.frameInfo.fileInfoExtended.height - 1) {
-                this.frameRegionSet.updateCursorRegionPosition(pos);
-            }
+        } else if (aroundImage) {
+            this.frameRegionSet.updateCursorRegionPosition(pos);
         }
-
         for (const frame of this.secondarySpatialImages) {
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
-            if (pointSecondaryImage.x >= 0 && pointSecondaryImage.x <= frame.frameInfo.fileInfoExtended.width - 1 && pointSecondaryImage.y >= 0 && pointSecondaryImage.y <= frame.frameInfo.fileInfoExtended.height - 1) {
+            if (pointSecondaryImage.x + 0.5 >= 0 && pointSecondaryImage.x + 0.5 <= frame.frameInfo.fileInfoExtended.width && pointSecondaryImage.y + 0.5 >= 0 && pointSecondaryImage.y + 0.5 <= frame.frameInfo.fileInfoExtended.height) {
                 frame.frameRegionSet.updateCursorRegionPosition(pointSecondaryImage);
             }
         }

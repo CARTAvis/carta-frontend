@@ -39,7 +39,8 @@ export class RegionSetStore {
             const cursorRegion = this.regions[0];
             // Need to avoid redundant update (position not changed), backend may not reply to redundant requests.
             const roundedPos = {x: Math.round(pos.x), y: Math.round(pos.y)};
-            if (cursorRegion?.regionId === CURSOR_REGION_ID && (cursorRegion.center?.x !== roundedPos.x || cursorRegion.center?.y !== roundedPos.y)) {
+            const hoverImage = pos.x + 0.5 >= 0 && pos.x + 0.5 <= this.frame.frameInfo.fileInfoExtended.width && pos.y + 0.5 >= 0 && pos.y + 0.5 <= this.frame.frameInfo.fileInfoExtended.height;
+            if (cursorRegion?.regionId === CURSOR_REGION_ID && (cursorRegion.center?.x !== roundedPos.x || cursorRegion.center?.y !== roundedPos.y || !hoverImage)) {
                 cursorRegion.setCenter(roundedPos);
             }
         }
