@@ -16,6 +16,11 @@ export const REGION_DIALOG_HELP_CONTENT = (
             decimal degrees. Region size can be defined in arcsecond with <code>&quot;</code>, in arcminute with <code>&apos;</code>, or in degree with <code>deg</code>.
         </p>
         <p>
+            For the ellipse region, <code>semi-axes</code> fields are required to define the size. The first and the second fields refer to the semi-major and the semi-minor axes, respectively. The semi-major axis is aligned to the
+            North-South direction of the sky, while the semi-minor axis is aligned to the East-West direction of the sky. The origin (0 degree) of the <code>P.A.</code> (position angle) points to the North and the P.A. increases toward the
+            East.
+        </p>
+        <p>
             You can center the selected region in the image viewer by clicking the <code>Focus</code> button at the bottom of the dialog. In addition, you can lock the region to prevent accidental modification by clicking the{" "}
             <code>Lock</code> button. To delete the selected region, click the <code>Delete</code> button or press <code>Delete</code> or <code>Backspace</code> key.
         </p>

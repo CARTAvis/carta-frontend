@@ -126,7 +126,7 @@ export const IMAGE_VIEW_HELP_CONTENT = (
             <li>Rectangle (rotatable)</li>
             <li>Ellipse (rotatable)</li>
             <li>Polygon</li>
-            <li>Line</li>
+            <li>Line (rotatable)</li>
             <li>Polyline</li>
         </ul>
         <p>
@@ -153,11 +153,6 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         <p>
             <ImageComponent light={exportPNGButton} dark={exportPNGButton_d} width="80%" />
         </p>
-        <h3 id="image-information-and-header">Image information and header</h3>
-        <p>Basic image information and full image headers are displayed in the file header dialog.</p>
-        <p>
-            <ImageComponent light={imageInfoButton} dark={imageInfoButton_d} width="34%" />
-        </p>
         <h3>Distance measure</h3>
         <p>This tool allows you to measure a geodesic distance between two locations on an image with mouse clicks. The geodesic line between the two clicks as well as the iso-latitude and iso-longitude lines are visualized.</p>
         <p>
@@ -167,6 +162,11 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         <p>
             When you hover over the colorbar, a cutoff value is applied to the raster image temporarily. Pixel values below the cutoff are rendered in grayscale. You may disable this feature in the <code>Colorbar</code> tab of the image
             view settings dialog.
+        </p>
+        <h3 id="image-information-and-header">Image information and header</h3>
+        <p>Basic image information and full image headers are displayed in the file header dialog.</p>
+        <p>
+            <ImageComponent light={imageInfoButton} dark={imageInfoButton_d} width="34%" />
         </p>
     </div>
 );

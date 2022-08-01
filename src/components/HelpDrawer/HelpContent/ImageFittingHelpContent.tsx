@@ -18,6 +18,10 @@ export const IMAGE_FITTING_HELP_CONTENT = (
             parameters in angular units.
         </p>
         <p>
+            The major FWHM axis is aligned to the North-South direction of the sky, while the minor FWHM axis is aligned to the East-West direction of the sky. The origin (0 degree) of the P.A. points to the North and the P.A. increases
+            toward the East.
+        </p>
+        <p>
             Once the initial solutions of a set of Gaussian components are set, you can click the <code>Fit</code> button to trigger the image fitting process. The fitting result is displayed in the <code>Fitting Result</code> tab. In the{" "}
             <code>Full Log</code> tab, more information about the fitting results is provided, including the best-fit solution in the image coordinate.
         </p>

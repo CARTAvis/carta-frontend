@@ -6,7 +6,7 @@ export const FILE_BROWSER_HELP_CONTENT = (
             <li>Load individual Stokes images as a single Stokes hypercube</li>
             <li>
                 Load images with the Lattice Expression Language (
-                <a href="https://casadocs.readthedocs.io/en/stable/notebooks/image_analysis.html?highlight=LEL#Lattice-Expression-Language" target="_blank" rel="noreferrer">
+                <a href="https://casadocs.readthedocs.io/en/stable/notebooks/image_analysis.html#Lattice-Expression-Language" target="_blank" rel="noreferrer">
                     LEL
                 </a>
                 )
@@ -51,7 +51,7 @@ export const FILE_BROWSER_HELP_CONTENT = (
         </p>
         <p>
             Images can be loaded with the Lattice Expression Language (
-            <a href="https://casadocs.readthedocs.io/en/stable/notebooks/image_analysis.html?highlight=LEL#Lattice-Expression-Language" target="_blank" rel="noreferrer">
+            <a href="https://casadocs.readthedocs.io/en/stable/notebooks/image_analysis.html#Lattice-Expression-Language" target="_blank" rel="noreferrer">
                 LEL
             </a>
             ). With LEL, you can apply image arithmetic and load the resulting image for visualization and analysis. To enable this image loading mode, click the <code>Filter</code> dropdown menu and switch to <code>Image arithmetic</code>.

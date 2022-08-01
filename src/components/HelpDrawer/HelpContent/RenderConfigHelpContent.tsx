@@ -41,13 +41,13 @@ export const RENDER_CONFIG_HELP_CONTENT = (
                 <code>scrolling wheel</code> (up to zoom in and down to zoom out with respect to the cursor position)
             </li>
             <li>
-                <code>click-and-drag</code> horizontally to zoom in x
+                <code>drag-and-drop</code> horizontally to zoom in x
             </li>
             <li>
-                <code>click-and-drag</code> vertically to zoom in y
+                <code>drag-and-drop</code> vertically to zoom in y
             </li>
             <li>
-                <code>click-and-drag</code> diagonally to zoom in both x and y
+                <code>drag-and-drop</code> diagonally to zoom in both x and y
             </li>
             <li>
                 <code>double-click</code> to reset x and y ranges
