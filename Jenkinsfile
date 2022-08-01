@@ -54,7 +54,7 @@ pipeline {
                 }
                 stage('Build with node v16') {
                     agent {
-                       label "macos11-agent"
+                       label "almalinux86-agent"
                     }
                     steps {
                         unstash "protobuf"
