@@ -1,5 +1,5 @@
 import * as React from "react";
-import {computed, autorun, /*observable,*/ makeObservable} from "mobx";
+import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
@@ -58,7 +58,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     constructor(props: WidgetProps) {
         super(props);
-        makeObservable(this);
 
         const appStore = AppStore.Instance;
         autorun(() => {

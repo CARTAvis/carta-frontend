@@ -63,9 +63,9 @@ export function trimTrailingZeros(value: string): string {
     // all trailing values are '0', we return only the values
     // left of the decimal
 
-    var decimals = value.split(".");
-    var trimmed = decimals[1];
-    var temp = [];
+    let decimals = value.split(".");
+    let trimmed = decimals[1];
+    let temp = [];
 
     if (typeof decimals[1] != "undefined") {
         temp = decimals[1].split("");
@@ -73,7 +73,7 @@ export function trimTrailingZeros(value: string): string {
         return decimals[0];
     }
 
-    for (var i = decimals[1].length - 1; i >= 0; i--) {
+    for (let i = decimals[1].length - 1; i >= 0; i--) {
         // Check if trailing value is 0 and pop() value if so.
         if (decimals[1][i] === "0") {
             temp.pop();
@@ -95,10 +95,10 @@ export function getVariablePrecision(value: number): number {
     // up to 14 decimal places to determine the approxmiate
     // precision.
 
-    var decimalPlacement = 0.1;
-    var precision = 3;
+    let decimalPlacement = 0.1;
+    let precision = 1;
 
-    for (var i = 0; i < 9; i++) {
+    for (let i = 0; i < 9; i++) {
         if (value < decimalPlacement) {
             decimalPlacement = 0.1 * decimalPlacement;
             precision++;
@@ -110,19 +110,14 @@ export function getVariablePrecision(value: number): number {
     return precision;
 }
 
-export function toFormattedNotation(value: number, delta: number): string {
+export function toFormattedNotationByDiff(value: number, delta: number): string {
     if (value === null || isNaN(value)) {
         return null;
     }
     // Determine approximate precision
-    var precision = getVariablePrecision(Math.abs(delta));
-    var frontDecimalLength = value.toString().split(".")[0].length;
-    var totalPrecision = frontDecimalLength + precision;
+    let precision = getVariablePrecision(Math.abs(delta));
 
-    // Trim trailing zeros
-    var trimmedValue = trimTrailingZeros(value.toPrecision(totalPrecision));
-
-    return value < 1 ? trimTrailingDecimals(trimmedValue) : trimTrailingDecimals(trimmedValue);
+    return trimTrailingDecimals(value.toFixed(precision))
 }
 
 export function formattedNotation(value: number): string {

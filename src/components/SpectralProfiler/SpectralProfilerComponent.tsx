@@ -13,7 +13,7 @@ import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfo
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, SpectralType} from "models";
-import {binarySearchByX, clamp, formattedExponential, toFormattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, toFormattedNotationByDiff, toExponential, toFixed, getColorForTheme} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
 import "./SpectralProfilerComponent.scss";
 
@@ -154,7 +154,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }, 33);
 
     private precisionFormatting = (data: number, diff: number, spectralType: SpectralType): string => {
-        return spectralType === SpectralType.CHANNEL ? toFixed(data) : toFormattedNotation(data, diff);
+        return spectralType === SpectralType.CHANNEL ? toFixed(data) : toFormattedNotationByDiff(data, diff);
     };
 
     private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string, start: number, end: number): string => {
