@@ -117,7 +117,7 @@ export function toFormattedNotationByDiff(value: number, delta: number): string 
     // Determine approximate precision
     let precision = getVariablePrecision(Math.abs(delta));
 
-    return trimTrailingDecimals(value.toFixed(precision))
+    return trimTrailingDecimals(value.toFixed(precision));
 }
 
 export function formattedNotation(value: number): string {
