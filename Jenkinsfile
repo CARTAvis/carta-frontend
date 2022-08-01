@@ -60,7 +60,7 @@ pipeline {
                         unstash "protobuf"
                         unstash "wasm_libs"
                         sh "uname -a"
-                        sh "sw_vers"
+                        sh "lsb_release -a"
                         sh 'rm -rf node_modules build'
                         sh 'n 16'
                         sh 'n exec 16 node -v'
