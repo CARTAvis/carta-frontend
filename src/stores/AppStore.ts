@@ -172,8 +172,8 @@ export class AppStore {
     };
 
     private connectToServer = async () => {
-        // Remove query parameters, replace protocol and remove trailing /
-        let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
+        // Remove query parameters and replace protocol
+        let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws");
         if (process.env.NODE_ENV === "development") {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
         } else {
