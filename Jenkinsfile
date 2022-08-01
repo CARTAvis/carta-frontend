@@ -27,6 +27,8 @@ pipeline {
                     steps {
                         unstash "protobuf"
                         unstash "wasm_libs"
+                        sh "uname -a"
+                        sh "lsb_release -a"
                         sh 'rm -rf node_modules build'
                         sh 'n 12'
                         sh 'n exec 12 node -v'
@@ -41,6 +43,8 @@ pipeline {
                     steps {
                         unstash "protobuf"
                         unstash "wasm_libs"
+                        sh "uname -a"
+                        sh "lsb_release -a"
                         sh 'rm -rf node_modules build'
                         sh 'n 14' 
                         sh 'n exec 14 node -v'
@@ -55,6 +59,8 @@ pipeline {
                     steps {
                         unstash "protobuf"
                         unstash "wasm_libs"
+                        sh "uname -a"
+                        sh "sw_vers"
                         sh 'rm -rf node_modules build'
                         sh 'n 16'
                         sh 'n exec 16 node -v'
@@ -67,10 +73,10 @@ pipeline {
     }
     post {
         success {
-            slackSend color: 'good', message: "carta-frontend - Success - ${env.BRANCH_NAME} ${COMMIT_ID} (<${env.RUN_DISPLAY_URL}|open>)";
+            slackSend color: 'good', message: "carta-frontend - Success - ${env.BRANCH_NAME} <${env.RUN_DISPLAY_URL}|${COMMIT_ID}>";
         }
         failure {
-            slackSend color: 'danger', message: "carta-frontend - Fail - ${env.BRANCH_NAME} ${COMMIT_ID} (<${env.RUN_DISPLAY_URL}|open>)";
+            slackSend color: 'danger', message: "carta-frontend - Fail - ${env.BRANCH_NAME} <${env.RUN_DISPLAY_URL}|${COMMIT_ID}>";
         }
     }
 }
