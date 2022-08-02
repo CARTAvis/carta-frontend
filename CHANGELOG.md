@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed issue when the active frame changes while the region is being imported.
 * Fixed the displayed values in the cursor info of the histogram widget by adopting binary-searched data x and y values ([#1917](https://github.com/CARTAvis/carta-frontend/issues/1917)) 
 * Fixed missing regions when the image is matched or unmatched to the reference ([#1780](https://github.com/CARTAvis/carta-frontend/issues/1780)).
+* Fixed issue of only enabling catalog selection button when there is a layer of catalog overlay ([#1826](https://github.com/CARTAvis/carta-frontend/issues/1826)).
 
 
 ## [3.0.0-beta.3]
