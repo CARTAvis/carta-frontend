@@ -206,7 +206,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         });
 
         const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
-        const catalogSelectionDisabled = appStore.catalogNum === 0 || sumNumSources == 0;
+        const catalogSelectionDisabled = appStore.catalogNum === 0 || sumNumSources === 0;
 
         return (
             <ButtonGroup className={className} style={styleProps}>
