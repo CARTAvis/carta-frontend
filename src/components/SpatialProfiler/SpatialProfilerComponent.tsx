@@ -413,7 +413,17 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const wcsLabel = cursorInfo?.infoWCS && !this.lineAxis ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
                     const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(nearest.point.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${nearest.point.x} px, `;
                     const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
-                    profilerInfo.push("Cursor: (" + wcsLabel + xLabel + valueLabel + ")");
+
+                    const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues);
+
+                    if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
+                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
+                    } else if (smoothedProfilerInfo) {
+                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${smoothedProfilerInfo})`);
+                    } else {
+                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel})`);
+                    }
+                    
                 }
             } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
                 // get value directly from point region
@@ -422,15 +432,44 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const wcsLabel = pointRegionInfo?.infoWCS ? `WCS: ${isXCoordinate ? pointRegionInfo.infoWCS.x : pointRegionInfo.infoWCS.y}, ` : "";
                     const imageLabel = `Image: ${toFixed(isXCoordinate ? pointRegionInfo.posImageSpace.x : pointRegionInfo.posImageSpace.y)} px, `;
                     const valueLabel = `${this.profileStore?.value !== undefined ? formattedExponential(this.profileStore.value, 5) : ""}`;
-                    profilerInfo.push("Data: (" + wcsLabel + imageLabel + valueLabel + ")");
+
+                    const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues, this.profileStore.x);
+
+                    if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
+                        profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
+                    } else if (smoothedProfilerInfo !== 'undefined') {
+                        profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${smoothedProfilerInfo})`);
+                    } else {
+                        profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel})`);
+                    }
                 }
             }
             if (this.widgetStore.meanRmsVisible) {
-                profilerInfo.push(`Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
+                profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
             }
         }
-        return profilerInfo;
+        return profilerInfo
     };
+
+    private genSmoothedProfilerInfo = (smoothedData: Point2D[], pointXValue?: number): string => {
+
+        let profilerInfo = '';
+
+        if(pointXValue) {
+            const nearest = binarySearchByX(smoothedData, pointXValue);
+            profilerInfo += formattedExponential(nearest?.point?.y, 5);
+
+        } else {
+            // handle the value when cursor is in profiler
+            const nearest = binarySearchByX(smoothedData, this.widgetStore.cursorX);
+            if (nearest?.point) {
+                const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
+                profilerInfo += valueLabel;
+            }
+        }
+
+        return profilerInfo;
+    }
 
     onGraphCursorMoved = _.throttle(x => {
         this.widgetStore.setCursor(x);
