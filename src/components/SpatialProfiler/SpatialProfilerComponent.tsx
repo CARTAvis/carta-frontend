@@ -423,7 +423,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     } else {
                         profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel})`);
                     }
-                    
                 }
             } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
                 // get value directly from point region
@@ -437,7 +436,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                     if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
                         profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
-                    } else if (smoothedProfilerInfo !== 'undefined') {
+                    } else if (smoothedProfilerInfo !== "undefined") {
                         profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${smoothedProfilerInfo})`);
                     } else {
                         profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel})`);
@@ -448,17 +447,15 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
             }
         }
-        return profilerInfo
+        return profilerInfo;
     };
 
     private genSmoothedProfilerInfo = (smoothedData: Point2D[], pointXValue?: number): string => {
+        let profilerInfo = "";
 
-        let profilerInfo = '';
-
-        if(pointXValue) {
+        if (pointXValue) {
             const nearest = binarySearchByX(smoothedData, pointXValue);
             profilerInfo += formattedExponential(nearest?.point?.y, 5);
-
         } else {
             // handle the value when cursor is in profiler
             const nearest = binarySearchByX(smoothedData, this.widgetStore.cursorX);
@@ -469,7 +466,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         return profilerInfo;
-    }
+    };
 
     onGraphCursorMoved = _.throttle(x => {
         this.widgetStore.setCursor(x);
