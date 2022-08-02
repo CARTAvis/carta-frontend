@@ -1325,18 +1325,17 @@ export class AppStore {
     };
 
     private checkNewRelease = async () => {
-        axios("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {Accept: "application/vnd.github+json"}})
-            .then(response => {
-                const latestRelease = response?.data?.[0]?.tag_name;
-
-                if (latestRelease && this.preferenceStore.latestRelease !== latestRelease) {
-                    console.log("new release available: ", latestRelease);
-                    this.updateNewRelease(latestRelease);
-                }
-            })
-            .catch(error => {
-                console.error("Failed to check new releases: ", error);
-            });
+        try {
+            const response = await axios("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {Accept: "application/vnd.github+json"}});
+            const latestRelease = response?.data?.[0]?.tag_name;
+    
+            if (latestRelease && this.preferenceStore.latestRelease !== latestRelease) {
+                console.log("new release available: ", latestRelease);
+                this.updateNewRelease(latestRelease);
+            }
+        } catch (err) {
+            console.error("Failed to check new releases: ", err);
+        }
     };
 
     private constructor() {
