@@ -193,20 +193,17 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        const baseFrame = this.props.frame;
+        const baseFrame = this.props.frame.spatialReference ?? this.props.frame;
         let numSourcesArray = [];
         appStore.catalogStore.visibleCatalogFiles.get(baseFrame).forEach(fileId => {
             const numSources = appStore.catalogStore.catalogCounts.get(fileId);
             numSourcesArray.push(numSources);
         });
-
-        let sumNumSources = 0;
-        numSourcesArray.forEach(element => {
-            sumNumSources += element;
-        });
+        
+        const numSourcesIsZero = numSourcesArray.every(element => element === 0)
 
         const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
-        const catalogSelectionDisabled = appStore.catalogNum === 0 || sumNumSources === 0;
+        const catalogSelectionDisabled = appStore.catalogNum === 0 || numSourcesIsZero === true;
 
         return (
             <ButtonGroup className={className} style={styleProps}>
