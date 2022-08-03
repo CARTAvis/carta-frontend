@@ -345,7 +345,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     y={centerPointCanvasSpace.y}
                     stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
                     strokeWidth={region.lineWidth}
-                    opacity={region.opacity === 2 ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : region.opacity === 0 ? 0 : 0.1}
+                    opacity={region.opacity === 2 ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : region.opacity === 0 ? 0 : 0.3}
                     dash={[region.dashLength]}
                     closed={!region.creating && region.regionType === CARTA.RegionType.POLYGON}
                     listening={this.props.listening && !region.locked}
