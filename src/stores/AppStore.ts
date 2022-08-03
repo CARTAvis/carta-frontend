@@ -1960,6 +1960,8 @@ export class AppStore {
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+        const fileUrl = `${frame.frameInfo.directory}/${frame.frameInfo.fileInfo.name}`.replace(/^\.\//, "");
+        window.history.replaceState({}, this.activeFrame.frameInfo.fileInfo.name, window.location.href.replace(window.location.search, "") + `?file=${encodeURI(fileUrl)}`);
         this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
         if (this.syncContourToFrame) {
             this.contourDataSource = frame;
