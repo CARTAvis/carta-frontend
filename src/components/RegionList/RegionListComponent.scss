@@ -5,6 +5,12 @@
     height: 100%;
     user-select: none;
 
+    .float {
+        position: absolute;
+        right: 0px;
+        bottom: 0px;
+    }
+
     .region-editing {
     }
 
