@@ -199,8 +199,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             const numSources = appStore.catalogStore.catalogCounts.get(fileId);
             numSourcesArray.push(numSources);
         });
-        
-        const numSourcesIsZero = numSourcesArray.every(element => element === 0)
+
+        const numSourcesIsZero = numSourcesArray.every(element => element === 0);
 
         const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
         const catalogSelectionDisabled = appStore.catalogNum === 0 || numSourcesIsZero === true;
