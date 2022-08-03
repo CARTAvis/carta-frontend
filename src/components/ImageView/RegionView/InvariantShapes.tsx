@@ -45,7 +45,7 @@ export const Point = (props: PointProps) => {
 
     return (
         <Group>
-            <Shape x={props.x} y={props.y} rotation={props.rotation} fill={props.color} sceneFunc={handlePointDraw} />
+            <Shape x={props.x} y={props.y} opacity={props.opacity} rotation={props.rotation} fill={props.color} sceneFunc={handlePointDraw} />
             <Shape
                 x={props.x}
                 y={props.y}
