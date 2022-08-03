@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
 import ReactResizeDetector from "react-resize-detector";
@@ -54,6 +54,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable firstVisibleRow: number = 0;
     @observable lastVisibleRow: number = 0;
     @observable regionVisibility: number = 2;
+    @observable regionsLock: boolean = false;
+    @observable regionLockStatus: boolean[] = this.validRegions.map(region => region.locked);
 
     constructor(props: any) {
         super(props);
@@ -66,27 +68,58 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     @action private toggleRegionVisibility = () => {
-        this.regionVisibility = (this.regionVisibility + 1) % 3;
+        this.regionVisibility = (this.regionVisibility + 2) % 3;
+    };
+
+    @action private toggleRegionsLock = (locked?: boolean) => {
+        this.regionsLock = locked ? locked : !this.regionsLock;
+        console.log(this.regionsLock);
+    };
+
+    @action private syncRegionLockStatus = () => {
+        this.regionLockStatus = this.validRegions.map(region => region.locked);
     };
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         region.toggleLock();
+        this.syncRegionLockStatus();
+
+        if (!this.regionLockStatus.includes(true)) {
+            this.toggleRegionsLock(false);
+        } else if (!this.regionLockStatus.includes(false)) {
+            this.toggleRegionsLock(true);
+        }
+
         ev.stopPropagation();
     };
 
     private handleAllRegionsLockClicked = (ev: React.MouseEvent<HTMLElement, MouseEvent>, regions: RegionStore[]) => {
         for (const region of regions) {
-            !region.locked && region.toggleLock();
+            this.regionsLock ? region.locked && region.toggleLock() : !region.locked && region.toggleLock();
         }
+        this.toggleRegionsLock();
+        this.syncRegionLockStatus();
         ev.stopPropagation();
     };
 
     private handleToggleHideClicked = (regions: RegionStore[]) => {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
             this.toggleRegionVisibility();
+
             for (const region of regions) {
                 region.setOpacity(this.regionVisibility);
             }
+
+            if (this.regionVisibility === 0) {
+                for (const region of regions) {
+                    !region.locked && region.toggleLock();
+                }
+            } else {
+                for (let i = 0; i < regions.length; i++) {
+                    regions[i].setLocked(this.regionLockStatus[i]);
+                }
+            }
+
             ev.stopPropagation();
         };
     };
@@ -196,20 +229,18 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const floatRenderer = () => {
             return (
-                <div className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
-                    <Icon icon={"blank"} style={{width: 16}} />
+                <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
                     <Tooltip2 content="Import regions" position={Position.BOTTOM}>
-                        <Icon icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
+                        <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
                     </Tooltip2>
-                    <Icon icon={"blank"} style={{width: 5}} />
                     <Tooltip2 content="Export all regions" position={Position.BOTTOM}>
-                        {this.validRegions.length > 1 ? <Icon icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} /> : <Icon icon="cloud-upload" style={{opacity: 0.4}} />}
+                        {this.validRegions.length > 1 ? <AnchorButton icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} /> : <AnchorButton icon="cloud-upload" style={{opacity: 0.4}} />}
                     </Tooltip2>
-                </div>
+                </ButtonGroup>
             );
         };
 
-        const headerRenderer = (regionVisibility: number) => {
+        const headerRenderer = (regionVisibility: number, regionsLock: boolean) => {
             return (props: {index: number; style: CSSProperties}) => {
                 const className = classNames("row-header", {"bp3-dark": darkTheme});
 
@@ -217,8 +248,12 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <div className={className} style={props.style}>
                         <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
                             <Icon icon={"blank"} style={{width: 16}} />
-                            <Tooltip2 content="Lock All Regions" position={Position.BOTTOM}>
-                                <Icon icon={"lock"} onClick={ev => this.handleAllRegionsLockClicked(ev, this.validRegions)} style={{cursor: "pointer"}} />
+                            <Tooltip2 disabled={this.regionVisibility === 0} content="Lock All Regions" position={Position.BOTTOM}>
+                                <Icon
+                                    icon={this.regionsLock ? "lock" : this.regionVisibility === 0 ? "lock" : "unlock"}
+                                    onClick={this.regionVisibility === 0 ? () => {} : ev => this.handleAllRegionsLockClicked(ev, this.validRegions)}
+                                    style={{cursor: "pointer", opacity: this.regionVisibility === 0 ? 0.3 : 1}}
+                                />
                             </Tooltip2>
                             <Icon icon={"blank"} style={{width: 5}} />
                             <Tooltip2 content={this.regionVisibility === 0 ? "Show Regions" : "Hide Regions"} position={Position.BOTTOM}>
@@ -320,8 +355,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let lockEntry: React.ReactNode;
             if (region.regionId) {
                 lockEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionLockClicked(ev, region)}>
-                        <Icon icon={region.locked ? "lock" : "unlock"} />
+                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={this.regionVisibility === 0 ? () => {} : ev => this.handleRegionLockClicked(ev, region)}>
+                        <Icon icon={region.locked ? "lock" : this.regionVisibility === 0 ? "lock" : "unlock"} style={{opacity: this.regionVisibility === 0 ? 0.3 : 1}} />
                     </div>
                 );
             } else {
@@ -383,7 +418,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             <div className="region-list-widget">
                 <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
                     <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
-                        {headerRenderer(this.regionVisibility)}
+                        {headerRenderer(this.regionVisibility, this.regionsLock)}
                     </FixedSizeList>
                     <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width="100%">
                         {rowRenderer}
