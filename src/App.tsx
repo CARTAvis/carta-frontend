@@ -25,7 +25,7 @@ export class App extends React.Component {
         switch (alertStore.alertType) {
             case AlertType.Info:
                 return (
-                    <Alert icon={alertStore.alertIcon} className={darkTheme ? "bp3-dark" : ""} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                    <Alert icon={alertStore.alertIcon} className={classNames({"bp3-dark": darkTheme})} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
                         <p>{alertStore.alertText}</p>
                     </Alert>
                 );
@@ -33,7 +33,7 @@ export class App extends React.Component {
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
-                        className={darkTheme ? "bp3-dark" : ""}
+                        className={classNames({"bp3-dark": darkTheme})}
                         isOpen={alertStore.alertVisible}
                         confirmButtonText="OK"
                         cancelButtonText="Cancel"
@@ -47,7 +47,7 @@ export class App extends React.Component {
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
-                        className={darkTheme ? "bp3-dark" : ""}
+                        className={classNames({"bp3-dark": darkTheme})}
                         isOpen={alertStore.alertVisible}
                         confirmButtonText="Retry"
                         intent={Intent.DANGER}

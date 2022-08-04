@@ -15,6 +15,7 @@ export class LinePlotSettingsPanelComponentProps {
     linePlotPointSize: number;
     useWcsValues?: boolean;
     showWCSAxis?: boolean;
+    disableShowWCSAxis?: boolean;
     meanRmsVisible?: boolean;
     isAutoScaledX?: boolean;
     isAutoScaledY?: boolean;
@@ -148,8 +149,8 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         </FormGroup>
                     )}
                     {typeof props.showWCSAxis !== "undefined" && props.handleWcsAxisChanged && (
-                        <FormGroup inline={true} label={"Show WCS Axis"}>
-                            <Switch checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged} />
+                        <FormGroup disabled={props.disableShowWCSAxis} inline={true} label={"Show WCS Axis"}>
+                            <Switch disabled={props.disableShowWCSAxis} checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged} />
                         </FormGroup>
                     )}
                     {typeof props.meanRmsVisible !== "undefined" && props.handleMeanRmsChanged && (

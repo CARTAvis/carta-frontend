@@ -27,12 +27,11 @@
 
     .contour-loading-icon {
         padding-right: 8px;
-        opacity: 0;
         color: $green3;
+    }
 
-        &.icon-visible {
-            opacity: 1;
-        }
+    .bp3-icon-console {
+        padding-right: 8px;
     }
 
     #hidden-status-info {
@@ -48,4 +47,39 @@
 .bp3-menu .bp3-popover2-target {
     // for menu items with tooltips
     display: block;
+}
+
+.new-release {
+    img {
+        width: 50px;
+        object-fit: contain;
+        margin-bottom: 30px;
+    }
+
+    .bp3-alert-contents {
+        width: 290px;
+        margin-left: 20px;
+
+        p {
+            margin-bottom: 5px;
+        }
+
+        .release-info {
+            margin-top: 15px;
+            font-size: 12px;
+            color: $gray2;
+        }
+    }
+
+    .bp3-alert-footer {
+        height: 30px;
+        margin-top: 0px;
+
+        .bp3-switch {
+            margin-top: 7px;
+            margin-right: 25px;
+            font-size: 12px;
+            color: $gray2;
+        }
+    }
 }
