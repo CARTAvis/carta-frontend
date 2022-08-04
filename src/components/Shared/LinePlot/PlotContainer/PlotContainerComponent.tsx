@@ -31,6 +31,8 @@ export class PlotContainerProps {
     tickTypeY?: TickType;
     showTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
+    customTopTicks?: Tick[];
+    showTopAxisGrids?: boolean;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Chart) => void;
     showXAxisTicks?: boolean;
@@ -373,22 +375,28 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     },
                     grid: {
                         drawBorder: false,
-                        color: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor),
+                        color: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : this.props.showTopAxisGrids ? "#00000000" : gridColor),
                         lineWidth: grid => (grid.index === 0 && this.props.zeroLineWidth ? this.props.zeroLineWidth : 1),
-                        tickLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
+                        tickLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10,
+                        tickColor: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor)
                     }
                 },
                 "x-axis-1": {
                     position: "top",
                     min: this.props.xMin,
                     max: this.props.xMax,
-                    afterBuildTicks: (axis: Scale) => this.filterLinearTicks(axis, false),
                     type: "linear",
                     display: this.props.showTopAxis !== undefined,
                     ticks: {
                         includeBounds: false,
                         color: labelColor,
                         maxRotation: 0
+                    },
+                    grid: {
+                        color: this.props.showTopAxisGrids ? gridColor : "#00000000",
+                        drawBorder: false,
+                        drawTicks: true,
+                        tickColor: gridColor
                     }
                 },
                 "y-axis-0": {
@@ -420,6 +428,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
         if (this.props.topAxisTickFormatter) {
             plotOptions.scales["x-axis-1"].ticks.callback = this.props.topAxisTickFormatter;
+            if (this.props.customTopTicks?.length > 0) {
+                plotOptions.scales["x-axis-1"].afterBuildTicks = (scale: Scale) => {
+                    scale.ticks = this.props.customTopTicks;
+                };
+            }
         }
 
         if (this.props.logY) {

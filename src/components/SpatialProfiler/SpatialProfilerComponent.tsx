@@ -346,8 +346,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return profilerInfo;
     };
 
-    @computed private get wcsGrid(): {wcs: string; pixel: number}[] {
-        const grids = [];
+    @computed private get wcsTicks(): {value: number; label: string}[] {
+        const ticks = [];
         const isXProfile = this.widgetStore.isXProfile;
         if (this.plotData?.values && this.widgetStore.effectiveRegion.regionType === CARTA.RegionType.POINT) {
             const wcsInfo = this.frame.wcsInfoForTransformation;
@@ -399,31 +399,31 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                 if (hasXOrigin) {
                     if (format === NumberFormatType.HMS) {
-                        grids.push(...this.getGrids(maxWcs, "24:00:00", wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
-                        grids.push(...this.getGrids("0:00:00", minWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                        ticks.push(...this.getTicks(maxWcs, "24:00:00", wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                        ticks.push(...this.getTicks("0:00:00", minWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
                     } else if (format === NumberFormatType.DMS) {
-                        grids.push(...this.getGrids(maxWcs, "360:00:00", wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
-                        grids.push(...this.getGrids("0:00:00", minWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                        ticks.push(...this.getTicks(maxWcs, "360:00:00", wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                        ticks.push(...this.getTicks("0:00:00", minWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
                     } else {
-                        grids.push(...this.getGrids(maxWcs, "360", wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
-                        grids.push(...this.getGrids("0", minWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                        ticks.push(...this.getTicks(maxWcs, "360", wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                        ticks.push(...this.getTicks("0", minWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
                     }
                 } else {
-                    grids.push(...this.getGrids(minWcs, maxWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                    ticks.push(...this.getTicks(minWcs, maxWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
                 }
             } else {
                 const deltaWcs = this.getInterWcsDist(initialWcs, finalWcs, format);
                 if (!deltaWcs) {
                     return null;
                 }
-                grids.push(...this.getGrids(minWcs, maxWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
+                ticks.push(...this.getTicks(minWcs, maxWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
             }
         }
-        return grids;
+        return ticks;
     }
 
-    private getGrids = (startWcs: string, endWcs: string, wcsInfo: AST.FrameSet, isXProfile: boolean, interDist: string, pointRegionWcs: {x: string; y: string}, format: NumberFormatType): {wcs: string; pixel: number}[] => {
-        const grids = [];
+    private getTicks = (startWcs: string, endWcs: string, wcsInfo: AST.FrameSet, isXProfile: boolean, interDist: string, pointRegionWcs: {x: string; y: string}, format: NumberFormatType): {value: number; label: string}[] => {
+        const ticks = [];
         if (format === NumberFormatType.HMS || format === NumberFormatType.DMS) {
             const hdms = this.getWcsHDMS(interDist);
             const startSeconds = this.totalSeconds(startWcs);
@@ -439,7 +439,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                     const wcs = `${wcsHD}:00:00`;
                     const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
-                    grids.push({wcs, pixel});
+                    ticks.push({value: pixel, label: wcs});
                 }
             } else if (hdms.m !== 0) {
                 const firstWcsM = Math.ceil(startSeconds / (hdms.m * 60)) * hdms.m;
@@ -453,7 +453,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const m = wcsM - h * 60;
                     const wcs = `${h}:${m < 10 ? "0" : ""}${m}:00`;
                     const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
-                    grids.push({wcs, pixel});
+                    ticks.push({value: pixel, label: wcs});
                 }
             } else if (hdms.s !== 0) {
                 // Round second.
@@ -469,13 +469,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     if (wcsS > endSeconds || wcsS === (format === NumberFormatType.HMS ? 24 : 360) * 3600) {
                         break;
                     }
-
                     const h = Math.floor(wcsS / 3600);
                     const m = Math.floor((wcsS - h * 3600) / 60);
                     const s = wcsS - h * 3600 - m * 60;
                     const wcs = `${h}:${m < 10 ? "0" : ""}${m}:${s < 10 ? "0" : ""}${Number(s.toFixed(roundingDecimalDigits))}`;
                     const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
-                    grids.push({wcs, pixel});
+                    ticks.push({value: pixel, label: wcs});
                 }
             }
         } else if (format === NumberFormatType.Degrees) {
@@ -495,10 +494,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
                 const wcs = `${Number(wcsDegree.toFixed(roundingDecimalDigits))}°`;
                 const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs.toString(), y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs.toString()}).y;
-                grids.push({wcs, pixel});
+                ticks.push({value: pixel, label: wcs});
             }
         }
-        return grids;
+        return ticks;
     };
 
     private getInterWcsDist = (wcs1: string, wcs2: string, format: NumberFormatType, hasXOrigin?: boolean): string => {
@@ -694,25 +693,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     isMouseMove: true
                 });
 
-                if (!this.widgetStore.isLineOrPolyline) {
-                    if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
-                        linePlotProps.showTopAxis = true;
-                        linePlotProps.topAxisTickFormatter = () => "";
-                        if (this.wcsGrid?.length) {
-                            for (var i = 0; i < this.wcsGrid.length; i++) {
-                                linePlotProps.markers.push({
-                                    value: this.wcsGrid[i].pixel,
-                                    topLabel: this.wcsGrid[i].wcs,
-                                    id: `marker-wcs-grid-${i}`,
-                                    draggable: false,
-                                    horizontal: false,
-                                    color: getColorForTheme(widgetStore.wcsAxisColor),
-                                    opacity: 0.6
-                                });
-                            }
-                        }
+                if (!this.widgetStore.isLineOrPolyline && this.frame.validWcs) {
+                    linePlotProps.showTopAxis = true;
+                    linePlotProps.customTopTicks = this.wcsTicks;
+                    linePlotProps.topAxisTickFormatter = (value, index, values) => {
+                        return values[index].label?.toString();
+                    };
+                    if (widgetStore.wcsAxisVisible) {
+                        linePlotProps.showTopAxisGrids = true;
                     } else {
-                        linePlotProps.showTopAxis = true;
+                        linePlotProps.showTopAxisGrids = false;
                     }
                 }
 
