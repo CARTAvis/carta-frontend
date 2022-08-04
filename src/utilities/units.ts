@@ -96,7 +96,8 @@ export function getVariablePrecision(value: number): number {
     // precision.
 
     let decimalPlacement = 0.1;
-    let precision = 3;
+    let precision = 3; // The additional 2-precision is added to accomdate for rounding
+                       // and improve UX experience.
 
     for (let i = 0; i < 9; i++) {
         if (value < decimalPlacement) {
@@ -107,6 +108,7 @@ export function getVariablePrecision(value: number): number {
         }
     }
 
+    console.log('value, precision: ' + value + ', ' + precision);
     return precision;
 }
 
