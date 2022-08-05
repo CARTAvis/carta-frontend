@@ -1,6 +1,7 @@
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable, ObservableMap, runInAction, when} from "mobx";
 import * as Long from "long";
+import axios from "axios";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
@@ -159,9 +160,20 @@ export class AppStore {
         this.isLoadingMultipleFiles = isLoadingMultipleFiles;
     };
 
+    // New release notification
+    @observable showNewRelease: boolean = false;
+    @observable newRelease: string = "";
+    @action setShowNewRelease = (val: boolean) => {
+        this.showNewRelease = val;
+    };
+    @action private updateNewRelease = (release: string) => {
+        this.newRelease = release;
+        this.showNewRelease = true;
+    };
+
     private connectToServer = async () => {
-        // Remove query parameters, replace protocol and remove trailing /
-        let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws").replace(/\/$/, "");
+        // Remove query parameters and replace protocol
+        let wsURL = window.location.href.replace(window.location.search, "").replace(/^http/, "ws");
         if (process.env.NODE_ENV === "development") {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
         } else {
@@ -1303,9 +1315,26 @@ export class AppStore {
                 await this.loadDefaultFiles();
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
+                if (this.preferenceStore.checkNewRelease) {
+                    await this.checkNewRelease();
+                }
             } catch (err) {
                 console.error(err);
             }
+        }
+    };
+
+    private checkNewRelease = async () => {
+        try {
+            const response = await axios("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {Accept: "application/vnd.github+json"}});
+            const latestRelease = response?.data?.[0]?.tag_name;
+
+            if (latestRelease && this.preferenceStore.latestRelease !== latestRelease) {
+                console.log("new release available: ", latestRelease);
+                this.updateNewRelease(latestRelease);
+            }
+        } catch (err) {
+            console.error("Failed to check new releases: ", err);
         }
     };
 
@@ -1935,6 +1964,8 @@ export class AppStore {
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+        const fileUrl = `${frame.frameInfo.directory}/${frame.frameInfo.fileInfo.name}`.replace(/^\.\//, "");
+        window.history.replaceState({}, this.activeFrame.frameInfo.fileInfo.name, window.location.href.replace(window.location.search, "") + `?file=${encodeURI(fileUrl)}`);
         this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
         if (this.syncContourToFrame) {
             this.contourDataSource = frame;
