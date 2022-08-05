@@ -171,7 +171,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let primaryXStr: string = "";
 
             // We calculate the difference between neighboring values to get and estimate of the precision.
-            diffLeft = nearest.index - 1 >= 0 ? Math.abs(data[nearest.index].x - data[nearest.index - 1].x) : Math.abs(data[nearest.index + 1].x - data[nearest.index].x);
+            diffLeft = data.length === 1 ? 1e-9 : nearest.index > 0 ? Math.abs(data[nearest.index].x - data[nearest.index - 1].x) : Math.abs(data[nearest.index + 1].x - data[nearest.index].x);
 
             // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
             // are handled idfferently because they have different structures.
@@ -184,7 +184,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
                 // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
                 // are handled idfferently because they have different structures.
-                diffLeft = nearest.index - 1 >= 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : Math.abs(secondary[nearest.index + 1] - secondary[nearest.index]);
+                diffLeft = data.length === 1 ? 1e-9 : nearest.index > 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : Math.abs(secondary[nearest.index + 1] - secondary[nearest.index]);
 
                 // Use precision to determine the proper rounding and zero suppression for displayed value.
                 const secondaryXStr = this.precisionFormatting(secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);

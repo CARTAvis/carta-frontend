@@ -108,7 +108,6 @@ export function getVariablePrecision(value: number): number {
         }
     }
 
-    console.log("value, precision: " + value + ", " + precision);
     return precision;
 }
 
