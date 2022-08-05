@@ -160,9 +160,7 @@ export class VectorOverlayViewComponent extends React.Component<VectorOverlayVie
         this.gl.uniform1i(shaderUniforms.DataTexture, 0);
         this.gl.uniform1f(shaderUniforms.CanvasSpaceLineWidth, pixelRatio * frame.vectorOverlayConfig.thickness);
         const baseScale = baseFrame.spatialTransform?.scale ?? 1.0;
-        const frameScale = frame.spatialTransform?.scale ?? 1.0;
-        const scaleRatio = frameScale / baseScale;
-        this.gl.uniform1f(shaderUniforms.FeatherWidth, pixelRatio * scaleRatio);
+        this.gl.uniform1f(shaderUniforms.FeatherWidth, pixelRatio / baseScale);
         if (isFinite(frame.vectorOverlayConfig.rotationOffset)) {
             this.gl.uniform1f(shaderUniforms.RotationOffset, (frame.vectorOverlayConfig.rotationOffset * Math.PI) / 180.0);
         } else {
