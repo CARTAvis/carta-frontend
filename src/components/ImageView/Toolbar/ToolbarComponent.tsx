@@ -194,12 +194,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         );
 
         const baseFrame = this.props.frame.spatialReference ?? this.props.frame;
-        let numSourcesArray = [];
-        appStore.catalogStore.visibleCatalogFiles.get(baseFrame).forEach(fileId => {
-            const numSources = appStore.catalogStore.catalogCounts.get(fileId);
-            numSourcesArray.push(numSources);
-        });
-
+        const numSourcesArray = appStore.catalogStore.visibleCatalogFiles.get(baseFrame).map(fileId => appStore.catalogStore.catalogCounts.get(fileId));
         const numSourcesIsZero = numSourcesArray.every(element => element === 0);
 
         const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
