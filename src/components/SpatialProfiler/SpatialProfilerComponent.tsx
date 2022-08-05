@@ -665,15 +665,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 });
 
                 if (!this.widgetStore.isLineOrPolyline && this.frame.validWcs) {
-                    linePlotProps.showTopAxis = true;
-                    linePlotProps.customTopTicks = this.wcsTicks;
-                    linePlotProps.topAxisTickFormatter = (value, index, values) => {
-                        return values[index].label?.toString();
-                    };
                     if (widgetStore.wcsAxisVisible) {
-                        linePlotProps.showTopAxisGrids = true;
-                    } else {
-                        linePlotProps.showTopAxisGrids = false;
+                        linePlotProps.showTopAxis = true;
+                        linePlotProps.customTopTicks = this.wcsTicks;
+                        linePlotProps.topAxisTickFormatter = (value, index, values) => {
+                            return values[index].label?.toString();
+                        };
                     }
                 }
 

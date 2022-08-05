@@ -90,7 +90,6 @@ export class LinePlotComponentProps {
     showTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
     customTopTicks?: Tick[];
-    showTopAxisGrids?: boolean;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
     graphZoomedX?: (xMin: number, xMax: number) => void;

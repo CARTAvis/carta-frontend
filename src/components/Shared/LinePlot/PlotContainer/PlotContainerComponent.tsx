@@ -32,7 +32,6 @@ export class PlotContainerProps {
     showTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: Tick[]) => string | number;
     customTopTicks?: Tick[];
-    showTopAxisGrids?: boolean;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Chart) => void;
     showXAxisTicks?: boolean;
@@ -375,7 +374,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     },
                     grid: {
                         drawBorder: false,
-                        color: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : this.props.showTopAxisGrids ? "#00000000" : gridColor),
+                        color: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor),
                         lineWidth: grid => (grid.index === 0 && this.props.zeroLineWidth ? this.props.zeroLineWidth : 1),
                         tickLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10,
                         tickColor: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor)
@@ -393,7 +392,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         maxRotation: 0
                     },
                     grid: {
-                        color: this.props.showTopAxisGrids ? gridColor : "#00000000",
+                        color: grid => "#00000000",
                         drawBorder: false,
                         drawTicks: true,
                         tickColor: gridColor
