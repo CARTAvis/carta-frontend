@@ -48,7 +48,6 @@ export interface LineMarker {
     dragMove?: (val: number) => void;
     isMouseMove?: boolean;
     interactionMarker?: boolean;
-    topLabel?: string;
 }
 
 export interface LinePlotInsideBoxMarker {
@@ -817,11 +816,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
         if (isShowingLabels && marker.label) {
             lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} rotation={-90} x={0} y={chartArea.bottom} />);
-        }
-        if (isShowingLabels && marker.topLabel) {
-            lineSegments.push(
-                <Text align={"center"} fill={markerColor} key={lineSegments.length} text={marker.topLabel} width={marker.topLabel.length * DEFAULT_FONT_SIZE} x={(-marker.topLabel.length * DEFAULT_FONT_SIZE) / 2} y={chartArea.top - 25} />
-            );
         }
 
         if (marker.draggable) {

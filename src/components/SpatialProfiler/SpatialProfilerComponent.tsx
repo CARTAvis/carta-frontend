@@ -354,6 +354,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             const pointRegionWcs = getFormattedWCSPoint(wcsInfo, this.widgetStore.effectiveRegion.center);
             const pointRegionPixel = this.widgetStore.effectiveRegion.center;
 
+            // get edge wcs points
             let initialPixel: Point2D, finalPixel: Point2D, initialWcs, finalWcs;
             if (isXProfile) {
                 initialPixel = {x: this.widgetStore.isAutoScaledX ? this.plotData.xMin : this.widgetStore.minX, y: pointRegionPixel.y};
@@ -371,6 +372,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 return null;
             }
 
+            // get min/max wcs points
             const format = isXProfile ? AppStore.Instance.overlayStore.numbers.formatX : AppStore.Instance.overlayStore.numbers.formatY;
             let minWcs: string, maxWcs: string;
             if (format === NumberFormatType.Degrees) {
@@ -384,15 +386,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             }
 
             if (isXProfile) {
-                let originPixel;
-                if (format === NumberFormatType.Degrees) {
-                    originPixel = getPixelValueFromWCS(wcsInfo, {x: "0", y: pointRegionWcs.y}).x;
-                } else {
-                    originPixel = getPixelValueFromWCS(wcsInfo, {x: "0:00:00", y: pointRegionWcs.y}).x;
-                }
+                const originPixel = getPixelValueFromWCS(wcsInfo, {x: format === NumberFormatType.Degrees ? "0" : "0:00:00", y: pointRegionWcs.y}).x;
                 const hasXOrigin = originPixel > initialPixel.x && originPixel < finalPixel.x;
-
-                const deltaWcs = this.getInterWcsDist(initialWcs, finalWcs, format, hasXOrigin);
+                const deltaWcs = this.getDeltaWcs(minWcs, maxWcs, format, hasXOrigin);
                 if (!deltaWcs) {
                     return null;
                 }
@@ -412,83 +408,52 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     ticks.push(...this.getTicks(minWcs, maxWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
                 }
             } else {
-                const deltaWcs = this.getInterWcsDist(initialWcs, finalWcs, format);
+                const deltaWcs = this.getDeltaWcs(initialWcs, finalWcs, format);
                 if (!deltaWcs) {
                     return null;
                 }
                 ticks.push(...this.getTicks(minWcs, maxWcs, wcsInfo, isXProfile, deltaWcs, pointRegionWcs, format));
             }
         }
-        return ticks;
+
+        // last tick label might be cutted off by right edge without sorted by tick.value
+        return _.sortBy(ticks, tick => tick.value);
     }
 
     private getTicks = (startWcs: string, endWcs: string, wcsInfo: AST.FrameSet, isXProfile: boolean, interDist: string, pointRegionWcs: {x: string; y: string}, format: NumberFormatType): {value: number; label: string}[] => {
         const ticks = [];
         if (format === NumberFormatType.HMS || format === NumberFormatType.DMS) {
-            const hdms = this.getWcsHDMS(interDist);
-            const startSeconds = this.totalSeconds(startWcs);
-            const endSeconds = this.totalSeconds(endWcs);
+            const interDistVal = this.totalSeconds(interDist);
+            // round delta seconds
+            let roundingDecimalDigits = 0;
+            if (interDistVal < 1 && interDistVal > 0) {
+                roundingDecimalDigits = Math.abs(Math.floor(Math.log10(interDistVal)));
+            }
+            const deltaSeconds = Number(interDistVal.toFixed(roundingDecimalDigits));
 
-            if (hdms.hd !== 0) {
-                const firstWcsHD = Math.ceil(startSeconds / (hdms.hd * 3600)) * hdms.hd;
-                for (var i = 0; ; i++) {
-                    const wcsHD = firstWcsHD + i * hdms.hd;
-                    if (wcsHD * 3600 > endSeconds || wcsHD === (format === NumberFormatType.HMS ? 24 : 360)) {
-                        break;
-                    }
-
-                    const wcs = `${wcsHD}:00:00`;
-                    const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
-                    ticks.push({value: pixel, label: wcs});
+            const firstWcsTotalSeconds = Math.ceil(this.totalSeconds(startWcs) / deltaSeconds) * deltaSeconds;
+            for (var i = 0; ; i++) {
+                const wcsTotalSeconds = firstWcsTotalSeconds + i * deltaSeconds;
+                if (wcsTotalSeconds > this.totalSeconds(endWcs) || wcsTotalSeconds === (format === NumberFormatType.HMS ? 24 : 360) * 3600) {
+                    break;
                 }
-            } else if (hdms.m !== 0) {
-                const firstWcsM = Math.ceil(startSeconds / (hdms.m * 60)) * hdms.m;
-                for (var j = 0; ; j++) {
-                    const wcsM = firstWcsM + j * hdms.m;
-                    if (wcsM * 60 > endSeconds || wcsM === (format === NumberFormatType.HMS ? 24 : 360) * 60) {
-                        break;
-                    }
-
-                    const h = Math.floor(wcsM / 60);
-                    const m = wcsM - h * 60;
-                    const wcs = `${h}:${m < 10 ? "0" : ""}${m}:00`;
-                    const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
-                    ticks.push({value: pixel, label: wcs});
-                }
-            } else if (hdms.s !== 0) {
-                // Round second.
-                let roundingDecimalDigits = 0;
-                if (hdms.s < 1) {
-                    roundingDecimalDigits = Math.abs(Math.floor(Math.log10(hdms.s)));
-                }
-                const interDistS = Number(hdms.s.toFixed(roundingDecimalDigits));
-
-                const firstWcsS = Math.ceil(startSeconds / interDistS) * interDistS;
-                for (var k = 0; ; k++) {
-                    const wcsS = Number((firstWcsS + k * interDistS).toFixed(roundingDecimalDigits));
-                    if (wcsS > endSeconds || wcsS === (format === NumberFormatType.HMS ? 24 : 360) * 3600) {
-                        break;
-                    }
-                    const h = Math.floor(wcsS / 3600);
-                    const m = Math.floor((wcsS - h * 3600) / 60);
-                    const s = wcsS - h * 3600 - m * 60;
-                    const wcs = `${h}:${m < 10 ? "0" : ""}${m}:${s < 10 ? "0" : ""}${Number(s.toFixed(roundingDecimalDigits))}`;
-                    const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
-                    ticks.push({value: pixel, label: wcs});
-                }
+                const hdms = this.secondsToHDMS(wcsTotalSeconds);
+                const wcs = `${hdms.isNegative ? "-" : ""}${hdms.hd}:${hdms.m < 10 ? "0" : ""}${hdms.m}:${hdms.s < 10 ? "0" : ""}${Number(hdms.s.toFixed(roundingDecimalDigits))}`;
+                const pixel = isXProfile ? getPixelValueFromWCS(wcsInfo, {x: wcs, y: pointRegionWcs.y}).x : getPixelValueFromWCS(wcsInfo, {x: pointRegionWcs.x, y: wcs}).y;
+                ticks.push({value: pixel, label: wcs});
             }
         } else if (format === NumberFormatType.Degrees) {
-            // round degrees
             const interDistVal = parseFloat(interDist);
+            // round delta degrees
             let roundingDecimalDigits = 0;
             if (interDistVal < 1) {
                 roundingDecimalDigits = Math.abs(Math.floor(Math.log10(interDistVal)));
             }
-            const interDistDegree = Number(interDistVal.toFixed(roundingDecimalDigits));
+            const deltaDegree = Number(interDistVal.toFixed(roundingDecimalDigits));
 
-            const firstWcsDegree = Math.ceil(parseFloat(startWcs) / interDistDegree) * interDistDegree;
-            for (var m = 0; ; m++) {
-                const wcsDegree = firstWcsDegree + m * interDistDegree;
+            const firstWcsDegree = Math.ceil(parseFloat(startWcs) / deltaDegree) * deltaDegree;
+            for (var j = 0; ; j++) {
+                const wcsDegree = firstWcsDegree + j * deltaDegree;
                 if (wcsDegree > parseFloat(endWcs) || wcsDegree === 360) {
                     break;
                 }
@@ -500,51 +465,57 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return ticks;
     };
 
-    private getInterWcsDist = (wcs1: string, wcs2: string, format: NumberFormatType, hasXOrigin?: boolean): string => {
+    private getDeltaWcs = (minWcs: string, maxWcs: string, format: NumberFormatType, hasXOrigin?: boolean): string => {
         if (format === NumberFormatType.HMS || format === NumberFormatType.DMS) {
-            const totalSeconds1 = this.totalSeconds(wcs1);
-            const totalSeconds2 = this.totalSeconds(wcs2);
-            const min = Math.min(totalSeconds1, totalSeconds2);
-            const max = Math.max(totalSeconds1, totalSeconds2);
-            const deltaSeconds = hasXOrigin ? min + (format === NumberFormatType.HMS ? 24 * 3600 : 360 * 3600) - max : max - min;
+            const min = this.totalSeconds(minWcs);
+            const max = this.totalSeconds(maxWcs);
+            const wcsDistSeconds = hasXOrigin ? min + (format === NumberFormatType.HMS ? 24 * 3600 : 360 * 3600) - max : max - min;
 
-            if (deltaSeconds > 3 * 3600) {
-                return `${this.getDeltaNumber(deltaSeconds / 3600)}:00:00`;
-            } else if (deltaSeconds <= 3 * 3600 && deltaSeconds > 2 * 3600) {
+            if (wcsDistSeconds > 3 * 3600) {
+                return `${this.getDeltaNumber(wcsDistSeconds / 3600)}:00:00`;
+            } else if (wcsDistSeconds <= 3 * 3600 && wcsDistSeconds > 2 * 3600) {
                 return "0:30:00";
-            } else if (deltaSeconds <= 2 * 3600 && deltaSeconds > 3600) {
+            } else if (wcsDistSeconds <= 2 * 3600 && wcsDistSeconds > 3600) {
                 return "0:20:00";
-            } else if (deltaSeconds <= 60 * 60 && deltaSeconds > 3 * 60) {
-                return `0:${this.getDeltaNumber(deltaSeconds / 60)}:00`;
-            } else if (deltaSeconds <= 3 * 60 && deltaSeconds > 2 * 60) {
+            } else if (wcsDistSeconds <= 60 * 60 && wcsDistSeconds > 3 * 60) {
+                return `0:${this.getDeltaNumber(wcsDistSeconds / 60)}:00`;
+            } else if (wcsDistSeconds <= 3 * 60 && wcsDistSeconds > 2 * 60) {
                 return "0:00:30";
-            } else if (deltaSeconds <= 2 * 60 && deltaSeconds > 60) {
+            } else if (wcsDistSeconds <= 2 * 60 && wcsDistSeconds > 60) {
                 return "0:00:20";
             } else {
-                return `0:00:${this.getDeltaNumber(deltaSeconds)}`;
+                return `0:00:${this.getDeltaNumber(wcsDistSeconds)}`;
             }
         } else {
-            const degree1 = parseFloat(wcs1);
-            const degree2 = parseFloat(wcs2);
-            const min = Math.min(degree1, degree2);
-            const max = Math.max(degree1, degree2);
-            const deltaDegree = hasXOrigin ? min + 360 - max : max - min;
-            return this.getDeltaNumber(deltaDegree).toString();
+            const min = parseFloat(minWcs);
+            const max = parseFloat(maxWcs);
+            const wcsDistDegrees = hasXOrigin ? min + 360 - max : max - min;
+            return this.getDeltaNumber(wcsDistDegrees).toString();
         }
     };
 
     private totalSeconds(wcs: string) {
-        const hdms = this.getWcsHDMS(wcs);
-        return hdms.hd * 60 * 60 + hdms.m * 60 + hdms.s;
+        const hdms = this.wcsToHDMS(wcs);
+        return (hdms.isNegative ? -1 : 1) * (hdms.hd * 60 * 60 + hdms.m * 60 + hdms.s);
     }
 
-    private getWcsHDMS(wcs: string): {hd: number; m: number; s: number} {
-        const hd = parseInt(wcs.substring(0, wcs.indexOf(":")));
+    private secondsToHDMS(totalSeconds: number): {hd: number; m: number; s: number; isNegative: boolean} {
+        const isNegative = totalSeconds < 0;
+        const absTotalSeconds = Math.abs(totalSeconds);
+        const hd = Math.floor(absTotalSeconds / 3600);
+        const m = Math.floor((absTotalSeconds - hd * 3600) / 60);
+        const s = absTotalSeconds - hd * 3600 - m * 60;
+        return {hd, m, s, isNegative};
+    }
+
+    private wcsToHDMS(wcs: string): {hd: number; m: number; s: number; isNegative: boolean} {
+        const isNegative = wcs.substring(0, 1) === "-";
+        const hd = parseInt(wcs.substring(isNegative ? 1 : 0, wcs.indexOf(":")));
         const mStr = wcs.substring(wcs.indexOf(":") + 1, wcs.lastIndexOf(":"));
         const m = mStr.startsWith("0") ? parseInt(mStr.substring(1)) : parseInt(mStr);
         const sStr = wcs.substring(wcs.lastIndexOf(":") + 1);
         const s = sStr.startsWith("0") ? parseFloat(sStr.substring(1)) : parseFloat(sStr);
-        return {hd, m, s};
+        return {hd, m, s, isNegative};
     }
 
     private getDeltaNumber(val: number): number {
