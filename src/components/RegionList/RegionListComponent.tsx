@@ -72,7 +72,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     @action private toggleRegionsLock = (locked?: boolean) => {
-        this.regionsLock = locked ? locked : !this.regionsLock;
+        this.regionsLock = locked !== undefined ? locked : !this.regionsLock;
     };
 
     @action private syncRegionLockStatus = () => {
