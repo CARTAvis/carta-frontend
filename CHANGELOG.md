@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for image fitting with field of view ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
 * Size conversion in the image fitting results ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
 * Show a notification when there is a new CARTA release ([#1852](https://github.com/CARTAvis/carta-frontend/issues/1852)).
+* Added links to the CARTA Dashboard to the splashscreen and alert dialog where appropriate ([#1874](https://github.com/CARTAvis/carta-frontend/issues/1874)).
 ### Changed
 * Splatalogue queries are now made directly with the server, rather than proxied through the backend ([#1755](https://github.com/CARTAvis/carta-frontend/issues/1755)).
 ### Fixed
