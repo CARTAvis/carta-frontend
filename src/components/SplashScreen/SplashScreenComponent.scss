@@ -26,19 +26,25 @@
         height: 175px;
     }
 
-    .appInfo-div {
+    .app-info-div {
         margin: 10px 0 10px 0;
         h1 {
             margin: 0 0 0 0;
         }
     }
 
-    .loadingInfo-div {
+    .loading-info-div {
         height: 40px;
         display: flex;
         align-items: center;
         p {
             margin: 0 0 0 0;
         }
+    }
+
+    .dashboard-info-div {
+        font-size: small;
+        margin-left: auto;
+        margin-right: auto;
     }
 }

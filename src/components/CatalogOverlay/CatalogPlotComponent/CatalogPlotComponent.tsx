@@ -600,6 +600,22 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         widgetStore.setFitting(result);
     };
 
+    private formatTickValues = (range: number[]): string => {
+        const difference = range[1] - range[0];
+        const exponential = difference.toExponential(2);
+        const power = parseFloat(exponential.split("e")[1]);
+        const maxPower = parseFloat(range[1].toExponential(1).split("e")[1]);
+        const minPower = parseFloat(range[0].toExponential(1).split("e")[1]);
+        if (maxPower >= 5) {
+            return `e`;
+        } else if (minPower <= -5) {
+            const sigDig = Math.abs(power) - Math.abs(maxPower);
+            return sigDig <= 0 ? ".2e" : `.${sigDig + 1}e`;
+        } else {
+            return power <= 0 ? `.${Math.abs(power) + 1}f` : "~f";
+        }
+    };
+
     public render() {
         const profileStore = this.profileStore;
         const widgetStore = this.widgetStore;
@@ -774,9 +790,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 spikemode: "across",
                 spikedash: "solid",
                 spikecolor: markerColor,
-                spikethickness: 1 * ratio,
-                // d3 format
-                tickformat: ".2e"
+                spikethickness: 1 * ratio
             },
             yaxis: {
                 titlefont: {
@@ -804,8 +818,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             },
             margin: {
                 t: 5 * ratio,
-                b: 40 * ratio,
-                l: 80 * ratio,
+                b: 60 * ratio,
+                l: 100 * ratio,
                 r: 5 * ratio,
                 pad: 0
             },
@@ -866,7 +880,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             layout.xaxis.range = [border.xMin, border.xMax];
             layout.yaxis.range = [border.yMin, border.yMax];
             layout.yaxis.title = widgetStore.yColumnName;
-            layout.yaxis.tickformat = ".2e";
+            layout.yaxis.tickformat = this.formatTickValues(layout.yaxis.range);
+            layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
         } else {
             data = this.histogramData.data;
             let border;
@@ -876,6 +891,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                 border = widgetStore.histogramBorder;
             }
             layout.xaxis.range = [border.xMin, border.xMax];
+            layout.xaxis.tickformat = this.formatTickValues(layout.xaxis.range);
             layout.yaxis.range = [this.histogramY?.yMin, this.histogramY?.yMax];
             layout.yaxis.fixedrange = true;
             // autorange will trigger y axis range change
