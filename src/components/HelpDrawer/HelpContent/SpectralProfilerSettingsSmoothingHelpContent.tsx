@@ -37,7 +37,6 @@ export const SPECTRAL_PROFILER_SETTINGS_SMOOTHING_HELP_CONTENT = (
             </li>
         </ul>
         <p>Optionally, the original profile can be overplotted with the smoothed profile. The appearance of the smoothed profile, including color, style, width, and size, can be customized.</p>
-        <p>The data of the smoothed profile is appended in the exported tsv file if smoothing is applied.</p>
 
         <h3>Examples</h3>
         <p>Boxcar: Kernel = 2</p>

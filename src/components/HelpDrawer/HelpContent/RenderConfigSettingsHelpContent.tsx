@@ -9,6 +9,8 @@ export const RENDER_CONFIG_SETTINGS_HELP_CONTENT = (
             <li>display y in logarithmic scale (default)</li>
             <li>display mean and RMS</li>
             <li>display clip labels</li>
+            <li>x and y ranges</li>
+            <li>reset x and y ranges</li>
         </ul>
     </div>
 );
