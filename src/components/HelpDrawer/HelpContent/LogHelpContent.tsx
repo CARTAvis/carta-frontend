@@ -1,11 +1,11 @@
 import {ImageComponent} from "../ImageComponent";
-import headLogButton from "static/help/head_log_button.png";
-import headLogButton_d from "static/help/head_log_button_d.png";
+import widgetButtonLog from "static/help/widgetButton_log.png";
+import widgetButtonLog_d from "static/help/widgetButton_log_d.png";
 
 export const LOG_HELP_CONTENT = (
     <div>
         <p>
-            <ImageComponent light={headLogButton} dark={headLogButton_d} width="90%" />
+            <ImageComponent light={widgetButtonLog} dark={widgetButtonLog_d} width="90%" />
         </p>
         <p>Log widget provides information for diagnostics when something went wrong. The log levels include:</p>
         <ul>
@@ -16,7 +16,11 @@ export const LOG_HELP_CONTENT = (
             <li>Critical</li>
         </ul>
         <p>
-            When you believe there is something wrong, please contact the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue on <a href="https://github.com/CARTAvis/carta/issues">Github</a> (recommended).
+            If you believe that something is wrong, please contact the <a href="mailto:support@carta.freshdesk.com">helpdesk</a> or file an issue on{" "}
+            <a href="https://github.com/CARTAvis/carta/issues" target="_blank" rel="noreferrer">
+                Github
+            </a>
+            .
         </p>
     </div>
 );
