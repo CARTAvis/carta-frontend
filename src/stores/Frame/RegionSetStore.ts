@@ -42,7 +42,7 @@ export class RegionSetStore {
             const roundedPos = {x: Math.round(pos.x), y: Math.round(pos.y)};
             if (cursorRegion?.regionId === CURSOR_REGION_ID && (!this.isHoverImage || cursorRegion.center?.x !== roundedPos.x || cursorRegion.center?.y !== roundedPos.y)) {
                 cursorRegion.setCenter(roundedPos);
-                this.isHoverImage = pos.x + 0.5 >= 0 && pos.x + 0.5 <= this.frame.frameInfo.fileInfoExtended.width && pos.y + 0.5 >= 0 && pos.y + 0.5 <= this.frame.frameInfo.fileInfoExtended.height;
+                this.setIsHover(pos.x + 0.5 >= 0 && pos.x + 0.5 <= this.frame.frameInfo.fileInfoExtended.width && pos.y + 0.5 >= 0 && pos.y + 0.5 <= this.frame.frameInfo.fileInfoExtended.height);
             }
         }
     };
