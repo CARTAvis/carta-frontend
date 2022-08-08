@@ -47,6 +47,10 @@ export class RegionSetStore {
         }
     };
 
+    public setIsHover = (bool: boolean) => {
+        this.isHoverImage = bool;
+    };
+
     // temporary region IDs are < 0 and used
     private getTempRegionId = () => {
         let regionId = -1;
