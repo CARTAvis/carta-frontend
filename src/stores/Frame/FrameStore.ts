@@ -1902,11 +1902,11 @@ export class FrameStore {
     }
 
     @action updateCursorRegion = (pos: Point2D) => {
-        const aroundImage = pos.x + 1 >= 0 && pos.x - 0.5 <= this.frameInfo.fileInfoExtended.width && pos.y + 1 >= 0 && pos.y - 0.5 <= this.frameInfo.fileInfoExtended.height;
+        const isHoverImage = pos.x + 0.5 >= 0 && pos.x + 0.5 <= this.frameInfo.fileInfoExtended.width && pos.y + 0.5 >= 0 && pos.y + 0.5 <= this.frameInfo.fileInfoExtended.height;
         if (this.spatialReference) {
             const pointRefImage = transformPoint(this.spatialTransformAST, pos, true);
             this.spatialReference.updateCursorRegion(pointRefImage);
-        } else if (aroundImage) {
+        } else if (isHoverImage) {
             this.frameRegionSet.updateCursorRegionPosition(pos);
         }
         for (const frame of this.secondarySpatialImages) {
