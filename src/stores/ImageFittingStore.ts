@@ -93,6 +93,7 @@ export class ImageFittingStore {
         }
         this.setIsFitting(true);
         const initialValues = [];
+        const fixedParams = [];
         for (const c of this.components) {
             initialValues.push({
                 center: c.center,
@@ -100,6 +101,7 @@ export class ImageFittingStore {
                 fwhm: c.fwhm,
                 pa: c.pa
             });
+            fixedParams.push(...c.fixedParams);
         }
         const fovInfo = this.getFovInfo();
         const regionId = fovInfo ? FOV_REGION_ID : IMAGE_REGION_ID;
@@ -107,7 +109,7 @@ export class ImageFittingStore {
         const message: CARTA.IFittingRequest = {
             fileId: this.effectiveFrame.frameInfo.fileId,
             initialValues,
-            fixedParams: [],
+            fixedParams,
             regionId,
             fovInfo
         };
@@ -281,6 +283,10 @@ export class ImageFittingIndividualStore {
     @observable amplitude: number;
     @observable fwhm: Point2D;
     @observable pa: number;
+    @observable centerFixed: {x: boolean, y: boolean};
+    @observable amplitudeFixed: boolean;
+    @observable fwhmFixed: {x: boolean, y: boolean};
+    @observable paFixed: boolean;
 
     @action setCenterX = (val: number) => {
         this.center.x = val;
@@ -306,15 +312,47 @@ export class ImageFittingIndividualStore {
         this.pa = val;
     };
 
+    @action toggleCenterXFixed = () => {
+        this.centerFixed.x = !this.centerFixed.x;
+    };
+
+    @action toggleCenterYFixed = () => {
+        this.centerFixed.y = !this.centerFixed.y;
+    };
+
+    @action toggleAmplitudeFixed = () => {
+        this.amplitudeFixed = !this.amplitudeFixed;
+    };
+
+    @action toggleFwhmXFixed = () => {
+        this.fwhmFixed.x = !this.fwhmFixed.x;
+    };
+
+    @action toggleFwhmYFixed = () => {
+        this.fwhmFixed.y = !this.fwhmFixed.y;
+    };
+
+    @action togglePaFixed = () => {
+        this.paFixed = !this.paFixed;
+    };
+
     constructor() {
         makeObservable(this);
         this.center = {x: NaN, y: NaN};
         this.amplitude = NaN;
         this.fwhm = {x: NaN, y: NaN};
         this.pa = NaN;
+        this.centerFixed = {x: false, y: false};
+        this.amplitudeFixed = false;
+        this.fwhmFixed = {x: false, y: false};
+        this.paFixed = false;
     }
 
-    @computed get validParams() {
+    @computed get validParams(): boolean {
         return isFinite(this.center?.x) && isFinite(this.center?.y) && isFinite(this.amplitude) && isFinite(this.fwhm?.x) && isFinite(this.fwhm?.y) && isFinite(this.pa);
+    }
+
+    @computed get fixedParams(): boolean[] {
+        return [this.centerFixed?.x, this.centerFixed?.y, this.amplitudeFixed, this.fwhmFixed?.x, this.fwhmFixed?.y, this.paFixed];
     }
 }
