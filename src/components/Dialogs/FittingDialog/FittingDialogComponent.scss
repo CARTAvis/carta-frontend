@@ -15,20 +15,21 @@
         display: flex;
         width: 100%;
         user-select: none;
+
+        .bp3-button {
+            margin-left: 5px;
+            margin-right: 5px;
+        }
     }
 
-    .bp3-control-group {
-        margin-right: 10px;
-
-        .bp3-input-group .bp3-input {
-            width: 125px;
-        }
+    .bp3-control-group .bp3-input {
+        width: 125px;
     }
 
     .components-input {
         display: flex;
 
-        .bp3-input-group .bp3-input {
+        .bp3-input {
             width: 40px;
         }
     }
