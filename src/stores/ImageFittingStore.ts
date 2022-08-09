@@ -116,7 +116,7 @@ export class ImageFittingStore {
         AppStore.Instance.requestFitting(message);
     };
 
-    setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], fittingLog: string) => {
+    setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, fixedParams: boolean[], values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], fittingLog: string) => {
         const frame = this.effectiveFrame;
         if (!frame || !values || !errors) {
             return;
@@ -129,11 +129,15 @@ export class ImageFittingStore {
         log += this.getRegionInfoLog(regionId, fovInfo) + "\n";
         log += fittingLog + "\n";
 
-        const toFixFormat = (param: string, value: number | string, error: number, unit: string): string => {
-            return `${param} = ${typeof value === "string" ? value : value?.toFixed(6)} +/- ${error?.toFixed(6)}${unit ? ` (${unit})` : ""}\n`;
+        const toFixFormat = (param: string, value: number | string, error: number, unit: string, fixed: boolean): string => {
+            const valueString = typeof value === "string" ? value : value?.toFixed(6);
+            const errorString = fixed ? "" : " +/- " + error?.toFixed(6);
+            return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
         };
-        const toExpFormat = (param: string, value: number | string, error: number, unit: string): string => {
-            return `${param} = ${typeof value === "string" ? value : toExponential(value, 12)} +/- ${toExponential(error, 12)}${unit ? ` (${unit})` : ""}\n`;
+        const toExpFormat = (param: string, value: number | string, error: number, unit: string, fixed: boolean): string => {
+            const valueString = typeof value === "string" ? value : toExponential(value, 12);
+            const errorString = fixed ? "" : " +/- " + toExponential(error, 12);
+            return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
         };
         const isFormatXDeg = AppStore.Instance.overlayStore.numbers?.formatTypeX === NumberFormatType.Degrees;
         const isFormatYDeg = AppStore.Instance.overlayStore.numbers?.formatTypeY === NumberFormatType.Degrees;
@@ -146,20 +150,21 @@ export class ImageFittingStore {
             }
             results += `Component #${i + 1}:\n`;
             log += `Component #${i + 1}:\n`;
+            const [centerFixedX, centerFixedY, amplitudeFixed, fwhmFixedX, fwhmFixedY, paFixed] = fixedParams.slice(i * 6, i * 6 + 6);
             if (!frame.wcsInfoForTransformation || !frame.pixelUnitSizeArcsec) {
-                results += toFixFormat("Center X       ", value.center?.x, error.center?.x, "px");
-                results += toFixFormat("Center Y       ", value.center?.y, error.center?.y, "px");
-                results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit);
-                results += toFixFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px");
-                results += toFixFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px");
-                results += toFixFormat("P.A.           ", value.pa, error.pa, "deg");
+                results += toFixFormat("Center X       ", value.center?.x, error.center?.x, "px", centerFixedX);
+                results += toFixFormat("Center Y       ", value.center?.y, error.center?.y, "px", centerFixedY);
+                results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
+                results += toFixFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
+                results += toFixFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
+                results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
 
-                log += toExpFormat("Center X       ", value.center?.x, error.center?.x, "px");
-                log += toExpFormat("Center Y       ", value.center?.y, error.center?.y, "px");
-                log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit);
-                log += toExpFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px");
-                log += toExpFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px");
-                log += toExpFormat("P.A.           ", value.pa, error.pa, "deg");
+                log += toExpFormat("Center X       ", value.center?.x, error.center?.x, "px", centerFixedX);
+                log += toExpFormat("Center Y       ", value.center?.y, error.center?.y, "px", centerFixedY);
+                log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
+                log += toExpFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
+                log += toExpFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
+                log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
             } else {
                 const centerValueWCS = getFormattedWCSPoint(frame.wcsInfoForTransformation, value.center as Point2D);
                 if (isFormatXDeg) {
@@ -180,23 +185,23 @@ export class ImageFittingStore {
                     fwhmErrorWCS.y = AngularSize.convertValueFromArcsec(fwhmErrorWCS.y, fwhmUnit.y);
                 }
 
-                results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec");
-                results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec");
-                results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit);
-                results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit.x);
-                results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit.y);
-                results += toFixFormat("P.A.           ", value.pa, error.pa, "deg");
+                results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec", centerFixedX);
+                results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec", centerFixedY);
+                results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
+                results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit.x, fwhmFixedX);
+                results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit.y, fwhmFixedY);
+                results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
 
-                log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec");
-                log += toExpFormat("               ", value.center?.x, error.center?.x, "px");
-                log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec");
-                log += toExpFormat("               ", value.center?.y, error.center?.y, "px");
-                log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit);
-                log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit.x);
-                log += toExpFormat("               ", value.fwhm?.x, error.fwhm?.x, "px");
-                log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit.y);
-                log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px");
-                log += toExpFormat("P.A.           ", value.pa, error.pa, "deg");
+                log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec", centerFixedX);
+                log += toExpFormat("               ", value.center?.x, error.center?.x, "px", centerFixedX);
+                log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec", centerFixedY);
+                log += toExpFormat("               ", value.center?.y, error.center?.y, "px", centerFixedY);
+                log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
+                log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit.x, fwhmFixedX);
+                log += toExpFormat("               ", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
+                log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit.y, fwhmFixedY);
+                log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
+                log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
             }
             if (i !== values.length - 1) {
                 results += "\n";
@@ -283,9 +288,9 @@ export class ImageFittingIndividualStore {
     @observable amplitude: number;
     @observable fwhm: Point2D;
     @observable pa: number;
-    @observable centerFixed: {x: boolean, y: boolean};
+    @observable centerFixed: {x: boolean; y: boolean};
     @observable amplitudeFixed: boolean;
-    @observable fwhmFixed: {x: boolean, y: boolean};
+    @observable fwhmFixed: {x: boolean; y: boolean};
     @observable paFixed: boolean;
 
     @action setCenterX = (val: number) => {
