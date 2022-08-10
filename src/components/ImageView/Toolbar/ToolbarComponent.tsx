@@ -104,6 +104,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const appStore = AppStore.Instance;
         const preferenceStore = appStore.preferenceStore;
         const overlay = appStore.overlayStore;
+        const dialogStore = appStore.dialogStore;
         const frame = this.props.frame;
         const grid = overlay.grid;
 
@@ -196,6 +197,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
         const catalogSelectionDisabled = appStore.catalogNum === 0;
 
+        const handleDistanceMeasuringClicked = () => {
+            dialogStore.showDistanceMeasuringDialog();
+            this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring);
+        }
+
         return (
             <ButtonGroup className={className} style={styleProps}>
                 {appStore.toolbarExpanded && (
@@ -212,7 +218,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 </span>
                             }
                         >
-                            <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring)} />
+                            <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={handleDistanceMeasuringClicked} />
                         </Tooltip2>
                         <Tooltip2
                             position={tooltipPosition}

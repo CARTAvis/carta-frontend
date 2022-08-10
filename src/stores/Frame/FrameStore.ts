@@ -975,7 +975,7 @@ export class FrameStore {
 
         this.stokesFiles = [];
 
-        this.distanceMeasuring = new DistanceMeasuringStore();
+        this.distanceMeasuring = DistanceMeasuringStore.Instance;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;

@@ -17,6 +17,7 @@ import {
     VectorOverlayDialogComponent,
     FittingDialogComponent
 } from "components/Dialogs";
+import { DistanceMeasuringDialog } from "components";
 
 @observer
 export class UIControllerComponent extends React.Component {
@@ -40,6 +41,7 @@ export class UIControllerComponent extends React.Component {
                 <TelemetryDialogComponent />
                 <SplashScreenComponent />
                 <FittingDialogComponent />
+                <DistanceMeasuringDialog />
             </React.Fragment>
         );
     }
