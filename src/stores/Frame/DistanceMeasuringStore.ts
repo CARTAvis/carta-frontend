@@ -18,12 +18,21 @@ export class DistanceMeasuringStore {
     static readonly DEFAULT_FONTSIZE = 14;
     static readonly DEFAULT_COLOR = "#62D96B";
 
+    private static staticInstance: DistanceMeasuringStore;
+
     constructor() {
         makeObservable(this);
         this.transformedStart = {x: null, y: null};
         this.transformedFinish = {x: null, y: null};
         this.isCreating = false;
         this.color = DistanceMeasuringStore.DEFAULT_COLOR;
+    }
+
+    static get Instance() {
+        if (!DistanceMeasuringStore.staticInstance) {
+            DistanceMeasuringStore.staticInstance = new DistanceMeasuringStore();
+        }
+        return DistanceMeasuringStore.staticInstance;
     }
 
     @computed get showCurve(): boolean {

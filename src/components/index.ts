@@ -32,3 +32,4 @@ export * from "./CatalogOverlay/CatalogPlotComponent/CatalogPlotComponent";
 export * from "./CatalogOverlay/CatalogOverlayPlotSettingsPanelComponent/CatalogOverlayPlotSettingsPanelComponent";
 export * from "./LayerList/LayerListSettingsPanelComponent/LayerListSettingsPanelComponent";
 export * from "./PvGenerator/PvGeneratorComponent";
+export * from "./ImageView/DistanceMeasuring";
