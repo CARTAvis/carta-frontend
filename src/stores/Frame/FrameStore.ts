@@ -1908,16 +1908,15 @@ export class FrameStore {
             this.spatialReference.updateCursorRegion(pointRefImage);
         } else if (isHoverImage) {
             this.frameRegionSet.updateCursorRegionPosition(pos);
-        } else if (!isHoverImage) {
-            this.frameRegionSet.setIsHover(false);
         }
 
         for (const frame of this.secondarySpatialImages) {
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
-            const isHoverSecondaryImage = pointSecondaryImage.x + 0.5 >= 0 && pointSecondaryImage.x + 0.5 <= frame.frameInfo.fileInfoExtended.width && pointSecondaryImage.y + 0.5 >= 0 && pointSecondaryImage.y + 0.5 <= frame.frameInfo.fileInfoExtended.height
+            const isHoverSecondaryImage =
+                pointSecondaryImage.x + 0.5 >= 0 && pointSecondaryImage.x + 0.5 <= frame.frameInfo.fileInfoExtended.width && pointSecondaryImage.y + 0.5 >= 0 && pointSecondaryImage.y + 0.5 <= frame.frameInfo.fileInfoExtended.height;
             if (isHoverSecondaryImage) {
                 frame.frameRegionSet.updateCursorRegionPosition(pointSecondaryImage);
-            } 
+            }
         }
     };
 
