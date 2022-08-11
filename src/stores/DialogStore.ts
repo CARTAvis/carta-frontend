@@ -175,8 +175,8 @@ export class DialogStore {
     @observable distanceMeasuringDialogVisible: boolean = false;
     @action showDistanceMeasuringDialog = () => {
         this.distanceMeasuringDialogVisible = true;
-    }
+    };
     @action hideDistanceMeasuringDialog = () => {
         this.distanceMeasuringDialogVisible = false;
-    }
+    };
 }

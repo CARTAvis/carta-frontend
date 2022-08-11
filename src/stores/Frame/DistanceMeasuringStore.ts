@@ -72,11 +72,11 @@ export class DistanceMeasuringStore {
         AST.setColor(getColorForTheme(color), AstColorsIndex.DISTANCE_MEASURE);
     };
 
-    @action setTransformedStart = (point: Point2D) => {
+    @action setTransformedStart(point: Point2D) {
         this.transformedStart = point;
     }
 
-    @action setTransformedFinish = (point: Point2D) => {
+    @action setTransformedFinish(point: Point2D) {
         this.transformedFinish = point;
     }
 }
