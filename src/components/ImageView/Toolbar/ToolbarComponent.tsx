@@ -200,7 +200,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const handleDistanceMeasuringClicked = () => {
             dialogStore.showDistanceMeasuringDialog();
             this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring);
-        }
+        };
 
         return (
             <ButtonGroup className={className} style={styleProps}>
