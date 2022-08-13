@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 import {action, computed, observable, makeObservable} from "mobx";
 import {ImageViewLayer} from "components";
 import {AppStore, AstColorsIndex, ASTSettingsString} from "stores";
-import {getColorForTheme} from "utilities";
+import {getColorForTheme, getFormattedWCSPoint} from "utilities";
 import {Point2D, Transform2D} from "models";
 
 export class DistanceMeasuringStore {
@@ -19,6 +19,8 @@ export class DistanceMeasuringStore {
     static readonly DEFAULT_COLOR = "#62D96B";
 
     private static staticInstance: DistanceMeasuringStore;
+
+    appStore = AppStore.Instance;
 
     constructor() {
         makeObservable(this);
@@ -48,6 +50,14 @@ export class DistanceMeasuringStore {
         return astString.toString();
     }
 
+    @computed get formattedStartWCSPoint() {
+        return getFormattedWCSPoint(this.appStore.activeFrame?.wcsInfo, this.transformedStart);
+    }
+
+    @computed get formattedFinishWCSPoint() {
+        return getFormattedWCSPoint(this.appStore.activeFrame?.wcsInfo, this.transformedFinish);
+    }
+
     @action setIsCreating = isCreating => {
         this.isCreating = isCreating;
     };
@@ -72,11 +82,11 @@ export class DistanceMeasuringStore {
         AST.setColor(getColorForTheme(color), AstColorsIndex.DISTANCE_MEASURE);
     };
 
-    @action setTransformedStart(point: Point2D) {
-        this.transformedStart = point;
+    @action setTransformedStart(x: number, y: number) {
+        this.transformedStart = {x: x, y: y || null};
     }
 
-    @action setTransformedFinish(point: Point2D) {
-        this.transformedFinish = point;
+    @action setTransformedFinish(x: number, y: number) {
+        this.transformedFinish = {x: x, y: y || null};
     }
 }
