@@ -1,23 +1,13 @@
 import * as React from "react";
-// import * as _ from "lodash";
-// import * as AST from "ast_wrapper";
-// import {CARTA} from "carta-protobuf";
-import {observable, computed, action, makeObservable} from "mobx";
+import {observable, action, makeObservable, reaction} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, IDialogProps, Switch} from "@blueprintjs/core";
-// import {Tick} from "chart.js";
-// import ReactResizeDetector from "react-resize-detector";
-import {AppStore} from "stores";
-import {SafeNumericInput} from "components/Shared";
-// import {WidgetProps } from "stores";
-import {DraggableDialogComponent} from "components/Dialogs";
-import {DialogStore} from "stores";
+import {FormGroup, IDialogProps, Switch, InputGroup, Button, NumericInput} from "@blueprintjs/core";
+import {AppStore, DialogStore} from "stores";
 import {DistanceMeasuringStore} from "stores/Frame";
-// import { Point2D } from "models";
-// import {FrameStore} from "stores/Frame";
-// import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
-import {Point2D, WCSPoint2D} from "models";
-import {getPixelValueFromWCS, transformPoint} from "utilities";
+// import {SafeNumericInput} from "components/Shared";
+import {DraggableDialogComponent} from "components/Dialogs";
+import {WCSPoint2D} from "models";
+import {getPixelValueFromWCS} from "utilities";
 
 @observer
 export class DistanceMeasuringDialog extends React.Component {
@@ -26,53 +16,53 @@ export class DistanceMeasuringDialog extends React.Component {
         makeObservable(this);
     }
 
+    distanceMeasuringStore = DistanceMeasuringStore.Instance;
+    appStore = AppStore.Instance;
+
     @observable WCSMode: boolean = false;
-    @observable start: Point2D = {x: 0, y: 0};
-    @observable finish: Point2D = {x: 0, y: 0};
-
-    @observable WCSStart: WCSPoint2D = {x: "0", y: "0"};
-    @observable WCSFinish: WCSPoint2D = {x: "0", y: "0"};
-
-    @computed get roundedStart(): Point2D {
-        return {x: Math.round(this.start.x), y: Math.round(this.start.y)};
-    }
-
-    @computed get roundedFinish(): Point2D {
-        return {x: Math.round(this.finish.x), y: Math.round(this.finish.y)};
-    }
+    @observable WCSStart: WCSPoint2D;
+    @observable WCSFinish: WCSPoint2D;
 
     @action setWCSMode(bool?: boolean) {
         this.WCSMode = bool === undefined ? !this.WCSMode : bool;
     }
 
-    @action setPoint = (value: number, isX: boolean, finish?: boolean, pixel?: boolean) => {
-        if (pixel) {
-            if (isX && finish) {
-                this.finish.x = value;
-            } else if (finish) {
-                this.finish.y = value;
-            } else if (isX) {
-                this.start.x = value;
-            } else {
-                this.start.y = value;
-            }
+    @action setWCSStart = (point: WCSPoint2D) => {
+        this.WCSStart = point;
+    };
+
+    @action setWCSFinish = (point: WCSPoint2D) => {
+        this.WCSFinish = point;
+    };
+
+    @action setWCSPoint = (value: string, isX: boolean, finish?: boolean) => {
+        if (isX && finish) {
+            this.WCSFinish.x = value;
+        } else if (finish) {
+            this.WCSFinish.y = value;
+        } else if (isX) {
+            this.WCSStart.x = value;
         } else {
-            if (isX && finish) {
-                this.WCSFinish.x = value.toString();
-            } else if (finish) {
-                this.WCSFinish.y = value.toString();
-            } else if (isX) {
-                this.WCSStart.x = value.toString();
-            } else {
-                this.WCSStart.y = value.toString();
-            }
+            this.WCSStart.y = value;
         }
     };
 
     render() {
+        reaction(
+            () => this.distanceMeasuringStore.transformedStart,
+            () => {
+                this.setWCSStart(this.distanceMeasuringStore.formattedStartWCSPoint);
+            }
+        );
+
+        reaction(
+            () => this.distanceMeasuringStore.transformedFinish,
+            () => {
+                this.setWCSFinish(this.distanceMeasuringStore.formattedFinishWCSPoint);
+            }
+        );
+
         const dialogStore = DialogStore.Instance;
-        const distanceMeasuringStore = DistanceMeasuringStore.Instance;
-        const appStore = AppStore.Instance;
 
         const style = {
             margin: 10
@@ -94,27 +84,35 @@ export class DistanceMeasuringDialog extends React.Component {
         };
 
         const handleToggleWCSMode = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-            distanceMeasuringStore.resetPos();
             this.setWCSMode(changeEvent.target.checked);
         };
 
-        const handleValueChange = (value: number, isX: boolean, finish?: boolean, pixel?: boolean) => {
-            this.setPoint(value, isX, finish, pixel);
-
+        const handleValueChange = (value: number | string, isX: boolean, finish?: boolean, pixel?: boolean) => {
             if (pixel) {
-                distanceMeasuringStore.setTransformedStart(this.start);
-                distanceMeasuringStore.setTransformedFinish(this.finish);
-            } else if (appStore.activeFrame) {
-                const startPixelFromWCS = getPixelValueFromWCS(appStore.activeFrame.wcsInfo, this.WCSStart);
-                const finishPixelFromWCS = getPixelValueFromWCS(appStore.activeFrame.wcsInfo, this.WCSFinish);
-
-                distanceMeasuringStore.setTransformedStart(startPixelFromWCS);
-                distanceMeasuringStore.setTransformedFinish(finishPixelFromWCS);
+                if (isX && finish) {
+                    this.distanceMeasuringStore.setTransformedFinish(value as number, this.distanceMeasuringStore.transformedFinish.y);
+                } else if (finish) {
+                    this.distanceMeasuringStore.setTransformedFinish(this.distanceMeasuringStore.transformedFinish.x, value as number);
+                } else if (isX) {
+                    this.distanceMeasuringStore.setTransformedStart(value as number, this.distanceMeasuringStore.transformedStart.y);
+                } else {
+                    this.distanceMeasuringStore.setTransformedStart(this.distanceMeasuringStore.transformedStart.x, value as number);
+                }
+            } else if (this.appStore.activeFrame) {
+                this.setWCSPoint(value as string, isX, finish);
             }
         };
 
+        const handleSubmitWCS = () => {
+            const startPixelFromWCS = getPixelValueFromWCS(this.appStore.activeFrame.wcsInfo, this.WCSStart);
+            const finishPixelFromWCS = getPixelValueFromWCS(this.appStore.activeFrame.wcsInfo, this.WCSFinish);
+
+            this.distanceMeasuringStore.setTransformedStart(startPixelFromWCS.x, startPixelFromWCS.y);
+            this.distanceMeasuringStore.setTransformedFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
+        };
+
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={300} defaultHeight={350} enableResizing={true}>
                 <div className="distance-measuring-settings">
                     <FormGroup inline={true} label={`Use WCS Coordinate`} style={style}>
                         <Switch checked={this.WCSMode} onChange={handleToggleWCSMode} />
@@ -122,48 +120,35 @@ export class DistanceMeasuringDialog extends React.Component {
 
                     {this.WCSMode ? (
                         <>
-                            <FormGroup label={"x-WCS"} inline={true} style={style}>
-                                <SafeNumericInput
-                                    stepSize={1}
-                                    value={appStore.activeFrame ? transformPoint(appStore.activeFrame.wcsInfo, distanceMeasuringStore.transformedStart).x : this.WCSStart.x}
-                                    onValueChange={value => handleValueChange(value, true, false, false)}
-                                />
-                            </FormGroup>
-                            <FormGroup label={"y-WCS"} inline={true} style={style}>
-                                <SafeNumericInput
-                                    stepSize={1}
-                                    value={appStore.activeFrame ? transformPoint(appStore.activeFrame.wcsInfo, distanceMeasuringStore.transformedStart).y : this.WCSStart.y}
-                                    onValueChange={value => handleValueChange(value, false, false, false)}
-                                />
-                            </FormGroup>
-                            <FormGroup label={"x-WCS"} inline={true} style={style}>
-                                <SafeNumericInput
-                                    stepSize={1}
-                                    value={appStore.activeFrame ? transformPoint(appStore.activeFrame.wcsInfo, distanceMeasuringStore.transformedFinish).x : this.WCSFinish.x}
-                                    onValueChange={value => handleValueChange(value, true, true, false)}
-                                />
-                            </FormGroup>
-                            <FormGroup label={"y-WCS"} inline={true} style={style}>
-                                <SafeNumericInput
-                                    stepSize={1}
-                                    value={appStore.activeFrame ? transformPoint(appStore.activeFrame.wcsInfo, distanceMeasuringStore.transformedFinish).y : this.WCSFinish.y}
-                                    onValueChange={value => handleValueChange(value, false, true, false)}
-                                />
+                            <FormGroup>
+                                <FormGroup label={"x-WCS"} inline={true} style={style}>
+                                    <InputGroup value={this.WCSStart?.x} onChange={event => handleValueChange(event.target.value, true, false, false)} />
+                                </FormGroup>
+                                <FormGroup label={"y-WCS"} inline={true} style={style}>
+                                    <InputGroup value={this.WCSStart?.y} onChange={event => handleValueChange(event.target.value, false, false, false)} />
+                                </FormGroup>
+                                <FormGroup label={"x-WCS"} inline={true} style={style}>
+                                    <InputGroup value={this.WCSFinish?.x} onChange={event => handleValueChange(event.target.value, true, true, false)} />
+                                </FormGroup>
+                                <FormGroup label={"y-WCS"} inline={true} style={style}>
+                                    <InputGroup value={this.WCSFinish?.y} onChange={event => handleValueChange(event.target.value, false, true, false)} />
+                                </FormGroup>
+                                <Button style={style} type="submit" text="Submit" onClick={handleSubmitWCS}></Button>
                             </FormGroup>
                         </>
                     ) : (
                         <>
                             <FormGroup label={"x-Pixel"} inline={true} style={style}>
-                                <SafeNumericInput stepSize={1} value={roundPoint(distanceMeasuringStore.transformedStart.x)} onValueChange={value => handleValueChange(value, true, false, true)} />
+                                <NumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedStart.x)} onValueChange={value => handleValueChange(value, true, false, true)} />
                             </FormGroup>
                             <FormGroup label={"y-Pixel"} inline={true} style={style}>
-                                <SafeNumericInput stepSize={1} value={roundPoint(distanceMeasuringStore.transformedStart.y)} onValueChange={value => handleValueChange(value, false, false, true)} />
+                                <NumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedStart.y)} onValueChange={value => handleValueChange(value, false, false, true)} />
                             </FormGroup>
                             <FormGroup label={"x-Pixel"} inline={true} style={style}>
-                                <SafeNumericInput stepSize={1} value={roundPoint(distanceMeasuringStore.transformedFinish.x)} onValueChange={value => handleValueChange(value, true, true, true)} />
+                                <NumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedFinish.x)} onValueChange={value => handleValueChange(value, true, true, true)} />
                             </FormGroup>
                             <FormGroup label={"y-Pixel"} inline={true} style={style}>
-                                <SafeNumericInput stepSize={1} value={roundPoint(distanceMeasuringStore.transformedFinish.y)} onValueChange={value => handleValueChange(value, false, true, true)} />
+                                <NumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedFinish.y)} onValueChange={value => handleValueChange(value, false, true, true)} />
                             </FormGroup>
                         </>
                     )}
