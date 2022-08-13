@@ -1,10 +1,10 @@
 import * as React from "react";
 import {observable, action, makeObservable, reaction} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, IDialogProps, Switch, InputGroup, Button, NumericInput} from "@blueprintjs/core";
+import {FormGroup, IDialogProps, Switch, InputGroup, Button} from "@blueprintjs/core";
 import {AppStore, DialogStore} from "stores";
 import {DistanceMeasuringStore} from "stores/Frame";
-// import {SafeNumericInput} from "components/Shared";
+import {SafeNumericInput} from "components/Shared";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {WCSPoint2D} from "models";
 import {getPixelValueFromWCS} from "utilities";
@@ -139,16 +139,16 @@ export class DistanceMeasuringDialog extends React.Component {
                     ) : (
                         <>
                             <FormGroup label={"x-Pixel"} inline={true} style={style}>
-                                <NumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedStart.x)} onValueChange={value => handleValueChange(value, true, false, true)} />
+                                <SafeNumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedStart.x)} onValueChange={value => handleValueChange(value, true, false, true)} />
                             </FormGroup>
                             <FormGroup label={"y-Pixel"} inline={true} style={style}>
-                                <NumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedStart.y)} onValueChange={value => handleValueChange(value, false, false, true)} />
+                                <SafeNumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedStart.y)} onValueChange={value => handleValueChange(value, false, false, true)} />
                             </FormGroup>
                             <FormGroup label={"x-Pixel"} inline={true} style={style}>
-                                <NumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedFinish.x)} onValueChange={value => handleValueChange(value, true, true, true)} />
+                                <SafeNumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedFinish.x)} onValueChange={value => handleValueChange(value, true, true, true)} />
                             </FormGroup>
                             <FormGroup label={"y-Pixel"} inline={true} style={style}>
-                                <NumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedFinish.y)} onValueChange={value => handleValueChange(value, false, true, true)} />
+                                <SafeNumericInput stepSize={1} value={roundPoint(this.distanceMeasuringStore.transformedFinish.y)} onValueChange={value => handleValueChange(value, false, true, true)} />
                             </FormGroup>
                         </>
                     )}
