@@ -1,4 +1,4 @@
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, computed, observable, makeObservable, flow} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -54,7 +54,7 @@ export class AnimatorStore {
         this.step = val;
     };
 
-    @action startAnimation = async () => {
+    @flow.bound *startAnimation() {
         const appStore = AppStore.Instance;
         const preferenceStore = PreferenceStore.Instance;
         const frame = appStore.activeFrame;
@@ -119,7 +119,7 @@ export class AnimatorStore {
         this.animationActive = true;
 
         try {
-            await appStore.backendService.startAnimation(animationMessage);
+            yield appStore.backendService.startAnimation(animationMessage);
             appStore.tileService.setAnimationEnabled(true);
             console.log("Animation started successfully");
         } catch (err) {
@@ -129,7 +129,7 @@ export class AnimatorStore {
 
         clearTimeout(this.stopHandle);
         this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.stopAnimationPlaybackMinutes);
-    };
+    }
 
     @action stopAnimation = () => {
         // Ignore stop when not playing
