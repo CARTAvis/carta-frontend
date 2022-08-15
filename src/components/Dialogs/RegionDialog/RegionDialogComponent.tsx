@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState} from "@blueprintjs/core";
+import {AnchorButton, Classes, DialogProps, Intent, NonIdealState} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -33,7 +33,7 @@ export class RegionDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "info-sign",
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,

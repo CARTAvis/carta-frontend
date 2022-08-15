@@ -1,29 +1,29 @@
 .catalog-settings {
     margin: 20px;
 
-    .file-menu .bp3-button {
+    .file-menu .bp4-button {
         white-space: nowrap;
         display: inline-block;
     }
-    .bp3-form-group {
+    .bp4-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
     }
 
-    .bp3-form-group .bp3-label {
+    .bp4-form-group .bp4-label {
         width: 9em;
         text-align: left;
     }
 
-    .bp3-numeric-input {
-        .bp3-input-group {
+    .bp4-numeric-input {
+        .bp4-input-group {
             width: 110px;
         }
     }
 
     .catalog-size-overlay {
-        .bp3-input-group {
+        .bp4-input-group {
             width: 50px;
         }
     }

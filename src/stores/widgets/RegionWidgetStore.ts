@@ -1,5 +1,5 @@
 import {action, observable, computed, makeObservable} from "mobx";
-import {IOptionProps} from "@blueprintjs/core";
+import {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
@@ -126,7 +126,7 @@ export class RegionWidgetStore {
         return false;
     }
 
-    @computed get frameOptions(): IOptionProps[] {
+    @computed get frameOptions(): OptionProps[] {
         return [{value: ACTIVE_FILE_ID, label: "Active"}, ...(AppStore.Instance.frameNames ?? [])];
     }
 

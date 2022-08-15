@@ -107,10 +107,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     public render() {
         const headerHeight = 25;
         const appStore = AppStore.Instance;
-        const className = classNames("floating-widget", {"bp3-dark": appStore.darkTheme});
-        const titleClass = classNames("floating-header", {selected: this.props.isSelected, "bp3-dark": appStore.darkTheme});
-        const buttonClass = classNames("floating-header-button", {"bp3-dark": appStore.darkTheme});
-        const floatingContentClassName = classNames("floating-content", {"bp3-dark": appStore.darkTheme, "floating-settings-content": !this.props.showPinButton});
+        const className = classNames("floating-widget", {"bp4-dark": appStore.darkTheme});
+        const titleClass = classNames("floating-header", {selected: this.props.isSelected, "bp4-dark": appStore.darkTheme});
+        const buttonClass = classNames("floating-header-button", {"bp4-dark": appStore.darkTheme});
+        const floatingContentClassName = classNames("floating-content", {"bp4-dark": appStore.darkTheme, "floating-settings-content": !this.props.showPinButton});
 
         const widgetConfig = this.props.widgetConfig;
 

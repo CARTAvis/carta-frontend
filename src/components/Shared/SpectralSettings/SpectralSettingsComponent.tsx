@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, OptionProps} from "@blueprintjs/core";
 import {FrameStore} from "stores/Frame";
 import {SpectralSystem} from "models";
 
@@ -17,10 +17,10 @@ export class SpectralSettingsComponent extends React.Component<{
         const nativeSpectralCoordinate = frame?.nativeSpectralCoordinate;
         const spectralTypes = frame?.spectralCoordsSupported ? Array.from(frame.spectralCoordsSupported.keys()) : [];
         const filteredSpectralTypes = this.props.disableChannelOption ? spectralTypes.filter(type => type !== "Channel") : spectralTypes;
-        const spectralCoordinateOptions: IOptionProps[] = filteredSpectralTypes.map((coord: string) => {
+        const spectralCoordinateOptions: OptionProps[] = filteredSpectralTypes.map((coord: string) => {
             return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord};
         });
-        const spectralSystemOptions: IOptionProps[] = frame?.spectralSystemsSupported
+        const spectralSystemOptions: OptionProps[] = frame?.spectralSystemsSupported
             ? frame.spectralSystemsSupported.map(system => {
                   return {value: system, label: system};
               })

@@ -3,19 +3,19 @@
     width: 100%;
     padding: 5px;
 
-    .bp3-dialog-body {
+    .bp4-dialog-body {
         height: calc(100% - 65px);
         margin: 0;
 
-        .bp3-numeric-input {
-            .bp3-input-group {
+        .bp4-numeric-input {
+            .bp4-input-group {
                 width: 80px;
             }
         }
 
-        .bp3-form-group {
+        .bp4-form-group {
             margin: 0 10px 0 0;
-            .bp3-label {
+            .bp4-label {
                 text-align: right;
             }
         }
@@ -34,7 +34,7 @@
             }
 
             .intensity-limit {
-                .bp3-form-group {
+                .bp4-form-group {
                     margin: 0;
                 }
             }
@@ -85,9 +85,9 @@
                 width: 100%;
                 padding: 5px;
 
-                .bp3-table-container {
+                .bp4-table-container {
                     width: 100%;
-                    .bp3-table-header {
+                    .bp4-table-header {
                         line-height: 220%;
                     }
                     .header-table-cell {
@@ -114,13 +114,13 @@
                 .result-table {
                     height: calc(100% - 35px);
                     width: 100%;
-                    .bp3-table-container {
+                    .bp4-table-container {
                         width: 100%;
-                        .bp3-table-editable-name.bp3-editable-text::before {
+                        .bp4-table-editable-name.bp4-editable-text::before {
                             right: 0px;
                             left: 0px;
                         }
-                        .bp3-editable-text::before {
+                        .bp4-editable-text::before {
                             right: 0px;
                             left: 0px;
                         }
@@ -134,16 +134,16 @@
         }
     }
 
-    .bp3-dialog-footer {
+    .bp4-dialog-footer {
         height: 65px;
         margin: 0px;
         padding: 0 5px 5px 5px;
-        .bp3-button {
+        .bp4-button {
             height: 30px;
         }
-        .bp3-form-group {
+        .bp4-form-group {
             margin: 0;
-            .bp3-label {
+            .bp4-label {
                 margin: 0;
             }
         }

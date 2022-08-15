@@ -2,15 +2,15 @@
     display: flex;
     flex-direction: row;
 
-    .bp3-numeric-input {
-        .bp3-input-group {
+    .bp4-numeric-input {
+        .bp4-input-group {
             width: 80px;
         }
     }
 
     .moment-panel {
         .image-region-select {
-            .bp3-html-select {
+            .bp4-html-select {
                 width: 120px;
             }
 
@@ -32,9 +32,9 @@
             display: flex;
             flex-direction: row;
 
-            .bp3-form-group {
+            .bp4-form-group {
                 margin-right: 10px;
-                .bp3-label {
+                .bp4-label {
                     margin: 0px;
                     width: 3em;
                 }

@@ -1,8 +1,9 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {Select} from "@blueprintjs/select";
+import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {Select2} from "@blueprintjs/select";
+import {MenuItem2} from "@blueprintjs/popover2";
 import {ColorResult} from "react-color";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
@@ -17,7 +18,7 @@ enum VectorOverlayDialogTabs {
     Styling
 }
 
-const DataSourceSelect = Select.ofType<FrameStore>();
+const DataSourceSelect = Select2.ofType<FrameStore>();
 
 @observer
 export class VectorOverlayDialogComponent extends React.Component {
@@ -106,7 +107,7 @@ export class VectorOverlayDialogComponent extends React.Component {
         if (!frame) {
             return null;
         }
-        return <MenuItem text={frame.filename} onClick={handleClick} key={frame.frameInfo.fileId} />;
+        return <MenuItem2 text={frame.filename} onClick={handleClick} key={frame.frameInfo.fileId} />;
     };
 
     private handleApplyOverlay = () => {

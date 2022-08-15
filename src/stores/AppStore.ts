@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable, ObservableMap, runInAction, when} from "mobx";
 import * as Long from "long";
 import axios from "axios";
-import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
+import {Classes, Colors, OptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
 import * as CARTACompute from "carta_computation";
@@ -41,7 +41,7 @@ import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Sha
 import {ProtobufProcessing} from "utilities";
 import GitCommit from "../static/gitInfo";
 
-interface FrameOption extends IOptionProps {
+interface FrameOption extends OptionProps {
     hasZAxis: boolean;
 }
 
@@ -356,7 +356,7 @@ export class AppStore {
         return id;
     }
 
-    @computed get frameNames(): IOptionProps[] {
+    @computed get frameNames(): OptionProps[] {
         return this.frames?.map((frame, index) => {
             return {
                 label: index + ": " + frame.filename,

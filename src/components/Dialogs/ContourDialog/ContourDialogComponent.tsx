@@ -1,9 +1,9 @@
 import * as React from "react";
 import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {Select} from "@blueprintjs/select";
+import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, DialogProps, Intent, NonIdealState, Tab, Tabs, TagInput} from "@blueprintjs/core";
+import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
+import {Select2} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
@@ -23,8 +23,8 @@ enum ContourDialogTabs {
     Styling
 }
 
-const DataSourceSelect = Select.ofType<FrameStore>();
-const HistogramSelect = Select.ofType<boolean>();
+const DataSourceSelect = Select2.ofType<FrameStore>();
+const HistogramSelect = Select2.ofType<boolean>();
 
 @observer
 export class ContourDialogComponent extends React.Component {
@@ -151,11 +151,11 @@ export class ContourDialogComponent extends React.Component {
         if (!frame) {
             return null;
         }
-        return <MenuItem text={frame.filename} onClick={handleClick} key={frame.frameInfo.fileId} />;
+        return <MenuItem2 text={frame.filename} onClick={handleClick} key={frame.frameInfo.fileId} />;
     };
 
     private renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
-        return <MenuItem text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
+        return <MenuItem2 text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
     private handleHistogramChange = (value: boolean) => {
@@ -271,7 +271,7 @@ export class ContourDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE} />,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
@@ -492,7 +492,7 @@ export class ContourDialogComponent extends React.Component {
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideContourDialog} text="Close" />
                     </div>
                 </div>
-                <Alert className={appStore.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                <Alert className={appStore.darkTheme ? "bp4-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
                 <TaskProgressDialogComponent

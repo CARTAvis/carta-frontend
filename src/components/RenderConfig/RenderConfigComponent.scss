@@ -8,7 +8,7 @@
 }
 
 .colormap-select-popover {
-    .bp3-menu {
+    .bp4-menu {
         max-height: 180px;
         overflow: auto;
         padding: 0;
@@ -22,7 +22,7 @@
     -moz-image-rendering: crisp-edges;
     border-radius: $pt-border-radius;
     border: 1px solid $gray4;
-    &.bp3-dark {
+    &.bp4-dark {
         border: 1px solid $gray2;
     }
 }
@@ -48,13 +48,13 @@
             margin-right: 0;
         }
 
-        .bp3-form-group {
+        .bp4-form-group {
             float: right;
             margin-bottom: 5px;
-            .bp3-button {
+            .bp4-button {
                 width: 130px;
             }
-            .bp3-label {
+            .bp4-label {
                 margin-right: 5px;
             }
             .bias-contrast-button {
@@ -62,15 +62,15 @@
             }
         }
 
-        .bp3-numeric-input {
-            .bp3-input-group {
+        .bp4-numeric-input {
+            .bp4-input-group {
                 input {
                     width: 130px;
                 }
             }
         }
 
-        .bp3-input-group {
+        .bp4-input-group {
             input {
                 width: 120px;
             }
@@ -82,11 +82,11 @@
         }
 
         .step-input {
-            .bp3-input-group input {
+            .bp4-input-group input {
                 width: 102px;
             }
 
-            .bp3-button {
+            .bp4-button {
                 width: 30px;
             }
         }
@@ -110,10 +110,10 @@
 
 .percentile-select {
     margin: 5px auto auto 5px;
-    .bp3-form-group {
+    .bp4-form-group {
         margin: 0;
     }
-    .bp3-button {
+    .bp4-button {
         margin-left: 5px;
     }
 }

@@ -2,12 +2,12 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {ResizeEnable, Rnd} from "react-rnd";
-import {Dialog, IDialogProps, Button} from "@blueprintjs/core";
+import {Dialog, DialogProps, Button} from "@blueprintjs/core";
 import {HelpStore, HelpType} from "stores";
 import "./DraggableDialogComponent.scss";
 
 export class ResizableDialogComponentProps {
-    dialogProps: IDialogProps;
+    dialogProps: DialogProps;
     defaultWidth: number;
     defaultHeight: number;
     minWidth?: number;
@@ -22,13 +22,13 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     private rnd: Rnd;
 
     componentDidUpdate() {
-        const header = this.dd.getElementsByClassName("bp3-dialog-header");
+        const header = this.dd.getElementsByClassName("bp4-dialog-header");
         if (this.props.helpType && header.length > 0 && this.dd.getElementsByClassName("help-button").length === 0) {
             const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton} />;
             const helpButtonDiv = document.createElement("div") as HTMLDivElement;
             helpButtonDiv.setAttribute("class", "help-button");
             ReactDOM.render(helpButton, helpButtonDiv);
-            const closeButton = this.dd.getElementsByClassName("bp3-dialog-close-button");
+            const closeButton = this.dd.getElementsByClassName("bp4-dialog-close-button");
             if (closeButton.length > 0) {
                 closeButton[0].before(helpButtonDiv);
             } else {
@@ -84,7 +84,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                         }}
                         minWidth={this.props.minWidth}
                         minHeight={this.props.minHeight}
-                        dragHandleClassName={"bp3-dialog-header"}
+                        dragHandleClassName={"bp4-dialog-header"}
                         ref={c => {
                             this.rnd = c;
                         }}

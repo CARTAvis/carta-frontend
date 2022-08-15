@@ -173,7 +173,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const selectedRegion = frame.regionSet.selectedRegion;
 
         const headerRenderer = (props: {index: number; style: CSSProperties}) => {
-            const className = classNames("row-header", {"bp3-dark": darkTheme});
+            const className = classNames("row-header", {"bp4-dark": darkTheme});
 
             return (
                 <div className={className} style={props.style}>
@@ -215,7 +215,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (!region) {
                 return null;
             }
-            const className = classNames("row", {"bp3-dark": darkTheme, selected: selectedRegion?.regionId === region.regionId});
+            const className = classNames("row", {"bp4-dark": darkTheme, selected: selectedRegion?.regionId === region.regionId});
 
             let centerContent: React.ReactNode;
             if (isFinite(region.center.x) && isFinite(region.center.y)) {
@@ -342,7 +342,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="region-list-widget">
-                <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
+                <div className={classNames("region-list-table", {"bp4-dark": darkTheme})}>
                     <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
                         {headerRenderer}
                     </FixedSizeList>

@@ -58,7 +58,7 @@ $border-radius-adjustment: 10px;
 
     &.lm_vertical {
         width: calc(100% - #{$border-radius-adjustment});
-        left: $border-radius-adjustment/2;
+        left: $border-radius-adjustment * 0.5;
         .lm_drag_handle {
             width: 100%;
             position: absolute;
@@ -69,7 +69,7 @@ $border-radius-adjustment: 10px;
     &.lm_horizontal {
         float: left;
         height: calc(100% - #{$border-radius-adjustment});
-        top: $border-radius-adjustment/2;
+        top: $border-radius-adjustment * 0.5;
 
         .lm_drag_handle {
             height: 100%;

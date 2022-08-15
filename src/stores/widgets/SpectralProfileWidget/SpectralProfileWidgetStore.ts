@@ -1,5 +1,5 @@
 import {action, autorun, computed, observable, makeObservable, override, reaction} from "mobx";
-import {IOptionProps, NumberRange} from "@blueprintjs/core";
+import {OptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
 import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
@@ -524,7 +524,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return null;
     }
 
-    @computed get momentRegionOptions(): IOptionProps[] {
+    @computed get momentRegionOptions(): OptionProps[] {
         const frame = this.effectiveFrame;
         let momentRegionOptions = [
             {value: RegionId.ACTIVE, label: "Active"},

@@ -73,9 +73,9 @@ export class ToolbarMenuComponent extends React.Component {
         const appStore = AppStore.Instance;
         const dialogStore = appStore.dialogStore;
 
-        const className = classNames("toolbar-menu", {"bp3-dark": appStore.darkTheme});
-        const dialogClassName = classNames("dialog-toolbar-menu", {"bp3-dark": appStore.darkTheme});
-        const actionsClassName = classNames("actions-toolbar-menu", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("toolbar-menu", {"bp4-dark": appStore.darkTheme});
+        const dialogClassName = classNames("dialog-toolbar-menu", {"bp4-dark": appStore.darkTheme});
+        const actionsClassName = classNames("actions-toolbar-menu", {"bp4-dark": appStore.darkTheme});
         const isRegionCreating = appStore.activeFrame ? appStore.activeFrame.regionSet.mode === RegionMode.CREATING : false;
         const newRegionType = appStore.activeFrame ? appStore.activeFrame.regionSet.newRegionType : CARTA.RegionType.RECTANGLE;
         const regionButtonsDisabled = !appStore.activeFrame || appStore.activeLayer === ImageViewLayer.Catalog;

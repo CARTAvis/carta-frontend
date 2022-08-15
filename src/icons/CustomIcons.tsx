@@ -27,7 +27,7 @@ export class CustomIcon extends React.Component<{icon: CustomIconName; size?: nu
     static readonly SIZE_LARGE = 20;
 
     public render() {
-        const className = classNames("custom-icon", "bp3-icon", {"dark-theme": AppStore.Instance.darkTheme});
+        const className = classNames("custom-icon", "bp4-icon", {"dark-theme": AppStore.Instance.darkTheme});
         const size = (this.props.size ? this.props.size : CustomIcon.SIZE_STANDARD) + "px";
         const content = (
             <span className={className}>

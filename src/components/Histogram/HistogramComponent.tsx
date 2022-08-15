@@ -297,7 +297,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             linePlotProps.comments = this.exportHeaders;
         }
 
-        const className = classNames("histogram-widget", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("histogram-widget", {"bp4-dark": appStore.darkTheme});
 
         return (
             <div className={className}>

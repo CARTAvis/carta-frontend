@@ -1,11 +1,11 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, IRegion} from "@blueprintjs/table";
+import {Cell, Column, Table2, SelectionModes, RenderMode, Region, ColumnHeaderCell2} from "@blueprintjs/table";
+import {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {Checkbox, InputGroup, Icon, Label, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {IconName} from "@blueprintjs/icons";
-import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
 import {CatalogApiService} from "services";
@@ -31,7 +31,7 @@ export class FilterableTableComponentProps {
     loadingCell?: boolean;
     selectedDataIndex?: number[];
     showSelectedData?: boolean;
-    updateTableRef?: (ref: Table) => void;
+    updateTableRef?: (ref: Table2) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
@@ -105,8 +105,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const controlHeader = this.props.filter?.get(columnHeader.name);
         const filterSyntax = this.getFilterSyntax(columnHeader.dataType);
         return (
-            <ColumnHeaderCell>
-                <ColumnHeaderCell>
+            <ColumnHeaderCell2>
+                <ColumnHeaderCell2>
                     <Checkbox
                         indeterminate={selectionType === RowSelectionType.Indeterminate}
                         checked={selectionType === RowSelectionType.All}
@@ -123,8 +123,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             }
                         }}
                     />
-                </ColumnHeaderCell>
-                <ColumnHeaderCell isActive={controlHeader?.filter !== ""}>
+                </ColumnHeaderCell2>
+                <ColumnHeaderCell2 isActive={controlHeader?.filter !== ""}>
                     <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
                         <InputGroup
                             key={"column-popover-" + columnIndex}
@@ -134,8 +134,8 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, columnHeader.name)}
                         />
                     </Tooltip2>
-                </ColumnHeaderCell>
-            </ColumnHeaderCell>
+                </ColumnHeaderCell2>
+            </ColumnHeaderCell2>
         );
     };
 
@@ -247,9 +247,9 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             }
             return (
                 <div className="sort-label" onClick={() => (disableSort ? null : this.props.updateSortRequest(column.name, nextSortType, column.columnIndex))}>
-                    <Label disabled={disableSort} className="bp3-inline label">
+                    <Label disabled={disableSort} className="bp4-inline label">
                         <Icon className={iconClass} icon={sortIcon as IconName} />
-                        <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp3-dark" : ""}>
+                        <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={headerDescription ?? "Description not avaliable"} position={Position.BOTTOM} popoverClassName={AppStore.Instance.darkTheme ? "bp4-dark" : ""}>
                             {column.name}
                         </Tooltip2>
                     </Label>
@@ -258,14 +258,14 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         };
 
         return (
-            <ColumnHeaderCell>
-                <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />
-                <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
+            <ColumnHeaderCell2>
+                <ColumnHeaderCell2 className={"column-name"} nameRenderer={nameRenderer} />
+                <ColumnHeaderCell2 isActive={controlheader?.filter !== ""}>
                     <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
                         <InputGroup key={"column-popover-" + columnIndex} small={true} placeholder="Click to filter" value={controlheader?.filter ?? ""} onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)} />
                     </Tooltip2>
-                </ColumnHeaderCell>
-            </ColumnHeaderCell>
+                </ColumnHeaderCell2>
+            </ColumnHeaderCell2>
         );
     };
 
@@ -276,7 +276,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         return false;
     }
 
-    private infiniteScroll = (rowIndices: IRowIndices) => {
+    private infiniteScroll = (rowIndices: RowIndices) => {
         // rowIndices offset around 5 form blueprintjs tabel
         const currentIndex = rowIndices.rowIndexEnd + 1;
         if (rowIndices.rowIndexEnd > 0 && currentIndex >= this.props.numVisibleRows && !this.props.loadingCell && !this.props.showSelectedData) {
@@ -291,7 +291,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         }
     };
 
-    private onRowIndexSelection = (selectedRegions: IRegion[]) => {
+    private onRowIndexSelection = (selectedRegions: Region[]) => {
         if (selectedRegions.length > 0) {
             let selectedDataIndex = [];
             for (let i = 0; i < selectedRegions.length; i++) {
@@ -321,10 +321,10 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
             tableColumns.push(column);
         });
 
-        const className = classNames("column-filter-table", {"bp3-dark": AppStore.Instance.darkTheme});
+        const className = classNames("column-filter-table", {"bp4-dark": AppStore.Instance.darkTheme});
 
         return (
-            <Table
+            <Table2
                 className={className}
                 ref={table.updateTableRef ? ref => table.updateTableRef(ref) : null}
                 numRows={table.numVisibleRows}
@@ -341,7 +341,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 onCompleteRender={table.onCompleteRender}
             >
                 {tableColumns}
-            </Table>
+            </Table2>
         );
     }
 }

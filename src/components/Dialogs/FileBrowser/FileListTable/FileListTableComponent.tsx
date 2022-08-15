@@ -1,8 +1,7 @@
 import * as React from "react";
 import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
 import {observer} from "mobx-react";
-import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
-import {IRegion} from "@blueprintjs/table/src/regions";
+import {Cell, Column, ColumnHeaderCell2, Regions, Region, RenderMode, SelectionModes, Table2, TableLoadingOption} from "@blueprintjs/table";
 import {Button, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
 import globToRegExp from "glob-to-regexp";
 import moment from "moment";
@@ -44,11 +43,11 @@ export interface FileListTableComponentProps {
 
 @observer
 export class FileListTableComponent extends React.Component<FileListTableComponentProps> {
-    @observable selectedRegions: IRegion[];
+    @observable selectedRegions: Region[];
     @observable columnWidths = [350, 80, 90, 95];
 
     private static readonly RowHeight = 22;
-    private tableRef: Table;
+    private tableRef: Table2;
     private cachedFilterString: string;
     private cachedSortingString: string;
     private cachedFileResponse: CARTA.IFileListResponse | CARTA.ICatalogListResponse;
@@ -276,7 +275,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
     };
 
-    private renderColumnHeader = (name: string, index?: number) => {
+    private renderColumnHeader = (name: string, _index?: number) => {
         const sortingConfig = {direction: this.props.sortingString.startsWith("+") ? 1 : -1, columnName: this.props.sortingString.substring(1).toLowerCase()};
         const sortColumn = name.toLowerCase() === sortingConfig?.columnName;
         const sortDesc = sortingConfig?.direction < 0;
@@ -285,7 +284,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             if (sortColumn) {
                 return (
                     <div className="sort-label" onClick={() => this.props.onSortingChanged(name, -sortingConfig.direction)}>
-                        <Label className="bp3-inline label">
+                        <Label className="bp4-inline label">
                             <Icon className="sort-icon" icon={sortDesc ? "sort-desc" : "sort-asc"} />
                             {name}
                         </Label>
@@ -294,7 +293,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
             } else {
                 return (
                     <div className="sort-label" onClick={() => this.props.onSortingChanged(name, 1)}>
-                        <Label className="bp3-inline label">
+                        <Label className="bp4-inline label">
                             <Icon className="sort-icon inactive" icon="sort" />
                             {name}
                         </Label>
@@ -302,7 +301,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 );
             }
         };
-        return <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />;
+        return <ColumnHeaderCell2 className={"column-name"} nameRenderer={nameRenderer} />;
     };
 
     private renderFilenames = (rowIndex: number) => {
@@ -441,7 +440,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
         const classes = ["browser-table"];
         if (this.props.darkTheme) {
-            classes.push("bp3-dark");
+            classes.push("bp4-dark");
         }
 
         const entryCount = this.tableEntries.length;
@@ -474,7 +473,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
         }
 
         const table = (
-            <Table
+            <Table2
                 ref={ref => (this.tableRef = ref)}
                 className={classes.join(" ")}
                 enableRowReordering={false}
@@ -496,7 +495,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes} />
                 <Column name="Size" columnHeaderCellRenderer={() => this.renderColumnHeader("Size")} cellRenderer={this.renderSizes} />
                 <Column name="Date" columnHeaderCellRenderer={() => this.renderColumnHeader("Date")} cellRenderer={this.renderDates} />
-            </Table>
+            </Table2>
         );
 
         return (

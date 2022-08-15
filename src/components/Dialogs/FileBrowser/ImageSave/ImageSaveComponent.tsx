@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, autorun, computed, makeObservable} from "mobx";
-import {Text, Label, FormGroup, IOptionProps, HTMLSelect, Switch, NumericInput, Intent} from "@blueprintjs/core";
+import {Text, Label, FormGroup, OptionProps, HTMLSelect, Switch, NumericInput, Intent} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FileBrowserStore} from "stores";
 import {FrequencyUnit, SpectralSystem} from "models";
@@ -131,7 +131,7 @@ export class ImageSaveComponent extends React.Component {
         const fileBrowser = FileBrowserStore.Instance;
         const activeFrame = AppStore.Instance.activeFrame;
         const closedRegions = activeFrame?.regionSet?.regions.filter(region => region.regionId > 0 && region.isClosedRegion);
-        const regionOptions: IOptionProps[] = [{value: 0, label: "Image"}].concat(
+        const regionOptions: OptionProps[] = [{value: 0, label: "Image"}].concat(
             closedRegions?.map(region => ({
                 value: region.regionId,
                 label: `${region.name ? region.name : region.regionId} (${CARTA.RegionType[region.regionType]})`
@@ -139,13 +139,13 @@ export class ImageSaveComponent extends React.Component {
         );
         // Global value of Spectral Coordinate System and Unit
         const nativeSpectralCoordinate = activeFrame ? activeFrame.nativeSpectralCoordinate : undefined;
-        const spectralCoordinateOptions: IOptionProps[] =
+        const spectralCoordinateOptions: OptionProps[] =
             activeFrame && activeFrame.spectralCoordsSupported
                 ? Array.from(activeFrame.spectralCoordsSupported.keys()).map((coord: string) => {
                       return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native WCS)" : coord};
                   })
                 : [];
-        const spectralSystemOptions: IOptionProps[] =
+        const spectralSystemOptions: OptionProps[] =
             activeFrame && activeFrame.spectralSystemsSupported
                 ? activeFrame.spectralSystemsSupported.map(system => {
                       return {value: system, label: system};

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {Cell, Column, Table, SelectionModes, RenderMode, RowHeaderCell} from "@blueprintjs/table";
+import {Cell, Column, Table2, SelectionModes, RenderMode, RowHeaderCell2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 
 export class SimpleTableComponentProps {
@@ -14,7 +14,7 @@ export class SimpleTableComponentProps {
     enableGhostCells?: boolean;
     isIndexZero?: boolean;
     boldIndex?: number[];
-    updateTableRef?: (ref: Table) => void;
+    updateTableRef?: (ref: Table2) => void;
 }
 
 @observer
@@ -25,7 +25,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
 
     private renderRowHeaderCell = (rowIndex: number) => {
         const index = this.props.isIndexZero ? rowIndex : rowIndex + 1;
-        return <RowHeaderCell name={index.toString()} style={this.getFontStyle(rowIndex)} />;
+        return <RowHeaderCell2 name={index.toString()} style={this.getFontStyle(rowIndex)} />;
     };
 
     private renderDataColumn = (columnName: string, columnData: any) => {
@@ -55,7 +55,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
         });
 
         return (
-            <Table
+            <Table2
                 ref={table.updateTableRef ? ref => table.updateTableRef(ref) : null}
                 numRows={table.numVisibleRows}
                 renderMode={RenderMode.NONE}
@@ -69,7 +69,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 onColumnWidthChanged={this.props.onColumnWidthChanged}
             >
                 {tableColumns}
-            </Table>
+            </Table2>
         );
     }
 }

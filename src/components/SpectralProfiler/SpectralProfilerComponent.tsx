@@ -493,7 +493,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
 
-        const className = classNames("spectral-profiler-widget", {"bp3-dark": appStore.darkTheme, "linked-to-widget-highlighted": this.widgetStore.isHighlighted});
+        const className = classNames("spectral-profiler-widget", {"bp4-dark": appStore.darkTheme, "linked-to-widget-highlighted": this.widgetStore.isHighlighted});
 
         return (
             <div className={className}>

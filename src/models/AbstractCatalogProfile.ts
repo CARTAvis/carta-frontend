@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 import {action, observable, computed} from "mobx";
-import {Regions, IRegion} from "@blueprintjs/table";
+import {Regions, Region} from "@blueprintjs/table";
 import {AppStore, CatalogStore, ControlHeader, CatalogUpdateMode} from "stores";
 import {CatalogWebGLService, CatalogTextureType} from "services";
 import {filterProcessedColumnData, getComparisonOperatorAndValue, minMaxArray, transformPoint, ProcessedColumnData, TypedArray} from "utilities";
@@ -261,8 +261,8 @@ export abstract class AbstractCatalogProfileStore {
         return catalogColumnsData;
     }
 
-    @computed get autoScrollRowNumber(): IRegion {
-        let singleRowRegion: IRegion = Regions.row(0);
+    @computed get autoScrollRowNumber(): Region {
+        let singleRowRegion: Region = Regions.row(0);
         if (this.selectedPointIndices.length > 0) {
             singleRowRegion = Regions.row(minMaxArray(this.selectedPointIndices).minVal);
         }

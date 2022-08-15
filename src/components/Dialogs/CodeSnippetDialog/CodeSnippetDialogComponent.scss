@@ -3,11 +3,11 @@
 .code-snippet-dialog {
     user-select: none;
 
-    .bp3-dialog-body {
+    .bp4-dialog-body {
         background: $white;
     }
 
-    .bp3-dialog-footer {
+    .bp4-dialog-footer {
         display: flex;
 
         .spacer {
@@ -15,8 +15,8 @@
         }
     }
 
-    &.bp3-dark {
-        .bp3-dialog-body {
+    &.bp4-dark {
+        .bp4-dialog-body {
             background: $dark-gray1;
         }
     }
@@ -27,7 +27,7 @@
         margin-top: 5px;
     }
 
-    .bp3-input-group {
+    .bp4-input-group {
         margin-bottom: 10px;
     }
 

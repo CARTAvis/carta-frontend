@@ -13,7 +13,7 @@ export class SpectralLineQuerySplashScreenComponent extends React.Component<{spl
     public render() {
         const appStore = AppStore.Instance;
 
-        const className = classNames("spectral-line-query-splash-screen", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("spectral-line-query-splash-screen", {"bp4-dark": appStore.darkTheme});
 
         return (
             <div className={className}>

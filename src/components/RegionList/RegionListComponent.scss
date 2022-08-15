@@ -12,7 +12,7 @@
         margin: 5px;
         border: 1px solid $gray4;
 
-        &.bp3-dark {
+        &.bp4-dark {
             border-color: $dark-gray2;
 
             .row {
@@ -47,7 +47,7 @@
                 background: lighten($blue5, 25);
             }
 
-            &.bp3-dark {
+            &.bp4-dark {
                 background: $dark-gray3;
 
                 .cell {
@@ -73,7 +73,7 @@
             font-weight: bold;
             overflow-x: hidden;
 
-            &.bp3-dark {
+            &.bp4-dark {
                 background: $dark-gray4;
 
                 .cell {

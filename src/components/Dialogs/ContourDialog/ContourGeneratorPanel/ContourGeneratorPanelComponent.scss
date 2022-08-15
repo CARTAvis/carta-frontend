@@ -7,7 +7,7 @@
             margin-left: 10px;
         }
 
-        .bp3-form-group .bp3-label {
+        .bp4-form-group .bp4-label {
             width: 6em;
             text-align: left;
         }
@@ -16,7 +16,7 @@
     .generator-parameters-row {
         display: flex;
 
-        .bp3-form-group .bp3-label {
+        .bp4-form-group .bp4-label {
             width: 6em;
             text-align: left;
         }
@@ -29,9 +29,9 @@
                 flex-direction: row;
                 flex-wrap: wrap;
 
-                .bp3-form-group {
+                .bp4-form-group {
                     padding-right: 10px;
-                    .bp3-label {
+                    .bp4-label {
                         width: 5em;
                         text-align: right;
                     }
@@ -39,9 +39,9 @@
             }
         }
 
-        .bp3-numeric-input {
+        .bp4-numeric-input {
             width: 110px;
-            .bp3-input-group {
+            .bp4-input-group {
                 height: 30px;
                 input {
                     width: 110px;
@@ -49,16 +49,16 @@
             }
 
             &.narrow {
-                .bp3-input-group {
+                .bp4-input-group {
                     height: 30px;
                     input {
                         width: 80px;
                     }
                 }
 
-                .bp3-button-group {
+                .bp4-button-group {
                     height: 30px;
-                    .bp3-button {
+                    .bp4-button {
                         height: 15px;
                         width: 30px;
                     }

@@ -4,9 +4,9 @@ import tinycolor from "tinycolor2";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Callout, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {Select} from "@blueprintjs/select";
+import {AnchorButton, Button, Callout, Checkbox, FormGroup, HTMLSelect, DialogProps, Intent, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
+import {Select2} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -48,7 +48,7 @@ enum PreferenceDialogTabs {
     TELEMETRY
 }
 
-const PercentileSelect = Select.ofType<string>();
+const PercentileSelect = Select2.ofType<string>();
 
 @observer
 export class PreferenceDialogComponent extends React.Component {
@@ -64,7 +64,7 @@ export class PreferenceDialogComponent extends React.Component {
     }
 
     private renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
-        return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile} />;
+        return <MenuItem2 text={percentile + "%"} onClick={handleClick} key={percentile} />;
     };
 
     private handleImageCompressionQualityChange = _.throttle((value: number) => {
@@ -766,9 +766,9 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
-        const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("preference-dialog", {"bp4-dark": appStore.darkTheme});
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "wrench",
             backdropClassName: "minimal-dialog-backdrop",
             className: className,
@@ -781,7 +781,7 @@ export class PreferenceDialogComponent extends React.Component {
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.PREFERENCES} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
-                <div className="bp3-dialog-body">
+                <div className="bp4-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
                         <Tab id={PreferenceDialogTabs.GLOBAL} title="Global" panel={globalPanel} />
                         <Tab id={PreferenceDialogTabs.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel} />
@@ -795,8 +795,8 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel} />
                     </Tabs>
                 </div>
-                <div className="bp3-dialog-footer">
-                    <div className="bp3-dialog-footer-actions">
+                <div className="bp4-dialog-footer">
+                    <div className="bp4-dialog-footer-actions">
                         <Tooltip2 content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults" />
                         </Tooltip2>

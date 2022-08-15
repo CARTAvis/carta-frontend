@@ -1,24 +1,24 @@
 .contour-dialog {
-    .bp3-dialog-body {
+    .bp4-dialog-body {
         user-select: none;
 
-        .bp3-form-group {
+        .bp4-form-group {
             &:first-of-type {
                 margin-left: 0px;
             }
         }
 
-        .contour-level-panel-levels .bp3-form-group .bp3-label {
+        .contour-level-panel-levels .bp4-form-group .bp4-label {
             width: 6em;
             text-align: left;
         }
 
-        .contour-config-panel .bp3-form-group .bp3-label {
+        .contour-config-panel .bp4-form-group .bp4-label {
             width: 10em;
             text-align: left;
         }
 
-        .bp3-tabs {
+        .bp4-tabs {
             margin: 2px;
         }
 

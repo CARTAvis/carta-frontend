@@ -17,7 +17,7 @@ export const SWATCH_COLORS = [
     Colors.TURQUOISE3,
     Colors.FOREST3,
     Colors.GOLD3,
-    Colors.COBALT3,
+    Colors.CERULEAN3,
     Colors.LIGHT_GRAY3,
     Colors.DARK_GRAY3,
     Colors.WHITE,

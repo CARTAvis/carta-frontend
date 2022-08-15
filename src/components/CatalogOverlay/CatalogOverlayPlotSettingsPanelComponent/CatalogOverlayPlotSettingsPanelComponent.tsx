@@ -3,9 +3,9 @@ import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
 import * as React from "react";
 import classNames from "classnames";
-import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
+import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, PopoverPosition, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
+import {Select2, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import {AppStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, CatalogOnlineQueryProfileStore} from "stores";
 import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, ValueClip} from "stores/widgets";
 import {CatalogOverlayComponent} from "components";
@@ -20,7 +20,7 @@ const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: 
         fillColor = "none";
     }
     return (
-        <span className="bp3-icon">
+        <span className="bp4-icon">
             <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
                 {path}
             </svg>
@@ -148,12 +148,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const disableOrientationMap = disabledOverlayPanel || widgetStore.disableOrientationMap;
         const disableSizeMinorMap = disableSizeMap || widgetStore.disableSizeMinorMap;
 
-        const noResults = <MenuItem disabled={true} text="No results" />;
+        const noResults = <MenuItem2 disabled={true} text="No results" />;
 
         const sizeMajor = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
-                    <Select
+                    <Select2
                         items={this.axisOption}
                         activeItem={null}
                         onItemSelect={columnName => widgetStore.setSizeMap(columnName)}
@@ -166,7 +166,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         resetOnSelect={true}
                     >
                         <Button text={widgetStore.sizeMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" />
-                    </Select>
+                    </Select2>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.sizeScalingType} onItemSelect={type => widgetStore.setSizeScalingType(type)} disabled={disableSizeMap} />
@@ -223,7 +223,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const sizeMinor = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
-                    <Select
+                    <Select2
                         items={this.axisOption}
                         activeItem={null}
                         onItemSelect={columnName => widgetStore.setSizeMinorMap(columnName)}
@@ -236,7 +236,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         resetOnSelect={true}
                     >
                         <Button text={widgetStore.sizeMinorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" />
-                    </Select>
+                    </Select2>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMinorMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.sizeMinorScalingType} onItemSelect={type => widgetStore.setSizeMinorScalingType(type)} disabled={disableSizeMinorMap} />
@@ -378,7 +378,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
-                    <Select
+                    <Select2
                         items={this.axisOption}
                         activeItem={null}
                         onItemSelect={columnName => widgetStore.setColorMapColumn(columnName)}
@@ -391,7 +391,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         resetOnSelect={true}
                     >
                         <Button text={widgetStore.colorMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" />
-                    </Select>
+                    </Select2>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableColorMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.colorScalingType} onItemSelect={type => widgetStore.setColorScalingType(type)} disabled={disableColorMap} />
@@ -428,7 +428,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
         const orientationMap = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Column" disabled={disabledOverlayPanel}>
-                    <Select
+                    <Select2
                         items={this.axisOption}
                         activeItem={null}
                         onItemSelect={columnName => widgetStore.setOrientationMapColumn(columnName)}
@@ -441,7 +441,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         resetOnSelect={true}
                     >
                         <Button text={widgetStore.orientationMapColumn} disabled={disabledOverlayPanel} rightIcon="double-caret-vertical" />
-                    </Select>
+                    </Select2>
                 </FormGroup>
                 <FormGroup label={"Scaling"} inline={true} disabled={disableOrientationMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.orientationScalingType} onItemSelect={type => widgetStore.setOrientationScalingType(type)} disabled={disableOrientationMap} />
@@ -492,13 +492,13 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 />
             </div>
         );
-        const className = classNames("catalog-settings", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("catalog-settings", {"bp4-dark": appStore.darkTheme});
 
         return (
             <div className={className}>
                 <FormGroup className={"file-menu"} inline={true} label="File" disabled={disabledOverlayPanel}>
-                    <Select
-                        className="bp3-fill"
+                    <Select2
+                        className="bp4-fill"
                         disabled={disabledOverlayPanel}
                         filterable={false}
                         items={catalogFileItems}
@@ -508,11 +508,11 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                     >
                         <Button text={activeFileName} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} />
-                    </Select>
+                    </Select2>
                 </FormGroup>
                 <FormGroup inline={true} label="Shape" disabled={disabledOverlayPanel}>
-                    <Select
-                        className="bp3-fill"
+                    <Select2
+                        className="bp4-fill"
                         disabled={disabledOverlayPanel}
                         filterable={false}
                         items={this.catalogOverlayShape}
@@ -522,7 +522,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                     >
                         <Button icon={this.getCatalogShape(widgetStore.catalogShape)} rightIcon="double-caret-vertical" disabled={disabledOverlayPanel} />
-                    </Select>
+                    </Select2>
                 </FormGroup>
                 <Tabs id="catalogSettings" vertical={false} selectedTabId={widgetStore.settingsTabId} onChange={tabId => this.handleSelectedTabChanged(tabId)}>
                     <Tab id={CatalogSettingsTabs.SIZE} title="Size" panel={sizeMap} disabled={disabledOverlayPanel} />
@@ -534,7 +534,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     }
 
     private renderAxisPopOver = (catalogName: string, itemProps: IItemRendererProps) => {
-        return <MenuItem key={catalogName} text={catalogName} onClick={itemProps.handleClick} />;
+        return <MenuItem2 key={catalogName} text={catalogName} onClick={itemProps.handleClick} />;
     };
 
     private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
@@ -587,12 +587,12 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
     private renderFileIdPopOver = (fileId: number, itemProps: IItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
         let text = `${fileId}: ${fileName}`;
-        return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem2 key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     private renderShapePopOver = (shape: CatalogOverlayShape, itemProps: IItemRendererProps) => {
         const shapeItem = this.getCatalogShape(shape);
-        return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem2 icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     private handleSelectedTabChanged = (newTabId: React.ReactText) => {

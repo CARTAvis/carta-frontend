@@ -2,8 +2,8 @@ import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, ButtonGroup, Checkbox, Intent, Menu, MenuItem, Position} from "@blueprintjs/core";
-import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, ButtonGroup, Checkbox, Intent, Menu, Position} from "@blueprintjs/core";
+import {MenuItem2, Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {AppStore} from "stores";
 import {MultiProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
@@ -53,7 +53,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
             }
         }
 
-        const className = classNames("category-set", {"bp3-dark": AppStore.Instance.darkTheme});
+        const className = classNames("category-set", {"bp4-dark": AppStore.Instance.darkTheme});
 
         return (
             <div className={className}>
@@ -64,7 +64,7 @@ class ProfileSelectionButtonComponent extends React.Component<ProfileSelectionBu
                     content={
                         <Menu>
                             {this.props.itemOptions?.map((item, index) => (
-                                <MenuItem
+                                <MenuItem2
                                     key={item.value}
                                     text={item.active ? <b>{item.label}</b> : item.label}
                                     disabled={item?.disabled}

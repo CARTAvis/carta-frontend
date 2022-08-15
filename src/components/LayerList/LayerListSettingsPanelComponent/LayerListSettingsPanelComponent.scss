@@ -3,13 +3,13 @@
 .layer-list-settings-panel {
     margin: 20px;
 
-    .bp3-form-group {
+    .bp4-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
     }
 
-    .bp3-button-text {
+    .bp4-button-text {
         display: block;
         white-space: nowrap;
         overflow: hidden;
@@ -17,15 +17,15 @@
     }
 
     .name-text {
-        .bp3-label {
+        .bp4-label {
             width: 110px;
         }
 
-        .bp3-button {
+        .bp4-button {
             width: 200px;
         }
 
-        .bp3-form-content {
+        .bp4-form-content {
             display: flex;
             width: calc(100% - 120px);
             line-height: 30px;
@@ -48,14 +48,14 @@
     .freq-input {
         display: flex;
 
-        .bp3-label {
+        .bp4-label {
             width: 110px;
         }
 
-        .bp3-form-group {
+        .bp4-form-group {
             margin-right: 7px;
 
-            .bp3-input-group {
+            .bp4-input-group {
                 width: 130px;
             }
         }

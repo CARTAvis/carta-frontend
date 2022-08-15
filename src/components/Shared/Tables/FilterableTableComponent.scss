@@ -1,4 +1,4 @@
-.bp3-table-header-content .bp3-checkbox {
+.bp4-table-header-content .bp4-checkbox {
     margin: 0 0 0 10px;
 }
 
@@ -7,29 +7,29 @@
 }
 
 .column-filter-table {
-    .bp3-table-selection-region {
+    .bp4-table-selection-region {
         border: 0px;
         background-color: rgba(255, 255, 255, 0);
     }
 
-    .bp3-table-region {
+    .bp4-table-region {
         border: 0px;
         background-color: rgba(255, 255, 255, 0);
     }
 
-    .bp3-table-header.bp3-table-header-selected::before {
+    .bp4-table-header.bp4-table-header-selected::before {
         background-image: none;
     }
 
-    label.bp3-label .bp3-popover2-target {
+    label.bp4-label .bp4-popover2-target {
         margin-top: 0px;
     }
 
-    .bp3-popover2-target {
+    .bp4-popover2-target {
         width: inherit;
 
-        .bp3-input-group {
-            .bp3-input {
+        .bp4-input-group {
+            .bp4-input {
                 border-radius: 0px;
                 vertical-align: baseline;
                 box-shadow: none;
@@ -38,7 +38,7 @@
         }
     }
 
-    .sort-label .bp3-label {
+    .sort-label .bp4-label {
         margin-bottom: 0px;
     }
 }

@@ -26,7 +26,7 @@ export class App extends React.Component {
         switch (alertStore.alertType) {
             case AlertType.Info:
                 return (
-                    <Alert icon={alertStore.alertIcon} className={classNames({"bp3-dark": darkTheme})} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                    <Alert icon={alertStore.alertIcon} className={classNames({"bp4-dark": darkTheme})} isOpen={alertStore.alertVisible} onClose={alertStore.dismissAlert} canEscapeKeyCancel={true}>
                         <p>{alertStore.alertText}</p>
                     </Alert>
                 );
@@ -34,7 +34,7 @@ export class App extends React.Component {
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
-                        className={classNames({"bp3-dark": darkTheme})}
+                        className={classNames({"bp4-dark": darkTheme})}
                         isOpen={alertStore.alertVisible}
                         confirmButtonText="OK"
                         cancelButtonText="Cancel"
@@ -56,7 +56,7 @@ export class App extends React.Component {
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
-                        className={classNames({"bp3-dark": darkTheme})}
+                        className={classNames({"bp4-dark": darkTheme})}
                         isOpen={alertStore.alertVisible}
                         confirmButtonText="Retry"
                         {...cancelProps}
@@ -74,7 +74,7 @@ export class App extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const className = classNames("App", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("App", {"bp4-dark": appStore.darkTheme});
         const glClassName = classNames("gl-container-app", {"dark-theme": appStore.darkTheme});
 
         const alertComponent = this.renderAlertComponent(appStore.alertStore, appStore.darkTheme);

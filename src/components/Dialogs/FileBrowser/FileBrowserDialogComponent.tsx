@@ -3,8 +3,8 @@ import * as _ from "lodash";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable, runInAction} from "mobx";
-import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, BreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
-import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {Alert, AnchorButton, Breadcrumb, Button, BreadcrumbProps, Icon, DialogProps, InputGroup, Intent, Menu, Position, TabId} from "@blueprintjs/core";
+import {MenuItem2, Popover2, Tooltip2, Breadcrumbs2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
@@ -301,10 +301,10 @@ export class FileBrowserDialogComponent extends React.Component {
                     if (fileBrowserStore.isComplexImage && fileBrowserStore.selectedFiles?.length === 1) {
                         const loadMenuItems = (
                             <Menu>
-                                <MenuItem text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
-                                <MenuItem text="Phase" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "PHASE")} />
-                                <MenuItem text="Real" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "REAL")} />
-                                <MenuItem text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "IMAG")} />
+                                <MenuItem2 text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
+                                <MenuItem2 text="Phase" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "PHASE")} />
+                                <MenuItem2 text="Real" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "REAL")} />
+                                <MenuItem2 text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "IMAG")} />
                             </Menu>
                         );
                         return (
@@ -340,10 +340,10 @@ export class FileBrowserDialogComponent extends React.Component {
                     if (fileBrowserStore.isComplexImage && fileBrowserStore.selectedFiles?.length === 1) {
                         const loadMenuItems = (
                             <Menu>
-                                <MenuItem text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
-                                <MenuItem text="Phase" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "PHASE")} />
-                                <MenuItem text="Real" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "REAL")} />
-                                <MenuItem text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "IMAG")} />
+                                <MenuItem2 text="Amplitude" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "AMPLITUDE")} />
+                                <MenuItem2 text="Phase" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "PHASE")} />
+                                <MenuItem2 text="Real" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "REAL")} />
+                                <MenuItem2 text="Imaginary" intent={Intent.PRIMARY} disabled={actionDisabled} onClick={() => this.loadComplexImage(fileBrowserStore.selectedFile.name, "IMAG")} />
                             </Menu>
                         );
 
@@ -422,8 +422,8 @@ export class FileBrowserDialogComponent extends React.Component {
                 minimal={true}
                 content={
                     <Menu>
-                        <MenuItem text="World Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.WORLD)} />
-                        <MenuItem text="Pixel Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.PIXEL)} />
+                        <MenuItem2 text="World Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.WORLD)} />
+                        <MenuItem2 text="Pixel Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.PIXEL)} />
                     </Menu>
                 }
                 position={Position.BOTTOM_RIGHT}
@@ -439,8 +439,8 @@ export class FileBrowserDialogComponent extends React.Component {
                 minimal={true}
                 content={
                     <Menu>
-                        <MenuItem text="CRTF Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)} />
-                        <MenuItem text="DS9 Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.DS9_REG)} />
+                        <MenuItem2 text="CRTF Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)} />
+                        <MenuItem2 text="DS9 Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.DS9_REG)} />
                     </Menu>
                 }
                 position={Position.BOTTOM_RIGHT}
@@ -468,8 +468,8 @@ export class FileBrowserDialogComponent extends React.Component {
                 minimal={true}
                 content={
                     <Menu>
-                        <MenuItem text="CASA" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.CASA)} />
-                        <MenuItem text="FITS" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.FITS)} />
+                        <MenuItem2 text="CASA" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.CASA)} />
+                        <MenuItem2 text="FITS" onClick={() => fileBrowserStore.setSaveFileType(CARTA.FileType.FITS)} />
                     </Menu>
                 }
                 position={Position.BOTTOM_RIGHT}
@@ -511,9 +511,9 @@ export class FileBrowserDialogComponent extends React.Component {
                 minimal={true}
                 content={
                     <Menu>
-                        <MenuItem text="Fuzzy search" onClick={() => this.setFilterType(FileFilteringType.Fuzzy)} />
-                        <MenuItem text="Unix pattern" onClick={() => this.setFilterType(FileFilteringType.Unix)} />
-                        <MenuItem text="Regular expression" onClick={() => this.setFilterType(FileFilteringType.Regex)} />
+                        <MenuItem2 text="Fuzzy search" onClick={() => this.setFilterType(FileFilteringType.Fuzzy)} />
+                        <MenuItem2 text="Unix pattern" onClick={() => this.setFilterType(FileFilteringType.Unix)} />
+                        <MenuItem2 text="Regular expression" onClick={() => this.setFilterType(FileFilteringType.Regex)} />
                     </Menu>
                 }
                 placement="bottom-end"
@@ -530,8 +530,8 @@ export class FileBrowserDialogComponent extends React.Component {
                     minimal={true}
                     content={
                         <Menu>
-                            <MenuItem text="List filtering" onClick={() => this.setEnableImageArithmetic(false)} />
-                            <MenuItem text="Image arithmetic" onClick={() => this.setEnableImageArithmetic(true)} />
+                            <MenuItem2 text="List filtering" onClick={() => this.setEnableImageArithmetic(false)} />
+                            <MenuItem2 text="Image arithmetic" onClick={() => this.setEnableImageArithmetic(true)} />
                         </Menu>
                     }
                     placement="bottom-start"
@@ -601,9 +601,9 @@ export class FileBrowserDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
-        const className = classNames("file-browser-dialog", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("file-browser-dialog", {"bp4-dark": appStore.darkTheme});
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "folder-open",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
@@ -666,11 +666,11 @@ export class FileBrowserDialogComponent extends React.Component {
                             <Tooltip2 content={"Refresh current directory"}>
                                 <AnchorButton className="refresh-button" icon="repeat" onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)} minimal={true} />
                             </Tooltip2>
-                            <Breadcrumbs className="path-breadcrumbs" breadcrumbRenderer={this.renderBreadcrumb} items={this.pathItems} />
+                            <Breadcrumbs2 className="path-breadcrumbs" breadcrumbRenderer={this.renderBreadcrumb} items={this.pathItems} />
                         </React.Fragment>
                     )}
                 </div>
-                <div className="bp3-dialog-body">
+                <div className="bp4-dialog-body">
                     <div className={paneClassName}>
                         <div className="file-list">
                             <FileListTableComponent
@@ -711,14 +711,14 @@ export class FileBrowserDialogComponent extends React.Component {
                     </div>
                     {fileInput}
                 </div>
-                <div className="bp3-dialog-footer">
-                    <div className="bp3-dialog-footer-actions">
+                <div className="bp4-dialog-footer">
+                    <div className="bp4-dialog-footer-actions">
                         <AnchorButton intent={Intent.NONE} onClick={this.closeFileBrowser} disabled={appStore.fileLoading} text="Close" />
                         {actionButton}
                     </div>
                 </div>
                 <Alert
-                    className={appStore.darkTheme ? "bp3-dark" : ""}
+                    className={appStore.darkTheme ? "bp4-dark" : ""}
                     isOpen={this.overwriteExistingFileAlertVisible}
                     confirmButtonText="Yes"
                     cancelButtonText="Cancel"
@@ -753,7 +753,7 @@ export class FileBrowserDialogComponent extends React.Component {
     private renderBreadcrumb = (props: BreadcrumbProps) => {
         return (
             <Breadcrumb onClick={props.onClick} className="folder-breadcrumb">
-                {props.icon && <Icon iconSize={14} icon={props.icon} />}
+                {props.icon && <Icon size={14} icon={props.icon} />}
                 {props.text}
             </Breadcrumb>
         );

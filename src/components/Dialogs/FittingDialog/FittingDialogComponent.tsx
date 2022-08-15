@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, Classes, Dialog, FormGroup, HTMLSelect, Icon, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Tab, Tabs, Text} from "@blueprintjs/core";
+import {AnchorButton, Classes, Dialog, FormGroup, HTMLSelect, Icon, DialogProps, Intent, NonIdealState, Position, Pre, Slider, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {AppStore, HelpType} from "stores";
@@ -38,7 +38,7 @@ export class FittingDialogComponent extends React.Component {
         const fittingStore = appStore.imageFittingStore;
         let component = fittingStore.components[fittingStore.selectedComponentIndex];
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,
             className: "fitting-dialog",
             backdropClassName: "minimal-dialog-backdrop",
@@ -128,7 +128,7 @@ export class FittingDialogComponent extends React.Component {
                         <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
                     </Tabs>
                 </div>
-                <Dialog className={classNames(Classes.ALERT, {"bp3-dark": appStore.darkTheme})} isOpen={fittingStore.isFitting}>
+                <Dialog className={classNames(Classes.ALERT, {"bp4-dark": appStore.darkTheme})} isOpen={fittingStore.isFitting}>
                     <div className={Classes.ALERT_BODY}>
                         <Icon icon="time" iconSize={40} />
                         <div className={Classes.ALERT_CONTENTS}>

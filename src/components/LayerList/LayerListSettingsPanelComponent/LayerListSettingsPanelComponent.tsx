@@ -5,8 +5,9 @@ import {computed, makeObservable} from "mobx";
 import {AppStore, WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
 import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/widgets";
 import {SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType, FrequencyUnit} from "models";
-import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
-import {IItemRendererProps, Select} from "@blueprintjs/select";
+import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
+import {MenuItem2} from "@blueprintjs/popover2";
+import {IItemRendererProps, Select2} from "@blueprintjs/select";
 import {ClearableNumericInputComponent} from "components/Shared";
 import "./LayerListSettingsPanelComponent.scss";
 
@@ -49,7 +50,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
 
     private renderFrameOptions = (val: number, itemProps: IItemRendererProps) => {
         const option = this.widgetStore.restFreqFrameOptions.find(option => option.frameIndex === val);
-        return <MenuItem key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem2 key={option?.frameIndex} text={option?.label} disabled={option?.disable} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     private renderRestFreqInput = frameOption => {
@@ -105,7 +106,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
             restFreqPanel = (
                 <div className="panel-container">
                     <FormGroup inline={true} label="Source" className="name-text">
-                        <Select
+                        <Select2
                             filterable={false}
                             items={this.widgetStore.restFreqFrameOptions.map(option => option.frameIndex)}
                             activeItem={selectedFrameIndex}
@@ -114,7 +115,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                             popoverProps={{minimal: true, position: PopoverPosition.AUTO_END}}
                         >
                             <Button text={fileText} rightIcon="double-caret-vertical" alignText={Alignment.LEFT} />
-                        </Select>
+                        </Select2>
                     </FormGroup>
                     {this.renderRestFreqInput(inputFrame)}
                 </div>

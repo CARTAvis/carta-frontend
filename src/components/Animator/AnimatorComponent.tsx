@@ -2,8 +2,8 @@ import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Position, Radio, RangeSlider, Slider} from "@blueprintjs/core";
-import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, NonIdealState, NumberRange, Position, Radio, RangeSlider, Slider} from "@blueprintjs/core";
+import {MenuItem2, Popover2, Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {AnimationMode, PlayMode, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
 import {SafeNumericInput} from "components/Shared";
@@ -322,17 +322,17 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         }
 
         const playbackClass = classNames("animator-playback", {wrap: hideSliders});
-        const playbackModeClass = classNames("playback-mode", {"bp3-dark": appStore.darkTheme});
+        const playbackModeClass = classNames("playback-mode", {"bp4-dark": appStore.darkTheme});
 
         const playbackModeButton = (
             <Popover2
                 className={playbackModeClass}
                 content={
                     <Menu>
-                        <MenuItem icon="arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.FORWARD)} />
-                        <MenuItem icon="arrow-left" text="Play Backwards" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.BACKWARD)} />
-                        <MenuItem icon="swap-horizontal" text="Bouncing" active={appStore.animatorStore.playMode === PlayMode.BOUNCING} onClick={() => (appStore.animatorStore.playMode = PlayMode.BOUNCING)} />
-                        <MenuItem icon="exchange" text="Blink" active={appStore.animatorStore.playMode === PlayMode.BLINK} onClick={() => (appStore.animatorStore.playMode = PlayMode.BLINK)} />
+                        <MenuItem2 icon="arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.FORWARD)} />
+                        <MenuItem2 icon="arrow-left" text="Play Backwards" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.BACKWARD)} />
+                        <MenuItem2 icon="swap-horizontal" text="Bouncing" active={appStore.animatorStore.playMode === PlayMode.BOUNCING} onClick={() => (appStore.animatorStore.playMode = PlayMode.BOUNCING)} />
+                        <MenuItem2 icon="exchange" text="Blink" active={appStore.animatorStore.playMode === PlayMode.BLINK} onClick={() => (appStore.animatorStore.playMode = PlayMode.BLINK)} />
                     </Menu>
                 }
                 position={Position.TOP}

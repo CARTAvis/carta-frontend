@@ -6,13 +6,13 @@
     flex-direction: column;
     user-select: none;
 
-    .bp3-numeric-input {
-        .bp3-input-group {
+    .bp4-numeric-input {
+        .bp4-input-group {
             width: 80px;
         }
     }
 
-    .bp3-non-ideal-state {
+    .bp4-non-ideal-state {
         flex: auto;
         padding: 5px 5px 1px;
         margin: 0;
@@ -23,16 +23,16 @@
         padding: 5px 5px 1px;
         margin: 0;
 
-        .bp3-form-group {
+        .bp4-form-group {
             margin-right: 10px;
-            .bp3-label {
+            .bp4-label {
                 margin: 0px;
                 width: 12em;
             }
         }
 
         .label-info-group {
-            .bp3-html-select {
+            .bp4-html-select {
                 width: 150px;
             }
 

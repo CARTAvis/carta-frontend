@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
+import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, OptionProps, NonIdealState, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {Popover2, Popover2InteractionKind} from "@blueprintjs/popover2";
 import {FixedSizeList as List} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -25,7 +25,7 @@ export enum FileInfoType {
 @observer
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[];
-    HDUOptions?: {HDUList: IOptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
+    HDUOptions?: {HDUList: OptionProps[]; handleSelectedHDUChange: (hdu: string) => void};
     fileInfoExtended: CARTA.IFileInfoExtended;
     regionFileInfo: string;
     catalogFileInfo: CARTA.ICatalogFileInfo;
@@ -386,7 +386,7 @@ export class FileInfoComponent extends React.Component<{
         return (
             <AutoSizer>
                 {({height, width}) => (
-                    <List className="header-list bp3-code-block" itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
+                    <List className="header-list bp4-code-block" itemCount={numHeaders} itemSize={18} height={height} width={width} ref={this.listRef}>
                         {renderHeaderRow}
                     </List>
                 )}

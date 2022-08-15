@@ -1,7 +1,7 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {Classes, Drawer, IDrawerProps} from "@blueprintjs/core";
+import {Classes, Drawer, DrawerProps} from "@blueprintjs/core";
 import {
     ANIMATOR_HELP_CONTENT,
     CATALOG_HISTOGRAM_PLOT_HELP_CONTENT,
@@ -112,9 +112,9 @@ const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
 export class HelpDrawerComponent extends React.Component {
     render() {
         const helpStore = HelpStore.Instance;
-        const className = classNames("help-drawer", {"bp3-dark": AppStore.Instance.darkTheme});
+        const className = classNames("help-drawer", {"bp4-dark": AppStore.Instance.darkTheme});
 
-        const drawerProps: IDrawerProps = {
+        const drawerProps: DrawerProps = {
             icon: "help",
             className: className,
             lazy: true,

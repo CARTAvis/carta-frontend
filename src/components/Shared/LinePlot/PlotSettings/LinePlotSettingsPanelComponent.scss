@@ -2,17 +2,17 @@
     width: 100%;
     margin-top: 10px;
 
-    .bp3-tab-panel {
+    .bp4-tab-panel {
         height: 22em;
         overflow: auto;
         width: 100%;
     }
 
-    .bp3-form-group {
+    .bp4-form-group {
         &:first-of-type {
             margin-left: 0px;
         }
-        .bp3-label {
+        .bp4-label {
             width: 10em;
 
             .line-label {
@@ -26,14 +26,14 @@
         }
     }
 
-    .bp3-numeric-input {
-        .bp3-input-group {
+    .bp4-numeric-input {
+        .bp4-input-group {
             width: 60px;
         }
     }
 
     .line-boundary {
-        .bp3-input-group {
+        .bp4-input-group {
             input {
                 width: 10em;
             }

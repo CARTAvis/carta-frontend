@@ -3,14 +3,14 @@
     width: 100%;
 
     .online-catalog-config {
-        .bp3-form-group {
-            .bp3-label {
+        .bp4-form-group {
+            .bp4-label {
                 margin-left: 5px !important;
             }
-            .bp3-form-content {
+            .bp4-form-content {
                 display: inline-flex;
             }
-            .bp3-form-content > * {
+            .bp4-form-content > * {
                 margin-right: 5px;
                 margin-left: 5px;
             }
@@ -26,13 +26,13 @@
         }
     }
 
-    .bp3-dialog-footer {
+    .bp4-dialog-footer {
         .result-info {
             display: inline-flex;
             font-size: x-small;
         }
 
-        .bp3-dialog-footer-actions {
+        .bp4-dialog-footer-actions {
             float: right;
         }
     }
@@ -48,8 +48,8 @@
 }
 
 .vizier-mulit-select {
-    .bp3-popover-content {
-        .bp3-menu {
+    .bp4-popover-content {
+        .bp4-menu {
             max-height: 200px;
             overflow: auto;
             min-width: fit-content;

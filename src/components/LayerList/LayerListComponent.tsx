@@ -2,9 +2,9 @@ import * as React from "react";
 import {CSSProperties} from "react";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table, IMenuContext} from "@blueprintjs/table";
+import {AnchorButton, Menu, MenuDivider, NonIdealState} from "@blueprintjs/core";
+import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
+import {Cell, Column, RowHeaderCell2, SelectionModes, Table2, IMenuContext, ColumnHeaderCell2} from "@blueprintjs/table";
 import classNames from "classnames";
 import ReactResizeDetector from "react-resize-detector";
 import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore} from "stores";
@@ -59,7 +59,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     private rowHeaderCellRenderer = (rowIndex: number) => {
         const className = classNames("row-cell", {active: rowIndex === AppStore.Instance.activeFrameIndex});
-        return <RowHeaderCell name={rowIndex.toString()} className={className} />;
+        return <RowHeaderCell2 name={rowIndex.toString()} className={className} />;
     };
 
     private onFileSelected = (frame: FrameStore) => {
@@ -324,7 +324,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             fontWeight: "bold"
         };
 
-        return <ColumnHeaderCell name={name} style={columnHeaderStyleProps} />;
+        return <ColumnHeaderCell2 name={name} style={columnHeaderStyleProps} />;
     };
 
     private restFreqShortCutOnClick = (selectedFrameIndex: number) => {
@@ -346,15 +346,15 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 return (
                     <Menu>
                         <MenuDivider title={frame.filename} />
-                        <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
-                        <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
-                        <MenuItem disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
+                        <MenuItem2 disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)} />
+                        <MenuItem2 disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)} />
+                        <MenuItem2 disabled={appStore.rasterScalingReference === frame} text="Set as raster scaling reference" onClick={() => appStore.setRasterScalingReference(frame)} />
                         <MenuDivider />
-                        <MenuItem disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />
+                        <MenuItem2 disabled={!frame.isRestFreqEditable} text="Set rest frequency" onClick={() => this.restFreqShortCutOnClick(rows[0])} />
                         <MenuDivider />
-                        <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)} />
-                        <MenuItem text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />
-                        <MenuItem text="Close all images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(null, false)} />
+                        <MenuItem2 text="Close image" onClick={() => appStore.closeFile(frame)} />
+                        <MenuItem2 text="Close other images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(frame)} />
+                        <MenuItem2 text="Close all images" disabled={appStore.frames?.length <= 1} onClick={() => appStore.closeOtherFiles(null, false)} />
                     </Menu>
                 );
             }
@@ -394,7 +394,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <div className="layer-list-widget">
                 {this.width > 0 && (
-                    <Table
+                    <Table2
                         numRows={frameNum}
                         rowHeaderCellRenderer={this.rowHeaderCellRenderer}
                         enableRowHeader={true}
@@ -413,7 +413,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.matchingRenderer} />
                         <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.channelRenderer} />
                         <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer} />
-                    </Table>
+                    </Table2>
                 )}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
             </div>

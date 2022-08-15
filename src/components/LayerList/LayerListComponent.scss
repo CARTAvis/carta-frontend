@@ -10,18 +10,18 @@
         cursor: pointer;
     }
 
-    .bp3-table-column-name {
+    .bp4-table-column-name {
         font-size: 12px;
     }
 
-    .bp3-button {
+    .bp4-button {
         font-size: 11px;
 
-        &.bp3-small {
+        &.bp4-small {
             min-height: 13px;
         }
 
-        .bp3-button-text {
+        .bp4-button-text {
             line-height: 13px;
         }
 
@@ -39,14 +39,14 @@
             font-weight: bold;
         }
 
-        .bp3-popover2-target:last-of-type {
-            .bp3-button {
+        .bp4-popover2-target:last-of-type {
+            .bp4-button {
                 margin-right: 0;
             }
         }
     }
 
-    .bp3-popover-wrapper + .bp3-popover-wrapper {
+    .bp4-popover-wrapper + .bp4-popover-wrapper {
         margin-left: 2px;
     }
 }

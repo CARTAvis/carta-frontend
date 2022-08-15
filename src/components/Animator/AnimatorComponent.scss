@@ -13,31 +13,31 @@
             width: 100%;
             margin-bottom: 5px;
 
-            .bp3-radio {
+            .bp4-radio {
                 flex: 1 1 135px;
             }
 
-            .bp3-slider {
+            .bp4-slider {
                 flex: 3 3 auto;
                 margin-right: 15px;
             }
 
-            .bp3-slider-label {
+            .bp4-slider-label {
                 white-space: nowrap;
             }
 
-            .bp3-input-group {
+            .bp4-input-group {
                 max-width: 80px;
             }
 
             &.tiled-label {
-                .bp3-slider-axis {
-                    .bp3-slider-label {
+                .bp4-slider-axis {
+                    .bp4-slider-label {
                         transform: matrix(0.866, 0.5, -0.5, 0.866, -25, 25);
                     }
                 }
-                .bp3-slider-handle {
-                    .bp3-slider-label {
+                .bp4-slider-handle {
+                    .bp4-slider-label {
                         transform: matrix(0.866, 0.5, -0.5, 0.866, -25, 25);
                     }
                 }
@@ -53,8 +53,8 @@
             &.range-slider {
                 position: relative;
                 height: 30px;
-                .bp3-slider {
-                    .bp3-slider-axis {
+                .bp4-slider {
+                    .bp4-slider-axis {
                         display: none;
                     }
                     top: -5px;
@@ -79,8 +79,8 @@
             height: 20px;
 
             // Re-center button icons
-            .bp3-button {
-                .bp3-icon {
+            .bp4-button {
+                .bp4-icon {
                     position: relative;
                     left: 3px;
                 }
@@ -94,11 +94,11 @@
         .playback-numeric-control {
             min-width: 180px;
             flex: 1 1 180px;
-            .bp3-html-select {
+            .bp4-html-select {
                 width: 115px;
             }
-            .bp3-numeric-input {
-                .bp3-input-group {
+            .bp4-numeric-input {
+                .bp4-input-group {
                     width: 35px;
                 }
             }

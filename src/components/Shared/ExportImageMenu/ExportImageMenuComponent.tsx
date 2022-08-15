@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {MenuDivider, MenuItem} from "@blueprintjs/core";
+import {MenuDivider} from "@blueprintjs/core";
+import {MenuItem2} from "@blueprintjs/popover2";
 import {AppStore} from "stores";
 
 @observer
@@ -10,9 +11,9 @@ export class ExportImageMenuComponent extends React.Component {
         return (
             <React.Fragment>
                 <MenuDivider title="Resolution" />
-                <MenuItem text="Normal (100%)" label={`${appStore.modifierString}E`} onClick={() => appStore.exportImage(1)} />
-                <MenuItem text="High (200%)" onClick={() => appStore.exportImage(2)} />
-                <MenuItem text="Highest (400%)" onClick={() => appStore.exportImage(4)} />
+                <MenuItem2 text="Normal (100%)" label={`${appStore.modifierString}E`} onClick={() => appStore.exportImage(1)} />
+                <MenuItem2 text="High (200%)" onClick={() => appStore.exportImage(2)} />
+                <MenuItem2 text="Highest (400%)" onClick={() => appStore.exportImage(4)} />
             </React.Fragment>
         );
     }

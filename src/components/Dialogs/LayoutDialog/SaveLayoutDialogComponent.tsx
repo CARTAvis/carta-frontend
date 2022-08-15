@@ -2,7 +2,7 @@ import * as React from "react";
 import classNames from "classnames";
 import {observable, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, InputGroup, IDialogProps, Button, Intent, Classes} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, InputGroup, DialogProps, Button, Intent, Classes} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
@@ -60,9 +60,9 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("preference-dialog", {"bp4-dark": appStore.darkTheme});
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "layout-grid",
             backdropClassName: "minimal-dialog-backdrop",
             className: className,

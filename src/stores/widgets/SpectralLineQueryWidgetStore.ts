@@ -1,6 +1,6 @@
 import {action, autorun, computed, observable, makeObservable, flow} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
-import {Table} from "@blueprintjs/table";
+import {Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
 import {SplatalogueService} from "services";
@@ -144,7 +144,7 @@ export class SpectralLineQueryWidgetStore {
     @observable columnHeaders: Array<CARTA.ICatalogHeader>;
     @observable redshiftType: RedshiftType;
     @observable redshiftInput: number;
-    @observable queryResultTableRef: Table;
+    @observable queryResultTableRef: Table2;
     @observable private queryResult: Map<number, ProcessedColumnData>;
     @observable filterResult: Map<number, ProcessedColumnData>;
     @observable private filteredRowIndexes: Array<number>;
@@ -209,7 +209,7 @@ export class SpectralLineQueryWidgetStore {
         });
     };
 
-    @action setQueryResultTableRef(ref: Table) {
+    @action setQueryResultTableRef(ref: Table2) {
         this.queryResultTableRef = ref;
     }
 

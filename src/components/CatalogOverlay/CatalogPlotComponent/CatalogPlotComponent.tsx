@@ -5,9 +5,9 @@ import * as GSL from "gsl_wrapper";
 import Plot from "react-plotly.js";
 import {action, autorun, computed, runInAction, observable, makeObservable, reaction} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, AnchorButton, Intent, Switch, Button, MenuItem, PopoverPosition, NonIdealState} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
+import {FormGroup, AnchorButton, Intent, Switch, Button, PopoverPosition, NonIdealState} from "@blueprintjs/core";
+import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
+import {Select2, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
@@ -545,7 +545,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     };
 
     private renderColumnNamePopOver = (column: string, itemProps: IItemRendererProps) => {
-        return <MenuItem key={column} text={column} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem2 key={column} text={column} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     private filterColumn: ItemPredicate<string> = (query: string, columnName: string) => {
@@ -569,7 +569,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
     private renderFilePopOver = (fileId: number, itemProps: IItemRendererProps) => {
         const fileName = this.catalogFileNames.get(fileId);
         let text = `${fileId}: ${fileName}`;
-        return <MenuItem key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        return <MenuItem2 key={fileId} text={text} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
     private handleFittingClick = (selectedPointIndices: number[]) => {
@@ -657,12 +657,12 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             }
         }
 
-        const noResults = <MenuItem disabled={true} text="No results" />;
+        const noResults = <MenuItem2 disabled={true} text="No results" />;
 
         const renderFileSelect = (
             <FormGroup inline={true} label="File">
-                <Select
-                    className="bp3-fill"
+                <Select2
+                    className="bp4-fill"
                     filterable={false}
                     items={catalogFileItems}
                     activeItem={this.catalogFileId}
@@ -671,14 +671,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                 >
                     <Button text={this.catalogFileId} rightIcon="double-caret-vertical" />
-                </Select>
+                </Select2>
             </FormGroup>
         );
 
         const renderXSelect = (
             <FormGroup inline={true} label="X">
-                <Select
-                    className="bp3-fill"
+                <Select2
+                    className="bp4-fill"
                     items={xyOptions}
                     activeItem={widgetStore.xColumnName}
                     onItemSelect={item => this.handleColumnNameChange("X", item)}
@@ -690,7 +690,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     resetOnSelect={true}
                 >
                     <Button text={widgetStore.xColumnName} rightIcon="double-caret-vertical" />
-                </Select>
+                </Select2>
             </FormGroup>
         );
 
@@ -702,8 +702,8 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
 
         const renderYSelect = (
             <FormGroup inline={true} label="Y">
-                <Select
-                    className="bp3-fill"
+                <Select2
+                    className="bp4-fill"
                     items={xyOptions}
                     activeItem={widgetStore.yColumnName}
                     onItemSelect={item => this.handleColumnNameChange("Y", item)}
@@ -715,14 +715,14 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     resetOnSelect={true}
                 >
                     <Button text={widgetStore.yColumnName} rightIcon="double-caret-vertical" />
-                </Select>
+                </Select2>
             </FormGroup>
         );
 
         const renderStatisticSelect = (
             <FormGroup inline={true} label="Statistic Source">
-                <Select
-                    className="bp3-fill"
+                <Select2
+                    className="bp4-fill"
                     items={xyOptions}
                     activeItem={widgetStore.statisticColumnName}
                     onItemSelect={item => this.handleColumnNameChange("S", item)}
@@ -734,7 +734,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                     resetOnSelect={true}
                 >
                     <Button text={widgetStore.statisticColumnName} rightIcon="double-caret-vertical" />
-                </Select>
+                </Select2>
             </FormGroup>
         );
 
@@ -970,11 +970,11 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
                         style={{transform: isScatterPlot ? `scale(${scale})` : "scale(1)", transformOrigin: "top left"}}
                     />
                 </div>
-                <div className="bp3-dialog-footer">
+                <div className="bp4-dialog-footer">
                     <div className="scatter-info">
                         <ProfilerInfoComponent info={infoStrings} type="pre-line" separator="newLine" />
                     </div>
-                    <div className="bp3-dialog-footer-actions">
+                    <div className="bp4-dialog-footer-actions">
                         <Tooltip2 content={"Show only selected sources at image and table viewer"}>
                             <FormGroup label={"Selected only"} inline={true} disabled={disabled}>
                                 <Switch checked={catalogWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled} />

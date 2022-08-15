@@ -1,9 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
+import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, Position} from "@blueprintjs/core";
+import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
+import {ItemPredicate, ItemRenderer, MultiSelect2} from "@blueprintjs/select";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
@@ -11,7 +11,7 @@ import {AppStore} from "stores";
 import {MOMENT_TEXT} from "models";
 import "./MomentGeneratorComponent.scss";
 
-const MomentMultiSelect = MultiSelect.ofType<CARTA.Moment>();
+const MomentMultiSelect = MultiSelect2.ofType<CARTA.Moment>();
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore}> {
@@ -76,7 +76,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
 
     private renderMomentSelectItem: ItemRenderer<CARTA.Moment> = (moment: CARTA.Moment, {modifiers, handleClick}) => {
         const momentContent = MOMENT_TEXT.get(moment);
-        return momentContent ? <MenuItem text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : undefined;
+        return momentContent ? <MenuItem2 text={`${momentContent.tag}: ${momentContent.text}`} onClick={handleClick} key={moment} icon={this.props.widgetStore.isMomentSelected(moment) ? "tick" : "blank"} /> : undefined;
     };
 
     private handleMomentTagRemove = (tag: string, index: number) => {
@@ -159,7 +159,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip2 content="Use cursor to select channel range in profiler" position={Position.BOTTOM}>
-                                    <AnchorButton className={widgetStore.isSelectingMomentChannelRange ? "bp3-active" : ""} icon="select" onClick={this.handleChannelSelectionClicked} />
+                                    <AnchorButton className={widgetStore.isSelectingMomentChannelRange ? "bp4-active" : ""} icon="select" onClick={this.handleChannelSelectionClicked} />
                                 </Tooltip2>
                             </div>
                         </div>
@@ -189,7 +189,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             </FormGroup>
                             <div className="cursor-select">
                                 <Tooltip2 content="Use cursor to select mask range in profiler" position={Position.BOTTOM}>
-                                    <AnchorButton className={widgetStore.isSelectingMomentMaskRange ? "bp3-active" : ""} icon="select" onClick={this.handleMaskSelectionClicked} />
+                                    <AnchorButton className={widgetStore.isSelectingMomentMaskRange ? "bp4-active" : ""} icon="select" onClick={this.handleMaskSelectionClicked} />
                                 </Tooltip2>
                             </div>
                         </div>

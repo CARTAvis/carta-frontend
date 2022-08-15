@@ -1,6 +1,7 @@
 import * as React from "react";
-import {MenuItem, IPopoverProps, Button} from "@blueprintjs/core";
-import {Select} from "@blueprintjs/select";
+import {Button} from "@blueprintjs/core";
+import {Select2} from "@blueprintjs/select";
+import {MenuItem2, Popover2Props} from "@blueprintjs/popover2";
 import {FrameScaling, RenderConfigStore} from "stores/Frame";
 import "./ScalingSelectComponent.scss";
 
@@ -27,9 +28,9 @@ const equationPngMap = new Map([
     [FrameScaling.POWER, powerPng]
 ]);
 
-const ScalingSelect = Select.ofType<FrameScaling>();
+const ScalingSelect = Select2.ofType<FrameScaling>();
 const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
-export const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
+export const SCALING_POPOVER_PROPS: Partial<Popover2Props> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => {
     const renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers, query}) => {
@@ -37,7 +38,7 @@ export const ScalingSelectComponent: React.FC<ScalingComponentProps> = props => 
             return null;
         }
         return (
-            <MenuItem
+            <MenuItem2
                 active={modifiers.active}
                 disabled={modifiers.disabled}
                 label={RenderConfigStore.SCALING_TYPES.get(scaling)}

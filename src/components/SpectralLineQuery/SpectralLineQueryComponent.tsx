@@ -2,9 +2,9 @@ import * as React from "react";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Position, Spinner, Switch} from "@blueprintjs/core";
-import {Popover2, Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, Overlay, Position, Spinner, Switch} from "@blueprintjs/core";
+import {MenuItem2, Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
 import SplitPane, {Pane} from "react-split-pane";
 import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
@@ -29,8 +29,8 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     @observable height: number;
     @observable widgetId: string;
     @observable headerTableColumnWidths: Array<number>;
-    private headerTableRef: Table;
-    private resultTableRef: Table;
+    private headerTableRef: Table2;
+    private resultTableRef: Table2;
     private scrollToTopHandle;
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -165,7 +165,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         tableColumns.push(columnDescription);
 
         return (
-            <Table
+            <Table2
                 ref={ref => (this.headerTableRef = ref)}
                 numRows={this.widgetStore.columnHeaders?.length}
                 enableRowReordering={false}
@@ -181,7 +181,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 enableRowResizing={false}
             >
                 {tableColumns}
-            </Table>
+            </Table2>
         );
     }
 
@@ -312,7 +312,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 content={
                     <Menu>
                         {AppStore.Instance.widgetsStore.spectralProfilerList.map(widgetID => (
-                            <MenuItem
+                            <MenuItem2
                                 key={widgetID}
                                 text={widgetID}
                                 onMouseEnter={() => this.handleEnterWidgetOption(true, widgetID)}
@@ -352,7 +352,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             tableHeaders: widgetStore.columnHeaders
         };
 
-        const className = classNames("spectral-line-query-widget", {"bp3-dark": appStore.darkTheme});
+        const className = classNames("spectral-line-query-widget", {"bp4-dark": appStore.darkTheme});
         const isSelectedLinesUnderLimit = widgetStore.numSelectedLines <= PLOT_LINES_LIMIT;
 
         const hint = (
@@ -374,7 +374,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 {widgetStore.splataloguePingStatus !== SplataloguePingStatus.Success && <SpectralLineQuerySplashScreenComponent splataloguePingStatus={widgetStore.splataloguePingStatus} onReload={widgetStore.pingSplatalogue} />}
                 {widgetStore.splataloguePingStatus === SplataloguePingStatus.Success && (
                     <React.Fragment>
-                        <div className="bp3-dialog-body">
+                        <div className="bp4-dialog-body">
                             {queryPanel}
                             <SplitPane className="body-split-pane" split="horizontal" primary={"second"} defaultSize={"60%"} minSize={"5%"} onChange={this.onTableResize}>
                                 <Pane className={"header-table-container"}>{this.width > 0 && this.createHeaderTable()}</Pane>
@@ -384,11 +384,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                                 </Pane>
                             </SplitPane>
                         </div>
-                        <div className="bp3-dialog-footer">
+                        <div className="bp4-dialog-footer">
                             <div className="result-table-info">
                                 <pre>{widgetStore.resultTableInfo}</pre>
                             </div>
-                            <div className="bp3-dialog-footer-actions">
+                            <div className="bp4-dialog-footer-actions">
                                 <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
                                     {widgetMenu}
                                 </FormGroup>

@@ -4,32 +4,32 @@
     position: fixed;
     z-index: 100;
     user-select: none;
-    .bp3-overlay.bp3-overlay-scroll-container.bp3-overlay-inline {
+    .bp4-overlay.bp4-overlay-scroll-container.bp4-overlay-inline {
         position: static;
         height: 100%;
         width: 100%;
     }
-    .bp3-overlay-inline .bp3-overlay-content,
-    .bp3-overlay-scroll-container .bp3-overlay-content {
+    .bp4-overlay-inline .bp4-overlay-content,
+    .bp4-overlay-scroll-container .bp4-overlay-content {
         position: static;
         width: 100%;
         height: 100%;
     }
-    .bp3-dialog-container .bp3-dialog {
+    .bp4-dialog-container .bp4-dialog {
         position: static;
         width: 100%;
         height: 100%;
         margin: 0 !important;
     }
-    .bp3-dialog-header {
+    .bp4-dialog-header {
         cursor: move;
     }
-    .bp3-dialog-body {
+    .bp4-dialog-body {
         height: 100%;
         width: auto;
         overflow: auto;
     }
-    .bp3-overlay-backdrop {
+    .bp4-overlay-backdrop {
         display: none;
     }
 }

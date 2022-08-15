@@ -1,10 +1,10 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, FormGroup, IDialogProps, Intent, InputGroup, MenuItem, NonIdealState, Overlay, Spinner, Icon, Position, PopoverPosition} from "@blueprintjs/core";
-import {MultiSelect} from "@blueprintjs/select";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, Select} from "@blueprintjs/select";
+import {AnchorButton, Button, FormGroup, DialogProps, Intent, InputGroup, NonIdealState, Overlay, Spinner, Icon, Position, PopoverPosition} from "@blueprintjs/core";
+import {MultiSelect2} from "@blueprintjs/select";
+import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
+import {IItemRendererProps, Select2} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
 import {AppStore, CatalogOnlineQueryConfigStore, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL, VizierItem} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -65,10 +65,10 @@ export class CatalogQueryDialogComponent extends React.Component {
         const configStore = CatalogOnlineQueryConfigStore.Instance;
         let className = "catalog-query-dialog";
         if (appStore.darkTheme) {
-            className += " bp3-dark";
+            className += " bp4-dark";
         }
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "geosearch",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
@@ -116,7 +116,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const configBoard = (
             <div className="online-catalog-config">
                 <FormGroup inline={false} label="Database" disabled={disable} className={isVizier ? "vizier-databse" : ""}>
-                    <Select
+                    <Select2
                         items={Object.values(CatalogDatabase)}
                         activeItem={null}
                         onItemSelect={db => configStore.setCatalogDB(db)}
@@ -127,7 +127,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                         resetOnSelect={true}
                     >
                         <Button text={configStore.catalogDB} disabled={disable} rightIcon="double-caret-vertical" />
-                    </Select>
+                    </Select2>
                 </FormGroup>
                 {isVizier ? (
                     <FormGroup inline={false} label="Key Words (Catalog Title)" disabled={disable} className={isVizier ? "vizier-key-words" : ""}>
@@ -152,7 +152,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                             onKeyDown={ev => this.handleRadiusChange(ev)}
                         />
                     </Tooltip2>
-                    <Select
+                    <Select2
                         items={Object.values(RadiusUnits)}
                         activeItem={null}
                         onItemSelect={units => configStore.setRadiusUnits(units)}
@@ -163,7 +163,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                         resetOnSelect={true}
                     >
                         <Button text={configStore.radiusUnits} disabled={disable} rightIcon="double-caret-vertical" />
-                    </Select>
+                    </Select2>
                     <Tooltip2 content="Reset Center Coordinates and Search Radius according current image viewer" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button disabled={disable} onClick={() => configStore.resetSearchRadius()}>
                             Set to viewer
@@ -171,7 +171,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </Tooltip2>
                 </FormGroup>
                 <FormGroup inline={false} label="Center Coordinates" disabled={disable}>
-                    <Select
+                    <Select2
                         items={Object.keys(SystemType).map(key => SystemType[key])}
                         activeItem={null}
                         onItemSelect={type => appStore.overlayStore.global.setSystem(type)}
@@ -182,7 +182,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                         resetOnSelect={true}
                     >
                         <Button text={appStore.overlayStore.global.system} disabled={disable} rightIcon="double-caret-vertical" />
-                    </Select>
+                    </Select2>
                     <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
@@ -223,7 +223,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 />
                 {configStore.showVizierResult ? (
                     <FormGroup inline={false} label="VizieR Catalog" disabled={disable}>
-                        <MultiSelect
+                        <MultiSelect2
                             placeholder={"Please select catalog tables"}
                             fill={true}
                             popoverProps={{popoverClassName: "vizier-mulit-select", minimal: true, position: PopoverPosition.TOP}}
@@ -233,7 +233,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                             selectedItems={configStore.vizierSelectedTableName}
                             tagRenderer={item => item.name}
                             itemPredicate={this.filterVizierTable}
-                            noResults={<MenuItem disabled={true} text="No results." />}
+                            noResults={<MenuItem2 disabled={true} text="No results." />}
                             tagInputProps={{
                                 onRemove: v => configStore.removeVizierSelectedTable(v.toString()),
                                 rightElement: <Button icon="cross" minimal={true} onClick={() => configStore.resetVizierSelectedTable()} />,
@@ -257,15 +257,15 @@ export class CatalogQueryDialogComponent extends React.Component {
                 defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
                 enableResizing={true}
             >
-                <div className="bp3-dialog-body">{configBoard}</div>
+                <div className="bp4-dialog-body">{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>
                     <div className="query-loading-overlay">
                         <Spinner intent={Intent.PRIMARY} size={30} value={null} />
                     </div>
                 </Overlay>
-                <div className="bp3-dialog-footer">
+                <div className="bp4-dialog-footer">
                     <div className={"result-info"}>{tableInfo}</div>
-                    <div className="bp3-dialog-footer-actions">
+                    <div className="bp4-dialog-footer-actions">
                         <AnchorButton intent={Intent.SUCCESS} disabled={disable} onClick={() => this.query()} text={"Query"} />
                         <AnchorButton intent={Intent.WARNING} disabled={!configStore.isQuerying} onClick={() => CatalogApiService.Instance.cancleQuery(configStore.catalogDB)} text={"Cancel"} />
                         {configStore.enableLoadVizier ? <AnchorButton intent={Intent.PRIMARY} disabled={disable} onClick={() => this.loadVizierCatalogs()} text={"Load selected"} /> : null}
@@ -352,15 +352,15 @@ export class CatalogQueryDialogComponent extends React.Component {
     }
 
     private renderDBPopOver = (catalogDB: CatalogDatabase, itemProps: IItemRendererProps) => {
-        return <MenuItem key={catalogDB} text={catalogDB} onClick={itemProps.handleClick} />;
+        return <MenuItem2 key={catalogDB} text={catalogDB} onClick={itemProps.handleClick} />;
     };
 
     private renderUnitsPopOver = (units: RadiusUnits, itemProps: IItemRendererProps) => {
-        return <MenuItem key={units} text={units} onClick={itemProps.handleClick} />;
+        return <MenuItem2 key={units} text={units} onClick={itemProps.handleClick} />;
     };
 
     private renderSysTypePopOver = (type: SystemType, itemProps: IItemRendererProps) => {
-        return <MenuItem key={type} text={type} onClick={itemProps.handleClick} />;
+        return <MenuItem2 key={type} text={type} onClick={itemProps.handleClick} />;
     };
 
     private vizierItemRenderer = (table: VizierItem, itemProps: IItemRendererProps) => {
@@ -368,7 +368,7 @@ export class CatalogQueryDialogComponent extends React.Component {
         const isFilmSelected = configStore.vizierSelectedTableName.filter(current => current.name === table.name).length > 0;
 
         return (
-            <MenuItem
+            <MenuItem2
                 active={itemProps.modifiers.active}
                 icon={isFilmSelected ? "tick" : "blank"}
                 key={table.name}

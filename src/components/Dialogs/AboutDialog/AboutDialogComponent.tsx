@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
+import {AnchorButton, Classes, DialogProps, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {DialogStore} from "stores";
 import {CARTA_INFO} from "models";
@@ -11,7 +11,7 @@ export class AboutDialogComponent extends React.Component {
     public render() {
         const dialogStore = DialogStore.Instance;
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: "info-sign",
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,

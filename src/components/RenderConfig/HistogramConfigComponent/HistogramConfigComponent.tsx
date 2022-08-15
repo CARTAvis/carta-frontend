@@ -1,13 +1,14 @@
 import * as React from "react";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Button, FormGroup, MenuItem} from "@blueprintjs/core";
-import {Select} from "@blueprintjs/select";
+import {Alert, Button, FormGroup} from "@blueprintjs/core";
+import {MenuItem2} from "@blueprintjs/popover2";
+import {Select2} from "@blueprintjs/select";
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
 import {SCALING_POPOVER_PROPS} from "components/Shared";
 
-const HistogramSelect = Select.ofType<boolean>();
+const HistogramSelect = Select2.ofType<boolean>();
 
 interface HistogramConfigProps {
     renderConfig: RenderConfigStore;
@@ -29,7 +30,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
     }
 
     renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
-        return <MenuItem text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
+        return <MenuItem2 text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
     handleHistogramChange = (value: boolean) => {
@@ -67,7 +68,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                         </HistogramSelect>
                     </FormGroup>
                 )}
-                <Alert className={AppStore.Instance.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                <Alert className={AppStore.Instance.darkTheme ? "bp4-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
                     <p>Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?</p>
                 </Alert>
             </React.Fragment>

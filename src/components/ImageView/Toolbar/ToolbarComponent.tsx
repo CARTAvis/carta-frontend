@@ -2,8 +2,8 @@ import * as React from "react";
 import classNames from "classnames";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
-import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, ButtonGroup, IconName, Menu, PopoverPosition, Position} from "@blueprintjs/core";
+import {MenuItem2, Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {AppStore, OverlayStore, SystemType} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
@@ -115,7 +115,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             backgroundColor: "transparent"
         };
 
-        const className = classNames("image-toolbar", {docked: this.props.docked, "bp3-dark": appStore.darkTheme});
+        const className = classNames("image-toolbar", {docked: this.props.docked, "bp4-dark": appStore.darkTheme});
 
         const zoomLevel = frame.spatialReference && frame.spatialTransform ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const currentZoomSpan = (
@@ -133,7 +133,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 {Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text], index) => {
                     const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
                     const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
-                    return <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
+                    return <MenuItem2 icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
                 })}
             </Menu>
         );
@@ -142,12 +142,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const coordinateSystemMenu = (
             <Menu>
-                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Auto)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Auto)} />
-                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.FK5)} onClick={() => this.handleCoordinateSystemClicked(SystemType.FK5)} />
-                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.FK4)} onClick={() => this.handleCoordinateSystemClicked(SystemType.FK4)} />
-                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Galactic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Galactic)} />
-                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Ecliptic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Ecliptic)} />
-                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.ICRS)} onClick={() => this.handleCoordinateSystemClicked(SystemType.ICRS)} />
+                <MenuItem2 text={ToolbarComponent.CoordinateSystemName.get(SystemType.Auto)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Auto)} />
+                <MenuItem2 text={ToolbarComponent.CoordinateSystemName.get(SystemType.FK5)} onClick={() => this.handleCoordinateSystemClicked(SystemType.FK5)} />
+                <MenuItem2 text={ToolbarComponent.CoordinateSystemName.get(SystemType.FK4)} onClick={() => this.handleCoordinateSystemClicked(SystemType.FK4)} />
+                <MenuItem2 text={ToolbarComponent.CoordinateSystemName.get(SystemType.Galactic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Galactic)} />
+                <MenuItem2 text={ToolbarComponent.CoordinateSystemName.get(SystemType.Ecliptic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Ecliptic)} />
+                <MenuItem2 text={ToolbarComponent.CoordinateSystemName.get(SystemType.ICRS)} onClick={() => this.handleCoordinateSystemClicked(SystemType.ICRS)} />
             </Menu>
         );
 
@@ -170,20 +170,20 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const wcsMatchingMenu = (
             <Menu>
-                <MenuItem
+                <MenuItem2
                     text={`Spectral (${preferenceStore.spectralMatchingType}) and Spatial`}
                     disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
                     active={spectralMatchingEnabled && spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(true, true)}
                 />
-                <MenuItem
+                <MenuItem2
                     text={`Spectral (${preferenceStore.spectralMatchingType})  only`}
                     disabled={!canEnableSpectralMatching}
                     active={spectralMatchingEnabled && !spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(false, true)}
                 />
-                <MenuItem text="Spatial only" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, false)} />
-                <MenuItem text="None" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && !spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, false)} />
+                <MenuItem2 text="Spatial only" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, false)} />
+                <MenuItem2 text="None" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && !spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, false)} />
             </Menu>
         );
 

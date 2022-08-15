@@ -1,5 +1,5 @@
 import {action, observable, makeObservable, computed} from "mobx";
-import {IOptionProps} from "@blueprintjs/core";
+import {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType, RegionId} from "./RegionWidgetStore";
@@ -7,9 +7,9 @@ import {RegionWidgetStore, RegionsType, RegionId} from "./RegionWidgetStore";
 export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;
 
-    @computed get regionOptions(): IOptionProps[] {
+    @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
-        let regionOptions: IOptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
+        let regionOptions: OptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
         if (appStore.frames) {
             const selectedFrame = appStore.getFrame(this.fileId);
             if (selectedFrame?.regionSet) {

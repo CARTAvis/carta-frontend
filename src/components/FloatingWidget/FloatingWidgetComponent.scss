@@ -14,7 +14,7 @@ $shadow-color: rgba($blue2, 0.1);
 .floating-widget {
     background-color: $widget-background;
     border: 1px solid $border-color;
-    &.bp3-dark {
+    &.bp4-dark {
         background-color: $widget-background-dark;
         border: 1px solid $border-color-dark;
     }
@@ -30,14 +30,14 @@ $shadow-color: rgba($blue2, 0.1);
         background-color: darken($widget-background, 5%);
         color: $title-color;
         border-bottom: 1px solid $border-color;
-        &.bp3-dark {
+        &.bp4-dark {
             background-color: lighten($widget-background-dark, 10%);
             border-bottom: 1px solid $border-color-dark;
         }
 
         &.selected {
             background-color: darken($widget-background, 10%);
-            &.bp3-dark {
+            &.bp4-dark {
                 background-color: lighten($widget-background-dark, 15%);
                 border-bottom: 1px solid $border-color-dark;
             }
@@ -45,12 +45,12 @@ $shadow-color: rgba($blue2, 0.1);
 
         &.selected {
             color: $selected-title-color;
-            &.bp3-dark {
+            &.bp4-dark {
                 color: $white;
             }
         }
 
-        &.bp3-dark {
+        &.bp4-dark {
             color: $title-color-dark;
         }
 
@@ -72,7 +72,7 @@ $shadow-color: rgba($blue2, 0.1);
             cursor: pointer;
             opacity: 0.4;
             color: black;
-            &.bp3-dark {
+            &.bp4-dark {
                 background-color: lighten($widget-background-dark, 10%);
                 color: white;
             }
