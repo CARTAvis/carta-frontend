@@ -2,7 +2,7 @@ import * as AST from "ast_wrapper";
 import {action, computed, observable, makeObservable} from "mobx";
 import {ImageViewLayer} from "components";
 import {AppStore, AstColorsIndex, ASTSettingsString} from "stores";
-import {getColorForTheme, getFormattedWCSPoint} from "utilities";
+import {getColorForTheme} from "utilities";
 import {Point2D, Transform2D} from "models";
 
 export class DistanceMeasuringStore {
@@ -48,14 +48,6 @@ export class DistanceMeasuringStore {
         astString.add("Color(Strings)", AstColorsIndex.DISTANCE_MEASURE);
         astString.add("Size(Strings)", DistanceMeasuringStore.DEFAULT_FONTSIZE * AppStore.Instance.imageRatio);
         return astString.toString();
-    }
-
-    @computed get formattedStartWCSPoint() {
-        return getFormattedWCSPoint(this.appStore.activeFrame?.wcsInfo, this.transformedStart);
-    }
-
-    @computed get formattedFinishWCSPoint() {
-        return getFormattedWCSPoint(this.appStore.activeFrame?.wcsInfo, this.transformedFinish);
     }
 
     @action setIsCreating = isCreating => {
