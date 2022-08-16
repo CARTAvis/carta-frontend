@@ -53,7 +53,6 @@ export class DistanceMeasuringDialog extends React.Component {
     };
 
     render() {
-
         const frame = this.appStore.activeFrame?.spatialReference ?? this.appStore.activeFrame;
         const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
         const WCSStart = getFormattedWCSPoint(wcsInfo, this.distanceMeasuringStore.transformedStart);
@@ -76,7 +75,7 @@ export class DistanceMeasuringDialog extends React.Component {
         };
 
         const handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
-            if(this.error) this.setError(false);
+            if (this.error) this.setError(false);
             const WCSMode = formEvent.currentTarget.value === RegionCoordinate.Image ? false : true;
             this.setWCSMode(WCSMode);
         };
@@ -95,23 +94,23 @@ export class DistanceMeasuringDialog extends React.Component {
                 }
             } else if (this.appStore.activeFrame) {
                 const value = event.target.value;
-                if(this.error) this.setError(false);
+                if (this.error) this.setError(false);
                 if (isX && isWCSStringFormatValid(value as string, this.appStore.overlayStore.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value as string});
                         this.distanceMeasuringStore.setTransformedFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
-                    }  else {
+                    } else {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value as string});
                         this.distanceMeasuringStore.setTransformedStart(startPixelFromWCS.x, startPixelFromWCS.y);
-                    }         
-                } else if(!isX && isWCSStringFormatValid(value as string, this.appStore.overlayStore.numbers.formatTypeY)) {
+                    }
+                } else if (!isX && isWCSStringFormatValid(value as string, this.appStore.overlayStore.numbers.formatTypeY)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value as string});
                         this.distanceMeasuringStore.setTransformedFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
                     } else {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value as string});
                         this.distanceMeasuringStore.setTransformedStart(startPixelFromWCS.x, startPixelFromWCS.y);
-                    }  
+                    }
                 } else {
                     this.setError(true);
                 }
@@ -138,8 +137,7 @@ export class DistanceMeasuringDialog extends React.Component {
             </>
         );
 
-        const finishInput = this.WCSMode ? 
-        (
+        const finishInput = this.WCSMode ? (
             <>
                 <FormGroup helperText={this.error ? "Invalid Input" : ""} label={"X-Coordinate"} inline={true} style={style}>
                     <SafeNumericInput selectAllOnFocus intent={this.error ? "danger" : "none"} allowNumericCharactersOnly={false} buttonPosition="none" value={WCSFinish.x} onBlur={event => handleValueChange(event, true, true, false)} />
@@ -175,7 +173,7 @@ export class DistanceMeasuringDialog extends React.Component {
                                             options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}
                                             value={this.appStore.overlayStore.global.system}
                                             onChange={ev => {
-                                                if(this.error) this.setError(false);
+                                                if (this.error) this.setError(false);
                                                 this.appStore.overlayStore.global.setSystem(ev.currentTarget.value as SystemType);
                                             }}
                                         />
