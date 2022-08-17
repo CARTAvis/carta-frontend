@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed missing regions when the image is matched or unmatched to the reference ([#1780](https://github.com/CARTAvis/carta-frontend/issues/1780)).
 * Fixed inconsistent vector line width on spatially matched images ([#1854](https://github.com/CARTAvis/carta-frontend/issues/1854)).
 * Fixed QU profile rendering black at the first channel in the stokes widget ([#1786](https://github.com/CARTAvis/carta-frontend/issues/1786)).
-
+* Fixed the issue of the corrupted spatial profile when cursor is moving ([#1602](https://github.com/CARTAvis/carta-frontend/issues/1602)).
 
 ## [3.0.0-beta.3]
 
