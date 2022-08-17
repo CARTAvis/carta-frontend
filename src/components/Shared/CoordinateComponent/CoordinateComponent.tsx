@@ -5,13 +5,21 @@ import {AppStore, SystemType} from "stores";
 import {RegionCoordinate, RegionStore} from "stores/Frame";
 import "./CoordinateComponent.scss";
 
+interface ICoordinateComponentProps {
+    region?: RegionStore;
+    disableCoordinate?: boolean;
+    selectedValue?: RegionCoordinate;
+    onChange?: (ev: React.FormEvent<HTMLInputElement>) => void;
+}
+
 @observer
-export class CoordinateComponent extends React.Component<{region: RegionStore; disableCooridnate: boolean}> {
+export class CoordinateComponent extends React.Component<ICoordinateComponentProps> {
+
     public render() {
         const region = this.props.region;
         return (
             <div className="coordinate-panel">
-                <RadioGroup inline={true} onChange={ev => region.setCoordinate(ev.currentTarget.value as RegionCoordinate)} selectedValue={region.coordinate} disabled={this.props.disableCooridnate}>
+                <RadioGroup inline={true} onChange={this.props.onChange || (ev => region.setCoordinate(ev.currentTarget.value as RegionCoordinate))} selectedValue={this.props.selectedValue || region.coordinate} disabled={this.props.disableCoordinate}>
                     <Radio label={RegionCoordinate.Image} value={RegionCoordinate.Image} />
                     <Radio label={RegionCoordinate.World} value={RegionCoordinate.World} />
                 </RadioGroup>

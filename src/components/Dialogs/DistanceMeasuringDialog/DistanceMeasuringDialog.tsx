@@ -1,13 +1,14 @@
 import * as React from "react";
 import {observable, action, makeObservable} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, IDialogProps, RadioGroup, Radio, HTMLSelect} from "@blueprintjs/core";
-import {AppStore, DialogStore, SystemType} from "stores";
+import {ColorResult} from "react-color";
+import {FormGroup, IDialogProps} from "@blueprintjs/core";
+import {AppStore, DialogStore} from "stores";
 import {DistanceMeasuringStore, RegionCoordinate} from "stores/Frame";
-import {SafeNumericInput} from "components/Shared";
+import {SafeNumericInput, ColorPickerComponent, CoordinateComponent} from "components/Shared";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {WCSPoint2D, Point2D} from "models";
-import {getPixelValueFromWCS, getFormattedWCSPoint, isWCSStringFormatValid} from "utilities";
+import {getPixelValueFromWCS, getFormattedWCSPoint, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
 
 @observer
 export class DistanceMeasuringDialog extends React.Component {
@@ -53,6 +54,9 @@ export class DistanceMeasuringDialog extends React.Component {
     };
 
     render() {
+        // dummy variables related to wcs to trigger re-render
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const system = this.appStore.overlayStore.global.explicitSystem;
         const frame = this.appStore.activeFrame?.spatialReference ?? this.appStore.activeFrame;
         const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
         const WCSStart = getFormattedWCSPoint(wcsInfo, this.distanceMeasuringStore.transformedStart);
@@ -81,6 +85,8 @@ export class DistanceMeasuringDialog extends React.Component {
         };
 
         const handleValueChange = (event: React.FocusEvent<HTMLInputElement>, isX: boolean, finish?: boolean, pixel?: boolean) => {
+            event.preventDefault();
+            event.stopPropagation();
             if (pixel) {
                 const value = parseFloat(event.target.value);
                 if (isX && finish) {
@@ -115,6 +121,11 @@ export class DistanceMeasuringDialog extends React.Component {
                     this.setError(true);
                 }
             }
+            console.log(event.target.value, event.currentTarget.value, WCSStart, WCSFinish)
+            // event.target.value = isX ? (finish ? WCSFinish.x : WCSStart.x) : (finish ? WCSFinish.y : WCSStart.y);
+            // event.currentTarget.value = isX ? (finish ? WCSFinish.x : WCSStart.x) : (finish ? WCSFinish.y : WCSStart.y);
+            event.currentTarget.value = null;
+            event.currentTarget.value = isX ? (finish ? WCSFinish.x : WCSStart.x) : (finish ? WCSFinish.y : WCSStart.y);
         };
 
         const startInput = this.WCSMode ? (
@@ -163,21 +174,25 @@ export class DistanceMeasuringDialog extends React.Component {
                     <table>
                         <tbody>
                             <tr>
+                                <td>
+                                    <FormGroup label="Color" inline={true}>
+                                        <ColorPickerComponent color={this.distanceMeasuringStore.color} presetColors={SWATCH_COLORS} setColor={(color: ColorResult) => this.distanceMeasuringStore.setColor(color.hex)} disableAlpha={true} darkTheme={this.appStore.darkTheme} />
+                                    </FormGroup>
+                                </td>
+                                {/* <td>
+                                    <FormGroup inline={true} label="Line Width" labelInfo="(px)">
+                                        <SafeNumericInput placeholder="Line Width" min={0} max={10} value={0} stepSize={0.5} onValueChange={ev => console.log(ev)} />
+                                    </FormGroup>
+                                </td>
+                                <td>
+                                    <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
+                                        <SafeNumericInput placeholder="Dash Length" min={0} max={10} value={0} stepSize={1} onValueChange={ev => console.log(ev)} />
+                                    </FormGroup>
+                                </td> */}
+                            </tr>
+                            <tr>
                                 <td colSpan={2}>
-                                    <div className="coordinate-panel">
-                                        <RadioGroup inline={true} onChange={ev => handleChangeWCSMode(ev)} selectedValue={this.WCSMode ? RegionCoordinate.World : RegionCoordinate.Image}>
-                                            <Radio label={RegionCoordinate.Image} value={"Image"} />
-                                            <Radio label={RegionCoordinate.World} value={"World"} />
-                                        </RadioGroup>
-                                        <HTMLSelect
-                                            options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}
-                                            value={this.appStore.overlayStore.global.system}
-                                            onChange={ev => {
-                                                if (this.error) this.setError(false);
-                                                this.appStore.overlayStore.global.setSystem(ev.currentTarget.value as SystemType);
-                                            }}
-                                        />
-                                    </div>
+                                    <CoordinateComponent onChange={(ev: React.FormEvent<HTMLInputElement>) => handleChangeWCSMode(ev)} selectedValue={this.WCSMode ? RegionCoordinate.World : RegionCoordinate.Image}/>
                                 </td>
                             </tr>
                             <tr>
