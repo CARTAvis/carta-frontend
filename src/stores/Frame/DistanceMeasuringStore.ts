@@ -13,6 +13,8 @@ export class DistanceMeasuringStore {
     @observable transformedFinish: Point2D;
     @observable isCreating: boolean;
     @observable color: string;
+    @observable lineWidth: number;
+    @observable fontSize: number;
 
     static readonly DEFAULT_WIDTH = 1.5;
     static readonly DEFAULT_FONTSIZE = 14;
@@ -28,6 +30,8 @@ export class DistanceMeasuringStore {
         this.transformedFinish = {x: null, y: null};
         this.isCreating = false;
         this.color = DistanceMeasuringStore.DEFAULT_COLOR;
+        this.lineWidth = DistanceMeasuringStore.DEFAULT_WIDTH;
+        this.fontSize = DistanceMeasuringStore.DEFAULT_FONTSIZE;
     }
 
     static get Instance() {
@@ -71,8 +75,17 @@ export class DistanceMeasuringStore {
 
     @action setColor = (color: string) => {
         this.color = color;
+        console.log(this.color)
         AST.setColor(getColorForTheme(color), AstColorsIndex.DISTANCE_MEASURE);
     };
+
+    @action setLineWidth = (width: number) => {
+        this.lineWidth = width;
+    }
+
+    @action setFontSize = (size: number) => {
+        this.fontSize = size;
+    }
 
     @action setTransformedStart(x: number, y: number) {
         this.transformedStart = {x: x, y: y || null};
