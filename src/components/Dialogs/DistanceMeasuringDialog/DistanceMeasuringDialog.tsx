@@ -120,12 +120,12 @@ export class DistanceMeasuringDialog extends React.Component {
                 } else {
                     this.setError(true);
                 }
+                event.currentTarget.value = null;
+                event.currentTarget.value = isX ? (finish ? WCSFinish.x : WCSStart.x) : (finish ? WCSFinish.y : WCSStart.y);
             }
-            console.log(event.target.value, event.currentTarget.value, WCSStart, WCSFinish)
+            console.log(event, WCSStart, WCSFinish)
             // event.target.value = isX ? (finish ? WCSFinish.x : WCSStart.x) : (finish ? WCSFinish.y : WCSStart.y);
             // event.currentTarget.value = isX ? (finish ? WCSFinish.x : WCSStart.x) : (finish ? WCSFinish.y : WCSStart.y);
-            event.currentTarget.value = null;
-            event.currentTarget.value = isX ? (finish ? WCSFinish.x : WCSStart.x) : (finish ? WCSFinish.y : WCSStart.y);
         };
 
         const startInput = this.WCSMode ? (
@@ -179,16 +179,16 @@ export class DistanceMeasuringDialog extends React.Component {
                                         <ColorPickerComponent color={this.distanceMeasuringStore.color} presetColors={SWATCH_COLORS} setColor={(color: ColorResult) => this.distanceMeasuringStore.setColor(color.hex)} disableAlpha={true} darkTheme={this.appStore.darkTheme} />
                                     </FormGroup>
                                 </td>
-                                {/* <td>
+                                <td>
                                     <FormGroup inline={true} label="Line Width" labelInfo="(px)">
-                                        <SafeNumericInput placeholder="Line Width" min={0} max={10} value={0} stepSize={0.5} onValueChange={ev => console.log(ev)} />
+                                        <SafeNumericInput placeholder="Line Width" min={0} max={20} value={this.distanceMeasuringStore.lineWidth} stepSize={0.5} onValueChange={value => this.distanceMeasuringStore.setLineWidth(value)} />
                                     </FormGroup>
                                 </td>
                                 <td>
-                                    <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
-                                        <SafeNumericInput placeholder="Dash Length" min={0} max={10} value={0} stepSize={1} onValueChange={ev => console.log(ev)} />
+                                    <FormGroup inline={true} label="Font Size" labelInfo="(px)">
+                                        <SafeNumericInput placeholder="Font Size" min={0} max={50} value={this.distanceMeasuringStore.fontSize} stepSize={1} onValueChange={value => this.distanceMeasuringStore.setFontSize(value)} />
                                     </FormGroup>
-                                </td> */}
+                                </td>
                             </tr>
                             <tr>
                                 <td colSpan={2}>
