@@ -193,7 +193,7 @@ export class FrameStore {
     }
 
     @computed get maxMip(): number {
-        if (this.frameInfo.fileInfoExtended.width < 256 || this.frameInfo.fileInfoExtended.height < 256) {
+        if (this.frameInfo.fileInfoExtended.width < TILE_SIZE) {
             return 1;
         } else {
             return Math.pow(2, Math.ceil(Math.log2(this.frameInfo.fileInfoExtended.width / TILE_SIZE)));
