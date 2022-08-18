@@ -198,7 +198,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const catalogSelectionDisabled = appStore.catalogNum === 0;
 
         const handleDistanceMeasuringClicked = () => {
-            dialogStore.showDistanceMeasuringDialog();
             this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring);
         };
 
@@ -213,12 +212,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     Measure distance
                                     <br />
                                     <i>
-                                        <small>Click to create geodesic curves.</small>
+                                        <small>Click to create geodesic curves.</small><br></br>
+                                        <small>Double Click to go to setting.</small>
                                     </i>
                                 </span>
                             }
                         >
-                            <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={handleDistanceMeasuringClicked} />
+                            <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={handleDistanceMeasuringClicked} onDoubleClick={dialogStore.showDistanceMeasuringDialog}/>
                         </Tooltip2>
                         <Tooltip2
                             position={tooltipPosition}

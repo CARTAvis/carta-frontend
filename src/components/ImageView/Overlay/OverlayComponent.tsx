@@ -4,7 +4,7 @@ import * as _ from "lodash";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AppStore, OverlayStore, PreferenceStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {DistanceMeasuringStore, FrameStore} from "stores/Frame";
 import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
 import "./OverlayComponent.scss";
 
@@ -156,6 +156,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringShowCurve = frame.distanceMeasuring.showCurve;
         const distanceMeasuringStart = frame.distanceMeasuring.transformedStart;
         const distanceMeasuringFinish = frame.distanceMeasuring.transformedFinish;
+        const distanceMeasuringColor = DistanceMeasuringStore.Instance.color;
         const title = frame.titleCustomText;
         const ratio = AppStore.Instance.imageRatio;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */

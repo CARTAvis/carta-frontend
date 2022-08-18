@@ -48,9 +48,9 @@ export class DistanceMeasuringStore {
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("Color(Curve)", AstColorsIndex.DISTANCE_MEASURE);
-        astString.add("Width(Curve)", DistanceMeasuringStore.DEFAULT_WIDTH * AppStore.Instance.imageRatio);
+        astString.add("Width(Curve)", this.lineWidth * AppStore.Instance.imageRatio);
         astString.add("Color(Strings)", AstColorsIndex.DISTANCE_MEASURE);
-        astString.add("Size(Strings)", DistanceMeasuringStore.DEFAULT_FONTSIZE * AppStore.Instance.imageRatio);
+        astString.add("Size(Strings)",this.fontSize * AppStore.Instance.imageRatio);
         return astString.toString();
     }
 
@@ -75,7 +75,6 @@ export class DistanceMeasuringStore {
 
     @action setColor = (color: string) => {
         this.color = color;
-        console.log(this.color)
         AST.setColor(getColorForTheme(color), AstColorsIndex.DISTANCE_MEASURE);
     };
 

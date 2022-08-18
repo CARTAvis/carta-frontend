@@ -21,6 +21,18 @@ export class ToolbarMenuComponent extends React.Component {
         appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
 
+    handleDistanceMeasuringClicked = () => {
+        const appStore = AppStore.Instance;
+        appStore.dialogStore.showDistanceMeasuringDialog();
+        const layer = ImageViewLayer.DistanceMeasuring;
+        if (appStore.activeLayer !== ImageViewLayer.DistanceMeasuring && layer === ImageViewLayer.DistanceMeasuring) {
+            appStore.frames.forEach(frame => frame.distanceMeasuring.resetPos());
+        }
+        appStore.updateActiveLayer(layer);
+        appStore.activeFrame.regionSet.setMode(RegionMode.MOVING);
+
+    };
+
     regionTooltip = (type: CARTA.RegionType) => {
         const regionModeIsCenter = AppStore.Instance.preferenceStore.regionCreationMode === RegionCreationMode.CENTER;
         let tooltip = null;
@@ -146,6 +158,9 @@ export class ToolbarMenuComponent extends React.Component {
                     </Tooltip2>
                     <Tooltip2 content={<span>Online Catalog Query</span>} position={Position.BOTTOM}>
                         <AnchorButton icon="geosearch" onClick={dialogStore.showCatalogQueryDialog} active={dialogStore.catalogQueryDialogVisible} />
+                    </Tooltip2>
+                    <Tooltip2 content={<span>Distance Measurement</span>} position={Position.BOTTOM}>
+                        <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={dialogStore.distanceMeasuringDialogVisible} onClick={this.handleDistanceMeasuringClicked} />
                     </Tooltip2>
                     {appStore.preferenceStore.codeSnippetsEnabled && (
                         <Tooltip2
