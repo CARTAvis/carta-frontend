@@ -354,7 +354,7 @@ export class ImageFittingIndividualStore {
     }
 
     @computed get validParams(): boolean {
-        return isFinite(this.center?.x) && isFinite(this.center?.y) && isFinite(this.amplitude) && isFinite(this.fwhm?.x) && isFinite(this.fwhm?.y) && isFinite(this.pa);
+        return !this.fixedParams.every(p => p === true) && isFinite(this.center?.x) && isFinite(this.center?.y) && isFinite(this.amplitude) && isFinite(this.fwhm?.x) && isFinite(this.fwhm?.y) && isFinite(this.pa);
     }
 
     @computed get fixedParams(): boolean[] {
