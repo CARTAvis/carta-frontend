@@ -4,7 +4,7 @@ import * as _ from "lodash";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import {AppStore, OverlayStore, PreferenceStore} from "stores";
-import {DistanceMeasuringStore, FrameStore} from "stores/Frame";
+import {FrameStore} from "stores/Frame";
 import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
 import "./OverlayComponent.scss";
 
@@ -94,7 +94,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 );
             };
 
-            let currentStyleString = settings.styleString;
+            let styleString = settings.styleString;
+            styleString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
+            let currentStyleString = styleString.toString();
+
             // Override the AST tolerance during motion
             if (frame.moving) {
                 const tolVal = Math.max((settings.global.tolerance * 2) / 100.0, 0.1);
@@ -129,7 +132,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     };
 
     render() {
-        const styleString = this.props.overlaySettings.styleString;
+        const styleString = this.props.overlaySettings.styleString.toString();
 
         const frame = this.props.frame;
         const refFrame = frame.spatialReference ?? frame;
@@ -156,7 +159,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringShowCurve = frame.distanceMeasuring.showCurve;
         const distanceMeasuringStart = frame.distanceMeasuring.transformedStart;
         const distanceMeasuringFinish = frame.distanceMeasuring.transformedFinish;
-        const distanceMeasuringColor = DistanceMeasuringStore.Instance.color;
+        const distanceMeasuringColor = frame.distanceMeasuring.color;
+        const distanceMeasuringFontSize = frame.distanceMeasuring.fontSize;
+        const distanceMeasuringLineWidth = frame.distanceMeasuring.lineWidth;
         const title = frame.titleCustomText;
         const ratio = AppStore.Instance.imageRatio;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
