@@ -2,13 +2,14 @@ import * as React from "react";
 import {observable, action, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {ColorResult} from "react-color";
-import {FormGroup, IDialogProps} from "@blueprintjs/core";
+import {FormGroup, IDialogProps, NonIdealState} from "@blueprintjs/core";
 import {AppStore, DialogStore} from "stores";
-import {DistanceMeasuringStore, RegionCoordinate} from "stores/Frame";
+import {RegionCoordinate} from "stores/Frame";
 import {SafeNumericInput, ColorPickerComponent, CoordinateComponent} from "components/Shared";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {WCSPoint2D, Point2D} from "models";
 import {getPixelValueFromWCS, getFormattedWCSPoint, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
+import {ImageViewLayer} from "components";
 
 @observer
 export class DistanceMeasuringDialog extends React.Component {
@@ -16,9 +17,6 @@ export class DistanceMeasuringDialog extends React.Component {
         super(props);
         makeObservable(this);
     }
-
-    distanceMeasuringStore = DistanceMeasuringStore.Instance;
-    appStore = AppStore.Instance;
 
     @observable WCSMode: boolean = false;
     @observable WCSStart: WCSPoint2D;
@@ -54,13 +52,15 @@ export class DistanceMeasuringDialog extends React.Component {
     };
 
     render() {
+        const appStore = AppStore.Instance;
         // dummy variables related to wcs to trigger re-render
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const system = this.appStore.overlayStore.global.explicitSystem;
-        const frame = this.appStore.activeFrame?.spatialReference ?? this.appStore.activeFrame;
+        const system = appStore.overlayStore.global.explicitSystem;
+        const frame = appStore.activeFrame?.spatialReference ?? appStore.activeFrame;
+        const distanceMeasuringStore = frame?.distanceMeasuring;
         const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
-        const WCSStart = getFormattedWCSPoint(wcsInfo, this.distanceMeasuringStore.transformedStart);
-        const WCSFinish = getFormattedWCSPoint(wcsInfo, this.distanceMeasuringStore.transformedFinish);
+        const WCSStart = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.transformedStart);
+        const WCSFinish = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.transformedFinish);
         const dialogStore = DialogStore.Instance;
 
         const style = {
@@ -75,8 +75,10 @@ export class DistanceMeasuringDialog extends React.Component {
             lazy: true,
             isOpen: dialogStore.distanceMeasuringDialogVisible,
             onClose: dialogStore.hideDistanceMeasuringDialog,
-            title: "Measure Distance"
+            title: `Measure Distance (${frame?.filename})`
         };
+
+        const MissingFrame = <NonIdealState icon={"error"} title={"Distance Measurement is not turned on"} description={"Please turn on distance measurement at menu toolbar located at the bottom of the image viewer"} />;
 
         const handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
             if (this.error) this.setError(false);
@@ -88,32 +90,32 @@ export class DistanceMeasuringDialog extends React.Component {
             if (pixel) {
                 const value = parseFloat(event.target.value);
                 if (isX && finish) {
-                    this.distanceMeasuringStore.setTransformedFinish(value, this.distanceMeasuringStore.transformedFinish.y);
+                    distanceMeasuringStore?.setTransformedFinish(value, distanceMeasuringStore?.transformedFinish.y);
                 } else if (finish) {
-                    this.distanceMeasuringStore.setTransformedFinish(this.distanceMeasuringStore.transformedFinish.x, value);
+                    distanceMeasuringStore?.setTransformedFinish(distanceMeasuringStore?.transformedFinish.x, value);
                 } else if (isX) {
-                    this.distanceMeasuringStore.setTransformedStart(value, this.distanceMeasuringStore.transformedStart.y);
+                    distanceMeasuringStore?.setTransformedStart(value, distanceMeasuringStore?.transformedStart.y);
                 } else {
-                    this.distanceMeasuringStore.setTransformedStart(this.distanceMeasuringStore.transformedStart.x, value);
+                    distanceMeasuringStore?.setTransformedStart(distanceMeasuringStore?.transformedStart.x, value);
                 }
-            } else if (this.appStore.activeFrame) {
+            } else if (appStore.activeFrame) {
                 const value = event.target.value;
                 if (this.error) this.setError(false);
-                if (isX && isWCSStringFormatValid(value as string, this.appStore.overlayStore.numbers.formatTypeX)) {
+                if (isX && isWCSStringFormatValid(value as string, appStore.overlayStore.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value as string});
-                        this.distanceMeasuringStore.setTransformedFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
+                        distanceMeasuringStore?.setTransformedFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
                     } else {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value as string});
-                        this.distanceMeasuringStore.setTransformedStart(startPixelFromWCS.x, startPixelFromWCS.y);
+                        distanceMeasuringStore?.setTransformedStart(startPixelFromWCS.x, startPixelFromWCS.y);
                     }
-                } else if (!isX && isWCSStringFormatValid(value as string, this.appStore.overlayStore.numbers.formatTypeY)) {
+                } else if (!isX && isWCSStringFormatValid(value as string, appStore.overlayStore.numbers.formatTypeY)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value as string});
-                        this.distanceMeasuringStore.setTransformedFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
+                        distanceMeasuringStore?.setTransformedFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
                     } else {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value as string});
-                        this.distanceMeasuringStore.setTransformedStart(startPixelFromWCS.x, startPixelFromWCS.y);
+                        distanceMeasuringStore?.setTransformedStart(startPixelFromWCS.x, startPixelFromWCS.y);
                     }
                 } else {
                     this.setError(true);
@@ -133,10 +135,10 @@ export class DistanceMeasuringDialog extends React.Component {
         ) : (
             <>
                 <FormGroup label={"x-Pixel"} inline={true} style={style}>
-                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={this.distanceMeasuringStore.transformedStart.x} onBlur={event => handleValueChange(event, true, false, true)} />
+                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.transformedStart.x} onBlur={event => handleValueChange(event, true, false, true)} />
                 </FormGroup>
                 <FormGroup label={"y-Pixel"} inline={true} style={style}>
-                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={this.distanceMeasuringStore.transformedStart.y} onBlur={event => handleValueChange(event, false, false, true)} />
+                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.transformedStart.y} onBlur={event => handleValueChange(event, false, false, true)} />
                 </FormGroup>
             </>
         );
@@ -153,10 +155,10 @@ export class DistanceMeasuringDialog extends React.Component {
         ) : (
             <>
                 <FormGroup label={"x-Pixel"} inline={true} style={style}>
-                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={this.distanceMeasuringStore.transformedFinish.x} onBlur={event => handleValueChange(event, true, true, true)} />
+                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.transformedFinish.x} onBlur={event => handleValueChange(event, true, true, true)} />
                 </FormGroup>
                 <FormGroup label={"y-Pixel"} inline={true} style={style}>
-                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={this.distanceMeasuringStore.transformedFinish.y} onBlur={event => handleValueChange(event, false, true, true)} />
+                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.transformedFinish.y} onBlur={event => handleValueChange(event, false, true, true)} />
                 </FormGroup>
             </>
         );
@@ -164,52 +166,56 @@ export class DistanceMeasuringDialog extends React.Component {
         return (
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={775} defaultHeight={475} minHeight={300} minWidth={700} enableResizing={true}>
                 <div className="distance-measuring-settings">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <FormGroup label="Color" inline={true}>
-                                        <ColorPickerComponent
-                                            color={this.distanceMeasuringStore.color}
-                                            presetColors={SWATCH_COLORS}
-                                            setColor={(color: ColorResult) => this.distanceMeasuringStore.setColor(color.hex)}
-                                            disableAlpha={true}
-                                            darkTheme={this.appStore.darkTheme}
-                                        />
-                                    </FormGroup>
-                                </td>
-                                <td>
-                                    <FormGroup inline={true} label="Line Width" labelInfo="(px)">
-                                        <SafeNumericInput placeholder="Line Width" min={0} max={20} value={this.distanceMeasuringStore.lineWidth} stepSize={0.5} onValueChange={value => this.distanceMeasuringStore.setLineWidth(value)} />
-                                    </FormGroup>
-                                </td>
-                                <td>
-                                    <FormGroup inline={true} label="Font Size" labelInfo="(px)">
-                                        <SafeNumericInput placeholder="Font Size" min={0} max={50} value={this.distanceMeasuringStore.fontSize} stepSize={1} onValueChange={value => this.distanceMeasuringStore.setFontSize(value)} />
-                                    </FormGroup>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colSpan={2}>
-                                    <CoordinateComponent onChange={(ev: React.FormEvent<HTMLInputElement>) => handleChangeWCSMode(ev)} selectedValue={this.WCSMode ? RegionCoordinate.World : RegionCoordinate.Image} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Start</td>
-                                <td>{startInput}</td>
-                                <td>
-                                    <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(this.distanceMeasuringStore.transformedStart, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Finish</td>
-                                <td>{finishInput}</td>
-                                <td>
-                                    <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(this.distanceMeasuringStore.transformedFinish, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <FormGroup label="Color" inline={true}>
+                                            <ColorPickerComponent
+                                                color={distanceMeasuringStore?.color}
+                                                presetColors={SWATCH_COLORS}
+                                                setColor={(color: ColorResult) => distanceMeasuringStore?.setColor(color.hex)}
+                                                disableAlpha={true}
+                                                darkTheme={appStore.darkTheme}
+                                            />
+                                        </FormGroup>
+                                    </td>
+                                    <td>
+                                        <FormGroup inline={true} label="Line Width" labelInfo="(px)">
+                                            <SafeNumericInput placeholder="Line Width" min={0.5} max={20} value={distanceMeasuringStore?.lineWidth} stepSize={0.5} onValueChange={value => distanceMeasuringStore?.setLineWidth(value)} />
+                                        </FormGroup>
+                                    </td>
+                                    <td>
+                                        <FormGroup inline={true} label="Font Size" labelInfo="(px)">
+                                            <SafeNumericInput placeholder="Font Size" min={0.5} max={50} value={distanceMeasuringStore?.fontSize} stepSize={1} onValueChange={value => distanceMeasuringStore?.setFontSize(value)} />
+                                        </FormGroup>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colSpan={2}>
+                                        <CoordinateComponent onChange={(ev: React.FormEvent<HTMLInputElement>) => handleChangeWCSMode(ev)} selectedValue={this.WCSMode ? RegionCoordinate.World : RegionCoordinate.Image} />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Start</td>
+                                    <td>{startInput}</td>
+                                    <td>
+                                        <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.transformedStart, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Finish</td>
+                                    <td>{finishInput}</td>
+                                    <td>
+                                        <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.transformedFinish, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    ) : (
+                        MissingFrame
+                    )}
                 </div>
             </DraggableDialogComponent>
         );

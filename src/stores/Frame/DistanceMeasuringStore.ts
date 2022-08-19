@@ -20,9 +20,9 @@ export class DistanceMeasuringStore {
     static readonly DEFAULT_FONTSIZE = 14;
     static readonly DEFAULT_COLOR = "#62D96B";
 
-    private static staticInstance: DistanceMeasuringStore;
+    // private static staticInstance: DistanceMeasuringStore;
 
-    appStore = AppStore.Instance;
+    // appStore = AppStore.Instance;
 
     constructor() {
         makeObservable(this);
@@ -34,18 +34,12 @@ export class DistanceMeasuringStore {
         this.fontSize = DistanceMeasuringStore.DEFAULT_FONTSIZE;
     }
 
-    static get Instance() {
-        if (!DistanceMeasuringStore.staticInstance) {
-            DistanceMeasuringStore.staticInstance = new DistanceMeasuringStore();
-        }
-        return DistanceMeasuringStore.staticInstance;
-    }
-
     @computed get showCurve(): boolean {
         return this.transformedStart.x != null && this.transformedStart.y != null && this.transformedFinish.x != null && this.transformedFinish.y != null && AppStore.Instance.activeLayer === ImageViewLayer.DistanceMeasuring;
     }
 
     @computed get styleString() {
+        AST.setColor(getColorForTheme(this.color), AstColorsIndex.DISTANCE_MEASURE);
         let astString = new ASTSettingsString();
         astString.add("Color(Curve)", AstColorsIndex.DISTANCE_MEASURE);
         astString.add("Width(Curve)", this.lineWidth * AppStore.Instance.imageRatio);
