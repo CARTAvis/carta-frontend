@@ -50,7 +50,7 @@ export class DistanceMeasuringStore {
         astString.add("Color(Curve)", AstColorsIndex.DISTANCE_MEASURE);
         astString.add("Width(Curve)", this.lineWidth * AppStore.Instance.imageRatio);
         astString.add("Color(Strings)", AstColorsIndex.DISTANCE_MEASURE);
-        astString.add("Size(Strings)",this.fontSize * AppStore.Instance.imageRatio);
+        astString.add("Size(Strings)", this.fontSize * AppStore.Instance.imageRatio);
         return astString.toString();
     }
 
@@ -80,11 +80,11 @@ export class DistanceMeasuringStore {
 
     @action setLineWidth = (width: number) => {
         this.lineWidth = width;
-    }
+    };
 
     @action setFontSize = (size: number) => {
         this.fontSize = size;
-    }
+    };
 
     @action setTransformedStart(x: number, y: number) {
         this.transformedStart = {x: x, y: y || null};

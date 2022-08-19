@@ -14,12 +14,16 @@ interface ICoordinateComponentProps {
 
 @observer
 export class CoordinateComponent extends React.Component<ICoordinateComponentProps> {
-
     public render() {
         const region = this.props.region;
         return (
             <div className="coordinate-panel">
-                <RadioGroup inline={true} onChange={this.props.onChange || (ev => region.setCoordinate(ev.currentTarget.value as RegionCoordinate))} selectedValue={this.props.selectedValue || region.coordinate} disabled={this.props.disableCoordinate}>
+                <RadioGroup
+                    inline={true}
+                    onChange={this.props.onChange || (ev => region.setCoordinate(ev.currentTarget.value as RegionCoordinate))}
+                    selectedValue={this.props.selectedValue || region.coordinate}
+                    disabled={this.props.disableCoordinate}
+                >
                     <Radio label={RegionCoordinate.Image} value={RegionCoordinate.Image} />
                     <Radio label={RegionCoordinate.World} value={RegionCoordinate.World} />
                 </RadioGroup>
