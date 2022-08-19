@@ -1,20 +1,35 @@
 import {ImageComponent} from "../ImageComponent";
-import headCatalogueButton from "static/help/head_catalogue_button.png";
-import headCatalogueButton_d from "static/help/head_catalogue_button_d.png";
-import demoCatalogueMarkerMapping from "static/help/demo_catalog_marker_mapping.png";
-import demoCatalogueMarkerMapping_d from "static/help/demo_catalog_marker_mapping_d.png";
+import widgetButtonCatalog from "static/help/widgetButton_catalog.png";
+import widgetButtonCatalog_d from "static/help/widgetButton_catalog_d.png";
+import dialogButtonCatalogQuery from "static/help/dialogButton_catalogQuery.png";
+import dialogButtonCatalogQuery_d from "static/help/dialogButton_catalogQuery_d.png";
+import demoCatalogMarkerMapping from "static/help/demo_catalog_marker_mapping.png";
+import demoCatalogMarkerMapping_d from "static/help/demo_catalog_marker_mapping_d.png";
 
 export const CATALOG_OVERLAY_HELP_CONTENT = (
     <div>
         <p>
-            <ImageComponent light={headCatalogueButton} dark={headCatalogueButton_d} width="90%" />
+            <ImageComponent light={widgetButtonCatalog} dark={widgetButtonCatalog_d} width="90%" />
         </p>
         <p>
-            Source catalog files in VOTable or FITS format can be loaded in CARTA (via <code>File</code>-&gt; <code>Import catalog</code>) for visualization as an image overlay, or a 2D scatter plot, or a histogram.
+            Source catalog files in VOTable or FITS format can be loaded in CARTA (via <code>File</code>-&gt; <code>Import catalog</code>) for visualization as an image overlay, or a 2D scatter plot, or a histogram. Alternatively, catalogs
+            can be retrieved from{" "}
+            <a href="http://simbad.u-strasbg.fr" target="_blank" rel="noreferrer">
+                SIMBAD
+            </a>{" "}
+            or{" "}
+            <a href="https://vizier.u-strasbg.fr/viz-bin/VizieR" target="_blank" rel="noreferrer">
+                VizieR
+            </a>{" "}
+            with the Online Catalog Query dialog.
+        </p>
+        <p>
+            <ImageComponent light={dialogButtonCatalogQuery} dark={dialogButtonCatalogQuery_d} width="30%" />
         </p>
         <p>
             Once a source catalog file is loaded, the information of each column will be shown in the upper table, while the actual catalog entries are displayed in the lower table. By default, only the first 10 columns are enabled and
-            displayed. You may configure it to show or hide certain columns to be displayed in the lower table.
+            displayed. You may configure it to show or hide certain columns to be displayed in the lower table. Catalog entries displayed in the lower table are displayed progressively. When you scroll down the table, more entries will be
+            streamed and displayed.
         </p>
         <p>The source catalog table accepts sub-filters such as partial string match or value range. For numeric columns, supported operators are:</p>
         <ul>
@@ -75,11 +90,11 @@ export const CATALOG_OVERLAY_HELP_CONTENT = (
             top-right corner of the widget to launch the dialog.
         </p>
         <p>
-            <ImageComponent light={demoCatalogueMarkerMapping} dark={demoCatalogueMarkerMapping_d} width="100%" />
+            <ImageComponent light={demoCatalogMarkerMapping} dark={demoCatalogMarkerMapping_d} width="100%" />
         </p>
         <p>
-            The source catalog table, the image overlay, the 2D scatter plot, and the histogram plot are inter-linked or cross-referenced. This means, for example, selecting a source or a set of source in the catalog table will trigger
-            source highlight in other places. Or, selecting a source or a set of sources in the 2D scatter plot will trigger source highlight in other plots and in the catalog table.
+            The source catalog table, the image overlay, the 2D scatter plot, and the histogram plot are inter-linked or cross-referenced. This means, for example, selecting a source or a set of sources in the catalog table will trigger
+            source highlights in other places. Or, selecting a source or a set of sources in the 2D scatter plot will trigger source highlights in other plots and in the catalog table.
         </p>
         <p>
             Multiple catalog files can be loaded and you may use the <code>File</code> dropdown at the top of the widget to switch in between. Multiple catalog widgets may be launched to display different catalog files. The{" "}
