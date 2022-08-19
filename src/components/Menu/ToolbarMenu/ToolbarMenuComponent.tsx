@@ -30,7 +30,6 @@ export class ToolbarMenuComponent extends React.Component {
         }
         appStore.updateActiveLayer(layer);
         appStore.activeFrame.regionSet.setMode(RegionMode.MOVING);
-
     };
 
     regionTooltip = (type: CARTA.RegionType) => {

@@ -85,8 +85,6 @@ export class DistanceMeasuringDialog extends React.Component {
         };
 
         const handleValueChange = (event: React.FocusEvent<HTMLInputElement>, isX: boolean, finish?: boolean, pixel?: boolean) => {
-            event.preventDefault();
-            event.stopPropagation();
             if (pixel) {
                 const value = parseFloat(event.target.value);
                 if (isX && finish) {
@@ -120,12 +118,7 @@ export class DistanceMeasuringDialog extends React.Component {
                 } else {
                     this.setError(true);
                 }
-                event.currentTarget.value = null;
-                event.currentTarget.value = isX ? (finish ? WCSFinish.x : WCSStart.x) : (finish ? WCSFinish.y : WCSStart.y);
             }
-            console.log(event, WCSStart, WCSFinish)
-            // event.target.value = isX ? (finish ? WCSFinish.x : WCSStart.x) : (finish ? WCSFinish.y : WCSStart.y);
-            // event.currentTarget.value = isX ? (finish ? WCSFinish.x : WCSStart.x) : (finish ? WCSFinish.y : WCSStart.y);
         };
 
         const startInput = this.WCSMode ? (
@@ -176,7 +169,13 @@ export class DistanceMeasuringDialog extends React.Component {
                             <tr>
                                 <td>
                                     <FormGroup label="Color" inline={true}>
-                                        <ColorPickerComponent color={this.distanceMeasuringStore.color} presetColors={SWATCH_COLORS} setColor={(color: ColorResult) => this.distanceMeasuringStore.setColor(color.hex)} disableAlpha={true} darkTheme={this.appStore.darkTheme} />
+                                        <ColorPickerComponent
+                                            color={this.distanceMeasuringStore.color}
+                                            presetColors={SWATCH_COLORS}
+                                            setColor={(color: ColorResult) => this.distanceMeasuringStore.setColor(color.hex)}
+                                            disableAlpha={true}
+                                            darkTheme={this.appStore.darkTheme}
+                                        />
                                     </FormGroup>
                                 </td>
                                 <td>
@@ -192,7 +191,7 @@ export class DistanceMeasuringDialog extends React.Component {
                             </tr>
                             <tr>
                                 <td colSpan={2}>
-                                    <CoordinateComponent onChange={(ev: React.FormEvent<HTMLInputElement>) => handleChangeWCSMode(ev)} selectedValue={this.WCSMode ? RegionCoordinate.World : RegionCoordinate.Image}/>
+                                    <CoordinateComponent onChange={(ev: React.FormEvent<HTMLInputElement>) => handleChangeWCSMode(ev)} selectedValue={this.WCSMode ? RegionCoordinate.World : RegionCoordinate.Image} />
                                 </td>
                             </tr>
                             <tr>

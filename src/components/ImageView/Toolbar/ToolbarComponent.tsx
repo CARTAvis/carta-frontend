@@ -212,13 +212,19 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     Measure distance
                                     <br />
                                     <i>
-                                        <small>Click to create geodesic curves.</small><br></br>
+                                        <small>Click to create geodesic curves.</small>
+                                        <br></br>
                                         <small>Double Click to go to setting.</small>
                                     </i>
                                 </span>
                             }
                         >
-                            <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={handleDistanceMeasuringClicked} onDoubleClick={dialogStore.showDistanceMeasuringDialog}/>
+                            <AnchorButton
+                                icon={<CustomIcon icon="distanceMeasuring" />}
+                                active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring}
+                                onClick={handleDistanceMeasuringClicked}
+                                onDoubleClick={dialogStore.showDistanceMeasuringDialog}
+                            />
                         </Tooltip2>
                         <Tooltip2
                             position={tooltipPosition}
