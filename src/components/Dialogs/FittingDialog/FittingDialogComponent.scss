@@ -15,11 +15,6 @@
         display: flex;
         width: 100%;
         user-select: none;
-
-        .bp3-button {
-            margin-left: 5px;
-            margin-right: 5px;
-        }
     }
 
     .bp3-control-group .bp3-input {
@@ -45,8 +40,16 @@
         }
     }
 
-    .bp3-dialog-body :last-child {
-        margin-bottom: 0;
+    .lock-button {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+
+    .bp3-dialog-body {
+        margin-bottom: 5px;
+        :last-child {
+            margin-bottom: 0px;
+        }
     }
 
     .fitting-result {

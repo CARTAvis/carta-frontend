@@ -33,7 +33,7 @@ export class FittingDialogComponent extends React.Component {
         return (
             <>
                 <SafeNumericInput value={isFinite(value) ? value : ""} placeholder={placeholder} onValueChange={onValueChange} buttonPosition="none" />
-                <AnchorButton onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} />
+                <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} />
             </>
         );
     };
