@@ -56,7 +56,7 @@ export class DistanceMeasuringDialog extends React.Component {
         // dummy variables related to wcs to trigger re-render
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const system = appStore.overlayStore.global.explicitSystem;
-        const frame = appStore.activeFrame?.spatialReference ?? appStore.activeFrame;
+        const frame = appStore.activeFrame;
         const distanceMeasuringStore = frame?.distanceMeasuring;
         const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
         const WCSStart = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.transformedStart);
@@ -98,7 +98,7 @@ export class DistanceMeasuringDialog extends React.Component {
                 } else {
                     distanceMeasuringStore?.setTransformedStart(distanceMeasuringStore?.transformedStart.x, value);
                 }
-            } else if (appStore.activeFrame) {
+            } else if (frame) {
                 const value = event.target.value;
                 if (this.error) this.setError(false);
                 if (isX && isWCSStringFormatValid(value as string, appStore.overlayStore.numbers.formatTypeX)) {
