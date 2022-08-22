@@ -20,10 +20,6 @@ export class DistanceMeasuringStore {
     static readonly DEFAULT_FONTSIZE = 14;
     static readonly DEFAULT_COLOR = "#62D96B";
 
-    // private static staticInstance: DistanceMeasuringStore;
-
-    // appStore = AppStore.Instance;
-
     constructor() {
         makeObservable(this);
         this.transformedStart = {x: null, y: null};
