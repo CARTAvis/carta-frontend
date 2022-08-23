@@ -6,8 +6,8 @@ import {getColorForTheme} from "utilities";
 import {Point2D, Transform2D} from "models";
 
 export class DistanceMeasuringStore {
-    start: Point2D;
-    finish: Point2D;
+    @observable start: Point2D;
+    @observable finish: Point2D;
 
     @observable transformedStart: Point2D;
     @observable transformedFinish: Point2D;
@@ -22,6 +22,8 @@ export class DistanceMeasuringStore {
 
     constructor() {
         makeObservable(this);
+        this.start = {x: null, y: null};
+        this.finish = {x: null, y: null};
         this.transformedStart = {x: null, y: null};
         this.transformedFinish = {x: null, y: null};
         this.isCreating = false;
@@ -76,11 +78,11 @@ export class DistanceMeasuringStore {
         this.fontSize = size;
     };
 
-    @action setTransformedStart(x: number, y: number) {
-        this.transformedStart = {x: x, y: y || null};
+    @action setStart(x: number, y: number) {
+        this.start = {x: x, y: y || null};
     }
 
-    @action setTransformedFinish(x: number, y: number) {
-        this.transformedFinish = {x: x, y: y || null};
+    @action setFinish(x: number, y: number) {
+        this.finish = {x: x, y: y || null};
     }
 }

@@ -57,10 +57,11 @@ export class DistanceMeasuringDialog extends React.Component {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const system = appStore.overlayStore.global.explicitSystem;
         const frame = appStore.activeFrame;
+        // const isSpatialReferenceOn = frame?.spatialReference;
         const distanceMeasuringStore = frame?.distanceMeasuring;
         const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
-        const WCSStart = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.transformedStart);
-        const WCSFinish = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.transformedFinish);
+        const WCSStart = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.start);
+        const WCSFinish = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.finish);
         const dialogStore = DialogStore.Instance;
 
         const style = {
@@ -90,13 +91,13 @@ export class DistanceMeasuringDialog extends React.Component {
             if (pixel) {
                 const value = parseFloat(event.target.value);
                 if (isX && finish) {
-                    distanceMeasuringStore?.setTransformedFinish(value, distanceMeasuringStore?.transformedFinish.y);
+                    distanceMeasuringStore?.setFinish(value, distanceMeasuringStore?.finish.y);
                 } else if (finish) {
-                    distanceMeasuringStore?.setTransformedFinish(distanceMeasuringStore?.transformedFinish.x, value);
+                    distanceMeasuringStore?.setFinish(distanceMeasuringStore?.finish.x, value);
                 } else if (isX) {
-                    distanceMeasuringStore?.setTransformedStart(value, distanceMeasuringStore?.transformedStart.y);
+                    distanceMeasuringStore?.setStart(value, distanceMeasuringStore?.start.y);
                 } else {
-                    distanceMeasuringStore?.setTransformedStart(distanceMeasuringStore?.transformedStart.x, value);
+                    distanceMeasuringStore?.setStart(distanceMeasuringStore?.start.x, value);
                 }
             } else if (frame) {
                 const value = event.target.value;
@@ -104,23 +105,25 @@ export class DistanceMeasuringDialog extends React.Component {
                 if (isX && isWCSStringFormatValid(value as string, appStore.overlayStore.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value as string});
-                        distanceMeasuringStore?.setTransformedFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
+                        distanceMeasuringStore?.setFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
                     } else {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value as string});
-                        distanceMeasuringStore?.setTransformedStart(startPixelFromWCS.x, startPixelFromWCS.y);
+                        distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
                     }
                 } else if (!isX && isWCSStringFormatValid(value as string, appStore.overlayStore.numbers.formatTypeY)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value as string});
-                        distanceMeasuringStore?.setTransformedFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
+                        distanceMeasuringStore?.setFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
                     } else {
                         const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value as string});
-                        distanceMeasuringStore?.setTransformedStart(startPixelFromWCS.x, startPixelFromWCS.y);
+                        distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
                     }
                 } else {
                     this.setError(true);
                 }
             }
+
+            distanceMeasuringStore.updateTransformedPos(frame.spatialTransform);
         };
 
         const startInput = this.WCSMode ? (
@@ -135,10 +138,10 @@ export class DistanceMeasuringDialog extends React.Component {
         ) : (
             <>
                 <FormGroup label={"x-Pixel"} inline={true} style={style}>
-                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.transformedStart.x} onBlur={event => handleValueChange(event, true, false, true)} />
+                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.start.x} onBlur={event => handleValueChange(event, true, false, true)} />
                 </FormGroup>
                 <FormGroup label={"y-Pixel"} inline={true} style={style}>
-                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.transformedStart.y} onBlur={event => handleValueChange(event, false, false, true)} />
+                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.start.y} onBlur={event => handleValueChange(event, false, false, true)} />
                 </FormGroup>
             </>
         );
@@ -155,10 +158,10 @@ export class DistanceMeasuringDialog extends React.Component {
         ) : (
             <>
                 <FormGroup label={"x-Pixel"} inline={true} style={style}>
-                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.transformedFinish.x} onBlur={event => handleValueChange(event, true, true, true)} />
+                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.finish.x} onBlur={event => handleValueChange(event, true, true, true)} />
                 </FormGroup>
                 <FormGroup label={"y-Pixel"} inline={true} style={style}>
-                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.transformedFinish.y} onBlur={event => handleValueChange(event, false, true, true)} />
+                    <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.finish.y} onBlur={event => handleValueChange(event, false, true, true)} />
                 </FormGroup>
             </>
         );
