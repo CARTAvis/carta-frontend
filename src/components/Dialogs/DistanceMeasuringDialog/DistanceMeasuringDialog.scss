@@ -1,0 +1,49 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.distance-measuring-settings {
+    &-table {
+        display: flex;
+        flex-wrap: wrap;
+        user-select: none;
+        margin: 1%;
+
+        &-title {
+            .bp3-heading {
+                padding-top: 10%;
+            }
+        }
+
+        &-line-style {
+            &-numeric-input {
+                padding-left: 10%;
+            }
+            .bp3-form-group {
+                flex-grow: 1;
+                &:last-of-type {
+                    padding-right: 0;
+                }
+            }
+            .bp3-numeric-input {
+                .bp3-input-group {
+                    width: 60px;
+                }
+            }
+        }
+
+        &-input {
+            .bp3-numeric-input {
+                width: 125px;
+
+                .bp3-input-group {
+                    width: 100%;
+                }
+            }
+            .info-string {
+                margin-left: 5px;
+                font-size: x-small;
+                font-family: monospace;
+                user-select: text;
+            }
+        }
+    }
+}
