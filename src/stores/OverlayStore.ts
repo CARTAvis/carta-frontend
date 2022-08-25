@@ -1097,6 +1097,7 @@ export class OverlayStore {
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
+        console.log("change");
 
         astString.addSection(this.global.styleString);
         astString.addSection(this.title.styleString);
@@ -1107,16 +1108,43 @@ export class OverlayStore {
         astString.addSection(this.numbers.styleString);
         astString.addSection(this.labels.styleString);
 
-        // astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
-
         astString.add("LabelUp", 0);
         astString.add("TitleGap", this.titleGap / this.minSize);
         astString.add("NumLabGap", this.defaultGap / this.minSize);
         astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize);
         astString.add("TextGapType", "plot");
 
-        return astString;
+        return (frame?: FrameStore) => {
+            // astString.addSection(frame ? frame.distanceMeasuring?.styleString : AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
+            frame ? astString.addSection(frame.distanceMeasuring?.styleString) : astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
+
+            return astString.toString();
+        };
     }
+
+    // @computed get styleString() {
+    //     let astString = new ASTSettingsString();
+    //     astString.addSection(this.global.styleString);
+    //     astString.addSection(this.title.styleString);
+    //     astString.addSection(this.grid.styleString);
+    //     astString.addSection(this.border.styleString);
+    //     astString.addSection(this.ticks.styleString);
+    //     astString.addSection(this.axes.styleString);
+    //     astString.addSection(this.numbers.styleString);
+    //     astString.addSection(this.labels.styleString);
+
+    //     // astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
+    //     // astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
+
+    //     astString.add("LabelUp", 0);
+    //     astString.add("TitleGap", this.titleGap / this.minSize);
+    //     astString.add("NumLabGap", this.defaultGap / this.minSize);
+    //     astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize);
+    //     astString.add("TextGapType", "plot");
+
+    //     // return astString.toString();
+    //     return astString;
+    // }
 
     @computed get minSize() {
         return Math.min(this.renderWidth, this.renderHeight);
