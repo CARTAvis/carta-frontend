@@ -50,7 +50,7 @@ export class DistanceMeasuringDialog extends React.Component {
         };
 
         const MissingFrame = (
-            <NonIdealState className={"distance-measuring-settings-nonIdealState"} icon={"error"} title={"Distance Measurement is not enabled"} description={"Please enable distance measurement tool via the image view toolbar."} />
+            <NonIdealState className={"distance-measuring-settings-nonIdealState"} icon={"error"} title={"Distance measurement tool is not enabled"} description={"Please enable distance measurement tool via the image view toolbar."} />
         );
 
         const handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
