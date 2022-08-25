@@ -23,7 +23,7 @@ export class DistanceMeasuringDialog extends React.Component {
     @observable WCSMode: boolean = false;
     @observable WCSStart: WCSPoint2D;
     @observable WCSFinish: WCSPoint2D;
-    @observable invalidInput: boolean = false;
+    // @observable invalidInput: boolean = false;
 
     @action setWCSMode = (bool?: boolean) => {
         this.WCSMode = bool === undefined ? !this.WCSMode : bool;
@@ -49,9 +49,9 @@ export class DistanceMeasuringDialog extends React.Component {
         }
     };
 
-    @action setInvalidInput = (err: boolean) => {
-        this.invalidInput = err;
-    };
+    // @action setInvalidInput = (err: boolean) => {
+    //     this.invalidInput = err;
+    // };
 
     render() {
         const appStore = AppStore.Instance;
@@ -81,7 +81,7 @@ export class DistanceMeasuringDialog extends React.Component {
         );
 
         const handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
-            if (this.invalidInput) this.setInvalidInput(false);
+            // if (this.invalidInput) this.setInvalidInput(false);
             const WCSMode = formEvent.currentTarget.value === RegionCoordinate.Image ? false : true;
             this.setWCSMode(WCSMode);
         };
@@ -101,7 +101,7 @@ export class DistanceMeasuringDialog extends React.Component {
                 }
             } else if (wcsInfo) {
                 const value = event.target.value;
-                if (this.invalidInput) this.setInvalidInput(false);
+                // if (this.invalidInput) this.setInvalidInput(false);
                 if (isX && isWCSStringFormatValid(value as string, appStore.overlayStore.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value as string});
@@ -119,7 +119,7 @@ export class DistanceMeasuringDialog extends React.Component {
                         distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
                     }
                 } else {
-                    this.setInvalidInput(true);
+                    event.currentTarget.value = finish ? (isX ? WCSFinish.x : WCSFinish.y) : isX ? WCSStart.x : WCSStart.y;
                 }
             }
 
@@ -129,10 +129,10 @@ export class DistanceMeasuringDialog extends React.Component {
         const startInput = this.WCSMode ? (
             <>
                 <td>
-                    <FormGroup helperText={this.invalidInput ? "Invalid Input" : ""} inline={true}>
+                    <FormGroup inline={true}>
                         <SafeNumericInput
                             selectAllOnFocus
-                            intent={this.invalidInput ? "danger" : "none"}
+                            // intent={this.invalidInput ? "danger" : "none"}
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             value={WCSStart?.x}
@@ -141,10 +141,10 @@ export class DistanceMeasuringDialog extends React.Component {
                     </FormGroup>
                 </td>
                 <td>
-                    <FormGroup helperText={this.invalidInput ? "Invalid Input" : ""} inline={true}>
+                    <FormGroup inline={true}>
                         <SafeNumericInput
                             selectAllOnFocus
-                            intent={this.invalidInput ? "danger" : "none"}
+                            // intent={this.invalidInput ? "danger" : "none"}
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             value={WCSStart?.y}
@@ -171,10 +171,10 @@ export class DistanceMeasuringDialog extends React.Component {
         const finishInput = this.WCSMode ? (
             <>
                 <td>
-                    <FormGroup helperText={this.invalidInput ? "Invalid Input" : ""} inline={true}>
+                    <FormGroup inline={true}>
                         <SafeNumericInput
                             selectAllOnFocus
-                            intent={this.invalidInput ? "danger" : "none"}
+                            // intent={this.invalidInput ? "danger" : "none"}
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             value={WCSFinish?.x}
@@ -183,10 +183,10 @@ export class DistanceMeasuringDialog extends React.Component {
                     </FormGroup>
                 </td>
                 <td>
-                    <FormGroup helperText={this.invalidInput ? "Invalid Input" : ""} inline={true}>
+                    <FormGroup inline={true}>
                         <SafeNumericInput
                             selectAllOnFocus
-                            intent={this.invalidInput ? "danger" : "none"}
+                            // intent={this.invalidInput ? "danger" : "none"}
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
                             value={WCSFinish?.y}
