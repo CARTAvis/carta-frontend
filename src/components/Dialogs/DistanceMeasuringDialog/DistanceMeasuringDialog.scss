@@ -1,5 +1,3 @@
-@import "~@blueprintjs/core/lib/scss/variables.scss";
-
 .distance-measuring-settings {
     &-table {
         display: flex;
@@ -10,6 +8,7 @@
         &-title {
             .bp3-heading {
                 padding-top: 10%;
+                margin-bottom: 5;
             }
         }
 
@@ -31,6 +30,9 @@
         }
 
         &-input {
+            .bp3-form-group {
+                margin-bottom: 0;
+            }
             .bp3-numeric-input {
                 width: 125px;
 
@@ -45,5 +47,9 @@
                 user-select: text;
             }
         }
+    }
+
+    &-nonIdealState {
+        margin-top: 8%;
     }
 }
