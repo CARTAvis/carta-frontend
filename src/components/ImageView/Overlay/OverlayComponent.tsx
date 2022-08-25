@@ -94,9 +94,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 );
             };
 
-            let styleString = settings.styleString;
-            styleString.addSection(this.props.frame?.distanceMeasuring?.styleString);
-            let currentStyleString = styleString.toString();
+            // let styleString = settings.styleString;
+            // styleString.addSection(this.props.frame?.distanceMeasuring?.styleString);
+            // let currentStyleString = styleString.toString();
+
+            let currentStyleString = settings.styleString(frame);
 
             // Override the AST tolerance during motion
             if (frame.moving) {
