@@ -21,31 +21,9 @@ export class DistanceMeasuringDialog extends React.Component {
     }
 
     @observable WCSMode: boolean = false;
-    @observable WCSStart: WCSPoint2D;
-    @observable WCSFinish: WCSPoint2D;
 
     @action setWCSMode = (bool?: boolean) => {
         this.WCSMode = bool === undefined ? !this.WCSMode : bool;
-    };
-
-    @action setWCSStart = (point: WCSPoint2D) => {
-        this.WCSStart = point;
-    };
-
-    @action setWCSFinish = (point: WCSPoint2D) => {
-        this.WCSFinish = point;
-    };
-
-    @action setWCSPoint = (value: string, isX: boolean, finish?: boolean) => {
-        if (isX && finish) {
-            this.WCSFinish.x = value;
-        } else if (finish) {
-            this.WCSFinish.y = value;
-        } else if (isX) {
-            this.WCSStart.x = value;
-        } else {
-            this.WCSStart.y = value;
-        }
     };
 
     render() {
@@ -119,61 +97,35 @@ export class DistanceMeasuringDialog extends React.Component {
             distanceMeasuringStore.updateTransformedPos(frame.spatialTransform);
         };
 
-        const startInput = this.WCSMode ? (
-            <>
-                <td>
-                    <FormGroup inline={true}>
-                        <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={WCSStart?.x} onBlur={event => handleValueChange(event, true, false, false)} />
-                    </FormGroup>
-                </td>
-                <td>
-                    <FormGroup inline={true}>
-                        <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={WCSStart?.y} onBlur={event => handleValueChange(event, false, false, false)} />
-                    </FormGroup>
-                </td>
-            </>
-        ) : (
-            <>
-                <td>
-                    <FormGroup inline={true}>
-                        <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.start.x} onBlur={event => handleValueChange(event, true, false, true)} />
-                    </FormGroup>
-                </td>
-                <td>
-                    <FormGroup inline={true}>
-                        <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.start.y} onBlur={event => handleValueChange(event, false, false, true)} />
-                    </FormGroup>
-                </td>
-            </>
-        );
-
-        const finishInput = this.WCSMode ? (
-            <>
-                <td>
-                    <FormGroup inline={true}>
-                        <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={WCSFinish?.x} onBlur={event => handleValueChange(event, true, true, false)} />
-                    </FormGroup>
-                </td>
-                <td>
-                    <FormGroup inline={true}>
-                        <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={WCSFinish?.y} onBlur={event => handleValueChange(event, false, true, false)} />
-                    </FormGroup>
-                </td>
-            </>
-        ) : (
-            <>
-                <td>
-                    <FormGroup inline={true}>
-                        <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.finish.x} onBlur={event => handleValueChange(event, true, true, true)} />
-                    </FormGroup>
-                </td>
-                <td>
-                    <FormGroup inline={true}>
-                        <SafeNumericInput selectAllOnFocus buttonPosition="none" value={distanceMeasuringStore?.finish.y} onBlur={event => handleValueChange(event, false, true, true)} />
-                    </FormGroup>
-                </td>
-            </>
-        );
+        const input = (finish: boolean) => {
+            return this.WCSMode ? (
+                <>
+                    <td>
+                        <FormGroup inline={true}>
+                            <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={finish ? WCSFinish.x : WCSStart?.x} onBlur={event => handleValueChange(event, true, finish, false)} />
+                        </FormGroup>
+                    </td>
+                    <td>
+                        <FormGroup inline={true}>
+                            <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={finish ? WCSFinish.y : WCSStart?.y} onBlur={event => handleValueChange(event, false, finish, false)} />
+                        </FormGroup>
+                    </td>
+                </>
+            ) : (
+                <>
+                    <td>
+                        <FormGroup inline={true}>
+                            <SafeNumericInput selectAllOnFocus buttonPosition="none" value={finish ? distanceMeasuringStore?.finish.x : distanceMeasuringStore?.start.x} onBlur={event => handleValueChange(event, true, finish, true)} />
+                        </FormGroup>
+                    </td>
+                    <td>
+                        <FormGroup inline={true}>
+                            <SafeNumericInput selectAllOnFocus buttonPosition="none" value={finish ? distanceMeasuringStore?.finish.y : distanceMeasuringStore?.start.y} onBlur={event => handleValueChange(event, false, finish, true)} />
+                        </FormGroup>
+                    </td>
+                </>
+            );
+        };
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={775} defaultHeight={475} minHeight={350} minWidth={775} enableResizing={true}>
@@ -223,14 +175,14 @@ export class DistanceMeasuringDialog extends React.Component {
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
                                         <td>Start{this.WCSMode ? "" : " (px)"}</td>
-                                        {startInput}
+                                        {input(false)}
                                         <td colSpan={3}>
                                             <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.start, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span>
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
                                         <td>Finish{this.WCSMode ? "" : " (px)"}</td>
-                                        {finishInput}
+                                        {input(true)}
                                         <td colSpan={3}>
                                             <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.finish, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span>
                                         </td>
