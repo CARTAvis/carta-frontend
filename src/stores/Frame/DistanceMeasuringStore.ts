@@ -78,11 +78,11 @@ export class DistanceMeasuringStore {
         this.fontSize = size;
     };
 
-    @action setStart(x: number, y: number) {
+    @action setStart = (x: number, y: number) => {
         this.start = {x: x, y: y || null};
-    }
+    };
 
-    @action setFinish(x: number, y: number) {
+    @action setFinish = (x: number, y: number) => {
         this.finish = {x: x, y: y || null};
-    }
+    };
 }
