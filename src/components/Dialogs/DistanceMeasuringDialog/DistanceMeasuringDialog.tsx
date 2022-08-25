@@ -123,24 +123,12 @@ export class DistanceMeasuringDialog extends React.Component {
             <>
                 <td>
                     <FormGroup inline={true}>
-                        <SafeNumericInput
-                            selectAllOnFocus
-                            allowNumericCharactersOnly={false}
-                            buttonPosition="none"
-                            value={WCSStart?.x}
-                            onBlur={event => handleValueChange(event, true, false, false)}
-                        />
+                        <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={WCSStart?.x} onBlur={event => handleValueChange(event, true, false, false)} />
                     </FormGroup>
                 </td>
                 <td>
                     <FormGroup inline={true}>
-                        <SafeNumericInput
-                            selectAllOnFocus
-                            allowNumericCharactersOnly={false}
-                            buttonPosition="none"
-                            value={WCSStart?.y}
-                            onBlur={event => handleValueChange(event, false, false, false)}
-                        />
+                        <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={WCSStart?.y} onBlur={event => handleValueChange(event, false, false, false)} />
                     </FormGroup>
                 </td>
             </>
@@ -163,24 +151,12 @@ export class DistanceMeasuringDialog extends React.Component {
             <>
                 <td>
                     <FormGroup inline={true}>
-                        <SafeNumericInput
-                            selectAllOnFocus
-                            allowNumericCharactersOnly={false}
-                            buttonPosition="none"
-                            value={WCSFinish?.x}
-                            onBlur={event => handleValueChange(event, true, true, false)}
-                        />
+                        <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={WCSFinish?.x} onBlur={event => handleValueChange(event, true, true, false)} />
                     </FormGroup>
                 </td>
                 <td>
                     <FormGroup inline={true}>
-                        <SafeNumericInput
-                            selectAllOnFocus
-                            allowNumericCharactersOnly={false}
-                            buttonPosition="none"
-                            value={WCSFinish?.y}
-                            onBlur={event => handleValueChange(event, false, true, false)}
-                        />
+                        <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={WCSFinish?.y} onBlur={event => handleValueChange(event, false, true, false)} />
                     </FormGroup>
                 </td>
             </>
