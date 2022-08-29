@@ -37,7 +37,6 @@ export class RegionStore {
     @observable locked: boolean;
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
-    // @observable opacity: number = 2;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -533,12 +532,6 @@ export class RegionStore {
             this.locked = locked;
         }
     };
-
-    // @action setOpacity = (opacity: number) => {
-    //     if (this.regionId !== CURSOR_REGION_ID) {
-    //         this.opacity = opacity;
-    //     }
-    // };
 
     @action focusCenter = () => {
         if (this.activeFrame) {

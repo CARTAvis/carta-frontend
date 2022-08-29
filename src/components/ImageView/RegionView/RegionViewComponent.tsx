@@ -667,7 +667,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer ref={this.layerRef} opacity={regionSet.opacity} >
+                    <Layer ref={this.layerRef} opacity={regionSet.locked && regionSet.opacity === 1 ? 0.7 : regionSet.opacity} listening={!regionSet.locked} >
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}

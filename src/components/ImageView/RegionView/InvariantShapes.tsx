@@ -25,7 +25,6 @@ interface PointProps {
     y: number;
     rotation: number;
     color: string;
-    opacity: number;
     selectionOpacity: number;
     listening: boolean;
     onDragStart: (ev) => void;
@@ -46,7 +45,7 @@ export const Point = (props: PointProps) => {
 
     return (
         <Group>
-            <Shape x={props.x} y={props.y} opacity={props.opacity} rotation={props.rotation} fill={props.color} sceneFunc={handlePointDraw} />
+            <Shape x={props.x} y={props.y} rotation={props.rotation} fill={props.color} sceneFunc={handlePointDraw} />
             <Shape
                 x={props.x}
                 y={props.y}
@@ -55,7 +54,7 @@ export const Point = (props: PointProps) => {
                 stroke={"white"}
                 strokeWidth={1}
                 strokeScaleEnabled={false}
-                opacity={props.opacity === 0 ? 0 : props.selectionOpacity}
+                opacity={props.selectionOpacity}
                 draggable={true}
                 listening={props.listening}
                 onDragStart={props.onDragStart}

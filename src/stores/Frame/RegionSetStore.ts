@@ -18,6 +18,7 @@ export class RegionSetStore {
     @observable mode: RegionMode;
     @observable newRegionType: CARTA.RegionType;
     @observable opacity: number;
+    @observable locked: boolean = false;
 
     private readonly frame: FrameStore;
     private readonly backendService: BackendService;
@@ -235,4 +236,12 @@ export class RegionSetStore {
             }
         }
     };
+
+    @action setOpacity(opacity: number) {
+        this.opacity = opacity;
+    }
+
+    @action setLocked(locked?: boolean) {
+        this.locked = locked === undefined ? !this.locked : locked;
+    }
 }

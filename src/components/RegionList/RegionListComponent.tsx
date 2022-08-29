@@ -55,7 +55,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable lastVisibleRow: number = 0;
     @observable regionVisibility: number = 2;
     @observable regionsLock: boolean = false;
-    @observable regionLockStatus: boolean[] = this.validRegions.map(region => region.locked);
+    // @observable regionLockStatus: boolean[] = this.validRegions.map(region => region.locked);
 
     constructor(props: any) {
         super(props);
@@ -75,29 +75,31 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         this.regionsLock = locked !== undefined ? locked : !this.regionsLock;
     };
 
-    @action private syncRegionLockStatus = () => {
-        this.regionLockStatus = this.validRegions.map(region => region.locked);
-    };
+    // @action private syncRegionLockStatus = () => {
+    //     this.regionLockStatus = this.validRegions.map(region => region.locked);
+    // };
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         region.toggleLock();
-        this.syncRegionLockStatus();
+        // this.syncRegionLockStatus();
 
-        if (!this.regionLockStatus.includes(true)) {
-            this.toggleRegionsLock(false);
-        } else if (!this.regionLockStatus.includes(false)) {
-            this.toggleRegionsLock(true);
-        }
+        // if (!this.regionLockStatus.includes(true)) {
+        //     AppStore.Instance.activeFrame.regionSet.setLocked(false);
+        // } else if (!this.regionLockStatus.includes(false)) {
+        //     AppStore.Instance.activeFrame.regionSet.setLocked(true);
+        // }
 
         ev.stopPropagation();
     };
 
     private handleAllRegionsLockClicked = (ev: React.MouseEvent<HTMLElement, MouseEvent>, regions: RegionStore[]) => {
-        for (const region of regions) {
-            this.regionsLock ? region.locked && region.toggleLock() : !region.locked && region.toggleLock();
-        }
+        // for (const region of regions) {
+        //     this.regionsLock ? region.locked && region.toggleLock() : !region.locked && region.toggleLock();
+        // }
+
         this.toggleRegionsLock();
-        this.syncRegionLockStatus();
+        AppStore.Instance.activeFrame.regionSet.setLocked(this.regionsLock);
+        // this.syncRegionLockStatus();
         ev.stopPropagation();
     };
 
@@ -105,23 +107,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
             this.toggleRegionVisibility();
 
-            let opa = [0, 0.1, 1]
+            let opacityArr = [0, 0.5, 1]
 
-            AppStore.Instance.activeFrame.regionSet.opacity = opa[this.regionVisibility];
-
-            // for (const region of regions) {
-            //     region.setOpacity(this.regionVisibility);
-            // }
-
-            // if (this.regionVisibility === 0) {
-            //     for (const region of regions) {
-            //         !region.locked && region.toggleLock();
-            //     }
-            // } else {
-            //     for (let i = 0; i < regions.length; i++) {
-            //         regions[i].setLocked(this.regionLockStatus[i]);
-            //     }
-            // }
+            AppStore.Instance.activeFrame.regionSet.setOpacity(opacityArr[this.regionVisibility]);
 
             ev.stopPropagation();
         };
@@ -160,6 +148,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const darkTheme = appStore.darkTheme;
+        const regionSet = appStore.activeFrame?.regionSet;
 
         if (!frame) {
             return (
@@ -358,8 +347,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let lockEntry: React.ReactNode;
             if (region.regionId) {
                 lockEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={this.regionVisibility === 0 ? () => {} : ev => this.handleRegionLockClicked(ev, region)}>
-                        <Icon icon={region.locked ? "lock" : this.regionVisibility === 0 ? "lock" : "unlock"} style={{opacity: this.regionVisibility === 0 ? 0.3 : 1}} />
+                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={regionSet.locked || this.regionVisibility === 0 ? () => {} : ev => this.handleRegionLockClicked(ev, region)}>
+                        <Icon icon={region.locked ? "lock" : this.regionVisibility === 0 ? "lock" : "unlock"} style={{opacity: regionSet.locked ? 0.3 : this.regionVisibility === 0 ? 0.3 : 1}} />
                     </div>
                 );
             } else {
