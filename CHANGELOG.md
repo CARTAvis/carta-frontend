@@ -4,18 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0-beta.4]
+## [3.0.0]
 
 ### Added
 * Added support for image fitting with field of view ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
 * Size conversion in the image fitting results ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
+* Show a notification when there is a new CARTA release ([#1852](https://github.com/CARTAvis/carta-frontend/issues/1852)).
+* Added links to the CARTA Dashboard to the splashscreen and alert dialog where appropriate ([#1874](https://github.com/CARTAvis/carta-frontend/issues/1874)).
 ### Changed
 * Splatalogue queries are now made directly with the server, rather than proxied through the backend ([#1755](https://github.com/CARTAvis/carta-frontend/issues/1755)).
 ### Fixed
 * Added missing vector overlay and image fitting options in the View menu ([#1848](https://github.com/CARTAvis/carta-frontend/issues/1848)).
 * Hide code snippet option in the View menu when code snippet is disabled in the preferences ([#1856](https://github.com/CARTAvis/carta-frontend/issues/1856)).
 * Fixed the rotation anchor offset of line regions ([#1739](https://github.com/CARTAvis/carta-frontend/issues/1739)).
-* Fixed issue with exporting decimated data instead of full resolution data in spatial profiler ([#1546](https://github.com/CARTAvis/carta-frontend/issues/1546))
+* Fixed issue with exporting decimated data instead of full resolution data in spatial profiler ([#1546](https://github.com/CARTAvis/carta-frontend/issues/1546)).
 * Fixed larger position errors of projected contours, catalog overlays, and vector overlays near the border ([#1843](https://github.com/CARTAvis/carta-frontend/issues/1843)).
 * Fixed no updating of spatial profile after region deleting ([#1831](https://github.com/CARTAvis/carta-frontend/issues/1831), [#1855](https://github.com/CARTAvis/carta-frontend/issues/1855)).
 * Fixed unable to switch channel by clicking scatter plot in stokes analysis widgets ([#1313](https://github.com/CARTAvis/carta-frontend/issues/1313)).
@@ -23,13 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed gaps in projected unclosed regions ([#1740](https://github.com/CARTAvis/carta-frontend/issues/1740)).
 * Fixed projection of polygon regions created on spatially matched images ([#1887](https://github.com/CARTAvis/carta-frontend/issues/1887)).
 * Fixed incorrect channels of matched images requested for animation ([#569](https://github.com/CARTAvis/carta-frontend/issues/569)).
-* Fixed issue of showing last index of animator sliders ([#1893] (https://github.com/CARTAvis/carta-frontend/issues/1893))
+* Fixed issue of showing last index of animator sliders ([#1893] (https://github.com/CARTAvis/carta-frontend/issues/1893)).
 * Fixed tooltip blocking issue of the toolbar in the image viewer ([#1897](https://github.com/CARTAvis/carta-frontend/issues/1897)).
 * Fixed persisent tooltip after exporting a png image ([#1742](https://github.com/CARTAvis/carta-frontend/issues/1742)).
 * Fixed high CPU/GPU usage when CARTA is idle or attempting to reconnect to server ([#153](https://github.com/CARTAvis/carta/issues/153) and [#1808](https://github.com/CARTAvis/carta-frontend/issues/1808)).
 * Fixed incorrect region positions when importing regions on a spatially matched image ([#1899](https://github.com/CARTAvis/carta-frontend/issues/1899)).
+* Fixed issue in the spatial profile setting where the "Show WCS Axis" should be disabled for steps and lines plot styles ([#1905](https://github.com/CARTAvis/carta-frontend/issues/1905)).
 * Fixed issue when the active frame changes while the region is being imported.
 * Fixed issue where spetral profiler cursor info shows data only for the main profile and the cursor info of the smoothing profile is missing. ([#1880](https://github.com/CARTAvis/carta-frontend/issues/1880)).
+* Fixed the imprecised catalog plot axis. ([#1884](https://github.com/cartavis/carta-frontend/issues/1884)).
+* Fixed the displayed values in the cursor info of the histogram widget by adopting binary-searched data x and y values ([#1917](https://github.com/CARTAvis/carta-frontend/issues/1917)).
+* Fixed missing regions when the image is matched or unmatched to the reference ([#1780](https://github.com/CARTAvis/carta-frontend/issues/1780)).
+* Fixed inconsistent vector line width on spatially matched images ([#1854](https://github.com/CARTAvis/carta-frontend/issues/1854)).
+* Fixed QU profile rendering black at the first channel in the stokes widget ([#1786](https://github.com/CARTAvis/carta-frontend/issues/1786)).
 
 ## [3.0.0-beta.3]
 
