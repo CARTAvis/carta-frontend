@@ -1,5 +1,8 @@
 pipeline {
     agent none
+    options {
+        disableConcurrentBuilds()
+    }
     environment {
         COMMIT_ID=''
     }
