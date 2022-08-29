@@ -17,7 +17,7 @@ export class RegionSetStore {
     @observable selectedRegion: RegionStore;
     @observable mode: RegionMode;
     @observable newRegionType: CARTA.RegionType;
-    @observable opacity: number;
+    @observable opacity: number = 1;
     @observable locked: boolean = false;
 
     private readonly frame: FrameStore;
@@ -243,5 +243,6 @@ export class RegionSetStore {
 
     @action setLocked(locked?: boolean) {
         this.locked = locked === undefined ? !this.locked : locked;
+        if (this.locked) this.selectRegionByIndex(0);
     }
 }

@@ -53,9 +53,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable height: number = 0;
     @observable firstVisibleRow: number = 0;
     @observable lastVisibleRow: number = 0;
-    @observable regionVisibility: number = 2;
+    @observable regionsVisibility: number = 2;
     @observable regionsLock: boolean = false;
-    // @observable regionLockStatus: boolean[] = this.validRegions.map(region => region.locked);
 
     constructor(props: any) {
         super(props);
@@ -68,49 +67,35 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     @action private toggleRegionVisibility = () => {
-        this.regionVisibility = (this.regionVisibility + 2) % 3;
+        this.regionsVisibility = (this.regionsVisibility + 2) % 3;
     };
 
     @action private toggleRegionsLock = (locked?: boolean) => {
         this.regionsLock = locked !== undefined ? locked : !this.regionsLock;
     };
 
-    // @action private syncRegionLockStatus = () => {
-    //     this.regionLockStatus = this.validRegions.map(region => region.locked);
-    // };
+    private syncRegionsLocked = () => {
+        AppStore.Instance.activeFrame.regionSet.setLocked(this.regionsLock);
+    };
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         region.toggleLock();
-        // this.syncRegionLockStatus();
-
-        // if (!this.regionLockStatus.includes(true)) {
-        //     AppStore.Instance.activeFrame.regionSet.setLocked(false);
-        // } else if (!this.regionLockStatus.includes(false)) {
-        //     AppStore.Instance.activeFrame.regionSet.setLocked(true);
-        // }
-
         ev.stopPropagation();
     };
 
     private handleAllRegionsLockClicked = (ev: React.MouseEvent<HTMLElement, MouseEvent>, regions: RegionStore[]) => {
-        // for (const region of regions) {
-        //     this.regionsLock ? region.locked && region.toggleLock() : !region.locked && region.toggleLock();
-        // }
-
         this.toggleRegionsLock();
-        AppStore.Instance.activeFrame.regionSet.setLocked(this.regionsLock);
-        // this.syncRegionLockStatus();
+        this.syncRegionsLocked();
         ev.stopPropagation();
     };
 
-    private handleToggleHideClicked = (regions: RegionStore[]) => {
+    private handleToggleHideClicked = () => {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
+            if (this.regionsLock !== AppStore.Instance.activeFrame.regionSet.locked) this.syncRegionsLocked();
             this.toggleRegionVisibility();
-
             let opacityArr = [0, 0.5, 1];
-
-            AppStore.Instance.activeFrame.regionSet.setOpacity(opacityArr[this.regionVisibility]);
-
+            AppStore.Instance.activeFrame.regionSet.setOpacity(opacityArr[this.regionsVisibility]);
+            if (this.regionsVisibility === 0) AppStore.Instance.activeFrame.regionSet.setLocked(true);
             ev.stopPropagation();
         };
     };
@@ -240,16 +225,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <div className={className} style={props.style}>
                         <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
                             <Icon icon={"blank"} style={{width: 16}} />
-                            <Tooltip2 disabled={this.regionVisibility === 0} content="Lock All Regions" position={Position.BOTTOM}>
+                            <Tooltip2 disabled={this.regionsVisibility === 0} content="Lock All Regions" position={Position.BOTTOM}>
                                 <Icon
-                                    icon={this.regionsLock ? "lock" : this.regionVisibility === 0 ? "lock" : "unlock"}
-                                    onClick={this.regionVisibility === 0 ? () => {} : ev => this.handleAllRegionsLockClicked(ev, this.validRegions)}
-                                    style={{cursor: "pointer", opacity: this.regionVisibility === 0 ? 0.3 : 1}}
+                                    icon={this.regionsLock ? "lock" : this.regionsVisibility === 0 ? "lock" : "unlock"}
+                                    onClick={this.regionsVisibility === 0 ? () => {} : ev => this.handleAllRegionsLockClicked(ev, this.validRegions)}
+                                    style={{cursor: "pointer", opacity: this.regionsVisibility === 0 ? 0.3 : 1}}
                                 />
                             </Tooltip2>
                             <Icon icon={"blank"} style={{width: 5}} />
-                            <Tooltip2 content={this.regionVisibility === 0 ? "Show Regions" : "Hide Regions"} position={Position.BOTTOM}>
-                                <Icon icon={this.regionVisibility === 0 ? "eye-off" : "eye-open"} onClick={this.handleToggleHideClicked(this.validRegions)} style={{cursor: "pointer", opacity: this.regionVisibility === 1 ? 0.3 : 1}} />
+                            <Tooltip2 content={this.regionsVisibility === 0 ? "Show Regions" : "Hide Regions"} position={Position.BOTTOM}>
+                                <Icon icon={this.regionsVisibility === 0 ? "eye-off" : "eye-open"} onClick={this.handleToggleHideClicked()} style={{cursor: "pointer", opacity: this.regionsVisibility === 1 ? 0.3 : 1}} />
                             </Tooltip2>
                         </div>
                         <div className="cell" style={{width: nameWidth}}>
@@ -347,8 +332,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let lockEntry: React.ReactNode;
             if (region.regionId) {
                 lockEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={regionSet.locked || this.regionVisibility === 0 ? () => {} : ev => this.handleRegionLockClicked(ev, region)}>
-                        <Icon icon={region.locked ? "lock" : this.regionVisibility === 0 ? "lock" : "unlock"} style={{opacity: regionSet.locked ? 0.3 : this.regionVisibility === 0 ? 0.3 : 1}} />
+                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={regionSet.locked || this.regionsVisibility === 0 ? () => {} : ev => this.handleRegionLockClicked(ev, region)}>
+                        <Icon icon={region.locked ? "lock" : this.regionsVisibility === 0 ? "lock" : "unlock"} style={{opacity: regionSet.locked ? 0.3 : this.regionsVisibility === 0 ? 0.3 : 1}} />
                     </div>
                 );
             } else {
@@ -410,7 +395,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             <div className="region-list-widget">
                 <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
                     <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
-                        {headerRenderer(this.regionVisibility, this.regionsLock)}
+                        {headerRenderer(this.regionsVisibility, this.regionsLock)}
                     </FixedSizeList>
                     <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width="100%">
                         {rowRenderer}
