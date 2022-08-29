@@ -17,6 +17,7 @@ export class RegionSetStore {
     @observable selectedRegion: RegionStore;
     @observable mode: RegionMode;
     @observable newRegionType: CARTA.RegionType;
+    @observable opacity: number;
 
     private readonly frame: FrameStore;
     private readonly backendService: BackendService;

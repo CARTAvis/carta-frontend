@@ -17,6 +17,7 @@ interface PointRegionComponentProps {
     stageRef: any;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
+    opacity: number;
 }
 
 @observer
@@ -60,7 +61,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     public render() {
         const region = this.props.region;
         const frame = this.props.frame;
-
+        console.log('hiiii')
         let centerPixelSpace: Point2D;
         let rotation: number;
 
@@ -84,7 +85,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                 y={centerPixelSpace.y}
                 rotation={rotation}
                 color={region.color}
-                opacity={region.opacity === 2 ? 1 : region.opacity === 0 ? 0 : 0.3}
+                opacity={this.props.opacity === 2 ? 1 : this.props.opacity === 0 ? 0 : 0.3}
                 selectionOpacity={region.locked ? 0 : this.props.selected ? 1 : 0}
                 listening={!region.locked}
                 onDragStart={this.handleDragStart}

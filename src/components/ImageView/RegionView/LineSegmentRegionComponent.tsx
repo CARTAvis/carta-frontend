@@ -23,6 +23,7 @@ interface LineSegmentRegionComponentProps {
     stageRef: any;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
+    opacity: number;
 }
 
 const NEW_ANCHOR_MAX_DISTANCE = 16;
@@ -345,7 +346,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     y={centerPointCanvasSpace.y}
                     stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
                     strokeWidth={region.lineWidth}
-                    opacity={region.opacity === 2 ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : region.opacity === 0 ? 0 : 0.3}
+                    opacity={this.props.opacity === 2 ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : this.props.opacity === 0 ? 0 : 0.3}
                     dash={[region.dashLength]}
                     closed={!region.creating && region.regionType === CARTA.RegionType.POLYGON}
                     listening={this.props.listening && !region.locked}

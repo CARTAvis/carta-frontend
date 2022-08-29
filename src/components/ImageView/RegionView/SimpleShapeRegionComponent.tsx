@@ -22,6 +22,7 @@ interface SimpleShapeRegionComponentProps {
     stageRef: any;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
+    opacity: number;
 }
 
 @observer
@@ -482,7 +483,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 y: centerPixelSpace.y,
                 stroke: region.color,
                 strokeWidth: region.lineWidth,
-                opacity: region.opacity === 2 ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : region.opacity === 0 ? 0 : 0.3,
+                opacity: this.props.opacity === 2 ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : this.props.opacity === 0 ? 0 : 0.3,
                 dash: [region.dashLength],
                 draggable: true,
                 listening: this.props.listening && !region.locked,

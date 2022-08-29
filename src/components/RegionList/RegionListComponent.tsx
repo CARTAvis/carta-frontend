@@ -105,19 +105,23 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
             this.toggleRegionVisibility();
 
-            for (const region of regions) {
-                region.setOpacity(this.regionVisibility);
-            }
+            let opa = [0, 0.1, 1]
 
-            if (this.regionVisibility === 0) {
-                for (const region of regions) {
-                    !region.locked && region.toggleLock();
-                }
-            } else {
-                for (let i = 0; i < regions.length; i++) {
-                    regions[i].setLocked(this.regionLockStatus[i]);
-                }
-            }
+            AppStore.Instance.activeFrame.regionSet.opacity = opa[this.regionVisibility];
+
+            // for (const region of regions) {
+            //     region.setOpacity(this.regionVisibility);
+            // }
+
+            // if (this.regionVisibility === 0) {
+            //     for (const region of regions) {
+            //         !region.locked && region.toggleLock();
+            //     }
+            // } else {
+            //     for (let i = 0; i < regions.length; i++) {
+            //         regions[i].setLocked(this.regionLockStatus[i]);
+            //     }
+            // }
 
             ev.stopPropagation();
         };
