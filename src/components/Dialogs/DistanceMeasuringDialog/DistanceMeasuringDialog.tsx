@@ -48,7 +48,7 @@ export class DistanceMeasuringDialog extends React.Component {
             lazy: true,
             isOpen: dialogStore.distanceMeasuringDialogVisible,
             onClose: dialogStore.hideDistanceMeasuringDialog,
-            title: `Measure Distance (${frame?.filename})`
+            title: `Distance Measurement (${frame?.filename})`
         };
 
         const MissingFrame = (
