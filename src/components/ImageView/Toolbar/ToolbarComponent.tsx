@@ -209,7 +209,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             position={tooltipPosition}
                             content={
                                 <span>
-                                    Measure distance
+                                    Distance Measurement
                                     <br />
                                     <i>
                                         <small>Click to create geodesic curves.</small>

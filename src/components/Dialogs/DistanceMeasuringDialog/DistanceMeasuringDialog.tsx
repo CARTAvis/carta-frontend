@@ -3,7 +3,7 @@ import {observable, action, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {ColorResult} from "react-color";
 import {FormGroup, IDialogProps, NonIdealState, H5} from "@blueprintjs/core";
-import {AppStore, DialogStore} from "stores";
+import {AppStore, DialogStore, HelpType} from "stores";
 import {RegionCoordinate} from "stores/Frame";
 import {CustomIcon} from "icons/CustomIcons";
 import {SafeNumericInput, ColorPickerComponent, CoordinateComponent} from "components/Shared";
@@ -13,6 +13,8 @@ import {getPixelValueFromWCS, getFormattedWCSPoint, isWCSStringFormatValid, SWAT
 import {ImageViewLayer} from "components";
 import "./DistanceMeasuringDialog.scss";
 
+const KEYCODE_ENTER = "Enter";
+
 @observer
 export class DistanceMeasuringDialog extends React.Component {
     constructor(props: any) {
@@ -20,7 +22,7 @@ export class DistanceMeasuringDialog extends React.Component {
         makeObservable(this);
     }
 
-    @observable WCSMode: boolean = false;
+    @observable WCSMode: boolean = true;
 
     @action setWCSMode = (bool?: boolean) => {
         this.WCSMode = bool === undefined ? !this.WCSMode : bool;
@@ -58,9 +60,10 @@ export class DistanceMeasuringDialog extends React.Component {
             this.setWCSMode(WCSMode);
         };
 
-        const handleValueChange = (event: React.FocusEvent<HTMLInputElement>, isX: boolean, finish?: boolean, pixel?: boolean) => {
+        const handleValueChange = (event: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>, isX: boolean, finish?: boolean, pixel?: boolean) => {
+            const target = event.target as HTMLInputElement;
             if (pixel) {
-                const value = parseFloat(event.target.value);
+                const value = parseFloat(target.value);
                 if (!isFinite(value)) return;
                 if (isX && finish) {
                     distanceMeasuringStore?.setFinish(value, distanceMeasuringStore?.finish.y);
@@ -72,7 +75,7 @@ export class DistanceMeasuringDialog extends React.Component {
                     distanceMeasuringStore?.setStart(distanceMeasuringStore?.start.x, value);
                 }
             } else if (wcsInfo) {
-                const value = event.target.value;
+                const value = target.value;
                 if (isX && isWCSStringFormatValid(value as string, appStore.overlayStore.numbers.formatTypeX)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value as string});
@@ -102,12 +105,30 @@ export class DistanceMeasuringDialog extends React.Component {
                 <>
                     <td>
                         <FormGroup inline={true}>
-                            <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={finish ? WCSFinish.x : WCSStart?.x} onBlur={event => handleValueChange(event, true, finish, false)} />
+                            <SafeNumericInput
+                                selectAllOnFocus
+                                allowNumericCharactersOnly={false}
+                                buttonPosition="none"
+                                value={finish ? WCSFinish?.x : WCSStart?.x}
+                                onBlur={event => handleValueChange(event, true, finish, false)}
+                                onKeyDown={event => {
+                                    if (event.type === "keydown" && event.key === KEYCODE_ENTER) handleValueChange(event, true, finish, false);
+                                }}
+                            />
                         </FormGroup>
                     </td>
                     <td>
                         <FormGroup inline={true}>
-                            <SafeNumericInput selectAllOnFocus allowNumericCharactersOnly={false} buttonPosition="none" value={finish ? WCSFinish.y : WCSStart?.y} onBlur={event => handleValueChange(event, false, finish, false)} />
+                            <SafeNumericInput
+                                selectAllOnFocus
+                                allowNumericCharactersOnly={false}
+                                buttonPosition="none"
+                                value={finish ? WCSFinish?.y : WCSStart?.y}
+                                onBlur={event => handleValueChange(event, false, finish, false)}
+                                onKeyDown={event => {
+                                    if (event.type === "keydown" && event.key === KEYCODE_ENTER) handleValueChange(event, false, finish, false);
+                                }}
+                            />
                         </FormGroup>
                     </td>
                 </>
@@ -115,12 +136,28 @@ export class DistanceMeasuringDialog extends React.Component {
                 <>
                     <td>
                         <FormGroup inline={true}>
-                            <SafeNumericInput selectAllOnFocus buttonPosition="none" value={finish ? distanceMeasuringStore?.finish.x : distanceMeasuringStore?.start.x} onBlur={event => handleValueChange(event, true, finish, true)} />
+                            <SafeNumericInput
+                                selectAllOnFocus
+                                buttonPosition="none"
+                                value={finish ? distanceMeasuringStore?.finish.x : distanceMeasuringStore?.start.x}
+                                onBlur={event => handleValueChange(event, true, finish, true)}
+                                onKeyDown={event => {
+                                    if (event.type === "keydown" && event.key === KEYCODE_ENTER) handleValueChange(event, true, finish, true);
+                                }}
+                            />
                         </FormGroup>
                     </td>
                     <td>
                         <FormGroup inline={true}>
-                            <SafeNumericInput selectAllOnFocus buttonPosition="none" value={finish ? distanceMeasuringStore?.finish.y : distanceMeasuringStore?.start.y} onBlur={event => handleValueChange(event, false, finish, true)} />
+                            <SafeNumericInput
+                                selectAllOnFocus
+                                buttonPosition="none"
+                                value={finish ? distanceMeasuringStore?.finish.y : distanceMeasuringStore?.start.y}
+                                onBlur={event => handleValueChange(event, false, finish, true)}
+                                onKeyDown={event => {
+                                    if (event.type === "keydown" && event.key === KEYCODE_ENTER) handleValueChange(event, false, finish, true);
+                                }}
+                            />
                         </FormGroup>
                     </td>
                 </>
@@ -128,7 +165,7 @@ export class DistanceMeasuringDialog extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={775} defaultHeight={475} minHeight={350} minWidth={775} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.DISTANCE_MEASUREMENT} defaultWidth={775} defaultHeight={475} minHeight={350} minWidth={775} enableResizing={true}>
                 <div className="distance-measuring-settings">
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (
                         <>
