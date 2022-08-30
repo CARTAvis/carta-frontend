@@ -194,8 +194,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
+        const baseFrame = this.props.frame;
+        const numSourcesArray = appStore.catalogStore.visibleCatalogFiles.get(baseFrame)?.map(fileId => appStore.catalogStore.catalogCounts.get(fileId));
+        const numSourcesIsZero = numSourcesArray?.every(element => element === 0);
+
         const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
-        const catalogSelectionDisabled = appStore.catalogNum === 0;
+        const catalogSelectionDisabled = appStore.catalogNum === 0 || numSourcesIsZero === true;
 
         const handleDistanceMeasuringClicked = () => {
             this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring);
