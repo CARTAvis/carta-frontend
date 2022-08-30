@@ -193,7 +193,11 @@ export class FrameStore {
     }
 
     @computed get maxMip(): number {
-        return Math.pow(2, Math.ceil(Math.log2(this.frameInfo.fileInfoExtended.width / TILE_SIZE)));
+        if (this.frameInfo.fileInfoExtended.width < TILE_SIZE) {
+            return 1;
+        } else {
+            return Math.pow(2, Math.ceil(Math.log2(this.frameInfo.fileInfoExtended.width / TILE_SIZE)));
+        }
     }
 
     @computed get aspectRatio(): number {
