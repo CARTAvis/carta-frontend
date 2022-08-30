@@ -125,6 +125,12 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
         case FrameScaling.GAMMA:
             scaleValue = Math.pow(x, gamma);
             break;
+        case FrameScaling.SINH:
+            scaleValue = Math.sinh(3 * x) / 10.0;
+            break;
+        case FrameScaling.ASINH:
+            scaleValue = Math.asinh(10 * x) / 3.0;
+            break;
         default:
             scaleValue = x;
     }
@@ -174,6 +180,10 @@ export function scaleValueInverse(x: number, scaling: FrameScaling, alpha: numbe
             return alpha === 1 ? 0 : Math.log((alpha - 1.0) * scaleValue + 1.0) / Math.log(alpha);
         case FrameScaling.GAMMA:
             return Math.pow(scaleValue, 1.0 / gamma);
+        case FrameScaling.SINH:
+            return Math.asinh(10 * scaleValue) / 3.0;
+        case FrameScaling.ASINH:
+            return Math.sinh(3 * scaleValue) / 10.0;
         default:
             return scaleValue;
     }

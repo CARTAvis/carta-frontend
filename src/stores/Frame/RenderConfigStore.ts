@@ -12,7 +12,9 @@ export enum FrameScaling {
     POWER = 4,
     GAMMA = 5,
     EXP = 6,
-    CUSTOM = 7
+    SINH = 7,
+    ASINH = 8,
+    CUSTOM = 9
 }
 
 export class RenderConfigStore {
@@ -22,7 +24,9 @@ export class RenderConfigStore {
         [FrameScaling.SQRT, "Square root"],
         [FrameScaling.SQUARE, "Squared"],
         [FrameScaling.GAMMA, "Gamma"],
-        [FrameScaling.POWER, "Power"]
+        [FrameScaling.POWER, "Power"],
+        [FrameScaling.SINH, "sinh"],
+        [FrameScaling.ASINH, "asinh"]
     ]);
 
     static readonly COLOR_MAPS_ALL = [

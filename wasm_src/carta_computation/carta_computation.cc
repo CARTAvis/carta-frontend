@@ -23,7 +23,9 @@ typedef enum {
     POWER = 4,
     GAMMA = 5,
     EXP = 6,
-    CUSTOM = 7
+    SINH = 7,
+    ASINH = 8,
+    CUSTOM = 9
 } FrameScaling;
 
 typedef enum {
@@ -261,6 +263,10 @@ float scaleValue(float x, int scaling, float alpha, float gamma) {
             return (pow(alpha, x) - 1.0) / alpha;
         case GAMMA:
             return pow(x, gamma);
+        case SINH:
+            return sinh(3.0 * x) / 10.0;
+        case ASINH:
+            return asinh(10.0 * x) / 3.0;
         default:
             return x;
     }

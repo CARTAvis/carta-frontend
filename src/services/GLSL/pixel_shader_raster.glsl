@@ -88,6 +88,10 @@ void main(void) {
     }
     else if (uScaleType == GAMMA) {
         x = pow(x, uGamma);
+    } else if (uScaleType == SINH) {
+        x = sinh(3.0 * x) / 10.0;
+    } else if (uScaleType == ASINH) {
+        x = asinh(10.0 * x) / 3.0;
     }
 
     if (uUseSmoothedBiasContrast > 0) {

@@ -24,7 +24,10 @@ const equationPngMap = new Map([
     [FrameScaling.SQRT, sqrtPng],
     [FrameScaling.SQUARE, squaredPng],
     [FrameScaling.GAMMA, gammaPng],
-    [FrameScaling.POWER, powerPng]
+    [FrameScaling.POWER, powerPng],
+    // TODO: add SINH and ASINH
+    [FrameScaling.SINH, squaredPng],
+    [FrameScaling.ASINH, squaredPng]
 ]);
 
 const ScalingSelect = Select.ofType<FrameScaling>();
