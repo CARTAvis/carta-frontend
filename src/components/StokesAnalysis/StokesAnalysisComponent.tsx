@@ -609,10 +609,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     private fillLineColor(data: Array<Point2D>, lineColor: string): Array<string> {
         let lineColors = [];
-        // n points have n-1 gaps between all points for line plot
-        if (this.widgetStore.plotType !== PlotType.POINTS) {
-            lineColors.push("");
-        }
         if (data && data.length && lineColor) {
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];

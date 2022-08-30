@@ -51,7 +51,7 @@ export class FittingDialogComponent extends React.Component {
 
         if (!appStore || appStore.frameNum <= 0 || !fittingStore.effectiveFrame) {
             return (
-                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.PLACEHOLDER} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
             );
@@ -70,7 +70,7 @@ export class FittingDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.PLACEHOLDER} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup label="Data Source" inline={true}>
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
