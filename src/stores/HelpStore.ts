@@ -12,6 +12,7 @@ export enum HelpType {
     STOKES = "Stokes Hypercube Dialog",
     ONLINE_CATALOG_QUERY = "Online Catalog Query",
     VECTOR_OVERLAY = "Vector Overlay Configuration",
+    IMAGE_FITTING = "Image Fitting",
 
     // Widgets
     ANIMATOR = "Animator",
@@ -51,7 +52,8 @@ export enum HelpType {
     CATALOG_SETTINGS_SIZE = "Catalog Size Settings",
     CATALOG_SETTINGS_ORIENTATION = "Catalog Orientation Settings",
     SPECTRAL_LINE_QUERY = "Spectral Line Query",
-    PV_GENERATOR = "PV Generator"
+    PV_GENERATOR = "PV Generator",
+    CURSOR_INFO = "Cursor Information"
 }
 
 export class HelpStore {
