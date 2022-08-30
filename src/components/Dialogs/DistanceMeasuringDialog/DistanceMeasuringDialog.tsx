@@ -207,21 +207,25 @@ export class DistanceMeasuringDialog extends React.Component {
                                     <tr className="distance-measuring-settings-table-coordinate">
                                         <td>Coordinate</td>
                                         <td colSpan={2}>
-                                            <CoordinateComponent onChange={(ev: React.FormEvent<HTMLInputElement>) => handleChangeWCSMode(ev)} selectedValue={this.WCSMode ? RegionCoordinate.World : RegionCoordinate.Image} />
+                                            <CoordinateComponent
+                                                onChange={(ev: React.FormEvent<HTMLInputElement>) => handleChangeWCSMode(ev)}
+                                                selectedValue={this.WCSMode && wcsInfo ? RegionCoordinate.World : RegionCoordinate.Image}
+                                                disableCoordinate={!wcsInfo}
+                                            />
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
                                         <td>Start{this.WCSMode ? "" : " (px)"}</td>
                                         {input(false)}
                                         <td colSpan={3}>
-                                            <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.start, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span>
+                                            {wcsInfo ? <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.start, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
                                         <td>Finish{this.WCSMode ? "" : " (px)"}</td>
                                         {input(true)}
                                         <td colSpan={3}>
-                                            <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.finish, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span>
+                                            {wcsInfo ? <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.finish, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span> : ""}
                                         </td>
                                     </tr>
                                 </tbody>
