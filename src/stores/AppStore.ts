@@ -202,7 +202,7 @@ export class AppStore {
         }
     };
 
-    private loadDefaultFiles = async () => {
+    @flow.bound *loadDefaultFiles() {
         const url = new URL(window.location.href);
         const folderSearchParam = url.searchParams.get("folder");
 
@@ -222,7 +222,7 @@ export class AppStore {
             if (fileList?.length) {
                 this.setLoadingMultipleFiles(true);
                 for (const file of fileList) {
-                    await this.loadFile(folderSearchParam, file, "", false);
+                    yield this.loadFile(folderSearchParam, file, "", false);
                 }
                 this.setLoadingMultipleFiles(false);
             } else if (this.preferenceStore.autoLaunch) {
@@ -234,7 +234,7 @@ export class AppStore {
         } catch (err) {
             console.error(err);
         }
-    };
+    }
 
     @action handleThemeChange = (darkMode: boolean) => {
         this.systemTheme = darkMode ? "dark" : "light";
@@ -518,7 +518,7 @@ export class AppStore {
         return true;
     };
 
-    loadFile = async (path: string, filename: string, hdu: string, imageArithmetic: boolean) => {
+    @flow.bound *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean) {
         this.startFileLoading();
 
         if (imageArithmetic) {
@@ -549,7 +549,7 @@ export class AppStore {
         }
 
         try {
-            const ack = await this.backendService.loadFile(path, filename, hdu, this.fileCounter, imageArithmetic);
+            const ack = yield this.backendService.loadFile(path, filename, hdu, this.fileCounter, imageArithmetic);
             this.fileCounter++;
             if (!this.addFrame(ack, path, hdu)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
@@ -560,14 +560,14 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.spectralProfileWidgets);
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             // Ensure loading finishes before next file is added
-            await this.delay(10);
+            yield this.delay(10);
             return this.getFrame(ack.fileId);
         } catch (err) {
             this.alertStore.showAlert(`Error loading file: ${err}`);
             this.endFileLoading();
             throw err;
         }
-    };
+    }
 
     loadConcatStokes = async (stokesFiles: CARTA.IStokesFile[], directory: string, hdu: string) => {
         this.startFileLoading();
@@ -613,11 +613,11 @@ export class AppStore {
      * @param {boolean=} imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string
      * @return {Promise<FrameStore>} [async] the FrameStore the opened file
      */
-    @action appendFile = async (path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) => {
+    @flow.bound *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        return this.loadFile(path, filename, hdu, imageArithmetic);
-    };
+        return yield this.loadFile(path, filename, hdu, imageArithmetic);
+    }
 
     /**
      * Closes all existing files and opens a file at the given path
@@ -627,10 +627,10 @@ export class AppStore {
      * @param {boolean=} imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string
      * @return {Promise<FrameStore>} [async] the FrameStore of the opened file
      */
-    @action openFile = (path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) => {
+    @flow.bound *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) {
         this.removeAllFrames();
-        return this.loadFile(path, filename, hdu, imageArithmetic);
-    };
+        return yield this.loadFile(path, filename, hdu, imageArithmetic);
+    }
 
     @flow.bound *saveFile(directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean, restFreq?: number) {
         if (!this.activeFrame) {
