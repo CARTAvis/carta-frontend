@@ -31,7 +31,7 @@ export class SplashScreenComponent extends React.Component {
                     </div>
                     {ApiService.RuntimeConfig?.dashboardAddress ? (
                         <div className="dashboard-info-div">
-                            <a href={ApiService.RuntimeConfig.apiAddress}>Connection problems? Open the CARTA dashboard</a>
+                            <a href={ApiService.RuntimeConfig.dashboardAddress}>Connection problems? Open the CARTA dashboard</a>
                         </div>
                     ) : null}
                 </div>
