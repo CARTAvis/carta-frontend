@@ -12,6 +12,12 @@ export enum RegionMode {
     CREATING
 }
 
+export enum RegionsOpacity {
+    Visible = 1,
+    Transparent = 0.5,
+    Invisible = 0
+}
+
 export class RegionSetStore {
     @observable regions: RegionStore[];
     @observable selectedRegion: RegionStore;
@@ -237,7 +243,7 @@ export class RegionSetStore {
         }
     };
 
-    @action setOpacity(opacity: number) {
+    @action setOpacity(opacity: RegionsOpacity) {
         this.opacity = opacity;
     }
 
