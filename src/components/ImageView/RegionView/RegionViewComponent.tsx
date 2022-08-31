@@ -123,7 +123,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     updateDistanceMeasureFinishPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
-        frame.distanceMeasuring.finish = this.getDistanceMeasureImagePos(x, y);
+        const imagePos = this.getDistanceMeasureImagePos(x, y);
+        frame.distanceMeasuring.setFinish(imagePos.x, imagePos.y);
         frame.distanceMeasuring.updateTransformedPos(frame.spatialTransform);
     }, 100);
 
@@ -430,10 +431,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (!isAstBadPoint(wcsPos)) {
                 const dist = frame.distanceMeasuring;
                 if (!dist.isCreating && !dist.showCurve) {
-                    dist.start = imagePos;
+                    dist.setStart(imagePos.x, imagePos.y);
                     dist.setIsCreating(true);
                 } else if (dist.isCreating) {
-                    dist.finish = imagePos;
+                    dist.setFinish(imagePos.x, imagePos.y);
                     dist.updateTransformedPos(frame.spatialTransform);
                     dist.setIsCreating(false);
                 } else {

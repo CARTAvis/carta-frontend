@@ -86,15 +86,3 @@ export class DistanceMeasuringStore {
         this.finish = {x: x, y: y || null};
     };
 }
-/*
-<Group>
-    <Rect
-      x={this.props.frame.spatialReference ? transformedImageToCanvasPos(this.props.frame.spatialReference?.cursorValue.position, frame, this.props.width, this.props.height, this.stageRef.current).x : 0}
-      y={this.props.frame.spatialReference ? transformedImageToCanvasPos(this.props.frame.spatialReference?.cursorValue.position, frame, this.props.width, this.props.height, this.stageRef.current).y : 0}
-      width={100}
-      height={100}
-      fill="red"
-      shadowBlur={10}
-    />
-</Group>
-*/

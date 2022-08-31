@@ -130,7 +130,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     };
 
     render() {
-        const styleString = this.props.overlaySettings.styleString();
         const frame = this.props.frame;
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
@@ -179,6 +178,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});
-        return <canvas className={className} style={{width: w, height: h}} id="overlay-canvas" key={styleString} ref={this.getRef} />;
+        return <canvas className={className} style={{width: w, height: h}} id="overlay-canvas" ref={this.getRef} />;
     }
 }
