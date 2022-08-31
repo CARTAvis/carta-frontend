@@ -101,7 +101,7 @@ export class DistanceMeasuringDialog extends React.Component {
         };
 
         const input = (finish: boolean) => {
-            return this.WCSMode ? (
+            return this.WCSMode && wcsInfo ? (
                 <>
                     <td>
                         <FormGroup inline={true}>
@@ -215,14 +215,14 @@ export class DistanceMeasuringDialog extends React.Component {
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
-                                        <td>Start{this.WCSMode ? "" : " (px)"}</td>
+                                        <td>Start{this.WCSMode && wcsInfo ? "" : " (px)"}</td>
                                         {input(false)}
                                         <td colSpan={3}>
                                             {wcsInfo ? <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.start, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
-                                        <td>Finish{this.WCSMode ? "" : " (px)"}</td>
+                                        <td>Finish{this.WCSMode && wcsInfo ? "" : " (px)"}</td>
                                         {input(true)}
                                         <td colSpan={3}>
                                             {wcsInfo ? <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.finish, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span> : ""}

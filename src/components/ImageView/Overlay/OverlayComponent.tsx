@@ -130,8 +130,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     };
 
     render() {
-        const styleString = this.props.overlaySettings.styleString.toString();
-
+        const styleString = this.props.overlaySettings.styleString();
         const frame = this.props.frame;
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
@@ -154,9 +153,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
         const darktheme = AppStore.Instance.darkTheme;
+        const distanceMeasuring = frame.distanceMeasuring;
         const distanceMeasuringShowCurve = frame.distanceMeasuring.showCurve;
-        const distanceMeasuringStart = frame.distanceMeasuring.transformedStart;
-        const distanceMeasuringFinish = frame.distanceMeasuring.transformedFinish;
+        const distanceMeasuringStart = frame.distanceMeasuring.start;
+        const distanceMeasuringFinish = frame.distanceMeasuring.finish;
+        const distanceMeasuringTransformedStart = frame.distanceMeasuring.transformedStart;
+        const distanceMeasuringTransformedFinish = frame.distanceMeasuring.transformedFinish;
         const distanceMeasuringColor = frame.distanceMeasuring.color;
         const distanceMeasuringFontSize = frame.distanceMeasuring.fontSize;
         const distanceMeasuringLineWidth = frame.distanceMeasuring.lineWidth;

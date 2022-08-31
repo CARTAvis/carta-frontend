@@ -22,8 +22,8 @@ export class DistanceMeasuringStore {
 
     constructor() {
         makeObservable(this);
-        this.start = {x: null, y: null};
-        this.finish = {x: null, y: null};
+        this.start = {x: 0, y: 0};
+        this.finish = {x: 0, y: 0};
         this.transformedStart = {x: null, y: null};
         this.transformedFinish = {x: null, y: null};
         this.isCreating = false;
@@ -58,8 +58,8 @@ export class DistanceMeasuringStore {
     };
 
     @action resetPos = () => {
-        this.start = {x: null, y: null};
-        this.finish = {x: null, y: null};
+        this.start = {x: 0, y: 0};
+        this.finish = {x: 0, y: 0};
         this.transformedStart = {x: null, y: null};
         this.transformedFinish = {x: null, y: null};
         this.isCreating = false;
@@ -86,3 +86,15 @@ export class DistanceMeasuringStore {
         this.finish = {x: x, y: y || null};
     };
 }
+/*
+<Group>
+    <Rect
+      x={this.props.frame.spatialReference ? transformedImageToCanvasPos(this.props.frame.spatialReference?.cursorValue.position, frame, this.props.width, this.props.height, this.stageRef.current).x : 0}
+      y={this.props.frame.spatialReference ? transformedImageToCanvasPos(this.props.frame.spatialReference?.cursorValue.position, frame, this.props.width, this.props.height, this.stageRef.current).y : 0}
+      width={100}
+      height={100}
+      fill="red"
+      shadowBlur={10}
+    />
+</Group>
+*/
