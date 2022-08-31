@@ -19,12 +19,12 @@ export enum FrameScaling {
 
 export class RenderConfigStore {
     static readonly SCALING_TYPES = new Map<FrameScaling, string>([
-        [FrameScaling.LINEAR, "Linear"],
-        [FrameScaling.LOG, "Log"],
-        [FrameScaling.SQRT, "Square root"],
-        [FrameScaling.SQUARE, "Squared"],
-        [FrameScaling.GAMMA, "Gamma"],
-        [FrameScaling.POWER, "Power"],
+        [FrameScaling.LINEAR, "linear"],
+        [FrameScaling.LOG, "log"],
+        [FrameScaling.SQRT, "sqrt"],
+        [FrameScaling.SQUARE, "square"],
+        [FrameScaling.GAMMA, "gamma"],
+        [FrameScaling.POWER, "pow"],
         [FrameScaling.SINH, "sinh"],
         [FrameScaling.ASINH, "asinh"]
     ]);
