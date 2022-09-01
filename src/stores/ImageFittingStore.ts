@@ -185,16 +185,16 @@ export class ImageFittingStore {
                     fwhmErrorWCS.y = AngularSize.convertValueFromArcsec(fwhmErrorWCS.y, fwhmUnit.y);
                 }
 
-                results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec", centerFixedX);
-                results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec", centerFixedY);
+                results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerFixedX ? "" : "arcsec", centerFixedX);
+                results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerFixedY ? "" : "arcsec", centerFixedY);
                 results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
                 results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit.x, fwhmFixedX);
                 results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit.y, fwhmFixedY);
                 results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
 
-                log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, "arcsec", centerFixedX);
+                log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerFixedX ? "" : "arcsec", centerFixedX);
                 log += toExpFormat("               ", value.center?.x, error.center?.x, "px", centerFixedX);
-                log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, "arcsec", centerFixedY);
+                log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerFixedY ? "" : "arcsec", centerFixedY);
                 log += toExpFormat("               ", value.center?.y, error.center?.y, "px", centerFixedY);
                 log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
                 log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit.x, fwhmFixedX);
