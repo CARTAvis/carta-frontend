@@ -102,9 +102,9 @@ export class DistanceMeasuringDialog extends React.Component {
 
         const input = (finish: boolean) => {
             return this.WCSMode && wcsInfo ? (
-                <>
+                <td colSpan={3}>
                     <td>
-                        <FormGroup inline={true}>
+                        <FormGroup inline={true} label={finish ? "Finish" : "Start"}>
                             <SafeNumericInput
                                 selectAllOnFocus
                                 allowNumericCharactersOnly={false}
@@ -131,11 +131,11 @@ export class DistanceMeasuringDialog extends React.Component {
                             />
                         </FormGroup>
                     </td>
-                </>
+                </td>
             ) : (
-                <>
+                <td colSpan={3}>
                     <td>
-                        <FormGroup inline={true}>
+                        <FormGroup inline={true} label={finish ? "Finish" : "Start"} labelInfo="(px)">
                             <SafeNumericInput
                                 selectAllOnFocus
                                 buttonPosition="none"
@@ -160,12 +160,12 @@ export class DistanceMeasuringDialog extends React.Component {
                             />
                         </FormGroup>
                     </td>
-                </>
+                </td>
             );
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.DISTANCE_MEASUREMENT} defaultWidth={775} defaultHeight={310} minHeight={310} minWidth={775} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.DISTANCE_MEASUREMENT} defaultWidth={775} defaultHeight={320} minHeight={320} minWidth={775} enableResizing={true}>
                 <div className="distance-measuring-settings">
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (
                         <>
@@ -215,14 +215,12 @@ export class DistanceMeasuringDialog extends React.Component {
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
-                                        <td>Start{this.WCSMode && wcsInfo ? "" : " (px)"}</td>
                                         {input(false)}
                                         <td colSpan={3}>
                                             {wcsInfo ? <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.start, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
-                                        <td>Finish{this.WCSMode && wcsInfo ? "" : " (px)"}</td>
                                         {input(true)}
                                         <td colSpan={3}>
                                             {wcsInfo ? <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.finish, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span> : ""}

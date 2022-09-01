@@ -79,10 +79,10 @@ export class DistanceMeasuringStore {
     };
 
     @action setStart = (x: number, y: number) => {
-        this.start = {x: x, y: y || null};
+        this.start = {x: x || null, y: y || null};
     };
 
     @action setFinish = (x: number, y: number) => {
-        this.finish = {x: x, y: y || null};
+        this.finish = {x: x || null, y: y || null};
     };
 }

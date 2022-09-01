@@ -218,7 +218,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     <i>
                                         <small>Click to create geodesic curves.</small>
                                         <br></br>
-                                        <small>Double Click to go to setting.</small>
+                                        <small>Double Click to open the settings.</small>
                                     </i>
                                 </span>
                             }
