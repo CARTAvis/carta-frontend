@@ -76,8 +76,9 @@ export class ImageFittingStore {
 
     @computed get fitDisabled() {
         const validFileId = this.effectiveFrame?.frameInfo && this.effectiveFrame?.frameInfo?.fileId >= 0;
+        const allFixed = this.components.every(c => c.allFixed === true);
         const validParams = this.components.every(c => c.validParams === true);
-        return !(validFileId && validParams) || this.isFitting;
+        return !validFileId || allFixed || !validParams || this.isFitting;
     }
 
     constructor() {
@@ -354,10 +355,14 @@ export class ImageFittingIndividualStore {
     }
 
     @computed get validParams(): boolean {
-        return !this.fixedParams.every(p => p === true) && isFinite(this.center?.x) && isFinite(this.center?.y) && isFinite(this.amplitude) && isFinite(this.fwhm?.x) && isFinite(this.fwhm?.y) && isFinite(this.pa);
+        return isFinite(this.center?.x) && isFinite(this.center?.y) && isFinite(this.amplitude) && isFinite(this.fwhm?.x) && isFinite(this.fwhm?.y) && isFinite(this.pa);
     }
 
     @computed get fixedParams(): boolean[] {
         return [this.centerFixed?.x, this.centerFixed?.y, this.amplitudeFixed, this.fwhmFixed?.x, this.fwhmFixed?.y, this.paFixed];
+    }
+
+    @computed get allFixed(): boolean {
+        return this.fixedParams.every(p => p === true);
     }
 }
