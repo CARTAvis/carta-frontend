@@ -165,7 +165,7 @@ export class DistanceMeasuringDialog extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.DISTANCE_MEASUREMENT} defaultWidth={775} defaultHeight={475} minHeight={350} minWidth={775} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.DISTANCE_MEASUREMENT} defaultWidth={775} defaultHeight={310} minHeight={310} minWidth={775} enableResizing={true}>
                 <div className="distance-measuring-settings">
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (
                         <>
