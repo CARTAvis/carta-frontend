@@ -116,6 +116,7 @@ export class AppStore {
     // ImageViewer
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
+    @observable cursorMirror: boolean = false;
     @observable toolbarExpanded: boolean;
     @observable imageRatio: number;
     @observable isExportingImage: boolean;
