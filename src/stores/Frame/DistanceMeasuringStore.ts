@@ -24,8 +24,8 @@ export class DistanceMeasuringStore {
         makeObservable(this);
         this.start = {x: 0, y: 0};
         this.finish = {x: 0, y: 0};
-        this.transformedStart = {x: null, y: null};
-        this.transformedFinish = {x: null, y: null};
+        this.transformedStart = {x: NaN, y: NaN};
+        this.transformedFinish = {x: NaN, y: NaN};
         this.isCreating = false;
         this.color = DistanceMeasuringStore.DEFAULT_COLOR;
         this.lineWidth = DistanceMeasuringStore.DEFAULT_WIDTH;
@@ -33,7 +33,7 @@ export class DistanceMeasuringStore {
     }
 
     @computed get showCurve(): boolean {
-        return this.transformedStart.x != null && this.transformedStart.y != null && this.transformedFinish.x != null && this.transformedFinish.y != null && AppStore.Instance.activeLayer === ImageViewLayer.DistanceMeasuring;
+        return this.transformedStart.x != NaN && this.transformedStart.y != NaN && this.transformedFinish.x != NaN && this.transformedFinish.y != NaN && AppStore.Instance.activeLayer === ImageViewLayer.DistanceMeasuring;
     }
 
     @computed get styleString() {
@@ -51,7 +51,7 @@ export class DistanceMeasuringStore {
     };
 
     @action updateTransformedPos = (spatialTransform: Transform2D) => {
-        if (this.start?.x != null && this.start?.y != null && this.finish?.x != null && this.finish?.y != null) {
+        if (this.start?.x != NaN && this.start?.y != NaN && this.finish?.x != NaN && this.finish?.y != NaN) {
             this.transformedStart = spatialTransform ? spatialTransform.transformCoordinate(this.start) : this.start;
             this.transformedFinish = spatialTransform ? spatialTransform.transformCoordinate(this.finish) : this.finish;
         }
@@ -60,8 +60,8 @@ export class DistanceMeasuringStore {
     @action resetPos = () => {
         this.start = {x: 0, y: 0};
         this.finish = {x: 0, y: 0};
-        this.transformedStart = {x: null, y: null};
-        this.transformedFinish = {x: null, y: null};
+        this.transformedStart = {x: NaN, y: NaN};
+        this.transformedFinish = {x: NaN, y: NaN};
         this.isCreating = false;
     };
 
@@ -79,10 +79,10 @@ export class DistanceMeasuringStore {
     };
 
     @action setStart = (x: number, y: number) => {
-        this.start = {x: x || null, y: y || null};
+        this.start = {x: x || NaN, y: y || NaN};
     };
 
     @action setFinish = (x: number, y: number) => {
-        this.finish = {x: x || null, y: y || null};
+        this.finish = {x: x || NaN, y: y || NaN};
     };
 }
