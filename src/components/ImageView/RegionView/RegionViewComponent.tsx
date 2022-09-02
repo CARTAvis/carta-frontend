@@ -439,7 +439,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     dist.setIsCreating(false);
                 } else {
                     dist.resetPos();
-                    dist.start = imagePos;
+                    dist.setStart(imagePos.x, imagePos.y);
                     dist.setIsCreating(true);
                 }
             }

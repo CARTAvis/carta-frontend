@@ -33,7 +33,7 @@ export class DistanceMeasuringStore {
     }
 
     @computed get showCurve(): boolean {
-        return isNaN(this.transformedStart.x) && isNaN(this.transformedStart.y) && isNaN(this.transformedFinish.x) && isNaN(this.transformedFinish.y) && AppStore.Instance.activeLayer === ImageViewLayer.DistanceMeasuring;
+        return !isNaN(this.transformedStart.x) && !isNaN(this.transformedStart.y) && !isNaN(this.transformedFinish.x) && !isNaN(this.transformedFinish.y) && AppStore.Instance.activeLayer === ImageViewLayer.DistanceMeasuring;
     }
 
     @computed get styleString() {
@@ -51,7 +51,7 @@ export class DistanceMeasuringStore {
     };
 
     @action updateTransformedPos = (spatialTransform: Transform2D) => {
-        if (isNaN(this.start?.x) && isNaN(this.start?.y) && isNaN(this.finish?.x) && isNaN(this.finish?.y)) {
+        if (!isNaN(this.start?.x) && !isNaN(this.start?.y) && !isNaN(this.finish?.x) && !isNaN(this.finish?.y)) {
             this.transformedStart = spatialTransform ? spatialTransform.transformCoordinate(this.start) : this.start;
             this.transformedFinish = spatialTransform ? spatialTransform.transformCoordinate(this.finish) : this.finish;
         }
