@@ -171,8 +171,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 smoothedFloatXStr = toFixed(nearestSmooth?.point.x, 3);
             }
             const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
-            const smoothedXLabel = `${smoothedFloatXStr} ${cursorXUnit}`;
-            //console.log(smoothedXLabel, nearestSmooth.point.x)
+            const smoothedXLabel = cursorXUnit === "Channel" ? `${cursorXUnit} ${toFixed(nearestSmooth?.point.x, 0)}` : `${smoothedFloatXStr} ${cursorXUnit}`;
             if (nearestSmooth && this.widgetStore.smoothingStore.isOverlayOn) {
                 cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}), Smoothed: (${smoothedXLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
             } else if (nearestSmooth) {
@@ -180,7 +179,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             } else {
                 cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
             }
-            //cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}) ${nearestSmooth ? `Smoothed: (${xLabel}, ${toExponential(nearestSmooth.point.y, 2)})` : ''}`;
         }
         return `${label}: ${cursorInfoString ?? "---"}`;
     };
