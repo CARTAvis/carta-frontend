@@ -212,7 +212,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const floatRenderer = () => {
             return (
                 <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
-                    <Tooltip2 content="Import regions" position={Position.BOTTOM}>
+                    <Tooltip2 content="Import regions" position={Position.TOP_LEFT}>
                         <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
                     </Tooltip2>
                     <Tooltip2 content="Export all regions" position={Position.BOTTOM}>
