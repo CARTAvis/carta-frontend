@@ -137,6 +137,7 @@ interface CursorMarkerProps {
     x: number;
     y: number;
     rotation: number;
+    color: string;
 }
 
 export const CursorMarker = (props: CursorMarkerProps) => {
@@ -160,7 +161,7 @@ export const CursorMarker = (props: CursorMarkerProps) => {
     return (
         <Group x={props.x} y={props.y} rotation={-props.rotation}>
             <Shape listening={false} strokeScaleEnabled={false} strokeWidth={1} stroke={"black"} sceneFunc={handleSquareDraw} />
-            <Shape listening={false} strokeScaleEnabled={false} fill={"white"} strokeWidth={1} stroke={"black"} sceneFunc={handleCrossDraw} />
+            <Shape listening={false} strokeScaleEnabled={false} fill={props.color} strokeWidth={1} stroke={"black"} sceneFunc={handleCrossDraw} />
         </Group>
     );
 };

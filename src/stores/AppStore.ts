@@ -1182,6 +1182,10 @@ export class AppStore {
         this.cursorFrozen = val;
     };
 
+    @action toggleCursorMirror = () => {
+        this.cursorMirror = !this.cursorMirror;
+    };
+
     @action toggleToolbarExpanded = () => {
         this.toolbarExpanded = !this.toolbarExpanded;
     };

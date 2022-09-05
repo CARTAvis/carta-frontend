@@ -22,7 +22,7 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
         if ((appStore.cursorFrozen || (appStore.cursorMirror && (frame?.spatialReference || frame === appStore.spatialReference))) && posImageSpace) {
             const rotation = frame.spatialReference ? (frame.spatialTransform.rotation * 180.0) / Math.PI : 0.0;
             const cursorCanvasSpace = transformedImageToCanvasPos(posImageSpace, frame, this.props.width, this.props.height, this.props.stageRef.current);
-            return isFinite(cursorCanvasSpace.x) && isFinite(cursorCanvasSpace.y) && <CursorMarker x={cursorCanvasSpace.x} y={cursorCanvasSpace.y} rotation={-rotation} />;
+            return isFinite(cursorCanvasSpace.x) && isFinite(cursorCanvasSpace.y) && <CursorMarker x={cursorCanvasSpace.x} y={cursorCanvasSpace.y} rotation={-rotation} color={appStore.cursorFrozen ? "white" : "yellow"} />;
         }
 
         return null;
