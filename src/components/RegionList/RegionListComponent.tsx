@@ -222,7 +222,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             );
         };
 
-        const headerRenderer = () => {
+        const headerRenderer = (regionsVisibility: RegionsOpacity, regionsLock: boolean) => {
             return (props: {index: number; style: CSSProperties}) => {
                 const className = classNames("row-header", {"bp3-dark": darkTheme});
 
@@ -230,19 +230,19 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <div className={className} style={props.style}>
                         <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
                             <Icon icon={"blank"} style={{width: 16}} />
-                            <Tooltip2 disabled={this.regionsVisibility === RegionsOpacity.Invisible} content="Lock All Regions" position={Position.BOTTOM}>
+                            <Tooltip2 disabled={regionsVisibility === RegionsOpacity.Invisible} content="Lock All Regions" position={Position.BOTTOM}>
                                 <Icon
-                                    icon={this.regionsLock ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
-                                    onClick={this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleAllRegionsLockClicked(ev)}
-                                    style={{cursor: "pointer", opacity: this.regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}}
+                                    icon={regionsLock ? "lock" : regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
+                                    onClick={regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleAllRegionsLockClicked(ev)}
+                                    style={{cursor: "pointer", opacity: regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}}
                                 />
                             </Tooltip2>
                             <Icon icon={"blank"} style={{width: 5}} />
-                            <Tooltip2 content={this.regionsVisibility === RegionsOpacity.Invisible ? "Show Regions" : "Hide Regions"} position={Position.BOTTOM}>
+                            <Tooltip2 content={regionsVisibility === RegionsOpacity.Invisible ? "Show Regions" : "Hide Regions"} position={Position.BOTTOM}>
                                 <Icon
-                                    icon={this.regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
+                                    icon={regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
                                     onClick={this.handleToggleHideClicked()}
-                                    style={{cursor: "pointer", opacity: this.regionsVisibility === RegionsOpacity.Transparent ? 0.3 : 1}}
+                                    style={{cursor: "pointer", opacity: regionsVisibility === RegionsOpacity.Transparent ? 0.3 : 1}}
                                 />
                             </Tooltip2>
                         </div>
@@ -411,7 +411,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             <div className="region-list-widget">
                 <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
                     <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
-                        {headerRenderer()}
+                        {headerRenderer(this.regionsVisibility, this.regionsLock)}
                     </FixedSizeList>
                     <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width="100%">
                         {rowRenderer}
