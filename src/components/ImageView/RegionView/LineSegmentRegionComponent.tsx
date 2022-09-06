@@ -261,7 +261,6 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         let anchors = null;
         let newAnchor = null;
         let pointArray: Array<number>;
-
         // trigger re-render when exporting images
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const imageRatio = AppStore.Instance.imageRatio;
@@ -280,7 +279,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             }
 
             // Construct anchors if region is selected
-            if (this.props.selected && this.props.listening && !region.locked) {
+            if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 anchors = controlPoints.map((p, i) => {
                     const pSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
                     const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
@@ -298,7 +297,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 }
             }
 
-            if (this.hoverIntersection && !region.locked) {
+            if (this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 const pSecondaryImage = transformPoint(frame.spatialTransformAST, this.hoverIntersection, false);
                 const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
@@ -309,7 +308,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             });
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
-            if (this.props.selected && this.props.listening && !region.locked) {
+            if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 anchors = new Array<React.ReactNode>(controlPoints.length);
                 for (let i = 0; i < controlPoints.length; i++) {
                     anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i);
@@ -326,7 +325,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 }
             }
 
-            if (this.hoverIntersection && !region.locked) {
+            if (this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
             }
