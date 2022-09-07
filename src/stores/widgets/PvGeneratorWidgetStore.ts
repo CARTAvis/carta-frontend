@@ -38,8 +38,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
             const requestMessage: CARTA.IPvRequest = {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
-                width: this.width
-                //reverse: this.reverse
+                width: this.width,
+                reverse: this.reverse
             };
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);

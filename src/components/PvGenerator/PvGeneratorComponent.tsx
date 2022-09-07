@@ -141,7 +141,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         } else {
             this.widgetStore.setReverse(false);
         }
-        console.log(this.widgetStore.reverse);
     };
 
     private onGenerateButtonClicked = () => {
