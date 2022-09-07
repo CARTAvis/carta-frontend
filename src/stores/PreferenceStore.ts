@@ -1,4 +1,4 @@
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, computed, observable, makeObservable, flow} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, FileFilteringType} from "stores";
@@ -630,7 +630,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.LATEST_RELEASE) ?? DEFAULTS.SILENT.latestRelease;
     }
 
-    @action setPreference = async (key: PreferenceKeys, value: any) => {
+    @flow.bound *setPreference(key: PreferenceKeys, value: any) {
         if (!key) {
             return false;
         }
@@ -650,20 +650,20 @@ export class PreferenceStore {
                 eventList.push(value);
             }
             this.preferences.set(PreferenceKeys.LOG_EVENT, eventList);
-            return await ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
+            return yield ApiService.Instance.setPreference(PreferenceKeys.LOG_EVENT, eventList);
         } else {
             this.preferences.set(key, value);
         }
 
-        return await ApiService.Instance.setPreference(key, value);
-    };
+        return yield ApiService.Instance.setPreference(key, value);
+    }
 
-    @action clearPreferences = async (keys: PreferenceKeys[]) => {
+    @flow.bound *clearPreferences(keys: PreferenceKeys[]) {
         for (const key of keys) {
             this.preferences.delete(key);
         }
-        await ApiService.Instance.clearPreferences(keys);
-    };
+        yield ApiService.Instance.clearPreferences(keys);
+    }
 
     // reset functions
     @action resetSilentSettings = () => {
@@ -796,13 +796,10 @@ export class PreferenceStore {
         this.clearPreferences([PreferenceKeys.TELEMETRY_CONSENT_SHOWN, PreferenceKeys.TELEMETRY_MODE, PreferenceKeys.TELEMETRY_LOGGING]);
     };
 
-    @action fetchPreferences = async () => {
-        await this.upgradePreferences();
-        await this.getPreferences();
-    };
+    @flow.bound *fetchPreferences() {
+        yield this.upgradePreferences();
 
-    private getPreferences = async () => {
-        const preferences = await ApiService.Instance.getPreferences();
+        const preferences = yield ApiService.Instance.getPreferences();
         if (preferences) {
             const keys = Object.keys(preferences);
             for (const key of keys) {
@@ -810,7 +807,7 @@ export class PreferenceStore {
                 this.preferences.set(key as PreferenceKeys, val);
             }
         }
-    };
+    }
 
     private upgradePreferences = async () => {
         if (!localStorage.getItem("preferences")) {
