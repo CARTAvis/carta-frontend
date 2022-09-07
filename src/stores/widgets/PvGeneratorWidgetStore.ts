@@ -4,8 +4,14 @@ import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType, RegionId} from "./RegionWidgetStore";
 
+export enum PVAxis {
+    SPATIAL = "Spatial",
+    SPECTRAL = "Spectral"
+}
+
 export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;
+    @observable reverse: boolean;
 
     @computed get regionOptions(): IOptionProps[] {
         const appStore = AppStore.Instance;
@@ -33,6 +39,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
                 width: this.width
+                //reverse: this.reverse
             };
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
@@ -52,9 +59,14 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.width = val;
     };
 
+    @action setReverse = (bool: boolean) => {
+        this.reverse = bool;
+    };
+
     constructor() {
         super(RegionsType.LINE);
         makeObservable(this);
         this.width = 3;
+        this.reverse = false;
     }
 }

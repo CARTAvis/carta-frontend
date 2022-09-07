@@ -5,7 +5,7 @@ import {FormGroup, Tabs, Tab, TabId, HTMLSelect, AnchorButton, Position} from "@
 import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {PvGeneratorWidgetStore, RegionId} from "stores/widgets";
+import {PvGeneratorWidgetStore, RegionId, PVAxis} from "stores/widgets";
 import {SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {Point2D} from "models";
@@ -19,6 +19,7 @@ export enum PvGeneratorComponentTabs {
 @observer
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @observable selectedTabId: TabId = PvGeneratorComponentTabs.PV_IMAGE;
+    axesOrder = {};
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTabId = tab;
@@ -31,7 +32,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             minWidth: 350,
             minHeight: 200,
             defaultWidth: 500,
-            defaultHeight: 300,
+            defaultHeight: 320,
             title: "PV Generator",
             isCloseable: true,
             helpType: HelpType.PV_GENERATOR
@@ -134,6 +135,15 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private handleAxesOrderChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
+        if (this.axesOrder["reverse"] === changeEvent.target.value) {
+            this.widgetStore.setReverse(true);
+        } else {
+            this.widgetStore.setReverse(false);
+        }
+        console.log(this.widgetStore.reverse);
+    };
+
     private onGenerateButtonClicked = () => {
         const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
         this.widgetStore.setFileId(fileId);
@@ -141,11 +151,29 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         this.widgetStore.requestPV();
     };
 
+    private genAxisOptions = () => {
+        const axes = Object.values(PVAxis);
+
+        for (const xAxis of axes) {
+            for (const yAxis of axes) {
+                if (xAxis !== yAxis) {
+                    if (xAxis === PVAxis.SPATIAL) {
+                        this.axesOrder["default"] = `X-axis: ${xAxis}, Y-axis: ${yAxis}`;
+                    } else {
+                        this.axesOrder["reverse"] = `X-axis: ${xAxis}, Y-axis: ${yAxis}`;
+                    }
+                }
+            }
+        }
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const frame = this.widgetStore.effectiveFrame;
         const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
         const regionInfo = this.widgetStore.effectiveRegionInfo;
+
+        this.genAxisOptions();
 
         let selectedValue = RegionId.ACTIVE;
         if (this.widgetStore.effectiveFrame?.regionSet) {
@@ -199,6 +227,9 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <FormGroup inline={true} label="Average Width">
                     <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
+                </FormGroup>
+                <FormGroup className="label-info-group" inline={true} label="Axes Order">
+                    <HTMLSelect options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
                 </FormGroup>
                 <div className="generate-button">
                     <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
