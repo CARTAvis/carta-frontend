@@ -1,7 +1,8 @@
 name: CI
-on: push
+on: [push, pull_request]
 jobs:
-  check-formatting:
+
+  format-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -12,3 +13,55 @@ jobs:
           # cache: 'npm'
       - run: npm install
       - run: npm run checkformat
+
+  WebAssembly-compilation:
+    runs-on: [self-hosted, Linux, X64, Docker]
+    needs: format-check
+    container: emscripten/emsdk:2.0.14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Build WebAssembly
+          shell: bash
+          run: |
+            ./wasm_libs/build_libs.sh
+            ./wasm_src/build_wrappers.sh
+            ./protobuf/build_proto.sh
+
+      - name: Save webassembly directory
+        uses: actions/upload-artifact@v3
+        with:
+          name: protobuf_wasm_libs_wasm_wrapper
+          path: |
+            protobuf/**/*
+            wasm_libs/built/**/*
+            wasm_libs/zstd/build/standalone_zstd.bc
+            wasm_wrapper/**/*
+
+  Build with node v12:
+    runs-on: [self-hosted, Linux, X64, Docker]
+    needs: [format-check, WebAssembly-compilation]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive          
+        uses: actions/setup-node@v3
+        with:
+          node-version: '12'
+
+      - name: Restore webassembly directory
+        uses: actions/download-artifact@v3
+        with:
+          name: protobuf_wasm_libs_wasm_wrapper
+
+      - name: Build
+          shell: bash
+          run: |
+            node -v
+            ls -sort
+            npm run build
+
