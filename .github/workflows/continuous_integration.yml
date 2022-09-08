@@ -29,21 +29,21 @@ jobs:
           chown -R $(id -u):$(id -g) $PWD
 
       - name: WebAssembly compilation
-          shell: bash
-          run: |
-            source /emsdk/emsdk_env.sh
-            ./wasm_libs/build_libs.sh
-            npm install
-            ./wasm_src/build_wrappers.sh
-            ./protobuf/build_proto.sh
+        shell: bash
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_libs/build_libs.sh
+          npm install
+          ./wasm_src/build_wrappers.sh
+          ./protobuf/build_proto.sh
 
       - name: Build with node v12
-          shell: bash
-          run: |
-            n 12
-            n exec 12 node -v
-            n exec 12 npm install
-            n exec 12 npm run build
+        shell: bash
+        run: |
+          n 12
+          n exec 12 node -v
+          n exec 12 npm install
+          n exec 12 npm run build
 
   node-v14:
     runs-on: [self-hosted, Linux, X64, Docker]
@@ -60,21 +60,21 @@ jobs:
           chown -R $(id -u):$(id -g) $PWD
 
       - name: WebAssembly compilation
-          shell: bash
-          run: |
-            source /emsdk/emsdk_env.sh
-            ./wasm_libs/build_libs.sh
-            npm install
-            ./wasm_src/build_wrappers.sh
-            ./protobuf/build_proto.sh
+        shell: bash
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_libs/build_libs.sh
+          npm install
+          ./wasm_src/build_wrappers.sh
+          ./protobuf/build_proto.sh
 
       - name: Build with node v14
-          shell: bash
-          run: |
-            n 14
-            n exec 14 node -v
-            n exec 14 npm install
-            n exec 14 npm run build            
+        shell: bash
+        run: |
+          n 14
+          n exec 14 node -v
+          n exec 14 npm install
+          n exec 14 npm run build            
 
   node-v16:
     runs-on: [self-hosted, Linux, X64, Docker]
@@ -91,19 +91,19 @@ jobs:
           chown -R $(id -u):$(id -g) $PWD
 
       - name: WebAssembly compilation
-          shell: bash
-          run: |
-            source /emsdk/emsdk_env.sh
-            ./wasm_libs/build_libs.sh
-            npm install
-            ./wasm_src/build_wrappers.sh
-            ./protobuf/build_proto.sh
+        shell: bash
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_libs/build_libs.sh
+          npm install
+          ./wasm_src/build_wrappers.sh
+          ./protobuf/build_proto.sh
 
       - name: Build with node v16
-          shell: bash
-          run: |
-            n 16
-            n exec 16 node -v
-            n exec 16 npm install --legacy-peer-deps
-            n exec 16 npm run build            
+        shell: bash
+        run: |
+          n 16
+          n exec 16 node -v
+          n exec 16 npm install --legacy-peer-deps
+          n exec 16 npm run build            
 
