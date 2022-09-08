@@ -25,11 +25,11 @@ jobs:
           submodules: recursive
 
       - name: Build WebAssembly
-          shell: bash
-          run: |
-            ./wasm_libs/build_libs.sh
-            ./wasm_src/build_wrappers.sh
-            ./protobuf/build_proto.sh
+        shell: bash
+        run: |
+          ./wasm_libs/build_libs.sh
+          ./wasm_src/build_wrappers.sh
+          ./protobuf/build_proto.sh
 
       - name: Save webassembly directory
         uses: actions/upload-artifact@v3
@@ -59,9 +59,9 @@ jobs:
           name: protobuf_wasm_libs_wasm_wrapper
 
       - name: Build
-          shell: bash
-          run: |
-            node -v
-            ls -sort
-            npm run build
+        shell: bash
+        run: |
+          node -v
+          ls -sort
+          npm run build
 
