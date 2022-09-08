@@ -41,7 +41,7 @@ jobs:
             wasm_libs/zstd/build/standalone_zstd.bc
             wasm_wrapper/**/*
 
-  Build with node v12:
+  Build-with-node-v12:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: [format-check, WebAssembly-compilation]
     steps:
