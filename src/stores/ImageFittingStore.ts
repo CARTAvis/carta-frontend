@@ -19,10 +19,12 @@ export class ImageFittingStore {
         return ImageFittingStore.staticInstance;
     }
 
-    @observable selectedFileId: number;
+    @observable selectedFileId: number = ACTIVE_FILE_ID;
     @observable components: ImageFittingIndividualStore[];
     @observable selectedComponentIndex: number;
-    @observable isFitting: boolean;
+    @observable createModelImage: boolean = true;
+    @observable createResidualImage: boolean = true;
+    @observable isFitting: boolean = false;
 
     @action setSelectedFileId = (id: number) => {
         this.selectedFileId = id;
@@ -58,6 +60,14 @@ export class ImageFittingStore {
         this.selectedComponentIndex = index;
     };
 
+    @action toggleCreateModelImage = () => {
+        this.createModelImage = !this.createModelImage;
+    };
+
+    @action toggleCreateResidualImage = () => {
+        this.createResidualImage = !this.createResidualImage;
+    };
+
     @action setIsFitting = (isFitting: boolean) => {
         this.isFitting = isFitting;
     };
@@ -82,9 +92,7 @@ export class ImageFittingStore {
 
     constructor() {
         makeObservable(this);
-        this.selectedFileId = ACTIVE_FILE_ID;
         this.clearComponents();
-        this.selectedComponentIndex = 0;
     }
 
     fitImage = () => {
@@ -109,7 +117,9 @@ export class ImageFittingStore {
             initialValues,
             fixedParams: [],
             regionId,
-            fovInfo
+            fovInfo,
+            createModelImage: this.createModelImage,
+            createResidualImage: this.createResidualImage
         };
         AppStore.Instance.requestFitting(message);
     };

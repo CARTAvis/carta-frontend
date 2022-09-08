@@ -1118,7 +1118,9 @@ export class AppStore {
             return;
         }
 
-        this.startFileLoading();
+        if (message.createModelImage || message.createResidualImage) {
+            this.startFileLoading();
+        }
         const frame = this.getFrame(message.fileId);
         if (frame?.fittingModelImage) {
             this.closeFile(frame.fittingModelImage);
@@ -1155,8 +1157,11 @@ export class AppStore {
         } catch (err) { 
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
+        
         this.setActiveFrameById(message.fileId);
-        this.endFileLoading();
+        if (message.createModelImage || message.createResidualImage) {
+            this.endFileLoading();
+        }
         this.imageFittingStore.setIsFitting(false);
     };
 
