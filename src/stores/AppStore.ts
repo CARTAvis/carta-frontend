@@ -1118,18 +1118,45 @@ export class AppStore {
             return;
         }
 
+        this.startFileLoading();
+        const frame = this.getFrame(message.fileId);
+        if (frame?.fittingModelImage) {
+            this.closeFile(frame.fittingModelImage);
+        }
+        if (frame?.fittingResidualImage) {
+            this.closeFile(frame.fittingResidualImage);
+        }
+        frame?.removeFittingImages();
+
         try {
             const ack = await this.backendService.requestFitting(message);
             if (ack.success) {
                 this.imageFittingStore.setResultString(message.regionId, message.fovInfo, ack.resultValues, ack.resultErrors, ack.log);
+                if (ack.modelImage) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, "", true)) {
+                        this.fileCounter++;
+                        frame?.addFittingModelImage(this.getFrame(ack.modelImage.fileId));
+                    } else {
+                        AppToaster.show({icon: "warning-sign", message: "Load model image failed.", intent: "danger", timeout: 3000});
+                    }
+                }
+                if (ack.residualImage) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(ack.residualImage), this.fileBrowserStore.startingDirectory, "", true)) {
+                        this.fileCounter++;
+                        frame?.addFittingResidualImage(this.getFrame(ack.residualImage.fileId));
+                    } else {
+                        AppToaster.show({icon: "warning-sign", message: "Load residual image failed.", intent: "danger", timeout: 3000});
+                    }
+                }
             }
             if (ack.message) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
             }
-        } catch (err) {
+        } catch (err) { 
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
-
+        this.setActiveFrameById(message.fileId);
+        this.endFileLoading();
         this.imageFittingStore.setIsFitting(false);
     };
 
