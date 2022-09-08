@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed issue of only enabling catalog selection button when there is a layer of catalog overlay ([#1826](https://github.com/CARTAvis/carta-frontend/issues/1826)).
 * Fixed the issue of the corrupted spatial profile when cursor is moving ([#1602](https://github.com/CARTAvis/carta-frontend/issues/1602)).
 * Fixed NaN pixel value in the cursor info bar of the image viewer when the image is 1x1 pixel ([#1879](https://github.com/CARTAvis/carta-frontend/issues/1879)).
+* Fixed issue where spetral profiler cursor info shows data only for the main profile and the cursor info of the smoothing profile is missing. ([#1880](https://github.com/CARTAvis/carta-frontend/issues/1880)).
 ### Changed
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
 
@@ -46,7 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect region positions when importing regions on a spatially matched image ([#1899](https://github.com/CARTAvis/carta-frontend/issues/1899)).
 * Fixed issue in the spatial profile setting where the "Show WCS Axis" should be disabled for steps and lines plot styles ([#1905](https://github.com/CARTAvis/carta-frontend/issues/1905)).
 * Fixed issue when the active frame changes while the region is being imported.
-* Fixed issue where spetral profiler cursor info shows data only for the main profile and the cursor info of the smoothing profile is missing. ([#1880](https://github.com/CARTAvis/carta-frontend/issues/1880)).
 * Fixed the imprecised catalog plot axis. ([#1884](https://github.com/cartavis/carta-frontend/issues/1884)).
 * Fixed the displayed values in the cursor info of the histogram widget by adopting binary-searched data x and y values ([#1917](https://github.com/CARTAvis/carta-frontend/issues/1917)).
 * Fixed missing regions when the image is matched or unmatched to the reference ([#1780](https://github.com/CARTAvis/carta-frontend/issues/1780)).
