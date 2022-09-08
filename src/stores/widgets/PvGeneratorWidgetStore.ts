@@ -12,6 +12,7 @@ export enum PVAxis {
 export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;
     @observable reverse: boolean;
+    @observable overwrite: boolean;
 
     @computed get regionOptions(): IOptionProps[] {
         const appStore = AppStore.Instance;
@@ -39,7 +40,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
                 width: this.width,
-                reverse: this.reverse
+                reverse: this.reverse,
+                overwrite: this.overwrite
             };
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
@@ -61,6 +63,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action setReverse = (bool: boolean) => {
         this.reverse = bool;
+    };
+
+    @action setOverwrite = (bool: boolean) => {
+        this.overwrite = bool;
     };
 
     constructor() {

@@ -7,7 +7,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {PvGeneratorWidgetStore, RegionId, PVAxis} from "stores/widgets";
 import {SafeNumericInput} from "components/Shared";
-import {TaskProgressDialogComponent} from "components/Dialogs";
+import {TaskProgressDialogComponent, ConfirmationDialogComponent} from "components/Dialogs";
 import {Point2D} from "models";
 import "./PvGeneratorComponent.scss";
 
@@ -20,6 +20,7 @@ export enum PvGeneratorComponentTabs {
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @observable selectedTabId: TabId = PvGeneratorComponentTabs.PV_IMAGE;
     axesOrder = {};
+    @observable isConfirmationDialogOpen: boolean = false;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTabId = tab;
@@ -119,6 +120,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    @action setConfirmationDialog = (bool: boolean) => {
+        this.isConfirmationDialogOpen = bool;
+    };
+
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.widgetStore.effectiveFrame) {
             const selectedFileId = parseInt(changeEvent.target.value);
@@ -144,10 +149,18 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private onGenerateButtonClicked = () => {
-        const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-        this.widgetStore.setFileId(fileId);
-        this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
-        this.widgetStore.requestPV();
+        this.setConfirmationDialog(true);
+    };
+
+    private onConfirmationDialogClicked = (overwrite: boolean) => {
+        return () => {
+            this.widgetStore.setOverwrite(overwrite);
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            this.widgetStore.setFileId(fileId);
+            this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
+            this.widgetStore.requestPV();
+            this.setConfirmationDialog(false);
+        };
     };
 
     private genAxisOptions = () => {
@@ -246,6 +259,17 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </Tabs>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
+                <ConfirmationDialogComponent
+                    isOpen={this.isConfirmationDialogOpen}
+                    cancellable={true}
+                    onConfirm={overwrite => this.onConfirmationDialogClicked(overwrite)}
+                    onCancel={() => {
+                        this.setConfirmationDialog(false);
+                        return this.widgetStore.requestingPVCancelled;
+                    }}
+                    titleText={"Before continuing ..."}
+                    contentText={"Would you like to overwrite the current PV Image?"}
+                />
                 <TaskProgressDialogComponent
                     isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
                     progress={frame ? frame.requestingPVProgress : 0}

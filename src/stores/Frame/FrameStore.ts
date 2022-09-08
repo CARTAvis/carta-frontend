@@ -931,7 +931,7 @@ export class FrameStore {
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
-        console.log(frameInfo);
+
         this.spectralFrame = null;
         this.spectralType = null;
         this.spectralUnit = null;
