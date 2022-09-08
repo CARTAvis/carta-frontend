@@ -563,7 +563,8 @@ export class FrameStore {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
             const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
-            return axis1?.value?.match(/offset|position|offset position/i) ? true : false;
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
+            return axis1?.value?.match(/offset|position|offset position/i) || axis2?.value?.match(/offset|position|offset position/i) ? true : false;
         }
         return false;
     }
