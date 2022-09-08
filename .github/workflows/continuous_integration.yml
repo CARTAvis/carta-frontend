@@ -14,53 +14,96 @@ jobs:
       - run: npm install
       - run: npm run checkformat
 
-  WebAssembly-compilation:
+  node-v12:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
-    container: emscripten/emsdk:2.0.14
+    container: carta/frontend-builder
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           submodules: recursive
 
-      - name: Build WebAssembly
-        shell: bash
+      - name: Fix ownership
         run: |
-          ./wasm_libs/build_libs.sh
-          ./wasm_src/build_wrappers.sh
-          ./protobuf/build_proto.sh
+          chown -R $(id -u):$(id -g) $PWD
 
-      - name: Save webassembly directory
-        uses: actions/upload-artifact@v3
-        with:
-          name: protobuf_wasm_libs_wasm_wrapper
-          path: |
-            protobuf/**/*
-            wasm_libs/built/**/*
-            wasm_libs/zstd/build/standalone_zstd.bc
-            wasm_wrapper/**/*
+      - name: WebAssembly compilation
+          shell: bash
+          run: |
+            source /emsdk/emsdk_env.sh
+            ./wasm_libs/build_libs.sh
+            npm install
+            ./wasm_src/build_wrappers.sh
+            ./protobuf/build_proto.sh
 
-  Build-with-node-v12:
+      - name: Build with node v12
+          shell: bash
+          run: |
+            n 12
+            n exec 12 node -v
+            n exec 12 npm install
+            n exec 12 npm run build
+
+  node-v14:
     runs-on: [self-hosted, Linux, X64, Docker]
-    needs: [format-check, WebAssembly-compilation]
+    needs: format-check
+    container: carta/frontend-builder
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
-          submodules: recursive          
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '12'
+          submodules: recursive
 
-      - name: Restore webassembly directory
-        uses: actions/download-artifact@v3
-        with:
-          name: protobuf_wasm_libs_wasm_wrapper
-
-      - name: Build
-        shell: bash
+      - name: Fix ownership
         run: |
-          node -v
-          ls -sort
-          npm run build
+          chown -R $(id -u):$(id -g) $PWD
+
+      - name: WebAssembly compilation
+          shell: bash
+          run: |
+            source /emsdk/emsdk_env.sh
+            ./wasm_libs/build_libs.sh
+            npm install
+            ./wasm_src/build_wrappers.sh
+            ./protobuf/build_proto.sh
+
+      - name: Build with node v14
+          shell: bash
+          run: |
+            n 14
+            n exec 14 node -v
+            n exec 14 npm install
+            n exec 14 npm run build            
+
+  node-v16:
+    runs-on: [self-hosted, Linux, X64, Docker]
+    needs: format-check
+    container: carta/frontend-builder
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Fix ownership
+        run: |
+          chown -R $(id -u):$(id -g) $PWD
+
+      - name: WebAssembly compilation
+          shell: bash
+          run: |
+            source /emsdk/emsdk_env.sh
+            ./wasm_libs/build_libs.sh
+            npm install
+            ./wasm_src/build_wrappers.sh
+            ./protobuf/build_proto.sh
+
+      - name: Build with node v16
+          shell: bash
+          run: |
+            n 16
+            n exec 16 node -v
+            n exec 16 npm install --legacy-peer-deps
+            n exec 16 npm run build            
 
