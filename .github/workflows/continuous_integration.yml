@@ -30,7 +30,9 @@ jobs:
 
       - name: Build libs
         shell: bash        
-        run: ./wasm_libs/build_libs.sh
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_libs/build_libs.sh
 
       - name: npm install with node 12
         shell: bash        
@@ -66,8 +68,10 @@ jobs:
           chown -R $(id -u):$(id -g) $PWD
 
       - name: Build libs
-        shell: bash        
-        run: ./wasm_libs/build_libs.sh
+        shell: bash
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_libs/build_libs.sh
 
       - name: npm install with node 14
         shell: bash        
@@ -105,7 +109,9 @@ jobs:
 
       - name: Build libs
         shell: bash        
-        run: ./wasm_libs/build_libs.sh
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_libs/build_libs.sh
 
       - name: npm install with node 16
         shell: bash        
