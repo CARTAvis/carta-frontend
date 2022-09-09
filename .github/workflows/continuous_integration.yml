@@ -19,7 +19,7 @@ jobs:
     needs: format-check
     container: 
       image: carta/frontend-builder
-      options: [--security-opt, seccomp=unconfined]
+      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -64,7 +64,7 @@ jobs:
     needs: format-check
     container: 
       image: carta/frontend-builder
-      options: [--security-opt, seccomp=unconfined]
+      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -110,7 +110,7 @@ jobs:
     needs: format-check
     container: 
       image: carta/frontend-builder
-      options: [--security-opt, seccomp=unconfined]
+      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout
         uses: actions/checkout@v3
