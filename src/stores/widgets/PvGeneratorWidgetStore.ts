@@ -44,7 +44,6 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 spectralRange: this.range?.max && this.range?.min ? this.range : null,
                 reverse: this.reverse,
                 overwrite: this.overwrite
-
             };
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
@@ -74,7 +73,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action setSpectralRange = (range: CARTA.IIntBounds) => {
         this.range = range;
-    }
+    };
 
     constructor() {
         super(RegionsType.LINE);
