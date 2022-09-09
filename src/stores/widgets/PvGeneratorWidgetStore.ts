@@ -13,6 +13,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;
     @observable reverse: boolean;
     @observable overwrite: boolean;
+    @observable range: CARTA.IIntBounds;
 
     @computed get regionOptions(): IOptionProps[] {
         const appStore = AppStore.Instance;
@@ -40,8 +41,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
                 width: this.width,
+                spectralRange: this.range?.max && this.range?.min ? this.range : null,
                 reverse: this.reverse,
                 overwrite: this.overwrite
+
             };
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
@@ -68,6 +71,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @action setOverwrite = (bool: boolean) => {
         this.overwrite = bool;
     };
+
+    @action setSpectralRange = (range: CARTA.IIntBounds) => {
+        this.range = range;
+    }
 
     constructor() {
         super(RegionsType.LINE);

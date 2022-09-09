@@ -31,9 +31,9 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             id: "pv-generator",
             type: "pv-generator",
             minWidth: 350,
-            minHeight: 200,
+            minHeight: 420,
             defaultWidth: 500,
-            defaultHeight: 320,
+            defaultHeight: 450,
             title: "PV Generator",
             isCloseable: true,
             helpType: HelpType.PV_GENERATOR
@@ -239,6 +239,12 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <FormGroup inline={true} label="Average Width">
                     <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Minimum Spectral Limit">
+                    <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.range?.min} onValueChange={value => this.widgetStore.setSpectralRange({min: value, max: this.widgetStore.range?.max})} />
+                </FormGroup>
+                <FormGroup inline={true} label="Maximum Spectral Limit">
+                    <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.range?.max} onValueChange={value => this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value})} />
                 </FormGroup>
                 <FormGroup className="label-info-group" inline={true} label="Axes Order">
                     <HTMLSelect options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
