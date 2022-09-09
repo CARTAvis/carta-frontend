@@ -120,10 +120,6 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
         }
     };
 
-    private toggleCursorMirror = () => {
-        AppStore.Instance.cursorMirror = !AppStore.Instance.cursorMirror;
-    };
-
     render() {
         const appStore = AppStore.Instance;
         const frameNum = appStore.frames.length;
@@ -174,7 +170,6 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="cursor-info-widget">
-                <button onClick={this.toggleCursorMirror}>Click here</button>
                 {this.width > 0 && ( // prevent row index header not rendering
                     <SimpleTableComponent
                         dataset={columnsData}
