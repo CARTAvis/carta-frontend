@@ -57,7 +57,9 @@ jobs:
 
       - name: Production build with node 12
         shell: bash        
-        run: n exec 12 npm run build
+        run: |
+          source /emsdk/emsdk_env.sh
+          n exec 12 npm run build
 
   node-v14:
     runs-on: [self-hosted, Linux, X64, Docker]
@@ -102,7 +104,9 @@ jobs:
 
       - name: Production build with node 14
         shell: bash        
-        run: n exec 14 npm run build
+        run: |
+          source /emsdk/emsdk_env.sh
+          n exec 14 npm run build
 
 
   node-v16:
@@ -132,7 +136,7 @@ jobs:
         run: |
           n 16
           n exec 16 node -v
-          n exec 16 npm install
+          n exec 16 npm install --legacy-peer-deps
 
       - name: Build wrappers
         shell: bash        
@@ -148,7 +152,9 @@ jobs:
 
       - name: Production build with node 16
         shell: bash        
-        run: n exec 16 npm run build
+        run: |
+          source /emsdk/emsdk_env.sh
+          n exec 16 npm run build 
 
   Notify:
     name: Send notifications
