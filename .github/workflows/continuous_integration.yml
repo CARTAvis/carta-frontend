@@ -17,8 +17,9 @@ jobs:
   node-v12:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
-    container: carta/frontend-builder
-      options: --security-opt seccomp=unconfined
+    container: 
+      image: carta/frontend-builder
+      options: [--security-opt, seccomp=unconfined]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -61,8 +62,9 @@ jobs:
   node-v14:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
-    container: carta/frontend-builder
-      options: --security-opt seccomp=unconfined    
+    container: 
+      image: carta/frontend-builder
+      options: [--security-opt, seccomp=unconfined]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -106,8 +108,9 @@ jobs:
   node-v16:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
-    container: carta/frontend-builder
-      options: --security-opt seccomp=unconfined    
+    container: 
+      image: carta/frontend-builder
+      options: [--security-opt, seccomp=unconfined]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
