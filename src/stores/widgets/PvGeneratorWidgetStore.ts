@@ -43,7 +43,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 width: this.width,
                 spectralRange: this.range?.max && this.range?.min ? this.range : null,
                 reverse: this.reverse,
-                overwrite: this.overwrite
+                keep: this.overwrite
             };
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
