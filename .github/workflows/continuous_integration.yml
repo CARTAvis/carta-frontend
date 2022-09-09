@@ -18,6 +18,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
     container: carta/frontend-builder
+      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -43,11 +44,15 @@ jobs:
 
       - name: Build wrappers
         shell: bash        
-        run: ./wasm_src/build_wrappers.sh
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_src/build_wrappers.sh
 
       - name: Build protobuf
         shell: bash        
-        run: ./protobuf/build_proto.sh
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./protobuf/build_proto.sh
 
       - name: Production build with node 12
         shell: bash        
@@ -57,6 +62,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
     container: carta/frontend-builder
+      options: --security-opt seccomp=unconfined    
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -82,11 +88,15 @@ jobs:
 
       - name: Build wrappers
         shell: bash        
-        run: ./wasm_src/build_wrappers.sh
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_src/build_wrappers.sh
 
       - name: Build protobuf
         shell: bash        
-        run: ./protobuf/build_proto.sh
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./protobuf/build_proto.sh
 
       - name: Production build with node 14
         shell: bash        
@@ -97,6 +107,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, Docker]
     needs: format-check
     container: carta/frontend-builder
+      options: --security-opt seccomp=unconfined    
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -122,11 +133,15 @@ jobs:
 
       - name: Build wrappers
         shell: bash        
-        run: ./wasm_src/build_wrappers.sh
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_src/build_wrappers.sh
 
       - name: Build protobuf
         shell: bash        
-        run: ./protobuf/build_proto.sh
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./protobuf/build_proto.sh
 
       - name: Production build with node 16
         shell: bash        
