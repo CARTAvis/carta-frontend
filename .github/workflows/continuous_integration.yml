@@ -29,23 +29,26 @@ jobs:
           chown -R $(id -u):$(id -g) $PWD
 
       - name: Build libs
-        run: |
-          source /emsdk/emsdk_env.sh
-          ./wasm_libs/build_libs.sh
+        shell: bash        
+        run: ./wasm_libs/build_libs.sh
 
       - name: npm install with node 12
+        shell: bash        
         run: |
           n 12
           n exec 12 node -v
           n exec 12 npm install
 
       - name: Build wrappers
+        shell: bash        
         run: ./wasm_src/build_wrappers.sh
 
       - name: Build protobuf
+        shell: bash        
         run: ./protobuf/build_proto.sh
 
       - name: Production build with node 12
+        shell: bash        
         run: n exec 12 npm run build
 
   node-v14:
@@ -59,27 +62,30 @@ jobs:
           submodules: recursive
 
       - name: Fix ownership
-        run: |
+        run: | 
           chown -R $(id -u):$(id -g) $PWD
 
       - name: Build libs
-        run: |
-          source /emsdk/emsdk_env.sh
-          ./wasm_libs/build_libs.sh
+        shell: bash        
+        run: ./wasm_libs/build_libs.sh
 
       - name: npm install with node 14
+        shell: bash        
         run: |
           n 14
           n exec 14 node -v
           n exec 14 npm install
 
       - name: Build wrappers
+        shell: bash        
         run: ./wasm_src/build_wrappers.sh
 
       - name: Build protobuf
+        shell: bash        
         run: ./protobuf/build_proto.sh
 
       - name: Production build with node 14
+        shell: bash        
         run: n exec 14 npm run build
 
 
@@ -98,23 +104,26 @@ jobs:
           chown -R $(id -u):$(id -g) $PWD
 
       - name: Build libs
-        run: |
-          source /emsdk/emsdk_env.sh
-          ./wasm_libs/build_libs.sh
+        shell: bash        
+        run: ./wasm_libs/build_libs.sh
 
       - name: npm install with node 16
+        shell: bash        
         run: |
           n 16
           n exec 16 node -v
           n exec 16 npm install
 
       - name: Build wrappers
+        shell: bash        
         run: ./wasm_src/build_wrappers.sh
 
       - name: Build protobuf
+        shell: bash        
         run: ./protobuf/build_proto.sh
 
       - name: Production build with node 16
+        shell: bash        
         run: n exec 16 npm run build
 
   Notify:
