@@ -568,6 +568,11 @@ export class FrameStore {
         return false;
     }
 
+    @computed get isSwappedImage(): boolean {
+        const spectralNumber = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
+        return spectralNumber === 0 || spectralNumber === 1;
+    }
+
     @computed get isUVImage(): boolean {
         return this.uvAxis !== undefined;
     }
@@ -586,6 +591,7 @@ export class FrameStore {
         return undefined;
     }
 
+    // TODO: Maybe it is better to change the function name "spectralAxis" to "depthAxis"
     @computed get spectralAxis(): {valid: boolean; dimension: number; type: SpectralTypeSet; specsys: string; value: number} {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
@@ -1036,6 +1042,13 @@ export class FrameStore {
                 this.wcsInfo = AST.copy(astFrameSet);
                 AST.deleteObject(astFrameSet);
             }
+        } else if (this.isSwappedImage) {
+            const astFrameSet = this.initSwappedFrame();
+            if (astFrameSet) {
+                this.spectralFrame = AST.getSpectralFrame(astFrameSet);
+                this.wcsInfo = AST.copy(astFrameSet);
+                AST.deleteObject(astFrameSet);
+            }
         } else if (this.isUVImage) {
             // TODO: Refactor the code to avoid redundancy between astFrameSet and astFrameSet2D
             const astFrameSet = this.initFrame(false);
@@ -1345,6 +1358,44 @@ export class FrameStore {
             AST.putFits(fitsChan, entryString);
         }
         return AST.getFrameFromFitsChan(fitsChan, checkSkyDomain);
+    };
+
+    private initSwappedFrame = (): AST.FrameSet => {
+        const fitsChan = AST.emptyFitsChan();
+        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            let name = entry.name;
+
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[1-2]/)) {
+                if (!entry.value.length) {
+                    continue;
+                }
+
+                let value = trimFitsComment(entry.value);
+                if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+                    value = "2";
+                }
+
+                if (entry.entryType === CARTA.EntryType.STRING) {
+                    value = `'${value}'`;
+                } else {
+                    value = FrameStore.ShiftASTCoords(entry, value);
+                }
+
+                if (value.match(/DEC--*/)) {
+                    value = "'Declination'";
+                } else if (value.match(/RA---*/)) {
+                    value = "'Right ascension'";
+                }
+
+                while (name.length < 8) {
+                    name += " ";
+                }
+
+                const entryString = `${name}=  ${value}`;
+                AST.putFits(fitsChan, entryString);
+            }
+        }
+        return AST.getFrameFromFitsChan(fitsChan, false);
     };
 
     private sanitizeChannelNumber(channel: number) {
