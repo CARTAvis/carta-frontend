@@ -9,8 +9,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '14'
-          # Disabling temporarily due to https://github.com/actions/setup-node/issues/516
-          # cache: 'npm'
+          cache: 'npm'
       - run: npm install
       - run: npm run checkformat
 
@@ -160,11 +159,11 @@ jobs:
     name: Send notifications
     runs-on: ubuntu-latest
     needs: [format-check, node-v12, node-v14, node-v16]
-    if: ${{ github.event_name == 'push' }}
+    if: always
     steps:
       - name: Notify Slack
         uses: baijunyao/action-slack-notify@v3.0.0
-        if: always()
+        if: ${{ github.event_name == 'push' }}
         with:
           slack_channel_id: actions-build-status
           slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
