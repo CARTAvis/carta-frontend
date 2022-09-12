@@ -1363,37 +1363,36 @@ export class FrameStore {
     private initSwappedFrame = (): AST.FrameSet => {
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
-                continue;
-            }
-            if (!entry.value.length) {
-                continue;
-            }
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[1-2]/)) {
+                if (!entry.value.length) {
+                    continue;
+                }
 
-            let value = trimFitsComment(entry.value);
-            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
-                value = "2";
-            }
+                let value = trimFitsComment(entry.value);
+                if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+                    value = "2";
+                }
 
-            if (entry.entryType === CARTA.EntryType.STRING) {
-                value = `'${value}'`;
-            } else {
-                value = FrameStore.ShiftASTCoords(entry, value);
-            }
+                if (entry.entryType === CARTA.EntryType.STRING) {
+                    value = `'${value}'`;
+                } else {
+                    value = FrameStore.ShiftASTCoords(entry, value);
+                }
 
-            if (value.match(/DEC--*/)) {
-                value = "'Declination'";
-            } else if (value.match(/RA---*/)) {
-                value = "'Right ascension'";
-            }
+                if (value.match(/DEC--*/)) {
+                    value = "'Declination'";
+                } else if (value.match(/RA---*/)) {
+                    value = "'Right ascension'";
+                }
 
-            let name = entry.name;
-            while (name.length < 8) {
-                name += " ";
-            }
+                let name = entry.name;
+                while (name.length < 8) {
+                    name += " ";
+                }
 
-            const entryString = `${name}=  ${value}`;
-            AST.putFits(fitsChan, entryString);
+                const entryString = `${name}=  ${value}`;
+                AST.putFits(fitsChan, entryString);
+            }
         }
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
