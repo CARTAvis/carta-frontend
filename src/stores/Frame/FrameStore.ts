@@ -1272,6 +1272,12 @@ export class FrameStore {
                 value = FrameStore.ShiftASTCoords(entry, value);
             }
 
+            if (value.match(/DEC--*/)) {
+                value = "'Declination'";
+            } else if (value.match(/RA---*/)) {
+                value = "'Right ascension'";
+            }
+
             while (name.length < 8) {
                 name += " ";
             }
