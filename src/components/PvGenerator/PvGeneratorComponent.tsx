@@ -21,6 +21,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @observable selectedTabId: TabId = PvGeneratorComponentTabs.PV_IMAGE;
     axesOrder = {};
     @observable isConfirmationDialogOpen: boolean = false;
+    @observable error: boolean = false;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTabId = tab;
@@ -124,6 +125,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         this.isConfirmationDialogOpen = bool;
     };
 
+    @action setError = (bool: boolean) => {
+        this.error = bool;
+    };
+
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.widgetStore.effectiveFrame) {
             const selectedFileId = parseInt(changeEvent.target.value);
@@ -170,14 +175,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         };
     };
 
-    // private onMaskFromChanged = (from: number) => {
-    //     const widgetStore = this.widgetStore;
-    //     const frame = widgetStore.effectiveFrame;
-    //     if (frame && isFinite(from)) {
-    //         widgetStore.setSelectedMaskRange(from, widgetStore.maskRange[1]);
-    //     }
-    // };
-
     private genAxisOptions = () => {
         const axes = Object.values(PVAxis);
 
@@ -194,6 +191,24 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private handleSpectralRangeChanged = (value: number, max: boolean) => {
+        if (max) {
+            this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value || null});
+        } else {
+            this.widgetStore.setSpectralRange({min: value || null, max: this.widgetStore.range?.max});
+        }
+
+        const frame = this.widgetStore.effectiveFrame;
+        const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
+        const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
+
+        if ((channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) || (this.widgetStore.range?.min === null && this.widgetStore.range?.max === null)) {
+            this.setError(false);
+        } else {
+            this.setError(true);
+        }
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const frame = this.widgetStore.effectiveFrame;
@@ -207,7 +222,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         }
 
-        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel;
+        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && !this.error;
         const hint = (
             <span>
                 <i>
@@ -257,13 +272,13 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={this.widgetStore.setSpectralCoordinate} onSpectralSystemChange={this.widgetStore.setSpectralSystem} disable={frame?.isPVImage} />
                 {frame && frame.numChannels > 1 && (
-                    <FormGroup label="Range" inline={true} labelInfo={`(${frame.requiredUnit})`}>
+                    <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.widgetStore.setSpectralRange({min: value, max: this.widgetStore.range?.max})} />
+                                <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, false)} />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value})} />
+                                <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.handleSpectralRangeChanged(value, true)} />
                             </FormGroup>
                         </div>
                     </FormGroup>

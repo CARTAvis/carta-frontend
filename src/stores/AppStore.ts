@@ -1068,7 +1068,7 @@ export class AppStore {
         // clear previously generated moment images under this frame
         if (!keep) {
             if (frame.pvImages) {
-                this.closeFile(frame.pvImages[-1]);
+                frame.pvImages.forEach(pvImage => this.closeFile(pvImage));
             }
             frame.removePvImage();
         }
@@ -1088,7 +1088,6 @@ export class AppStore {
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
             this.endFileLoading();
-            console.log(this.frames);
         } catch (err) {
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);

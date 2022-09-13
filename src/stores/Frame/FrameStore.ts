@@ -571,6 +571,18 @@ export class FrameStore {
         return false;
     }
 
+    @computed get isReversedPVImage(): boolean {
+        if (this.isPVImage) {
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+            const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
+            // const axis1SpectralAxis2Spatial = axis1?.value?.match(/offset|position|offset position/i) && axis2?.value?.match(/freq/i);
+            const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position/i) && axis1?.value?.match(/freq/i);
+            return axis1SpatialAxis2Spectral ? true : false;
+        }
+        return false;
+    }
+
     @computed get isUVImage(): boolean {
         return this.uvAxis !== undefined;
     }
@@ -619,11 +631,11 @@ export class FrameStore {
 
             // Fill up spectral dimension & type/unit/system
             if (dimension) {
-                const spectralHeader = entries.find(entry => entry.name.includes(`CTYPE${dimension}`));
+                const spectralHeader = entries.find(entry => entry.name.includes(`CTYPE${this.isReversedPVImage ? 1 : dimension}`));
                 const spectralValue = spectralHeader?.value.trim().toUpperCase();
                 const spectralType = STANDARD_SPECTRAL_TYPE_SETS.find(type => spectralValue === type.code);
-                const valueHeader = entries.find(entry => entry.name.includes(`CRVAL${dimension}`));
-                const unitHeader = entries.find(entry => entry.name.includes(`CUNIT${dimension}`));
+                const valueHeader = entries.find(entry => entry.name.includes(`CRVAL${this.isReversedPVImage ? 1 : dimension}`));
+                const unitHeader = entries.find(entry => entry.name.includes(`CUNIT${this.isReversedPVImage ? 1 : dimension}`));
                 const specSysHeader = entries.find(entry => entry.name.includes("SPECSYS"));
                 const specsys = specSysHeader?.value ? trimFitsComment(specSysHeader.value)?.toUpperCase() : undefined;
                 if (spectralType) {
@@ -931,7 +943,7 @@ export class FrameStore {
         this.logStore = LogStore.Instance;
         this.backendService = BackendService.Instance;
         const preferenceStore = PreferenceStore.Instance;
-        console.log(frameInfo);
+
         this.spectralFrame = null;
         this.spectralType = null;
         this.spectralUnit = null;
@@ -1567,12 +1579,10 @@ export class FrameStore {
                 return this.channelInfo.getChannelIndexSimple(x);
             } else {
                 if ((this.spectralAxis && !this.spectralAxis.valid) || this.isSpectralPropsEqual) {
-                    console.log(x);
                     return this.channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
                     const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
-                    console.log(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, tx);
                     return this.channelInfo.getChannelIndexWCS(tx);
                 }
             }

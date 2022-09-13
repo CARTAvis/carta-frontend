@@ -37,10 +37,14 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action requestPV = () => {
         const frame = this.effectiveFrame;
-        console.log(this.effectiveFrame.filename, this.range.max, this.range.min);
-        const channelIndexMin = frame.findChannelIndexByValue(this.range.min);
-        const channelIndexMax = frame.findChannelIndexByValue(this.range.max);
-        console.log(channelIndexMax, channelIndexMin);
+        let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
+        let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
+        if (channelIndexMin >= channelIndexMax) {
+            if (channelIndexMax === 1) {
+                channelIndexMax++;
+            }
+            channelIndexMin = channelIndexMax - 1;
+        }
         if (frame && this.effectiveRegion) {
             const requestMessage: CARTA.IPvRequest = {
                 fileId: frame.frameInfo.fileId,
