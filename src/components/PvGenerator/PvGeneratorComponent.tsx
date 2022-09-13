@@ -6,7 +6,7 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {PvGeneratorWidgetStore, RegionId, PVAxis} from "stores/widgets";
-import {SafeNumericInput} from "components/Shared";
+import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {TaskProgressDialogComponent, ConfirmationDialogComponent} from "components/Dialogs";
 import {Point2D} from "models";
 import "./PvGeneratorComponent.scss";
@@ -31,7 +31,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             id: "pv-generator",
             type: "pv-generator",
             minWidth: 350,
-            minHeight: 420,
+            minHeight: 450,
             defaultWidth: 500,
             defaultHeight: 450,
             title: "PV Generator",
@@ -149,12 +149,19 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private onGenerateButtonClicked = () => {
+        if (!this.widgetStore.effectiveFrame.pvImages.length) {
+            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+            this.widgetStore.setFileId(fileId);
+            this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
+            this.widgetStore.requestPV();
+            return;
+        }
         this.setConfirmationDialog(true);
     };
 
-    private onConfirmationDialogClicked = (overwrite: boolean) => {
+    private onConfirmationDialogClicked = (keep: boolean) => {
         return () => {
-            this.widgetStore.setOverwrite(overwrite);
+            this.widgetStore.setKeep(keep);
             const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             this.widgetStore.setFileId(fileId);
             this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
@@ -162,6 +169,14 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             this.setConfirmationDialog(false);
         };
     };
+
+    // private onMaskFromChanged = (from: number) => {
+    //     const widgetStore = this.widgetStore;
+    //     const frame = widgetStore.effectiveFrame;
+    //     if (frame && isFinite(from)) {
+    //         widgetStore.setSelectedMaskRange(from, widgetStore.maskRange[1]);
+    //     }
+    // };
 
     private genAxisOptions = () => {
         const axes = Object.values(PVAxis);
@@ -240,12 +255,19 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 <FormGroup inline={true} label="Average Width">
                     <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Minimum Spectral Limit">
-                    <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.range?.min} onValueChange={value => this.widgetStore.setSpectralRange({min: value, max: this.widgetStore.range?.max})} />
-                </FormGroup>
-                <FormGroup inline={true} label="Maximum Spectral Limit">
-                    <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.range?.max} onValueChange={value => this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value})} />
-                </FormGroup>
+                <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={this.widgetStore.setSpectralCoordinate} onSpectralSystemChange={this.widgetStore.setSpectralSystem} disable={frame?.isPVImage} />
+                {frame && frame.numChannels > 1 && (
+                    <FormGroup label="Range" inline={true} labelInfo={`(${frame.requiredUnit})`}>
+                        <div className="range-select">
+                            <FormGroup label="From" inline={true}>
+                                <SafeNumericInput value={this.widgetStore.range?.min} buttonPosition="none" onValueChange={value => this.widgetStore.setSpectralRange({min: value, max: this.widgetStore.range?.max})} />
+                            </FormGroup>
+                            <FormGroup label="To" inline={true}>
+                                <SafeNumericInput value={this.widgetStore.range?.max} buttonPosition="none" onValueChange={value => this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value})} />
+                            </FormGroup>
+                        </div>
+                    </FormGroup>
+                )}
                 <FormGroup className="label-info-group" inline={true} label="Axes Order">
                     <HTMLSelect options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
                 </FormGroup>

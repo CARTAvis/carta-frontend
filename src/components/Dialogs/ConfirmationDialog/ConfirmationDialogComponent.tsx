@@ -27,8 +27,8 @@ export class ConfirmationDialogComponent extends React.Component<ConfirmationDia
                 {this.props.cancellable && (
                     <div className={Classes.DIALOG_FOOTER}>
                         <div className="footer-button">
-                            <AnchorButton onClick={this.props.onConfirm(true)}>Yes</AnchorButton>
-                            <AnchorButton onClick={this.props.onConfirm(false)}>No</AnchorButton>
+                            <AnchorButton onClick={this.props.onConfirm(false)}>Yes</AnchorButton>
+                            <AnchorButton onClick={this.props.onConfirm(true)}>No</AnchorButton>
                             <AnchorButton onClick={this.props.onCancel}>Cancel</AnchorButton>
                         </div>
                     </div>

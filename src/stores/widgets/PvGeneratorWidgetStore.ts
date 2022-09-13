@@ -3,6 +3,7 @@ import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType, RegionId} from "./RegionWidgetStore";
+import {SpectralSystem} from "models";
 
 export enum PVAxis {
     SPATIAL = "Spatial",
@@ -12,8 +13,8 @@ export enum PVAxis {
 export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;
     @observable reverse: boolean;
-    @observable overwrite: boolean;
-    @observable range: CARTA.IIntBounds;
+    @observable keep: boolean;
+    @observable range: CARTA.IIntBounds = {min: null, max: null};
 
     @computed get regionOptions(): IOptionProps[] {
         const appStore = AppStore.Instance;
@@ -36,18 +37,22 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action requestPV = () => {
         const frame = this.effectiveFrame;
+        console.log(this.effectiveFrame.filename, this.range.max, this.range.min);
+        const channelIndexMin = frame.findChannelIndexByValue(this.range.min);
+        const channelIndexMax = frame.findChannelIndexByValue(this.range.max);
+        console.log(channelIndexMax, channelIndexMin);
         if (frame && this.effectiveRegion) {
             const requestMessage: CARTA.IPvRequest = {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
                 width: this.width,
-                spectralRange: this.range?.max && this.range?.min ? this.range : null,
+                spectralRange: channelIndexMin && channelIndexMax ? {min: channelIndexMin, max: channelIndexMax} : null,
                 reverse: this.reverse,
-                keep: this.overwrite
+                keep: this.keep
             };
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
-            AppStore.Instance.requestPV(requestMessage, frame);
+            AppStore.Instance.requestPV(requestMessage, frame, this.keep);
         }
     };
 
@@ -59,6 +64,18 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setSpectralCoordinate = (coordStr: string) => {
+        if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
+            console.log(this.effectiveFrame.spectralType, this.effectiveFrame.spectralUnit);
+        }
+    };
+
+    @action setSpectralSystem = (specsys: SpectralSystem) => {
+        if (this.effectiveFrame.setSpectralSystem(specsys)) {
+            console.log(this.effectiveFrame.spectralSystem);
+        }
+    };
+
     @action setWidth = (val: number) => {
         this.width = val;
     };
@@ -67,12 +84,14 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.reverse = bool;
     };
 
-    @action setOverwrite = (bool: boolean) => {
-        this.overwrite = bool;
+    @action setKeep = (bool: boolean) => {
+        this.keep = bool;
     };
 
     @action setSpectralRange = (range: CARTA.IIntBounds) => {
-        this.range = range;
+        if (isFinite(range.min) && isFinite(range.max)) {
+            this.range = range;
+        }
     };
 
     constructor() {

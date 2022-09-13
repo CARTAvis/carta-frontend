@@ -156,7 +156,7 @@ export class FrameStore {
     @observable secondarySpectralImages: FrameStore[];
     @observable secondaryRasterScalingImages: FrameStore[];
     @observable momentImages: FrameStore[];
-    @observable pvImage: FrameStore;
+    @observable pvImages: FrameStore[];
     @observable generatedPVRegionId: number;
     @observable fittingResult: string;
     @observable fittingLog: string;
@@ -970,7 +970,7 @@ export class FrameStore {
         this.secondarySpectralImages = [];
         this.secondaryRasterScalingImages = [];
         this.momentImages = [];
-        this.pvImage = null;
+        this.pvImages = [];
         this.fittingResult = "";
         this.fittingLog = "";
 
@@ -1567,10 +1567,12 @@ export class FrameStore {
                 return this.channelInfo.getChannelIndexSimple(x);
             } else {
                 if ((this.spectralAxis && !this.spectralAxis.valid) || this.isSpectralPropsEqual) {
+                    console.log(x);
                     return this.channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
                     const tx = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x, false);
+                    console.log(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, tx);
                     return this.channelInfo.getChannelIndexWCS(tx);
                 }
             }
@@ -2324,13 +2326,13 @@ export class FrameStore {
     };
 
     @action addPvImage = (frame: FrameStore) => {
-        if (frame && (!this.pvImage || this.pvImage.frameInfo.fileId !== frame.frameInfo.fileId)) {
-            this.pvImage = frame;
+        if (frame && (!this.pvImages || this.pvImages[-1]?.frameInfo.fileId !== frame.frameInfo.fileId)) {
+            this.pvImages?.push(frame);
         }
     };
 
     @action removePvImage = () => {
-        this.pvImage = null;
+        this.pvImages = [];
     };
 
     @action setIsRequestingPV = (val: boolean) => {
