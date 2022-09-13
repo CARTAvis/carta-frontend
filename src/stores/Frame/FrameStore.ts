@@ -569,8 +569,10 @@ export class FrameStore {
     }
 
     @computed get isSwappedImage(): boolean {
-        const spectralNumber = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
-        return spectralNumber === 0 || spectralNumber === 1;
+        const spectral = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
+        const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+        const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
+        return (spectral === 0 && (dirX === 1 || dirY === 1)) || (spectral === 1 && (dirX === 0 || dirY === 0));
     }
 
     @computed get isUVImage(): boolean {
@@ -609,14 +611,9 @@ export class FrameStore {
                     dimension = 3;
                 }
             } else {
-                const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
-                const typeHeader4 = entries.find(entry => entry.name.includes("CTYPE4"));
-                if (typeHeader3 && !typeHeader3.value.match(/stokes/i)) {
-                    // spectral axis should be CTYPE3
-                    dimension = 3;
-                } else if (typeHeader4 && !typeHeader4.value.match(/stokes/i)) {
-                    // spectral axis should be CTYPE4
-                    dimension = 4;
+                const depthAxis = this.frameInfo.fileInfoExtended.axesNumbers.depth + 1;
+                if (depthAxis > 0) {
+                    dimension = depthAxis;
                 }
             }
 
