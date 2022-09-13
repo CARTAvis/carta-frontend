@@ -1269,10 +1269,15 @@ export class FrameStore {
                 value = FrameStore.ShiftASTCoords(entry, value);
             }
 
+            // For the case y-axis is not the spectral axis
             if (value.match(/DEC--*/)) {
                 value = "'Declination'";
             } else if (value.match(/RA---*/)) {
                 value = "'Right ascension'";
+            } else if (value.match(/GLON-*/)) {
+                value = "'Galactic longitude'";
+            } else if (value.match(/GLAT-*/)) {
+                value = "'Galactic latitude'";
             }
 
             while (name.length < 8) {
@@ -1386,6 +1391,10 @@ export class FrameStore {
                     value = "'Declination'";
                 } else if (value.match(/RA---*/)) {
                     value = "'Right ascension'";
+                } else if (value.match(/GLON-*/)) {
+                    value = "'Galactic longitude'";
+                } else if (value.match(/GLAT-*/)) {
+                    value = "'Galactic latitude'";
                 }
 
                 let name = entry.name;
