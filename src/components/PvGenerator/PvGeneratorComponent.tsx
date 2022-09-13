@@ -193,16 +193,16 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
     private handleSpectralRangeChanged = (value: number, max: boolean) => {
         if (max) {
-            this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value || null});
+            this.widgetStore.setSpectralRange({min: this.widgetStore.range?.min, max: value ?? null});
         } else {
-            this.widgetStore.setSpectralRange({min: value || null, max: this.widgetStore.range?.max});
+            this.widgetStore.setSpectralRange({min: value ?? null, max: this.widgetStore.range?.max});
         }
 
         const frame = this.widgetStore.effectiveFrame;
         const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
         const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
 
-        if ((channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) || (this.widgetStore.range?.min === null && this.widgetStore.range?.max === null)) {
+        if ((channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) || (!this.widgetStore.range?.min && !this.widgetStore.range?.max && this.widgetStore.range?.min && this.widgetStore.range?.max)) {
             this.setError(false);
         } else {
             this.setError(true);

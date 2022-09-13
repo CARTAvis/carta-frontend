@@ -39,8 +39,9 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         const frame = this.effectiveFrame;
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
+
         if (channelIndexMin >= channelIndexMax) {
-            if (channelIndexMax === 1) {
+            if (channelIndexMax === 0) {
                 channelIndexMax++;
             }
             channelIndexMin = channelIndexMax - 1;
@@ -50,7 +51,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
                 width: this.width,
-                spectralRange: channelIndexMin && channelIndexMax ? {min: channelIndexMin, max: channelIndexMax} : null,
+                spectralRange: !channelIndexMin && !channelIndexMax && channelIndexMin !== 0 && channelIndexMax !== 0 ? null : {min: channelIndexMin, max: channelIndexMax},
                 reverse: this.reverse,
                 keep: this.keep
             };

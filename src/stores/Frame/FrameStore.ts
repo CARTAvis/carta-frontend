@@ -426,7 +426,7 @@ export class FrameStore {
         const rawValues = new Array<number>(N);
 
         let getChannelIndexSimple = (value: number): number => {
-            if (!value) {
+            if (!value && value !== 0) {
                 return null;
             }
 
