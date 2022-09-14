@@ -14,7 +14,7 @@ export enum RegionMode {
 
 export enum RegionsOpacity {
     Visible = 1,
-    Transparent = 0.5,
+    SemiTransparent = 0.5,
     Invisible = 0
 }
 
@@ -255,6 +255,8 @@ export class RegionSetStore {
 
     @action setLocked(locked?: boolean) {
         this.locked = locked === undefined ? !this.locked : locked;
-        if (this.locked) this.selectRegionByIndex(0);
+        if (this.locked) {
+            this.selectRegionByIndex(0);
+        }
     }
 }

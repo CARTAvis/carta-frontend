@@ -68,8 +68,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     @action private toggleRegionVisibility = () => {
         if (this.regionsVisibility === RegionsOpacity.Visible) {
-            this.regionsVisibility = RegionsOpacity.Transparent;
-        } else if (this.regionsVisibility === RegionsOpacity.Transparent) {
+            this.regionsVisibility = RegionsOpacity.SemiTransparent;
+        } else if (this.regionsVisibility === RegionsOpacity.SemiTransparent) {
             this.regionsVisibility = RegionsOpacity.Invisible;
         } else if (this.regionsVisibility === RegionsOpacity.Invisible) {
             this.regionsVisibility = RegionsOpacity.Visible;
@@ -97,10 +97,14 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private handleToggleHideClicked = () => {
         return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
-            if (this.regionsLock !== AppStore.Instance.activeFrame.regionSet.locked) this.syncRegionsLocked();
+            if (this.regionsLock !== AppStore.Instance.activeFrame.regionSet.locked) {
+                this.syncRegionsLocked();
+            }
             this.toggleRegionVisibility();
             AppStore.Instance.activeFrame.regionSet.setOpacity(this.regionsVisibility);
-            if (this.regionsVisibility === RegionsOpacity.Invisible) AppStore.Instance.activeFrame.regionSet.setLocked(true);
+            if (this.regionsVisibility === RegionsOpacity.Invisible) {
+                AppStore.Instance.activeFrame.regionSet.setLocked(true);
+            }
             ev.stopPropagation();
         };
     };
@@ -242,7 +246,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 <Icon
                                     icon={regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
                                     onClick={this.handleToggleHideClicked()}
-                                    style={{cursor: "pointer", opacity: regionsVisibility === RegionsOpacity.Transparent ? 0.3 : 1}}
+                                    style={{cursor: "pointer", opacity: regionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}}
                                 />
                             </Tooltip2>
                         </div>
