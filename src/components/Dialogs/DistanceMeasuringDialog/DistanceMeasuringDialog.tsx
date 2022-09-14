@@ -3,8 +3,9 @@ import {observable, action, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 import {ColorResult} from "react-color";
 import {FormGroup, IDialogProps, NonIdealState, H5} from "@blueprintjs/core";
+import * as AST from "ast_wrapper";
 import {AppStore, DialogStore, HelpType} from "stores";
-import {RegionCoordinate} from "stores/Frame";
+import {DistanceMeasuringStore, RegionCoordinate} from "stores/Frame";
 import {CustomIcon} from "icons/CustomIcons";
 import {SafeNumericInput, ColorPickerComponent, CoordinateComponent} from "components/Shared";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -26,6 +27,129 @@ export class DistanceMeasuringDialog extends React.Component {
 
     @action setWCSMode = (bool?: boolean) => {
         this.WCSMode = bool === undefined ? !this.WCSMode : bool;
+    };
+
+    private handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
+        const WCSMode = formEvent.currentTarget.value === RegionCoordinate.Image ? false : true;
+        this.setWCSMode(WCSMode);
+    };
+
+    private handleValueChange = (
+        event: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>,
+        distanceMeasuringStore: DistanceMeasuringStore,
+        wcsInfo: AST.FrameSet,
+        WCSStart: WCSPoint2D,
+        WCSFinish: WCSPoint2D,
+        isX: boolean,
+        finish?: boolean,
+        pixel?: boolean
+    ) => {
+        const target = event.target as HTMLInputElement;
+
+        if (pixel) {
+            const value = parseFloat(target.value);
+            if (!isFinite(value)) return;
+            if (isX && finish) {
+                distanceMeasuringStore?.setFinish(value, distanceMeasuringStore?.finish.y);
+            } else if (finish) {
+                distanceMeasuringStore?.setFinish(distanceMeasuringStore?.finish.x, value);
+            } else if (isX) {
+                distanceMeasuringStore?.setStart(value, distanceMeasuringStore?.start.y);
+            } else {
+                distanceMeasuringStore?.setStart(distanceMeasuringStore?.start.x, value);
+            }
+        } else if (wcsInfo) {
+            const value = target.value;
+            if (isX && isWCSStringFormatValid(value as string, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+                if (finish) {
+                    const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value as string});
+                    distanceMeasuringStore?.setFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
+                } else {
+                    const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value as string});
+                    distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
+                }
+            } else if (!isX && isWCSStringFormatValid(value as string, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+                if (finish) {
+                    const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value as string});
+                    distanceMeasuringStore?.setFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
+                } else {
+                    const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value as string});
+                    distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
+                }
+            } else {
+                event.currentTarget.value = finish ? (isX ? WCSFinish.x : WCSFinish.y) : isX ? WCSStart.x : WCSStart.y;
+            }
+        }
+
+        distanceMeasuringStore?.updateTransformedPos(AppStore.Instance.activeFrame.spatialTransform);
+    };
+
+    private inputWCSMode = (distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, finish: boolean) => {
+        return (
+            <>
+                <td>
+                    <FormGroup inline={true}>
+                        <SafeNumericInput
+                            selectAllOnFocus
+                            allowNumericCharactersOnly={false}
+                            buttonPosition="none"
+                            value={finish ? WCSFinish?.x : WCSStart?.x}
+                            onBlur={event => this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, true, finish, false)}
+                            onKeyDown={event => {
+                                if (event.type === "keydown" && event.key === KEYCODE_ENTER) this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, true, finish, false);
+                            }}
+                        />
+                    </FormGroup>
+                </td>
+                <td>
+                    <FormGroup inline={true}>
+                        <SafeNumericInput
+                            selectAllOnFocus
+                            allowNumericCharactersOnly={false}
+                            buttonPosition="none"
+                            value={finish ? WCSFinish?.y : WCSStart?.y}
+                            onBlur={event => this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, false, finish, false)}
+                            onKeyDown={event => {
+                                if (event.type === "keydown" && event.key === KEYCODE_ENTER) this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, false, finish, false);
+                            }}
+                        />
+                    </FormGroup>
+                </td>
+            </>
+        );
+    };
+
+    private inputPixelMode = (distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, finish: boolean) => {
+        return (
+            <>
+                <td>
+                    <FormGroup inline={true}>
+                        <SafeNumericInput
+                            selectAllOnFocus
+                            buttonPosition="none"
+                            value={finish ? distanceMeasuringStore?.finish.x : distanceMeasuringStore?.start.x}
+                            onBlur={event => this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, true, finish, true)}
+                            onKeyDown={event => {
+                                if (event.type === "keydown" && event.key === KEYCODE_ENTER) this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, true, finish, true);
+                            }}
+                        />
+                    </FormGroup>
+                </td>
+                <td>
+                    <FormGroup inline={true}>
+                        <SafeNumericInput
+                            selectAllOnFocus
+                            buttonPosition="none"
+                            value={finish ? distanceMeasuringStore?.finish.y : distanceMeasuringStore?.start.y}
+                            onBlur={event => this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, false, finish, true)}
+                            onKeyDown={event => {
+                                if (event.type === "keydown" && event.key === KEYCODE_ENTER) this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, false, finish, true);
+                            }}
+                        />
+                    </FormGroup>
+                </td>
+            </>
+        );
     };
 
     render() {
@@ -54,115 +178,6 @@ export class DistanceMeasuringDialog extends React.Component {
         const MissingFrame = (
             <NonIdealState className={"distance-measuring-settings-nonIdealState"} icon={"error"} title={"Distance measurement tool is not enabled"} description={"Please enable distance measurement tool via the image view toolbar."} />
         );
-
-        const handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
-            const WCSMode = formEvent.currentTarget.value === RegionCoordinate.Image ? false : true;
-            this.setWCSMode(WCSMode);
-        };
-
-        const handleValueChange = (event: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>, isX: boolean, finish?: boolean, pixel?: boolean) => {
-            const target = event.target as HTMLInputElement;
-            if (pixel) {
-                const value = parseFloat(target.value);
-                if (!isFinite(value)) return;
-                if (isX && finish) {
-                    distanceMeasuringStore?.setFinish(value, distanceMeasuringStore?.finish.y);
-                } else if (finish) {
-                    distanceMeasuringStore?.setFinish(distanceMeasuringStore?.finish.x, value);
-                } else if (isX) {
-                    distanceMeasuringStore?.setStart(value, distanceMeasuringStore?.start.y);
-                } else {
-                    distanceMeasuringStore?.setStart(distanceMeasuringStore?.start.x, value);
-                }
-            } else if (wcsInfo) {
-                const value = target.value;
-                if (isX && isWCSStringFormatValid(value as string, appStore.overlayStore.numbers.formatTypeX)) {
-                    if (finish) {
-                        const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value as string});
-                        distanceMeasuringStore?.setFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
-                    } else {
-                        const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value as string});
-                        distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
-                    }
-                } else if (!isX && isWCSStringFormatValid(value as string, appStore.overlayStore.numbers.formatTypeY)) {
-                    if (finish) {
-                        const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value as string});
-                        distanceMeasuringStore?.setFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
-                    } else {
-                        const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value as string});
-                        distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
-                    }
-                } else {
-                    event.currentTarget.value = finish ? (isX ? WCSFinish.x : WCSFinish.y) : isX ? WCSStart.x : WCSStart.y;
-                }
-            }
-
-            distanceMeasuringStore.updateTransformedPos(frame.spatialTransform);
-        };
-
-        const input = (finish: boolean) => {
-            return this.WCSMode && wcsInfo ? (
-                <>
-                    <td>
-                        <FormGroup inline={true}>
-                            <SafeNumericInput
-                                selectAllOnFocus
-                                allowNumericCharactersOnly={false}
-                                buttonPosition="none"
-                                value={finish ? WCSFinish?.x : WCSStart?.x}
-                                onBlur={event => handleValueChange(event, true, finish, false)}
-                                onKeyDown={event => {
-                                    if (event.type === "keydown" && event.key === KEYCODE_ENTER) handleValueChange(event, true, finish, false);
-                                }}
-                            />
-                        </FormGroup>
-                    </td>
-                    <td>
-                        <FormGroup inline={true}>
-                            <SafeNumericInput
-                                selectAllOnFocus
-                                allowNumericCharactersOnly={false}
-                                buttonPosition="none"
-                                value={finish ? WCSFinish?.y : WCSStart?.y}
-                                onBlur={event => handleValueChange(event, false, finish, false)}
-                                onKeyDown={event => {
-                                    if (event.type === "keydown" && event.key === KEYCODE_ENTER) handleValueChange(event, false, finish, false);
-                                }}
-                            />
-                        </FormGroup>
-                    </td>
-                </>
-            ) : (
-                <>
-                    <td>
-                        <FormGroup inline={true}>
-                            <SafeNumericInput
-                                selectAllOnFocus
-                                buttonPosition="none"
-                                value={finish ? distanceMeasuringStore?.finish.x : distanceMeasuringStore?.start.x}
-                                onBlur={event => handleValueChange(event, true, finish, true)}
-                                onKeyDown={event => {
-                                    if (event.type === "keydown" && event.key === KEYCODE_ENTER) handleValueChange(event, true, finish, true);
-                                }}
-                            />
-                        </FormGroup>
-                    </td>
-                    <td>
-                        <FormGroup inline={true}>
-                            <SafeNumericInput
-                                selectAllOnFocus
-                                buttonPosition="none"
-                                value={finish ? distanceMeasuringStore?.finish.y : distanceMeasuringStore?.start.y}
-                                onBlur={event => handleValueChange(event, false, finish, true)}
-                                onKeyDown={event => {
-                                    if (event.type === "keydown" && event.key === KEYCODE_ENTER) handleValueChange(event, false, finish, true);
-                                }}
-                            />
-                        </FormGroup>
-                    </td>
-                </>
-            );
-        };
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.DISTANCE_MEASUREMENT} defaultWidth={775} defaultHeight={320} minHeight={320} minWidth={775} enableResizing={true}>
@@ -208,7 +223,7 @@ export class DistanceMeasuringDialog extends React.Component {
                                         <td>Coordinate</td>
                                         <td colSpan={2}>
                                             <CoordinateComponent
-                                                onChange={(ev: React.FormEvent<HTMLInputElement>) => handleChangeWCSMode(ev)}
+                                                onChange={(ev: React.FormEvent<HTMLInputElement>) => this.handleChangeWCSMode(ev)}
                                                 selectedValue={this.WCSMode && wcsInfo ? RegionCoordinate.World : RegionCoordinate.Image}
                                                 disableCoordinate={!wcsInfo}
                                             />
@@ -216,14 +231,14 @@ export class DistanceMeasuringDialog extends React.Component {
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
                                         <td>Start{this.WCSMode ? "" : " (px)"}</td>
-                                        {input(false)}
+                                        {this.WCSMode && wcsInfo ? this.inputWCSMode(distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, false) : this.inputPixelMode(distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, false)}
                                         <td colSpan={3}>
                                             {wcsInfo ? <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.start, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
                                         <td>Finish{this.WCSMode ? "" : " (px)"}</td>
-                                        {input(true)}
+                                        {this.WCSMode && wcsInfo ? this.inputWCSMode(distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, true) : this.inputPixelMode(distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, true)}
                                         <td colSpan={3}>
                                             {wcsInfo ? <span className="info-string">{this.WCSMode ? `Image: ${Point2D.ToString(distanceMeasuringStore?.finish, "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span> : ""}
                                         </td>
