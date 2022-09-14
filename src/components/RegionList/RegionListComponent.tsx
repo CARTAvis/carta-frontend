@@ -115,7 +115,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         if (appStore.fileBrowserStore.isLoadingDialogOpen) {
             return (
                 <div className="region-list-widget">
-                    <NonIdealState icon={<Spinner />} title={"Loading regions"} description={"Region list with be shown when regions have been loaded"} />
+                    <NonIdealState icon={<Spinner />} title={"Loading regions"} description={"Region list will be shown when regions have been loaded"} />
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
                 </div>
             );
