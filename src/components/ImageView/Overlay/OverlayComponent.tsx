@@ -161,7 +161,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image
-        if (frame.isPVImage && frame.spectralAxis?.valid) {
+        if ((frame.isPVImage && frame.spectralAxis?.valid) || (frame.isSwappedImage && frame.spectralAxis?.dimension === 2)) {
             AST.set(
                 frame.wcsInfo,
                 `${frame.spectralType ? `System(2)=${frame.spectralType},` : ""}` +

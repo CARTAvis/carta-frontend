@@ -593,28 +593,15 @@ export class FrameStore {
         return undefined;
     }
 
-    // TODO: Maybe it is better to change the function name "spectralAxis" to "depthAxis"
     @computed get spectralAxis(): {valid: boolean; dimension: number; type: SpectralTypeSet; specsys: string; value: number} {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
 
             // Locate spectral dimension from axis 1~4
             let dimension = undefined;
-            if (this.isPVImage) {
-                const typeHeader2 = entries.find(entry => entry.name.includes("CTYPE2"));
-                const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
-                if (typeHeader2 && !typeHeader2.value.match(/stokes/i)) {
-                    // spectral axis should be CTYPE2
-                    dimension = 2;
-                } else if (typeHeader3 && !typeHeader3.value.match(/stokes/i)) {
-                    // spectral axis should be CTYPE3
-                    dimension = 3;
-                }
-            } else {
-                const depthAxis = this.frameInfo.fileInfoExtended.axesNumbers.depth + 1;
-                if (depthAxis > 0) {
-                    dimension = depthAxis;
-                }
+            const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral + 1;
+            if (spectralAxis > 0) {
+                dimension = spectralAxis;
             }
 
             // Fill up spectral dimension & type/unit/system
@@ -643,6 +630,31 @@ export class FrameStore {
                         value: getHeaderNumericValue(valueHeader)
                     };
                 }
+            }
+        }
+        return undefined;
+    }
+
+    @computed get depthAxis(): {dimension: number; type: string; unit: string} {
+        if (this.frameInfo?.fileInfoExtended?.headerEntries) {
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+
+            // Locate depth dimension from axis 1~4
+            let dimension = undefined;
+            const depthAxis = this.frameInfo.fileInfoExtended.axesNumbers.depth + 1;
+            if (depthAxis > 0) {
+                dimension = depthAxis;
+            }
+
+            if (dimension) {
+                const typeHeader = entries.find(entry => entry.name.includes(`CTYPE${dimension}`));
+                const type = typeHeader ? typeHeader.value.trim().toUpperCase() : "";
+                const unit = entries.find(entry => entry.name.includes(`CUNIT${dimension}`));
+                return {
+                    dimension: dimension,
+                    type: type,
+                    unit: unit?.value?.trim() ?? undefined
+                };
             }
         }
         return undefined;
@@ -710,6 +722,14 @@ export class FrameStore {
             return this.spectralAxis.type.unit;
         }
         return this.isCoordChannel ? SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL) : (this.spectralUnit as string);
+    }
+
+    @computed get depthLabel(): string {
+        let label = undefined;
+        if (this.depthAxis) {
+            label = `${this.depthAxis.type} ${this.depthAxis.unit ? `(${this.depthAxis.unit})` : ""}`;
+        }
+        return label;
     }
 
     @computed get hasStokes(): boolean {
@@ -1032,14 +1052,14 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        if (this.isPVImage) {
+        if (this.isPVImage && this.spectralAxis?.valid) {
             const astFrameSet = this.initPVFrame();
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfo = AST.copy(astFrameSet);
                 AST.deleteObject(astFrameSet);
             }
-        } else if (this.isSwappedImage) {
+        } else if (this.isPVImage || this.isSwappedImage) {
             const astFrameSet = this.initSwappedFrame();
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
