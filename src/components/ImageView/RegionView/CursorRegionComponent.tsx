@@ -18,8 +18,8 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
         const appStore = AppStore.Instance;
         const frame = this.props.frame;
         const posImageSpace = frame?.cursorInfo?.posImageSpace;
-        //check the current frame is the spatialReg
-        const isSpatialMatchingOn = appStore.frames.some(thisFrame => thisFrame.spatialReference === frame);
+        //check the current frame is the spatialRef
+        const isSpatialMatchingOn: boolean = frame.secondarySpatialImages?.length ? true : false;
 
         if ((appStore.cursorFrozen || (appStore.cursorMirror && (frame?.spatialReference || isSpatialMatchingOn || frame === appStore.activeFrame))) && posImageSpace) {
             const rotation = frame.spatialReference ? (frame.spatialTransform.rotation * 180.0) / Math.PI : 0.0;
