@@ -157,7 +157,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return spectralType === SpectralType.CHANNEL ? toFixed(data) : toFormattedNotationByDiff(data, diff);
     };
 
-    private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string, start: number, end: number): string => {
+    private genCursoInfoString = (data: Point2D[], secondary: Point2D[], cursorXValue: number, cursorXUnit: string, label: string, start: number, end: number): string => {
         const frame = this.widgetStore.effectiveFrame;
 
         let diffLeft: number = undefined;
@@ -180,14 +180,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let xLabel = cursorXUnit === "Channel" ? `Channel ${primaryXStr}` : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
 
             if (this.widgetStore.secondaryAxisCursorInfoVisible) {
-                let secondary = frame.channelSecondaryValues.slice(start, end);
+                //let secondary = frame.channelSecondaryValues.slice(start, end);
 
                 // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
                 // are handled idfferently because they have different structures.
-                diffLeft = data.length === 1 ? 1e-9 : nearest.index > 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : Math.abs(secondary[nearest.index + 1] - secondary[nearest.index]);
+                diffLeft = data.length === 1 ? 1e-9 : nearest.index > 0 ? Math.abs(secondary[nearest.index].x - secondary[nearest.index - 1].x) : Math.abs(secondary[nearest.index + 1].x - secondary[nearest.index].x);
+                
+                //console.log('nearest: ' + binarySearchByX(secondary, cursorXValue).index);
 
                 // Use precision to determine the proper rounding and zero suppression for displayed value.
-                const secondaryXStr = this.precisionFormatting(secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);
+                const secondaryXStr = this.precisionFormatting(secondary[nearest.index].x, diffLeft, frame.spectralTypeSecondary);
 
                 if (frame.spectralTypeSecondary !== SpectralType.CHANNEL) secondaryXUnit = frame.spectralUnitSecondary;
                 else secondaryChannelString = "Channel";
@@ -212,21 +214,25 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (this.plotData.numProfiles === 1) {
                 // Single profile, Mean/RMS is available
 
-                const startIndex = this.plotData.startEndIndexes[0].startIndex;
-                const endIndex = this.plotData.startEndIndexes[0].endIndex + 1;
+                const startIndex = this.plotData.dataIndexes[0].startIndex;
+                const endIndex = this.plotData.dataIndexes[0].endIndex+1;
 
                 const data = this.plotData.data[0];
-                const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label, startIndex, endIndex);
+                const secondary = this.plotData.secondaryData[0];
+
+                const cursorInfoString = this.genCursoInfoString(data, secondary, cursorXValue, cursorXUnit, label, startIndex, endIndex);
                 profilerInfo.push({
                     infoString: this.isMeanRmsVisible ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}` : cursorInfoString
                 });
             } else {
                 for (let i = 0; i < this.plotData.numProfiles; i++) {
-                    const startIndex = this.plotData.startEndIndexes[i].startIndex;
-                    const endIndex = this.plotData.startEndIndexes[i].endIndex + 1;
+                    const startIndex = this.plotData.dataIndexes[i].startIndex;
+                    const endIndex = this.plotData.dataIndexes[i].endIndex+1;
 
                     const data = this.plotData.data[i];
-                    const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label, startIndex, endIndex);
+                    const secondary = this.plotData.secondaryData[i];
+
+                    const cursorInfoString = this.genCursoInfoString(data, secondary, cursorXValue, cursorXUnit, label, startIndex, endIndex);
                     profilerInfo.push({
                         color: this.plotData.colors?.[i],
                         infoString: `${cursorInfoString}, ${this.plotData.labels?.[i]?.image}, ${this.plotData.labels?.[i]?.plot}`

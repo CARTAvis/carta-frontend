@@ -1809,7 +1809,7 @@ export class FrameStore {
             this.spectralUnitSecondary = coord.unit;
 
             if (alignSpectralSiblings) {
-                (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinate(coordStr, false));
+                (!this.spectralReference ? this.secondarySpectralImages : this.spectralSiblings)?.forEach(spectrallyMatchedFrame => spectrallyMatchedFrame.setSpectralCoordinateSecondary(coordStr, false));
             }
             return true;
         }

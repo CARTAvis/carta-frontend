@@ -22,6 +22,7 @@ type Comments = string[];
 export type MultiPlotData = {
     numProfiles: number;
     data: DataPoints[];
+    secondaryData: DataPoints[];
     smoothedData: DataPoints[];
     fittingData: {x: number[]; y: Float32Array | Float64Array};
     colors: string[];
@@ -34,7 +35,7 @@ export type MultiPlotData = {
     yMax: number;
     yMean: number;
     yRms: number;
-    startEndIndexes: {startIndex: number; endIndex: number}[];
+    dataIndexes: {startIndex: number; endIndex: number}[];
     progress: number;
 };
 
@@ -412,6 +413,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // Determine points/smoothingPoints/colors/yBound/progress
         let numProfiles = 0;
         let data = [];
+        let secondaryData = [];
         let smoothedData = [];
         let colors = [];
         let labels = [];
@@ -421,7 +423,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let yMean = undefined;
         let yRms = undefined;
         let progressSum: number = 0;
-        let startEndIndexes: {startIndex: number; endIndex: number}[] = [];
+        let dataIndexes: {startIndex: number; endIndex: number}[] = [];
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
         profiles.forEach(profile => {
@@ -433,8 +435,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
                 const intensityValues = this.intensityConversion ? this.intensityConversion(profile.data.values) : profile.data.values;
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
+                const secondaryPointsAndProperties = this.getDataPointsAndProperties(profile.channelSecondaryValues, intensityValues, wantMeanRms);
+                
                 data.push(pointsAndProperties?.points ?? []);
+                secondaryData.push(secondaryPointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
+                
                 if (pointsAndProperties) {
                     if (wantMeanRms) {
                         yMean = pointsAndProperties.yMean;
@@ -453,16 +459,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                         yBound.yMax = pointsAndProperties.yBound.yMax;
                     }
                     progressSum = progressSum + profile.data.progress;
-                    startEndIndexes.push({startIndex: pointsAndProperties.startIndex, endIndex: pointsAndProperties.endIndex});
+                    dataIndexes.push({startIndex: pointsAndProperties.startIndex, endIndex: pointsAndProperties.endIndex});
                 }
             }
         });
 
         let fittingData: {x: number[]; y: Float32Array | Float64Array};
-        if (profiles.length === 1 && startEndIndexes.length === 1) {
-            let x = profiles[0].channelValues.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
+        if (profiles.length === 1 && dataIndexes.length === 1) {
+            let x = profiles[0].channelValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             const intensityValues = this.intensityConversion ? this.intensityConversion(profiles[0].data.values) : profiles[0].data.values;
-            let y = intensityValues.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
+            let y = intensityValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE) {
                 const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
                 x = smoothedData.x;
@@ -489,6 +495,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return {
             numProfiles: numProfiles,
             data: data,
+            secondaryData: secondaryData,
             smoothedData: smoothedData,
             fittingData: fittingData,
             colors: colors,
@@ -501,7 +508,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             yMax: yBound.yMax,
             yMean: yMean,
             yRms: yRms,
-            startEndIndexes: startEndIndexes,
+            dataIndexes: dataIndexes,
             progress: progressSum / numProfiles
         };
     }
