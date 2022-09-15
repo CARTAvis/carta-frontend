@@ -1,4 +1,4 @@
-import {action, observable, makeObservable, computed} from "mobx";
+import {action, observable, makeObservable, computed, reaction} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
@@ -14,7 +14,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;
     @observable reverse: boolean;
     @observable keep: boolean;
-    @observable range: CARTA.IIntBounds = {min: null, max: null};
+    @observable range: CARTA.IIntBounds = {min: this.effectiveFrame.channelValueBounds?.min, max: this.effectiveFrame.channelValueBounds?.max};
 
     @computed get regionOptions(): IOptionProps[] {
         const appStore = AppStore.Instance;
@@ -71,13 +71,13 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action setSpectralCoordinate = (coordStr: string) => {
         if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
-            console.log(this.effectiveFrame.spectralType, this.effectiveFrame.spectralUnit);
+            return;
         }
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
         if (this.effectiveFrame.setSpectralSystem(specsys)) {
-            console.log(this.effectiveFrame.spectralSystem);
+            return;
         }
     };
 
@@ -104,5 +104,13 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         makeObservable(this);
         this.width = 3;
         this.reverse = false;
+        reaction(
+            () => this.effectiveFrame.channelValueBounds,
+            channelValueBounds => {
+                if (channelValueBounds) {
+                    this.setSpectralRange(channelValueBounds);
+                }
+            }
+        );
     }
 }

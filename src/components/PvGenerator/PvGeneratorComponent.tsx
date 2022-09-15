@@ -21,7 +21,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @observable selectedTabId: TabId = PvGeneratorComponentTabs.PV_IMAGE;
     axesOrder = {};
     @observable isConfirmationDialogOpen: boolean = false;
-    @observable error: boolean = false;
+    @observable isValidSpectralRange: boolean = false;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTabId = tab;
@@ -125,8 +125,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         this.isConfirmationDialogOpen = bool;
     };
 
-    @action setError = (bool: boolean) => {
-        this.error = bool;
+    @action setIsValidSpectralRange = (bool: boolean) => {
+        this.isValidSpectralRange = bool;
     };
 
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
@@ -203,9 +203,9 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
 
         if ((channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) || (!this.widgetStore.range?.min && !this.widgetStore.range?.max && this.widgetStore.range?.min && this.widgetStore.range?.max)) {
-            this.setError(false);
+            this.setIsValidSpectralRange(false);
         } else {
-            this.setError(true);
+            this.setIsValidSpectralRange(true);
         }
     };
 
@@ -222,7 +222,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         }
 
-        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && !this.error;
+        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && !this.isValidSpectralRange;
         const hint = (
             <span>
                 <i>
