@@ -1,4 +1,4 @@
-import {action, computed, observable, makeObservable, runInAction, autorun} from "mobx";
+import {action, computed, observable, makeObservable, autorun, flow} from "mobx";
 import {IOptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
@@ -181,7 +181,8 @@ export class FileBrowserStore {
         this.extendedLoading = val;
     };
 
-    @action getFileList = async (directory: string = "") => {
+    @flow.bound
+    *getFileList(directory: string = "") {
         const appStore = AppStore.Instance;
 
         this.loadingList = true;
@@ -197,13 +198,13 @@ export class FileBrowserStore {
 
         try {
             if (this.browserMode === BrowserMode.File || this.browserMode === BrowserMode.SaveFile) {
-                const list = await appStore.backendService.getFileList(directory, filterMode);
+                const list = yield appStore.backendService.getFileList(directory, filterMode);
                 this.setFileList(list);
             } else if (this.browserMode === BrowserMode.Catalog) {
-                const list = await appStore.backendService.getCatalogList(directory, filterMode);
+                const list = yield appStore.backendService.getCatalogList(directory, filterMode);
                 this.setCatalogFileList(list);
             } else {
-                const list = await appStore.backendService.getRegionList(directory, filterMode);
+                const list = yield appStore.backendService.getRegionList(directory, filterMode);
                 this.setFileList(list);
             }
         } catch (err) {
@@ -212,9 +213,10 @@ export class FileBrowserStore {
         }
         this.loadingList = false;
         this.resetLoadingStates();
-    };
+    }
 
-    @action getFileInfo = async (directory: string, file: string, hdu: string) => {
+    @flow.bound
+    *getFileInfo(directory: string, file: string, hdu: string) {
         const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
@@ -222,30 +224,27 @@ export class FileBrowserStore {
         this.responseErrorMessage = "";
 
         try {
-            const res = await backendService.getFileInfo(directory, file, hdu);
-            runInAction(() => {
-                if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                    this.HDUfileInfoExtended = res.fileInfoExtended;
-                    const HDUList = Object.keys(this.HDUfileInfoExtended);
-                    if (HDUList?.length >= 1) {
-                        this.selectedHDU = HDUList[0];
-                    }
-                    this.loadingInfo = false;
+            const res = yield backendService.getFileInfo(directory, file, hdu);
+            if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                this.HDUfileInfoExtended = res.fileInfoExtended;
+                const HDUList = Object.keys(this.HDUfileInfoExtended);
+                if (HDUList?.length >= 1) {
+                    this.selectedHDU = HDUList[0];
                 }
-                this.fileInfoResp = true;
-            });
-        } catch (err) {
-            runInAction(() => {
-                console.log(err);
-                this.responseErrorMessage = err;
-                this.fileInfoResp = false;
-                this.HDUfileInfoExtended = null;
                 this.loadingInfo = false;
-            });
+            }
+            this.fileInfoResp = true;
+        } catch (err) {
+            console.log(err);
+            this.responseErrorMessage = err;
+            this.fileInfoResp = false;
+            this.HDUfileInfoExtended = null;
+            this.loadingInfo = false;
         }
-    };
+    }
 
-    @action getRegionFileInfo = async (directory: string, file: string) => {
+    @flow.bound
+    *getRegionFileInfo(directory: string, file: string) {
         const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
@@ -253,26 +252,22 @@ export class FileBrowserStore {
         this.responseErrorMessage = "";
 
         try {
-            const res = await backendService.getRegionFileInfo(directory, file);
-            runInAction(() => {
-                if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                    this.loadingInfo = false;
-                    this.regionFileInfo = res.contents;
-                }
-                this.fileInfoResp = true;
-            });
-        } catch (err) {
-            runInAction(() => {
-                console.log(err);
-                this.responseErrorMessage = err;
-                this.fileInfoResp = false;
-                this.regionFileInfo = null;
+            const res = yield backendService.getRegionFileInfo(directory, file);
+            if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
-            });
+                this.regionFileInfo = res.contents;
+            }
+            this.fileInfoResp = true;
+        } catch (err) {
+            console.log(err);
+            this.responseErrorMessage = err;
+            this.fileInfoResp = false;
+            this.regionFileInfo = null;
+            this.loadingInfo = false;
         }
-    };
+    }
 
-    @action getCatalogFileInfo = async (directory: string, filename: string) => {
+    @flow.bound *getCatalogFileInfo(directory: string, filename: string) {
         const backendService = BackendService.Instance;
         this.loadingInfo = true;
         this.fileInfoResp = false;
@@ -281,17 +276,15 @@ export class FileBrowserStore {
         this.responseErrorMessage = "";
 
         try {
-            const res = await backendService.getCatalogFileInfo(directory, filename);
-            runInAction(() => {
-                if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                    this.loadingInfo = false;
-                    this.catalogFileInfo = res.fileInfo;
-                    this.catalogHeaders = res.headers.sort((a, b) => {
-                        return a.columnIndex - b.columnIndex;
-                    });
-                }
-                this.fileInfoResp = true;
-            });
+            const res = yield backendService.getCatalogFileInfo(directory, filename);
+            if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                this.loadingInfo = false;
+                this.catalogFileInfo = res.fileInfo;
+                this.catalogHeaders = res.headers.sort((a, b) => {
+                    return a.columnIndex - b.columnIndex;
+                });
+            }
+            this.fileInfoResp = true;
         } catch (err) {
             console.log(err);
             this.responseErrorMessage = err;
@@ -299,7 +292,7 @@ export class FileBrowserStore {
             this.catalogFileInfo = null;
             this.loadingInfo = false;
         }
-    };
+    }
 
     /// Update the spectral range for save image file
     @action initialSaveSpectralRange = () => {

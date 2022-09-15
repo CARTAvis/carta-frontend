@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable, makeObservable, runInAction, reaction} from "mobx";
+import {action, autorun, computed, observable, makeObservable, reaction} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
@@ -1360,13 +1360,11 @@ export class FrameStore {
             clearTimeout(this.zoomTimeoutHandler);
         }
 
-        this.zoomTimeoutHandler = setTimeout(
-            () =>
-                runInAction(() => {
-                    this.zooming = false;
-                }),
-            FrameStore.ZoomInertiaDuration
-        );
+        this.zoomTimeoutHandler = setTimeout(this.endZoom, FrameStore.ZoomInertiaDuration);
+    };
+
+    @action private endZoom = () => {
+        this.zooming = false;
     };
 
     private getPixelUnitSize = () => {
@@ -1892,32 +1890,31 @@ export class FrameStore {
         }
         this.cursorMoving = true;
         clearTimeout(this.cursorMovementHandle);
-        this.cursorMovementHandle = setTimeout(
-            () =>
-                runInAction(() => {
-                    this.cursorMoving = false;
-                }),
-            FrameStore.CursorMovementDuration
-        );
+        this.cursorMovementHandle = setTimeout(this.endCursorMove, FrameStore.CursorMovementDuration);
     }
+
+    @action private endCursorMove = () => {
+        this.cursorMoving = false;
+    };
 
     @action setCursorValue(position: Point2D, channel: number, value: number) {
         this.cursorValue = {position, channel, value};
     }
 
     @action updateCursorRegion = (pos: Point2D) => {
+        const isHoverImage = pos.x + 0.5 >= 0 && pos.x + 0.5 <= this.frameInfo.fileInfoExtended.width && pos.y + 0.5 >= 0 && pos.y + 0.5 <= this.frameInfo.fileInfoExtended.height;
         if (this.spatialReference) {
             const pointRefImage = transformPoint(this.spatialTransformAST, pos, true);
             this.spatialReference.updateCursorRegion(pointRefImage);
-        } else {
-            if (pos.x >= 0 && pos.x <= this.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.frameInfo.fileInfoExtended.height - 1) {
-                this.frameRegionSet.updateCursorRegionPosition(pos);
-            }
+        } else if (isHoverImage) {
+            this.frameRegionSet.updateCursorRegionPosition(pos);
         }
 
         for (const frame of this.secondarySpatialImages) {
             const pointSecondaryImage = transformPoint(frame.spatialTransformAST, pos, false);
-            if (pointSecondaryImage.x >= 0 && pointSecondaryImage.x <= frame.frameInfo.fileInfoExtended.width - 1 && pointSecondaryImage.y >= 0 && pointSecondaryImage.y <= frame.frameInfo.fileInfoExtended.height - 1) {
+            const isHoverSecondaryImage =
+                pointSecondaryImage.x + 0.5 >= 0 && pointSecondaryImage.x + 0.5 <= frame.frameInfo.fileInfoExtended.width && pointSecondaryImage.y + 0.5 >= 0 && pointSecondaryImage.y + 0.5 <= frame.frameInfo.fileInfoExtended.height;
+            if (isHoverSecondaryImage) {
                 frame.frameRegionSet.updateCursorRegionPosition(pointSecondaryImage);
             }
         }
