@@ -132,12 +132,12 @@ export class ImageFittingStore {
 
         const toFixFormat = (param: string, value: number | string, error: number, unit: string, fixed: boolean): string => {
             const valueString = typeof value === "string" ? value : value?.toFixed(6);
-            const errorString = fixed ? "" : " +/- " + error?.toFixed(6);
+            const errorString = fixed ? "" : " \u00b1 " + error?.toFixed(6);
             return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
         };
         const toExpFormat = (param: string, value: number | string, error: number, unit: string, fixed: boolean): string => {
             const valueString = typeof value === "string" ? value : toExponential(value, 12);
-            const errorString = fixed ? "" : " +/- " + toExponential(error, 12);
+            const errorString = fixed ? "" : " \u00b1 " + toExponential(error, 12);
             return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
         };
         const isFormatXDeg = AppStore.Instance.overlayStore.numbers?.formatTypeX === NumberFormatType.Degrees;
