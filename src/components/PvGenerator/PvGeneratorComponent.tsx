@@ -8,7 +8,7 @@ import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from
 import {PvGeneratorWidgetStore, RegionId, PVAxis} from "stores/widgets";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {TaskProgressDialogComponent, ConfirmationDialogComponent} from "components/Dialogs";
-import {Point2D} from "models";
+import {Point2D, SpectralSystem} from "models";
 import "./PvGeneratorComponent.scss";
 
 export enum PvGeneratorComponentTabs {
@@ -199,8 +199,14 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
 
         const frame = this.widgetStore.effectiveFrame;
-        const channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
-        const channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
+        let channelIndexMin = frame.findChannelIndexByValue(this.widgetStore.range?.min);
+        let channelIndexMax = frame.findChannelIndexByValue(this.widgetStore.range?.max);
+
+        if (channelIndexMin > channelIndexMax) {
+            const holder = channelIndexMax;
+            channelIndexMax = channelIndexMin;
+            channelIndexMin = holder;
+        }
 
         if ((channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) || (!this.widgetStore.range?.min && !this.widgetStore.range?.max && this.widgetStore.range?.min && this.widgetStore.range?.max)) {
             this.setIsValidSpectralRange(false);
@@ -270,7 +276,18 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 <FormGroup inline={true} label="Average Width">
                     <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
                 </FormGroup>
-                <SpectralSettingsComponent frame={frame} onSpectralCoordinateChange={this.widgetStore.setSpectralCoordinate} onSpectralSystemChange={this.widgetStore.setSpectralSystem} disable={frame?.isPVImage} />
+                <SpectralSettingsComponent
+                    frame={frame}
+                    onSpectralCoordinateChange={coord => {
+                        this.setIsValidSpectralRange(false);
+                        this.widgetStore.setSpectralCoordinate(coord);
+                    }}
+                    onSpectralSystemChange={sys => {
+                        this.setIsValidSpectralRange(false);
+                        this.widgetStore.setSpectralSystem(sys as SpectralSystem);
+                    }}
+                    disable={frame?.isPVImage}
+                />
                 {frame && frame.numChannels > 1 && (
                     <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
                         <div className="range-select">
