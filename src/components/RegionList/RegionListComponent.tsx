@@ -72,12 +72,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
             id => {
                 if (id > 0) {
-                    const validRegionId = [];
-                    for (let i = 0; i < this.validRegions.length; i++) {
-                        validRegionId.push(this.validRegions[i].regionId);
-                    }
+                    const validRegionId = this.validRegions.map(el => el.regionId);
                     this.scrollToSelected(validRegionId.findIndex(element => element === id));
-                } else return;
+                }
             }
         );
     }
