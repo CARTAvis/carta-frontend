@@ -417,7 +417,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues);
 
                     if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
-                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
+                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel}, Smoothed: ${wcsLabel}${xLabel}${smoothedProfilerInfo})`);
                     } else if (smoothedProfilerInfo) {
                         profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${smoothedProfilerInfo})`);
                     } else {
