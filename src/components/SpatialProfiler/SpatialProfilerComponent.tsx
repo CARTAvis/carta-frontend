@@ -417,9 +417,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues);
 
                     if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
-                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel}, Smoothed: ${wcsLabel}${xLabel}${smoothedProfilerInfo})`);
+                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
                     } else if (smoothedProfilerInfo) {
-                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${smoothedProfilerInfo})`);
+                        profilerInfo.push(`Cursor: (${smoothedProfilerInfo})`);
                     } else {
                         profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel})`);
                     }
@@ -436,7 +436,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                     if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
                         profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
-                    } else if (smoothedProfilerInfo !== "undefined") {
+                    } else if (smoothedProfilerInfo) {
                         profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${smoothedProfilerInfo})`);
                     } else {
                         profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel})`);
@@ -452,20 +452,20 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     private genSmoothedProfilerInfo = (smoothedData: Point2D[], pointXValue?: number): string => {
         let profilerInfo = "";
+        const nearest = binarySearchByX(smoothedData, pointXValue ?? this.widgetStore.cursorX);
+        const smoothedXLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(nearest?.point?.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${nearest?.point?.x} px, `;
 
         if (pointXValue) {
-            const nearest = binarySearchByX(smoothedData, pointXValue);
             profilerInfo += formattedExponential(nearest?.point?.y, 5);
         } else {
             // handle the value when cursor is in profiler
-            const nearest = binarySearchByX(smoothedData, this.widgetStore.cursorX);
             if (nearest?.point) {
                 const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
                 profilerInfo += valueLabel;
             }
         }
 
-        return profilerInfo;
+        return nearest && `${smoothedXLabel}${profilerInfo}`;
     };
 
     onGraphCursorMoved = _.throttle(x => {
