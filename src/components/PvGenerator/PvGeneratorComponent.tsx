@@ -1,13 +1,13 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, Tabs, Tab, TabId, HTMLSelect, AnchorButton, Position} from "@blueprintjs/core";
+import {FormGroup, Tabs, Tab, TabId, HTMLSelect, AnchorButton, Position, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {PvGeneratorWidgetStore, RegionId, PVAxis} from "stores/widgets";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {TaskProgressDialogComponent, ConfirmationDialogComponent} from "components/Dialogs";
+import {TaskProgressDialogComponent} from "components/Dialogs";
 import {Point2D, SpectralSystem} from "models";
 import "./PvGeneratorComponent.scss";
 
@@ -20,7 +20,6 @@ export enum PvGeneratorComponentTabs {
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @observable selectedTabId: TabId = PvGeneratorComponentTabs.PV_IMAGE;
     axesOrder = {};
-    @observable isConfirmationDialogOpen: boolean = false;
     @observable isValidSpectralRange: boolean = false;
 
     @action private setSelectedTab = (tab: TabId) => {
@@ -32,9 +31,9 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             id: "pv-generator",
             type: "pv-generator",
             minWidth: 350,
-            minHeight: 450,
+            minHeight: 500,
             defaultWidth: 500,
-            defaultHeight: 450,
+            defaultHeight: 500,
             title: "PV Generator",
             isCloseable: true,
             helpType: HelpType.PV_GENERATOR
@@ -121,10 +120,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    @action setConfirmationDialog = (bool: boolean) => {
-        this.isConfirmationDialogOpen = bool;
-    };
-
     @action setIsValidSpectralRange = (bool: boolean) => {
         this.isValidSpectralRange = bool;
     };
@@ -154,25 +149,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private onGenerateButtonClicked = () => {
-        if (!this.widgetStore.effectiveFrame.pvImages.length) {
-            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            this.widgetStore.setFileId(fileId);
-            this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
-            this.widgetStore.requestPV();
-            return;
-        }
-        this.setConfirmationDialog(true);
-    };
-
-    private onConfirmationDialogClicked = (keep: boolean) => {
-        return () => {
-            this.widgetStore.setKeep(keep);
-            const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            this.widgetStore.setFileId(fileId);
-            this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
-            this.widgetStore.requestPV();
-            this.setConfirmationDialog(false);
-        };
+        const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+        this.widgetStore.setFileId(fileId);
+        this.widgetStore.setRegionId(fileId, this.widgetStore.effectiveRegionId);
+        this.widgetStore.requestPV();
     };
 
     private genAxisOptions = () => {
@@ -288,6 +268,15 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     }}
                     disable={frame?.isPVImage}
                 />
+                <FormGroup inline={true} label={"Keep previous PV Image"}>
+                    <Switch
+                        onChange={event => {
+                            const e = event.target as HTMLInputElement;
+                            this.widgetStore.setKeep(e.checked);
+                            console.log(this.widgetStore.keep);
+                        }}
+                    />
+                </FormGroup>
                 {frame && frame.numChannels > 1 && (
                     <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
                         <div className="range-select">
@@ -319,17 +308,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </Tabs>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
-                <ConfirmationDialogComponent
-                    isOpen={this.isConfirmationDialogOpen}
-                    cancellable={true}
-                    onConfirm={overwrite => this.onConfirmationDialogClicked(overwrite)}
-                    onCancel={() => {
-                        this.setConfirmationDialog(false);
-                        return this.widgetStore.requestingPVCancelled;
-                    }}
-                    titleText={"Before continuing ..."}
-                    contentText={"Would you like to overwrite the current PV Image?"}
-                />
                 <TaskProgressDialogComponent
                     isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
                     progress={frame ? frame.requestingPVProgress : 0}
