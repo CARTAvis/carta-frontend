@@ -192,7 +192,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const cursorXValue = isCursorInsideLinePlots ? this.widgetStore.cursorX : this.currentChannelValue;
             const cursorXUnit = frame.spectralUnitStr;
 
-            if (this.plotData.numProfiles === 1 && (this.widgetStore.smoothingStore.type === SmoothingType.NONE || !this.widgetStore.smoothingStore.isOverlayOn)) {
+            if (this.plotData.numProfiles === 1 && !(this.widgetStore.smoothingStore.type !== SmoothingType.NONE && this.widgetStore.smoothingStore.isOverlayOn)) {
                 // Single profile, Mean/RMS is available
                 const data = this.plotData.data[0];
                 const smoothedData = this.plotData.smoothedData[0];

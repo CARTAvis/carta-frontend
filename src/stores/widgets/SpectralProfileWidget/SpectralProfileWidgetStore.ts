@@ -926,7 +926,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     }
                 }
             }
-            smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, intensityValues));
+            smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, intensityValues, startIndex, endIndex));
 
             if (wantMeanRms && yCount > 0) {
                 yMean = ySum / yCount;
