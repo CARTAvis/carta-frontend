@@ -268,15 +268,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     }}
                     disable={frame?.isPVImage}
                 />
-                <FormGroup inline={true} label={"Keep previous PV Image"}>
-                    <Switch
-                        onChange={event => {
-                            const e = event.target as HTMLInputElement;
-                            this.widgetStore.setKeep(e.checked);
-                            console.log(this.widgetStore.keep);
-                        }}
-                    />
-                </FormGroup>
                 {frame && frame.numChannels > 1 && (
                     <FormGroup label="Range" inline={true} labelInfo={`(${frame.spectralUnit})`}>
                         <div className="range-select">
@@ -291,6 +282,15 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 )}
                 <FormGroup className="label-info-group" inline={true} label="Axes Order">
                     <HTMLSelect options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
+                </FormGroup>
+                <FormGroup inline={true} label={"Keep previous PV Image"}>
+                    <Switch
+                        onChange={event => {
+                            const e = event.target as HTMLInputElement;
+                            this.widgetStore.setKeep(e.checked);
+                            console.log(this.widgetStore.keep);
+                        }}
+                    />
                 </FormGroup>
                 <div className="generate-button">
                     <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
