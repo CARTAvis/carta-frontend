@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable, makeObservable, runInAction, reaction} from "mobx";
+import {action, autorun, computed, observable, makeObservable, reaction} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
@@ -1362,13 +1362,11 @@ export class FrameStore {
             clearTimeout(this.zoomTimeoutHandler);
         }
 
-        this.zoomTimeoutHandler = setTimeout(
-            () =>
-                runInAction(() => {
-                    this.zooming = false;
-                }),
-            FrameStore.ZoomInertiaDuration
-        );
+        this.zoomTimeoutHandler = setTimeout(this.endZoom, FrameStore.ZoomInertiaDuration);
+    };
+
+    @action private endZoom = () => {
+        this.zooming = false;
     };
 
     private getPixelUnitSize = () => {
@@ -1894,14 +1892,12 @@ export class FrameStore {
         }
         this.cursorMoving = true;
         clearTimeout(this.cursorMovementHandle);
-        this.cursorMovementHandle = setTimeout(
-            () =>
-                runInAction(() => {
-                    this.cursorMoving = false;
-                }),
-            FrameStore.CursorMovementDuration
-        );
+        this.cursorMovementHandle = setTimeout(this.endCursorMove, FrameStore.CursorMovementDuration);
     }
+
+    @action private endCursorMove = () => {
+        this.cursorMoving = false;
+    };
 
     @action setCursorValue(position: Point2D, channel: number, value: number) {
         this.cursorValue = {position, channel, value};

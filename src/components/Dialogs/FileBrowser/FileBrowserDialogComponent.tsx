@@ -2,7 +2,7 @@ import * as React from "react";
 import * as _ from "lodash";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {action, computed, makeObservable, observable, runInAction} from "mobx";
+import {action, computed, flow, makeObservable, observable, runInAction} from "mobx";
 import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, BreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
@@ -80,24 +80,24 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
-    private loadExpression = async () => {
+    @flow.bound private *loadExpression() {
         const appStore = AppStore.Instance;
         const frames = appStore.frames;
         const fileBrowserStore = appStore.fileBrowserStore;
         let frame: FrameStore;
 
         if (!fileBrowserStore.appendingFrame || !frames.length) {
-            frame = await appStore.openFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
+            frame = yield appStore.openFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
         } else {
-            frame = await appStore.appendFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
+            frame = yield appStore.appendFile(fileBrowserStore.fileList.directory, this.imageArithmeticString, "", true);
         }
         fileBrowserStore.saveStartingDirectory();
         this.clearArithmeticString();
         this.setEnableImageArithmetic(false);
         return frame;
-    };
+    }
 
-    private loadComplexImage = async (filename: string, expression: string) => {
+    @flow.bound private *loadComplexImage(filename: string, expression: string) {
         const imageArithmeticString = `${expression}("${filename}")`;
         const appStore = AppStore.Instance;
         const frames = appStore.frames;
@@ -105,15 +105,15 @@ export class FileBrowserDialogComponent extends React.Component {
         let frame: FrameStore;
 
         if (!fileBrowserStore.appendingFrame || !frames.length) {
-            frame = await appStore.openFile(fileBrowserStore.fileList.directory, imageArithmeticString, "", true);
+            frame = yield appStore.openFile(fileBrowserStore.fileList.directory, imageArithmeticString, "", true);
         } else {
-            frame = await appStore.appendFile(fileBrowserStore.fileList.directory, imageArithmeticString, "", true);
+            frame = yield appStore.appendFile(fileBrowserStore.fileList.directory, imageArithmeticString, "", true);
         }
         fileBrowserStore.saveStartingDirectory();
         return frame;
-    };
+    }
 
-    private loadFile = async (file: ISelectedFile, forceAppend: boolean = false) => {
+    @flow.bound private *loadFile(file: ISelectedFile, forceAppend: boolean = false) {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
         let frame: FrameStore;
@@ -130,22 +130,22 @@ export class FileBrowserDialogComponent extends React.Component {
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = appStore.frames;
             if (!(forceAppend || fileBrowserStore.appendingFrame) || !frames.length) {
-                frame = await appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
+                frame = yield appStore.openFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             } else {
-                frame = await appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
+                frame = yield appStore.appendFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
             }
         } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
-            await appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, file.fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
+            yield appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, file.fileInfo.name, CatalogProfileStore.InitTableRows, CARTA.CatalogFileType.VOTable);
         } else {
             fileBrowserStore.setImportingRegions(true);
             fileBrowserStore.showLoadingDialog();
-            await appStore.importRegion(fileBrowserStore.fileList.directory, file.fileInfo.name, file.fileInfo.type);
+            yield appStore.importRegion(fileBrowserStore.fileList.directory, file.fileInfo.name, file.fileInfo.type);
             fileBrowserStore.resetLoadingStates();
         }
 
         fileBrowserStore.saveStartingDirectory();
         return frame;
-    };
+    }
 
     /// Prepare parameters for send saveFile
     private handleSaveFile = async () => {

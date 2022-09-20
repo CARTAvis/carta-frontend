@@ -1,4 +1,4 @@
-import {observable, computed, action, makeObservable, runInAction} from "mobx";
+import {observable, computed, action, makeObservable, flow} from "mobx";
 import {AlertStore} from "stores";
 import {AppToaster, SuccessToast} from "components/Shared";
 import {ApiService} from "services";
@@ -56,25 +56,23 @@ export class SnippetStore {
         }
     };
 
-    @action fetchSnippets = async () => {
+    @flow.bound *fetchSnippets() {
         this.setDefaultSnippets();
 
         try {
-            const userSnippets = await ApiService.Instance.getSnippets();
-            runInAction(() => {
-                for (const [name, snippet] of userSnippets) {
-                    this.snippets.set(name, snippet);
-                }
-                const previousSnippet = this.snippets.get("_previous");
-                if (previousSnippet) {
-                    this.setActiveSnippet(previousSnippet, "");
-                }
-            });
+            const userSnippets = yield ApiService.Instance.getSnippets();
+            for (const [name, snippet] of userSnippets) {
+                this.snippets.set(name, snippet);
+            }
+            const previousSnippet = this.snippets.get("_previous");
+            if (previousSnippet) {
+                this.setActiveSnippet(previousSnippet, "");
+            }
         } catch (err) {
             AlertStore.Instance.showAlert("Loading user-defined snippets failed!");
             console.log(err);
         }
-    };
+    }
 
     @computed get numSavedSnippets(): number {
         return this.snippets.size;
@@ -131,11 +129,11 @@ export class SnippetStore {
         this.activeSnippet.code = val;
     };
 
-    @action saveSnippet = async (name: string, snippet: Snippet, silent: boolean = false) => {
+    @flow.bound *saveSnippet(name: string, snippet: Snippet, silent: boolean = false) {
         this.snippets.set(name, snippet);
 
         try {
-            const success = await ApiService.Instance.setSnippet(name, snippet);
+            const success = yield ApiService.Instance.setSnippet(name, snippet);
             if (success) {
                 // Silently exit on success if silent flag is set
                 if (!silent) {
@@ -150,12 +148,12 @@ export class SnippetStore {
             AlertStore.Instance.showAlert(`Saving snippet ${name} failed!`);
             return false;
         }
-    };
+    }
 
-    @action deleteSnippet = async (name: string, silent: boolean = false) => {
+    @flow.bound *deleteSnippet(name: string, silent: boolean = false) {
         this.snippets.delete(name);
         try {
-            const success = await ApiService.Instance.clearSnippet(name);
+            const success = yield ApiService.Instance.clearSnippet(name);
             if (success) {
                 // Silently exit on success if silent flag is set
                 if (!silent) {
@@ -170,17 +168,17 @@ export class SnippetStore {
             AlertStore.Instance.showAlert(`Deleting snippet ${name} failed!`);
             return false;
         }
-    };
+    }
 
     @action private setSnippetExecuting = (val: boolean) => {
         this.isExecuting = val;
     };
 
-    async executeCurrentSnippet() {
+    @flow.bound *executeCurrentSnippet() {
         if (this.functionToExecute && !this.isExecuting) {
             this.setSnippetExecuting(true);
             try {
-                await this.functionToExecute();
+                yield this.functionToExecute();
                 this.setSnippetExecuting(false);
 
                 // Save current snippet as previous
@@ -192,7 +190,7 @@ export class SnippetStore {
                     requires: [],
                     code: this.activeSnippet?.code
                 };
-                await this.saveSnippet("_previous", snippet, true);
+                yield this.saveSnippet("_previous", snippet, true);
                 return true;
             } catch (err) {
                 this.setSnippetExecuting(false);

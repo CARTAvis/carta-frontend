@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {runInAction} from "mobx";
+import {action} from "mobx";
 import axios, {AxiosInstance, AxiosResponse, CancelTokenSource} from "axios";
 import {AppToaster, ErrorToast, WarningToast} from "components/Shared";
 import {CatalogInfo, CatalogType, WCSPoint2D} from "models";
@@ -139,19 +139,17 @@ export class CatalogApiService {
         });
     };
 
-    public loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.ICatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
+    @action loadCatalog = (fileId: number, catalogInfo: CatalogInfo, headers: CARTA.ICatalogHeader[], columnData: Map<number, ProcessedColumnData>, type: CatalogType) => {
         const appStore = AppStore.Instance;
-        runInAction(() => {
-            const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
-            if (catalogWidgetId) {
-                appStore.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
-                appStore.catalogStore.addCatalog(fileId, catalogInfo.dataSize);
-                appStore.fileBrowserStore.hideFileBrowser();
-                const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, type);
-                appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
-                appStore.dialogStore.hideCatalogQueryDialog();
-            }
-        });
+        const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
+        if (catalogWidgetId) {
+            appStore.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
+            appStore.catalogStore.addCatalog(fileId, catalogInfo.dataSize);
+            appStore.fileBrowserStore.hideFileBrowser();
+            const catalogProfileStore = new CatalogOnlineQueryProfileStore(catalogInfo, headers, columnData, type);
+            appStore.catalogStore.catalogProfileStores.set(fileId, catalogProfileStore);
+            appStore.dialogStore.hideCatalogQueryDialog();
+        }
     };
 
     public resetCancelTokenSource(type: CatalogDatabase) {
