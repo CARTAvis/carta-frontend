@@ -2377,8 +2377,10 @@ export class FrameStore {
         }
     };
 
-    @action removeFittingImages = () => {
+    @action resetFitting = () => {
         this.fittingModelImage = null;
         this.fittingResidualImage = null;
+        this.fittingResult = "";
+        this.fittingLog = "";
     };
 }

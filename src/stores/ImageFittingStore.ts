@@ -25,6 +25,8 @@ export class ImageFittingStore {
     @observable createModelImage: boolean = true;
     @observable createResidualImage: boolean = true;
     @observable isFitting: boolean = false;
+    @observable progress: number = 0;
+    @observable isCancelling: boolean = false;
 
     @action setSelectedFileId = (id: number) => {
         this.selectedFileId = id;
@@ -70,6 +72,20 @@ export class ImageFittingStore {
 
     @action setIsFitting = (isFitting: boolean) => {
         this.isFitting = isFitting;
+    };
+
+    @action setProgress = (progress: number) => {
+        this.progress = progress;
+    };
+
+    @action setIsCancelling = (isCancelling: boolean) => {
+        this.isCancelling = isCancelling;
+    };
+
+    @action resetFittingState = () => {
+        this.isFitting = false;
+        this.progress = 0;
+        this.isCancelling = false;
     };
 
     @computed get frameOptions() {
@@ -122,6 +138,13 @@ export class ImageFittingStore {
             createResidualImage: this.createResidualImage
         };
         AppStore.Instance.requestFitting(message);
+    };
+
+    cancelFitting = () => {
+        this.setIsCancelling(true);
+        if (this.progress < 1.0) {
+            AppStore.Instance.backendService?.cancelRequestingFitting(this.effectiveFrame.frameInfo.fileId);
+        }
     };
 
     setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], fittingLog: string) => {

@@ -1128,7 +1128,8 @@ export class AppStore {
         if (frame?.fittingResidualImage) {
             this.closeFile(frame.fittingResidualImage);
         }
-        frame?.removeFittingImages();
+        frame?.resetFitting();
+        this.restartTaskProgress();
 
         try {
             const ack = await this.backendService.requestFitting(message);
@@ -1162,7 +1163,7 @@ export class AppStore {
         if (message.createModelImage || message.createResidualImage) {
             this.endFileLoading();
         }
-        this.imageFittingStore.setIsFitting(false);
+        this.imageFittingStore.resetFittingState();
     };
 
     @action setAstReady = (val: boolean) => {
@@ -1594,6 +1595,7 @@ export class AppStore {
         this.tileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
+        this.backendService.fittingProgressStream.subscribe(this.handleFittingProgressStream);
         this.backendService.vectorTileStream.subscribe(this.handleVectorTileStream);
 
         // Set auth token from URL if it exists
@@ -1832,6 +1834,14 @@ export class AppStore {
             this.updateTaskProgress(pvProgress.progress);
         }
     };
+
+    handleFittingProgressStream = (fittingProgress: CARTA.FittingProgress) => {
+        if (!fittingProgress) {
+            return;
+        }
+        this.imageFittingStore.setProgress(fittingProgress.progress);
+        this.updateTaskProgress(fittingProgress.progress);
+    }
 
     handleVectorTileStream = (vectorTileData: CARTA.IVectorOverlayTileData) => {
         const updatedFrame = this.getFrame(vectorTileData.fileId);

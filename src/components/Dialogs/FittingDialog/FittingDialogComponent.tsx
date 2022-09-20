@@ -1,11 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, Classes, Dialog, FormGroup, HTMLSelect, Icon, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {AppStore, HelpType} from "stores";
-import {DraggableDialogComponent} from "components/Dialogs";
+import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import "./FittingDialogComponent.scss";
@@ -130,15 +130,15 @@ export class FittingDialogComponent extends React.Component {
                         <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
                     </Tabs>
                 </div>
-                <Dialog className={classNames(Classes.ALERT, {"bp3-dark": appStore.darkTheme})} isOpen={fittingStore.isFitting}>
-                    <div className={Classes.ALERT_BODY}>
-                        <Icon icon="time" iconSize={40} />
-                        <div className={Classes.ALERT_CONTENTS}>
-                            <p>Image fitting processing ...</p>
-                            <p>Calculation may take a long time, depending on the size of the file and the number of Gaussian components.</p>
-                        </div>
-                    </div>
-                </Dialog>
+                <TaskProgressDialogComponent
+                    isOpen={fittingStore.isFitting}
+                    progress={fittingStore?.progress ?? 0}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={true}
+                    onCancel={fittingStore.cancelFitting}
+                    text={"Image fitting processing"}
+                    isCancelling={fittingStore.isCancelling}
+                />
             </DraggableDialogComponent>
         );
     }
