@@ -1155,10 +1155,10 @@ export class AppStore {
             if (ack.message) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
             }
-        } catch (err) { 
+        } catch (err) {
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
-        
+
         this.setActiveFrameById(message.fileId);
         if (message.createModelImage || message.createResidualImage) {
             this.endFileLoading();
@@ -1841,7 +1841,7 @@ export class AppStore {
         }
         this.imageFittingStore.setProgress(fittingProgress.progress);
         this.updateTaskProgress(fittingProgress.progress);
-    }
+    };
 
     handleVectorTileStream = (vectorTileData: CARTA.IVectorOverlayTileData) => {
         const updatedFrame = this.getFrame(vectorTileData.fileId);
