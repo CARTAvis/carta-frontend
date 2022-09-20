@@ -37,6 +37,7 @@ export class RegionStore {
     @observable locked: boolean;
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
+    @observable isAnnotation: boolean;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -50,16 +51,22 @@ export class RegionStore {
     public static RegionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
             case CARTA.RegionType.POINT:
+            case CARTA.RegionType.ANNPOINT:
                 return "Point";
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
                 return "Line";
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
                 return "Rectangle";
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
                 return "Ellipse";
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
                 return "Polygon";
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 return "Polyline";
             default:
                 return "Not Implemented";
@@ -69,7 +76,9 @@ export class RegionStore {
     public static IsRegionCustomIcon(regionType: CARTA.RegionType): boolean {
         switch (regionType) {
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 return true;
             default:
                 return false;
@@ -102,6 +111,12 @@ export class RegionStore {
         [CARTA.RegionType.ELLIPSE, "Ellipse"],
         [CARTA.RegionType.POLYGON, "Polygon"],
         [CARTA.RegionType.POLYLINE, "Polyline"]
+        // [CARTA.RegionType.ANNPOINT, "Annotation Point"],
+        // [CARTA.RegionType.ANNLINE, "Annotation Line"],
+        // [CARTA.RegionType.ANNRECTANGLE, "Annotation Rectangle"],
+        // [CARTA.RegionType.ANNELLIPSE, "Annotation Ellipse"],
+        // [CARTA.RegionType.ANNPOLYGON, "Annotation Polygon"],
+        // [CARTA.RegionType.ANNPOLYLINE, "Annotation Polyline"]
     ]);
 
     public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
@@ -126,14 +141,20 @@ export class RegionStore {
         }
         switch (this.regionType) {
             case CARTA.RegionType.POINT:
+            case CARTA.RegionType.ANNPOINT:
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
                 return this.controlPoints[CENTER_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
                 return midpoint2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: 0, y: 0};
@@ -143,12 +164,17 @@ export class RegionStore {
     @computed get size(): Point2D {
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
                 return this.controlPoints[SIZE_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 return this.boundingBox;
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
                 return subtract2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: undefined, y: undefined};
@@ -169,11 +195,15 @@ export class RegionStore {
         }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
                 return this.size;
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
                 return scale2D(this.size, 2);
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 const boundingBox = minMax2D(this.controlPoints);
                 return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
             default:
@@ -207,14 +237,20 @@ export class RegionStore {
         // Basic validation, ensuring that the region has the correct number of control points
         switch (this.regionType) {
             case CARTA.RegionType.POINT:
+            case CARTA.RegionType.ANNPOINT:
                 return this.controlPoints.length === 1;
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 return this.controlPoints.length >= 1;
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
                 return this.controlPoints.length === 1 || this.controlPoints.length === 2;
             default:
                 return false;
@@ -242,8 +278,10 @@ export class RegionStore {
 
         switch (regionType) {
             case CARTA.RegionType.POINT:
+            case CARTA.RegionType.ANNPOINT:
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
                 let lineProperties = "Line (pixel) [";
                 controlPoints.forEach((point, index) => {
                     lineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
@@ -251,10 +289,13 @@ export class RegionStore {
                 });
                 return lineProperties;
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
                 return `rotbox[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
                 return `ellipse[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
                 let polygonProperties = "poly[";
                 controlPoints.forEach((point, index) => {
                     polygonProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
@@ -262,6 +303,7 @@ export class RegionStore {
                 });
                 return polygonProperties;
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 let polylineProperties = "Polyline (pixel) [";
                 controlPoints.forEach((point, index) => {
                     polylineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
@@ -322,7 +364,8 @@ export class RegionStore {
         lineWidth: number = 2,
         dashLength: number = 0,
         rotation: number = 0,
-        name: string = ""
+        name: string = "",
+        isAnnotation: boolean
     ) {
         makeObservable(this);
         this.fileId = fileId;
@@ -349,13 +392,14 @@ export class RegionStore {
         }
 
         this.regionApproximationMap = new Map<number, Point2D[]>();
-        if (this.regionType === CARTA.RegionType.POLYGON) {
+        if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
             this.simplePolygonTest();
         }
-        if (this.regionType === CARTA.RegionType.LINE && controlPoints.length === 2) {
+        if ((this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) && controlPoints.length === 2) {
             this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
         }
         this.modifiedTimestamp = performance.now();
+        this.isAnnotation = isAnnotation;
     }
 
     @action setRegionId = (id: number) => {
@@ -363,7 +407,7 @@ export class RegionStore {
     };
 
     @action setCenter = (p: Point2D, skipUpdate = false) => {
-        if (this.regionType === CARTA.RegionType.LINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) {
             const rotation = (this.rotation * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
@@ -379,7 +423,7 @@ export class RegionStore {
     };
 
     @action setSize = (p: Point2D, skipUpdate = false) => {
-        if (this.regionType === CARTA.RegionType.LINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) {
             const newStart = {x: this.center.x - p.x / 2, y: this.center.y - p.y / 2};
             const newEnd = {x: this.center.x + p.x / 2, y: this.center.y + p.y / 2};
             this.setControlPoints([newStart, newEnd]);
@@ -401,7 +445,7 @@ export class RegionStore {
                 this.simplePolygonTest(index);
             }
 
-            if (this.regionType === CARTA.RegionType.LINE) {
+            if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) {
                 this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
             }
         }
@@ -426,7 +470,7 @@ export class RegionStore {
             this.simplePolygonTest();
         }
 
-        if (this.regionType === CARTA.RegionType.LINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) {
             this.rotation = points.length === 2 ? this.getLineAngle(points[0], points[1]) : 0;
         }
 
@@ -450,7 +494,7 @@ export class RegionStore {
         if (!this.activeFrame?.hasSquarePixels) {
             return;
         }
-        if (this.regionType === CARTA.RegionType.LINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) {
             const rotation = (((angle + 360) % 360) * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
@@ -507,6 +551,7 @@ export class RegionStore {
                 console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
                 this.setRegionId(ack.regionId);
             } catch (err) {
+                console.log("ending creating");
                 console.log(err);
             }
         }

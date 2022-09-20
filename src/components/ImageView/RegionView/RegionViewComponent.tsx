@@ -179,6 +179,30 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 this.creatingRegion = frame.regionSet.addPolylineRegion([cursorPosImageSpace], true);
                 this.polygonRegionCreating(mouseEvent);
                 break;
+            case CARTA.RegionType.ANNPOINT:
+                this.creatingRegion = frame.regionSet.addAnnPointRegion(cursorPosImageSpace, false);
+                this.regionStartPoint = cursorPosImageSpace;
+                break;
+            case CARTA.RegionType.ANNRECTANGLE:
+                this.creatingRegion = frame.regionSet.addAnnRectangularRegion(cursorPosImageSpace, 0, 0, true);
+                this.regionStartPoint = cursorPosImageSpace;
+                break;
+            case CARTA.RegionType.ANNELLIPSE:
+                this.creatingRegion = frame.regionSet.addAnnEllipticalRegion(cursorPosImageSpace, 0, 0, true);
+                this.regionStartPoint = cursorPosImageSpace;
+                break;
+            case CARTA.RegionType.ANNPOLYGON:
+                this.creatingRegion = frame.regionSet.addAnnPolygonalRegion([cursorPosImageSpace], true);
+                this.polygonRegionCreating(mouseEvent);
+                break;
+            case CARTA.RegionType.ANNLINE:
+                this.creatingRegion = frame.regionSet.addAnnLineRegion([cursorPosImageSpace, cursorPosImageSpace], true);
+                this.regionStartPoint = cursorPosImageSpace;
+                break;
+            case CARTA.RegionType.ANNPOLYLINE:
+                this.creatingRegion = frame.regionSet.addAnnPolylineRegion([cursorPosImageSpace], true);
+                this.polygonRegionCreating(mouseEvent);
+                break;
             default:
                 return;
         }
@@ -193,17 +217,24 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const regionType = this.props.frame.regionSet.newRegionType;
         switch (regionType) {
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
                 frame = this.props.frame.spatialReference || this.props.frame;
                 if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.size) === 0) {
-                    const scaleFactor = (PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5)) / frame.zoomLevel;
+                    const scaleFactor =
+                        (PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNRECTANGLE ? 1.0 : 0.5)) / frame.zoomLevel;
                     this.creatingRegion.setSize(scale2D(this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1}, scaleFactor));
                 }
                 break;
             case CARTA.RegionType.POINT:
+            case CARTA.RegionType.ANNPOINT:
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 break;
             default:
                 return;
@@ -275,12 +306,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
             switch (this.creatingRegion.regionType) {
                 case CARTA.RegionType.RECTANGLE:
+                case CARTA.RegionType.ANNRECTANGLE:
                     this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
                     break;
                 case CARTA.RegionType.ELLIPSE:
+                case CARTA.RegionType.ANNELLIPSE:
                     this.creatingRegion.setControlPoints([center, {y: Math.abs(dx) / 2.0, x: Math.abs(dy) / 2.0}]);
                     break;
                 case CARTA.RegionType.LINE:
+                case CARTA.RegionType.ANNLINE:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
                     break;
                 default:
@@ -290,12 +324,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             // center-to-corner region creation
             switch (this.creatingRegion.regionType) {
                 case CARTA.RegionType.RECTANGLE:
+                case CARTA.RegionType.ANNRECTANGLE:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);
                     break;
                 case CARTA.RegionType.ELLIPSE:
+                case CARTA.RegionType.ANNELLIPSE:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, {y: Math.abs(dx), x: Math.abs(dy)}]);
                     break;
                 case CARTA.RegionType.LINE:
+                case CARTA.RegionType.ANNLINE:
                     this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
                     break;
                 default:
@@ -519,11 +556,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private handleMouseDown = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         switch (this.props.frame.regionSet.newRegionType) {
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
                 this.regionCreationStart(konvaEvent.evt);
                 break;
             case CARTA.RegionType.POINT:
+            case CARTA.RegionType.ANNPOINT:
                 this.regionCreationStart(konvaEvent.evt);
                 this.regionCreationEnd();
                 break;
@@ -536,12 +577,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.dragPanning = false;
         switch (this.props.frame.regionSet.newRegionType) {
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
                 this.regionCreationEnd();
                 break;
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 if (!this.creatingRegion) {
                     this.regionCreationStart(konvaEvent.evt);
                 } else {
@@ -563,12 +609,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion) {
             switch (this.creatingRegion.regionType) {
                 case CARTA.RegionType.RECTANGLE:
+                case CARTA.RegionType.ANNRECTANGLE:
                 case CARTA.RegionType.ELLIPSE:
+                case CARTA.RegionType.ANNELLIPSE:
                 case CARTA.RegionType.LINE:
+                case CARTA.RegionType.ANNLINE:
                     this.RegionCreating(mouseEvent);
                     break;
                 case CARTA.RegionType.POLYGON:
+                case CARTA.RegionType.ANNPOLYGON:
                 case CARTA.RegionType.POLYLINE:
+                case CARTA.RegionType.ANNPOLYLINE:
                     this.polygonRegionCreating(mouseEvent);
                     break;
                 default:
@@ -708,7 +759,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                     onDoubleClick: this.handleRegionDoubleClicked
                 };
 
-                if (r.regionType === CARTA.RegionType.POINT) {
+                if (r.regionType === CARTA.RegionType.POINT || r.regionType === CARTA.RegionType.ANNPOINT) {
                     return <PointRegionComponent {...commonProps} />;
                 } else {
                     const allProps = {
@@ -716,7 +767,12 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                         listening: regionSet.mode !== RegionMode.CREATING && AppStore.Instance?.activeLayer !== ImageViewLayer.DistanceMeasuring,
                         isRegionCornerMode: AppStore.Instance.preferenceStore.isRegionCornerMode
                     };
-                    return r.regionType === CARTA.RegionType.POLYGON || r.regionType === CARTA.RegionType.LINE || r.regionType === CARTA.RegionType.POLYLINE ? (
+                    return r.regionType === CARTA.RegionType.POLYGON ||
+                        r.regionType === CARTA.RegionType.LINE ||
+                        r.regionType === CARTA.RegionType.POLYLINE ||
+                        r.regionType === CARTA.RegionType.ANNPOLYGON ||
+                        r.regionType === CARTA.RegionType.ANNLINE ||
+                        r.regionType === CARTA.RegionType.ANNPOLYLINE ? (
                         <LineSegmentRegionComponent {...allProps} />
                     ) : (
                         <SimpleShapeRegionComponent {...allProps} />

@@ -80,7 +80,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const relativeOppositeAnchorPointUnrotated = {x: 0, y: 0};
 
         // Ellipse control points are radii, not diameter
-        const sizeFactor = this.props.region.regionType === CARTA.RegionType.RECTANGLE ? 0.5 : 1.0;
+        const sizeFactor = this.props.region.regionType === CARTA.RegionType.RECTANGLE || this.props.region.regionType === CARTA.RegionType.ANNRECTANGLE ? 0.5 : 1.0;
 
         if (this.editAnchor.includes("left")) {
             relativeOppositeAnchorPointUnrotated.x = +w * sizeFactor;
@@ -118,7 +118,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         let w: number, h: number;
         let sizeFactor: number;
-        if (region.regionType === CARTA.RegionType.RECTANGLE) {
+        if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE) {
             sizeFactor = 1.0;
             w = region.size.x;
             h = region.size.y;
@@ -148,7 +148,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         // re-rotate after clamping the anchor bounds to get the correct position of the anchor point
         deltaAnchors = rotate2D(deltaAnchorsUnrotated, (region.rotation * Math.PI) / 180.0);
         const newCenter = add2D(this.editOppositeAnchorPoint, scale2D(deltaAnchors, 0.5));
-        const newSize = region.regionType === CARTA.RegionType.RECTANGLE ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)} : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
+        const newSize = region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)} : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
         region.setControlPoints([newCenter, newSize]);
     };
 
@@ -162,7 +162,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         let w: number, h: number;
         let sizeFactor: number;
-        if (region.regionType === CARTA.RegionType.RECTANGLE) {
+        if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE) {
             sizeFactor = 2.0;
             w = region.size.x;
             h = region.size.y;
@@ -189,7 +189,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             }
         }
 
-        const newSize = region.regionType === CARTA.RegionType.RECTANGLE ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)} : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
+        const newSize = region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE ? {x: Math.max(1e-3, w), y: Math.max(1e-3, h)} : {y: Math.max(1e-3, w), x: Math.max(1e-3, h)};
         region.setSize(newSize);
     };
 
@@ -293,7 +293,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         if (frame && (anchorName === "left" || anchorName === "right" || anchorName === "top" || anchorName === "bottom")) {
             const width = region.size.x / devicePixelRatio;
             const height = region.size.y / devicePixelRatio;
-            const size = region.regionType === CARTA.RegionType.RECTANGLE ? {x: width * frame.aspectRatio, y: height} : {x: height * frame.aspectRatio, y: width};
+            const size = region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE ? {x: width * frame.aspectRatio, y: height} : {x: height * frame.aspectRatio, y: width};
             let delta: Point2D;
             if (anchorName === "left") {
                 delta = {x: -size.x, y: 0};
@@ -304,7 +304,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             } else {
                 delta = {x: 0, y: size.y};
             }
-            const offset = rotate2D(scale2D(delta, region.regionType === CARTA.RegionType.RECTANGLE ? 0.5 : 1), (-region.rotation * Math.PI) / 180.0);
+            const offset = rotate2D(scale2D(delta, region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE ? 0.5 : 1), (-region.rotation * Math.PI) / 180.0);
             return isCornerMode ? add2D(this.editOppositeAnchorCanvasPos, scale2D(offset, 2)) : add2D(this.centerCanvasPos, offset);
         }
         return undefined;
@@ -315,7 +315,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const frame = this.props.frame;
         if (frame && (anchorName === "top-left" || anchorName === "bottom-left" || anchorName === "top-right" || anchorName === "bottom-right")) {
             const size = {x: region.size.x / devicePixelRatio, y: region.size.y / devicePixelRatio};
-            const offset = rotate2D(scale2D(size, region.regionType === CARTA.RegionType.RECTANGLE ? 0.5 : 1), (region.rotation * Math.PI) / 180.0);
+            const offset = rotate2D(scale2D(size, region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE ? 0.5 : 1), (region.rotation * Math.PI) / 180.0);
             if (anchorName === "top-left") {
                 return add2D(this.centerCanvasPos, {x: -offset.y * frame.aspectRatio, y: -offset.x});
             } else if (anchorName === "bottom-left") {
@@ -376,7 +376,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         const frame = this.props.frame;
 
         // Ellipse has swapped axes
-        const offset = region.regionType === CARTA.RegionType.RECTANGLE ? {x: region.size.x / 2, y: region.size.y / 2} : {x: region.size.y, y: region.size.x};
+        const offset = region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE ? {x: region.size.x / 2, y: region.size.y / 2} : {x: region.size.y, y: region.size.x};
         let anchorConfigs = [
             {anchor: "top", offset: {x: 0, y: offset.y}},
             {anchor: "bottom", offset: {x: 0, y: -offset.y}},
@@ -496,7 +496,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 strokeScaleEnabled: false
             };
 
-            if (region.regionType === CARTA.RegionType.RECTANGLE) {
+            if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE) {
                 shapeNode = <Rect {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} />;
             } else {
                 shapeNode = <Ellipse {...commonProps} radiusY={width} radiusX={height * frame.aspectRatio} />;

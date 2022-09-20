@@ -57,6 +57,7 @@ export class RegionSetStore {
         if (this.regions.length) {
             let minRegionId = Math.min(...this.regions.map(r => r.regionId));
             regionId = Math.min(regionId, minRegionId - 1);
+            console.log("inside", regionId);
         }
         return regionId;
     };
@@ -66,7 +67,7 @@ export class RegionSetStore {
     }
 
     @action addPointRegion = (center: Point2D, cursorRegion = false) => {
-        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
+        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, false, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
     };
 
     @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
@@ -88,9 +89,32 @@ export class RegionSetStore {
     @action addPolylineRegion = (points: Point2D[], temporary: boolean = false) => {
         return this.addRegion(points, 0, CARTA.RegionType.POLYLINE, temporary);
     };
+    @action addAnnPointRegion = (center: Point2D, cursorRegion = false) => {
+        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, cursorRegion, true, this.getTempRegionId());
+    };
+
+    @action addAnnRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
+        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNRECTANGLE, temporary, true);
+    };
+
+    @action addAnnEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
+        return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ANNELLIPSE, temporary, true);
+    };
+
+    @action addAnnPolygonalRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYGON, temporary, true);
+    };
+
+    @action addAnnLineRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNLINE, temporary, true);
+    };
+
+    @action addAnnPolylineRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYLINE, temporary, true);
+    };
 
     @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[]) => {
-        const region = this.addRegion(points, rotation, regionType, true, regionId, name);
+        const region = this.addRegion(points, rotation, regionType, true, false, regionId, name);
         // additional imported style properties;
         if (color) {
             region.color = color;
@@ -104,7 +128,7 @@ export class RegionSetStore {
         return region;
     };
 
-    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
+    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, isAnnotation: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
         const region = new RegionStore(
             this.backendService,
             this.frame.frameInfo.fileId,
@@ -116,16 +140,22 @@ export class RegionSetStore {
             this.preference.regionLineWidth,
             this.preference.regionDashLength,
             rotation,
-            regionName
+            regionName,
+            isAnnotation
         );
+        console.log(region, regionId);
         this.regions.push(region);
+        //Need to be removed
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).then(
                 ack => {
                     console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
                     region.setRegionId(ack.regionId);
                 },
-                err => console.log(err)
+                err => {
+                    console.log(err);
+                    region.setRegionId(regionId);
+                }
             );
         }
 
@@ -198,7 +228,9 @@ export class RegionSetStore {
 
                 switch (region.regionType) {
                     case CARTA.RegionType.RECTANGLE:
+                    case CARTA.RegionType.ANNRECTANGLE:
                     case CARTA.RegionType.ELLIPSE:
+                    case CARTA.RegionType.ANNELLIPSE:
                         const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                         if (!isAstBadPoint(centerNewFrame)) {
                             const transform = new Transform2D(spatialTransformAST, centerNewFrame);
@@ -208,9 +240,13 @@ export class RegionSetStore {
                         }
                         break;
                     case CARTA.RegionType.POINT:
+                    case CARTA.RegionType.ANNPOINT:
                     case CARTA.RegionType.POLYGON:
+                    case CARTA.RegionType.ANNPOLYGON:
                     case CARTA.RegionType.LINE:
+                    case CARTA.RegionType.ANNLINE:
                     case CARTA.RegionType.POLYLINE:
+                    case CARTA.RegionType.ANNPOLYLINE:
                         for (const point of region.controlPoints) {
                             const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
                             if (!isAstBadPoint(pointNewFrame)) {
@@ -224,7 +260,7 @@ export class RegionSetStore {
 
                 if (newControlPoints.length) {
                     let newRegion: RegionStore;
-                    if (region.regionType === CARTA.RegionType.POINT) {
+                    if (region.regionType === CARTA.RegionType.POINT || region.regionType === CARTA.RegionType.ANNPOINT) {
                         newRegion = this.addRegion(newControlPoints, 0, CARTA.RegionType.POINT);
                         newRegion.setName(region.name);
                         newRegion.setColor(region.color);
