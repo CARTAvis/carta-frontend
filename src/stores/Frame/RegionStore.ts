@@ -110,7 +110,7 @@ export class RegionStore {
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
         [CARTA.RegionType.ELLIPSE, "Ellipse"],
         [CARTA.RegionType.POLYGON, "Polygon"],
-        [CARTA.RegionType.POLYLINE, "Polyline"]
+        [CARTA.RegionType.POLYLINE, "Polyline"],
         // [CARTA.RegionType.ANNPOINT, "Annotation Point"],
         // [CARTA.RegionType.ANNLINE, "Annotation Line"],
         // [CARTA.RegionType.ANNRECTANGLE, "Annotation Rectangle"],
@@ -321,9 +321,9 @@ export class RegionStore {
             if (this.regionType === CARTA.RegionType.POINT) {
                 approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
-            if (this.regionType === CARTA.RegionType.ELLIPSE) {
+            if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE) {
                 approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
-            } else if (this.regionType === CARTA.RegionType.RECTANGLE) {
+            } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE) {
                 let halfWidth = this.size.x / 2;
                 let halfHeight = this.size.y / 2;
                 const rotation = (this.rotation * Math.PI) / 180.0;
@@ -365,7 +365,7 @@ export class RegionStore {
         dashLength: number = 0,
         rotation: number = 0,
         name: string = "",
-        isAnnotation: boolean
+        isAnnotation: boolean,
     ) {
         makeObservable(this);
         this.fileId = fileId;
@@ -551,7 +551,7 @@ export class RegionStore {
                 console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
                 this.setRegionId(ack.regionId);
             } catch (err) {
-                console.log("ending creating");
+                console.log('ending creating')
                 console.log(err);
             }
         }
