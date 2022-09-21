@@ -18,7 +18,7 @@ export class ToolbarMenuComponent extends React.Component {
         const appStore = AppStore.Instance;
         appStore.updateActiveLayer(ImageViewLayer.RegionCreating);
         //NEED TO BE REMOVED
-        appStore.activeFrame.regionSet.setNewRegionType(CARTA.RegionType.ANNRECTANGLE);
+        appStore.activeFrame.regionSet.setNewRegionType(CARTA.RegionType.ANNTEXT);
         appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
 

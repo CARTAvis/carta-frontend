@@ -110,7 +110,7 @@ export class RegionStore {
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
         [CARTA.RegionType.ELLIPSE, "Ellipse"],
         [CARTA.RegionType.POLYGON, "Polygon"],
-        [CARTA.RegionType.POLYLINE, "Polyline"],
+        [CARTA.RegionType.POLYLINE, "Polyline"]
         // [CARTA.RegionType.ANNPOINT, "Annotation Point"],
         // [CARTA.RegionType.ANNLINE, "Annotation Line"],
         // [CARTA.RegionType.ANNRECTANGLE, "Annotation Rectangle"],
@@ -155,6 +155,7 @@ export class RegionStore {
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR:
                 return midpoint2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: 0, y: 0};
@@ -175,6 +176,7 @@ export class RegionStore {
                 return this.boundingBox;
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR:
                 return subtract2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: undefined, y: undefined};
@@ -251,6 +253,7 @@ export class RegionStore {
                 return this.controlPoints.length >= 1;
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR:
                 return this.controlPoints.length === 1 || this.controlPoints.length === 2;
             default:
                 return false;
@@ -282,6 +285,7 @@ export class RegionStore {
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR:
                 let lineProperties = "Line (pixel) [";
                 controlPoints.forEach((point, index) => {
                     lineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
@@ -365,7 +369,7 @@ export class RegionStore {
         dashLength: number = 0,
         rotation: number = 0,
         name: string = "",
-        isAnnotation: boolean,
+        isAnnotation: boolean
     ) {
         makeObservable(this);
         this.fileId = fileId;
@@ -551,7 +555,7 @@ export class RegionStore {
                 console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
                 this.setRegionId(ack.regionId);
             } catch (err) {
-                console.log('ending creating')
+                console.log("ending creating");
                 console.log(err);
             }
         }

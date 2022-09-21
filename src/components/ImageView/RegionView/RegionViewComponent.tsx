@@ -203,6 +203,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 this.creatingRegion = frame.regionSet.addAnnPolylineRegion([cursorPosImageSpace], true);
                 this.polygonRegionCreating(mouseEvent);
                 break;
+            case CARTA.RegionType.ANNVECTOR:
+                this.creatingRegion = frame.regionSet.addAnnVectorRegion([cursorPosImageSpace, cursorPosImageSpace], true);
+                this.regionStartPoint = cursorPosImageSpace;
+                break;
             default:
                 return;
         }
@@ -222,6 +226,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR:
                 frame = this.props.frame.spatialReference || this.props.frame;
                 if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.size) === 0) {
                     const scaleFactor =
@@ -244,7 +249,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (
             this.creatingRegion.isValid &&
             ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE) || this.creatingRegion.controlPoints.length > 2) &&
-            (regionType !== CARTA.RegionType.LINE || this.creatingRegion.controlPoints.length === 2)
+            ((regionType !== CARTA.RegionType.LINE && regionType !== CARTA.RegionType.ANNLINE && regionType !== CARTA.RegionType.ANNVECTOR) || this.creatingRegion.controlPoints.length === 2)
         ) {
             this.creatingRegion.endCreating();
             frame.regionSet.selectRegion(this.creatingRegion);
@@ -315,6 +320,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     break;
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
+                case CARTA.RegionType.ANNVECTOR:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
                     break;
                 default:
@@ -333,6 +339,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     break;
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
+                case CARTA.RegionType.ANNVECTOR:
                     this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
                     break;
                 default:
@@ -561,6 +568,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR:
                 this.regionCreationStart(konvaEvent.evt);
                 break;
             case CARTA.RegionType.POINT:
@@ -582,6 +590,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR:
                 this.regionCreationEnd();
                 break;
             case CARTA.RegionType.POLYGON:
@@ -614,6 +623,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNELLIPSE:
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
+                case CARTA.RegionType.ANNVECTOR:
                     this.RegionCreating(mouseEvent);
                     break;
                 case CARTA.RegionType.POLYGON:
@@ -772,6 +782,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
                         r.regionType === CARTA.RegionType.POLYLINE ||
                         r.regionType === CARTA.RegionType.ANNPOLYGON ||
                         r.regionType === CARTA.RegionType.ANNLINE ||
+                        r.regionType === CARTA.RegionType.ANNVECTOR ||
                         r.regionType === CARTA.RegionType.ANNPOLYLINE ? (
                         <LineSegmentRegionComponent {...allProps} />
                     ) : (

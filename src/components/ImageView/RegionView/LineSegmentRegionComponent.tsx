@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Group, Line} from "react-konva";
+import {Group, Line, Arrow} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
@@ -246,7 +246,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 onDragEnd={this.handleAnchorDragEnd}
                 onDragMove={this.handleAnchorDrag}
                 onDblClick={this.props.region.regionType === CARTA.RegionType.LINE ? null : this.handleAnchorDoubleClick}
-                isLineRegion={this.props.region.regionType === CARTA.RegionType.LINE}
+                isLineRegion={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR}
             />
         );
     }
@@ -340,31 +340,55 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
 
         return (
             <Group>
-                <Line
-                    x={centerPointCanvasSpace.x}
-                    y={centerPointCanvasSpace.y}
-                    stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
-                    strokeWidth={region.lineWidth}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    dash={[region.dashLength]}
-                    closed={!region.creating && region.regionType === CARTA.RegionType.POLYGON}
-                    listening={this.props.listening && !region.locked}
-                    onClick={this.handleClick}
-                    onDblClick={this.handleDoubleClick}
-                    onContextMenu={this.handleContextMenu}
-                    onMouseEnter={region.regionType === CARTA.RegionType.LINE ? null : this.handleStrokeMouseEnter}
-                    onMouseLeave={region.regionType === CARTA.RegionType.LINE ? null : this.handleStrokeMouseLeave}
-                    onMouseMove={region.regionType === CARTA.RegionType.LINE ? null : this.handleMouseMove}
-                    onDragStart={this.handleDragStart}
-                    onDragEnd={this.handleDragEnd}
-                    onDragMove={this.handleDrag}
-                    perfectDrawEnabled={false}
-                    strokeScaleEnabled={false}
-                    lineJoin={"round"}
-                    draggable={true}
-                    points={pointArray}
-                    hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
-                />
+                {region.regionType === CARTA.RegionType.ANNVECTOR ? (
+                    <Arrow
+                        x={centerPointCanvasSpace.x}
+                        y={centerPointCanvasSpace.y}
+                        stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
+                        strokeWidth={region.lineWidth}
+                        opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                        dash={[region.dashLength]}
+                        listening={this.props.listening && !region.locked}
+                        onClick={this.handleClick}
+                        onDblClick={this.handleDoubleClick}
+                        onContextMenu={this.handleContextMenu}
+                        onDragStart={this.handleDragStart}
+                        onDragEnd={this.handleDragEnd}
+                        onDragMove={this.handleDrag}
+                        perfectDrawEnabled={false}
+                        strokeScaleEnabled={false}
+                        lineJoin={"round"}
+                        draggable={true}
+                        points={pointArray}
+                        hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
+                    />
+                ) : (
+                    <Line
+                        x={centerPointCanvasSpace.x}
+                        y={centerPointCanvasSpace.y}
+                        stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
+                        strokeWidth={region.lineWidth}
+                        opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                        dash={[region.dashLength]}
+                        closed={!region.creating && region.regionType === CARTA.RegionType.POLYGON}
+                        listening={this.props.listening && !region.locked}
+                        onClick={this.handleClick}
+                        onDblClick={this.handleDoubleClick}
+                        onContextMenu={this.handleContextMenu}
+                        onMouseEnter={region.regionType === CARTA.RegionType.LINE ? null : this.handleStrokeMouseEnter}
+                        onMouseLeave={region.regionType === CARTA.RegionType.LINE ? null : this.handleStrokeMouseLeave}
+                        onMouseMove={region.regionType === CARTA.RegionType.LINE ? null : this.handleMouseMove}
+                        onDragStart={this.handleDragStart}
+                        onDragEnd={this.handleDragEnd}
+                        onDragMove={this.handleDrag}
+                        perfectDrawEnabled={false}
+                        strokeScaleEnabled={false}
+                        lineJoin={"round"}
+                        draggable={true}
+                        points={pointArray}
+                        hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
+                    />
+                )}
                 <Group>
                     {anchors}
                     {newAnchor}

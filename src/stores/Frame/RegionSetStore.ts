@@ -57,7 +57,6 @@ export class RegionSetStore {
         if (this.regions.length) {
             let minRegionId = Math.min(...this.regions.map(r => r.regionId));
             regionId = Math.min(regionId, minRegionId - 1);
-            console.log("inside", regionId);
         }
         return regionId;
     };
@@ -113,6 +112,10 @@ export class RegionSetStore {
         return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYLINE, temporary, true);
     };
 
+    @action addAnnVectorRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNVECTOR, temporary, true);
+    };
+
     @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[]) => {
         const region = this.addRegion(points, rotation, regionType, true, false, regionId, name);
         // additional imported style properties;
@@ -154,7 +157,7 @@ export class RegionSetStore {
                 },
                 err => {
                     console.log(err);
-                    region.setRegionId(regionId);
+                    region.setRegionId(3);
                 }
             );
         }
