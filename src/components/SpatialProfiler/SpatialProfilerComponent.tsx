@@ -437,7 +437,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
                         profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
                     } else if (smoothedProfilerInfo) {
-                        profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${smoothedProfilerInfo})`);
+                        profilerInfo.push(`Data: (${smoothedProfilerInfo})`);
                     } else {
                         profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel})`);
                     }
