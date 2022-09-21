@@ -3,6 +3,7 @@ precision highp int;
 
 uniform sampler2D uCmapTexture;
 uniform highp sampler2D uControlMapTexture;
+uniform sampler2D uPositionTexture;
 uniform sampler2D uSizeTexture;
 uniform sampler2D uColorTexture;
 uniform sampler2D uOrientationTexture;

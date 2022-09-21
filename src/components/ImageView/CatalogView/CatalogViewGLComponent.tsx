@@ -226,7 +226,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const sizeTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Size);
                 if (!catalogWidgetStore.disableSizeMap && sizeTexture) {
                     this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 1);
-                    this.gl.activeTexture(GL2.TEXTURE2);
+                    this.gl.activeTexture(GL2.TEXTURE3);
                     this.gl.bindTexture(GL2.TEXTURE_2D, sizeTexture);
                     this.gl.uniform1i(shaderUniforms.SizeTexture, 2);
                 }
@@ -237,7 +237,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 if (!catalogWidgetStore.disableColorMap && colorTexture) {
                     this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
                     this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
-                    this.gl.activeTexture(GL2.TEXTURE3);
+                    this.gl.activeTexture(GL2.TEXTURE4);
                     this.gl.bindTexture(GL2.TEXTURE_2D, colorTexture);
                     this.gl.uniform1i(shaderUniforms.ColorTexture, 3);
                 }
@@ -249,7 +249,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const orientationTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Orientation);
                 if (!catalogWidgetStore.disableOrientationMap && orientationTexture) {
                     this.gl.uniform1i(shaderUniforms.OmapEnabled, 1);
-                    this.gl.activeTexture(GL2.TEXTURE4);
+                    this.gl.activeTexture(GL2.TEXTURE5);
                     this.gl.bindTexture(GL2.TEXTURE_2D, orientationTexture);
                     this.gl.uniform1i(shaderUniforms.OrientationTexture, 4);
                 }
@@ -257,7 +257,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 // selected source
                 const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource);
                 if (selectedSource) {
-                    this.gl.activeTexture(GL2.TEXTURE5);
+                    this.gl.activeTexture(GL2.TEXTURE6);
                     this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
                     this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 5);
                 }
@@ -268,7 +268,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const sizeMinorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SizeMinor);
                 if (!catalogWidgetStore.disableSizeMinorMap && sizeMinorTexture && catalogWidgetStore.catalogShape === CatalogOverlayShape.ELLIPSE_LINED) {
                     this.gl.uniform1i(shaderUniforms.SizeMinorMapEnabled, 1);
-                    this.gl.activeTexture(GL2.TEXTURE6);
+                    this.gl.activeTexture(GL2.TEXTURE7);
                     this.gl.bindTexture(GL2.TEXTURE_2D, sizeMinorTexture);
                     this.gl.uniform1i(shaderUniforms.SizeMinorTexture, 6);
                 }
