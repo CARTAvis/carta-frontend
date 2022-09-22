@@ -74,13 +74,14 @@ bool isNaN(float val) {
 
 void main() {
     uvec4 selectedSource = getValueByIndexFromTextureU(uSelectedSourceTexture, gl_VertexID);
-    // Scale and rotate
-    vec2 posImageSpace = vec2(a_position.x,a_position.y);
+    vec4 position = getValueByIndexFromTexture(uPositionTexture, gl_VertexID);
+    vec2 posImageSpace = position.xy;
 
     if (uControlMapEnabled > 0) {
         posImageSpace = controlMapLookup(uControlMapTexture, posImageSpace, uControlMapSize, uControlMapMin, uControlMapMax);
     }
 
+    // Scale and rotate
     vec2 pos = rotate2D(posImageSpace, uRotationAngle) * uScaleAdjustment * uRangeScale + uRangeOffset;
 
     gl_Position = vec4(imageToGL(pos), 0.5, 1.0);

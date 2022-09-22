@@ -54,6 +54,7 @@ export class CatalogWebGLService {
     private static staticInstance: CatalogWebGLService;
     private cmapTexture: WebGLTexture;
     private vertexBuffers: Map<number, WebGLBuffer>;
+    private positionArrays: Map<number, Float32Array>;
     private positionTextures: Map<number, WebGLTexture>;
     private sizeTextures: Map<number, WebGLTexture>;
     private colorTextures: Map<number, WebGLTexture>;
@@ -81,6 +82,16 @@ export class CatalogWebGLService {
     };
 
     public updateBuffer = (fileId: number, dataPoints: Float32Array, offset: number) => {
+        const positionArray = this.positionArrays.get(fileId);
+        if (positionArray) {
+            const newArray = new Float32Array(offset + dataPoints.length);
+            newArray.set(positionArray.slice(0, offset));
+            newArray.set(dataPoints, offset);
+            this.positionArrays.set(fileId, newArray);
+        } else {
+            this.positionArrays.set(fileId, dataPoints);
+        }
+
         const buffer = this.vertexBuffers.get(fileId);
         if (buffer) {
             // Fill data, 10 times faster than bufferData since do not need to allocate memory
@@ -93,6 +104,9 @@ export class CatalogWebGLService {
     };
 
     public bindBuffer = (fileId: number): boolean => {
+        const positionArray = this.positionArrays.get(fileId);
+        this.updateDataTexture(fileId, positionArray, CatalogTextureType.Position);
+
         const buffer = this.vertexBuffers.get(fileId);
         if (!this.vertexBuffers || !buffer) {
             return false;
@@ -109,7 +123,7 @@ export class CatalogWebGLService {
         // colorMap is texture0, controlMap is texture1
         switch (textureType) {
             case CatalogTextureType.Position:
-                this.positionTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE2, 1));
+                this.positionTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE2, 2));
                 break;
             case CatalogTextureType.Size:
                 this.sizeTextures.set(fileId, createTextureFromArray(this.gl, dataPoints, GL2.TEXTURE3, 1));
@@ -158,6 +172,7 @@ export class CatalogWebGLService {
         this.selectedSourceTextures.delete(fileId);
         this.sizeMinorTextures.delete(fileId);
         this.vertexBuffers.delete(fileId);
+        this.positionArrays.delete(fileId);
     };
 
     private initShaders() {
@@ -208,6 +223,7 @@ export class CatalogWebGLService {
         };
 
         this.vertexBuffers = new Map<number, WebGLBuffer>();
+        this.positionArrays = new Map<number, Float32Array>();
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 0);
         this.positionTextures = new Map<number, WebGLTexture>();
