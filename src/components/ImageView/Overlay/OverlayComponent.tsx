@@ -161,14 +161,15 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image
-        if ((frame.isPVImage && frame.spectralAxis?.valid) || (frame.isSwappedImage && frame.spectralAxis?.dimension === 2)) {
+        if ((frame.isPVImage && frame.spectralAxis?.valid) || (frame.isSwappedImage && frame.spectralAxis?.dimension < 3)) {
+            const spectralAxis = frame.spectralAxis?.dimension;
             AST.set(
                 frame.wcsInfo,
-                `${frame.spectralType ? `System(2)=${frame.spectralType},` : ""}` +
-                    `${frame.spectralUnit ? `Unit(2)=${frame.spectralUnit},` : ""}` +
+                `${frame.spectralType ? `System(${spectralAxis})=${frame.spectralType},` : ""}` +
+                    `${frame.spectralUnit ? `Unit(${spectralAxis})=${frame.spectralUnit},` : ""}` +
                     `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
                     `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
-                    `${frame.spectralType && frame.spectralSystem ? `Label(2)=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
+                    `${frame.spectralType && frame.spectralSystem ? `Label(${spectralAxis})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
         }
 
