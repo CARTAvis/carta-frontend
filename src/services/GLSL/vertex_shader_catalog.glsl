@@ -39,7 +39,6 @@ uniform vec2 uControlMapSize;
 uniform float uLineThickness;
 uniform float uPixelRatio;
 
-in vec4 a_position;
 out vec3 v_colour;
 out float v_pointSize;
 out float v_orientation;

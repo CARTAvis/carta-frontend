@@ -1,4 +1,4 @@
-import {createTextureFromArray, getShaderProgram, initWebGL2, loadImageTexture, makeBuffer, GL2} from "utilities";
+import {createTextureFromArray, getShaderProgram, initWebGL2, loadImageTexture, GL2} from "utilities";
 import {catalogShaders} from "./GLSL";
 import allMaps from "../static/allmaps.png";
 
@@ -53,7 +53,6 @@ interface ShaderUniforms {
 export class CatalogWebGLService {
     private static staticInstance: CatalogWebGLService;
     private cmapTexture: WebGLTexture;
-    private vertexBuffers: Map<number, WebGLBuffer>;
     private positionArrays: Map<number, Float32Array>;
     private positionTextures: Map<number, WebGLTexture>;
     private sizeTextures: Map<number, WebGLTexture>;
@@ -63,7 +62,6 @@ export class CatalogWebGLService {
     private sizeMinorTextures: Map<number, WebGLTexture>;
     readonly gl: WebGL2RenderingContext;
     shaderUniforms: ShaderUniforms;
-    vertexPositionAttribute: GLint;
 
     static get Instance() {
         if (!CatalogWebGLService.staticInstance) {
@@ -81,7 +79,7 @@ export class CatalogWebGLService {
         this.gl.viewport(0, 0, width, height);
     };
 
-    public updateBuffer = (fileId: number, dataPoints: Float32Array, offset: number) => {
+    public updatePositionArray = (fileId: number, dataPoints: Float32Array, offset: number) => {
         const positionArray = this.positionArrays.get(fileId);
         if (positionArray) {
             const newArray = new Float32Array(offset + dataPoints.length);
@@ -91,29 +89,15 @@ export class CatalogWebGLService {
         } else {
             this.positionArrays.set(fileId, dataPoints);
         }
-
-        const buffer = this.vertexBuffers.get(fileId);
-        if (buffer) {
-            // Fill data, 10 times faster than bufferData since do not need to allocate memory
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-            this.gl.bufferSubData(this.gl.ARRAY_BUFFER, offset * 4, dataPoints);
-        } else {
-            // allocates a new buffer
-            this.vertexBuffers.set(fileId, makeBuffer(this.gl, dataPoints, this.gl.STATIC_DRAW));
-        }
     };
 
-    public bindBuffer = (fileId: number): boolean => {
+    public updatePositionTexture = (fileId: number): boolean => {
         const positionArray = this.positionArrays.get(fileId);
-        this.updateDataTexture(fileId, positionArray, CatalogTextureType.Position);
-
-        const buffer = this.vertexBuffers.get(fileId);
-        if (!this.vertexBuffers || !buffer) {
-            return false;
-        } else {
-            this.gl.bindBuffer(GL2.ARRAY_BUFFER, buffer);
+        if (positionArray.length) {
+            this.updateDataTexture(fileId, positionArray, CatalogTextureType.Position);
             return true;
         }
+        return false;
     };
 
     public updateDataTexture = (fileId: number, dataPoints: Float32Array | Uint8Array, textureType: CatalogTextureType) => {
@@ -171,7 +155,6 @@ export class CatalogWebGLService {
         this.orientationTextures.delete(fileId);
         this.selectedSourceTextures.delete(fileId);
         this.sizeMinorTextures.delete(fileId);
-        this.vertexBuffers.delete(fileId);
         this.positionArrays.delete(fileId);
     };
 
@@ -181,9 +164,6 @@ export class CatalogWebGLService {
         }
         const shaderProgram = getShaderProgram(this.gl, catalogShaders.vertexShader, catalogShaders.fragmentShader);
         this.gl.useProgram(shaderProgram);
-
-        this.vertexPositionAttribute = this.gl.getAttribLocation(shaderProgram, "a_position");
-        this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
 
         this.shaderUniforms = {
             LineThickness: this.gl.getUniformLocation(shaderProgram, "uLineThickness"),
@@ -222,7 +202,6 @@ export class CatalogWebGLService {
             SizeMinorTexture: this.gl.getUniformLocation(shaderProgram, "uSizeMinorTexture"),
         };
 
-        this.vertexBuffers = new Map<number, WebGLBuffer>();
         this.positionArrays = new Map<number, Float32Array>();
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 0);

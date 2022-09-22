@@ -293,9 +293,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform1i(shaderUniforms.ControlMapTexture, 1);
                 }
 
-                const hasBuffer = this.catalogWebGLService.bindBuffer(fileId);
-
-                // position
                 const positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
                 if (positionTexture) {
                     this.gl.activeTexture(GL2.TEXTURE2);
@@ -303,13 +300,12 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform1i(shaderUniforms.PositionTexture, 2);
                 }
 
-                if (hasBuffer) {
+                const hasSources = this.catalogWebGLService.updatePositionTexture(fileId);
+                if (hasSources) {
                     this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                     this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
                     this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
                     this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio * AppStore.Instance.imageRatio);
-
-                    this.gl.vertexAttribPointer(this.catalogWebGLService.vertexPositionAttribute, 2, GL2.FLOAT, false, 0, 0);
 
                     this.gl.drawArrays(GL2.POINTS, 0, count);
                     this.gl.finish();
