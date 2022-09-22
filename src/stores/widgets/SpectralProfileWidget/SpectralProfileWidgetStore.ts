@@ -22,7 +22,7 @@ type Comments = string[];
 export type MultiPlotData = {
     numProfiles: number;
     data: DataPoints[];
-    secondaryData: DataPoints[];
+    secondaryData: Array<number>;
     smoothedData: DataPoints[];
     fittingData: {x: number[]; y: Float32Array | Float64Array};
     colors: string[];
@@ -426,6 +426,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let dataIndexes: {startIndex: number; endIndex: number}[] = [];
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
+
         profiles.forEach(profile => {
             if (profile?.data) {
                 numProfiles++;
@@ -435,12 +436,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
                 const intensityValues = this.intensityConversion ? this.intensityConversion(profile.data.values) : profile.data.values;
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
-                const secondaryPointsAndProperties = this.getDataPointsAndProperties(profile.channelSecondaryValues, intensityValues, wantMeanRms);
-                
+
                 data.push(pointsAndProperties?.points ?? []);
-                secondaryData.push(secondaryPointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
-                
+
                 if (pointsAndProperties) {
                     if (wantMeanRms) {
                         yMean = pointsAndProperties.yMean;
