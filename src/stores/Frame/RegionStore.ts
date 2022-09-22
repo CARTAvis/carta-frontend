@@ -37,7 +37,6 @@ export class RegionStore {
     @observable locked: boolean;
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
-    @observable isAnnotation: boolean;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -146,6 +145,7 @@ export class RegionStore {
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNTEXT:
                 return this.controlPoints[CENTER_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
@@ -168,6 +168,7 @@ export class RegionStore {
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNTEXT:
                 return this.controlPoints[SIZE_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
@@ -198,6 +199,7 @@ export class RegionStore {
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ANNRECTANGLE:
+            case CARTA.RegionType.ANNTEXT:
                 return this.size;
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
@@ -224,6 +226,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNULUS:
+            case CARTA.RegionType.ANNTEXT:
                 return true;
             default:
                 return false;
@@ -245,6 +248,7 @@ export class RegionStore {
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNTEXT:
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
@@ -294,6 +298,7 @@ export class RegionStore {
                 return lineProperties;
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ANNRECTANGLE:
+            case CARTA.RegionType.ANNTEXT:
                 return `rotbox[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
@@ -327,7 +332,7 @@ export class RegionStore {
             }
             if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE) {
                 approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
-            } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE) {
+            } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT) {
                 let halfWidth = this.size.x / 2;
                 let halfHeight = this.size.y / 2;
                 const rotation = (this.rotation * Math.PI) / 180.0;
@@ -368,8 +373,7 @@ export class RegionStore {
         lineWidth: number = 2,
         dashLength: number = 0,
         rotation: number = 0,
-        name: string = "",
-        isAnnotation: boolean
+        name: string = ""
     ) {
         makeObservable(this);
         this.fileId = fileId;
@@ -403,7 +407,6 @@ export class RegionStore {
             this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
         }
         this.modifiedTimestamp = performance.now();
-        this.isAnnotation = isAnnotation;
     }
 
     @action setRegionId = (id: number) => {

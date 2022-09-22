@@ -1,3 +1,4 @@
+export * from "./AnnotationStore";
 export * from "./ColorbarStore";
 export * from "./ContourStore";
 export * from "./ContourConfigStore";

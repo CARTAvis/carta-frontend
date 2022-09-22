@@ -2,7 +2,7 @@ import {action, makeObservable, observable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Subject, throwError} from "rxjs";
 import {AppStore, PreferenceStore} from "stores";
-import {RegionStore} from "stores/Frame";
+import {RegionStore, AnnotationStore} from "stores/Frame";
 import {mapToObject} from "utilities";
 import {ApiService} from "./ApiService";
 import {TelemetryAction, TelemetryService} from "./TelemetryService";
@@ -508,7 +508,7 @@ export class BackendService {
         return false;
     }
 
-    async setRegion(fileId: number, regionId: number, region: RegionStore): Promise<CARTA.ISetRegionAck> {
+    async setRegion(fileId: number, regionId: number, region: RegionStore | AnnotationStore): Promise<CARTA.ISetRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {

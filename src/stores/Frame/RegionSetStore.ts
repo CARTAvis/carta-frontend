@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "stores";
-import {CURSOR_REGION_ID, FrameStore, RegionStore} from "stores/Frame";
+import {CURSOR_REGION_ID, FrameStore, RegionStore, AnnotationStore} from "stores/Frame";
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
@@ -13,8 +13,8 @@ export enum RegionMode {
 }
 
 export class RegionSetStore {
-    @observable regions: RegionStore[];
-    @observable selectedRegion: RegionStore;
+    @observable regions: (RegionStore | AnnotationStore)[];
+    @observable selectedRegion: RegionStore | AnnotationStore;
     @observable mode: RegionMode;
     @observable newRegionType: CARTA.RegionType;
     @observable isHoverImage: Boolean = false;
@@ -61,7 +61,7 @@ export class RegionSetStore {
         return regionId;
     };
 
-    @computed get regionsForRender(): RegionStore[] {
+    @computed get regionsAndAnnotationsForRender(): (RegionStore | AnnotationStore)[] {
         return this.regions?.filter(r => r.isValid && r.regionId !== 0)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
     }
 
@@ -116,6 +116,10 @@ export class RegionSetStore {
         return this.addRegion(points, 0, CARTA.RegionType.ANNVECTOR, temporary, true);
     };
 
+    @action addAnnTextRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
+        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNTEXT, temporary, true);
+    };
+
     @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[]) => {
         const region = this.addRegion(points, rotation, regionType, true, false, regionId, name);
         // additional imported style properties;
@@ -132,20 +136,21 @@ export class RegionSetStore {
     };
 
     private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, isAnnotation: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
-        const region = new RegionStore(
-            this.backendService,
-            this.frame.frameInfo.fileId,
-            this.frame,
-            points,
-            regionType,
-            regionId,
-            this.preference.regionColor,
-            this.preference.regionLineWidth,
-            this.preference.regionDashLength,
-            rotation,
-            regionName,
-            isAnnotation
-        );
+        const region = isAnnotation
+            ? new AnnotationStore(
+                  this.backendService,
+                  this.frame.frameInfo.fileId,
+                  this.frame,
+                  points,
+                  regionType,
+                  regionId,
+                  this.preference.regionColor,
+                  this.preference.regionLineWidth,
+                  this.preference.regionDashLength,
+                  rotation,
+                  regionName
+              )
+            : new RegionStore(this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId, this.preference.regionColor, this.preference.regionLineWidth, this.preference.regionDashLength, rotation, regionName);
         console.log(region, regionId);
         this.regions.push(region);
         //Need to be removed
@@ -165,7 +170,7 @@ export class RegionSetStore {
         return region;
     }
 
-    @action selectRegion = (region: RegionStore) => {
+    @action selectRegion = (region: RegionStore | AnnotationStore) => {
         if (this.regions.indexOf(region) >= 0) {
             this.selectedRegion = region;
         }
@@ -181,7 +186,7 @@ export class RegionSetStore {
         this.selectedRegion = null;
     };
 
-    @action deleteRegion = (region: RegionStore) => {
+    @action deleteRegion = (region: RegionStore | AnnotationStore) => {
         // Cursor region cannot be deleted
         if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
             if (region === this.selectedRegion) {
@@ -234,6 +239,7 @@ export class RegionSetStore {
                     case CARTA.RegionType.ANNRECTANGLE:
                     case CARTA.RegionType.ELLIPSE:
                     case CARTA.RegionType.ANNELLIPSE:
+                    case CARTA.RegionType.ANNTEXT:
                         const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                         if (!isAstBadPoint(centerNewFrame)) {
                             const transform = new Transform2D(spatialTransformAST, centerNewFrame);
