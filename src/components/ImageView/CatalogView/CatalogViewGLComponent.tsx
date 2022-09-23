@@ -219,6 +219,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
                 this.gl.uniform1f(shaderUniforms.ScaleAdjustment, scaleAdjustment);
                 this.gl.uniform1f(shaderUniforms.RotationAngle, rotationAngle);
+                this.gl.uniform1f(shaderUniforms.ZoomLevel, sourceFrame?.spatialReference?.zoomLevel ?? sourceFrame?.zoomLevel); 
 
                 // size
                 this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 0);
@@ -307,7 +308,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
                     this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio * AppStore.Instance.imageRatio);
 
-                    this.gl.drawArrays(GL2.POINTS, 0, count);
+                    this.gl.drawArrays(GL2.TRIANGLES, 0, count * 6);
                     this.gl.finish();
                 }
             }
