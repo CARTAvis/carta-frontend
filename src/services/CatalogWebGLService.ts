@@ -201,7 +201,7 @@ export class CatalogWebGLService {
             ColorTexture: this.gl.getUniformLocation(shaderProgram, "uColorTexture"),
             OrientationTexture: this.gl.getUniformLocation(shaderProgram, "uOrientationTexture"),
             SelectedSourceTexture: this.gl.getUniformLocation(shaderProgram, "uSelectedSourceTexture"),
-            SizeMinorTexture: this.gl.getUniformLocation(shaderProgram, "uSizeMinorTexture"),
+            SizeMinorTexture: this.gl.getUniformLocation(shaderProgram, "uSizeMinorTexture")
         };
 
         this.positionArrays = new Map<number, Float32Array>();
