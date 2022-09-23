@@ -9,6 +9,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import "./FittingDialogComponent.scss";
+import {exportTxtFile} from "utilities";
 
 enum FittingResultTabs {
     RESULT,
@@ -31,6 +32,12 @@ export class FittingDialogComponent extends React.Component {
 
     private renderParamInput = (value: number, placeholder: string, onValueChange) => {
         return <SafeNumericInput value={isFinite(value) ? value : ""} placeholder={placeholder} onValueChange={onValueChange} buttonPosition="none" />;
+    };
+
+    private exportResult = () => {
+        const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingResult;
+        const fileName = "fittingReult";
+        exportTxtFile(fileName, content);
     };
 
     render() {
