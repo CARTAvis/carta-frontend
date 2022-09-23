@@ -145,7 +145,7 @@ void main() {
     }
 
     vec2 offset = getOffsetFromId(gl_VertexID);
-    v_pointCoord = offset + 0.5;
+    v_pointCoord = vec2(offset.x, -offset.y) + 0.5;
     posImageSpace += offset * point_size / (uZoomLevel * uScaleAdjustment);
 
     // Scale and rotate
