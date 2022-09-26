@@ -58,6 +58,7 @@ export class RegionDialogComponent extends React.Component {
             dialogProps.title = `Editing ${region.nameString} (${frame.filename})`;
             switch (region.regionType) {
                 case CARTA.RegionType.POINT:
+                case CARTA.RegionType.ANNPOINT:
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
@@ -67,6 +68,8 @@ export class RegionDialogComponent extends React.Component {
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.RECTANGLE:
+                case CARTA.RegionType.ANNRECTANGLE:
+                case CARTA.RegionType.ANNTEXT:
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
@@ -76,6 +79,7 @@ export class RegionDialogComponent extends React.Component {
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.ELLIPSE:
+                case CARTA.RegionType.ANNELLIPSE:
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
@@ -86,6 +90,8 @@ export class RegionDialogComponent extends React.Component {
                     break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.POLYLINE:
+                case CARTA.RegionType.ANNPOLYGON:
+                case CARTA.RegionType.ANNPOLYLINE:
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
@@ -95,6 +101,8 @@ export class RegionDialogComponent extends React.Component {
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.LINE:
+                case CARTA.RegionType.ANNLINE:
+                case CARTA.RegionType.ANNVECTOR:
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme} />

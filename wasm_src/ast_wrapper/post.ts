@@ -95,7 +95,7 @@ Module.setCanvas = function (canvas) {
     Module.gridContext.font = Module.font;
 };
 
-Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
+Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string", "boolean", "boolean", "number", "number", "number", "number"]);
 Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
 Module.putFits = Module.cwrap("putFits", null, ["number", "string"])
 Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number", "number"]);

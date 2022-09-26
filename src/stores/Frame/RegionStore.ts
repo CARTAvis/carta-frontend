@@ -146,6 +146,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.ANNTEXT:
+            case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints[CENTER_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
@@ -169,6 +170,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.ANNTEXT:
+            case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints[SIZE_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
@@ -200,6 +202,7 @@ export class RegionStore {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ANNTEXT:
+            case CARTA.RegionType.ANNCOMPASS:
                 return this.size;
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
@@ -227,6 +230,7 @@ export class RegionStore {
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNULUS:
             case CARTA.RegionType.ANNTEXT:
+            case CARTA.RegionType.ANNCOMPASS:
                 return true;
             default:
                 return false;
@@ -259,6 +263,8 @@ export class RegionStore {
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
                 return this.controlPoints.length === 1 || this.controlPoints.length === 2;
+            case CARTA.RegionType.ANNCOMPASS:
+                return true;
             default:
                 return false;
         }
@@ -299,6 +305,7 @@ export class RegionStore {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ANNTEXT:
+            case CARTA.RegionType.ANNCOMPASS:
                 return `rotbox[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
@@ -332,7 +339,7 @@ export class RegionStore {
             }
             if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE) {
                 approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
-            } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT) {
+            } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT || this.regionType === CARTA.RegionType.ANNCOMPASS) {
                 let halfWidth = this.size.x / 2;
                 let halfHeight = this.size.y / 2;
                 const rotation = (this.rotation * Math.PI) / 180.0;

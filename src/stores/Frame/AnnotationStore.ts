@@ -33,3 +33,32 @@ export class AnnotationStore extends RegionStore {
         this.text = text;
     };
 }
+
+export class CompassAnnotationStore extends RegionStore {
+    @observable compassLength: Point2D = {x: 0, y: 0};
+    @observable endPoints: Point2D[] = [
+        {x: 0, y: 0},
+        {x: 0, y: 0}
+    ];
+
+    constructor(
+        backendService: BackendService,
+        fileId: number,
+        activeFrame: FrameStore,
+        controlPoints: Point2D[],
+        regionType: CARTA.RegionType,
+        regionId: number = -1,
+        color: string = Colors.TURQUOISE5,
+        lineWidth: number = 2,
+        dashLength: number = 0,
+        rotation: number = 0,
+        name: string = ""
+    ) {
+        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
+        makeObservable(this);
+    }
+
+    @action setEndPoints = (endPoints: Point2D[]) => {
+        this.endPoints = endPoints;
+    };
+}
