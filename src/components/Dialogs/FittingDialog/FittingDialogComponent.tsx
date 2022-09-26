@@ -36,13 +36,13 @@ export class FittingDialogComponent extends React.Component {
 
     private exportResult = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingResult;
-        const fileName = `${getTimestamp()}-2D_Fitting_Result`;
+        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename.split(".")[0]}-${getTimestamp()}_2D-Fitting-Result`;
         exportTxtFile(fileName, content);
     };
 
     private exportFullLog = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingLog;
-        const fileName = `${getTimestamp()}-2D_Fitting_Full_Log`;
+        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename.split(".")[0]}-${getTimestamp()}-2D_Fitting_Full_Log`;
         exportTxtFile(fileName, content);
     };
 
@@ -87,6 +87,7 @@ export class FittingDialogComponent extends React.Component {
                 </Tooltip2>
             </Pre>
         );
+        console.log("fileName: "+fittingStore.effectiveFrame?.filename.split(".")[0])
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
