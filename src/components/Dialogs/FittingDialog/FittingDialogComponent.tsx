@@ -9,7 +9,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import "./FittingDialogComponent.scss";
-import {exportTxtFile} from "utilities";
+import {exportTxtFile, getTimestamp} from "utilities";
 
 enum FittingResultTabs {
     RESULT,
@@ -36,7 +36,13 @@ export class FittingDialogComponent extends React.Component {
 
     private exportResult = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingResult;
-        const fileName = "fittingReult";
+        const fileName = `${getTimestamp()}-2D_Fitting_Result`;
+        exportTxtFile(fileName, content);
+    };
+
+    private exportFullLog = () => {
+        const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingLog;
+        const fileName = `${getTimestamp()}-2D_Fitting_Full_Log`;
         exportTxtFile(fileName, content);
     };
 
@@ -67,12 +73,18 @@ export class FittingDialogComponent extends React.Component {
         const fittingResultPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
+                <Tooltip2 content={"Output result as .txt"} position={Position.LEFT} className="output-result-button">
+                    <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
+                </Tooltip2>
             </Pre>
         );
 
         const fullLogPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
+                <Tooltip2 content={"Output log as .txt"} position={Position.LEFT} className="output-log-button">
+                    <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
+                </Tooltip2>
             </Pre>
         );
 

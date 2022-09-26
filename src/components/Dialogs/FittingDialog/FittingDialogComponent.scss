@@ -48,6 +48,32 @@
         margin-bottom: 0;
     }
 
+    .output-result-button {
+        position: absolute;
+        bottom: 40px;
+        right: 15px;
+        margin: 0 10px 10px 0;
+        transition: opacity 400ms;
+
+        .bp3-button {
+            transition: opacity 400ms;
+            user-select: none;
+        }
+    }
+
+    .output-log-button {
+        position: absolute;
+        bottom: 40px;
+        right: 30px;
+        margin: 0 10px 10px 0;
+        transition: opacity 400ms;
+
+        .bp3-button {
+            transition: opacity 400ms;
+            user-select: none;
+        }
+    }
+
     .fitting-result {
         height: 70%;
         margin-bottom: 0;
