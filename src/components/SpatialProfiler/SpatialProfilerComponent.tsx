@@ -73,7 +73,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get plotData(): {values: Array<Point2D>; fullResolutionValues: Array<Point2D>; smoothingValues: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number; yMean: number; yRms: number} {
+    @computed get plotData(): {
+        values: Array<Point2D>;
+        fullResolutionValues: Array<Point2D>;
+        smoothingValues: Array<Point2D>;
+        xMin: number;
+        xMax: number;
+        yMin: number;
+        yMax: number;
+        yMean: number;
+        yRms: number;
+        ySmoothedMean: number;
+        ySmoothedRms: number;
+    } {
         if (!this.frame || !this.width || !this.profileStore) {
             return null;
         }
@@ -109,6 +121,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let yMax = -Number.MAX_VALUE;
             let yMean;
             let yRms;
+            let ySmoothedMean = undefined;
+            let ySmoothedRms = undefined;
 
             // Variables for mean and RMS calculations
             let ySum = 0;
@@ -230,7 +244,27 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
 
-            return {values: values, fullResolutionValues, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
+            // Variables for smoothed mean and RMS calculations
+            if (smoothingValues && this.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
+                let ySmoothedSum = 0;
+                let ySmoothedSum2 = 0;
+                let ySmoothedCount = 0;
+                for (let i = 0; i < smoothingValues.length; i++) {
+                    const ySmoothed = smoothingValues[i].y;
+                    if (isFinite(ySmoothed)) {
+                        ySmoothedCount++;
+                        ySmoothedSum += ySmoothed;
+                        ySmoothedSum2 += ySmoothed * ySmoothed;
+                    }
+                }
+
+                if (ySmoothedCount > 0) {
+                    ySmoothedMean = ySmoothedSum / ySmoothedCount;
+                    ySmoothedRms = Math.sqrt(ySmoothedSum2 / ySmoothedCount - ySmoothedMean * ySmoothedMean);
+                }
+            }
+
+            return {values: values, fullResolutionValues, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms, ySmoothedMean, ySmoothedRms};
         }
     }
 
@@ -444,7 +478,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
             if (this.widgetStore.meanRmsVisible) {
-                profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
+                if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
+                    profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
+                } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
+                    profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.ySmoothedMean, 2) + " / " + formattedExponential(this.plotData.ySmoothedRms, 2)}`);
+                }
             }
         }
         return profilerInfo;
@@ -604,24 +642,45 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 });
 
                 if (widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
-                    linePlotProps.markers.push({
-                        value: currentPlotData.yMean,
-                        id: "marker-mean",
-                        draggable: false,
-                        horizontal: true,
-                        color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
-                        dash: [5]
-                    });
+                    if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
+                        linePlotProps.markers.push({
+                            value: currentPlotData.yMean,
+                            id: "marker-mean",
+                            draggable: false,
+                            horizontal: true,
+                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                            dash: [5]
+                        });
 
-                    linePlotProps.markers.push({
-                        value: currentPlotData.yMean,
-                        id: "marker-rms",
-                        draggable: false,
-                        horizontal: true,
-                        width: currentPlotData.yRms,
-                        opacity: 0.2,
-                        color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
-                    });
+                        linePlotProps.markers.push({
+                            value: currentPlotData.yMean,
+                            id: "marker-rms",
+                            draggable: false,
+                            horizontal: true,
+                            width: currentPlotData.yRms,
+                            opacity: 0.2,
+                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                        });
+                    } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
+                        linePlotProps.markers.push({
+                            value: currentPlotData.ySmoothedMean,
+                            id: "marker-smoothed-mean",
+                            draggable: false,
+                            horizontal: true,
+                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                            dash: [5]
+                        });
+
+                        linePlotProps.markers.push({
+                            value: currentPlotData.ySmoothedMean,
+                            id: "marker-smoothed-rms",
+                            draggable: false,
+                            horizontal: true,
+                            width: currentPlotData.ySmoothedRms,
+                            opacity: 0.2,
+                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                        });
+                    }
                 }
 
                 // TODO: Get comments from region info, rather than directly from cursor position
