@@ -45,13 +45,13 @@ export class FittingDialogComponent extends React.Component {
 
     private exportResult = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingResult;
-        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename.split(".")[0]}-${getTimestamp()}_2D-Fitting-Result`;
+        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}_2D-Fitting-Result`;
         exportTxtFile(fileName, content);
     };
 
     private exportFullLog = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingLog;
-        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename.split(".")[0]}-${getTimestamp()}-2D_Fitting_Full_Log`;
+        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Full_Log`;
         exportTxtFile(fileName, content);
     };
 
