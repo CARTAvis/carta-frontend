@@ -25,8 +25,8 @@ export class DistanceMeasuringDialog extends React.Component {
 
     @observable WCSMode: boolean = true;
 
-    @action setWCSMode = (bool?: boolean) => {
-        this.WCSMode = bool === undefined ? !this.WCSMode : bool;
+    @action setWCSMode = (value?: boolean) => {
+        this.WCSMode = value === undefined ? !this.WCSMode : value;
     };
 
     private handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
@@ -59,21 +59,21 @@ export class DistanceMeasuringDialog extends React.Component {
                 distanceMeasuringStore?.setStart(distanceMeasuringStore?.start.x, value);
             }
         } else if (wcsInfo) {
-            const value = target.value;
-            if (isX && isWCSStringFormatValid(value as string, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+            const value = target.value as string;
+            if (isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
                 if (finish) {
-                    const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value as string});
+                    const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
                     distanceMeasuringStore?.setFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
                 } else {
-                    const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value as string});
+                    const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value});
                     distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
                 }
-            } else if (!isX && isWCSStringFormatValid(value as string, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+            } else if (!isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
                 if (finish) {
-                    const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value as string});
+                    const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
                     distanceMeasuringStore?.setFinish(finishPixelFromWCS.x, finishPixelFromWCS.y);
                 } else {
-                    const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value as string});
+                    const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value});
                     distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
                 }
             } else {
@@ -120,6 +120,14 @@ export class DistanceMeasuringDialog extends React.Component {
     };
 
     private inputPixelMode = (distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, finish: boolean) => {
+        const handleOnKeyDown = (isX: boolean) => {
+            return (event: React.KeyboardEvent<HTMLInputElement>) => {
+                if (event.type === "keydown" && event.key === KEYCODE_ENTER) {
+                    this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, isX, finish, true);
+                }
+            };
+        };
+
         return (
             <>
                 <td>
@@ -129,9 +137,7 @@ export class DistanceMeasuringDialog extends React.Component {
                             buttonPosition="none"
                             value={finish ? distanceMeasuringStore?.finish.x : distanceMeasuringStore?.start.x}
                             onBlur={event => this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, true, finish, true)}
-                            onKeyDown={event => {
-                                if (event.type === "keydown" && event.key === KEYCODE_ENTER) this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, true, finish, true);
-                            }}
+                            onKeyDown={handleOnKeyDown(true)}
                         />
                     </FormGroup>
                 </td>
@@ -142,9 +148,7 @@ export class DistanceMeasuringDialog extends React.Component {
                             buttonPosition="none"
                             value={finish ? distanceMeasuringStore?.finish.y : distanceMeasuringStore?.start.y}
                             onBlur={event => this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, false, finish, true)}
-                            onKeyDown={event => {
-                                if (event.type === "keydown" && event.key === KEYCODE_ENTER) this.handleValueChange(event, distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, false, finish, true);
-                            }}
+                            onKeyDown={handleOnKeyDown(false)}
                         />
                     </FormGroup>
                 </td>
