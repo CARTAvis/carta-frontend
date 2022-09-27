@@ -1802,7 +1802,7 @@ export class FrameStore {
         return false;
     };
 
-    @action setSpectralCoordinateSecondary = (coordStr: string, alignSpectralSiblings: boolean = false): boolean => {
+    @action setSpectralCoordinateSecondary = (coordStr: string, alignSpectralSiblings: boolean = true): boolean => {
         if (this.spectralCoordsSupported?.has(coordStr)) {
             const coord: {type: SpectralType; unit: SpectralUnit} = this.spectralCoordsSupported.get(coordStr);
             this.spectralTypeSecondary = coord.type;
