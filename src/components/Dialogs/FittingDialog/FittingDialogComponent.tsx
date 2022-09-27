@@ -82,7 +82,7 @@ export class FittingDialogComponent extends React.Component {
         const fittingResultPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
-                <ButtonGroup style={{opacity: this.isMouseEntered ? 1 : 0}}>
+                <ButtonGroup style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
                     <Tooltip2 content={"Export result as .txt"} position={Position.LEFT} className="output-result-button">
                         <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
                     </Tooltip2>
@@ -93,14 +93,13 @@ export class FittingDialogComponent extends React.Component {
         const fullLogPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
-                <ButtonGroup style={{opacity: this.isMouseEntered ? 1 : 0}}>
+                <ButtonGroup style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
                     <Tooltip2 content={"Exportput log as .txt"} position={Position.LEFT} className="output-log-button">
                         <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
                     </Tooltip2>
                 </ButtonGroup>
             </Pre>
         );
-        console.log("fileName: " + fittingStore.effectiveFrame?.filename.split(".")[0]);
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
