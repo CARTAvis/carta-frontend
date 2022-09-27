@@ -189,7 +189,7 @@ export class ApiService {
             try {
                 await this.axiosInstance.post(ApiService.RuntimeConfig.logoutAddress);
             } catch (err) {
-                if (err.response.status == 404) {
+                if (err.response.status === 404) {
                     // OIDC logout requires GET for logout vs POST for other mechanisms
                     window.open(ApiService.RuntimeConfig.logoutAddress, "_self");
                     return; // avoid later potential dashboard redirect
