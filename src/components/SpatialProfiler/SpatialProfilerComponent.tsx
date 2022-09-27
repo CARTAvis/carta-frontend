@@ -447,7 +447,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const wcsLabel = cursorInfo?.infoWCS && !this.lineAxis ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
                     const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(nearest.point.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${nearest.point.x} px, `;
                     const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
-                    profilerInfo.push("Cursor: (" + wcsLabel + xLabel + valueLabel + ")");
+
+                    const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues);
+
+                    if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
+                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
+                    } else if (smoothedProfilerInfo) {
+                        profilerInfo.push(`Cursor: (${smoothedProfilerInfo})`);
+                    } else {
+                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel})`);
+                    }
                 }
             } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
                 // get value directly from point region
@@ -456,7 +465,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const wcsLabel = pointRegionInfo?.infoWCS ? `WCS: ${isXCoordinate ? pointRegionInfo.infoWCS.x : pointRegionInfo.infoWCS.y}, ` : "";
                     const imageLabel = `Image: ${toFixed(isXCoordinate ? pointRegionInfo.posImageSpace.x : pointRegionInfo.posImageSpace.y)} px, `;
                     const valueLabel = `${this.profileStore?.value !== undefined ? formattedExponential(this.profileStore.value, 5) : ""}`;
-                    profilerInfo.push("Data: (" + wcsLabel + imageLabel + valueLabel + ")");
+
+                    const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues, this.profileStore.x);
+
+                    if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
+                        profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
+                    } else if (smoothedProfilerInfo) {
+                        profilerInfo.push(`Data: (${smoothedProfilerInfo})`);
+                    } else {
+                        profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel})`);
+                    }
                 }
             }
             if (this.widgetStore.meanRmsVisible) {
@@ -468,6 +486,24 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             }
         }
         return profilerInfo;
+    };
+
+    private genSmoothedProfilerInfo = (smoothedData: Point2D[], pointXValue?: number): string => {
+        let profilerInfo = "";
+        const nearest = binarySearchByX(smoothedData, pointXValue ?? this.widgetStore.cursorX);
+        const smoothedXLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(nearest?.point?.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${nearest?.point?.x} px, `;
+
+        if (pointXValue) {
+            profilerInfo += formattedExponential(nearest?.point?.y, 5);
+        } else {
+            // handle the value when cursor is in profiler
+            if (nearest?.point) {
+                const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
+                profilerInfo += valueLabel;
+            }
+        }
+
+        return nearest && `${smoothedXLabel}${profilerInfo}`;
     };
 
     onGraphCursorMoved = _.throttle(x => {
