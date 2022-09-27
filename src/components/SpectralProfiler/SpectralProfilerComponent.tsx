@@ -152,21 +152,33 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 33);
 
-    private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
+    private genCursoInfoString = (data: Point2D[], smoothedData: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
         let cursorInfoString = undefined;
         const nearest = binarySearchByX(data, cursorXValue);
+        const nearestSmooth = smoothedData.length ? binarySearchByX(smoothedData, cursorXValue) : null;
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
             let floatXStr = "";
+            let smoothedFloatXStr = "";
             const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
             if (diffLeft > 0 && diffLeft < 1e-6) {
                 floatXStr = formattedNotation(nearest.point.x);
+                smoothedFloatXStr = formattedNotation(nearestSmooth.point.x);
             } else if (diffLeft >= 1e-6 && diffLeft < 1e-3) {
                 floatXStr = toFixed(nearest.point.x, 6);
+                smoothedFloatXStr = toFixed(nearestSmooth?.point.x, 6);
             } else {
                 floatXStr = toFixed(nearest.point.x, 3);
+                smoothedFloatXStr = toFixed(nearestSmooth?.point.x, 3);
             }
             const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
-            cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+            const smoothedXLabel = cursorXUnit === "Channel" ? `${cursorXUnit} ${toFixed(nearestSmooth?.point.x, 0)}` : `${smoothedFloatXStr} ${cursorXUnit}`;
+            if (nearestSmooth && this.widgetStore.smoothingStore.isOverlayOn) {
+                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}), Smoothed: (${smoothedXLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
+            } else if (nearestSmooth) {
+                cursorInfoString = `(${smoothedXLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
+            } else {
+                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+            }
         }
         return `${label}: ${cursorInfoString ?? "---"}`;
     };
@@ -180,17 +192,19 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const cursorXValue = isCursorInsideLinePlots ? this.widgetStore.cursorX : this.currentChannelValue;
             const cursorXUnit = frame.spectralUnitStr;
 
-            if (this.plotData.numProfiles === 1) {
+            if (this.plotData.numProfiles === 1 && !(this.widgetStore.smoothingStore.type !== SmoothingType.NONE && this.widgetStore.smoothingStore.isOverlayOn)) {
                 // Single profile, Mean/RMS is available
                 const data = this.plotData.data[0];
-                const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
+                const smoothedData = this.plotData.smoothedData[0];
+                const cursorInfoString = this.genCursoInfoString(data, smoothedData, cursorXValue, cursorXUnit, label);
                 profilerInfo.push({
                     infoString: this.isMeanRmsVisible ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}` : cursorInfoString
                 });
             } else {
                 for (let i = 0; i < this.plotData.numProfiles; i++) {
                     const data = this.plotData.data[i];
-                    const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
+                    const smoothedData = this.plotData.smoothedData[i];
+                    const cursorInfoString = this.genCursoInfoString(data, smoothedData, cursorXValue, cursorXUnit, label);
                     profilerInfo.push({
                         color: this.plotData.colors?.[i],
                         infoString: `${cursorInfoString}, ${this.plotData.labels?.[i]?.image}, ${this.plotData.labels?.[i]?.plot}`

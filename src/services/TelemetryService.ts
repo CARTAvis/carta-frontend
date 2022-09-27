@@ -1,6 +1,6 @@
 import jwt_decode from "jwt-decode";
 import axios, {AxiosInstance} from "axios";
-import {computed, makeObservable, observable, runInAction} from "mobx";
+import {computed, flow, makeObservable, observable} from "mobx";
 import {v1 as uuidv1} from "uuid";
 import {openDB, DBSchema, IDBPDatabase} from "idb";
 import {PreferenceKeys, PreferenceStore} from "stores";
@@ -94,15 +94,13 @@ export class TelemetryService {
         setInterval(this.flushTelemetry, TelemetryService.SubmissionIntervalSeconds * 1000);
     }
 
-    async checkAndGenerateId(forceNewId: boolean = false) {
+    @flow.bound *checkAndGenerateId(forceNewId: boolean = false) {
         const url = new URL(window.location.href);
         const skipTelemetry = url.searchParams.get("skipTelemetry");
         // Check for URL query parameter or build-time flag for skipping telemetry
         if (skipTelemetry || process.env.REACT_APP_SKIP_TELEMETRY === "true") {
             console.log(`Skipping telemetry due to ${skipTelemetry ? "URL override" : "build-time override"}`);
-            runInAction(() => {
-                this.skipTelemetry = true;
-            });
+            this.skipTelemetry = true;
             return false;
         }
 
@@ -111,14 +109,14 @@ export class TelemetryService {
 
         if (!token || forceNewId) {
             try {
-                const res = await this.axiosInstance.get("/api/token");
+                const res = yield this.axiosInstance.get("/api/token");
                 token = res.data?.token;
                 const decodedObject = jwt_decode(token) as any;
                 if (decodedObject?.uuid) {
-                    await preferences.setPreference(PreferenceKeys.TELEMETRY_UUID, token);
+                    yield preferences.setPreference(PreferenceKeys.TELEMETRY_UUID, token);
                     console.log(`Generated new telemetry ID ${decodedObject.uuid}. This will only be used if telemetry consent is given.`);
                     if (forceNewId) {
-                        await this.clearTelemetry();
+                        yield this.clearTelemetry();
                     }
                 }
             } catch (err) {
@@ -135,9 +133,7 @@ export class TelemetryService {
         try {
             const decodedObject: {uuid?: string} = jwt_decode(token);
             if (decodedObject?.uuid) {
-                runInAction(() => {
-                    this.uuid = decodedObject.uuid;
-                });
+                this.uuid = decodedObject.uuid;
             }
         } catch (err) {
             console.warn("Malformed telemetry token");

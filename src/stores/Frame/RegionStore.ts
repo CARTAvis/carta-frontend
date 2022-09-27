@@ -1,4 +1,4 @@
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, computed, observable, makeObservable, flow} from "mobx";
 import {Colors, IconName} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
@@ -492,7 +492,7 @@ export class RegionStore {
         this.editing = true;
     };
 
-    @action endCreating = async () => {
+    @flow.bound *endCreating() {
         this.creating = false;
         this.editing = false;
 
@@ -503,14 +503,14 @@ export class RegionStore {
 
         if (this.regionType !== CARTA.RegionType.POINT) {
             try {
-                const ack = await this.backendService.setRegion(this.fileId, -1, this);
+                const ack = yield this.backendService.setRegion(this.fileId, -1, this);
                 console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
                 this.setRegionId(ack.regionId);
             } catch (err) {
                 console.log(err);
             }
         }
-    };
+    }
 
     @action beginEditing = () => {
         this.editing = true;
@@ -551,6 +551,7 @@ export class RegionStore {
     };
 
     // Update the region with the backend
+    // TODO: Determine whether we should await when calling this function from above
     private updateRegion = async () => {
         if (this.isValid) {
             if (this.regionId === CURSOR_REGION_ID) {

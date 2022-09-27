@@ -1,5 +1,5 @@
 import * as React from "react";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
@@ -26,6 +26,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 80;
     private static readonly ROW_HEIGHT = 35;
     private static readonly HEADER_ROW_HEIGHT = 25;
+    private listRef = React.createRef<any>();
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -56,9 +57,28 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
     @observable regionsLock: boolean = false;
 
+    private scrollToSelected = (selected: any) => {
+        const listRefCurrent = this.listRef.current;
+        if (!listRefCurrent) {
+            return;
+        } else {
+            this.listRef.current.scrollToItem(selected, "smart");
+        }
+    };
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
+
+        reaction(
+            () => AppStore.Instance.activeFrame?.regionSet?.selectedRegion?.regionId,
+            id => {
+                if (id > 0) {
+                    const validRegionId = this.validRegions.map(el => el.regionId);
+                    this.scrollToSelected(validRegionId.findIndex(element => element === id));
+                }
+            }
+        );
     }
 
     @action private onResize = (width: number, height: number) => {
@@ -156,7 +176,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         if (appStore.fileBrowserStore.isLoadingDialogOpen) {
             return (
                 <div className="region-list-widget">
-                    <NonIdealState icon={<Spinner />} title={"Loading regions"} description={"Region list with be shown when regions have been loaded"} />
+                    <NonIdealState icon={<Spinner />} title={"Loading regions"} description={"Region list will be shown when regions have been loaded"} />
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
                 </div>
             );
@@ -417,7 +437,14 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
                         {headerRenderer(this.regionsVisibility, this.regionsLock)}
                     </FixedSizeList>
-                    <FixedSizeList onItemsRendered={this.onListRendered} height={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2} itemCount={this.validRegions.length} itemSize={RegionListComponent.ROW_HEIGHT} width="100%">
+                    <FixedSizeList
+                        onItemsRendered={this.onListRendered}
+                        height={tableHeight - RegionListComponent.HEADER_ROW_HEIGHT - padding * 2}
+                        itemCount={this.validRegions.length}
+                        itemSize={RegionListComponent.ROW_HEIGHT}
+                        width="100%"
+                        ref={this.listRef}
+                    >
                         {rowRenderer}
                     </FixedSizeList>
                 </div>

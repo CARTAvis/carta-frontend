@@ -53,7 +53,7 @@ void main(void) {
     // Mimics texel fetch in WebGL1
     vec2 tileCoordsPixel = vUV * uTileTextureSize;
     // Prevent edge artefacts
-    vec2 texCoordsPixel = clamp(tileCoordsPixel, 0.5, uTileTextureSize - 0.5) + uTileTextureOffset;
+    vec2 texCoordsPixel = clamp(floor(tileCoordsPixel), 0.5, uTileTextureSize - 0.5) + uTileTextureOffset;
     vec2 f = fract(tileCoordsPixel);
 
     // Pixel grid: 1.1px feather on line width. 1.1 instead of 1.0 to reduce Moire effects
