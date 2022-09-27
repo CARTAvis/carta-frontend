@@ -1,9 +1,11 @@
 import React from "react";
-import {Group, Shape, Arrow, Transformer, Rect, Line} from "react-konva";
+import {Group, Shape, Arrow, Transformer, Text, Line} from "react-konva";
 import {KonvaEventObject} from "konva/lib/Node";
+// import * as AST from "ast_wrapper";
+import { AppStore } from "stores";
 import {CompassAnnotationStore, FrameStore, RegionStore} from "stores/Frame";
 import {transformedImageToCanvasPos} from "./shared";
-import {transformPoint} from "utilities";
+// import {transformPoint} from "utilities";
 
 const POINT_WIDTH = 6;
 const POINT_DRAG_WIDTH = 13;
@@ -196,19 +198,6 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
 
     const frame = props.frame;
     const region = props.region as CompassAnnotationStore;
-    // const centerReferenceImage = region.center;
-    // const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
-    // const centerPixelSpace = transformedImageToCanvasPos(centerSecondaryImage, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-    // const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
-    // const N = pointsSecondaryImage.length;
-    // const pointArray = new Array<number>(N * 2);
-    // for (let i = 0; i < N; i++) {
-    //     const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-    //     pointArray[i * 2] = approxPointPixelSpace.x - centerPixelSpace.x;
-    //     pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
-    // }
-
-    // console.log(centerPixelSpace)
 
     const handleClick = (event: KonvaEventObject<MouseEvent>) => {
         console.log("selecting");
@@ -218,54 +207,57 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
         console.log("double clicking");
         props.onDoubleClick(region);
     };
-    // const handleContextMenu = () => {};
-    // const handleDragStart = () => {};
-    // const handleDragEnd = () => {};
-    // const handleDrag = () => {};
-    const transformedStart = transformPoint(frame.wcsInfo, region.endPoints[0], false);
-    const transformedEnd = transformPoint(frame.wcsInfo, region.endPoints[1], false);
-    const approxPoints = region.getRegionApproximation(frame.wcsInfo);
-    const pointArray = new Array<number>(approxPoints.length * 2);
-    for (let i = 0; i < approxPoints.length; i++) {
-        const point = transformedImageToCanvasPos(approxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        pointArray[i * 2] = point.x;
-        pointArray[i * 2 + 1] = point.y;
+
+    // const copySrc = AST.copy(frame.wcsInfoForTransformation);
+    // AST.invert(copySrc);
+    // const spatialTransformAST = frame.wcsInfo;
+    const approxPoints = region.getRegionApproximation(frame.spatialTransformAST);
+    const northApproxPoints = approxPoints.northApproximatePoints;
+    const eastApproxPoints = approxPoints.eastApproximatePoints;
+    const northPointArray = new Array<number>(northApproxPoints.length * 2);
+    const eastPointArray = new Array<number>(eastApproxPoints.length * 2);
+    for (let i = 0; i < northApproxPoints.length; i++) {
+        const point = transformedImageToCanvasPos(northApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        northPointArray[i * 2] = point.x;
+        northPointArray[i * 2 + 1] = point.y;
     }
-    const startPoint = transformedImageToCanvasPos(transformedStart, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-    const endPoint = transformedImageToCanvasPos(transformedEnd, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-    // const width = region.size.x / devicePixelRatio;
-    // const height = region.size.y / devicePixelRatio;
-    // const offsetX = (width * frame.aspectRatio) / 2.0;
-    // const offsetY = height / 2.0;
+    for (let i = 0; i < eastApproxPoints.length; i++) {
+        const point = transformedImageToCanvasPos(eastApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        eastPointArray[i * 2] = point.x;
+        eastPointArray[i * 2 + 1] = point.y;
+    }
+
+    // trigger re-render when exporting images
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const imageRatio = AppStore.Instance.imageRatio;
+
+    console.log(northPointArray[0], northPointArray[1], eastPointArray[0], eastPointArray[1], northPointArray[northPointArray.length - 2], northPointArray[northPointArray.length - 1], eastPointArray[eastPointArray.length-2], eastPointArray[eastPointArray.length-1])
 
     return (
         <>
             <Group
-                key={props.key}
                 ref={shapeRef}
                 listening={!region.locked}
                 draggable
                 onClick={handleClick}
                 onDblClick={handleDoubleClick}
-                // width={width * frame.aspectRatio}
-                // height={height}
-                // offsetX={offsetX}
-                // offsetY={offsetY}
             >
-                <Line points={pointArray} stroke={region.color} strokeWidth={region.lineWidth} />
-                <Rect x={startPoint.x} y={startPoint.y} opacity={0.5} fill={"green"} width={endPoint.x - startPoint.x} height={endPoint.y - startPoint.y} points={pointArray} />
+                {/* <Line points={pointArray} stroke={'yellow'} strokeWidth={10} opacity={1}/> */}
+                <Line closed points={[eastPointArray[eastPointArray.length - 2], northPointArray[northPointArray.length - 1], eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], northPointArray[northPointArray.length - 2], northPointArray[northPointArray.length - 1]]} opacity={0.5} fill={"green"} />
+                <Line closed points={[eastPointArray[0], eastPointArray[1], eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], northPointArray[northPointArray.length - 2], northPointArray[northPointArray.length - 1]]} opacity={0.5} fill={"green"} />
+                {/* <Rect x={eastPointArray[0]} y={eastPointArray[1]} width={eastPointArray[eastPointArray.length - 2] - eastPointArray[0]} height={northPointArray[northPointArray.length - 1] - northPointArray[1]} opacity={0.5} fill={"green"} /> */}
                 <Arrow
                     stroke={"red"}
-                    fill={region.color}
+                    fill={"red"}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     dash={[region.dashLength]}
-                    closed={true}
+                    closed={false}
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
-                    // points={[centerPixelSpace.x, centerPixelSpace.y, centerPixelSpace.x + region.size.x, centerPixelSpace.y]}
-                    points={[startPoint.x, startPoint.y, endPoint.x, startPoint.y]}
+                    points={eastPointArray}
+                    // points={[startPoint.x, startPoint.y, endPoint.x, startPoint.y]}
                 />
                 <Arrow
                     stroke={region.color}
@@ -274,12 +266,14 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     dash={[region.dashLength]}
-                    closed={true}
+                    closed={false}
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
-                    // points={[centerPixelSpace.x, centerPixelSpace.y, centerPixelSpace.x, centerPixelSpace.y + region.size.y]}
-                    points={[startPoint.x, startPoint.y, startPoint.x, endPoint.y]}
+                    points={northPointArray}
+                    // points={[startPoint.x, startPoint.y, startPoint.x, endPoint.y]}
                 />
+                <Text x={northPointArray[northPointArray.length - 2]} y={northPointArray[northPointArray.length - 1]} text={region.northLabel} fill={'yellow'}/>
+                <Text x={eastPointArray[eastPointArray.length - 2]} y={eastPointArray[eastPointArray.length - 1]} text={region.eastLabel} fill={'red'}/>
             </Group>
             {props.selected && <Transformer ref={trRef} draggable />}
         </>

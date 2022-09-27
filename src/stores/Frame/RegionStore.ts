@@ -44,7 +44,7 @@ export class RegionStore {
     static readonly TARGET_VERTEX_COUNT = 200;
 
     private readonly backendService: BackendService;
-    private readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
+    protected readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
     public modifiedTimestamp: number;
 
     public static RegionTypeString(regionType: CARTA.RegionType): string {
@@ -339,7 +339,7 @@ export class RegionStore {
             }
             if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE) {
                 approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
-            } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT || this.regionType === CARTA.RegionType.ANNCOMPASS) {
+            } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT) {
                 let halfWidth = this.size.x / 2;
                 let halfHeight = this.size.y / 2;
                 const rotation = (this.rotation * Math.PI) / 180.0;
