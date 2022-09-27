@@ -1,4 +1,4 @@
-import {observable, computed, action, makeObservable} from "mobx";
+import {observable, computed, action, makeObservable, flow} from "mobx";
 import {AppStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
 import {LayoutConfig, PresetLayout} from "models";
@@ -42,9 +42,9 @@ export class LayoutStore {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
-    @action fetchLayouts = async () => {
+    @flow.bound *fetchLayouts() {
         try {
-            const userLayouts = await ApiService.Instance.getLayouts();
+            const userLayouts = yield ApiService.Instance.getLayouts();
             for (const name of Object.keys(userLayouts)) {
                 if (name) {
                     this.layouts[name] = userLayouts[name];
@@ -54,7 +54,7 @@ export class LayoutStore {
             AlertStore.Instance.showAlert("Loading user-defined layout failed!");
             console.log(err);
         }
-    };
+    }
 
     private initLayoutsFromPresets = () => {
         PresetLayout.PRESETS.forEach(presetName => {
@@ -131,7 +131,7 @@ export class LayoutStore {
         return true;
     };
 
-    @action saveLayout = async () => {
+    @flow.bound *saveLayout() {
         const appStore = AppStore.Instance;
         if (!this.layouts || !this.layoutNameToBeSaved || !this.dockedLayout) {
             appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
@@ -164,7 +164,7 @@ export class LayoutStore {
         this.layouts[this.layoutNameToBeSaved] = configToSave;
         if (!PresetLayout.isPreset(this.layoutNameToBeSaved)) {
             try {
-                const success = await appStore.apiService.setLayout(this.layoutNameToBeSaved, configToSave);
+                const success = yield appStore.apiService.setLayout(this.layoutNameToBeSaved, configToSave);
                 if (success) {
                     this.handleSaveResult(success);
                 }
@@ -173,7 +173,7 @@ export class LayoutStore {
                 this.handleSaveResult(false);
             }
         }
-    };
+    }
 
     private handleSaveResult = (success: boolean) => {
         if (success) {

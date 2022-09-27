@@ -198,7 +198,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label="Average Width">
-                    <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
+                    <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
                 </FormGroup>
                 <div className="generate-button">
                     <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
