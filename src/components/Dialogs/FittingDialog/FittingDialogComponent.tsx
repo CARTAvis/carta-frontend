@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, Classes, Dialog, FormGroup, HTMLSelect, Icon, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Tab, Tabs, Text} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Dialog, FormGroup, HTMLSelect, Icon, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {AppStore, HelpType} from "stores";
@@ -19,9 +19,18 @@ enum FittingResultTabs {
 @observer
 export class FittingDialogComponent extends React.Component {
     @observable private fittingResultTabId: FittingResultTabs;
+    @observable isMouseEntered: boolean = false;
 
     @action private setFittingResultTabId = (tabId: FittingResultTabs) => {
         this.fittingResultTabId = tabId;
+    };
+
+    @action onMouseEnter = () => {
+        this.isMouseEntered = true;
+    };
+
+    @action onMouseLeave = () => {
+        this.isMouseEntered = false;
     };
 
     constructor(props: any) {
@@ -73,21 +82,25 @@ export class FittingDialogComponent extends React.Component {
         const fittingResultPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
-                <Tooltip2 content={"Output result as .txt"} position={Position.LEFT} className="output-result-button">
-                    <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
-                </Tooltip2>
+                <ButtonGroup style={{opacity: this.isMouseEntered ? 1 : 0}}>
+                    <Tooltip2 content={"Export result as .txt"} position={Position.LEFT} className="output-result-button">
+                        <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
+                    </Tooltip2>
+                </ButtonGroup>
             </Pre>
         );
 
         const fullLogPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
-                <Tooltip2 content={"Output log as .txt"} position={Position.LEFT} className="output-log-button">
-                    <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
-                </Tooltip2>
+                <ButtonGroup style={{opacity: this.isMouseEntered ? 1 : 0}}>
+                    <Tooltip2 content={"Exportput log as .txt"} position={Position.LEFT} className="output-log-button">
+                        <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
+                    </Tooltip2>
+                </ButtonGroup>
             </Pre>
         );
-        console.log("fileName: "+fittingStore.effectiveFrame?.filename.split(".")[0])
+        console.log("fileName: " + fittingStore.effectiveFrame?.filename.split(".")[0]);
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
@@ -142,7 +155,7 @@ export class FittingDialogComponent extends React.Component {
                         </Tooltip2>
                     </div>
                 </div>
-                <div className={classNames(Classes.DIALOG_BODY, "fitting-result")}>
+                <div className={classNames(Classes.DIALOG_BODY, "fitting-result")} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                     <Tabs id="fittingResultTabs" vertical={true} selectedTabId={this.fittingResultTabId} onChange={this.setFittingResultTabId}>
                         <Tab id={FittingResultTabs.RESULT} title="Fitting Result" panel={fittingResultPanel} />
                         <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
