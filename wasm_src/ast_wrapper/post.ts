@@ -62,17 +62,17 @@ Module.colors = [
 ];
 Module.shapes = [
     "\u25A1", // Square
-    "\u25E6",  // Little circle
-    "\u002B",  // Cross
-    "\u26B9",  // Sextile (star)
-    "\u25CB",  // Larger circle
-    "\u2A09",  // Cross
+    "\u25E6", // Little circle
+    "\u002B", // Cross
+    "\u26B9", // Sextile (star)
+    "\u25CB", // Larger circle
+    "\u2A09", // Cross
     "\u25A1", // Square (repeat)
     "\u25BD", // Triangle
     "\u2295", // Circled plus
     "\u25A1", // Square (repeat)
     "\u25C7", // Diamond
-    "\u2606", // White star
+    "\u2606" // White star
 ];
 
 Module.setColors = function (colors) {
@@ -97,7 +97,7 @@ Module.setCanvas = function (canvas) {
 
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
 Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
-Module.putFits = Module.cwrap("putFits", null, ["number", "string"])
+Module.putFits = Module.cwrap("putFits", null, ["number", "string"]);
 Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number", "number"]);
 Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
 Module.getSkyFrameSet = Module.cwrap("getSkyFrameSet", "number", ["number"]);
@@ -128,6 +128,7 @@ Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
 Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
 Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
+Module.make2DSwappedFrameSet = Module.cwrap("make2DSwappedFrameSet", "number", ["number", "number", "number", "number", "number", "number"]);
 
 Module.currentFormatStrings = [];
 
@@ -154,14 +155,14 @@ Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number
     return {x: xFormat, y: yFormat};
 };
 
-Module.getWCSValueFromFormattedString = function (wcsInfo: number, formatString: {x: string, y: string}) {
+Module.getWCSValueFromFormattedString = function (wcsInfo: number, formatString: {x: string; y: string}) {
     const N = 1;
     Module.unformat(wcsInfo, 1, formatString.x, Module.xOut);
     Module.unformat(wcsInfo, 2, formatString.y, Module.yOut);
     const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
     const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
     return {x: xOut[0], y: yOut[0]};
-}
+};
 
 Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn: Float64Array, forward: boolean = true) {
     // Return empty array if arguments are invalid

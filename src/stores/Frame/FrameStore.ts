@@ -1063,7 +1063,19 @@ export class FrameStore {
             const astFrameSet = this.initSwappedFrame();
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
-                this.wcsInfo = AST.copy(astFrameSet);
+                const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral + 1;
+                const dirXAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
+                const dirYAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+                const dirAxis = dirXAxis < dirYAxis ? dirXAxis : dirYAxis;
+                let dirAxisSize;
+                if (dirAxis === 1) {
+                    dirAxisSize = this.frameInfo.fileInfoExtended.width;
+                } else {
+                    // For dirAxis === 2
+                    dirAxisSize = this.frameInfo.fileInfoExtended.height;
+                }
+                AST.set(astFrameSet, "Equinox=J2010"); // To avoid negative angles on the RA axis
+                this.wcsInfo = AST.make2DSwappedFrameSet(astFrameSet, dirAxis, spectralAxis, this.channel + 1, dirAxisSize, 3);
                 AST.deleteObject(astFrameSet);
             }
         } else if (this.isUVImage) {
@@ -1390,41 +1402,52 @@ export class FrameStore {
 
     private initSwappedFrame = (): AST.FrameSet => {
         const fitsChan = AST.emptyFitsChan();
+        const stokesAxis = this.frameInfo.fileInfoExtended.axesNumbers.stokes + 1;
+        let regStokesAxis = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${stokesAxis}`);
+
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[1-2]/)) {
-                if (!entry.value.length) {
+            let name = entry.name;
+            if (name === "HISTORY") {
+                continue;
+            }
+
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]/)) {
+                continue;
+            }
+
+            if (stokesAxis > 0 && entry.name.match(regStokesAxis)) {
+                continue;
+            }
+
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) {
+                if (stokesAxis > 0) {
+                    name = entry.name.replace("4", `${stokesAxis}`);
+                } else {
                     continue;
                 }
-
-                let value = trimFitsComment(entry.value);
-                if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
-                    value = "2";
-                }
-
-                if (entry.entryType === CARTA.EntryType.STRING) {
-                    value = `'${value}'`;
-                } else {
-                    value = FrameStore.ShiftASTCoords(entry, value);
-                }
-
-                if (value.match(/DEC--*/)) {
-                    value = "'Declination'";
-                } else if (value.match(/RA---*/)) {
-                    value = "'Right ascension'";
-                } else if (value.match(/GLON-*/)) {
-                    value = "'Galactic longitude'";
-                } else if (value.match(/GLAT-*/)) {
-                    value = "'Galactic latitude'";
-                }
-
-                let name = entry.name;
-                while (name.length < 8) {
-                    name += " ";
-                }
-
-                const entryString = `${name}=  ${value}`;
-                AST.putFits(fitsChan, entryString);
             }
+
+            if (!entry.value.length) {
+                continue;
+            }
+
+            let value = trimFitsComment(entry.value);
+            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+                value = "3";
+            }
+
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            } else {
+                value = FrameStore.ShiftASTCoords(entry, value);
+            }
+
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            const entryString = `${name}=  ${value}`;
+            AST.putFits(fitsChan, entryString);
         }
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
