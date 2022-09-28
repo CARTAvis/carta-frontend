@@ -56,7 +56,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
                 width: this.width,
-                spectralRange: !channelIndexMin && !channelIndexMax && channelIndexMin !== 0 && channelIndexMax !== 0 ? null : {min: channelIndexMin, max: channelIndexMax},
+                spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) && !channelIndexMin && !channelIndexMax && channelIndexMin !== 0 && channelIndexMax !== 0 ? null : {min: channelIndexMin, max: channelIndexMax},
                 reverse: this.reverse,
                 keep: this.keep
             };
@@ -109,6 +109,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         makeObservable(this);
         this.width = 3;
         this.reverse = false;
+        this.keep = false;
         reaction(
             () => this.effectiveFrame.channelValueBounds,
             channelValueBounds => {

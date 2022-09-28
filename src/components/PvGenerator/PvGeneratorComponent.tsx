@@ -100,7 +100,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
-
+        this.genAxisOptions();
         const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === PvGeneratorComponent.WIDGET_CONFIG.type) {
@@ -188,7 +188,11 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             channelIndexMin = holder;
         }
 
-        if ((channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) || (!this.widgetStore.range?.min && !this.widgetStore.range?.max && this.widgetStore.range?.min && this.widgetStore.range?.max)) {
+        if (
+            isFinite(this.widgetStore.range?.min) &&
+            isFinite(this.widgetStore.range?.max) &&
+            ((channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) || (!this.widgetStore.range?.min && !this.widgetStore.range?.max && this.widgetStore.range?.min && this.widgetStore.range?.max))
+        ) {
             this.setInValidSpectralRange(true);
         } else {
             this.setInValidSpectralRange(false);
@@ -200,8 +204,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const frame = this.widgetStore.effectiveFrame;
         const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
         const regionInfo = this.widgetStore.effectiveRegionInfo;
-
-        this.genAxisOptions();
 
         let selectedValue = RegionId.ACTIVE;
         if (this.widgetStore.effectiveFrame?.regionSet) {
