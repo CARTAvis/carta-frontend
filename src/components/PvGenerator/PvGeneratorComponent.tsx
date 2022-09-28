@@ -20,7 +20,7 @@ export enum PvGeneratorComponentTabs {
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @observable selectedTabId: TabId = PvGeneratorComponentTabs.PV_IMAGE;
     axesOrder = {};
-    @observable inValidSpectralRange: boolean = true;
+    @observable isValidSpectralRange: boolean = true;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTabId = tab;
@@ -120,8 +120,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    @action setInValidSpectralRange = (bool: boolean) => {
-        this.inValidSpectralRange = bool;
+    @action setisValidSpectralRange = (bool: boolean) => {
+        this.isValidSpectralRange = bool;
     };
 
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
@@ -188,14 +188,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             channelIndexMin = holder;
         }
 
-        if (
-            isFinite(this.widgetStore.range?.min) &&
-            isFinite(this.widgetStore.range?.max) &&
-            ((channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) || (!this.widgetStore.range?.min && !this.widgetStore.range?.max && this.widgetStore.range?.min && this.widgetStore.range?.max))
-        ) {
-            this.setInValidSpectralRange(true);
+        if (isFinite(this.widgetStore.range?.min) && isFinite(this.widgetStore.range?.max) && channelIndexMin < channelIndexMax && channelIndexMax < frame.numChannels) {
+            this.setisValidSpectralRange(true);
         } else {
-            this.setInValidSpectralRange(false);
+            this.setisValidSpectralRange(false);
         }
     };
 
@@ -210,7 +206,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         }
 
-        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.inValidSpectralRange;
+        const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
         const hint = (
             <span>
                 <i>
@@ -261,11 +257,11 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 <SpectralSettingsComponent
                     frame={frame}
                     onSpectralCoordinateChange={coord => {
-                        this.setInValidSpectralRange(true);
+                        this.setisValidSpectralRange(true);
                         this.widgetStore.setSpectralCoordinate(coord);
                     }}
                     onSpectralSystemChange={sys => {
-                        this.setInValidSpectralRange(true);
+                        this.setisValidSpectralRange(true);
                         this.widgetStore.setSpectralSystem(sys as SpectralSystem);
                     }}
                     disable={frame?.isPVImage}
