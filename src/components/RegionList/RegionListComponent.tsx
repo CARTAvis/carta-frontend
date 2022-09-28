@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
-import {Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
 import ReactResizeDetector from "react-resize-detector";
@@ -9,7 +9,7 @@ import {CSSProperties} from "react";
 import classNames from "classnames";
 import {CARTA} from "carta-protobuf";
 import {DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FileBrowserStore, BrowserMode} from "stores";
-import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {FrameStore, RegionStore, RegionsOpacity, WCS_PRECISION} from "stores/Frame";
 import {toFixed, getFormattedWCSPoint, formattedArcsec, length2D, clamp} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionListComponent.scss";
@@ -54,6 +54,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable height: number = 0;
     @observable firstVisibleRow: number = 0;
     @observable lastVisibleRow: number = 0;
+    @observable regionsVisibility: RegionsOpacity = RegionsOpacity.Visible;
+    @observable regionsLock: boolean = false;
 
     private scrollToSelected = (selected: any) => {
         const listRefCurrent = this.listRef.current;
@@ -84,9 +86,47 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    @action private toggleRegionVisibility = () => {
+        if (this.regionsVisibility === RegionsOpacity.Visible) {
+            this.regionsVisibility = RegionsOpacity.SemiTransparent;
+        } else if (this.regionsVisibility === RegionsOpacity.SemiTransparent) {
+            this.regionsVisibility = RegionsOpacity.Invisible;
+        } else if (this.regionsVisibility === RegionsOpacity.Invisible) {
+            this.regionsVisibility = RegionsOpacity.Visible;
+        }
+    };
+
+    @action private toggleRegionsLock = (locked?: boolean) => {
+        this.regionsLock = locked !== undefined ? locked : !this.regionsLock;
+    };
+
+    private syncRegionsLocked = () => {
+        AppStore.Instance.activeFrame.regionSet.setLocked(this.regionsLock);
+    };
+
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
         region.toggleLock();
         ev.stopPropagation();
+    };
+
+    private handleAllRegionsLockClicked = (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
+        this.toggleRegionsLock();
+        this.syncRegionsLocked();
+        ev.stopPropagation();
+    };
+
+    private handleToggleHideClicked = () => {
+        return (ev: React.MouseEvent<HTMLElement, MouseEvent>) => {
+            if (this.regionsLock !== AppStore.Instance.activeFrame.regionSet.locked) {
+                this.syncRegionsLocked();
+            }
+            this.toggleRegionVisibility();
+            AppStore.Instance.activeFrame.regionSet.setOpacity(this.regionsVisibility);
+            if (this.regionsVisibility === RegionsOpacity.Invisible) {
+                AppStore.Instance.activeFrame.regionSet.setLocked(true);
+            }
+            ev.stopPropagation();
+        };
     };
 
     private handleFocusClicked = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>, region: RegionStore) => {
@@ -122,6 +162,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
         const darkTheme = appStore.darkTheme;
+        const regionSet = appStore.activeFrame?.regionSet;
 
         if (!frame) {
             return (
@@ -192,42 +233,65 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const selectedRegion = frame.regionSet.selectedRegion;
 
-        const headerRenderer = (props: {index: number; style: CSSProperties}) => {
-            const className = classNames("row-header", {"bp3-dark": darkTheme});
-
+        const floatRenderer = () => {
             return (
-                <div className={className} style={props.style}>
-                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
-                        <Icon icon={"blank"} style={{width: 16}} />
-                        <Tooltip2 content="Import regions" position={Position.BOTTOM}>
-                            <Icon icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
-                        </Tooltip2>
-                        <Icon icon={"blank"} style={{width: 5}} />
-                        <Tooltip2 content="Export all regions" position={Position.BOTTOM}>
-                            {this.validRegions.length > 1 ? <Icon icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} /> : <Icon icon="cloud-upload" style={{opacity: 0.4}} />}
-                        </Tooltip2>
-                    </div>
-                    <div className="cell" style={{width: nameWidth}}>
-                        Name
-                    </div>
-                    <div className="cell" style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>
-                        Type
-                    </div>
-                    <div className="cell" style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>
-                        {frame.validWcs ? "Center" : "Pixel Center"}
-                    </div>
-                    {showSizeColumn && (
-                        <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>
-                            {frame.validWcs ? "Size" : "Size (px)"}
-                        </div>
-                    )}
-                    {showRotationColumn && (
-                        <div className="cell" style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>
-                            P.A. (deg)
-                        </div>
-                    )}
-                </div>
+                <ButtonGroup className="float" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                    <Tooltip2 content="Import regions" position={Position.TOP_LEFT}>
+                        <AnchorButton icon={"cloud-download"} onClick={this.handleRegionImportClicked} style={{cursor: "pointer"}} />
+                    </Tooltip2>
+                    <Tooltip2 content="Export all regions" position={Position.BOTTOM}>
+                        {this.validRegions.length > 1 ? <AnchorButton icon="cloud-upload" onClick={this.handleRegionExportAllClicked} style={{cursor: "pointer"}} /> : <AnchorButton icon="cloud-upload" style={{opacity: 0.4}} />}
+                    </Tooltip2>
+                </ButtonGroup>
             );
+        };
+
+        const headerRenderer = (regionsVisibility: RegionsOpacity, regionsLock: boolean) => {
+            return (props: {index: number; style: CSSProperties}) => {
+                const className = classNames("row-header", {"bp3-dark": darkTheme});
+
+                return (
+                    <div className={className} style={props.style}>
+                        <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
+                            <Icon icon={"blank"} style={{width: 16}} />
+                            <Tooltip2 disabled={regionsVisibility === RegionsOpacity.Invisible} content="Lock All Regions" position={Position.BOTTOM}>
+                                <Icon
+                                    icon={regionsLock ? "lock" : regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
+                                    onClick={regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleAllRegionsLockClicked(ev)}
+                                    style={{cursor: "pointer", opacity: regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}}
+                                />
+                            </Tooltip2>
+                            <Icon icon={"blank"} style={{width: 5}} />
+                            <Tooltip2 content={regionsVisibility === RegionsOpacity.Invisible ? "Show Regions" : "Hide Regions"} position={Position.BOTTOM}>
+                                <Icon
+                                    icon={regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
+                                    onClick={this.handleToggleHideClicked()}
+                                    style={{cursor: "pointer", opacity: regionsVisibility === RegionsOpacity.SemiTransparent ? 0.3 : 1}}
+                                />
+                            </Tooltip2>
+                        </div>
+                        <div className="cell" style={{width: nameWidth}}>
+                            Name
+                        </div>
+                        <div className="cell" style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>
+                            Type
+                        </div>
+                        <div className="cell" style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>
+                            {frame.validWcs ? "Center" : "Pixel Center"}
+                        </div>
+                        {showSizeColumn && (
+                            <div className="cell" style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>
+                                {frame.validWcs ? "Size" : "Size (px)"}
+                            </div>
+                        )}
+                        {showRotationColumn && (
+                            <div className="cell" style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>
+                                P.A. (deg)
+                            </div>
+                        )}
+                    </div>
+                );
+            };
         };
 
         const rowRenderer = (props: {index: number; style: CSSProperties}) => {
@@ -301,8 +365,15 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let lockEntry: React.ReactNode;
             if (region.regionId) {
                 lockEntry = (
-                    <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={ev => this.handleRegionLockClicked(ev, region)}>
-                        <Icon icon={region.locked ? "lock" : "unlock"} />
+                    <div
+                        className="cell"
+                        style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}
+                        onClick={regionSet.locked || this.regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleRegionLockClicked(ev, region)}
+                    >
+                        <Icon
+                            icon={region.locked ? "lock" : this.regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
+                            style={{opacity: regionSet.locked ? 0.3 : this.regionsVisibility === RegionsOpacity.Invisible ? 0.3 : 1}}
+                        />
                     </div>
                 );
             } else {
@@ -364,7 +435,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             <div className="region-list-widget">
                 <div className={classNames("region-list-table", {"bp3-dark": darkTheme})}>
                     <FixedSizeList itemSize={RegionListComponent.HEADER_ROW_HEIGHT} height={RegionListComponent.HEADER_ROW_HEIGHT} itemCount={1} width="100%" className="list-header">
-                        {headerRenderer}
+                        {headerRenderer(this.regionsVisibility, this.regionsLock)}
                     </FixedSizeList>
                     <FixedSizeList
                         onItemsRendered={this.onListRendered}
@@ -378,6 +449,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     </FixedSizeList>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} />
+                {floatRenderer()}
             </div>
         );
     }
