@@ -149,7 +149,8 @@ export class HotkeyContainer extends React.Component {
 
         const otherHotKeys = [
             <Hotkey key={0} group={otherGroupTitle} global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={HotkeyContainer.ToggleDarkTheme} />,
-            <Hotkey key={1} group={otherGroupTitle} global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen} />
+            <Hotkey key={1} group={otherGroupTitle} global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen} />,
+            <Hotkey key={2} group={otherGroupTitle} global={true} combo="G" label="Mirror cursor on multipanel view" onKeyDown={appStore.toggleCursorMirror} />
         ];
 
         return (

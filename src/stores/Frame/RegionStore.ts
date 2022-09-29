@@ -34,7 +34,7 @@ export class RegionStore {
     @observable rotation: number;
     @observable editing: boolean;
     @observable creating: boolean;
-    @observable locked: boolean;
+    @observable locked: boolean = false;
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
 
