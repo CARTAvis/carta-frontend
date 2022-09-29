@@ -158,6 +158,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringFinish = frame.distanceMeasuring.transformedFinish;
         const title = frame.titleCustomText;
         const ratio = AppStore.Instance.imageRatio;
+        if (frame.isSwappedImage) {
+            const requiredChannel = frame.requiredChannel;
+        }
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image

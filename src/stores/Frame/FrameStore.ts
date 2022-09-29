@@ -102,9 +102,10 @@ export class FrameStore {
 
     public requiredFrameViewForRegionRender: FrameView;
 
-    public readonly wcsInfo: AST.FrameSet;
+    public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
+    public readonly wcsInfoSwappedAxes: AST.FrameSet;
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
@@ -1062,20 +1063,10 @@ export class FrameStore {
         } else if (this.isPVImage || this.isSwappedImage) {
             const astFrameSet = this.initSwappedFrame();
             if (astFrameSet) {
-                this.spectralFrame = AST.getSpectralFrame(astFrameSet);
-                const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral + 1;
-                const dirXAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
-                const dirYAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
-                const dirAxis = dirXAxis < dirYAxis ? dirXAxis : dirYAxis;
-                let dirAxisSize;
-                if (dirAxis === 1) {
-                    dirAxisSize = this.frameInfo.fileInfoExtended.width;
-                } else {
-                    // For dirAxis === 2
-                    dirAxisSize = this.frameInfo.fileInfoExtended.height;
-                }
                 AST.set(astFrameSet, "Equinox=J2010"); // To avoid negative angles on the RA axis
-                this.wcsInfo = AST.make2DSwappedFrameSet(astFrameSet, dirAxis, spectralAxis, this.channel + 1, dirAxisSize, 3);
+                this.spectralFrame = AST.getSpectralFrame(astFrameSet);
+                this.wcsInfoSwappedAxes = AST.copy(astFrameSet);
+                this.updateSwappedFrameSet();
                 AST.deleteObject(astFrameSet);
             }
         } else if (this.isUVImage) {
@@ -1450,6 +1441,24 @@ export class FrameStore {
             AST.putFits(fitsChan, entryString);
         }
         return AST.getFrameFromFitsChan(fitsChan, false);
+    };
+
+    public updateSwappedFrameSet = () => {
+        if (this.wcsInfoSwappedAxes) {
+            const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral + 1;
+            const dirXAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
+            const dirYAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+            const dirAxis = dirXAxis < dirYAxis ? dirXAxis : dirYAxis;
+            let dirAxisSize;
+            if (dirAxis === 1) {
+                dirAxisSize = this.frameInfo.fileInfoExtended.width;
+            } else {
+                // For dirAxis === 2
+                dirAxisSize = this.frameInfo.fileInfoExtended.height;
+            }
+            const requiredChannel = this.requiredChannel + 1;
+            this.wcsInfo = AST.make2DSwappedFrameSet(this.wcsInfoSwappedAxes, dirAxis, spectralAxis, requiredChannel, dirAxisSize, 3);
+        }
     };
 
     private sanitizeChannelNumber(channel: number) {
@@ -1937,6 +1946,11 @@ export class FrameStore {
                 const siblingChannel = getTransformedChannel(this.wcsInfo3D, frame.wcsInfo3D, PreferenceStore.Instance.spectralMatchingType, sanitizedChannel);
                 frame.setChannels(siblingChannel, frame.requiredStokes, false);
             });
+        }
+
+        // Update the wcsInfo for swapped-axes cube image, since its rendering coordinate may dependent on channels
+        if (this.isSwappedImage) {
+            this.updateSwappedFrameSet();
         }
     }
 
