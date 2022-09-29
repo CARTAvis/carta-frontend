@@ -576,6 +576,12 @@ export class FrameStore {
         return (spectral === 0 && (dirX === 1 || dirY === 1)) || (spectral === 1 && (dirX === 0 || dirY === 0));
     }
 
+    @computed get isSwappedXY(): boolean {
+        const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+        const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
+        return dirX === 1 && dirY === 0;
+    }
+
     @computed get isUVImage(): boolean {
         return this.uvAxis !== undefined;
     }
@@ -1094,7 +1100,11 @@ export class FrameStore {
                 if (frameInfo.fileInfoExtended.depth > 1) {
                     // 3D frame
                     this.wcsInfo3D = AST.copy(astFrameSet);
-                    this.wcsInfo = AST.getSkyFrameSet(this.wcsInfo3D);
+                    if (this.isSwappedXY) {
+                        this.wcsInfo = this.initFrame2D();
+                    } else {
+                        this.wcsInfo = AST.getSkyFrameSet(this.wcsInfo3D);
+                    }
                 } else {
                     // 2D frame
                     this.wcsInfo = AST.copy(astFrameSet);
@@ -1104,8 +1114,10 @@ export class FrameStore {
                 if (this.wcsInfo) {
                     // init 2D(Sky) wcs copy for the precision of region coordinate transformation
                     this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
-                    AST.set(this.wcsInfoForTransformation, `Format(1)=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
-                    AST.set(this.wcsInfoForTransformation, `Format(2)=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
+                    const xAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
+                    const yAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+                    AST.set(this.wcsInfoForTransformation, `Format(${xAxis})=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
+                    AST.set(this.wcsInfoForTransformation, `Format(${yAxis})=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
                     this.validWcs = true;
                     this.overlayStore.setDefaultsFromAST(this);
                 }
@@ -1537,11 +1549,13 @@ export class FrameStore {
 
             let precisionX = 0;
             let precisionY = 0;
+            const xAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
+            const yAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
-                astString.add("Format(1)", this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringX(precisionX));
-                astString.add("Format(2)", this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringY(precisionY));
+                astString.add(`Format(${xAxis})`, this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringX(precisionX));
+                astString.add(`Format(${yAxis})`, this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringY(precisionY));
                 astString.add("System", this.isPVImage || this.isUVImage ? "cartesian" : this.overlayStore.global.explicitSystem);
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));

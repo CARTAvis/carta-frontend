@@ -534,8 +534,11 @@ export class OverlayNumberSettings {
         astString.add("Color(NumLab)", AstColorsIndex.NUMBER, this.customColor);
 
         // Add settings for individual axes
-        astString.add("Format(1)", this.formatStringX);
-        astString.add("Format(2)", this.formatStringY);
+        const frame = AppStore.Instance.activeFrame;
+        const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
+        const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+        astString.add(`Format(${xAxis})`, this.formatStringX);
+        astString.add(`Format(${yAxis})`, this.formatStringY);
 
         return astString.toString();
     }
@@ -1020,7 +1023,8 @@ export class OverlayStore {
             const _ = this.numbers.formatTypeX;
             const frame = AppStore.Instance.activeFrame;
             if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeX) {
-                AST.set(frame.wcsInfoForTransformation, `Format(1)=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
+                const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
+                AST.set(frame.wcsInfoForTransformation, `Format(${xAxis})=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
             }
         });
 
@@ -1029,7 +1033,8 @@ export class OverlayStore {
             const _ = this.numbers.formatTypeY;
             const frame = AppStore.Instance.activeFrame;
             if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeY) {
-                AST.set(frame.wcsInfoForTransformation, `Format(2)=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
+                const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+                AST.set(frame.wcsInfoForTransformation, `Format(${yAxis})=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
             }
         });
     }
