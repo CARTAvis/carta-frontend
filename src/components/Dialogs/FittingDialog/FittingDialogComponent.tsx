@@ -83,7 +83,7 @@ export class FittingDialogComponent extends React.Component {
             <Pre className="fitting-result-pre">
                 <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
                 <ButtonGroup style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
-                    <Tooltip2 content={"Export result as .txt"} position={Position.LEFT} className="output-result-button">
+                    <Tooltip2 content={"Export as txt"} position={Position.LEFT} className="output-result-button">
                         <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
                     </Tooltip2>
                 </ButtonGroup>
@@ -94,7 +94,7 @@ export class FittingDialogComponent extends React.Component {
             <Pre className="fitting-result-pre">
                 <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
                 <ButtonGroup style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
-                    <Tooltip2 content={"Exportput log as .txt"} position={Position.LEFT} className="output-log-button">
+                    <Tooltip2 content={"Exportput as txt"} position={Position.LEFT} className="output-log-button">
                         <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
                     </Tooltip2>
                 </ButtonGroup>
