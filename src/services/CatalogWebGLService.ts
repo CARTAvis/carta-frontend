@@ -83,8 +83,7 @@ export class CatalogWebGLService {
     public updatePositionArray = (fileId: number, dataPoints: Float32Array, offset: number) => {
         const positionArray = this.positionArrays.get(fileId);
         if (positionArray) {
-            const newArray = new Float32Array(offset + dataPoints.length);
-            newArray.set(positionArray.slice(0, offset));
+            const newArray = new Float32Array(positionArray.buffer, 0, offset + dataPoints.length);
             newArray.set(dataPoints, offset);
             this.positionArrays.set(fileId, newArray);
         } else {
