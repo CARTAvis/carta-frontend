@@ -12,11 +12,19 @@ export enum RegionMode {
     CREATING
 }
 
+export enum RegionsOpacity {
+    Visible = 1,
+    SemiTransparent = 0.5,
+    Invisible = 0
+}
+
 export class RegionSetStore {
     @observable regions: RegionStore[];
     @observable selectedRegion: RegionStore;
     @observable mode: RegionMode;
     @observable newRegionType: CARTA.RegionType;
+    @observable opacity: number = 1;
+    @observable locked: boolean = false;
     @observable isHoverImage: Boolean = false;
 
     private readonly frame: FrameStore;
@@ -240,4 +248,15 @@ export class RegionSetStore {
             }
         }
     };
+
+    @action setOpacity(opacity: RegionsOpacity) {
+        this.opacity = opacity;
+    }
+
+    @action setLocked(locked?: boolean) {
+        this.locked = locked === undefined ? !this.locked : locked;
+        if (this.locked) {
+            this.selectRegionByIndex(0);
+        }
+    }
 }
