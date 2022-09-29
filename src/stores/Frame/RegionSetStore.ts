@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "stores";
-import {CURSOR_REGION_ID, FrameStore, RegionStore, AnnotationStore, CompassAnnotationStore} from "stores/Frame";
+import {CURSOR_REGION_ID, FrameStore, RegionStore, AnnotationStore, CompassAnnotationStore, RulerAnnotationStore} from "stores/Frame";
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
@@ -120,8 +120,12 @@ export class RegionSetStore {
         return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNTEXT, temporary, true);
     };
 
-    @action addAnnCompassRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
-        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNCOMPASS, temporary, true);
+    @action addAnnCompassRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNCOMPASS, temporary, true);
+    };
+
+    @action addAnnRulerRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNRULER, temporary, true);
     };
 
     @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[]) => {
@@ -140,50 +144,56 @@ export class RegionSetStore {
     };
 
     private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, isAnnotation: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
-        let region;
-        if (regionType === CARTA.RegionType.ANNCOMPASS) {
-            region = new CompassAnnotationStore(
-                this.backendService,
-                this.frame.frameInfo.fileId,
-                this.frame,
-                points,
-                regionType,
-                regionId,
-                this.preference.regionColor,
-                this.preference.regionLineWidth,
-                this.preference.regionDashLength,
-                rotation,
-                regionName
-            );
-        } else {
-            region = isAnnotation
-                ? new AnnotationStore(
-                      this.backendService,
-                      this.frame.frameInfo.fileId,
-                      this.frame,
-                      points,
-                      regionType,
-                      regionId,
-                      this.preference.regionColor,
-                      this.preference.regionLineWidth,
-                      this.preference.regionDashLength,
-                      rotation,
-                      regionName
-                  )
-                : new RegionStore(
-                      this.backendService,
-                      this.frame.frameInfo.fileId,
-                      this.frame,
-                      points,
-                      regionType,
-                      regionId,
-                      this.preference.regionColor,
-                      this.preference.regionLineWidth,
-                      this.preference.regionDashLength,
-                      rotation,
-                      regionName
-                  );
+        let region: RegionStore;
+
+        switch (regionType) {
+            case CARTA.RegionType.ANNCOMPASS:
+                region = new CompassAnnotationStore(
+                    this.backendService,
+                    this.frame.frameInfo.fileId,
+                    this.frame,
+                    points,
+                    regionType,
+                    regionId,
+                    this.preference.regionColor,
+                    this.preference.regionLineWidth,
+                    this.preference.regionDashLength,
+                    rotation,
+                    regionName
+                );
+                break;
+            case CARTA.RegionType.ANNRULER:
+                region = new RulerAnnotationStore(
+                    this.backendService,
+                    this.frame.frameInfo.fileId,
+                    this.frame,
+                    points,
+                    regionType,
+                    regionId,
+                    this.preference.regionColor,
+                    this.preference.regionLineWidth,
+                    this.preference.regionDashLength,
+                    rotation,
+                    regionName
+                );
+                break;
+            default:
+                region = new RegionStore(
+                    this.backendService,
+                    this.frame.frameInfo.fileId,
+                    this.frame,
+                    points,
+                    regionType,
+                    regionId,
+                    this.preference.regionColor,
+                    this.preference.regionLineWidth,
+                    this.preference.regionDashLength,
+                    rotation,
+                    regionName
+                );
+                break;
         }
+
         console.log(region, points);
         this.regions.push(region);
         //Need to be removed

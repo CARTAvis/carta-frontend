@@ -2,8 +2,8 @@ import React from "react";
 import {Group, Shape, Arrow, Transformer, Text, Line} from "react-konva";
 import {KonvaEventObject} from "konva/lib/Node";
 // import * as AST from "ast_wrapper";
-import { AppStore } from "stores";
-import {CompassAnnotationStore, FrameStore, RegionStore} from "stores/Frame";
+import {AppStore} from "stores";
+import {CompassAnnotationStore, FrameStore, RegionStore, RulerAnnotationStore} from "stores/Frame";
 import {transformedImageToCanvasPos} from "./shared";
 // import {transformPoint} from "utilities";
 
@@ -231,21 +231,26 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const imageRatio = AppStore.Instance.imageRatio;
 
-    console.log(northPointArray[0], northPointArray[1], eastPointArray[0], eastPointArray[1], northPointArray[northPointArray.length - 2], northPointArray[northPointArray.length - 1], eastPointArray[eastPointArray.length-2], eastPointArray[eastPointArray.length-1])
+    const topMostY = Math.min(northPointArray[northPointArray.length - 1], northPointArray[1], eastPointArray[eastPointArray.length - 1]);
+    const bottomMostY = Math.max(northPointArray[northPointArray.length - 1], northPointArray[1], eastPointArray[eastPointArray.length - 1]);
+    const leftMostX = Math.min(eastPointArray[0], eastPointArray[eastPointArray.length - 2], northPointArray[northPointArray.length - 2]);
+    const rightMostX = Math.max(eastPointArray[0], eastPointArray[eastPointArray.length - 2], northPointArray[northPointArray.length - 2]);
+
+    const topLeftPoint = [leftMostX, topMostY];
+    const topRightPoint = [rightMostX, topMostY];
+    const bottomLeftPoint = [leftMostX, bottomMostY];
+    const bottomRightPoint = [rightMostX, bottomMostY];
 
     return (
         <>
-            <Group
-                ref={shapeRef}
-                listening={!region.locked}
-                draggable
-                onClick={handleClick}
-                onDblClick={handleDoubleClick}
-            >
+            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick}>
                 {/* <Line points={pointArray} stroke={'yellow'} strokeWidth={10} opacity={1}/> */}
-                <Line closed points={[eastPointArray[eastPointArray.length - 2], northPointArray[northPointArray.length - 1], eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], northPointArray[northPointArray.length - 2], northPointArray[northPointArray.length - 1]]} opacity={0.5} fill={"green"} />
-                <Line closed points={[eastPointArray[0], eastPointArray[1], eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], northPointArray[northPointArray.length - 2], northPointArray[northPointArray.length - 1]]} opacity={0.5} fill={"green"} />
+                {/* <Line closed points={[eastPointArray[eastPointArray.length - 2], northPointArray[northPointArray.length - 1], eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], northPointArray[northPointArray.length - 2], northPointArray[northPointArray.length - 1]]} opacity={0.5} fill={"green"} />
+                <Line closed points={[eastPointArray[0], eastPointArray[1], eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], northPointArray[northPointArray.length - 2], northPointArray[northPointArray.length - 1]]} opacity={0.5} fill={"green"} /> */}
                 {/* <Rect x={eastPointArray[0]} y={eastPointArray[1]} width={eastPointArray[eastPointArray.length - 2] - eastPointArray[0]} height={northPointArray[northPointArray.length - 1] - northPointArray[1]} opacity={0.5} fill={"green"} /> */}
+                <Line closed points={[...topLeftPoint, ...topRightPoint, ...bottomLeftPoint, ...bottomRightPoint]} opacity={0} />
+                <Line closed points={[...bottomRightPoint, ...topRightPoint, ...bottomLeftPoint, ...topLeftPoint]} opacity={0} />
+
                 <Arrow
                     stroke={"red"}
                     fill={"red"}
@@ -272,10 +277,110 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
                     points={northPointArray}
                     // points={[startPoint.x, startPoint.y, startPoint.x, endPoint.y]}
                 />
-                <Text x={northPointArray[northPointArray.length - 2]} y={northPointArray[northPointArray.length - 1]} text={region.northLabel} fill={'yellow'}/>
-                <Text x={eastPointArray[eastPointArray.length - 2]} y={eastPointArray[eastPointArray.length - 1]} text={region.eastLabel} fill={'red'}/>
+                <Text x={northPointArray[northPointArray.length - 2]} y={northPointArray[northPointArray.length - 1]} text={region.northLabel} fill={"yellow"} />
+                <Text x={eastPointArray[eastPointArray.length - 2]} y={eastPointArray[eastPointArray.length - 1]} text={region.eastLabel} fill={"red"} />
             </Group>
-            {props.selected && <Transformer ref={trRef} draggable />}
+            {props.selected && <Transformer ref={trRef} shouldOverdrawWholeArea onClick={handleClick} onDblClick={handleDoubleClick} />}
+        </>
+    );
+};
+export const RulerAnnotation = (props: CompassAnnotationProps) => {
+    const shapeRef = React.useRef();
+    const trRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (props.selected) {
+            // we need to attach transformer manually
+            trRef?.current?.nodes([shapeRef.current]);
+            trRef?.current?.getLayer().batchDraw();
+        }
+    }, [props.selected]);
+
+    const frame = props.frame;
+    const region = props.region as RulerAnnotationStore;
+
+    const handleClick = (event: KonvaEventObject<MouseEvent>) => {
+        console.log("selecting");
+        props.onSelect(region);
+    };
+    const handleDoubleClick = (event: KonvaEventObject<MouseEvent>) => {
+        console.log("double clicking");
+        props.onDoubleClick(region);
+    };
+
+    // const copySrc = AST.copy(frame.wcsInfoForTransformation);
+    // AST.invert(copySrc);
+    // const spatialTransformAST = frame.wcsInfo;
+    const approxPoints = region.getRegionApproximation(frame.spatialTransformAST);
+    const xApproxPoints = approxPoints.xApproximatePoints;
+    const yApproxPoints = approxPoints.yApproximatePoints;
+    const xPointArray = new Array<number>(xApproxPoints.length * 2);
+    const yPointArray = new Array<number>(yApproxPoints.length * 2);
+    for (let i = 0; i < xApproxPoints.length; i++) {
+        const point = transformedImageToCanvasPos(xApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        xPointArray[i * 2] = point.x;
+        xPointArray[i * 2 + 1] = point.y;
+    }
+    for (let i = 0; i < yApproxPoints.length; i++) {
+        const point = transformedImageToCanvasPos(yApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        yPointArray[i * 2] = point.x;
+        yPointArray[i * 2 + 1] = point.y;
+    }
+
+    // trigger re-render when exporting images
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const imageRatio = AppStore.Instance.imageRatio;
+
+    const topMostY = Math.min(yPointArray[yPointArray.length - 1], yPointArray[1], xPointArray[xPointArray.length - 1]);
+    const bottomMostY = Math.max(yPointArray[yPointArray.length - 1], yPointArray[1], xPointArray[xPointArray.length - 1]);
+    const leftMostX = Math.min(xPointArray[0], xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 2]);
+    const rightMostX = Math.max(xPointArray[0], xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 2]);
+
+    const topLeftPoint = [leftMostX, topMostY];
+    const topRightPoint = [rightMostX, topMostY];
+    const bottomLeftPoint = [leftMostX, bottomMostY];
+    const bottomRightPoint = [rightMostX, bottomMostY];
+
+    return (
+        <>
+            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick}>
+                {/* <Line points={pointArray} stroke={'yellow'} strokeWidth={10} opacity={1}/> */}
+                {/* <Line closed points={[xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 1], yPointArray[xPointArray.length - 2], xPointArray[yPointArray.length - 1], xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]]} opacity={0.5} fill={"green"} />
+                <Line closed points={[Math.max(yPointArray[yPointArray.length - 2], yPointArray[1]), xPointArray[yPointArray.length - 1], xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 1], xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]]} opacity={0.5} fill={"yellow"} /> */}
+                {/* <Line closed points={[xPointArray[0], xPointArray[1], xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]]} opacity={0.5} fill={"green"} /> */}
+                {/* <Rect x={eastPointArray[0]} y={eastPointArray[1]} width={eastPointArray[eastPointArray.length - 2] - eastPointArray[0]} height={northPointArray[northPointArray.length - 1] - northPointArray[1]} opacity={0.5} fill={"green"} /> */}
+                <Line closed points={[...topLeftPoint, ...topRightPoint, ...bottomLeftPoint, ...bottomRightPoint]} opacity={0} />
+                <Line closed points={[...bottomRightPoint, ...topRightPoint, ...bottomLeftPoint, ...topLeftPoint]} opacity={0} />
+
+                <Line points={[xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]]} stroke={"green"} strokeWidth={10} />
+                <Line
+                    stroke={"red"}
+                    fill={"red"}
+                    strokeWidth={region.lineWidth}
+                    strokeScaleEnabled={false}
+                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    dash={[region.dashLength]}
+                    closed={false}
+                    perfectDrawEnabled={false}
+                    lineJoin={"round"}
+                    points={xPointArray}
+                    // points={[startPoint.x, startPoint.y, endPoint.x, startPoint.y]}
+                />
+                <Line
+                    stroke={region.color}
+                    fill={region.color}
+                    strokeWidth={region.lineWidth}
+                    strokeScaleEnabled={false}
+                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    dash={[region.dashLength]}
+                    closed={false}
+                    perfectDrawEnabled={false}
+                    lineJoin={"round"}
+                    points={yPointArray}
+                    // points={[startPoint.x, startPoint.y, startPoint.x, endPoint.y]}
+                />
+            </Group>
+            {props.selected && <Transformer ref={trRef} shouldOverdrawWholeArea onClick={handleClick} onDblClick={handleDoubleClick} />}
         </>
     );
 };

@@ -17,7 +17,7 @@ import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, 
 import {CursorInfo, Point2D, ZoomPoint} from "models";
 import {add2D, average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
-import {CompassAnnotation} from "./InvariantShapes";
+import {CompassAnnotation, RulerAnnotation} from "./InvariantShapes";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
@@ -213,7 +213,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 this.regionStartPoint = cursorPosImageSpace;
                 break;
             case CARTA.RegionType.ANNCOMPASS:
-                this.creatingRegion = frame.regionSet.addAnnCompassRegion(cursorPosImageSpace, 0, 0, true);
+                this.creatingRegion = frame.regionSet.addAnnCompassRegion([cursorPosImageSpace, cursorPosImageSpace], true);
+                this.regionStartPoint = cursorPosImageSpace;
+                break;
+            case CARTA.RegionType.ANNRULER:
+                this.creatingRegion = frame.regionSet.addAnnRulerRegion([cursorPosImageSpace, cursorPosImageSpace], true);
                 this.regionStartPoint = cursorPosImageSpace;
                 break;
             default:
@@ -240,14 +244,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 frame = this.props.frame.spatialReference || this.props.frame;
                 if (this.creatingRegion.controlPoints.length > 1 && length2D(this.creatingRegion.size) === 0) {
                     const scaleFactor =
-                    (PreferenceStore.Instance.regionSize *
-                        (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNRECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNCOMPASS ? 1.0 : 0.5)) /
-                        frame.zoomLevel;
-                        this.creatingRegion.setSize(scale2D(this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1}, scaleFactor));
-                        console.log("creating region setting size", this.creatingRegion.size);
-                    }
+                        (PreferenceStore.Instance.regionSize * (this.creatingRegion.regionType === CARTA.RegionType.RECTANGLE || this.creatingRegion.regionType === CARTA.RegionType.ANNRECTANGLE ? 1.0 : 0.5)) / frame.zoomLevel;
+                    this.creatingRegion.setSize(scale2D(this.creatingRegion.regionType === CARTA.RegionType.LINE ? {x: 2, y: 0} : {x: 1, y: 1}, scaleFactor));
+                    console.log("creating region setting size", this.creatingRegion.size);
+                }
                 break;
             case CARTA.RegionType.ANNCOMPASS:
+            case CARTA.RegionType.ANNRULER:
             case CARTA.RegionType.POINT:
             case CARTA.RegionType.ANNPOINT:
             case CARTA.RegionType.POLYGON:
@@ -332,10 +335,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     console.log("setting control point corner to corner");
                     this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
                     break;
-                
-                    // this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
-                    // // (this.creatingRegion as CompassAnnotationStore).setEndPoints([this.regionStartPoint, endPoint]);
-                    // break;
+
+                // this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
+                // // (this.creatingRegion as CompassAnnotationStore).setEndPoints([this.regionStartPoint, endPoint]);
+                // break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
                     this.creatingRegion.setControlPoints([center, {y: Math.abs(dx) / 2.0, x: Math.abs(dy) / 2.0}]);
@@ -344,6 +347,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
                 case CARTA.RegionType.ANNCOMPASS:
+                case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
                     break;
                 default:
@@ -355,7 +359,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ANNRECTANGLE:
                 case CARTA.RegionType.ANNTEXT:
-                
                     console.log("setting control point center to corner");
                     this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);
                     console.log(this.creatingRegion.controlPoints);
@@ -368,12 +371,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
                 case CARTA.RegionType.ANNCOMPASS:
+                case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
                     break;
-                // case CARTA.RegionType.ANNCOMPASS:
-                //     this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
-                //     (this.creatingRegion as CompassAnnotationStore).setEndPoints([this.regionStartPoint, endPoint]);
-                //     break;
                 default:
                     break;
             }
@@ -603,6 +603,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.ANNVECTOR:
             case CARTA.RegionType.ANNTEXT:
             case CARTA.RegionType.ANNCOMPASS:
+            case CARTA.RegionType.ANNRULER:
                 this.regionCreationStart(konvaEvent.evt);
                 break;
             case CARTA.RegionType.POINT:
@@ -627,6 +628,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             case CARTA.RegionType.ANNVECTOR:
             case CARTA.RegionType.ANNTEXT:
             case CARTA.RegionType.ANNCOMPASS:
+            case CARTA.RegionType.ANNRULER:
                 this.regionCreationEnd();
                 break;
             case CARTA.RegionType.POLYGON:
@@ -663,6 +665,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNVECTOR:
                 case CARTA.RegionType.ANNTEXT:
                 case CARTA.RegionType.ANNCOMPASS:
+                case CARTA.RegionType.ANNRULER:
                     this.RegionCreating(mouseEvent);
                     break;
                 case CARTA.RegionType.POLYGON:
@@ -812,6 +815,8 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: (Reg
                     return <PointRegionComponent {...commonProps} />;
                 } else if (r.regionType === CARTA.RegionType.ANNCOMPASS) {
                     return <CompassAnnotation {...commonProps} />;
+                } else if (r.regionType === CARTA.RegionType.ANNRULER) {
+                    return <RulerAnnotation {...commonProps} />;
                 } else {
                     const allProps = {
                         ...commonProps,

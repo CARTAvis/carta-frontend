@@ -110,12 +110,19 @@ export class RegionStore {
         [CARTA.RegionType.ELLIPSE, "Ellipse"],
         [CARTA.RegionType.POLYGON, "Polygon"],
         [CARTA.RegionType.POLYLINE, "Polyline"]
-        // [CARTA.RegionType.ANNPOINT, "Annotation Point"],
-        // [CARTA.RegionType.ANNLINE, "Annotation Line"],
-        // [CARTA.RegionType.ANNRECTANGLE, "Annotation Rectangle"],
-        // [CARTA.RegionType.ANNELLIPSE, "Annotation Ellipse"],
-        // [CARTA.RegionType.ANNPOLYGON, "Annotation Polygon"],
-        // [CARTA.RegionType.ANNPOLYLINE, "Annotation Polyline"]
+    ]);
+
+    static readonly AVAILABLE_ANNOTATION_TYPES = new Map<CARTA.RegionType, string>([
+        [CARTA.RegionType.ANNPOINT, "Annotation Point"],
+        [CARTA.RegionType.ANNLINE, "Annotation Line"],
+        [CARTA.RegionType.ANNRECTANGLE, "Annotation Rectangle"],
+        [CARTA.RegionType.ANNELLIPSE, "Annotation Ellipse"],
+        [CARTA.RegionType.ANNPOLYGON, "Annotation Polygon"],
+        [CARTA.RegionType.ANNPOLYLINE, "Annotation Polyline"],
+        [CARTA.RegionType.ANNVECTOR, "Annotation Vector"],
+        [CARTA.RegionType.ANNTEXT, "Annotation Text"],
+        [CARTA.RegionType.ANNCOMPASS, "Annotation Compass"],
+        [CARTA.RegionType.ANNRULER, "Annotation Ruler"]
     ]);
 
     public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
@@ -146,12 +153,13 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.ANNTEXT:
-            case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints[CENTER_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
             case CARTA.RegionType.ANNPOLYLINE:
+            case CARTA.RegionType.ANNCOMPASS:
+            case CARTA.RegionType.ANNRULER:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
             case CARTA.RegionType.LINE:
@@ -170,7 +178,6 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.ANNTEXT:
-            case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints[SIZE_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
@@ -180,6 +187,8 @@ export class RegionStore {
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
+            case CARTA.RegionType.ANNCOMPASS:
+            case CARTA.RegionType.ANNRULER:
                 return subtract2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: undefined, y: undefined};
@@ -202,7 +211,6 @@ export class RegionStore {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ANNTEXT:
-            case CARTA.RegionType.ANNCOMPASS:
                 return this.size;
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
@@ -211,6 +219,8 @@ export class RegionStore {
             case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
             case CARTA.RegionType.ANNPOLYLINE:
+            case CARTA.RegionType.ANNCOMPASS:
+            case CARTA.RegionType.ANNRULER:
                 const boundingBox = minMax2D(this.controlPoints);
                 return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
             default:
@@ -230,7 +240,6 @@ export class RegionStore {
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNULUS:
             case CARTA.RegionType.ANNTEXT:
-            case CARTA.RegionType.ANNCOMPASS:
                 return true;
             default:
                 return false;
@@ -258,13 +267,13 @@ export class RegionStore {
             case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
             case CARTA.RegionType.ANNPOLYLINE:
+            case CARTA.RegionType.ANNCOMPASS:
+            case CARTA.RegionType.ANNRULER:
                 return this.controlPoints.length >= 1;
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
                 return this.controlPoints.length === 1 || this.controlPoints.length === 2;
-            case CARTA.RegionType.ANNCOMPASS:
-                return true;
             default:
                 return false;
         }
@@ -296,6 +305,8 @@ export class RegionStore {
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
+            case CARTA.RegionType.ANNCOMPASS:
+            case CARTA.RegionType.ANNRULER:
                 let lineProperties = "Line (pixel) [";
                 controlPoints.forEach((point, index) => {
                     lineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
@@ -305,7 +316,6 @@ export class RegionStore {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ANNTEXT:
-            case CARTA.RegionType.ANNCOMPASS:
                 return `rotbox[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:

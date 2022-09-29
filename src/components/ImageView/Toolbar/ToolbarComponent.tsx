@@ -138,6 +138,16 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
+        const annotationMenu = (
+            <Menu>
+                {Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
+                    const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
+                    const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
+                    return <MenuItem icon={annotationIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
+                })}
+            </Menu>
+        );
+
         let coordinateSystem = overlay.global.system;
 
         const coordinateSystemMenu = (
@@ -277,6 +287,22 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
                             />
                         </Tooltip2>
+                        <Popover2 popoverClassName="annotation-menu" content={annotationMenu} position={Position.TOP} minimal={true}>
+                            <Tooltip2
+                                position={tooltipPosition}
+                                content={
+                                    <span>
+                                        Create annotation
+                                        <br />
+                                        <i>
+                                            <small>Click to select annotation type</small>
+                                        </i>
+                                    </span>
+                                }
+                            >
+                                <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)} />
+                            </Tooltip2>
+                        </Popover2>
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
                             <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} />
                         </Tooltip2>
