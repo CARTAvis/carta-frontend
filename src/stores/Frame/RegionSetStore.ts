@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "stores";
-import {CURSOR_REGION_ID, FrameStore, RegionStore, AnnotationStore, CompassAnnotationStore, RulerAnnotationStore} from "stores/Frame";
+import {CURSOR_REGION_ID, FrameStore, RegionStore, CompassAnnotationStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
@@ -13,8 +13,8 @@ export enum RegionMode {
 }
 
 export class RegionSetStore {
-    @observable regions: (RegionStore | AnnotationStore)[];
-    @observable selectedRegion: RegionStore | AnnotationStore;
+    @observable regions: RegionStore[];
+    @observable selectedRegion: RegionStore;
     @observable mode: RegionMode;
     @observable newRegionType: CARTA.RegionType;
     @observable isHoverImage: Boolean = false;
@@ -61,7 +61,7 @@ export class RegionSetStore {
         return regionId;
     };
 
-    @computed get regionsAndAnnotationsForRender(): (RegionStore | AnnotationStore)[] {
+    @computed get regionsAndAnnotationsForRender(): RegionStore[] {
         return this.regions?.filter(r => r.isValid && r.regionId !== 0)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
     }
 
@@ -177,6 +177,21 @@ export class RegionSetStore {
                     regionName
                 );
                 break;
+            case CARTA.RegionType.ANNTEXT:
+                region = new TextAnnotationStore(
+                    this.backendService,
+                    this.frame.frameInfo.fileId,
+                    this.frame,
+                    points,
+                    regionType,
+                    regionId,
+                    this.preference.regionColor,
+                    this.preference.regionLineWidth,
+                    this.preference.regionDashLength,
+                    rotation,
+                    regionName
+                );
+                break;
             default:
                 region = new RegionStore(
                     this.backendService,
@@ -213,7 +228,7 @@ export class RegionSetStore {
         return region;
     }
 
-    @action selectRegion = (region: RegionStore | AnnotationStore) => {
+    @action selectRegion = (region: RegionStore) => {
         if (this.regions.indexOf(region) >= 0) {
             this.selectedRegion = region;
         }
@@ -229,7 +244,7 @@ export class RegionSetStore {
         this.selectedRegion = null;
     };
 
-    @action deleteRegion = (region: RegionStore | AnnotationStore) => {
+    @action deleteRegion = (region: RegionStore) => {
         // Cursor region cannot be deleted
         if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
             if (region === this.selectedRegion) {

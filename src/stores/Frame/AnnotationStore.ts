@@ -10,7 +10,7 @@ import {FrameStore} from "stores/Frame";
 import {getApproximatePolygonPoints} from "utilities";
 import {RegionStore} from "./RegionStore";
 
-export class AnnotationStore extends RegionStore {
+export class TextAnnotationStore extends RegionStore {
     @observable text: string = "Double click to edit text";
 
     constructor(
@@ -112,6 +112,7 @@ export class RulerAnnotationStore extends RegionStore {
     public getRegionApproximation(astTransform: AST.FrameSet): any {
         let xApproximatePoints = this.regionApproximationMap.get(astTransform);
         let yApproximatePoints = this.regionApproximationMap.get(astTransform);
+        let hypotenuseApproximatePoints = this.regionApproximationMap.get(astTransform);
         const startPoint = {x: this.controlPoints[1].x, y: this.controlPoints[0].y};
         const xEndPoint = {x: this.controlPoints[0].x, y: this.controlPoints[0].y};
         const yEndPoint = {x: this.controlPoints[1].x, y: this.controlPoints[1].y};
@@ -119,6 +120,7 @@ export class RulerAnnotationStore extends RegionStore {
         // const eastEndPoint = {x: Math.min(this.controlPoints[0].x, this.controlPoints[1].x), y: startPoint.y}
         const xArrowPoints = [startPoint, xEndPoint];
         const yArrowPoints = [startPoint, yEndPoint];
+        const hypotenuseArrowPoints = [xEndPoint, yEndPoint];
         // const northArrowPoints = [startPoint, {x: this.controlPoints[0].x, y: this.controlPoints[1].y}]
         // const eastArrowPoints = [startPoint, {x: this.controlPoints[1].x, y: this.controlPoints[0].y}]
         // const northArrowPoints = [{...this.endPoints[0]}, {x: this.endPoints[0].x, y: this.endPoints[1].y}]
@@ -126,10 +128,11 @@ export class RulerAnnotationStore extends RegionStore {
         if (!yApproximatePoints && !xApproximatePoints) {
             xApproximatePoints = getApproximatePolygonPoints(astTransform, xArrowPoints, RegionStore.TARGET_VERTEX_COUNT, false);
             yApproximatePoints = getApproximatePolygonPoints(astTransform, yArrowPoints, RegionStore.TARGET_VERTEX_COUNT, false);
+            hypotenuseApproximatePoints = getApproximatePolygonPoints(astTransform, hypotenuseArrowPoints, RegionStore.TARGET_VERTEX_COUNT, false);
 
             // this.regionApproximationMap.set(astTransform, northApproximatePoints);
             // this.regionApproximationMap.set(astTransform, eastApproximatePoints);
         }
-        return {xApproximatePoints, yApproximatePoints};
+        return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints};
     }
 }

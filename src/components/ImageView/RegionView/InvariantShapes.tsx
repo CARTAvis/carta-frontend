@@ -1,11 +1,11 @@
 import React from "react";
 import {Group, Shape, Arrow, Transformer, Text, Line} from "react-konva";
 import {KonvaEventObject} from "konva/lib/Node";
-// import * as AST from "ast_wrapper";
+import * as AST from "ast_wrapper";
 import {AppStore} from "stores";
 import {CompassAnnotationStore, FrameStore, RegionStore, RulerAnnotationStore} from "stores/Frame";
 import {transformedImageToCanvasPos} from "./shared";
-// import {transformPoint} from "utilities";
+import {midpoint2D} from "utilities";
 
 const POINT_WIDTH = 6;
 const POINT_DRAG_WIDTH = 13;
@@ -311,11 +311,14 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
     // const copySrc = AST.copy(frame.wcsInfoForTransformation);
     // AST.invert(copySrc);
     // const spatialTransformAST = frame.wcsInfo;
+    const tempWcsInfo = AST.copy(frame.wcsInfo);
     const approxPoints = region.getRegionApproximation(frame.spatialTransformAST);
     const xApproxPoints = approxPoints.xApproximatePoints;
     const yApproxPoints = approxPoints.yApproximatePoints;
+    const hypotenuseApproxPoints = approxPoints.hypotenuseApproximatePoints;
     const xPointArray = new Array<number>(xApproxPoints.length * 2);
     const yPointArray = new Array<number>(yApproxPoints.length * 2);
+    const hypotenusePointArray = new Array<number>(hypotenuseApproxPoints.length * 2);
     for (let i = 0; i < xApproxPoints.length; i++) {
         const point = transformedImageToCanvasPos(xApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
         xPointArray[i * 2] = point.x;
@@ -326,33 +329,45 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
         yPointArray[i * 2] = point.x;
         yPointArray[i * 2 + 1] = point.y;
     }
+    for (let i = 0; i < hypotenuseApproxPoints.length; i++) {
+        const point = transformedImageToCanvasPos(hypotenuseApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        hypotenusePointArray[i * 2] = point.x;
+        hypotenusePointArray[i * 2 + 1] = point.y;
+    }
+
+    const centerPoints = midpoint2D({x: xPointArray[xPointArray.length - 2], y: xPointArray[xPointArray.length - 1]}, {x: yPointArray[yPointArray.length - 2], y: yPointArray[yPointArray.length - 1]});
+
+    console.log(xPointArray[xPointArray.length - 2], xPointArray[xApproxPoints.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]);
+    const distance = AST.geodesicDistance(tempWcsInfo, xPointArray[xPointArray.length - 2], xPointArray[xApproxPoints.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]);
+    const distanceText: string = ((distance * 180.0) / Math.PI).toString() + "\u00B0";
+    // const xEndPoint = {x: region.controlPoints[0].x, y: region.controlPoints[0].y};
+    // const yEndPoint = {x: region.controlPoints[1].x, y: region.controlPoints[1].y};
+    // const transformedXEndPoint = frame?.spatialTransform?.transformCoordinate(xEndPoint);
+    // const transformedYEndPoint = frame?.spatialTransform?.transformCoordinate(yEndPoint);
+    // const distance = AST.geodesicDistance(tempWcsInfo, transformedXEndPoint?.x, transformedXEndPoint?.y, transformedYEndPoint?.x, transformedYEndPoint?.y);
 
     // trigger re-render when exporting images
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const imageRatio = AppStore.Instance.imageRatio;
 
-    const topMostY = Math.min(yPointArray[yPointArray.length - 1], yPointArray[1], xPointArray[xPointArray.length - 1]);
-    const bottomMostY = Math.max(yPointArray[yPointArray.length - 1], yPointArray[1], xPointArray[xPointArray.length - 1]);
-    const leftMostX = Math.min(xPointArray[0], xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 2]);
-    const rightMostX = Math.max(xPointArray[0], xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 2]);
+    // const topMostY = Math.min(yPointArray[yPointArray.length - 1], yPointArray[1], xPointArray[xPointArray.length - 1]);
+    // const bottomMostY = Math.max(yPointArray[yPointArray.length - 1], yPointArray[1], xPointArray[xPointArray.length - 1]);
+    // const leftMostX = Math.min(xPointArray[0], xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 2]);
+    // const rightMostX = Math.max(xPointArray[0], xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 2]);
 
-    const topLeftPoint = [leftMostX, topMostY];
-    const topRightPoint = [rightMostX, topMostY];
-    const bottomLeftPoint = [leftMostX, bottomMostY];
-    const bottomRightPoint = [rightMostX, bottomMostY];
+    // const topLeftPoint = [leftMostX, topMostY];
+    // const topRightPoint = [rightMostX, topMostY];
+    // const bottomLeftPoint = [leftMostX, bottomMostY];
+    // const bottomRightPoint = [rightMostX, bottomMostY];
 
     return (
         <>
             <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick}>
-                {/* <Line points={pointArray} stroke={'yellow'} strokeWidth={10} opacity={1}/> */}
-                {/* <Line closed points={[xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 1], yPointArray[xPointArray.length - 2], xPointArray[yPointArray.length - 1], xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]]} opacity={0.5} fill={"green"} />
-                <Line closed points={[Math.max(yPointArray[yPointArray.length - 2], yPointArray[1]), xPointArray[yPointArray.length - 1], xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 1], xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]]} opacity={0.5} fill={"yellow"} /> */}
-                {/* <Line closed points={[xPointArray[0], xPointArray[1], xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]]} opacity={0.5} fill={"green"} /> */}
-                {/* <Rect x={eastPointArray[0]} y={eastPointArray[1]} width={eastPointArray[eastPointArray.length - 2] - eastPointArray[0]} height={northPointArray[northPointArray.length - 1] - northPointArray[1]} opacity={0.5} fill={"green"} /> */}
-                <Line closed points={[...topLeftPoint, ...topRightPoint, ...bottomLeftPoint, ...bottomRightPoint]} opacity={0} />
-                <Line closed points={[...bottomRightPoint, ...topRightPoint, ...bottomLeftPoint, ...topLeftPoint]} opacity={0} />
+                {/* <Line closed points={[...topLeftPoint, ...topRightPoint, ...bottomLeftPoint, ...bottomRightPoint]} opacity={0.5} fill={'red'} />
+                <Line closed points={[...bottomRightPoint, ...topRightPoint, ...bottomLeftPoint, ...topLeftPoint]} opacity={0.5} fill={'green'} /> */}
 
-                <Line points={[xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]]} stroke={"green"} strokeWidth={10} />
+                {/* <Line points={[xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]]} stroke={"green"} strokeWidth={10} /> */}
+                <Line points={hypotenusePointArray} stroke={"green"} strokeWidth={10} />
                 <Line
                     stroke={"red"}
                     fill={"red"}
@@ -379,6 +394,7 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
                     points={yPointArray}
                     // points={[startPoint.x, startPoint.y, startPoint.x, endPoint.y]}
                 />
+                <Text x={centerPoints.x} y={centerPoints.y} text={distanceText} stroke={"yellow"} strokeWidth={region.lineWidth} />
             </Group>
             {props.selected && <Transformer ref={trRef} shouldOverdrawWholeArea onClick={handleClick} onDblClick={handleDoubleClick} />}
         </>

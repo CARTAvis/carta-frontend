@@ -5,14 +5,14 @@ import {Ellipse, Group, Line, Rect, Text} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore, AnnotationStore} from "stores/Frame";
+import {FrameStore, RegionStore, TextAnnotationStore} from "stores/Frame";
 import {Point2D} from "models";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
 import {Anchor} from "./InvariantShapes";
 
 interface SimpleShapeRegionComponentProps {
-    region: RegionStore | AnnotationStore;
+    region: RegionStore;
     frame: FrameStore;
     layerWidth: number;
     layerHeight: number;
@@ -438,7 +438,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     };
 
     public render() {
-        const region = this.props.region;
+        const region = this.props.region as TextAnnotationStore;
         const frame = this.props.frame;
 
         let shapeNode: React.ReactNode;
@@ -517,8 +517,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE) {
                 shapeNode = <Rect {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} />;
             } else if (region.regionType === CARTA.RegionType.ANNTEXT) {
-                console.log((region as AnnotationStore).text);
-                shapeNode = <Text {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} text={(region as AnnotationStore).text} />;
+                console.log(region.text);
+                shapeNode = <Text {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} text={region.text} />;
             } else {
                 shapeNode = <Ellipse {...commonProps} radiusY={width} radiusX={height * frame.aspectRatio} />;
             }

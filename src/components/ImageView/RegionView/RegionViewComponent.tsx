@@ -7,7 +7,7 @@ import {Layer, Line, Stage} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {AppStore, OverlayStore, PreferenceStore} from "stores";
-import {FrameStore, RegionMode, RegionStore, AnnotationStore} from "stores/Frame";
+import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {CursorRegionComponent} from "./CursorRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
@@ -38,7 +38,7 @@ const KEYCODE_ESC = 27;
 
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
-    @observable creatingRegion: RegionStore | AnnotationStore;
+    @observable creatingRegion: RegionStore;
     @observable currentCursorPos: Point2D;
 
     private stageRef;
@@ -782,7 +782,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 }
 
 @observer
-class RegionComponents extends React.Component<{frame: FrameStore; regions: (RegionStore | AnnotationStore)[]; width: number; height: number; stageRef: any}> {
+class RegionComponents extends React.Component<{frame: FrameStore; regions: RegionStore[]; width: number; height: number; stageRef: any}> {
     private handleRegionDoubleClicked = (region: RegionStore) => {
         const appStore = AppStore.Instance;
         if (region) {
