@@ -8,8 +8,8 @@ import {AppStore, HelpType} from "stores";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import "./FittingDialogComponent.scss";
 import {exportTxtFile, getTimestamp} from "utilities";
+import "./FittingDialogComponent.scss";
 
 enum FittingResultTabs {
     RESULT,
@@ -45,7 +45,7 @@ export class FittingDialogComponent extends React.Component {
 
     private exportResult = () => {
         const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingResult;
-        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}_2D-Fitting-Result`;
+        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Result`;
         exportTxtFile(fileName, content);
     };
 
@@ -82,8 +82,8 @@ export class FittingDialogComponent extends React.Component {
         const fittingResultPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
-                <ButtonGroup style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
-                    <Tooltip2 content={"Export as txt"} position={Position.LEFT} className="output-result-button">
+                <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
+                    <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
                         <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
                     </Tooltip2>
                 </ButtonGroup>
@@ -93,8 +93,8 @@ export class FittingDialogComponent extends React.Component {
         const fullLogPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
-                <ButtonGroup style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
-                    <Tooltip2 content={"Exportput as txt"} position={Position.LEFT} className="output-log-button">
+                <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
+                    <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
                         <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
                     </Tooltip2>
                 </ButtonGroup>

@@ -48,20 +48,7 @@
         margin-bottom: 0;
     }
 
-    .output-result-button {
-        position: absolute;
-        bottom: 25px;
-        right: 25px;
-        margin: 0 0 0 0;
-        transition: opacity 400ms;
-
-        .bp3-button {
-            transition: opacity 400ms;
-            user-select: none;
-        }
-    }
-
-    .output-log-button {
+    .output-button {
         position: absolute;
         bottom: 25px;
         right: 25px;
