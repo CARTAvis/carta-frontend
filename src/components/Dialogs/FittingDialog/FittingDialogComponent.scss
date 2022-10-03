@@ -17,18 +17,14 @@
         user-select: none;
     }
 
-    .bp3-control-group {
-        margin-right: 10px;
-
-        .bp3-input-group .bp3-input {
-            width: 125px;
-        }
+    .bp3-control-group .bp3-input {
+        width: 125px;
     }
 
     .components-input {
         display: flex;
 
-        .bp3-input-group .bp3-input {
+        .bp3-input {
             width: 40px;
         }
     }
@@ -44,8 +40,16 @@
         }
     }
 
-    .bp3-dialog-body :last-child {
-        margin-bottom: 0;
+    .lock-button {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+
+    .bp3-dialog-body {
+        margin-bottom: 5px;
+        :last-child {
+            margin-bottom: 0px;
+        }
     }
 
     .output-button {

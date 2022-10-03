@@ -1110,7 +1110,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.requestFitting(message);
             if (ack.success) {
-                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, ack.resultValues, ack.resultErrors, ack.log);
+                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, message.fixedParams, ack.resultValues, ack.resultErrors, ack.log);
             }
             if (ack.message) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
