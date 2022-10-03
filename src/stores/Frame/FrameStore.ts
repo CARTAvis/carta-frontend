@@ -1059,17 +1059,17 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        if (this.isPVImage && this.spectralAxis?.valid) {
+        if (this.isPVImage) {
             const astFrameSet = this.initPVFrame();
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfo = AST.copy(astFrameSet);
                 AST.deleteObject(astFrameSet);
             }
-        } else if (this.isPVImage || this.isSpectralVsDirection) {
+        } else if (this.isSpectralVsDirection) {
             const astFrameSet = this.initSpectralVsDirectionFrame();
             if (astFrameSet) {
-                AST.set(astFrameSet, "Equinox=J2010"); // To avoid negative angles on the RA axis
+                AST.set(astFrameSet, "Equinox=2005"); // To avoid negative angles on the RA axis
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfoSwappedAxes = AST.copy(astFrameSet);
                 this.updateSwappedFrameSet();
