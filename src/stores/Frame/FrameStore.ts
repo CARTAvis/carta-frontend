@@ -1039,7 +1039,7 @@ export class FrameStore {
                 AST.set(astFrameSet, "Equinox=2005"); // To avoid negative angles on the RA axis
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfoSwappedAxes = AST.copy(astFrameSet);
-                this.updateSwappedFrameSet();
+                this.updateSpectralVsDirectionWcs();
                 AST.deleteObject(astFrameSet);
             }
         } else if (this.isUVImage) {
@@ -1411,7 +1411,7 @@ export class FrameStore {
         return AST.getFrameFromFitsChan(fitsChan, false);
     };
 
-    public updateSwappedFrameSet = () => {
+    public updateSpectralVsDirectionWcs = () => {
         if (this.wcsInfoSwappedAxes) {
             const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
             const dirXAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
@@ -1920,7 +1920,7 @@ export class FrameStore {
 
         // Update the wcsInfo for swapped-axes cube image, since its rendering coordinate may dependent on channels
         if (this.isSpectralVsDirection) {
-            this.updateSwappedFrameSet();
+            this.updateSpectralVsDirectionWcs();
         }
     }
 
