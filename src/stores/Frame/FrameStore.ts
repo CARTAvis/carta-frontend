@@ -1362,28 +1362,20 @@ export class FrameStore {
     private initSpectralVsDirectionFrame = (): AST.FrameSet => {
         const fitsChan = AST.emptyFitsChan();
         const stokesAxis = this.frameInfo.fileInfoExtended.axesNumbers.stokes;
-        let regStokesAxis = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${stokesAxis}`);
+        const depthAxis = this.frameInfo.fileInfoExtended.axesNumbers.depth;
+        const regStokesAxis = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${stokesAxis}`);
+        const regDepthAxis = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${depthAxis}`);
 
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
-            if (name === "HISTORY") {
+
+            if (name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]/) || (stokesAxis > 0 && name.match(regStokesAxis)) || name === "HISTORY") {
                 continue;
             }
 
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]/)) {
-                continue;
-            }
-
-            if (stokesAxis > 0 && entry.name.match(regStokesAxis)) {
-                continue;
-            }
-
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) {
-                if (stokesAxis > 0) {
-                    name = entry.name.replace("4", `${stokesAxis}`);
-                } else {
-                    continue;
-                }
+            // Depth axis is the third axis that is not stokes axis (if any)
+            if (depthAxis > 0 && name.match(regDepthAxis)) {
+                name = entry.name.replace(`${depthAxis}`, "3");
             }
 
             if (!entry.value.length) {
@@ -1391,7 +1383,7 @@ export class FrameStore {
             }
 
             let value = trimFitsComment(entry.value);
-            if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
+            if (name.toUpperCase() === "NAXIS" || name.toUpperCase() === "WCSAXES") {
                 value = "3";
             }
 
