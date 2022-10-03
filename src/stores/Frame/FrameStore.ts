@@ -569,7 +569,7 @@ export class FrameStore {
         return false;
     }
 
-    @computed get isSwappedImage(): boolean {
+    @computed get isSpectralVsDirection(): boolean {
         const spectral = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
@@ -1066,8 +1066,8 @@ export class FrameStore {
                 this.wcsInfo = AST.copy(astFrameSet);
                 AST.deleteObject(astFrameSet);
             }
-        } else if (this.isPVImage || this.isSwappedImage) {
-            const astFrameSet = this.initSwappedFrame();
+        } else if (this.isPVImage || this.isSpectralVsDirection) {
+            const astFrameSet = this.initSpectralVsDirectionFrame();
             if (astFrameSet) {
                 AST.set(astFrameSet, "Equinox=J2010"); // To avoid negative angles on the RA axis
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
@@ -1392,7 +1392,7 @@ export class FrameStore {
         return AST.getFrameFromFitsChan(fitsChan, checkSkyDomain);
     };
 
-    private initSwappedFrame = (): AST.FrameSet => {
+    private initSpectralVsDirectionFrame = (): AST.FrameSet => {
         const fitsChan = AST.emptyFitsChan();
         const stokesAxis = this.frameInfo.fileInfoExtended.axesNumbers.stokes;
         let regStokesAxis = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${stokesAxis}`);
@@ -1952,7 +1952,7 @@ export class FrameStore {
         }
 
         // Update the wcsInfo for swapped-axes cube image, since its rendering coordinate may dependent on channels
-        if (this.isSwappedImage) {
+        if (this.isSpectralVsDirection) {
             this.updateSwappedFrameSet();
         }
     }

@@ -158,13 +158,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringFinish = frame.distanceMeasuring.transformedFinish;
         const title = frame.titleCustomText;
         const ratio = AppStore.Instance.imageRatio;
-        if (frame.isSwappedImage) {
+        if (frame.isSpectralVsDirection) {
             const requiredChannel = frame.requiredChannel;
         }
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image
-        if ((frame.isPVImage && frame.spectralAxis?.valid) || (frame.isSwappedImage && frame.spectralAxis?.dimension < 3)) {
+        if ((frame.isPVImage && frame.spectralAxis?.valid) || (frame.isSpectralVsDirection && frame.spectralAxis?.dimension < 3)) {
             const spectralAxis = frame.spectralAxis?.dimension;
             AST.set(
                 frame.wcsInfo,
