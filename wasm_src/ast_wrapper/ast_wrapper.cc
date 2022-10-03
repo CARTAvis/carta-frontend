@@ -203,7 +203,9 @@ void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* fi
     double middle[2];
     astOffset(plot, start, finish, dist / 2, middle);
     float up[] = {0.0f, 1.0f}; // horizontal text
-
+    cout << "start" << start[0] << " " << start[1] << endl;
+    cout << "finish" << finish[0] << " " << finish[1] << endl;
+    cout << "dist" << dist << endl;
     string distString;
     const char* unit = astGetC(wcsinfo, "Unit(1)");
     if (strstr(unit, "degree") != nullptr || strstr(unit, "hh:mm:s") != nullptr)
@@ -415,6 +417,71 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     if (!astOK)
     {
         astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[], double yin[], double out[])
+{
+    if (!wcsinfo)
+    {
+        cout << "not wcsinfo" << endl;
+        return 1;
+    }
+
+    // double in[2][npoint];
+    // in[0] = &xin;
+    // in[1] = &yin;
+    // double** in = &xin;
+    // in[1] = yin;
+    // const double* inPtr = in[0];
+    // AstPointList* result = astPointList(wcsinfo, npoint, 2, npoint, inPtr, nullptr, nullptr);
+    // cout << "ListSize" << astGetI(result, "ListSize") << endl;
+    // out = result;
+
+    // return result;
+    double x[npoint];
+    double y[npoint];
+    // cout << "443 " << xin[0] << " " << yin[0] << " " << xin[1] << " " << yin[1] << endl;
+    // cout << "444 " << x[0] << " " << y[0] << " " << x[npoint - 1] << " " << y[npoint - 1] << endl;
+    transform(wcsinfo, npoint, xin, yin, false, x, y);
+    // cout << "446 " << x[0] << " " << y[0] << " " << x[npoint - 1] << " " << y[npoint - 1] << endl;
+
+    double start[] = {x[0], y[0]};
+    double finish[] = {x[npoint - 1], y[npoint - 1]};
+    astShow(wcsinfo);
+
+    double dist = astDistance(wcsinfo, start, finish);
+    double discreteDist = dist/npoint;
+    double output[2];
+    cout << "start" << start[0] << " " << start[1] << endl;
+    cout << "finish" << finish[0] << " " << finish[1] << endl;
+    cout << "dist" << dist << endl;
+    for(int i = 0; i < npoint; i++) {
+        // cout << "454  " << x[i] << y[i] << endl;
+        double distance = discreteDist * i;
+        // cout << "distance" << distance << endl;
+        if(i % 2 == 0) {
+            // cout << "461  " << output[0] << " " << output[1] << endl;
+            // cout << "461  " << out[i] << out[i+1] << endl;
+            astOffset(wcsinfo, start, finish, distance, output);
+            // cout << "462  " << output[0] << " " << output[1] << endl;
+            // cout << "462  " << out[i] << out[i+1] << endl;
+            out[i] = output[0];
+            out[i + 1] = output[1];
+            // cout << "468 " << out[i] << " " << out[i + 1] << endl;
+        }
+    }
+
+    for(int i = 0; i < npoint; i++) {
+        cout << i << " " << out[i] << endl;
+    }
+
+    if (!astOK)
+    {
+        astClearStatus;
+        cout << "something went wrong" << endl;
         return 1;
     }
     return 0;

@@ -128,6 +128,7 @@ Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
 Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
 Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
+Module.pointList = Module.cwrap("pointList", "number", ["number", "number", "number", "number", "number"]);
 
 Module.currentFormatStrings = [];
 
@@ -191,6 +192,35 @@ Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn:
     Module._free(yInPtr);
     Module._free(xOutPtr);
     Module._free(yOutPtr);
+    return result;
+};
+
+Module.transformPointList = function (wcsInfo: number, xIn: Float64Array, yIn: Float64Array) {
+    // Return empty array if arguments are invalid
+    if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
+        return {x: new Float64Array(1), y: new Float64Array(1)};
+    }
+
+    // Allocate and assign WASM memory
+    const N = xIn.length;
+    const xInPtr = Module._malloc(N * 8);
+    const yInPtr = Module._malloc(N * 8);
+    const outPtr = Module._malloc(202 * 8);
+    Module.HEAPF64.set(xIn, xInPtr / 8);
+    Module.HEAPF64.set(yIn, yInPtr / 8);
+    // Perform the AST transform
+    Module.pointList(wcsInfo, 201, xInPtr, yInPtr, outPtr);
+    // console.log(xIn[0], yIn[0], xIn[1], yIn[1], N)
+
+    // Copy result out to an object
+    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, 202);
+    const result = out;
+    
+    // Free WASM memory
+    Module._free(xInPtr);
+    Module._free(yInPtr);
+    Module._free(outPtr);
+    console.log('result', result)
     return result;
 };
 
