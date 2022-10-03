@@ -309,10 +309,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         const frame = this.widgetStore.effectiveFrame;
         if (frame) {
-            if (frame.spectralAxis?.dimension === 3 && !frame.isCoordChannel) {
+            if (frame.spectralAxis && !frame.isCoordChannel) {
                 linePlotProps.xLabel = frame.spectralLabel;
-            } else if (frame.depthAxis?.dimension === 3) {
-                linePlotProps.xLabel = frame.depthLabel;
             }
             if (this.widgetStore.yUnit) {
                 linePlotProps.yLabel = `Value (${this.widgetStore.yUnit})`;

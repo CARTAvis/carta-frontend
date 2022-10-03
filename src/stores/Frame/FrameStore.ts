@@ -642,31 +642,6 @@ export class FrameStore {
         return undefined;
     }
 
-    @computed get depthAxis(): {dimension: number; type: string; unit: string} {
-        if (this.frameInfo?.fileInfoExtended?.headerEntries) {
-            const entries = this.frameInfo.fileInfoExtended.headerEntries;
-
-            // Locate depth dimension from axis 1~4
-            let dimension = undefined;
-            const depthAxis = this.frameInfo.fileInfoExtended.axesNumbers.depth + 1;
-            if (depthAxis > 0) {
-                dimension = depthAxis;
-            }
-
-            if (dimension) {
-                const typeHeader = entries.find(entry => entry.name.includes(`CTYPE${dimension}`));
-                const type = typeHeader ? typeHeader.value.trim().toUpperCase() : "";
-                const unit = entries.find(entry => entry.name.includes(`CUNIT${dimension}`));
-                return {
-                    dimension: dimension,
-                    type: type,
-                    unit: unit?.value?.trim() ?? undefined
-                };
-            }
-        }
-        return undefined;
-    }
-
     @computed get isSpectralCoordinateConvertible(): boolean {
         if (!this.spectralAxis || (this.spectralAxis && !this.spectralAxis.valid) || !this.spectralFrame) {
             return false;
@@ -729,14 +704,6 @@ export class FrameStore {
             return this.spectralAxis.type.unit;
         }
         return this.isCoordChannel ? SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL) : (this.spectralUnit as string);
-    }
-
-    @computed get depthLabel(): string {
-        let label = undefined;
-        if (this.depthAxis) {
-            label = `${this.depthAxis.type} ${this.depthAxis.unit ? `(${this.depthAxis.unit})` : ""}`;
-        }
-        return label;
     }
 
     @computed get hasStokes(): boolean {
