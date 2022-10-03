@@ -535,8 +535,8 @@ export class OverlayNumberSettings {
 
         // Add settings for individual axes
         const frame = AppStore.Instance.activeFrame;
-        const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
-        const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+        const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX;
+        const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY;
         astString.add(`Format(${xAxis})`, this.formatStringX);
         astString.add(`Format(${yAxis})`, this.formatStringY);
 
@@ -1023,7 +1023,7 @@ export class OverlayStore {
             const _ = this.numbers.formatTypeX;
             const frame = AppStore.Instance.activeFrame;
             if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeX) {
-                const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
+                const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX;
                 AST.set(frame.wcsInfoForTransformation, `Format(${xAxis})=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
             }
         });
@@ -1033,7 +1033,7 @@ export class OverlayStore {
             const _ = this.numbers.formatTypeY;
             const frame = AppStore.Instance.activeFrame;
             if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeY) {
-                const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+                const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY;
                 AST.set(frame.wcsInfoForTransformation, `Format(${yAxis})=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
             }
         });

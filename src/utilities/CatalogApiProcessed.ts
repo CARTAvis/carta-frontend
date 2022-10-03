@@ -78,8 +78,8 @@ export class CatalogApiProcessing {
         const raformat = `${NumberFormatType.HMS}.${6}`;
         const deformat = `${NumberFormatType.DMS}.${6}`;
         const wcsCopy = AST.copy(frame.wcsInfo);
-        const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
-        const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+        const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX;
+        const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY;
         AST.set(wcsCopy, `System=${SystemType.ICRS}`);
         AST.set(wcsCopy, `Format(${xAxis})=${raformat}`);
         AST.set(wcsCopy, `Format(${yAxis})=${deformat}`);

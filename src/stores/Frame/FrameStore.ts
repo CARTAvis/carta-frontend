@@ -573,13 +573,13 @@ export class FrameStore {
         const spectral = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
-        return (spectral === 0 && (dirX === 1 || dirY === 1)) || (spectral === 1 && (dirX === 0 || dirY === 0));
+        return (spectral === 1 && (dirX === 2 || dirY === 2)) || (spectral === 2 && (dirX === 1 || dirY === 1));
     }
 
     @computed get isSwappedXY(): boolean {
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
-        return dirX === 1 && dirY === 0;
+        return dirX === 2 && dirY === 1;
     }
 
     @computed get isUVImage(): boolean {
@@ -606,7 +606,7 @@ export class FrameStore {
 
             // Locate spectral dimension from axis 1~4
             let dimension = undefined;
-            const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral + 1;
+            const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
             if (spectralAxis > 0) {
                 dimension = spectralAxis;
             }
@@ -1114,8 +1114,8 @@ export class FrameStore {
                 if (this.wcsInfo) {
                     // init 2D(Sky) wcs copy for the precision of region coordinate transformation
                     this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
-                    const xAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
-                    const yAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+                    const xAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+                    const yAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
                     AST.set(this.wcsInfoForTransformation, `Format(${xAxis})=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
                     AST.set(this.wcsInfoForTransformation, `Format(${yAxis})=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
                     this.validWcs = true;
@@ -1394,7 +1394,7 @@ export class FrameStore {
 
     private initSwappedFrame = (): AST.FrameSet => {
         const fitsChan = AST.emptyFitsChan();
-        const stokesAxis = this.frameInfo.fileInfoExtended.axesNumbers.stokes + 1;
+        const stokesAxis = this.frameInfo.fileInfoExtended.axesNumbers.stokes;
         let regStokesAxis = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${stokesAxis}`);
 
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
@@ -1446,9 +1446,9 @@ export class FrameStore {
 
     public updateSwappedFrameSet = () => {
         if (this.wcsInfoSwappedAxes) {
-            const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral + 1;
-            const dirXAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
-            const dirYAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+            const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
+            const dirXAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+            const dirYAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
             const dirAxis = dirXAxis < dirYAxis ? dirXAxis : dirYAxis;
             let dirAxisSize;
             if (dirAxis === 1) {
@@ -1549,8 +1549,8 @@ export class FrameStore {
 
             let precisionX = 0;
             let precisionY = 0;
-            const xAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
-            const yAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+            const xAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+            const yAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();

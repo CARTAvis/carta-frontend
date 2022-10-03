@@ -317,8 +317,8 @@ export class CatalogOnlineQueryConfigStore {
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
-            const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
-            const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+            const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX;
+            const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY;
             AST.set(wcsCopy, `System=${sys}`);
             astString.add(`Format(${xAxis})`, format);
             astString.add(`Format(${yAxis})`, format);
@@ -338,8 +338,8 @@ export class CatalogOnlineQueryConfigStore {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
             const format = `${NumberFormatType.Degrees}.${precision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
-            const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX + 1;
-            const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY + 1;
+            const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX;
+            const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY;
             AST.set(wcsCopy, `System=${SystemType.ICRS}`);
             AST.set(wcsCopy, `Format(${xAxis})=${format}`);
             AST.set(wcsCopy, `Format(${yAxis})=${format}`);
