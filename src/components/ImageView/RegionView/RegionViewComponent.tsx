@@ -667,7 +667,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer ref={this.layerRef}>
+                    <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.locked}>
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}
@@ -693,6 +693,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
 
     public render() {
         const regions = this.props.regions;
+
         if (!AppStore.Instance.fileBrowserStore.isLoadingDialogOpen && regions?.length) {
             const regionSet = this.props.frame?.regionSet;
             return regions.map(r => {

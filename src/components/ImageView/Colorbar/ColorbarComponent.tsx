@@ -163,7 +163,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 height={rectHeight}
                 fillLinearGradientStartPoint={rectGradientStart}
                 fillLinearGradientEndPoint={rectGradientEnd}
-                fillLinearGradientColorStops={frame.renderConfig.colorscaleArray}
+                fillLinearGradientColorStops={colorbarSettings.gradientVisible ? frame.renderConfig.colorscaleArray : null}
                 stroke={colorbarSettings.borderVisible ? getColor(colorbarSettings.borderCustomColor, colorbarSettings.borderColor) : null}
                 strokeWidth={colorbarSettings.borderWidth / devicePixelRatio}
             />

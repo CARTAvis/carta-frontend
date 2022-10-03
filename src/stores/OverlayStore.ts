@@ -717,6 +717,7 @@ export class OverlayColorbarSettings {
     @observable labelCustomText: boolean;
     @observable labelCustomColor: boolean;
     @observable labelColor: string;
+    @observable gradientVisible: boolean;
     private textRatio = [0.56, 0.51, 0.56, 0.51, 0.6];
 
     constructor() {
@@ -754,6 +755,7 @@ export class OverlayColorbarSettings {
         this.labelCustomText = false;
         this.labelCustomColor = false;
         this.labelColor = AST_DEFAULT_COLOR;
+        this.gradientVisible = true;
     }
 
     @action setVisible = (visible: boolean) => {
@@ -882,6 +884,10 @@ export class OverlayColorbarSettings {
 
     @action setLabelColor = (color: string) => {
         this.labelColor = color;
+    };
+
+    @action setGradientVisible = (visible: boolean) => {
+        this.gradientVisible = visible;
     };
 
     @computed get yOffset(): number {

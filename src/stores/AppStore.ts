@@ -116,6 +116,7 @@ export class AppStore {
     // ImageViewer
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
+    @observable cursorMirror: boolean = false;
     @observable toolbarExpanded: boolean;
     @observable imageRatio: number;
     @observable isExportingImage: boolean;
@@ -1167,6 +1168,10 @@ export class AppStore {
 
     @action setCursorFrozen = (val: boolean) => {
         this.cursorFrozen = val;
+    };
+
+    @action toggleCursorMirror = () => {
+        this.cursorMirror = !this.cursorMirror;
     };
 
     @action toggleToolbarExpanded = () => {
