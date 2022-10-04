@@ -205,22 +205,20 @@ Module.transformPointList = function (wcsInfo: number, xIn: Float64Array, yIn: F
     const N = xIn.length;
     const xInPtr = Module._malloc(N * 8);
     const yInPtr = Module._malloc(N * 8);
-    const outPtr = Module._malloc(202 * 8);
+    const outPtr = Module._malloc(201 * 2 * 8);
     Module.HEAPF64.set(xIn, xInPtr / 8);
     Module.HEAPF64.set(yIn, yInPtr / 8);
     // Perform the AST transform
     Module.pointList(wcsInfo, 201, xInPtr, yInPtr, outPtr);
-    // console.log(xIn[0], yIn[0], xIn[1], yIn[1], N)
 
     // Copy result out to an object
-    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, 202);
-    const result = out;
+    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, 201 * 2);
+    const result = out.slice(0);
     
     // Free WASM memory
     Module._free(xInPtr);
     Module._free(yInPtr);
     Module._free(outPtr);
-    console.log('result', result)
     return result;
 };
 

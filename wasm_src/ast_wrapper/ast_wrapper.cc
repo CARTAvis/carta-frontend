@@ -272,6 +272,8 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     {
         const double x[] = {curveX1, curveX2};
         const double y[] = {curveY1, curveY2};
+        cout << "start" << x[0] << " " << y[0] << endl;
+        cout << "finish" << x[1] << " " << y[1] << endl;
         double xtran[2];
         double ytran[2];
         astTran2(wcsinfo, 2, x, y, 1, xtran, ytran);
@@ -430,58 +432,54 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
         return 1;
     }
 
-    // double in[2][npoint];
-    // in[0] = &xin;
-    // in[1] = &yin;
-    // double** in = &xin;
-    // in[1] = yin;
-    // const double* inPtr = in[0];
-    // AstPointList* result = astPointList(wcsinfo, npoint, 2, npoint, inPtr, nullptr, nullptr);
-    // cout << "ListSize" << astGetI(result, "ListSize") << endl;
-    // out = result;
+    double* x = new double[2];
+    double* y = new double[2];
+    double xIn[2] = {xin[0], xin[1]};
+    double yIn[2] = {yin[0], yin[1]};
 
-    // return result;
-    double x[npoint];
-    double y[npoint];
-    // cout << "443 " << xin[0] << " " << yin[0] << " " << xin[1] << " " << yin[1] << endl;
-    // cout << "444 " << x[0] << " " << y[0] << " " << x[npoint - 1] << " " << y[npoint - 1] << endl;
-    transform(wcsinfo, npoint, xin, yin, false, x, y);
-    // cout << "446 " << x[0] << " " << y[0] << " " << x[npoint - 1] << " " << y[npoint - 1] << endl;
+    astTran2(wcsinfo, 2, xIn, yIn, 1, x, y);
 
     double start[] = {x[0], y[0]};
-    double finish[] = {x[npoint - 1], y[npoint - 1]};
-    astShow(wcsinfo);
+    double finish[] = {x[1], y[1]};
 
     double dist = astDistance(wcsinfo, start, finish);
     double discreteDist = dist/npoint;
     double output[2];
-    cout << "start" << start[0] << " " << start[1] << endl;
-    cout << "finish" << finish[0] << " " << finish[1] << endl;
-    cout << "dist" << dist << endl;
-    for(int i = 0; i < npoint; i++) {
-        // cout << "454  " << x[i] << y[i] << endl;
-        double distance = discreteDist * i;
-        // cout << "distance" << distance << endl;
-        if(i % 2 == 0) {
-            // cout << "461  " << output[0] << " " << output[1] << endl;
-            // cout << "461  " << out[i] << out[i+1] << endl;
-            astOffset(wcsinfo, start, finish, distance, output);
-            // cout << "462  " << output[0] << " " << output[1] << endl;
-            // cout << "462  " << out[i] << out[i+1] << endl;
-            out[i] = output[0];
-            out[i + 1] = output[1];
-            // cout << "468 " << out[i] << " " << out[i + 1] << endl;
-        }
-    }
 
     for(int i = 0; i < npoint; i++) {
-        cout << i << " " << out[i] << endl;
+        double distance = discreteDist * i;
+        astOffset(wcsinfo, start, finish, distance, output);
+        out[i * 2] = output[0];
+        out[i * 2 + 1] = output[1];
     }
+
+    double* xout = new double[npoint];
+    double* yout = new double[npoint];
+    double* xOut = new double[npoint];
+    double* yOut = new double[npoint];
+
+    for(int i = 0; i < npoint; i++) {
+        xout[i] = out[i * 2];
+        yout[i] = out[i * 2 + 1];
+    }
+
+    astTran2(wcsinfo, 201, xout, yout, 0, xOut, yOut);
+
+    for(int i = 0; i < npoint; i++) {
+         out[i * 2] = xOut[i];
+         out[i * 2 + 1] = yOut[i];
+    }
+
+    delete[] x;
+    delete[] y;
+    delete[] xout;
+    delete[] yout;
+    delete[] xOut;
+    delete[] yOut;
 
     if (!astOK)
     {
         astClearStatus;
-        cout << "something went wrong" << endl;
         return 1;
     }
     return 0;

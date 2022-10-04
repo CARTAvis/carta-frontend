@@ -308,29 +308,19 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
         props.onDoubleClick(region);
     };
 
-    // const copySrc = AST.copy(frame.wcsInfoForTransformation);
-    // AST.invert(copySrc);
-    // const spatialTransformAST = frame.wcsInfo;
     const tempWcsInfo = AST.copy(frame.wcsInfo);
     const approxPoints = region.getRegionApproximation(tempWcsInfo);
 
-    const xApproxPoints = approxPoints.xApproximatePoints.slice(0, 200);
-    const yApproxPoints = approxPoints.yApproximatePoints.slice(0, 200);
-    const hypotenuseApproxPoints = approxPoints.hypotenuseApproximatePoints.slice(0, 200);
+    const xApproxPoints = approxPoints.xApproximatePoints;
+    const yApproxPoints = approxPoints.yApproximatePoints;
+    const hypotenuseApproxPoints = approxPoints.hypotenuseApproximatePoints;
     const xPointArray = Array<number>(xApproxPoints.length);
     const yPointArray = Array<number>(yApproxPoints.length);
     const hypotenusePointArray = Array<number>(hypotenuseApproxPoints.length);
-    // const xApproxPoints = approxPoints.xApproximatePoints;
-    // const yApproxPoints = approxPoints.yApproximatePoints;
-    // const hypotenuseApproxPoints = approxPoints.hypotenuseApproximatePoints;
-    // const xPointArray = new Array<number>(xApproxPoints.length * 2);
-    // const yPointArray = new Array<number>(yApproxPoints.length * 2);
-    // const hypotenusePointArray = new Array<number>(hypotenuseApproxPoints.length * 2);
+
     for (let i = 0; i < xPointArray.length; i++) {
         if (i % 2 === 0) {
-            // console.log({x: xApproxPoints[i], y: xApproxPoints[i + 1]})
             const point = transformedImageToCanvasPos({x: xApproxPoints[i], y: xApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            // console.log(point)
             xPointArray[i] = point.x;
             xPointArray[i + 1] = point.y;
         }
@@ -338,7 +328,6 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
     for (let i = 0; i < yPointArray.length; i++) {
         if (i % 2 === 0) {
             const point = transformedImageToCanvasPos({x: yApproxPoints[i], y: yApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            // console.log(point)
             yPointArray[i] = point.x;
             yPointArray[i + 1] = point.y;
         }
@@ -346,82 +335,23 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
     for (let i = 0; i < hypotenusePointArray.length; i++) {
         if (i % 2 === 0) {
             const point = transformedImageToCanvasPos({x: hypotenuseApproxPoints[i], y: hypotenuseApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            // console.log(point)
             hypotenusePointArray[i] = point.x;
             hypotenusePointArray[i + 1] = point.y;
         }
     }
 
-    // for (let i = 0; i < xApproxPoints.length; i++) {
-    //     const point = transformedImageToCanvasPos(xApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-    //     xPointArray[i * 2] = point.x;
-    //     xPointArray[i * 2 + 1] = point.y;
-    // }
-    // for (let i = 0; i < yApproxPoints.length; i++) {
-    //     const point = transformedImageToCanvasPos(yApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-    //     yPointArray[i * 2] = point.x;
-    //     yPointArray[i * 2 + 1] = point.y;
-    // }
-    // for (let i = 0; i < hypotenuseApproxPoints.length; i++) {
-    //     const point = transformedImageToCanvasPos(hypotenuseApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-    //     hypotenusePointArray[i * 2] = point.x;
-    //     hypotenusePointArray[i * 2 + 1] = point.y;
-    // }
-
     const centerPoints = midpoint2D({x: xPointArray[xPointArray.length - 2], y: xPointArray[xPointArray.length - 1]}, {x: yPointArray[yPointArray.length - 2], y: yPointArray[yPointArray.length - 1]});
     const distance = AST.geodesicDistance(tempWcsInfo, xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]);
     const distanceText: string = ((distance * 180.0) / Math.PI).toString() + "\u00B0";
-    // const xEndPoint = {x: region.controlPoints[0].x, y: region.controlPoints[0].y};
-    // const yEndPoint = {x: region.controlPoints[1].x, y: region.controlPoints[1].y};
-    // const transformedXEndPoint = frame?.spatialTransform?.transformCoordinate(xEndPoint);
-    // const transformedYEndPoint = frame?.spatialTransform?.transformCoordinate(yEndPoint);
-    // const distance = AST.geodesicDistance(tempWcsInfo, transformedXEndPoint?.x, transformedXEndPoint?.y, transformedYEndPoint?.x, transformedYEndPoint?.y);
 
     // trigger re-render when exporting images
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const imageRatio = AppStore.Instance.imageRatio;
 
-    // const topMostY = Math.min(yPointArray[yPointArray.length - 1], yPointArray[1], xPointArray[xPointArray.length - 1]);
-    // const bottomMostY = Math.max(yPointArray[yPointArray.length - 1], yPointArray[1], xPointArray[xPointArray.length - 1]);
-    // const leftMostX = Math.min(xPointArray[0], xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 2]);
-    // const rightMostX = Math.max(xPointArray[0], xPointArray[xPointArray.length - 2], yPointArray[yPointArray.length - 2]);
-
-    // const topLeftPoint = [leftMostX, topMostY];
-    // const topRightPoint = [rightMostX, topMostY];
-    // const bottomLeftPoint = [leftMostX, bottomMostY];
-    // const bottomRightPoint = [rightMostX, bottomMostY];
-    const handlePointDraw = (ctx, shape) => {
-        HandleSquareDraw(ctx, shape, POINT_WIDTH);
-    };
-
     return (
         <>
-            {xPointArray.map((point, index) => {
-                if (index % 2 === 0 && index < xPointArray.length - 1) {
-                    return <Shape key={index} x={point} y={xPointArray[index + 1]} fill={"yellow"} sceneFunc={handlePointDraw} />;
-                }
-                return <Shape key={index} x={0} y={0} fill={"yellow"} sceneFunc={handlePointDraw} />;
-            })}
-            {yPointArray.map((point, index) => {
-                return index % 2 === 0 && index < yPointArray.length - 1 ? (
-                    <Shape key={index} x={point} y={yPointArray[index + 1]} fill={"yellow"} sceneFunc={handlePointDraw} />
-                ) : (
-                    <Shape key={index} x={0} y={0} fill={"yellow"} sceneFunc={handlePointDraw} />
-                );
-            })}
-            {hypotenusePointArray.map((point, index) => {
-                return index % 2 === 0 && index < hypotenusePointArray.length - 1 ? (
-                    <Shape key={index} x={point} y={hypotenusePointArray[index + 1]} fill={"yellow"} sceneFunc={handlePointDraw} />
-                ) : (
-                    <Shape key={index} x={0} y={0} fill={"yellow"} sceneFunc={handlePointDraw} />
-                );
-            })}
             <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick}>
-                {/* <Line closed points={[...topLeftPoint, ...topRightPoint, ...bottomLeftPoint, ...bottomRightPoint]} opacity={0.5} fill={'red'} />
-                <Line closed points={[...bottomRightPoint, ...topRightPoint, ...bottomLeftPoint, ...topLeftPoint]} opacity={0.5} fill={'green'} /> */}
-
-                {/* <Line points={[xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]]} stroke={"green"} strokeWidth={10} /> */}
-                {/* <Line points={hypotenusePointArray} stroke={"green"} strokeWidth={10} />
+                <Line points={hypotenusePointArray} stroke={"green"} strokeWidth={5} />
                 <Line
                     stroke={"red"}
                     fill={"red"}
@@ -433,7 +363,6 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={xPointArray}
-                    // points={[startPoint.x, startPoint.y, endPoint.x, startPoint.y]}
                 />
                 <Line
                     stroke={region.color}
@@ -446,8 +375,7 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={yPointArray}
-                    // points={[startPoint.x, startPoint.y, startPoint.x, endPoint.y]}
-                /> */}
+                />
                 <Text x={centerPoints.x} y={centerPoints.y} text={distanceText} stroke={"yellow"} strokeWidth={region.lineWidth} />
             </Group>
             {props.selected && <Transformer ref={trRef} shouldOverdrawWholeArea onClick={handleClick} onDblClick={handleDoubleClick} />}

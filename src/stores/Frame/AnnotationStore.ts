@@ -153,7 +153,8 @@ export class RulerAnnotationStore extends RegionStore {
             xApproximatePoints = AST.transformPointList(astTransform, a1, a2);
             yApproximatePoints = AST.transformPointList(astTransform, b1, b2);
             hypotenuseApproximatePoints = AST.transformPointList(astTransform, c1, c2);
-            console.log(xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints);
+            // console.log(a1, a2, b1, b2, c1, c2)
+            // console.log(xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints);
 
             // xApproximatePoints = getApproximatePolygonPoints(astTransform, xArrowPoints, RegionStore.TARGET_VERTEX_COUNT, false);
             // yApproximatePoints = getApproximatePolygonPoints(astTransform, yArrowPoints, RegionStore.TARGET_VERTEX_COUNT, false);
