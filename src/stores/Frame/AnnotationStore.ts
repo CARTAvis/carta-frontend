@@ -4,10 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
-// import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
-// import {CustomIconName} from "icons/CustomIcons";
-import {getApproximatePolygonPoints} from "utilities";
 import {RegionStore} from "./RegionStore";
 
 export class TextAnnotationStore extends RegionStore {
@@ -69,23 +66,28 @@ export class CompassAnnotationStore extends RegionStore {
     public getRegionApproximation(astTransform: AST.FrameSet): any {
         let northApproximatePoints = this.regionApproximationMap.get(astTransform);
         let eastApproximatePoints = this.regionApproximationMap.get(astTransform);
-        const startPoint = {x: Math.max(this.controlPoints[0].x, this.controlPoints[1].x), y: Math.min(this.controlPoints[0].y, this.controlPoints[1].y)};
-        // const northEndPoint = {x: this.controlPoints[0].x, y: this.controlPoints[1].y}
-        // const eastEndPoint = {x: this.controlPoints[1].x, y: this.controlPoints[0].y}
-        const northEndPoint = {x: startPoint.x, y: Math.max(this.controlPoints[0].y, this.controlPoints[1].y)};
-        const eastEndPoint = {x: Math.min(this.controlPoints[0].x, this.controlPoints[1].x), y: startPoint.y};
-        const northArrowPoints = [startPoint, northEndPoint];
-        const eastArrowPoints = [startPoint, eastEndPoint];
-        // const northArrowPoints = [startPoint, {x: this.controlPoints[0].x, y: this.controlPoints[1].y}]
-        // const eastArrowPoints = [startPoint, {x: this.controlPoints[1].x, y: this.controlPoints[0].y}]
-        // const northArrowPoints = [{...this.endPoints[0]}, {x: this.endPoints[0].x, y: this.endPoints[1].y}]
-        // const eastArrowPoints = [{...this.endPoints[0]}, {x: this.endPoints[1].x, y: this.endPoints[0].y}]
-        if (!northApproximatePoints && !eastApproximatePoints) {
-            northApproximatePoints = getApproximatePolygonPoints(astTransform, northArrowPoints, RegionStore.TARGET_VERTEX_COUNT, false);
-            eastApproximatePoints = getApproximatePolygonPoints(astTransform, eastArrowPoints, RegionStore.TARGET_VERTEX_COUNT, false);
 
-            // this.regionApproximationMap.set(astTransform, northApproximatePoints);
-            // this.regionApproximationMap.set(astTransform, eastApproximatePoints);
+        if (!northApproximatePoints && !eastApproximatePoints) {
+            const startPoint = {x: Math.max(this.controlPoints[0].x, this.controlPoints[1].x), y: Math.min(this.controlPoints[0].y, this.controlPoints[1].y)};
+            const northEndPoint = {x: startPoint.x, y: Math.max(this.controlPoints[0].y, this.controlPoints[1].y)};
+            const eastEndPoint = {x: Math.min(this.controlPoints[0].x, this.controlPoints[1].x), y: startPoint.y};
+            console.log(startPoint, northEndPoint, eastEndPoint);
+            const northArrowXIn = new Float64Array(2);
+            northArrowXIn[0] = startPoint.x;
+            northArrowXIn[1] = northEndPoint.x;
+            const northArrowYIn = new Float64Array(2);
+            northArrowYIn[0] = startPoint.y;
+            northArrowYIn[1] = northEndPoint.y;
+            const eastArrowXIn = new Float64Array(2);
+            eastArrowXIn[0] = startPoint.x;
+            eastArrowXIn[1] = eastEndPoint.x;
+            const eastArrowYIn = new Float64Array(2);
+            eastArrowYIn[0] = startPoint.y;
+            eastArrowYIn[1] = eastEndPoint.y;
+            console.log(northArrowXIn, northArrowYIn, eastArrowXIn, eastArrowYIn);
+            northApproximatePoints = AST.transformPointList(astTransform, northArrowXIn, northArrowYIn);
+            eastApproximatePoints = AST.transformPointList(astTransform, eastArrowXIn, eastArrowYIn);
+            console.log(northApproximatePoints, eastApproximatePoints);
         }
         return {northApproximatePoints, eastApproximatePoints};
     }
@@ -113,23 +115,11 @@ export class RulerAnnotationStore extends RegionStore {
         let xApproximatePoints;
         let yApproximatePoints;
         let hypotenuseApproximatePoints;
-        // let approximatePoints;
-        // let xApproximatePoints = this.regionApproximationMap.get(astTransform);
-        // let yApproximatePoints = this.regionApproximationMap.get(astTransform);
-        // let hypotenuseApproximatePoints = this.regionApproximationMap.get(astTransform);
+
         const startPoint = {x: this.controlPoints[1].x, y: this.controlPoints[0].y};
         const xEndPoint = {x: this.controlPoints[0].x, y: this.controlPoints[0].y};
         const yEndPoint = {x: this.controlPoints[1].x, y: this.controlPoints[1].y};
-        // const northEndPoint = {x: startPoint.x, y: Math.max(this.controlPoints[0].y, this.controlPoints[1].y)}
-        // const eastEndPoint = {x: Math.min(this.controlPoints[0].x, this.controlPoints[1].x), y: startPoint.y}
-        // const xArrowPoints = [startPoint, xEndPoint];
-        // const yArrowPoints = [startPoint, yEndPoint];
-        // const hypotenuseArrowPoints = [xEndPoint, yEndPoint];
-        // const northArrowPoints = [startPoint, {x: this.controlPoints[0].x, y: this.controlPoints[1].y}]
-        // const eastArrowPoints = [startPoint, {x: this.controlPoints[1].x, y: this.controlPoints[0].y}]
-        // const northArrowPoints = [{...this.endPoints[0]}, {x: this.endPoints[0].x, y: this.endPoints[1].y}]
-        // const eastArrowPoints = [{...this.endPoints[0]}, {x: this.endPoints[1].x, y: this.endPoints[0].y}]
-        // if (!approximatePoints) {
+
         if (!yApproximatePoints && !xApproximatePoints) {
             const a1 = new Float64Array(2);
             a1[0] = startPoint.x;
@@ -153,20 +143,7 @@ export class RulerAnnotationStore extends RegionStore {
             xApproximatePoints = AST.transformPointList(astTransform, a1, a2);
             yApproximatePoints = AST.transformPointList(astTransform, b1, b2);
             hypotenuseApproximatePoints = AST.transformPointList(astTransform, c1, c2);
-            // console.log(a1, a2, b1, b2, c1, c2)
-            // console.log(xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints);
-
-            // xApproximatePoints = getApproximatePolygonPoints(astTransform, xArrowPoints, RegionStore.TARGET_VERTEX_COUNT, false);
-            // yApproximatePoints = getApproximatePolygonPoints(astTransform, yArrowPoints, RegionStore.TARGET_VERTEX_COUNT, false);
-            // hypotenuseApproximatePoints = getApproximatePolygonPoints(astTransform, hypotenuseArrowPoints, RegionStore.TARGET_VERTEX_COUNT, false);
-
-            // this.regionApproximationMap.set(astTransform, northApproximatePoints);
-            // this.regionApproximationMap.set(astTransform, eastApproximatePoints);
-
-            // approximatePoints = getApproximatePolygonPoints(astTransform, [startPoint, xEndPoint, yEndPoint], RegionStore.TARGET_VERTEX_COUNT, true);
-            // console.log(approximatePoints);
         }
-        // return approximatePoints;
         return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints};
     }
 }

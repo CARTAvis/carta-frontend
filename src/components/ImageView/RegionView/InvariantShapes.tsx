@@ -208,23 +208,22 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
         props.onDoubleClick(region);
     };
 
-    // const copySrc = AST.copy(frame.wcsInfoForTransformation);
-    // AST.invert(copySrc);
-    // const spatialTransformAST = frame.wcsInfo;
-    const approxPoints = region.getRegionApproximation(frame.spatialTransformAST);
+    const approxPoints = region.getRegionApproximation(frame.wcsInfo);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
-    const northPointArray = new Array<number>(northApproxPoints.length * 2);
-    const eastPointArray = new Array<number>(eastApproxPoints.length * 2);
-    for (let i = 0; i < northApproxPoints.length; i++) {
-        const point = transformedImageToCanvasPos(northApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        northPointArray[i * 2] = point.x;
-        northPointArray[i * 2 + 1] = point.y;
+    const northPointArray = new Array<number>(northApproxPoints.length);
+    const eastPointArray = new Array<number>(eastApproxPoints.length);
+
+    for (let i = 0; i < northApproxPoints.length; i += 2) {
+        const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        northPointArray[i] = point.x;
+        northPointArray[i + 1] = point.y;
     }
-    for (let i = 0; i < eastApproxPoints.length; i++) {
-        const point = transformedImageToCanvasPos(eastApproxPoints[i], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        eastPointArray[i * 2] = point.x;
-        eastPointArray[i * 2 + 1] = point.y;
+
+    for (let i = 0; i < eastApproxPoints.length; i += 2) {
+        const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        eastPointArray[i] = point.x;
+        eastPointArray[i + 1] = point.y;
     }
 
     // trigger re-render when exporting images
@@ -244,10 +243,6 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
     return (
         <>
             <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick}>
-                {/* <Line points={pointArray} stroke={'yellow'} strokeWidth={10} opacity={1}/> */}
-                {/* <Line closed points={[eastPointArray[eastPointArray.length - 2], northPointArray[northPointArray.length - 1], eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], northPointArray[northPointArray.length - 2], northPointArray[northPointArray.length - 1]]} opacity={0.5} fill={"green"} />
-                <Line closed points={[eastPointArray[0], eastPointArray[1], eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], northPointArray[northPointArray.length - 2], northPointArray[northPointArray.length - 1]]} opacity={0.5} fill={"green"} /> */}
-                {/* <Rect x={eastPointArray[0]} y={eastPointArray[1]} width={eastPointArray[eastPointArray.length - 2] - eastPointArray[0]} height={northPointArray[northPointArray.length - 1] - northPointArray[1]} opacity={0.5} fill={"green"} /> */}
                 <Line closed points={[...topLeftPoint, ...topRightPoint, ...bottomLeftPoint, ...bottomRightPoint]} opacity={0} />
                 <Line closed points={[...bottomRightPoint, ...topRightPoint, ...bottomLeftPoint, ...topLeftPoint]} opacity={0} />
 
@@ -262,7 +257,6 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={eastPointArray}
-                    // points={[startPoint.x, startPoint.y, endPoint.x, startPoint.y]}
                 />
                 <Arrow
                     stroke={region.color}
@@ -275,7 +269,6 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={northPointArray}
-                    // points={[startPoint.x, startPoint.y, startPoint.x, endPoint.y]}
                 />
                 <Text x={northPointArray[northPointArray.length - 2]} y={northPointArray[northPointArray.length - 1]} text={region.northLabel} fill={"yellow"} />
                 <Text x={eastPointArray[eastPointArray.length - 2]} y={eastPointArray[eastPointArray.length - 1]} text={region.eastLabel} fill={"red"} />
@@ -308,8 +301,7 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
         props.onDoubleClick(region);
     };
 
-    const tempWcsInfo = AST.copy(frame.wcsInfo);
-    const approxPoints = region.getRegionApproximation(tempWcsInfo);
+    const approxPoints = region.getRegionApproximation(frame.wcsInfo);
 
     const xApproxPoints = approxPoints.xApproximatePoints;
     const yApproxPoints = approxPoints.yApproximatePoints;
@@ -318,30 +310,26 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
     const yPointArray = Array<number>(yApproxPoints.length);
     const hypotenusePointArray = Array<number>(hypotenuseApproxPoints.length);
 
-    for (let i = 0; i < xPointArray.length; i++) {
-        if (i % 2 === 0) {
-            const point = transformedImageToCanvasPos({x: xApproxPoints[i], y: xApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            xPointArray[i] = point.x;
-            xPointArray[i + 1] = point.y;
-        }
+    for (let i = 0; i < xPointArray.length; i += 2) {
+        const point = transformedImageToCanvasPos({x: xApproxPoints[i], y: xApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        xPointArray[i] = point.x;
+        xPointArray[i + 1] = point.y;
     }
-    for (let i = 0; i < yPointArray.length; i++) {
-        if (i % 2 === 0) {
-            const point = transformedImageToCanvasPos({x: yApproxPoints[i], y: yApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            yPointArray[i] = point.x;
-            yPointArray[i + 1] = point.y;
-        }
+
+    for (let i = 0; i < yPointArray.length; i += 2) {
+        const point = transformedImageToCanvasPos({x: yApproxPoints[i], y: yApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        yPointArray[i] = point.x;
+        yPointArray[i + 1] = point.y;
     }
-    for (let i = 0; i < hypotenusePointArray.length; i++) {
-        if (i % 2 === 0) {
-            const point = transformedImageToCanvasPos({x: hypotenuseApproxPoints[i], y: hypotenuseApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            hypotenusePointArray[i] = point.x;
-            hypotenusePointArray[i + 1] = point.y;
-        }
+
+    for (let i = 0; i < hypotenusePointArray.length; i += 2) {
+        const point = transformedImageToCanvasPos({x: hypotenuseApproxPoints[i], y: hypotenuseApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+        hypotenusePointArray[i] = point.x;
+        hypotenusePointArray[i + 1] = point.y;
     }
 
     const centerPoints = midpoint2D({x: xPointArray[xPointArray.length - 2], y: xPointArray[xPointArray.length - 1]}, {x: yPointArray[yPointArray.length - 2], y: yPointArray[yPointArray.length - 1]});
-    const distance = AST.geodesicDistance(tempWcsInfo, xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]);
+    const distance = AST.geodesicDistance(frame.wcsInfo, xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]);
     const distanceText: string = ((distance * 180.0) / Math.PI).toString() + "\u00B0";
 
     // trigger re-render when exporting images
