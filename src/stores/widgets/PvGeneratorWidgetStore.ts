@@ -56,7 +56,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
                 width: this.width,
-                spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) && !channelIndexMin && !channelIndexMax && channelIndexMin !== 0 && channelIndexMax !== 0 ? null : {min: channelIndexMin, max: channelIndexMax},
+                spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
                 reverse: this.reverse,
                 keep: this.keep
             };
