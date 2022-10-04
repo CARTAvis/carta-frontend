@@ -116,6 +116,7 @@ export class AppStore {
     // ImageViewer
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
+    @observable cursorMirror: boolean = false;
     @observable toolbarExpanded: boolean;
     @observable imageRatio: number;
     @observable isExportingImage: boolean;
@@ -1112,7 +1113,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.requestFitting(message);
             if (ack.success) {
-                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, ack.resultValues, ack.resultErrors, ack.log);
+                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, message.fixedParams, ack.resultValues, ack.resultErrors, ack.log);
             }
             if (ack.message) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
@@ -1170,6 +1171,10 @@ export class AppStore {
 
     @action setCursorFrozen = (val: boolean) => {
         this.cursorFrozen = val;
+    };
+
+    @action toggleCursorMirror = () => {
+        this.cursorMirror = !this.cursorMirror;
     };
 
     @action toggleToolbarExpanded = () => {
