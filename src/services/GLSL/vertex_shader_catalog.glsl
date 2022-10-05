@@ -3,6 +3,7 @@ precision highp int;
 
 uniform sampler2D uCmapTexture;
 uniform highp sampler2D uControlMapTexture;
+uniform sampler2D uPositionTexture;
 uniform sampler2D uSizeTexture;
 uniform sampler2D uColorTexture;
 uniform sampler2D uOrientationTexture;
@@ -29,6 +30,7 @@ uniform float uRotationAngle;
 uniform vec2 uRangeOffset;
 uniform vec2 uRangeScale;
 uniform float uScaleAdjustment;
+uniform float uZoomLevel;
 
 // Control-map based transformation
 uniform int uControlMapEnabled;
@@ -38,7 +40,7 @@ uniform vec2 uControlMapSize;
 uniform float uLineThickness;
 uniform float uPixelRatio;
 
-in vec4 a_position;
+out vec2 v_pointCoord;
 out vec3 v_colour;
 out float v_pointSize;
 out float v_orientation;
@@ -72,17 +74,16 @@ bool isNaN(float val) {
 }
 
 void main() {
-    uvec4 selectedSource = getValueByIndexFromTextureU(uSelectedSourceTexture, gl_VertexID);
-    // Scale and rotate
-    vec2 posImageSpace = vec2(a_position.x,a_position.y);
+    int dataPointIndex = gl_VertexID / 6;  
+    uvec4 selectedSource = getValueByIndexFromTextureU(uSelectedSourceTexture, dataPointIndex);
+    vec4 position = getValueByIndexFromTexture(uPositionTexture, dataPointIndex);
+    vec2 posImageSpace = position.xy;
 
     if (uControlMapEnabled > 0) {
         posImageSpace = controlMapLookup(uControlMapTexture, posImageSpace, uControlMapSize, uControlMapMin, uControlMapMax);
     }
 
-    vec2 pos = rotate2D(posImageSpace, uRotationAngle) * uScaleAdjustment * uRangeScale + uRangeOffset;
-
-    gl_Position = vec4(imageToGL(pos), 0.5, 1.0);
+    float point_size = 0.0;
 
     v_colour = uPointColor;
     v_orientation = 0.0;
@@ -92,7 +93,7 @@ void main() {
     v_featherWidth = uFeatherWidth;
 
     if (uCmapEnabled) {
-        vec4 color = getValueByIndexFromTexture(uColorTexture, gl_VertexID);
+        vec4 color = getValueByIndexFromTexture(uColorTexture, dataPointIndex);
         float x = clamp(color.x, 0.0, 1.0);
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
         vec2 cmapCoords = vec2(x, cmapYVal);
@@ -100,14 +101,14 @@ void main() {
     }
 
     if (uOmapEnabled) {
-        vec4 orientation = getValueByIndexFromTexture(uOrientationTexture, gl_VertexID);
+        vec4 orientation = getValueByIndexFromTexture(uOrientationTexture, dataPointIndex);
         if (!isNaN(orientation.x)) {
             v_orientation = orientation.x;
         }
     }
 
     if (uSizeMajorMapEnabled) {
-        vec4 sizeMajor = getValueByIndexFromTexture(uSizeTexture, gl_VertexID);
+        vec4 sizeMajor = getValueByIndexFromTexture(uSizeTexture, dataPointIndex);
         float size = sizeMajor.x;
         if(!isNaN(size)) {
             v_pointSize = size;
@@ -120,26 +121,35 @@ void main() {
 
     if (uShowSelectedSource) {
         if (v_selected == 1.0) {
-            gl_PointSize = v_pointSize + v_featherWidth;
+            point_size = v_pointSize + v_featherWidth;
         } else {
-            gl_PointSize = 0.0;
+            point_size = 0.0;
         }
     } else {
-        gl_PointSize = v_pointSize + v_featherWidth;
+        point_size = v_pointSize + v_featherWidth;
     }
 
     if (uSizeMinorMapEnabled) {
-        vec4 sizeMinor = getValueByIndexFromTexture(uSizeMinorTexture, gl_VertexID);
+        vec4 sizeMinor = getValueByIndexFromTexture(uSizeMinorTexture, dataPointIndex);
         v_minorSize = sizeMinor.x;
         if (uAreaModeMinor) {
             v_minorSize = getSquareSideByArea(v_pointSize, v_minorSize);
         }
         if (v_pointSize < v_minorSize) {
-            gl_PointSize = v_minorSize + v_featherWidth;
+            point_size = v_minorSize + v_featherWidth;
         }
     }
 
     if (uShapeType == ELLIPSE_LINED) {
         v_featherWidth = v_pointSize / 50.0 * 15.0 + 0.7;
     }
+
+    vec2 offset = getOffsetFromId(gl_VertexID);
+    v_pointCoord = vec2(offset.x, -offset.y) + 0.5;
+    posImageSpace += offset * point_size / (uZoomLevel * uScaleAdjustment);
+
+    // Scale and rotate
+    vec2 pos = rotate2D(posImageSpace, uRotationAngle) * uScaleAdjustment * uRangeScale + uRangeOffset;
+
+    gl_Position = vec4(imageToGL(pos), 0.5, 1.0);
 }
