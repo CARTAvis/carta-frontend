@@ -105,7 +105,7 @@ export class FrameStore {
     public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
-    public readonly wcsInfoSwappedAxes: AST.FrameSet;
+    public readonly wcsInfoSpectralVsDirection: AST.FrameSet;
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
@@ -1038,7 +1038,7 @@ export class FrameStore {
             if (astFrameSet) {
                 AST.set(astFrameSet, "Equinox=2005"); // To avoid negative angles on the RA axis
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
-                this.wcsInfoSwappedAxes = AST.copy(astFrameSet);
+                this.wcsInfoSpectralVsDirection = AST.copy(astFrameSet);
                 this.updateSpectralVsDirectionWcs();
                 AST.deleteObject(astFrameSet);
             }
@@ -1374,7 +1374,7 @@ export class FrameStore {
             }
 
             // Depth axis is the third axis that is not stokes axis (if any)
-            if (depthAxis > 0 && name.match(regDepthAxis)) {
+            if (name.match(regDepthAxis) && depthAxis !== 3) {
                 name = entry.name.replace(`${depthAxis}`, "3");
             }
 
@@ -1404,7 +1404,7 @@ export class FrameStore {
     };
 
     public updateSpectralVsDirectionWcs = () => {
-        if (this.wcsInfoSwappedAxes) {
+        if (this.wcsInfoSpectralVsDirection) {
             const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
             const dirXAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
             const dirYAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
@@ -1417,7 +1417,7 @@ export class FrameStore {
                 dirAxisSize = this.frameInfo.fileInfoExtended.height;
             }
             const requiredChannel = this.requiredChannel + 1;
-            this.wcsInfo = AST.make2DSwappedFrameSet(this.wcsInfoSwappedAxes, dirAxis, spectralAxis, requiredChannel, dirAxisSize, 3);
+            this.wcsInfo = AST.make2DSwappedFrameSet(this.wcsInfoSpectralVsDirection, dirAxis, spectralAxis, requiredChannel, dirAxisSize, 3);
         }
     };
 
