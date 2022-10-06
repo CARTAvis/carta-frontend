@@ -1,11 +1,11 @@
 import React from "react";
 import {Group, Shape, Arrow, Transformer, Text, Line} from "react-konva";
-import {KonvaEventObject} from "konva/lib/Node";
+import Konva from "konva";
 import * as AST from "ast_wrapper";
 import {AppStore} from "stores";
 import {CompassAnnotationStore, FrameStore, RegionStore, RulerAnnotationStore} from "stores/Frame";
-import {transformedImageToCanvasPos} from "./shared";
-import {midpoint2D} from "utilities";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {midpoint2D, transformPoint} from "utilities";
 
 const POINT_WIDTH = 6;
 const POINT_DRAG_WIDTH = 13;
@@ -199,13 +199,34 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
     const frame = props.frame;
     const region = props.region as CompassAnnotationStore;
 
-    const handleClick = (event: KonvaEventObject<MouseEvent>) => {
+    const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         console.log("selecting");
         props.onSelect(region);
     };
-    const handleDoubleClick = (event: KonvaEventObject<MouseEvent>) => {
+    const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         console.log("double clicking");
         props.onDoubleClick(region);
+    };
+
+    const handleDragStart = () => {
+        props.onSelect?.(props.region);
+        props.region.beginEditing();
+    };
+
+    const handleDragEnd = () => {
+        props.region.endEditing();
+    };
+
+    const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (konvaEvent.target) {
+            const frame = props.frame;
+            const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
+            let positionImageSpace = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
+            if (frame.spatialReference) {
+                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+            }
+            props.region.setCenter(positionImageSpace);
+        }
     };
 
     const approxPoints = region.getRegionApproximation(frame.wcsInfo);
@@ -242,7 +263,7 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick}>
+            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
                 <Line closed points={[...topLeftPoint, ...topRightPoint, ...bottomLeftPoint, ...bottomRightPoint]} opacity={0} />
                 <Line closed points={[...bottomRightPoint, ...topRightPoint, ...bottomLeftPoint, ...topLeftPoint]} opacity={0} />
 
@@ -292,13 +313,34 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
     const frame = props.frame;
     const region = props.region as RulerAnnotationStore;
 
-    const handleClick = (event: KonvaEventObject<MouseEvent>) => {
+    const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         console.log("selecting");
         props.onSelect(region);
     };
-    const handleDoubleClick = (event: KonvaEventObject<MouseEvent>) => {
+    const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         console.log("double clicking");
         props.onDoubleClick(region);
+    };
+
+    const handleDragStart = () => {
+        props.onSelect?.(props.region);
+        props.region.beginEditing();
+    };
+
+    const handleDragEnd = () => {
+        props.region.endEditing();
+    };
+
+    const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (konvaEvent.target) {
+            const frame = props.frame;
+            const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
+            let positionImageSpace = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
+            if (frame.spatialReference) {
+                positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
+            }
+            props.region.setCenter(positionImageSpace);
+        }
     };
 
     const approxPoints = region.getRegionApproximation(frame.wcsInfo);
@@ -338,7 +380,7 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick}>
+            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
                 <Line points={hypotenusePointArray} stroke={"green"} strokeWidth={5} />
                 <Line
                     stroke={"red"}

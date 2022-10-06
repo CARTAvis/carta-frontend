@@ -651,7 +651,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (this.props.dragPanningEnabled && this.dragPanning) {
             return;
         }
-        console.log("handlemove");
 
         const frame = this.props.frame;
         if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion) {

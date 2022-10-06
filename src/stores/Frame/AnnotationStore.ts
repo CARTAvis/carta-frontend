@@ -87,8 +87,8 @@ export class CompassAnnotationStore extends RegionStore {
             console.log(northArrowXIn, northArrowYIn, eastArrowXIn, eastArrowYIn);
             northApproximatePoints = AST.transformPointList(astTransform, northArrowXIn, northArrowYIn);
             eastApproximatePoints = AST.transformPointList(astTransform, eastArrowXIn, eastArrowYIn);
-            console.log(northApproximatePoints, eastApproximatePoints);
         }
+        console.log(this.controlPoints[0].x, this.controlPoints[0].y, this.controlPoints[1].x, this.controlPoints[1].y);
         return {northApproximatePoints, eastApproximatePoints};
     }
 }
