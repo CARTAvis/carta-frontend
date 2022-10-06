@@ -371,8 +371,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
                 case CARTA.RegionType.ANNCOMPASS:
-                case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
+                    break;
+                case CARTA.RegionType.ANNRULER:
+                    this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
                     break;
                 default:
                     break;

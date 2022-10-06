@@ -71,7 +71,6 @@ export class CompassAnnotationStore extends RegionStore {
             const startPoint = {x: Math.max(this.controlPoints[0].x, this.controlPoints[1].x), y: Math.min(this.controlPoints[0].y, this.controlPoints[1].y)};
             const northEndPoint = {x: startPoint.x, y: Math.max(this.controlPoints[0].y, this.controlPoints[1].y)};
             const eastEndPoint = {x: Math.min(this.controlPoints[0].x, this.controlPoints[1].x), y: startPoint.y};
-            console.log(startPoint, northEndPoint, eastEndPoint);
             const northArrowXIn = new Float64Array(2);
             northArrowXIn[0] = startPoint.x;
             northArrowXIn[1] = northEndPoint.x;
@@ -84,11 +83,9 @@ export class CompassAnnotationStore extends RegionStore {
             const eastArrowYIn = new Float64Array(2);
             eastArrowYIn[0] = startPoint.y;
             eastArrowYIn[1] = eastEndPoint.y;
-            console.log(northArrowXIn, northArrowYIn, eastArrowXIn, eastArrowYIn);
             northApproximatePoints = AST.transformPointList(astTransform, northArrowXIn, northArrowYIn);
             eastApproximatePoints = AST.transformPointList(astTransform, eastArrowXIn, eastArrowYIn);
         }
-        console.log(this.controlPoints[0].x, this.controlPoints[0].y, this.controlPoints[1].x, this.controlPoints[1].y);
         return {northApproximatePoints, eastApproximatePoints};
     }
 }
