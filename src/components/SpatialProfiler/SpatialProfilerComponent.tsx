@@ -288,6 +288,30 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    @computed get nearestCursorPoint(): Point2D {
+        if (this.widgetStore.isMouseMoveIntoLinePlots) {
+            return binarySearchByX(this.plotData.values, this.widgetStore.cursorX)?.point ?? null;
+        }
+        return null;
+    }
+
+    @computed get pointInfo(): {
+        posImageSpace: Point2D;
+        posWCS: any;
+        infoWCS: any;
+        precision: Point2D;
+    } {
+        if (this.plotData) {
+            if (this.nearestCursorPoint) {
+                const pixelPoint = this.widgetStore.isXProfile ? {x: this.nearestCursorPoint.x, y: this.profileStore.y} : {x: this.profileStore.x, y: this.nearestCursorPoint.x};
+                return this.frame.getCursorInfo(pixelPoint);
+            } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
+                return this.frame.getCursorInfo(this.widgetStore.effectiveRegion.center);
+            }
+        }
+        return null;
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
@@ -390,7 +414,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         if (decimalIndex === -1) {
             return;
         }
-        const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex;
+        const pointInfoPrecision = this.widgetStore.isXProfile ? this.pointInfo?.precision.x : this.pointInfo?.precision.y;
+        // Skip lists with no more decimals than pointInfo
+        if (this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
+            return;
+        }
+        // Start trimming from the next digit of pointInfo to avoid offset between pointInfo and upper wcs axis value
+        const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex - 1 - (pointInfoPrecision + 1);
         for (let trim = initialTrimLength; trim > 0; trim--) {
             let trimmedArray = this.cachedFormattedCoordinates.slice();
             for (let i = 0; i < trimmedArray.length; i++) {
@@ -399,10 +429,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (!SpatialProfilerComponent.hasRepeats(trimmedArray)) {
                 this.cachedFormattedCoordinates = trimmedArray;
                 return;
-            }
-            // Skip an extra character after the first check, because of the decimal indicator
-            if (trim === initialTrimLength) {
-                trim--;
             }
         }
     }
@@ -440,13 +466,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             const isXCoordinate = this.widgetStore.coordinate.indexOf("x") >= 0;
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 // handle the value when cursor is in profiler
-                const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
-                if (nearest?.point) {
-                    const pixelPoint = isXCoordinate ? {x: nearest.point.x, y: this.profileStore.y} : {x: this.profileStore.x, y: nearest.point.x};
-                    const cursorInfo = this.frame.getCursorInfo(pixelPoint);
-                    const wcsLabel = cursorInfo?.infoWCS && !this.lineAxis ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
-                    const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(nearest.point.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${nearest.point.x} px, `;
-                    const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
+                if (this.pointInfo && this.nearestCursorPoint) {
+                    const wcsLabel = this.pointInfo?.infoWCS && !this.lineAxis ? `WCS: ${isXCoordinate ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
+                    const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(this.nearestCursorPoint.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${this.nearestCursorPoint.x} px, `;
+                    const valueLabel = `${this.nearestCursorPoint.y !== undefined ? formattedExponential(this.nearestCursorPoint.y, 5) : ""}`;
 
                     const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues);
 
@@ -460,10 +483,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
             } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
                 // get value directly from point region
-                const pointRegionInfo = this.frame.getCursorInfo(this.widgetStore.effectiveRegion.center);
-                if (pointRegionInfo?.posImageSpace) {
-                    const wcsLabel = pointRegionInfo?.infoWCS ? `WCS: ${isXCoordinate ? pointRegionInfo.infoWCS.x : pointRegionInfo.infoWCS.y}, ` : "";
-                    const imageLabel = `Image: ${toFixed(isXCoordinate ? pointRegionInfo.posImageSpace.x : pointRegionInfo.posImageSpace.y)} px, `;
+                if (this.pointInfo?.posImageSpace) {
+                    const wcsLabel = this.pointInfo?.infoWCS ? `WCS: ${isXCoordinate ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
+                    const imageLabel = `Image: ${toFixed(isXCoordinate ? this.pointInfo.posImageSpace.x : this.pointInfo.posImageSpace.y)} px, `;
                     const valueLabel = `${this.profileStore?.value !== undefined ? formattedExponential(this.profileStore.value, 5) : ""}`;
 
                     const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues, this.profileStore.x);
