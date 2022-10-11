@@ -34,7 +34,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)}>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)} tooltip={rowIndex < columnData?.length ? columnData[rowIndex] : undefined}>
                         {rowIndex < columnData?.length ? columnData[rowIndex] : undefined}
                     </Cell>
                 )}
