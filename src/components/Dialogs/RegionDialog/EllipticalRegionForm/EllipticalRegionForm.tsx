@@ -214,7 +214,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
-        if (!region || region.controlPoints.length !== 2 || region.regionType !== CARTA.RegionType.ELLIPSE) {
+        if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.ELLIPSE && region.regionType !== CARTA.RegionType.ANNELLIPSE)) {
             return null;
         }
 

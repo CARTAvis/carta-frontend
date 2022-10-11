@@ -91,7 +91,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
-        if (!region || !region.isValid || (region.regionType !== CARTA.RegionType.POLYGON && region.regionType !== CARTA.RegionType.POLYLINE)) {
+        if (!region || !region.isValid || (region.regionType !== CARTA.RegionType.POLYGON && region.regionType !== CARTA.RegionType.POLYLINE && region.regionType !== CARTA.RegionType.ANNPOLYLINE && region.regionType !== CARTA.RegionType.ANNPOLYGON)) {
             return null;
         }
 

@@ -12,6 +12,7 @@ import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm"
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
 import {LineRegionForm} from "./LineRegionForm/LineRegionForm";
+import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionDialogComponent.scss";
 
@@ -107,6 +108,16 @@ export class RegionDialogComponent extends React.Component {
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
                             <LineRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
+                        </React.Fragment>
+                    );
+                    editableRegion = true;
+                    break;
+                case CARTA.RegionType.ANNCOMPASS:
+                case CARTA.RegionType.ANNRULER:
+                    bodyContent = (
+                        <React.Fragment>
+                            <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
+                            <CompassRulerRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
                         </React.Fragment>
                     );
                     editableRegion = true;

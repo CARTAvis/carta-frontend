@@ -6,7 +6,7 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {FrameStore, RegionCoordinate, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {FrameStore, RegionCoordinate, RegionStore, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
@@ -440,7 +440,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
-        if (!region || region.controlPoints.length !== 2 || region.regionType !== CARTA.RegionType.RECTANGLE) {
+        if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.RECTANGLE && region.regionType !== CARTA.RegionType.ANNRECTANGLE && region.regionType !== CARTA.RegionType.ANNTEXT)) {
             return null;
         }
 
@@ -607,6 +607,13 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                                     <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
                                 </td>
                             </tr>
+                            {region.regionType === CARTA.RegionType.ANNTEXT && 
+                            <tr>
+                                <td>Text</td>
+                                <td colSpan={2}>
+                                    <InputGroup placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} />
+                                </td>
+                            </tr>}
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>

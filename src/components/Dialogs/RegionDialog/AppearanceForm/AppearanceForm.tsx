@@ -5,7 +5,7 @@ import {ColorResult} from "react-color";
 import {FormGroup, H5} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {RegionStore} from "stores/Frame";
+import {RegionStore, TextAnnotationStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import "./AppearanceForm.scss";
 
@@ -46,6 +46,11 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                     {region.regionType !== CARTA.RegionType.POINT && (
                         <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
                             <SafeNumericInput placeholder="Dash Length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.dashLength} stepSize={1} onValueChange={this.handleDashLengthChange} />
+                        </FormGroup>
+                    )}
+                    {(region.regionType === CARTA.RegionType.ANNCOMPASS || region.regionType === CARTA.RegionType.ANNTEXT || region.regionType === CARTA.RegionType.ANNRULER) && (
+                        <FormGroup inline={true} label="Font Size" labelInfo="(px)">
+                            <SafeNumericInput placeholder="Font Size" min={0.5} max={100} value={(region as TextAnnotationStore)?.fontSize} stepSize={1} onValueChange={value => (region as TextAnnotationStore)?.setFontSize(value)} />
                         </FormGroup>
                     )}
                 </div>

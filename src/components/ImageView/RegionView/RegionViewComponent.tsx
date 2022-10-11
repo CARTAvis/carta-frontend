@@ -265,7 +265,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         // Handle region completion
         if (
             this.creatingRegion.isValid &&
-            ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE) || this.creatingRegion.controlPoints.length > 2) &&
+            ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE && regionType !== CARTA.RegionType.ANNPOLYGON && regionType !== CARTA.RegionType.ANNPOLYLINE) || this.creatingRegion.controlPoints.length > 2) &&
             ((regionType !== CARTA.RegionType.LINE && regionType !== CARTA.RegionType.ANNLINE && regionType !== CARTA.RegionType.ANNVECTOR) || this.creatingRegion.controlPoints.length === 2)
         ) {
             this.creatingRegion.endCreating();
@@ -276,7 +276,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             console.log("region got deleted");
         }
 
-        if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE) {
+        if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE || regionType === CARTA.RegionType.ANNPOLYGON || regionType === CARTA.RegionType.ANNPOLYLINE) {
             // avoid mouse up event triggering region creation start
             setTimeout(() => {
                 this.creatingRegion = null;
@@ -696,7 +696,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
-        if (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) {
+        if (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE || this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYGON || this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYLINE) {
             this.regionCreationEnd();
         }
     };
@@ -719,7 +719,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         AppStore.Instance.updateLayerPixelRatio(this.layerRef);
 
         let creatingLine = null;
-        if (this.currentCursorPos && (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE) && this.creatingRegion.isValid) {
+        if (this.currentCursorPos && (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE || this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYGON || this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYLINE) && this.creatingRegion.isValid) {
             let firstControlPoint = this.creatingRegion.controlPoints[0];
             let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
 
@@ -731,7 +731,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const lineEnd = transformedImageToCanvasPos(lastControlPoint, frame, this.props.width, this.props.height, this.stageRef.current);
             const cusorCanvasPos = adjustPosToMutatedStage(this.currentCursorPos, this.stageRef.current);
             let points: number[];
-            if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE) {
+            if (this.creatingRegion.controlPoints.length > 1 && this.creatingRegion?.regionType !== CARTA.RegionType.POLYLINE && this.creatingRegion?.regionType !== CARTA.RegionType.ANNPOLYLINE) {
                 points = [lineStart.x, lineStart.y, cusorCanvasPos.x, cusorCanvasPos.y, lineEnd.x, lineEnd.y];
             } else {
                 points = [lineEnd.x, lineEnd.y, cusorCanvasPos.x, cusorCanvasPos.y];

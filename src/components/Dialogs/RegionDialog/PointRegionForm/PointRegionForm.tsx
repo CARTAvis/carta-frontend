@@ -109,7 +109,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
-        if (!region || region.regionType !== CARTA.RegionType.POINT) {
+        if (!region || (region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT)) {
             return null;
         }
 

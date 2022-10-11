@@ -9,6 +9,7 @@ import {RegionStore} from "./RegionStore";
 
 export class TextAnnotationStore extends RegionStore {
     @observable text: string = "Double click to edit text";
+    @observable fontSize: number = 20;
 
     constructor(
         backendService: BackendService,
@@ -30,13 +31,18 @@ export class TextAnnotationStore extends RegionStore {
     @action setText = (text: string) => {
         this.text = text;
     };
+
+    @action setFontSize = (fontSize: number) => {
+        this.fontSize = fontSize;
+    };
 }
 
 export class CompassAnnotationStore extends RegionStore {
-    @observable northLabel: string = "test north";
-    @observable eastLabel: string = "test east";
+    @observable northLabel: string = "North";
+    @observable eastLabel: string = "East";
     @observable isNorthArrowhead: boolean = true;
     @observable isEastArrowhead: boolean = true;
+    @observable fontSize: number = 20;
 
     constructor(
         backendService: BackendService,
@@ -61,6 +67,10 @@ export class CompassAnnotationStore extends RegionStore {
         } else {
             this.eastLabel = label;
         }
+    };
+
+    @action setFontSize = (fontSize: number) => {
+        this.fontSize = fontSize;
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet): any {
@@ -91,6 +101,8 @@ export class CompassAnnotationStore extends RegionStore {
 }
 
 export class RulerAnnotationStore extends RegionStore {
+    @observable fontSize: number = 20;
+
     constructor(
         backendService: BackendService,
         fileId: number,
@@ -107,6 +119,10 @@ export class RulerAnnotationStore extends RegionStore {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
         makeObservable(this);
     }
+
+    @action setFontSize = (fontSize: number) => {
+        this.fontSize = fontSize;
+    };
 
     public getRegionApproximation(astTransform: AST.FrameSet): any {
         let xApproximatePoints;

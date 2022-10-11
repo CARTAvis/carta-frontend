@@ -370,7 +370,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                         strokeWidth={region.lineWidth}
                         opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                         dash={[region.dashLength]}
-                        closed={!region.creating && region.regionType === CARTA.RegionType.POLYGON}
+                        closed={!region.creating && (region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.ANNPOLYGON)}
                         listening={this.props.listening && !region.locked}
                         onClick={this.handleClick}
                         onDblClick={this.handleDoubleClick}

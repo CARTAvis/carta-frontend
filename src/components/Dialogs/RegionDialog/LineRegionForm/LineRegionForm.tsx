@@ -393,7 +393,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
-        if (!region || region.controlPoints.length !== 2 || region.regionType !== CARTA.RegionType.LINE) {
+        if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.LINE && region.regionType !== CARTA.RegionType.ANNLINE && region.regionType !== CARTA.RegionType.ANNVECTOR)) {
             return null;
         }
 
