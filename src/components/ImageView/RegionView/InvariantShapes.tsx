@@ -1,4 +1,5 @@
 import {Group, Shape} from "react-konva";
+import {AppStore} from "stores";
 
 const POINT_WIDTH = 6;
 const POINT_DRAG_WIDTH = 13;
@@ -26,6 +27,7 @@ interface PointProps {
     rotation: number;
     color: string;
     opacity: number;
+    selectionOpacity: number;
     listening: boolean;
     onDragStart: (ev) => void;
     onDragEnd: (ev) => void;
@@ -45,24 +47,26 @@ export const Point = (props: PointProps) => {
 
     return (
         <Group>
-            <Shape x={props.x} y={props.y} rotation={props.rotation} fill={props.color} sceneFunc={handlePointDraw} />
-            <Shape
-                x={props.x}
-                y={props.y}
-                rotation={props.rotation}
-                sceneFunc={handlePointBoundDraw}
-                stroke={"white"}
-                strokeWidth={1}
-                strokeScaleEnabled={false}
-                opacity={props.opacity}
-                draggable={true}
-                listening={props.listening}
-                onDragStart={props.onDragStart}
-                onDragEnd={props.onDragEnd}
-                onDragMove={props.onDragMove}
-                onClick={props.onClick}
-                onDblClick={props.onDblClick}
-            />
+            <Shape x={props.x} y={props.y} opacity={props.opacity} rotation={props.rotation} fill={props.color} sceneFunc={handlePointDraw} />
+            {!AppStore.Instance.activeFrame?.regionSet.locked && (
+                <Shape
+                    x={props.x}
+                    y={props.y}
+                    rotation={props.rotation}
+                    sceneFunc={handlePointBoundDraw}
+                    stroke={"white"}
+                    strokeWidth={1}
+                    strokeScaleEnabled={false}
+                    opacity={props.selectionOpacity}
+                    draggable={true}
+                    listening={props.listening}
+                    onDragStart={props.onDragStart}
+                    onDragEnd={props.onDragEnd}
+                    onDragMove={props.onDragMove}
+                    onClick={props.onClick}
+                    onDblClick={props.onDblClick}
+                />
+            )}
         </Group>
     );
 };

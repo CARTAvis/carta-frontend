@@ -49,28 +49,6 @@ float calculateLength(float intensity) {
     return mix(uLengthMin, uLengthMax, clamp(calculateScaledIntensity(intensity), 0.0, 1.0));
 }
 
-// Get vertex offset in units of length, based on the vertex ID
-vec2 getOffsetFromId(int id) {
-    int index = id % 6;
-    switch(index) {
-        // First triangle is TRC, TLC, BRC
-        case 0:
-        return vec2(0.5, 0.5);
-        case 1:
-        return vec2(-0.5, 0.5);
-        case 2:
-        return vec2(0.5, -0.5);
-        // Second triangle is BRC, TLC, BLC
-        case 3:
-        return vec2(0.5, -0.5);
-        case 4:
-        return vec2(-0.5, 0.5);
-        case 5:
-        default:
-        return vec2(-0.5, -0.5);
-    }
-}
-
 void main() {
     int dataPointIndex = gl_VertexID / 6;
     vec4 data = getValueByIndexFromTexture(uDataTexture, dataPointIndex);

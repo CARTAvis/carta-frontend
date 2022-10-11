@@ -1,14 +1,171 @@
 name: CI
-on: push
+on: [push, pull_request]
 jobs:
-  check-formatting:
+
+  format-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '14'
-          # Disabling temporarily due to https://github.com/actions/setup-node/issues/516
-          # cache: 'npm'
+          cache: 'npm'
       - run: npm install
       - run: npm run checkformat
+
+  node-v12:
+    runs-on: [self-hosted, Linux, X64, Docker]
+    needs: format-check
+    container: 
+      image: carta/frontend-builder
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Fix ownership
+        run: |
+          chown -R $(id -u):$(id -g) $PWD
+
+      - name: Build libs
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_libs/build_libs.sh
+
+      - name: npm install with node 12
+        shell: bash        
+        run: |
+          n 12
+          n exec 12 node -v
+          n exec 12 npm install
+
+      - name: Build wrappers
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_src/build_wrappers.sh
+
+      - name: Build protobuf
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./protobuf/build_proto.sh
+
+      - name: Production build with node 12
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          n exec 12 npm run build
+
+  node-v14:
+    runs-on: [self-hosted, Linux, X64, Docker]
+    needs: format-check
+    container: 
+      image: carta/frontend-builder
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Fix ownership
+        run: | 
+          chown -R $(id -u):$(id -g) $PWD
+
+      - name: Build libs
+        shell: bash
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_libs/build_libs.sh
+
+      - name: npm install with node 14
+        shell: bash        
+        run: |
+          n 14
+          n exec 14 node -v
+          n exec 14 npm install
+
+      - name: Build wrappers
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_src/build_wrappers.sh
+
+      - name: Build protobuf
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./protobuf/build_proto.sh
+
+      - name: Production build with node 14
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          n exec 14 npm run build
+
+
+  node-v16:
+    runs-on: [self-hosted, Linux, X64, Docker]
+    needs: format-check
+    container: 
+      image: carta/frontend-builder
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Fix ownership
+        run: |
+          chown -R $(id -u):$(id -g) $PWD
+
+      - name: Build libs
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_libs/build_libs.sh
+
+      - name: npm install with node 16
+        shell: bash        
+        run: |
+          n 16
+          n exec 16 node -v
+          n exec 16 npm install --legacy-peer-deps
+
+      - name: Build wrappers
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./wasm_src/build_wrappers.sh
+
+      - name: Build protobuf
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          ./protobuf/build_proto.sh
+
+      - name: Production build with node 16
+        shell: bash        
+        run: |
+          source /emsdk/emsdk_env.sh
+          n exec 16 npm run build 
+
+  Notify:
+    name: Send notifications
+    runs-on: ubuntu-latest
+    needs: [format-check, node-v12, node-v14, node-v16]
+    if: always()
+    steps:
+      - name: Notify Slack
+        uses: baijunyao/action-slack-notify@v3.0.0
+        if: ${{ github.event_name == 'push' }}
+        with:
+          slack_channel_id: actions-build-status
+          slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+          github_context: ${{ toJson(github) }}
+
