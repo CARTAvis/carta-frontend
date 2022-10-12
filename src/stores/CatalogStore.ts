@@ -95,7 +95,7 @@ export class CatalogStore {
                     break;
             }
             this.catalogCounts.set(fileId, this.catalogCounts.get(fileId) + xData.length);
-            CatalogWebGLService.Instance.updateBuffer(fileId, position, startIndex * 2);
+            CatalogWebGLService.Instance.updatePositionArray(fileId, position, startIndex * 2);
         }
     }
 
@@ -106,7 +106,7 @@ export class CatalogStore {
             catalog.y = new Float32Array(catalog.y.length);
             const position = new Float32Array(catalog.x.length * 2);
             this.catalogCounts.set(fileId, 0);
-            CatalogWebGLService.Instance.updateBuffer(fileId, position, 0);
+            CatalogWebGLService.Instance.updatePositionArray(fileId, position, 0);
         }
     }
 

@@ -9,8 +9,7 @@ import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {FrameStore, RegionCoordinate, RegionStore, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
-import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
-import {SafeNumericInput} from "components/Shared";
+import {SafeNumericInput, CoordinateComponent} from "components/Shared";
 import "./RectangularRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
@@ -618,7 +617,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>
-                                    <CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo} />
+                                    <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
                                 </td>
                             </tr>
                             <tr>

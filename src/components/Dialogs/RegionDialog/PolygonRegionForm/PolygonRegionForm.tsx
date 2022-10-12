@@ -9,8 +9,7 @@ import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {RegionCoordinate, RegionStore} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
-import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
-import {SafeNumericInput} from "components/Shared";
+import {SafeNumericInput, CoordinateComponent} from "components/Shared";
 import "./PolygonRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
@@ -181,7 +180,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>
-                                    <CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo} />
+                                    <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
                                 </td>
                             </tr>
                             {pointRows}
