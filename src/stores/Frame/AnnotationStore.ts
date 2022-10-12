@@ -38,6 +38,7 @@ export class TextAnnotationStore extends RegionStore {
 }
 
 export class CompassAnnotationStore extends RegionStore {
+    @observable length: number = 10;
     @observable northLabel: string = "North";
     @observable eastLabel: string = "East";
     @observable isNorthArrowhead: boolean = true;
@@ -73,14 +74,21 @@ export class CompassAnnotationStore extends RegionStore {
         this.fontSize = fontSize;
     };
 
+    @action setLength = (length: number) => {
+        this.length = length;
+    };
+
     public getRegionApproximation(astTransform: AST.FrameSet): any {
         let northApproximatePoints = this.regionApproximationMap.get(astTransform);
         let eastApproximatePoints = this.regionApproximationMap.get(astTransform);
 
         if (!northApproximatePoints && !eastApproximatePoints) {
-            const startPoint = {x: Math.max(this.controlPoints[0].x, this.controlPoints[1].x), y: Math.min(this.controlPoints[0].y, this.controlPoints[1].y)};
-            const northEndPoint = {x: startPoint.x, y: Math.max(this.controlPoints[0].y, this.controlPoints[1].y)};
-            const eastEndPoint = {x: Math.min(this.controlPoints[0].x, this.controlPoints[1].x), y: startPoint.y};
+            // const startPoint = {x: Math.max(this.controlPoints[0].x, this.controlPoints[1].x), y: Math.min(this.controlPoints[0].y, this.controlPoints[1].y)};
+            // const northEndPoint = {x: startPoint.x, y: Math.max(this.controlPoints[0].y, this.controlPoints[1].y)};
+            // const eastEndPoint = {x: Math.min(this.controlPoints[0].x, this.controlPoints[1].x), y: startPoint.y};
+            const startPoint = {x: this.controlPoints[0].x + this.length / 2, y: this.controlPoints[0].y - this.length / 2};
+            const northEndPoint = {x: startPoint.x, y: startPoint.y + this.length};
+            const eastEndPoint = {x: startPoint.x - this.length, y: startPoint.y};
             const northArrowXIn = new Float64Array(2);
             northArrowXIn[0] = startPoint.x;
             northArrowXIn[1] = northEndPoint.x;

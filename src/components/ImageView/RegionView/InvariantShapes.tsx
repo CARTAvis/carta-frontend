@@ -223,7 +223,7 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
             const deltaPosition = subtract2D(newPosition, centerImageSpace);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
-            console.log(transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current))
+            console.log(transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current));
         }
     };
 
@@ -343,45 +343,57 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
                     lineJoin={"round"}
                     points={northPointArray}
                 />
-                <Text x={northPointArray[northPointArray.length - 2]} y={northPointArray[northPointArray.length - 1]} text={region.northLabel} stroke={region.color}
+                <Text
+                    x={northPointArray[northPointArray.length - 2]}
+                    y={northPointArray[northPointArray.length - 1]}
+                    text={region.northLabel}
+                    stroke={region.color}
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1} fontSize={region.fontSize} />
-                <Text x={eastPointArray[eastPointArray.length - 2]} y={eastPointArray[eastPointArray.length - 1]} text={region.eastLabel} stroke={region.color}
+                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    fontSize={region.fontSize}
+                />
+                <Text
+                    x={eastPointArray[eastPointArray.length - 2]}
+                    y={eastPointArray[eastPointArray.length - 1]}
+                    text={region.eastLabel}
+                    stroke={region.color}
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1} fontSize={region.fontSize} />
+                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    fontSize={region.fontSize}
+                />
                 <Group>
-                    {props.selected &&
-                    <>
-                        <Anchor
-                            anchor={"north"}
-                            x={northPointArray[northPointArray.length - 2]}
-                            y={northPointArray[northPointArray.length - 1]}
-                            rotation={0}
-                            isRotator={false}
-                            onMouseEnter={handleAnchorMouseEnter}
-                            onMouseOut={handleAnchorMouseOut}
-                            onDragStart={handleAnchorDragStart}
-                            onDragEnd={handleAnchorDragEnd}
-                            onDragMove={handleAnchorDrag}
-                        />
-                        <Anchor
-                            anchor={"east"}
-                            x={eastPointArray[eastPointArray.length - 2]}
-                            y={eastPointArray[eastPointArray.length - 1]}
-                            rotation={0}
-                            isRotator={false}
-                            onMouseEnter={handleAnchorMouseEnter}
-                            onMouseOut={handleAnchorMouseOut}
-                            onDragStart={handleAnchorDragStart}
-                            onDragEnd={handleAnchorDragEnd}
-                            onDragMove={handleAnchorDrag}
-                        />
-                    </>
-                    }
+                    {props.selected && (
+                        <>
+                            <Anchor
+                                anchor={"north"}
+                                x={northPointArray[northPointArray.length - 2]}
+                                y={northPointArray[northPointArray.length - 1]}
+                                rotation={0}
+                                isRotator={false}
+                                onMouseEnter={handleAnchorMouseEnter}
+                                onMouseOut={handleAnchorMouseOut}
+                                onDragStart={handleAnchorDragStart}
+                                onDragEnd={handleAnchorDragEnd}
+                                onDragMove={handleAnchorDrag}
+                            />
+                            <Anchor
+                                anchor={"east"}
+                                x={eastPointArray[eastPointArray.length - 2]}
+                                y={eastPointArray[eastPointArray.length - 1]}
+                                rotation={0}
+                                isRotator={false}
+                                onMouseEnter={handleAnchorMouseEnter}
+                                onMouseOut={handleAnchorMouseOut}
+                                onDragStart={handleAnchorDragStart}
+                                onDragEnd={handleAnchorDragEnd}
+                                onDragMove={handleAnchorDrag}
+                            />
+                        </>
+                    )}
                 </Group>
             </Group>
         </>
@@ -417,7 +429,7 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
         // console.log(transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current), transformedImageToCanvasPos(region.controlPoints[1], frame, props.layerWidth, props.layerHeight, props.stageRef.current))
         // const newPoints = region.controlPoints.map(p => add2D(p, offset));
         // region.setControlPoints(newPoints, false, false);
-        
+
         const region = props.region;
         const frame = props.frame;
         // const centerImageSpace = average2D([region.controlPoints[0]]);
@@ -431,30 +443,29 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
         // let newPosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
         // let oldPosition = canvasToTransformedImagePos(lastPosition.x, lastPosition.y, frame, props.layerWidth, props.layerHeight);
         // let oldPosition = canvasToTransformedImagePos(lastPosition.x, lastPosition.y, frame, props.layerWidth, props.layerHeight);
-        console.log(konvaEvent.target._lastPos,oldPosition, newPosition)
+        console.log(konvaEvent.target._lastPos, oldPosition, newPosition);
         // if (frame.spatialReference) {
         //     newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
         // }
-        const deltaPosition = subtract2D({x: konvaEvent.evt.movementX, y:konvaEvent.evt.movementY}, mousePoint.current);
+        const deltaPosition = subtract2D({x: konvaEvent.evt.movementX, y: konvaEvent.evt.movementY}, mousePoint.current);
         const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
         region.setControlPoints(newPoints, false, false);
         props.region.endEditing();
         // const point = transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            // konvaEvent.target.attrs.x = point.x;
-            // konvaEvent.target.attrs.y = point.y;
-        };
+        // konvaEvent.target.attrs.x = point.x;
+        // konvaEvent.target.attrs.y = point.y;
+    };
 
     const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
             const position = konvaEvent.target;
-            console.log(position)
+            console.log(position);
             // const offsetPoint = adjustPosToUnityStage(position, props.stageRef.current);
             // const position = {x: konvaEvent.target.x(), y: konvaEvent.target.y()};
             // console.log(canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight));
             // const point = transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
             // konvaEvent.target.attrs.x = point.x;
             // konvaEvent.target.attrs.y = point.y;
-
 
             // const frame = props.frame;
             // const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
@@ -490,7 +501,6 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
             // console.log(transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current), transformedImageToCanvasPos(region.controlPoints[1], frame, props.layerWidth, props.layerHeight, props.stageRef.current))
             // console.log(konvaEvent.target.getPosition(), konvaEvent.target.position())
             // console.log(deltaPosition, (region.controlPoints[0]), region.controlPoints[1], konvaEvent.target.getPosition(), konvaEvent.target.position())
-
         }
     };
 
@@ -616,45 +626,50 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
                     lineJoin={"round"}
                     points={yPointArray}
                 />
-                <Text x={centerPoints.x} y={centerPoints.y} text={distanceText} stroke={region.color}
+                <Text
+                    x={centerPoints.x}
+                    y={centerPoints.y}
+                    text={distanceText}
+                    stroke={region.color}
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1} fontSize={region.fontSize} />
+                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                    fontSize={region.fontSize}
+                />
                 <Group>
-                    {props.selected && 
-                    <>
-                        <Anchor
-                            anchor={"start"}
-                            x={canvasPosStart.x}
-                            y={canvasPosStart.y}
-                            rotation={0}
-                            isRotator={false}
-                            onMouseEnter={handleAnchorMouseEnter}
-                            onMouseOut={handleAnchorMouseOut}
-                            onDragStart={handleAnchorDragStart}
-                            onDragEnd={handleAnchorDragEnd}
-                            onDragMove={handleAnchorDrag}
-                        />
-                        <Anchor
-                            anchor={"finish"}
-                            x={canvasPosFinish.x}
-                            y={canvasPosFinish.y}
-                            rotation={0}
-                            isRotator={false}
-                            onMouseEnter={handleAnchorMouseEnter}
-                            onMouseOut={handleAnchorMouseOut}
-                            onDragStart={handleAnchorDragStart}
-                            onDragEnd={handleAnchorDragEnd}
-                            onDragMove={handleAnchorDrag}
-                        />
-                    </>
-                    }
+                    {props.selected && (
+                        <>
+                            <Anchor
+                                anchor={"start"}
+                                x={canvasPosStart.x}
+                                y={canvasPosStart.y}
+                                rotation={0}
+                                isRotator={false}
+                                onMouseEnter={handleAnchorMouseEnter}
+                                onMouseOut={handleAnchorMouseOut}
+                                onDragStart={handleAnchorDragStart}
+                                onDragEnd={handleAnchorDragEnd}
+                                onDragMove={handleAnchorDrag}
+                            />
+                            <Anchor
+                                anchor={"finish"}
+                                x={canvasPosFinish.x}
+                                y={canvasPosFinish.y}
+                                rotation={0}
+                                isRotator={false}
+                                onMouseEnter={handleAnchorMouseEnter}
+                                onMouseOut={handleAnchorMouseOut}
+                                onDragStart={handleAnchorDragStart}
+                                onDragEnd={handleAnchorDragEnd}
+                                onDragMove={handleAnchorDrag}
+                            />
+                        </>
+                    )}
                 </Group>
             </Group>
 
-            <Text x={0} y={0} text={'here'} fill={'green'} fontSize={100} />
-
+            <Text x={0} y={0} text={"here"} fill={"green"} fontSize={100} />
         </>
     );
 };

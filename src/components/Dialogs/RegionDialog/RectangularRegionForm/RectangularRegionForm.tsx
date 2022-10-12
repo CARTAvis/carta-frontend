@@ -607,13 +607,14 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                                     <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
                                 </td>
                             </tr>
-                            {region.regionType === CARTA.RegionType.ANNTEXT && 
-                            <tr>
-                                <td>Text</td>
-                                <td colSpan={2}>
-                                    <InputGroup placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} />
-                                </td>
-                            </tr>}
+                            {region.regionType === CARTA.RegionType.ANNTEXT && (
+                                <tr>
+                                    <td>Text</td>
+                                    <td colSpan={2}>
+                                        <InputGroup placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} />
+                                    </td>
+                                </tr>
+                            )}
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>

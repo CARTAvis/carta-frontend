@@ -4,7 +4,7 @@ import {FormGroup, H5, InputGroup} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore} from "stores";
-import {RegionStore,RegionCoordinate, CompassAnnotationStore} from "stores/Frame";
+import {RegionStore, RegionCoordinate, CompassAnnotationStore} from "stores/Frame";
 import {SafeNumericInput} from "components/Shared";
 import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
 import {WCSPoint2D, Point2D} from "models";
@@ -15,7 +15,6 @@ const KEYCODE_ENTER = "Enter";
 
 @observer
 export class CompassRulerRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
-
     private handleNameChange = (formEvent: React.FormEvent<HTMLInputElement>) => {
         this.props.region.setName(formEvent.currentTarget.value);
     };
@@ -153,7 +152,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         return (
             <div className="form-section compass-ruler-annotation-form">
                 <H5>Properties</H5>
-                    <div className="form-contents">
+                <div className="form-contents">
                     <table>
                         <tbody>
                             <tr>
@@ -162,22 +161,26 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                     <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} />
                                 </td>
                             </tr>
-                            {region.regionType === CARTA.RegionType.ANNCOMPASS && 
-                            <>
-                                <tr>
-                                    <td>North Label</td>
-                                    <td colSpan={2}>
-                                        <InputGroup placeholder="Enter north label" value={(region as CompassAnnotationStore).northLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)} />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>East Label</td>
-                                    <td colSpan={2}>
-                                        <InputGroup placeholder="Enter east label" value={(region as CompassAnnotationStore).eastLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)} />
-                                    </td>
-                                </tr>
-                            </>
-                            }
+                            {region.regionType === CARTA.RegionType.ANNCOMPASS && (
+                                <>
+                                    <tr>
+                                        <td>North Label</td>
+                                        <td colSpan={2}>
+                                            <InputGroup
+                                                placeholder="Enter north label"
+                                                value={(region as CompassAnnotationStore).northLabel}
+                                                onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)}
+                                            />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>East Label</td>
+                                        <td colSpan={2}>
+                                            <InputGroup placeholder="Enter east label" value={(region as CompassAnnotationStore).eastLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)} />
+                                        </td>
+                                    </tr>
+                                </>
+                            )}
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>
@@ -185,17 +188,35 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                 </td>
                             </tr>
                             <tr className="compass-ruler-annotation-table-input">
-                                <td>{region.regionType === CARTA.RegionType.ANNCOMPASS ? 'East Axis Tip' : 'Start'}{wcsInfo ? "" : " (px)"}</td>
-                                {(region.coordinate === RegionCoordinate.World && wcsInfo) ? this.inputWCSMode(region, wcsInfo, WCSStart, WCSFinish, false) : this.inputPixelMode(region, wcsInfo, WCSStart, WCSFinish, false)}
+                                <td>
+                                    {region.regionType === CARTA.RegionType.ANNCOMPASS ? "East Axis Tip" : "Start"}
+                                    {wcsInfo ? "" : " (px)"}
+                                </td>
+                                {region.coordinate === RegionCoordinate.World && wcsInfo ? this.inputWCSMode(region, wcsInfo, WCSStart, WCSFinish, false) : this.inputPixelMode(region, wcsInfo, WCSStart, WCSFinish, false)}
                                 <td colSpan={3}>
-                                    {wcsInfo ? <span className="info-string">{region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
+                                    {wcsInfo ? (
+                                        <span className="info-string">
+                                            {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}
+                                        </span>
+                                    ) : (
+                                        ""
+                                    )}
                                 </td>
                             </tr>
                             <tr className="compass-ruler-annotation-table-input">
-                                <td>{region.regionType === CARTA.RegionType.ANNCOMPASS ? 'North Axis Tip' : 'Finish'}{wcsInfo ? "" : " (px)"}</td>
-                                {(region.coordinate === RegionCoordinate.World && wcsInfo) ? this.inputWCSMode(region, wcsInfo, WCSStart, WCSFinish, true) : this.inputPixelMode(region, wcsInfo, WCSStart, WCSFinish, true)}
+                                <td>
+                                    {region.regionType === CARTA.RegionType.ANNCOMPASS ? "North Axis Tip" : "Finish"}
+                                    {wcsInfo ? "" : " (px)"}
+                                </td>
+                                {region.coordinate === RegionCoordinate.World && wcsInfo ? this.inputWCSMode(region, wcsInfo, WCSStart, WCSFinish, true) : this.inputPixelMode(region, wcsInfo, WCSStart, WCSFinish, true)}
                                 <td colSpan={3}>
-                                    {wcsInfo ? <span className="info-string">{region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span> : ""}
+                                    {wcsInfo ? (
+                                        <span className="info-string">
+                                            {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}
+                                        </span>
+                                    ) : (
+                                        ""
+                                    )}
                                 </td>
                             </tr>
                         </tbody>

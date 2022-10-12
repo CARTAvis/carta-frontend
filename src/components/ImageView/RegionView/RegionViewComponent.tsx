@@ -7,7 +7,7 @@ import {Layer, Line, Stage} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {AppStore, OverlayStore, PreferenceStore} from "stores";
-import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
+import {CompassAnnotationStore, FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {CursorRegionComponent} from "./CursorRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
@@ -265,7 +265,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         // Handle region completion
         if (
             this.creatingRegion.isValid &&
-            ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE && regionType !== CARTA.RegionType.ANNPOLYGON && regionType !== CARTA.RegionType.ANNPOLYLINE) || this.creatingRegion.controlPoints.length > 2) &&
+            ((regionType !== CARTA.RegionType.POLYGON && regionType !== CARTA.RegionType.POLYLINE && regionType !== CARTA.RegionType.ANNPOLYGON && regionType !== CARTA.RegionType.ANNPOLYLINE) ||
+                this.creatingRegion.controlPoints.length > 2) &&
             ((regionType !== CARTA.RegionType.LINE && regionType !== CARTA.RegionType.ANNLINE && regionType !== CARTA.RegionType.ANNVECTOR) || this.creatingRegion.controlPoints.length === 2)
         ) {
             this.creatingRegion.endCreating();
@@ -335,10 +336,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     console.log("setting control point corner to corner");
                     this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
                     break;
-
-                // this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
-                // // (this.creatingRegion as CompassAnnotationStore).setEndPoints([this.regionStartPoint, endPoint]);
-                // break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
                     this.creatingRegion.setControlPoints([center, {y: Math.abs(dx) / 2.0, x: Math.abs(dy) / 2.0}]);
@@ -347,6 +344,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
                 case CARTA.RegionType.ANNCOMPASS:
+                    // this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, {x: cursorPosImageSpace.x + maxDiff, y: cursorPosImageSpace.y + maxDiff}]);
+                    break;
                 case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
                     break;
@@ -371,7 +370,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
                 case CARTA.RegionType.ANNCOMPASS:
-                    this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
+                    // this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
+                    const length = Math.min(Math.abs(this.regionStartPoint.x - cursorPosImageSpace.x), Math.abs(this.regionStartPoint.y - cursorPosImageSpace.y)) * 2;
+                    (this.creatingRegion as CompassAnnotationStore).setLength(length);
+                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: this.regionStartPoint.x + length / 2, y: this.regionStartPoint.y + length / 2}]);
                     break;
                 case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
@@ -696,7 +698,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
-        if (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE || this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYGON || this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYLINE) {
+        if (
+            this.creatingRegion?.regionType === CARTA.RegionType.POLYGON ||
+            this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE ||
+            this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYGON ||
+            this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYLINE
+        ) {
             this.regionCreationEnd();
         }
     };
@@ -719,7 +726,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         AppStore.Instance.updateLayerPixelRatio(this.layerRef);
 
         let creatingLine = null;
-        if (this.currentCursorPos && (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON || this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE || this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYGON || this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYLINE) && this.creatingRegion.isValid) {
+        if (
+            this.currentCursorPos &&
+            (this.creatingRegion?.regionType === CARTA.RegionType.POLYGON ||
+                this.creatingRegion?.regionType === CARTA.RegionType.POLYLINE ||
+                this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYGON ||
+                this.creatingRegion?.regionType === CARTA.RegionType.ANNPOLYLINE) &&
+            this.creatingRegion.isValid
+        ) {
             let firstControlPoint = this.creatingRegion.controlPoints[0];
             let lastControlPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
 
