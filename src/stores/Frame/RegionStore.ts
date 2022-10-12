@@ -575,7 +575,6 @@ export class RegionStore {
                 console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
                 this.setRegionId(ack.regionId);
             } catch (err) {
-                console.log("ending creating");
                 console.log(err);
             }
         }

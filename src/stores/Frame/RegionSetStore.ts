@@ -220,7 +220,6 @@ export class RegionSetStore {
                 },
                 err => {
                     console.log(err);
-                    region.setRegionId(3);
                 }
             );
         }

@@ -271,10 +271,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         ) {
             this.creatingRegion.endCreating();
             frame.regionSet.selectRegion(this.creatingRegion);
-            console.log("region creation completed,", this.creatingRegion);
         } else {
             frame.regionSet.deleteRegion(this.creatingRegion);
-            console.log("region got deleted");
         }
 
         if (regionType === CARTA.RegionType.POLYGON || regionType === CARTA.RegionType.POLYLINE || regionType === CARTA.RegionType.ANNPOLYGON || regionType === CARTA.RegionType.ANNPOLYLINE) {
@@ -343,8 +341,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
+                    this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
+                break;
                 case CARTA.RegionType.ANNCOMPASS:
-                    // this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, {x: cursorPosImageSpace.x + maxDiff, y: cursorPosImageSpace.y + maxDiff}]);
                     break;
                 case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
@@ -369,8 +368,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
+                    this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
+                    break;
                 case CARTA.RegionType.ANNCOMPASS:
-                    // this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
                     const length = Math.min(Math.abs(this.regionStartPoint.x - cursorPosImageSpace.x), Math.abs(this.regionStartPoint.y - cursorPosImageSpace.y)) * 2;
                     (this.creatingRegion as CompassAnnotationStore).setLength(length);
                     this.creatingRegion.setControlPoints([this.regionStartPoint, {x: this.regionStartPoint.x + length / 2, y: this.regionStartPoint.y + length / 2}]);
