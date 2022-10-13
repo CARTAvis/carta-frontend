@@ -11,6 +11,8 @@ import sqrtPng from "static/equations/sqrt.png";
 import squaredPng from "static/equations/squared.png";
 import gammaPng from "static/equations/gamma.png";
 import powerPng from "static/equations/power.png";
+import sinhPng from "static/equations/sinh.png";
+import asinhPng from "static/equations/asinh.png";
 
 interface ScalingComponentProps {
     selectedItem: FrameScaling;
@@ -25,9 +27,8 @@ const equationPngMap = new Map([
     [FrameScaling.SQUARE, squaredPng],
     [FrameScaling.GAMMA, gammaPng],
     [FrameScaling.POWER, powerPng],
-    // TODO: add SINH and ASINH
-    [FrameScaling.SINH, squaredPng],
-    [FrameScaling.ASINH, squaredPng]
+    [FrameScaling.SINH, sinhPng],
+    [FrameScaling.ASINH, asinhPng]
 ]);
 
 const ScalingSelect = Select.ofType<FrameScaling>();
