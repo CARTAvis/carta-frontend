@@ -9,7 +9,7 @@ import {RegionStore} from "./RegionStore";
 
 export class TextAnnotationStore extends RegionStore {
     @observable text: string = "Double click to edit text";
-    @observable fontSize: number = 20;
+    @observable fontSize: number = 10;
 
     constructor(
         backendService: BackendService,
@@ -83,9 +83,6 @@ export class CompassAnnotationStore extends RegionStore {
         let eastApproximatePoints = this.regionApproximationMap.get(astTransform);
 
         if (!northApproximatePoints && !eastApproximatePoints) {
-            // const startPoint = {x: Math.max(this.controlPoints[0].x, this.controlPoints[1].x), y: Math.min(this.controlPoints[0].y, this.controlPoints[1].y)};
-            // const northEndPoint = {x: startPoint.x, y: Math.max(this.controlPoints[0].y, this.controlPoints[1].y)};
-            // const eastEndPoint = {x: Math.min(this.controlPoints[0].x, this.controlPoints[1].x), y: startPoint.y};
             const startPoint = {x: this.controlPoints[0].x + this.length / 2, y: this.controlPoints[0].y - this.length / 2};
             const northEndPoint = {x: startPoint.x, y: startPoint.y + this.length};
             const eastEndPoint = {x: startPoint.x - this.length, y: startPoint.y};
@@ -109,7 +106,7 @@ export class CompassAnnotationStore extends RegionStore {
 }
 
 export class RulerAnnotationStore extends RegionStore {
-    @observable fontSize: number = 20;
+    @observable fontSize: number = 10;
 
     constructor(
         backendService: BackendService,

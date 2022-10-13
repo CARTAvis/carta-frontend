@@ -153,18 +153,18 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.ANNTEXT:
+            case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints[CENTER_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
             case CARTA.RegionType.ANNPOLYLINE:
-            case CARTA.RegionType.ANNCOMPASS:
-            case CARTA.RegionType.ANNRULER:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
+            case CARTA.RegionType.ANNRULER:
                 return midpoint2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: 0, y: 0};
@@ -490,7 +490,7 @@ export class RegionStore {
         this.regionApproximationMap.clear();
         this.modifiedTimestamp = performance.now();
         this.controlPoints = points;
-        if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
+        if (shapeChanged && (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON)) {
             this.simplePolygonTest();
         }
 

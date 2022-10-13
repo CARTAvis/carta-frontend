@@ -188,7 +188,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                             </tr>
                             <tr className="compass-ruler-annotation-table-input">
                                 <td>
-                                    {region.regionType === CARTA.RegionType.ANNCOMPASS ? "East Axis Tip" : "Start"}
+                                    {region.regionType === CARTA.RegionType.ANNCOMPASS ? "Center" : "Start"}
                                     {wcsInfo ? "" : " (px)"}
                                 </td>
                                 {region.coordinate === RegionCoordinate.World && wcsInfo ? this.inputWCSMode(region, wcsInfo, WCSStart, WCSFinish, false) : this.inputPixelMode(region, wcsInfo, WCSStart, WCSFinish, false)}
@@ -204,7 +204,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                             </tr>
                             <tr className="compass-ruler-annotation-table-input">
                                 <td>
-                                    {region.regionType === CARTA.RegionType.ANNCOMPASS ? "North Axis Tip" : "Finish"}
+                                    {region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Finish"}
                                     {wcsInfo ? "" : " (px)"}
                                 </td>
                                 {region.coordinate === RegionCoordinate.World && wcsInfo ? this.inputWCSMode(region, wcsInfo, WCSStart, WCSFinish, true) : this.inputPixelMode(region, wcsInfo, WCSStart, WCSFinish, true)}
