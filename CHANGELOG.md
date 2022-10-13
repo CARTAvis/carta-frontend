@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Added a setting dialog for the angular distance measurement ([#1201](https://github.com/cartavis/carta-frontend/issues/1201)).
 * Added the functionality to show/hide and lock all regions ([#1796](https://github.com/cartavis/carta-frontend/issues/1796)).
 * Added a method to auto-scrolling the selected region into the region list view ([#1797](https://github.com/CARTAvis/carta-frontend/issues/1797)).
 * Added the functionality to mirror cursor position on spatially matched frame via hotkey "G" ([#1947](https://github.com/cartavis/carta-frontend/issues/1947)).
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed NaN pixel value in the cursor info bar of the image viewer when the image is 1x1 pixel ([#1879](https://github.com/CARTAvis/carta-frontend/issues/1879)).
 * Fixed issue to show cursor info of smoothed profiles in the spatial and spectral profilers ([#1880](https://github.com/CARTAvis/carta-frontend/issues/1880), [#1938](https://github.com/CARTAvis/carta-frontend/pull/1938)).
 * Fixed mean and RMS not updating when smoothing in the spatial and spectral profilers ([#1838](https://github.com/CARTAvis/carta-frontend/issues/1838)).
+* Fixed limitations of the point size for catalog overlay rendering ([#1662](https://github.com/CARTAvis/carta-frontend/issues/1662) and [#1802](https://github.com/CARTAvis/carta-frontend/issues/1802)).
 ### Changed
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
 

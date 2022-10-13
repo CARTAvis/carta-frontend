@@ -2,6 +2,7 @@ import * as _ from "lodash";
 import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
 import * as Long from "long";
 import axios from "axios";
+import * as Semver from "semver";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
@@ -1322,7 +1323,7 @@ export class AppStore {
             const response = await axios("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {Accept: "application/vnd.github+json"}});
             const latestRelease = response?.data?.[0]?.tag_name;
 
-            if (latestRelease && this.preferenceStore.latestRelease !== latestRelease) {
+            if (latestRelease && Semver.gt(latestRelease, this.preferenceStore.latestRelease)) {
                 console.log("new release available: ", latestRelease);
                 this.updateNewRelease(latestRelease);
             }
