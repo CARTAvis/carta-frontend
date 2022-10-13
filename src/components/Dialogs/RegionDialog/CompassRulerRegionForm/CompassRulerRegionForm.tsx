@@ -5,8 +5,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore} from "stores";
 import {RegionStore, RegionCoordinate, CompassAnnotationStore} from "stores/Frame";
-import {SafeNumericInput} from "components/Shared";
-import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
+import {SafeNumericInput, CoordinateComponent} from "components/Shared";
 import {WCSPoint2D, Point2D} from "models";
 import {getPixelValueFromWCS, getFormattedWCSPoint, isWCSStringFormatValid} from "utilities";
 import "./CompassRulerRegionForm.scss";
@@ -184,7 +183,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>
-                                    <CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo} />
+                                    <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
                                 </td>
                             </tr>
                             <tr className="compass-ruler-annotation-table-input">

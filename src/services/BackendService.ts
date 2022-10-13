@@ -355,6 +355,7 @@ export class BackendService {
     }
 
     async exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionStyles: Map<number, CARTA.IRegionStyle>): Promise<CARTA.IExportRegionAck> {
+        console.log(regionStyles);
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {

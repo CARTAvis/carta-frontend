@@ -5,7 +5,7 @@ import * as AST from "ast_wrapper";
 import {AppStore} from "stores";
 import {CompassAnnotationStore, FrameStore, RegionStore, RulerAnnotationStore} from "stores/Frame";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {add2D, average2D, midpoint2D, subtract2D, transformPoint} from "utilities";
+import {add2D, midpoint2D, subtract2D, transformPoint} from "utilities";
 
 const POINT_WIDTH = 6;
 const POINT_DRAG_WIDTH = 13;
@@ -193,8 +193,7 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
 
     const frame = props.frame;
     const region = props.region as CompassAnnotationStore;
-
-    // const [point, setPoint] = React.useState({x: 0, y: 0})
+    const mousePoint = React.useRef({x: 0, y: 0});
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         console.log("selecting");
@@ -205,30 +204,39 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
         props.onDoubleClick(region);
     };
 
-    const handleDragStart = () => {
-        props.onSelect?.(props.region);
-        props.region.beginEditing();
-    };
-
-    const handleDragEnd = () => {
-        props.region.endEditing();
-    };
-
-    const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    const handleDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            const region = props.region;
-            const frame = props.frame;
-            const centerImageSpace = average2D(region.controlPoints);
-            const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
-            let newPosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
-            if (frame.spatialReference) {
-                newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
-            }
-            const deltaPosition = subtract2D(newPosition, centerImageSpace);
+            props.onSelect?.(props.region);
+            mousePoint.current = {x: konvaEvent.evt.offsetX, y: konvaEvent.evt.offsetY};
+            props.region.beginEditing();
+        }
+    };
+
+    const getCursorPosImageSpace = (offsetX: number, offsetY: number) => {
+        const frame = props.frame;
+        let cursorPosImageSpace = canvasToTransformedImagePos(offsetX, offsetY, frame, props.layerWidth, props.layerHeight);
+        if (frame.spatialReference) {
+            cursorPosImageSpace = transformPoint(frame.spatialTransformAST, cursorPosImageSpace, true);
+        }
+        return cursorPosImageSpace;
+    };
+
+    const handleDragEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (konvaEvent.target && konvaEvent.target.nodeType !== "Shape") {
+            // const oldPosition = adjustPosToUnityStage(mousePoint.current, props.stageRef.current);;
+            // const oldImagePosition = canvasToTransformedImagePos(oldPosition.x, oldPosition.y, frame, props.layerWidth, props.layerHeight);
+            // const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
+            // const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
+            const deltaPosition = subtract2D({x: konvaEvent.evt.offsetX, y: konvaEvent.evt.offsetY}, mousePoint.current);
+            deltaPosition.y *= -1;
+            const changePosition = getCursorPosImageSpace(deltaPosition.x, deltaPosition.y);
+            console.log(deltaPosition, changePosition);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
-            console.log(transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current));
         }
+        props.region.endEditing();
+
+        console.log(region.controlPoints[0].x, region.controlPoints[0].y, region.controlPoints[1].x, region.controlPoints[1].y, konvaEvent.currentTarget);
     };
 
     const handleAnchorMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -247,7 +255,8 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
 
     const handleAnchorDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            region.beginEditing();
+            props.onSelect?.(props.region);
+            props.region.beginEditing();
         }
     };
 
@@ -255,24 +264,15 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
         if (konvaEvent.target) {
             const anchor = konvaEvent.target;
             const anchorPos = anchor.position();
-            const anchorName = anchor.id();
+            // const anchorName = anchor.id();
             const offsetPoint = adjustPosToUnityStage(anchorPos, props.stageRef.current);
             let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight);
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
 
-            if (anchorName === "north") {
-                region.setControlPoints([
-                    {x: region.controlPoints[0].x, y: Math.max(positionImageSpace.y, region.controlPoints[1].y)},
-                    {x: Math.max(positionImageSpace.x, region.controlPoints[0].x), y: region.controlPoints[1].y}
-                ]);
-            } else {
-                region.setControlPoints([
-                    {x: Math.min(positionImageSpace.x, region.controlPoints[1].x), y: region.controlPoints[0].y},
-                    {x: region.controlPoints[1].x, y: Math.min(positionImageSpace.y, region.controlPoints[0].y)}
-                ]);
-            }
+            region.setLength(2 * Math.abs(positionImageSpace.y - region.controlPoints[0].y));
+            region.setControlPoint(1, {x: region.controlPoints[0].x + region.length / 2, y: region.controlPoints[0].y - region.length / 2});
         }
     };
 
@@ -316,13 +316,13 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
     // const secondaryImagePointEast = frame.spatialReference ? transformPoint(frame.spatialTransformAST, {x: eastPointArray[eastPointArray.length - 2], y: eastPointArray[eastPointArray.length - 1]}, false) : {x: eastPointArray[eastPointArray.length - 2], y: eastPointArray[eastPointArray.length - 1]};
     // const canvasPosNorth = transformedImageToCanvasPos(secondaryImagePointNorth, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
     // const canvasPosEast = transformedImageToCanvasPos(secondaryImagePointEast, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+    const anchorPosition = transformedImageToCanvasPos({x: region.controlPoints[1].x, y: region.controlPoints[1].y}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
+    // anchorPosition.x = anchorPosition.x + region.length / 2;
+    // anchorPosition.y = anchorPosition.y + region.length / 2;
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
-                {/* <Line closed points={[...topLeftPoint, ...topRightPoint, ...bottomLeftPoint, ...bottomRightPoint]} opacity={0} />
-                <Line closed points={[...bottomRightPoint, ...topRightPoint, ...bottomLeftPoint, ...topLeftPoint]} opacity={0} /> */}
-
+            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onMouseDown={handleDragStart} onDragEnd={handleDragEnd}>
                 <Arrow
                     stroke={region.color}
                     fill={region.color}
@@ -373,9 +373,9 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
                     {props.selected && (
                         <>
                             <Anchor
-                                anchor={"north"}
-                                x={northPointArray[northPointArray.length - 2]}
-                                y={northPointArray[northPointArray.length - 1]}
+                                anchor={"origin"}
+                                x={anchorPosition.x}
+                                y={anchorPosition.y}
                                 rotation={0}
                                 isRotator={false}
                                 onMouseEnter={handleAnchorMouseEnter}
@@ -384,7 +384,7 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
                                 onDragEnd={handleAnchorDragEnd}
                                 onDragMove={handleAnchorDrag}
                             />
-                            <Anchor
+                            {/* <Anchor
                                 anchor={"east"}
                                 x={eastPointArray[eastPointArray.length - 2]}
                                 y={eastPointArray[eastPointArray.length - 1]}
@@ -395,7 +395,7 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
                                 onDragStart={handleAnchorDragStart}
                                 onDragEnd={handleAnchorDragEnd}
                                 onDragMove={handleAnchorDrag}
-                            />
+                            /> */}
                         </>
                     )}
                 </Group>
@@ -406,9 +406,6 @@ export const CompassAnnotation = (props: CompassAnnotationProps) => {
 export const RulerAnnotation = (props: CompassAnnotationProps) => {
     const shapeRef = React.useRef();
     const mousePoint = React.useRef({x: 0, y: 0});
-
-    // const [testPoint, setTestPoint] = React.useState({x: 0, y: 0})
-    // const [offset, setOffset] = React.useState({x: 0, y: 0});
 
     const frame = props.frame;
     const region = props.region as RulerAnnotationStore;
@@ -425,87 +422,27 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
     const handleDragStart = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         props.onSelect?.(props.region);
         props.region.beginEditing();
-        mousePoint.current = {x: konvaEvent.evt.movementX, y: konvaEvent.evt.movementY};
+        mousePoint.current = konvaEvent.target.position();
     };
 
     const handleDragEnd = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        // console.log(region.controlPoints[0], region.controlPoints[1])
-        // console.log(transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current), transformedImageToCanvasPos(region.controlPoints[1], frame, props.layerWidth, props.layerHeight, props.stageRef.current))
-        // const newPoints = region.controlPoints.map(p => add2D(p, offset));
-        // region.setControlPoints(newPoints, false, false);
-
-        const region = props.region;
-        const frame = props.frame;
-        // const centerImageSpace = average2D([region.controlPoints[0]]);
-        // const lastPosition = adjustPosToUnityStage(konvaEvent.target._lastPos, props.stageRef.current);
-        const oldPosition = region.controlPoints[0];
-        // const lastPosition = canvasToTransformedImagePos(region.controlPoints[0].x, region.controlPoints[0].y, frame, props.layerWidth, props.layerHeight)
-        // const lastPosition = transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current)
-        // const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
-        const position = {x: konvaEvent.target.x(), y: konvaEvent.target.y()};
-        let newPosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
-        // let newPosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
-        // let oldPosition = canvasToTransformedImagePos(lastPosition.x, lastPosition.y, frame, props.layerWidth, props.layerHeight);
-        // let oldPosition = canvasToTransformedImagePos(lastPosition.x, lastPosition.y, frame, props.layerWidth, props.layerHeight);
-        console.log(konvaEvent.target._lastPos, oldPosition, newPosition);
-        // if (frame.spatialReference) {
-        //     newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
-        // }
-        const deltaPosition = subtract2D({x: konvaEvent.evt.movementX, y: konvaEvent.evt.movementY}, mousePoint.current);
-        const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
-        region.setControlPoints(newPoints, false, false);
+        if (konvaEvent.target && konvaEvent.target.nodeType !== "Shape") {
+            // const oldPosition = adjustPosToUnityStage(mousePoint.current, props.stageRef.current);;
+            // const oldImagePosition = canvasToTransformedImagePos(oldPosition.x, oldPosition.y, frame, props.layerWidth, props.layerHeight);
+            // const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
+            // const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
+            // const deltaPosition = subtract2D(imagePosition, oldImagePosition);
+            // console.log(deltaPosition)
+            // const newPoints = region.controlPoints.map(p => add2D(p, {x: deltaPosition.x / 2, y: deltaPosition.y / 2}));
+            // region.setControlPoints(newPoints, false, false);
+        }
         props.region.endEditing();
-        // const point = transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        // konvaEvent.target.attrs.x = point.x;
-        // konvaEvent.target.attrs.y = point.y;
+
+        console.log(region.controlPoints[0].x, region.controlPoints[0].y, region.controlPoints[1].x, region.controlPoints[1].y, konvaEvent.target);
     };
 
     const handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        if (konvaEvent.target) {
-            const position = konvaEvent.target;
-            console.log(position);
-            // const offsetPoint = adjustPosToUnityStage(position, props.stageRef.current);
-            // const position = {x: konvaEvent.target.x(), y: konvaEvent.target.y()};
-            // console.log(canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight));
-            // const point = transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-            // konvaEvent.target.attrs.x = point.x;
-            // konvaEvent.target.attrs.y = point.y;
-
-            // const frame = props.frame;
-            // const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
-            // let positionImageSpace = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
-            // const deltaPosition = subtract2D(positionImageSpace, region.controlPoints[0]);
-            // // const newEndPoint = add2D(region.controlPoints[1], deltaPosition);
-            // setTestPoint(positionImageSpace);
-            // if (frame.spatialReference) {
-            //     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
-            // }
-            // const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
-            // props.region.setControlPoints(newPoints);
-            // const region = props.region;
-            // const frame = props.frame;
-            // // const centerImageSpace = average2D([region.controlPoints[0]]);
-            // const lastPosition = adjustPosToUnityStage(konvaEvent.target._lastPos, props.stageRef.current);
-            // const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
-            // let newPosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
-            // let oldPosition = canvasToTransformedImagePos(lastPosition.x, lastPosition.y, frame, props.layerWidth, props.layerHeight);
-            // if (frame.spatialReference) {
-            //     newPosition = transformPoint(frame.spatialTransformAST, newPosition, true);
-            // }
-            // const deltaPosition = subtract2D(newPosition, oldPosition);
-            // const deltaPosition = subtract2D(newPosition, region.controlPoints[0]);
-            // setOffset(deltaPosition);
-            // const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
-            // region.setControlPoints(newPoints, false, false);
-            // const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
-            // setTestPoint(transformedImageToCanvasPos(newPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current));
-            // region.setControlPoints(newPoints, false, false);
-            // console.log(oldPosition)
-            // console.log(region.controlPoints[0], region.controlPoints[1])
-            // console.log(transformedImageToCanvasPos(region.controlPoints[0], frame, props.layerWidth, props.layerHeight, props.stageRef.current), transformedImageToCanvasPos(region.controlPoints[1], frame, props.layerWidth, props.layerHeight, props.stageRef.current))
-            // console.log(konvaEvent.target.getPosition(), konvaEvent.target.position())
-            // console.log(deltaPosition, (region.controlPoints[0]), region.controlPoints[1], konvaEvent.target.getPosition(), konvaEvent.target.position())
-        }
+        console.log(konvaEvent);
     };
 
     const handleAnchorMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -672,8 +609,6 @@ export const RulerAnnotation = (props: CompassAnnotationProps) => {
                     )}
                 </Group>
             </Group>
-
-            <Text x={0} y={0} text={"here"} fill={"green"} fontSize={100} />
         </>
     );
 };

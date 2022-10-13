@@ -343,8 +343,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
                     this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
-                break;
+                    break;
                 case CARTA.RegionType.ANNCOMPASS:
+                    const length = Math.min(Math.abs(this.regionStartPoint.x - cursorPosImageSpace.x), Math.abs(this.regionStartPoint.y - cursorPosImageSpace.y)) * 2;
+                    (this.creatingRegion as CompassAnnotationStore).setLength(length);
+                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: this.regionStartPoint.x + length / 2, y: this.regionStartPoint.y - length / 2}]);
                     break;
                 case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
@@ -374,7 +377,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNCOMPASS:
                     const length = Math.min(Math.abs(this.regionStartPoint.x - cursorPosImageSpace.x), Math.abs(this.regionStartPoint.y - cursorPosImageSpace.y)) * 2;
                     (this.creatingRegion as CompassAnnotationStore).setLength(length);
-                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: this.regionStartPoint.x + length / 2, y: this.regionStartPoint.y + length / 2}]);
+                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: this.regionStartPoint.x + length / 2, y: this.regionStartPoint.y - length / 2}]);
                     break;
                 case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
@@ -786,7 +789,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer ref={this.layerRef}>
+                    <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.locked}>
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsAndAnnotationsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}
