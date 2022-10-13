@@ -209,7 +209,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         if (konvaEvent.target) {
             props.onSelect?.(props.region);
             props.region.beginEditing();
-            mousePoint.current = konvaEvent.target.position();
+            mousePoint.current = konvaEvent.currentTarget.position();
+            console.log(mousePoint.current);
         }
     };
 
@@ -221,12 +222,13 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         if (konvaEvent.target) {
             const oldPosition = adjustPosToUnityStage(mousePoint.current, props.stageRef.current);
             const oldImagePosition = canvasToTransformedImagePos(oldPosition.x, oldPosition.y, frame, props.layerWidth, props.layerHeight);
-            const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
+            const position = adjustPosToUnityStage(konvaEvent.currentTarget.position(), props.stageRef.current);
             const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
             const deltaPosition = subtract2D(imagePosition, oldImagePosition);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
             mousePoint.current = konvaEvent.target.position();
+            console.log();
         }
     };
 
@@ -258,6 +260,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             // const anchorName = anchor.id();
             const offsetPoint = adjustPosToUnityStage(anchorPos, props.stageRef.current);
             let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight);
+
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
@@ -280,14 +283,14 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 
     for (let i = 0; i < northApproxPoints.length; i += 2) {
         const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        northPointArray[i] = point.x;
-        northPointArray[i + 1] = point.y;
+        northPointArray[i] = point.x - mousePoint.current.x;
+        northPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     for (let i = 0; i < eastApproxPoints.length; i += 2) {
         const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        eastPointArray[i] = point.x;
-        eastPointArray[i + 1] = point.y;
+        eastPointArray[i] = point.x - mousePoint.current.x;
+        eastPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     // trigger re-render when exporting images
@@ -374,11 +377,9 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
     const region = props.region as RulerAnnotationStore;
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        console.log("selecting", event);
         props.onSelect(region);
     };
     const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        console.log("double clicking");
         props.onDoubleClick(region);
     };
 
@@ -399,7 +400,6 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
             const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
             const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
             const deltaPosition = subtract2D(imagePosition, oldImagePosition);
-            console.log(deltaPosition);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
             mousePoint.current = konvaEvent.target.position();
@@ -465,20 +465,20 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
 
     for (let i = 0; i < xPointArray.length; i += 2) {
         const point = transformedImageToCanvasPos({x: xApproxPoints[i], y: xApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        xPointArray[i] = point.x;
-        xPointArray[i + 1] = point.y;
+        xPointArray[i] = point.x - mousePoint.current.x;
+        xPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     for (let i = 0; i < yPointArray.length; i += 2) {
         const point = transformedImageToCanvasPos({x: yApproxPoints[i], y: yApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        yPointArray[i] = point.x;
-        yPointArray[i + 1] = point.y;
+        yPointArray[i] = point.x - mousePoint.current.x;
+        yPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     for (let i = 0; i < hypotenusePointArray.length; i += 2) {
         const point = transformedImageToCanvasPos({x: hypotenuseApproxPoints[i], y: hypotenuseApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        hypotenusePointArray[i] = point.x;
-        hypotenusePointArray[i + 1] = point.y;
+        hypotenusePointArray[i] = point.x - mousePoint.current.x;
+        hypotenusePointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     const centerPoints = midpoint2D({x: xPointArray[xPointArray.length - 2], y: xPointArray[xPointArray.length - 1]}, {x: yPointArray[yPointArray.length - 2], y: yPointArray[yPointArray.length - 1]});
