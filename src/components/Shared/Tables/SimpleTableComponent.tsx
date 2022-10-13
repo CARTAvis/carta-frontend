@@ -29,12 +29,25 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
     };
 
     private renderDataColumn = (columnName: string, columnData: any) => {
+        if (columnName === "Image") {
+            return (
+                <Column
+                    key={columnName}
+                    name={columnName}
+                    cellRenderer={(rowIndex, columnIndex) => (
+                        <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)} tooltip={rowIndex < columnData?.length ? columnData[rowIndex] : undefined}>
+                            {rowIndex < columnData?.length ? columnData[rowIndex] : undefined}
+                        </Cell>
+                    )}
+                />
+            );
+        }
         return (
             <Column
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)} tooltip={rowIndex < columnData?.length ? columnData[rowIndex] : undefined}>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)}>
                         {rowIndex < columnData?.length ? columnData[rowIndex] : undefined}
                     </Cell>
                 )}
