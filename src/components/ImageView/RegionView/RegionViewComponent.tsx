@@ -347,7 +347,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNCOMPASS:
                     const length = Math.min(Math.abs(this.regionStartPoint.x - cursorPosImageSpace.x), Math.abs(this.regionStartPoint.y - cursorPosImageSpace.y)) * 2;
                     (this.creatingRegion as CompassAnnotationStore).setLength(length);
-                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: this.regionStartPoint.x + length / 2, y: this.regionStartPoint.y - length / 2}]);
+                    this.creatingRegion.setControlPoints([this.regionStartPoint]);
                     break;
                 case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
@@ -377,7 +377,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNCOMPASS:
                     const length = Math.min(Math.abs(this.regionStartPoint.x - cursorPosImageSpace.x), Math.abs(this.regionStartPoint.y - cursorPosImageSpace.y)) * 2;
                     (this.creatingRegion as CompassAnnotationStore).setLength(length);
-                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: this.regionStartPoint.x + length / 2, y: this.regionStartPoint.y - length / 2}]);
+                    this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
                     break;
                 case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);

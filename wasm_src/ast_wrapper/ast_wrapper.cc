@@ -205,6 +205,7 @@ void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* fi
     float up[] = {0.0f, 1.0f}; // horizontal text
     cout << "start" << start[0] << " " << start[1] << endl;
     cout << "finish" << finish[0] << " " << finish[1] << endl;
+    cout << "middle" << middle[0] << " " << middle[1] << endl;
     cout << "dist" << dist << endl;
     string distString;
     const char* unit = astGetC(wcsinfo, "Unit(1)");
@@ -424,6 +425,7 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     return 0;
 }
 
+//xin and yin needs to be transformed
 EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[], double yin[], double out[])
 {
     if (!wcsinfo)
@@ -432,15 +434,8 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
         return 1;
     }
 
-    double* x = new double[2];
-    double* y = new double[2];
-    double xIn[2] = {xin[0], xin[1]};
-    double yIn[2] = {yin[0], yin[1]};
-
-    astTran2(wcsinfo, 2, xIn, yIn, 1, x, y);
-
-    double start[] = {x[0], y[0]};
-    double finish[] = {x[1], y[1]};
+    double start[] = {xin[0], yin[0]};
+    double finish[] = {xin[1], yin[1]};
 
     double dist = astDistance(wcsinfo, start, finish);
     double discreteDist = dist/npoint;
@@ -470,8 +465,6 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
          out[i * 2 + 1] = yOut[i];
     }
 
-    delete[] x;
-    delete[] y;
     delete[] xout;
     delete[] yout;
     delete[] xOut;

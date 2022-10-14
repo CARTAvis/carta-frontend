@@ -75,32 +75,48 @@ export class CompassAnnotationStore extends RegionStore {
     };
 
     @action setLength = (length: number) => {
+        console.log("length change", length);
+
+        if (length < 0) {
+            this.length = 0;
+        }
+
         this.length = length;
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet): any {
-        let northApproximatePoints = this.regionApproximationMap.get(astTransform);
-        let eastApproximatePoints = this.regionApproximationMap.get(astTransform);
+        let northApproximatePoints;
+        let eastApproximatePoints;
 
-        if (!northApproximatePoints && !eastApproximatePoints) {
-            const startPoint = {x: this.controlPoints[0].x + this.length / 2, y: this.controlPoints[0].y - this.length / 2};
-            const northEndPoint = {x: startPoint.x, y: startPoint.y + this.length};
-            const eastEndPoint = {x: startPoint.x - this.length, y: startPoint.y};
-            const northArrowXIn = new Float64Array(2);
-            northArrowXIn[0] = startPoint.x;
-            northArrowXIn[1] = northEndPoint.x;
-            const northArrowYIn = new Float64Array(2);
-            northArrowYIn[0] = startPoint.y;
-            northArrowYIn[1] = northEndPoint.y;
-            const eastArrowXIn = new Float64Array(2);
-            eastArrowXIn[0] = startPoint.x;
-            eastArrowXIn[1] = eastEndPoint.x;
-            const eastArrowYIn = new Float64Array(2);
-            eastArrowYIn[0] = startPoint.y;
-            eastArrowYIn[1] = eastEndPoint.y;
-            northApproximatePoints = AST.transformPointList(astTransform, northArrowXIn, northArrowYIn);
-            eastApproximatePoints = AST.transformPointList(astTransform, eastArrowXIn, eastArrowYIn);
-        }
+        const startPoint = {x: this.controlPoints[0].x + this.length / 2, y: this.controlPoints[0].y - this.length / 2};
+        const northEndPoint = {x: startPoint.x, y: startPoint.y + this.length};
+        const eastEndPoint = {x: startPoint.x - this.length, y: startPoint.y};
+
+        const xIn = new Float64Array(2);
+        const yIn = new Float64Array(2);
+        xIn[0] = northEndPoint.x;
+        xIn[1] = eastEndPoint.x;
+        yIn[0] = northEndPoint.y;
+        yIn[1] = eastEndPoint.y;
+        const transformed = AST.transformPointArrays(astTransform, xIn, yIn);
+        const originPoints = {x: transformed.x[0], y: transformed.y[1]};
+
+        //index 0 is North, index 1 is East
+        const originToNorthX = new Float64Array(2);
+        originToNorthX[0] = originPoints.x;
+        originToNorthX[1] = transformed.x[0];
+        const originToNorthY = new Float64Array(2);
+        originToNorthY[0] = originPoints.y;
+        originToNorthY[1] = transformed.y[0];
+        const originToEastX = new Float64Array(2);
+        originToEastX[0] = originPoints.x;
+        originToEastX[1] = transformed.x[1];
+        const originToEastY = new Float64Array(2);
+        originToEastY[0] = originPoints.y;
+        originToEastY[1] = transformed.y[1];
+        northApproximatePoints = AST.transformPointList(astTransform, originToNorthX, originToNorthY);
+        eastApproximatePoints = AST.transformPointList(astTransform, originToEastX, originToEastY);
+
         return {northApproximatePoints, eastApproximatePoints};
     }
 }
@@ -134,34 +150,40 @@ export class RulerAnnotationStore extends RegionStore {
         let yApproximatePoints;
         let hypotenuseApproximatePoints;
 
-        const startPoint = {x: this.controlPoints[1].x, y: this.controlPoints[0].y};
-        const xEndPoint = {x: this.controlPoints[0].x, y: this.controlPoints[0].y};
-        const yEndPoint = {x: this.controlPoints[1].x, y: this.controlPoints[1].y};
+        console.log("system change please come in");
+        const xIn = new Float64Array(2);
+        const yIn = new Float64Array(2);
+        xIn[0] = this.controlPoints[0].x;
+        xIn[1] = this.controlPoints[1].x;
+        yIn[0] = this.controlPoints[0].y;
+        yIn[1] = this.controlPoints[1].y;
 
-        if (!yApproximatePoints && !xApproximatePoints) {
-            const a1 = new Float64Array(2);
-            a1[0] = startPoint.x;
-            a1[1] = xEndPoint.x;
-            const a2 = new Float64Array(2);
-            a2[0] = startPoint.y;
-            a2[1] = xEndPoint.y;
-            const b1 = new Float64Array(2);
-            b1[0] = startPoint.x;
-            b1[1] = yEndPoint.x;
-            const b2 = new Float64Array(2);
-            b2[0] = startPoint.y;
-            b2[1] = yEndPoint.y;
-            const c1 = new Float64Array(2);
-            c1[0] = xEndPoint.x;
-            c1[1] = yEndPoint.x;
-            const c2 = new Float64Array(2);
-            c2[0] = xEndPoint.y;
-            c2[1] = yEndPoint.y;
+        const transformed = AST.transformPointArrays(astTransform, xIn, yIn);
+        const startX = transformed.x[0];
+        const finishX = transformed.x[1];
+        const cornerX = transformed.x[1];
+        const startY = transformed.y[0];
+        const finishY = transformed.y[1];
+        const cornerY = transformed.y[0];
 
-            xApproximatePoints = AST.transformPointList(astTransform, a1, a2);
-            yApproximatePoints = AST.transformPointList(astTransform, b1, b2);
-            hypotenuseApproximatePoints = AST.transformPointList(astTransform, c1, c2);
-        }
+        const finishToCornerX = new Float64Array(2);
+        finishToCornerX[0] = finishX;
+        finishToCornerX[1] = cornerX;
+        const finishToCornerY = new Float64Array(2);
+        finishToCornerY[0] = finishY;
+        finishToCornerY[1] = cornerY;
+
+        const cornerToStartX = new Float64Array(2);
+        cornerToStartX[0] = cornerX;
+        cornerToStartX[1] = startX;
+        const cornerToStartY = new Float64Array(2);
+        cornerToStartY[0] = cornerY;
+        cornerToStartY[1] = startY;
+
+        xApproximatePoints = AST.transformPointList(astTransform, finishToCornerX, finishToCornerY);
+        yApproximatePoints = AST.transformPointList(astTransform, cornerToStartX, cornerToStartY);
+        hypotenuseApproximatePoints = AST.transformPointList(astTransform, transformed.x, transformed.y);
+
         return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints};
     }
 }

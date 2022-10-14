@@ -228,7 +228,6 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
             mousePoint.current = konvaEvent.target.position();
-            console.log();
         }
     };
 
@@ -265,8 +264,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
 
-            region.setLength(2 * Math.abs(positionImageSpace.y - region.controlPoints[0].y));
-            region.setControlPoint(1, {x: region.controlPoints[0].x + region.length / 2, y: region.controlPoints[0].y - region.length / 2});
+            region.setLength(Math.min(Math.abs(positionImageSpace.x - region.controlPoints[0].x), Math.abs(positionImageSpace.y - region.controlPoints[0].y)) * 2);
         }
     };
 
@@ -274,7 +272,6 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         region.endEditing();
     };
 
-    const anchorPosition = transformedImageToCanvasPos({x: region.controlPoints[1].x, y: region.controlPoints[1].y}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
     const approxPoints = region.getRegionApproximation(frame.wcsInfo);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
@@ -293,13 +290,19 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         eastPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
-    // trigger re-render when exporting images
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const originPoints = {x: northPointArray[0] + mousePoint.current.x, y: northPointArray[1] + mousePoint.current.y};
+
+    // Dummy variables for triggering re-render
+    /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
     const imageRatio = AppStore.Instance.imageRatio;
+    const system = AppStore.Instance.overlayStore.global.explicitSystem;
+    const darktheme = AppStore.Instance.darkTheme;
+    const title = frame.titleCustomText;
+    /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onMouseDown={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
+            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
                 <Arrow
                     stroke={region.color}
                     fill={region.color}
@@ -323,6 +326,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={northPointArray}
+                    pointerWidth={4}
+                    pointerLength={50}
                 />
                 <Text
                     x={northPointArray[northPointArray.length - 2]}
@@ -352,8 +357,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     <>
                         <Anchor
                             anchor={"origin"}
-                            x={anchorPosition.x}
-                            y={anchorPosition.y}
+                            x={originPoints.x}
+                            y={originPoints.y}
                             rotation={0}
                             isRotator={false}
                             onMouseEnter={handleAnchorMouseEnter}
@@ -481,13 +486,18 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
         hypotenusePointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
-    const centerPoints = midpoint2D({x: xPointArray[xPointArray.length - 2], y: xPointArray[xPointArray.length - 1]}, {x: yPointArray[yPointArray.length - 2], y: yPointArray[yPointArray.length - 1]});
-    const distance = AST.geodesicDistance(frame.wcsInfo, xPointArray[xPointArray.length - 2], xPointArray[xPointArray.length - 1], yPointArray[yPointArray.length - 2], yPointArray[yPointArray.length - 1]);
+    // const centerPoints = midpoint2D({x: xPointArray[xPointArray.length - 2], y: xPointArray[xPointArray.length - 1]}, {x: yPointArray[yPointArray.length - 2], y: yPointArray[yPointArray.length - 1]});
+    const centerPoints = midpoint2D({x: hypotenusePointArray[0], y: hypotenusePointArray[1]}, {x: hypotenusePointArray[hypotenusePointArray.length - 2], y: hypotenusePointArray[hypotenusePointArray.length - 1]});
+    const distance = AST.geodesicDistance(frame.wcsInfo, hypotenusePointArray[0], hypotenusePointArray[1], hypotenusePointArray[hypotenusePointArray.length - 2], hypotenusePointArray[hypotenusePointArray.length - 1]);
     const distanceText: string = ((distance * 180.0) / Math.PI).toString() + "\u00B0";
 
-    // trigger re-render when exporting images
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // Dummy variables for triggering re-render
+    /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
     const imageRatio = AppStore.Instance.imageRatio;
+    const system = AppStore.Instance.overlayStore.global.explicitSystem;
+    const darktheme = AppStore.Instance.darkTheme;
+    const title = frame.titleCustomText;
+    /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
     return (
         <>
