@@ -576,7 +576,9 @@ EMSCRIPTEN_KEEPALIVE double geodesicDistance(AstFrameSet* wcsinfo, double x1, do
 
     double start[] = {xtran[0], ytran[0]};
     double finish[] = {xtran[1], ytran[1]};
-    return astDistance(wcsinfo, start, finish) * 180.0 / M_PI * 3600.0;
+    cout << "start" << start[0] << " " << start[1] << endl;
+    cout << "finish" << finish[0] << " " << finish[1] << endl;
+    return astDistance(wcsinfo, start, finish) * 180.0 / M_PI;
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrame* frame(int naxes, const char* options)

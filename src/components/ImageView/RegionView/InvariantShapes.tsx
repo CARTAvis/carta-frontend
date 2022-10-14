@@ -488,8 +488,10 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
 
     // const centerPoints = midpoint2D({x: xPointArray[xPointArray.length - 2], y: xPointArray[xPointArray.length - 1]}, {x: yPointArray[yPointArray.length - 2], y: yPointArray[yPointArray.length - 1]});
     const centerPoints = midpoint2D({x: hypotenusePointArray[0], y: hypotenusePointArray[1]}, {x: hypotenusePointArray[hypotenusePointArray.length - 2], y: hypotenusePointArray[hypotenusePointArray.length - 1]});
-    const distance = AST.geodesicDistance(frame.wcsInfo, hypotenusePointArray[0], hypotenusePointArray[1], hypotenusePointArray[hypotenusePointArray.length - 2], hypotenusePointArray[hypotenusePointArray.length - 1]);
-    const distanceText: string = ((distance * 180.0) / Math.PI).toString() + "\u00B0";
+    const distance = AST.geodesicDistance(frame.wcsInfo, region.controlPoints[0].x, region.controlPoints[0].y, region.controlPoints[1].x, region.controlPoints[1].y);
+    // const distance = AST.geodesicDistance(frame.wcsInfo, hypotenusePointArray[0], hypotenusePointArray[1], hypotenusePointArray[hypotenusePointArray.length - 2], hypotenusePointArray[hypotenusePointArray.length - 1]);
+    const distanceText: string = distance.toString() + "\u00B0";
+    // const distanceText: string = ((distance * 180.0) / Math.PI).toString() + "\u00B0";
 
     // Dummy variables for triggering re-render
     /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
