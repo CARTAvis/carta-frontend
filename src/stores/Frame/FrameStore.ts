@@ -132,6 +132,7 @@ export class FrameStore {
     @observable spectralUnitSecondary: SpectralUnit;
     @observable spectralSystem: SpectralSystem;
     @observable channelValues: Array<number>;
+    @observable channelSecondaryValues: Array<number>;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: {position: Point2D; channel: number; value: number};
@@ -147,8 +148,6 @@ export class FrameStore {
     @observable contourStores: Map<number, ContourStore>;
     @observable moving: boolean;
     @observable zooming: boolean;
-
-    @observable channelSecondaryValues: Array<number>;
 
     @observable colorbarLabelCustomText: string;
     @observable titleCustomText: string;
@@ -1718,7 +1717,6 @@ export class FrameStore {
                 this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
             } else {
                 this.spectralCoordsSupported = new Map<string, {type: SpectralType; unit: SpectralUnit}>();
-
                 Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
                     const value = SPECTRAL_COORDS_SUPPORTED.get(key);
                     const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;

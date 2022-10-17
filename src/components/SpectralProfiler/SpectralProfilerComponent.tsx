@@ -19,7 +19,6 @@ import "./SpectralProfilerComponent.scss";
 
 const INFO_HEIGHT_MIN = 28;
 const INFO_HEIGHT_MAX = 100;
-
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -169,25 +168,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
             let primaryXStr: string = "";
-
-            // We calculate the difference between neighboring values to get and estimate of the precision.
-            diffLeft = data.length === 1 ? 1e-9 : nearest.index > 0 ? Math.abs(data[nearest.index].x - data[nearest.index - 1].x) : Math.abs(data[nearest.index + 1].x - data[nearest.index].x);
-
-            // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
-            // are handled idfferently because they have different structures.
-            primaryXStr = this.precisionFormatting(data[nearest.index].x, diffLeft, frame.spectralType);
+            const currentIndex = nearest.index;
+            const neighborIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex + 1;
+            diffLeft = data.length === 1 ? 1e-9 : Math.abs(data[currentIndex].x - data[neighborIndex].x);
+            primaryXStr = this.precisionFormatting(data[currentIndex].x, diffLeft, frame.spectralType);
 
             let xLabel = cursorXUnit === "Channel" ? `Channel ${primaryXStr}` : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
 
             if (this.widgetStore.secondaryAxisCursorInfoVisible) {
-                let secondary = secondaryData;
-
-                // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
-                // are handled idfferently because they have different structures.
-                diffLeft = data.length === 1 ? 1e-9 : nearest.index > 0 ? Math.abs(secondary[nearest.index] - secondary[nearest.index - 1]) : Math.abs(secondary[nearest.index + 1] - secondary[nearest.index]);
-
-                // Use precision to determine the proper rounding and zero suppression for displayed value.
-                const secondaryXStr = this.precisionFormatting(secondary[nearest.index], diffLeft, frame.spectralTypeSecondary);
+                diffLeft = data.length === 1 ? 1e-9 : Math.abs(secondaryData[currentIndex] - secondaryData[neighborIndex]);
+                const secondaryXStr = this.precisionFormatting(secondaryData[currentIndex], diffLeft, frame.spectralTypeSecondary);
 
                 if (frame.spectralTypeSecondary !== SpectralType.CHANNEL) secondaryXUnit = frame.spectralUnitSecondary;
                 else secondaryChannelString = "Channel";
@@ -196,7 +186,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
             cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
         }
-
         return `${label}: ${cursorInfoString ?? "---"}`;
     };
 

@@ -58,7 +58,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     constructor(props: WidgetProps) {
         super(props);
-
         const appStore = AppStore.Instance;
         autorun(() => {
             if (this.widgetStore) {
