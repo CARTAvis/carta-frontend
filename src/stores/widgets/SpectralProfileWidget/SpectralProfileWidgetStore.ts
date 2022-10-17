@@ -35,7 +35,6 @@ export type MultiPlotData = {
     yMax: number;
     yMean: number;
     yRms: number;
-    dataIndexes: {startIndex: number; endIndex: number}[];
     progress: number;
 };
 
@@ -508,7 +507,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             yMax: yBound.yMax,
             yMean: yMean,
             yRms: yRms,
-            dataIndexes: dataIndexes,
             progress: progressSum / numProfiles
         };
     }
