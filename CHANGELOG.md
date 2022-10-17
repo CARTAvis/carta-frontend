@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added the functionality to mirror cursor position on spatially matched frame via hotkey "G" ([#1947](https://github.com/cartavis/carta-frontend/issues/1947)).
 * Added buttons to image fitting for exporting fitting result and full log ([#1397](https://github.com/cartavis/carta-frontend/issues/1397)).
 * Added support for image fitting with fixed parameters ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
+* Added additional cursor info option to spectral profile widget ([#1837](https://github.com/CARTAvis/carta-frontend/issues/1837)).
 ### Fixed
 * Fixed issue of only enabling catalog selection button when there is a layer of catalog overlay ([#1826](https://github.com/CARTAvis/carta-frontend/issues/1826)).
 * Fixed the issue of the corrupted spatial profile when cursor is moving ([#1602](https://github.com/CARTAvis/carta-frontend/issues/1602)).
@@ -33,8 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added support for image fitting with field of view ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
 * Size conversion in the image fitting results ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
-* Added additional cursor info option to spectral profile widget.
-=======
 * Show a notification when there is a new CARTA release ([#1852](https://github.com/CARTAvis/carta-frontend/issues/1852)).
 * Added links to the CARTA Dashboard to the splashscreen and alert dialog where appropriate ([#1874](https://github.com/CARTAvis/carta-frontend/issues/1874)).
 ### Changed
