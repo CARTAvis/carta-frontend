@@ -294,8 +294,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = tabId;
     };
 
-    @action setSecondaryAxisCursorInfoVisible = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.secondaryAxisCursorInfoVisible = changeEvent.target.checked;
+    @action setSecondaryAxisCursorInfoVisible = (val: boolean) => {
+        this.secondaryAxisCursorInfoVisible = val;
     };
 
     constructor(coordinate: string = "z") {

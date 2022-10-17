@@ -193,7 +193,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
                                 </FormGroup>
                                 <FormGroup inline={true} label={"Secondary Info"}>
-                                    <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={widgetStore.setSecondaryAxisCursorInfoVisible} />
+                                    <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
                                 </FormGroup>
                             </React.Fragment>
                         }
