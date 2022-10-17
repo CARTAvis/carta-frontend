@@ -7,6 +7,7 @@ import {FloatingWidgetManagerComponent, UIControllerComponent} from "./component
 import {TaskProgressDialogComponent} from "./components/Dialogs";
 import {AlertStore, AlertType, AppStore} from "./stores";
 import {HotkeyTargetContainer} from "./HotkeyWrapper";
+import {ApiService} from "./services";
 import "./App.scss";
 import "./layout-base.scss";
 import "./layout-theme.scss";
@@ -44,12 +45,21 @@ export class App extends React.Component {
                     </Alert>
                 );
             case AlertType.Retry:
+                const cancelProps =
+                    alertStore.showDashboardLink && ApiService.RuntimeConfig?.dashboardAddress
+                        ? {
+                              cancelButtonText: "Open CARTA Dashboard",
+                              onCancel: () => window.open(ApiService.RuntimeConfig.dashboardAddress, "_blank")
+                          }
+                        : {};
+
                 return (
                     <Alert
                         icon={alertStore.alertIcon}
                         className={classNames({"bp3-dark": darkTheme})}
                         isOpen={alertStore.alertVisible}
                         confirmButtonText="Retry"
+                        {...cancelProps}
                         intent={Intent.DANGER}
                         onClose={alertStore.handleInteractiveAlertClosed}
                         canEscapeKeyCancel={false}

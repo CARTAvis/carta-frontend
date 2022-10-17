@@ -104,6 +104,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const appStore = AppStore.Instance;
         const preferenceStore = appStore.preferenceStore;
         const overlay = appStore.overlayStore;
+        const dialogStore = appStore.dialogStore;
         const frame = this.props.frame;
         const grid = overlay.grid;
 
@@ -193,8 +194,16 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
+        const baseFrame = this.props.frame;
+        const numSourcesArray = appStore.catalogStore.visibleCatalogFiles.get(baseFrame)?.map(fileId => appStore.catalogStore.catalogCounts.get(fileId));
+        const numSourcesIsZero = numSourcesArray?.every(element => element === 0);
+
         const catalogOverlayEnabled = appStore.activeLayer === ImageViewLayer.Catalog;
-        const catalogSelectionDisabled = appStore.catalogNum === 0;
+        const catalogSelectionDisabled = appStore.catalogNum === 0 || numSourcesIsZero === true;
+
+        const handleDistanceMeasuringClicked = () => {
+            this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring);
+        };
 
         return (
             <ButtonGroup className={className} style={styleProps}>
@@ -204,15 +213,22 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             position={tooltipPosition}
                             content={
                                 <span>
-                                    Measure distance
+                                    Distance Measurement
                                     <br />
                                     <i>
                                         <small>Click to create geodesic curves.</small>
+                                        <br></br>
+                                        <small>Double Click to open the settings.</small>
                                     </i>
                                 </span>
                             }
                         >
-                            <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.DistanceMeasuring)} />
+                            <AnchorButton
+                                icon={<CustomIcon icon="distanceMeasuring" />}
+                                active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring}
+                                onClick={handleDistanceMeasuringClicked}
+                                onDoubleClick={dialogStore.showDistanceMeasuringDialog}
+                            />
                         </Tooltip2>
                         <Tooltip2
                             position={tooltipPosition}

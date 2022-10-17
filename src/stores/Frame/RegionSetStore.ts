@@ -12,11 +12,20 @@ export enum RegionMode {
     CREATING
 }
 
+export enum RegionsOpacity {
+    Visible = 1,
+    SemiTransparent = 0.5,
+    Invisible = 0
+}
+
 export class RegionSetStore {
     @observable regions: RegionStore[];
     @observable selectedRegion: RegionStore;
     @observable mode: RegionMode;
     @observable newRegionType: CARTA.RegionType;
+    @observable opacity: number = 1;
+    @observable locked: boolean = false;
+    @observable isHoverImage: Boolean = false;
 
     private readonly frame: FrameStore;
     private readonly backendService: BackendService;
@@ -39,10 +48,15 @@ export class RegionSetStore {
             const cursorRegion = this.regions[0];
             // Need to avoid redundant update (position not changed), backend may not reply to redundant requests.
             const roundedPos = {x: Math.round(pos.x), y: Math.round(pos.y)};
-            if (cursorRegion?.regionId === CURSOR_REGION_ID && (cursorRegion.center?.x !== roundedPos.x || cursorRegion.center?.y !== roundedPos.y)) {
+            if (cursorRegion?.regionId === CURSOR_REGION_ID && (!this.isHoverImage || cursorRegion.center?.x !== roundedPos.x || cursorRegion.center?.y !== roundedPos.y)) {
                 cursorRegion.setCenter(roundedPos);
+                this.setIsHover(true);
             }
         }
+    };
+
+    @action setIsHover = (bool: boolean) => {
+        this.isHoverImage = bool;
     };
 
     // temporary region IDs are < 0 and used
@@ -234,4 +248,15 @@ export class RegionSetStore {
             }
         }
     };
+
+    @action setOpacity(opacity: RegionsOpacity) {
+        this.opacity = opacity;
+    }
+
+    @action setLocked(locked?: boolean) {
+        this.locked = locked === undefined ? !this.locked : locked;
+        if (this.locked) {
+            this.selectRegionByIndex(0);
+        }
+    }
 }

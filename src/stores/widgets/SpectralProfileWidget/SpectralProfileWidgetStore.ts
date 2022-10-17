@@ -442,8 +442,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
                 if (pointsAndProperties) {
                     if (wantMeanRms) {
-                        yMean = pointsAndProperties.yMean;
-                        yRms = pointsAndProperties.yRms;
+                        if (this.smoothingStore.type === SmoothingType.NONE) {
+                            yMean = pointsAndProperties.yMean;
+                            yRms = pointsAndProperties.yRms;
+                        } else if (!this.smoothingStore.isOverlayOn) {
+                            yMean = pointsAndProperties.ySmoothedMean;
+                            yRms = pointsAndProperties.ySmoothedRms;
+                        }
                     }
                     if (xBound.xMin > pointsAndProperties.xBound.xMin) {
                         xBound.xMin = pointsAndProperties.xBound.xMin;
@@ -892,6 +897,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         yRms: number;
         startIndex: number;
         endIndex: number;
+        ySmoothedMean: number;
+        ySmoothedRms: number;
     } => {
         let points: Point2D[] = [];
         let smoothedPoints: Point2D[] = [];
@@ -899,6 +906,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean = undefined;
         let yRms = undefined;
+        let ySmoothedMean = undefined;
+        let ySmoothedRms = undefined;
 
         if (intensityValues?.length > 0 && frameChannelValues?.length > 0 && intensityValues.length === frameChannelValues.length) {
             // Variables for mean and RMS calculations
@@ -937,11 +946,29 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     }
                 }
             }
-            smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, intensityValues));
+            smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, intensityValues, startIndex, endIndex));
 
             if (wantMeanRms && yCount > 0) {
                 yMean = ySum / yCount;
                 yRms = Math.sqrt(ySum2 / yCount - yMean * yMean);
+            }
+
+            if (wantMeanRms && smoothedPoints && this.smoothingStore.type !== SmoothingType.NONE) {
+                let ySmoothedSum = 0;
+                let ySmoothedSum2 = 0;
+                let ySmoothedCount = 0;
+                for (let i = 0; i < smoothedPoints.length; i++) {
+                    const ySmoothed = smoothedPoints[i].y;
+                    if (isFinite(ySmoothed)) {
+                        ySmoothedCount++;
+                        ySmoothedSum += ySmoothed;
+                        ySmoothedSum2 += ySmoothed * ySmoothed;
+                    }
+                }
+                if (ySmoothedCount > 0) {
+                    ySmoothedMean = ySmoothedSum / ySmoothedCount;
+                    ySmoothedRms = Math.sqrt(ySmoothedSum2 / ySmoothedCount - ySmoothedMean * ySmoothedMean);
+                }
             }
 
             return {
@@ -952,7 +979,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 yMean: yMean,
                 yRms: yRms,
                 startIndex: startIndex,
-                endIndex: endIndex
+                endIndex: endIndex,
+                ySmoothedMean: ySmoothedMean,
+                ySmoothedRms: ySmoothedRms
             };
         } else {
             return undefined;
