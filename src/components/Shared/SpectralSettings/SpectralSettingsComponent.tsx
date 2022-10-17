@@ -38,7 +38,7 @@ export class SpectralSettingsComponent extends React.Component<{
                         disabled={disableCoordinateSetting}
                         value={frame && frame.spectralCoordinate ? frame.spectralCoordinate : ""}
                         options={spectralCoordinateOptions}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralCoordinateChange(event.currentTarget.value as string)}
+                        onChange={event => this.props.onSpectralCoordinateChange(event.currentTarget.value as string)}
                     />
                 </FormGroup>
                 {this.props.secondaryAxisCursorInfoVisible && (
@@ -47,7 +47,7 @@ export class SpectralSettingsComponent extends React.Component<{
                             disabled={disableCoordinateSetting}
                             value={frame && frame.spectralCoordinateSecondary ? frame.spectralCoordinateSecondary : ""}
                             options={spectralCoordinateOptions}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralCoordinateChangeSecondary(event.currentTarget.value as string)}
+                            onChange={event => this.props.onSpectralCoordinateChangeSecondary(event.currentTarget.value as string)}
                         />
                     </FormGroup>
                 )}
@@ -57,7 +57,7 @@ export class SpectralSettingsComponent extends React.Component<{
                         disabled={disableSystemSetting}
                         value={frame && frame.spectralSystem ? frame.spectralSystem : ""}
                         options={spectralSystemOptions}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralSystemChange(event.currentTarget.value as SpectralSystem)}
+                        onChange={event => this.props.onSpectralSystemChange(event.currentTarget.value as SpectralSystem)}
                     />
                 </FormGroup>
             </React.Fragment>
