@@ -104,7 +104,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         region.endEditing();
     };
 
-    const approxPoints = region.getRegionApproximation(frame.wcsInfo);
+    const approxPoints = region.getRegionApproximation(frame.spatialTransformAST || frame.wcsInfo, frame.spatialReference ? true : false);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
     const northPointArray = new Array<number>(northApproxPoints.length);

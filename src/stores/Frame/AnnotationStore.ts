@@ -85,11 +85,12 @@ export class CompassAnnotationStore extends RegionStore {
         this.length = length;
     };
 
-    public getRegionApproximation(astTransform: AST.FrameSet): any {
+    public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {
         let northApproximatePoints;
         let eastApproximatePoints;
 
-        const startPoint = {x: this.controlPoints[0].x + this.length / 2, y: this.controlPoints[0].y - this.length / 2};
+        const centerPoint = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
+        const startPoint = {x: centerPoint.x + this.length / 2, y: centerPoint.y - this.length / 2};
         const northEndPoint = {x: startPoint.x, y: startPoint.y + this.length};
         const eastEndPoint = {x: startPoint.x - this.length, y: startPoint.y};
 
@@ -154,13 +155,8 @@ export class RulerAnnotationStore extends RegionStore {
         const xIn = new Float64Array(2);
         const yIn = new Float64Array(2);
 
-        // const imagePointStart = this.controlPoints[0];
-        // const imagePointFinish = this.controlPoints[1];
-        console.log(this.activeFrame.filename);
         const imagePointStart = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
         const imagePointFinish = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[1], false) : this.controlPoints[1];
-        // const imagePointStart = this.activeFrame.spatialReference ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
-        // const imagePointFinish = this.activeFrame.spatialReference ? transformPoint(astTransform, this.controlPoints[1], false) : this.controlPoints[1];
         xIn[0] = imagePointStart.x;
         xIn[1] = imagePointFinish.x;
         yIn[0] = imagePointStart.y;
