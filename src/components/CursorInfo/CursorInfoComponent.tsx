@@ -181,6 +181,7 @@ export class CursorInfoComponent extends React.Component<WidgetProps> {
                         defaultRowHeight={40}
                         isIndexZero={true}
                         boldIndex={[appStore.activeFrameIndex]}
+                        isFilenameTooltip={true}
                     />
                 )}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}></ReactResizeDetector>
