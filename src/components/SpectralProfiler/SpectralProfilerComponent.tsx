@@ -180,7 +180,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let xLabel = cursorXUnit === "Channel" ? `Channel ${primaryXStr}` : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
 
             if (this.widgetStore.secondaryAxisCursorInfoVisible) {
-                let secondary = secondaryData.slice(start, end);
+                let secondary = secondaryData;
 
                 // Use precision to determine the proper rounding and zero suppression for displayed value. Data and secondary
                 // are handled idfferently because they have different structures.
@@ -228,7 +228,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const endIndex = this.plotData.dataIndexes[i].endIndex + 1;
 
                     const data = this.plotData.data[i];
-                    const secondary = this.widgetStore.profileSelectionStore.profiles[i].channelSecondaryValues;
+                    const secondary = this.plotData.secondaryData[i];
                     const cursorInfoString = this.genCursoInfoString(data, secondary, cursorXValue, cursorXUnit, label, startIndex, endIndex);
 
                     profilerInfo.push({
