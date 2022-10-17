@@ -460,29 +460,55 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
             }
 
-            shapeNode = (
-                <Line
-                    x={centerPixelSpace.x}
-                    y={centerPixelSpace.y}
-                    stroke={region.color}
-                    strokeWidth={region.lineWidth}
-                    strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    dash={[region.dashLength]}
-                    closed={true}
-                    listening={this.props.listening && !region.locked}
-                    onClick={this.handleClick}
-                    onDblClick={this.handleDoubleClick}
-                    onContextMenu={this.handleContextMenu}
-                    onDragStart={this.handleDragStart}
-                    onDragEnd={this.handleDragEnd}
-                    onDragMove={this.handleDrag}
-                    perfectDrawEnabled={false}
-                    lineJoin={"round"}
-                    draggable={true}
-                    points={pointArray}
-                />
-            );
+            shapeNode =
+                region.regionType === CARTA.RegionType.ANNTEXT ? (
+                    <Text
+                        rotation={-region.rotation}
+                        x={centerPixelSpace.x}
+                        y={centerPixelSpace.y}
+                        stroke={region.color}
+                        strokeWidth={region.lineWidth}
+                        opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                        dash={[region.dashLength]}
+                        draggable={true}
+                        listening={this.props.listening && !region.locked}
+                        onDragStart={this.handleDragStart}
+                        onDragEnd={this.handleDragEnd}
+                        onDragMove={this.handleDrag}
+                        onClick={this.handleClick}
+                        onDblClick={this.handleDoubleClick}
+                        onContextMenu={this.handleContextMenu}
+                        perfectDrawEnabled={false}
+                        strokeScaleEnabled={false}
+                        width={(region.size.x / devicePixelRatio) * frame.aspectRatio}
+                        height={region.size.y / devicePixelRatio}
+                        offsetX={((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0}
+                        offsetY={region.size.y / devicePixelRatio / 2.0}
+                        text={region.text}
+                    />
+                ) : (
+                    <Line
+                        x={centerPixelSpace.x}
+                        y={centerPixelSpace.y}
+                        stroke={region.color}
+                        strokeWidth={region.lineWidth}
+                        strokeScaleEnabled={false}
+                        opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                        dash={[region.dashLength]}
+                        closed={true}
+                        listening={this.props.listening && !region.locked}
+                        onClick={this.handleClick}
+                        onDblClick={this.handleDoubleClick}
+                        onContextMenu={this.handleContextMenu}
+                        onDragStart={this.handleDragStart}
+                        onDragEnd={this.handleDragEnd}
+                        onDragMove={this.handleDrag}
+                        perfectDrawEnabled={false}
+                        lineJoin={"round"}
+                        draggable={true}
+                        points={pointArray}
+                    />
+                );
         } else {
             const width = region.size.x / devicePixelRatio;
             const height = region.size.y / devicePixelRatio;
@@ -517,7 +543,6 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE) {
                 shapeNode = <Rect {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} />;
             } else if (region.regionType === CARTA.RegionType.ANNTEXT) {
-                console.log(region.text);
                 shapeNode = <Text {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} text={region.text} />;
             } else {
                 shapeNode = <Ellipse {...commonProps} radiusY={width} radiusX={height * frame.aspectRatio} />;

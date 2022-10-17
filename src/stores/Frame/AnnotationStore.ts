@@ -6,6 +6,7 @@ import {Point2D} from "models";
 import {BackendService} from "services";
 import {FrameStore} from "stores/Frame";
 import {RegionStore} from "./RegionStore";
+import {transformPoint} from "utilities";
 
 export class TextAnnotationStore extends RegionStore {
     @observable text: string = "Double click to edit text";
@@ -145,18 +146,25 @@ export class RulerAnnotationStore extends RegionStore {
         this.fontSize = fontSize;
     };
 
-    public getRegionApproximation(astTransform: AST.FrameSet): any {
+    public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {
         let xApproximatePoints;
         let yApproximatePoints;
         let hypotenuseApproximatePoints;
 
-        console.log("system change please come in");
         const xIn = new Float64Array(2);
         const yIn = new Float64Array(2);
-        xIn[0] = this.controlPoints[0].x;
-        xIn[1] = this.controlPoints[1].x;
-        yIn[0] = this.controlPoints[0].y;
-        yIn[1] = this.controlPoints[1].y;
+
+        // const imagePointStart = this.controlPoints[0];
+        // const imagePointFinish = this.controlPoints[1];
+        console.log(this.activeFrame.filename);
+        const imagePointStart = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
+        const imagePointFinish = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[1], false) : this.controlPoints[1];
+        // const imagePointStart = this.activeFrame.spatialReference ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
+        // const imagePointFinish = this.activeFrame.spatialReference ? transformPoint(astTransform, this.controlPoints[1], false) : this.controlPoints[1];
+        xIn[0] = imagePointStart.x;
+        xIn[1] = imagePointFinish.x;
+        yIn[0] = imagePointStart.y;
+        yIn[1] = imagePointFinish.y;
 
         const transformed = AST.transformPointArrays(astTransform, xIn, yIn);
         const startX = transformed.x[0];
@@ -180,8 +188,8 @@ export class RulerAnnotationStore extends RegionStore {
         cornerToStartY[0] = cornerY;
         cornerToStartY[1] = startY;
 
-        xApproximatePoints = AST.transformPointList(astTransform, finishToCornerX, finishToCornerY);
-        yApproximatePoints = AST.transformPointList(astTransform, cornerToStartX, cornerToStartY);
+        xApproximatePoints = AST.transformPointList(astTransform, cornerToStartX, cornerToStartY);
+        yApproximatePoints = AST.transformPointList(astTransform, finishToCornerX, finishToCornerY);
         hypotenuseApproximatePoints = AST.transformPointList(astTransform, transformed.x, transformed.y);
 
         return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints};

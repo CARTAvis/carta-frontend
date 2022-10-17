@@ -17,7 +17,7 @@ import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, 
 import {CursorInfo, Point2D, ZoomPoint} from "models";
 import {add2D, average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 import "./RegionViewComponent.scss";
-import {CompassAnnotation, RulerAnnotation} from "./InvariantShapes";
+import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
