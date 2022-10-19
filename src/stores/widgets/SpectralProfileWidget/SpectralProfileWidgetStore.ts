@@ -22,7 +22,7 @@ type Comments = string[];
 export type MultiPlotData = {
     numProfiles: number;
     data: DataPoints[];
-    secondaryData: number[][];
+    secondaryXData: number[][];
     smoothedData: DataPoints[];
     fittingData: {x: number[]; y: Float32Array | Float64Array};
     colors: string[];
@@ -412,7 +412,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // Determine points/smoothingPoints/colors/yBound/progress
         let numProfiles = 0;
         let data = [];
-        let secondaryData = [];
+        let secondaryXData = [];
         let smoothedData = [];
         let colors = [];
         let labels = [];
@@ -438,7 +438,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
                 data.push(pointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
-                secondaryData.push(profile.channelSecondaryValues?.slice(pointsAndProperties?.startIndex, pointsAndProperties?.endIndex) ?? []);
+                secondaryXData.push(profile.channelSecondaryValues?.slice(pointsAndProperties?.startIndex, pointsAndProperties?.endIndex) ?? []);
 
                 if (pointsAndProperties) {
                     if (wantMeanRms) {
@@ -499,7 +499,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return {
             numProfiles: numProfiles,
             data: data,
-            secondaryData: secondaryData,
+            secondaryXData: secondaryXData,
             smoothedData: smoothedData,
             fittingData: fittingData,
             colors: colors,
