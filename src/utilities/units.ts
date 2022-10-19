@@ -44,49 +44,7 @@ export function toFixed(val: number, decimals: number = 0): string {
 }
 
 export function trimTrailingDecimals(value: string): string {
-    let splitValue: string[] = value.split(".");
-
-    if (splitValue[1] === undefined) {
-        return splitValue[0];
-    } else {
-        for (let i = 0; i < splitValue[1].length; i++) {
-            if (splitValue[1][i] !== "0") {
-                return value;
-            }
-        }
-        return splitValue[0];
-    }
-}
-
-export function trimTrailingZeros(value: string): string {
-    // Trims the trailing zeros from the input decimal value. If
-    // all trailing values are '0', we return only the values
-    // left of the decimal
-
-    let decimals = value.split(".");
-    let trimmed = decimals[1];
-    let temp = [];
-
-    if (typeof decimals[1] != "undefined") {
-        temp = decimals[1].split("");
-    } else {
-        return decimals[0];
-    }
-
-    for (let i = decimals[1].length - 1; i >= 0; i--) {
-        // Check if trailing value is 0 and pop() value if so.
-        if (decimals[1][i] === "0") {
-            temp.pop();
-            trimmed = temp.join("");
-        } else {
-            // Once all trailing values are removed, rebuild full value minus
-            // trailing zeros and return.
-
-            trimmed = decimals[0] + "." + trimmed;
-            return trimmed;
-        }
-    }
-    return decimals[0];
+    return value.replace(/(\d+?\.\d+?)0+/gm, "$1").replace(/(\d+)\.0+/gm, "$1");
 }
 
 export function getVariablePrecision(value: number): number {
@@ -96,18 +54,16 @@ export function getVariablePrecision(value: number): number {
     // precision.
 
     let decimalPlacement = 0.1;
-    let precision = 3; // The additional 2-precision is added to accomdate for rounding
-    // and improve UX experience.
+    let precision = 3; // The additional 2-precision is added to accomdate for rounding and improve UX experience
 
     for (let i = 0; i < 9; i++) {
         if (value < decimalPlacement) {
-            decimalPlacement = 0.1 * decimalPlacement;
+            decimalPlacement *= 0.1;
             precision++;
         } else {
             return precision;
         }
     }
-
     return precision;
 }
 
@@ -115,9 +71,7 @@ export function toFormattedNotationByDiff(value: number, delta: number): string 
     if (value === null || isNaN(value)) {
         return null;
     }
-    // Determine approximate precision
-    let precision = getVariablePrecision(Math.abs(delta));
-
+    const precision = getVariablePrecision(Math.abs(delta));
     return trimTrailingDecimals(value.toFixed(precision));
 }
 
