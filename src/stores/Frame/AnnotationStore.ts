@@ -39,12 +39,14 @@ export class TextAnnotationStore extends RegionStore {
 }
 
 export class CompassAnnotationStore extends RegionStore {
-    @observable length: number = 10;
+    @observable length: number = 500;
     @observable northLabel: string = "North";
     @observable eastLabel: string = "East";
     @observable isNorthArrowhead: boolean = true;
     @observable isEastArrowhead: boolean = true;
     @observable fontSize: number = 20;
+    @observable pointerWidth: number = 5;
+    @observable pointerLength: number = 5;
 
     constructor(
         backendService: BackendService,
@@ -75,24 +77,33 @@ export class CompassAnnotationStore extends RegionStore {
         this.fontSize = fontSize;
     };
 
+    @action setPointerWidth = (width: number) => {
+        this.pointerWidth = width;
+    };
+
+    @action setPointerLength = (length: number) => {
+        this.pointerLength = length;
+    };
+
     @action setLength = (length: number) => {
         console.log("length change", length);
 
         if (length < 0) {
             this.length = 0;
+        } else {
+            this.length = length;
         }
-
-        this.length = length;
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {
         let northApproximatePoints;
         let eastApproximatePoints;
 
-        const centerPoint = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
-        const startPoint = {x: centerPoint.x + this.length / 2, y: centerPoint.y - this.length / 2};
-        const northEndPoint = {x: startPoint.x, y: startPoint.y + this.length};
-        const eastEndPoint = {x: startPoint.x - this.length, y: startPoint.y};
+        const originPoint = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
+        const transformedOrigin = AST.transformPoint(astTransform, originPoint.x, originPoint.y);
+
+        const northEndPoint = {x: originPoint.x, y: originPoint.y + this.length};
+        const eastEndPoint = {x: originPoint.x - this.length, y: originPoint.y};
 
         const xIn = new Float64Array(2);
         const yIn = new Float64Array(2);
@@ -101,23 +112,9 @@ export class CompassAnnotationStore extends RegionStore {
         yIn[0] = northEndPoint.y;
         yIn[1] = eastEndPoint.y;
         const transformed = AST.transformPointArrays(astTransform, xIn, yIn);
-        const originPoints = {x: transformed.x[0], y: transformed.y[1]};
 
-        //index 0 is North, index 1 is East
-        const originToNorthX = new Float64Array(2);
-        originToNorthX[0] = originPoints.x;
-        originToNorthX[1] = transformed.x[0];
-        const originToNorthY = new Float64Array(2);
-        originToNorthY[0] = originPoints.y;
-        originToNorthY[1] = transformed.y[0];
-        const originToEastX = new Float64Array(2);
-        originToEastX[0] = originPoints.x;
-        originToEastX[1] = transformed.x[1];
-        const originToEastY = new Float64Array(2);
-        originToEastY[0] = originPoints.y;
-        originToEastY[1] = transformed.y[1];
-        northApproximatePoints = AST.transformPointList(astTransform, originToNorthX, originToNorthY);
-        eastApproximatePoints = AST.transformPointList(astTransform, originToEastX, originToEastY);
+        northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformedOrigin.y, transformed.y[0], transformedOrigin.x);
+        eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformedOrigin.x, transformed.x[1], transformedOrigin.y);
 
         return {northApproximatePoints, eastApproximatePoints};
     }
@@ -125,6 +122,8 @@ export class CompassAnnotationStore extends RegionStore {
 
 export class RulerAnnotationStore extends RegionStore {
     @observable fontSize: number = 10;
+    @observable auxiliaryLineVisible: boolean = false;
+    @observable auxiliaryLineDashLength: number = 0;
 
     constructor(
         backendService: BackendService,
@@ -145,6 +144,14 @@ export class RulerAnnotationStore extends RegionStore {
 
     @action setFontSize = (fontSize: number) => {
         this.fontSize = fontSize;
+    };
+
+    @action setAuxiliaryLineVisible = (isVisible: boolean) => {
+        this.auxiliaryLineVisible = isVisible;
+    };
+
+    @action setAuxiliaryLineDashLength = (length: number) => {
+        this.auxiliaryLineDashLength = length;
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {

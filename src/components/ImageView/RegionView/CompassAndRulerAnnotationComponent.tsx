@@ -59,6 +59,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             const deltaPosition = subtract2D(imagePosition, oldImagePosition);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
+            console.log(newPoints[0]);
             mousePoint.current = konvaEvent.target.position();
         }
     };
@@ -88,7 +89,6 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         if (konvaEvent.target) {
             const anchor = konvaEvent.target;
             const anchorPos = anchor.position();
-            // const anchorName = anchor.id();
             const offsetPoint = adjustPosToUnityStage(anchorPos, props.stageRef.current);
             let positionImageSpace = canvasToTransformedImagePos(offsetPoint.x, offsetPoint.y, frame, props.layerWidth, props.layerHeight);
 
@@ -96,7 +96,15 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
 
-            region.setLength(Math.min(Math.abs(positionImageSpace.x - region.controlPoints[0].x), Math.abs(positionImageSpace.y - region.controlPoints[0].y)) * 2);
+            if (anchor.id() === "origin") {
+                region.setControlPoint(0, positionImageSpace);
+            } else if (anchor.id() === "northTip") {
+                region.setLength(Math.abs(positionImageSpace.y - region.controlPoints[0].y));
+                console.log(Math.abs(positionImageSpace.y - region.controlPoints[0].y));
+            } else if (anchor.id() === "eastTip") {
+                region.setLength(Math.abs(positionImageSpace.x - region.controlPoints[0].x));
+                console.log(Math.abs(positionImageSpace.x - region.controlPoints[0].x));
+            }
         }
     };
 
@@ -122,7 +130,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         eastPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
-    const originPoints = {x: northPointArray[0] + mousePoint.current.x, y: northPointArray[1] + mousePoint.current.y};
+    const controlPoint = frame.spatialReference ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
+    const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
     // Dummy variables for triggering re-render
     /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
@@ -130,7 +139,13 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     const system = AppStore.Instance.overlayStore.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
+    // const scale = props.stageRef.current.scaleX();
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
+
+    console.log(frame.zoomLevel);
+    // React.useEffect(() => {
+    //     region.setLength(region.length * imageRatio / frame.zoomLevel);
+    // }, [frame.zoomLevel]);
 
     return (
         <>
@@ -146,6 +161,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={eastPointArray}
+                    pointerWidth={region.pointerWidth}
+                    pointerLength={region.pointerLength}
                 />
                 <Arrow
                     stroke={region.color}
@@ -158,8 +175,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={northPointArray}
-                    pointerWidth={4}
-                    pointerLength={50}
+                    pointerWidth={region.pointerWidth}
+                    pointerLength={region.pointerLength}
                 />
                 <Text
                     x={northPointArray[northPointArray.length - 2]}
@@ -170,7 +187,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    fontSize={region.fontSize}
+                    fontSize={(region.fontSize * imageRatio) / frame.zoomLevel}
                 />
                 <Text
                     x={eastPointArray[eastPointArray.length - 2]}
@@ -181,7 +198,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    fontSize={region.fontSize}
+                    fontSize={(region.fontSize * imageRatio) / frame.zoomLevel}
                 />
             </Group>
             <Group>
@@ -191,6 +208,30 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                             anchor={"origin"}
                             x={originPoints.x}
                             y={originPoints.y}
+                            rotation={0}
+                            isRotator={false}
+                            onMouseEnter={handleAnchorMouseEnter}
+                            onMouseOut={handleAnchorMouseOut}
+                            onDragStart={handleAnchorDragStart}
+                            onDragEnd={handleAnchorDragEnd}
+                            onDragMove={handleAnchorDrag}
+                        />
+                        <Anchor
+                            anchor={"northTip"}
+                            x={northPointArray[northPointArray.length - 2] + mousePoint.current.x}
+                            y={northPointArray[northPointArray.length - 1] + mousePoint.current.y}
+                            rotation={0}
+                            isRotator={false}
+                            onMouseEnter={handleAnchorMouseEnter}
+                            onMouseOut={handleAnchorMouseOut}
+                            onDragStart={handleAnchorDragStart}
+                            onDragEnd={handleAnchorDragEnd}
+                            onDragMove={handleAnchorDrag}
+                        />
+                        <Anchor
+                            anchor={"eastTip"}
+                            x={eastPointArray[eastPointArray.length - 2] + mousePoint.current.x}
+                            y={eastPointArray[eastPointArray.length - 1] + mousePoint.current.y}
                             rotation={0}
                             isRotator={false}
                             onMouseEnter={handleAnchorMouseEnter}
@@ -350,8 +391,8 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    dash={[region.dashLength]}
+                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                    dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
@@ -362,8 +403,8 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     fill={region.color}
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    dash={[region.dashLength]}
+                    opacity={region.auxiliaryLineVisible ? (region.isTemporary ? 0.5 : region.locked ? 0.7 : 1) : 0}
+                    dash={[region.auxiliaryLineDashLength]}
                     closed={false}
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
@@ -378,7 +419,7 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     strokeWidth={region.lineWidth}
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    fontSize={region.fontSize}
+                    fontSize={(region.fontSize * imageRatio) / frame.zoomLevel}
                 />
             </Group>
             <Group>

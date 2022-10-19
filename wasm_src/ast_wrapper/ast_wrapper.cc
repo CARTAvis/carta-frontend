@@ -441,24 +441,85 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
     double discreteDist = dist/npoint;
     double output[2];
 
+    double* xout = new double[npoint];
+    double* yout = new double[npoint];
+    double* xOut = new double[npoint];
+    double* yOut = new double[npoint];
+    
     for(int i = 0; i < npoint; i++) {
         double distance = discreteDist * i;
         astOffset(wcsinfo, start, finish, distance, output);
-        out[i * 2] = output[0];
-        out[i * 2 + 1] = output[1];
+        xout[i] = output[0];
+        yout[i] = output[1];
     }
 
+    astTran2(wcsinfo, 201, xout, yout, 0, xOut, yOut);
+
+    for(int i = 0; i < npoint; i++) {
+         out[i * 2] = xOut[i];
+         out[i * 2 + 1] = yOut[i];
+    }
+
+    delete[] xout;
+    delete[] yout;
+    delete[] xOut;
+    delete[] yOut;
+
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
+//xin and yin needs to be transformed
+EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis, double startValue, double finishValue, double yValue, double out[])
+{
+    if (!wcsinfo)
+    {
+        cout << "not wcsinfo" << endl;
+        return 1;
+    }
+
+    double start[2];
+    double finish[2];
+
+    if(axis == 1) {
+        start[0] = startValue;
+        start[1] = yValue;
+        finish[0] = finishValue;
+        finish[1] = yValue;
+    } else if (axis == 2) {
+        start[0] = yValue;
+        start[1] = startValue;
+        finish[0] = yValue;
+        finish[1] = finishValue;
+    }
+
+    double dist = astDistance(wcsinfo, start, finish);
+    double discreteDist = dist/npoint;
+
+    double output;
     double* xout = new double[npoint];
     double* yout = new double[npoint];
     double* xOut = new double[npoint];
     double* yOut = new double[npoint];
 
     for(int i = 0; i < npoint; i++) {
-        xout[i] = out[i * 2];
-        yout[i] = out[i * 2 + 1];
+        double distance = discreteDist * i;
+        output = astAxOffset(wcsinfo, 1, startValue, distance);
+
+        if(axis == 1) {
+            xout[i] = output;
+            yout[i] = yValue;
+        } else if (axis == 2) {
+            xout[i] = yValue;
+            yout[i] = output;
+        }
     }
 
-    astTran2(wcsinfo, 201, xout, yout, 0, xOut, yOut);
+    astTran2(wcsinfo, npoint, xout, yout, 0, xOut, yOut);
 
     for(int i = 0; i < npoint; i++) {
          out[i * 2] = xOut[i];
