@@ -96,25 +96,22 @@ export class CompassAnnotationStore extends RegionStore {
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {
-        let northApproximatePoints;
-        let eastApproximatePoints;
-
         const originPoint = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
-        const transformedOrigin = AST.transformPoint(astTransform, originPoint.x, originPoint.y);
-
         const northEndPoint = {x: originPoint.x, y: originPoint.y + this.length};
         const eastEndPoint = {x: originPoint.x - this.length, y: originPoint.y};
 
-        const xIn = new Float64Array(2);
-        const yIn = new Float64Array(2);
-        xIn[0] = northEndPoint.x;
-        xIn[1] = eastEndPoint.x;
-        yIn[0] = northEndPoint.y;
-        yIn[1] = eastEndPoint.y;
+        const xIn = new Float64Array(3);
+        const yIn = new Float64Array(3);
+        xIn[0] = originPoint.x;
+        xIn[1] = northEndPoint.x;
+        xIn[2] = eastEndPoint.x;
+        yIn[0] = originPoint.y;
+        yIn[1] = northEndPoint.y;
+        yIn[2] = eastEndPoint.y;
         const transformed = AST.transformPointArrays(astTransform, xIn, yIn);
 
-        northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformedOrigin.y, transformed.y[0], transformedOrigin.x);
-        eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformedOrigin.x, transformed.x[1], transformedOrigin.y);
+        const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.y[0], transformed.y[1], transformed.x[0]);
+        const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x[0], transformed.x[2], transformed.y[0]);
 
         return {northApproximatePoints, eastApproximatePoints};
     }
