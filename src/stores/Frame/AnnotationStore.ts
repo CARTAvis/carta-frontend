@@ -47,6 +47,7 @@ export class CompassAnnotationStore extends RegionStore {
     @observable fontSize: number = 20;
     @observable pointerWidth: number = 5;
     @observable pointerLength: number = 5;
+    @observable lengthScale: number = 1;
 
     constructor(
         backendService: BackendService,
@@ -77,6 +78,10 @@ export class CompassAnnotationStore extends RegionStore {
         this.fontSize = fontSize;
     };
 
+    @action setLengthScale = (lengthScale: number) => {
+        this.lengthScale = lengthScale;
+    };
+
     @action setPointerWidth = (width: number) => {
         this.pointerWidth = width;
     };
@@ -86,19 +91,13 @@ export class CompassAnnotationStore extends RegionStore {
     };
 
     @action setLength = (length: number) => {
-        console.log("length change", length);
-
-        if (length < 0) {
-            this.length = 0;
-        } else {
-            this.length = length;
-        }
+            this.length = Math.abs(length);
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {
         const originPoint = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
-        const northEndPoint = {x: originPoint.x, y: originPoint.y + this.length};
-        const eastEndPoint = {x: originPoint.x - this.length, y: originPoint.y};
+        const northEndPoint = {x: originPoint.x, y: originPoint.y + this.length * this.lengthScale};
+        const eastEndPoint = {x: originPoint.x - this.length * this.lengthScale, y: originPoint.y};
 
         const xIn = new Float64Array(3);
         const yIn = new Float64Array(3);

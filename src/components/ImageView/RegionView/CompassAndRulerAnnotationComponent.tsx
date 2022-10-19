@@ -99,11 +99,11 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             if (anchor.id() === "origin") {
                 region.setControlPoint(0, positionImageSpace);
             } else if (anchor.id() === "northTip") {
-                region.setLength(Math.abs(positionImageSpace.y - region.controlPoints[0].y));
-                console.log(Math.abs(positionImageSpace.y - region.controlPoints[0].y));
+                console.log(region.length, Math.abs(positionImageSpace.y - region.controlPoints[0].y));
+                region.setLength(Math.abs(positionImageSpace.y - region.controlPoints[0].y) / region.lengthScale);
             } else if (anchor.id() === "eastTip") {
-                region.setLength(Math.abs(positionImageSpace.x - region.controlPoints[0].x));
-                console.log(Math.abs(positionImageSpace.x - region.controlPoints[0].x));
+                console.log(region.length, Math.abs(positionImageSpace.x - region.controlPoints[0].x));
+                region.setLength(Math.abs(positionImageSpace.x - region.controlPoints[0].x) / region.lengthScale);
             }
         }
     };
@@ -112,6 +112,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         region.endEditing();
     };
 
+    // region.getEndPoints(frame.spatialTransformAST || frame.wcsInfo, frame.spatialReference ? true : false, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
     const approxPoints = region.getRegionApproximation(frame.spatialTransformAST || frame.wcsInfo, frame.spatialReference ? true : false);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
@@ -139,13 +140,15 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     const system = AppStore.Instance.overlayStore.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
+    const length = region.length;
     // const scale = props.stageRef.current.scaleX();
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
-    console.log(frame.zoomLevel);
-    // React.useEffect(() => {
-    //     region.setLength(region.length * imageRatio / frame.zoomLevel);
-    // }, [frame.zoomLevel]);
+    const scale = React.useRef(frame.zoomLevel); //store the initial frame zoomLevel
+
+    React.useEffect(() => {
+        region.setLengthScale(imageRatio * scale.current / frame.zoomLevel);
+    }, [frame.zoomLevel]);
 
     return (
         <>
@@ -161,8 +164,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={eastPointArray}
-                    pointerWidth={region.pointerWidth}
-                    pointerLength={region.pointerLength}
+                    pointerWidth={region.pointerWidth * region.lengthScale}
+                    pointerLength={region.pointerLength * region.lengthScale}
                 />
                 <Arrow
                     stroke={region.color}
@@ -175,8 +178,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={northPointArray}
-                    pointerWidth={region.pointerWidth}
-                    pointerLength={region.pointerLength}
+                    pointerWidth={region.pointerWidth * region.lengthScale}
+                    pointerLength={region.pointerLength * region.lengthScale}
                 />
                 <Text
                     x={northPointArray[northPointArray.length - 2]}
