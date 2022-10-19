@@ -15,7 +15,8 @@ export class SimpleTableComponentProps {
     isIndexZero?: boolean;
     boldIndex?: number[];
     updateTableRef?: (ref: Table) => void;
-    isFilenameTooltip?: boolean;
+    isTooltip?: boolean;
+    tooltipIndex?: number;
 }
 
 @observer
@@ -29,31 +30,18 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
         return <RowHeaderCell name={index.toString()} style={this.getFontStyle(rowIndex)} />;
     };
 
-    private getFilenameTooltip = (columnName: string, columnData: any, rowIndex: number) => {
+    private getTooltip = (columnData: any, columnIndex: number, rowIndex: number) => {
         const tooltip = rowIndex < columnData?.length ? columnData[rowIndex] : undefined;
-        return this.props.isFilenameTooltip && columnName === "Image" ? tooltip : undefined;
+        return this.props.isTooltip && columnIndex === this.props.tooltipIndex ? tooltip : undefined;
     };
 
     private renderDataColumn = (columnName: string, columnData: any) => {
-        // if (columnName === "Image") {
-        //     return (
-        //         <Column
-        //             key={columnName}
-        //             name={columnName}
-        //             cellRenderer={(rowIndex, columnIndex) => (
-        //                 <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)} tooltip={rowIndex < columnData?.length ? columnData[rowIndex] : undefined}>
-        //                     {rowIndex < columnData?.length ? columnData[rowIndex] : undefined}
-        //                 </Cell>
-        //             )}
-        //         />
-        //     );
-        // }
         return (
             <Column
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)} tooltip={this.getFilenameTooltip(columnName, columnData, rowIndex)}>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)} tooltip={this.getTooltip(columnData, columnIndex, rowIndex)}>
                         {rowIndex < columnData?.length ? columnData[rowIndex] : undefined}
                     </Cell>
                 )}
