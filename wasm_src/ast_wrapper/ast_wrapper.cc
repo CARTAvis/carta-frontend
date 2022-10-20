@@ -473,8 +473,7 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
     return 0;
 }
 
-//xin and yin needs to be transformed
-EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis, double startValue, double finishValue, double yValue, double out[])
+EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis, double x, double y, double out[])
 {
     if (!wcsinfo)
     {
@@ -482,22 +481,23 @@ EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis,
         return 1;
     }
 
-    double start[2];
-    double finish[2];
+    // double start[2];
+    // double finish[2];
 
-    if(axis == 1) {
-        start[0] = startValue;
-        start[1] = yValue;
-        finish[0] = finishValue;
-        finish[1] = yValue;
-    } else if (axis == 2) {
-        start[0] = yValue;
-        start[1] = startValue;
-        finish[0] = yValue;
-        finish[1] = finishValue;
-    }
+    // if(axis == 1) {
+    //     start[0] = startValue;
+    //     start[1] = yValue;
+    //     finish[0] = finishValue;
+    //     finish[1] = yValue;
+    // } else if (axis == 2) {
+    //     start[0] = yValue;
+    //     start[1] = startValue;
+    //     finish[0] = yValue;
+    //     finish[1] = finishValue;
+    // }
 
-    double dist = astDistance(wcsinfo, start, finish);
+    // double dist = astDistance(wcsinfo, start, finish);
+    double dist = 3.14;
     double discreteDist = dist/npoint;
 
     double output;
@@ -508,13 +508,14 @@ EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis,
 
     for(int i = 0; i < npoint; i++) {
         double distance = discreteDist * i;
-        output = astAxOffset(wcsinfo, 1, startValue, distance);
 
         if(axis == 1) {
+            output = astAxOffset(wcsinfo, axis, x, distance);
             xout[i] = output;
-            yout[i] = yValue;
+            yout[i] = y;
         } else if (axis == 2) {
-            xout[i] = yValue;
+            output = astAxOffset(wcsinfo, axis, y, distance);
+            xout[i] = x;
             yout[i] = output;
         }
     }

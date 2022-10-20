@@ -91,26 +91,30 @@ export class CompassAnnotationStore extends RegionStore {
     };
 
     @action setLength = (length: number) => {
-            this.length = Math.abs(length);
+        this.length = Math.abs(length);
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {
         const originPoint = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
-        const northEndPoint = {x: originPoint.x, y: originPoint.y + this.length * this.lengthScale};
-        const eastEndPoint = {x: originPoint.x - this.length * this.lengthScale, y: originPoint.y};
+        // const northEndPoint = {x: originPoint.x, y: originPoint.y + this.length * this.lengthScale};
+        // const eastEndPoint = {x: originPoint.x - this.length * this.lengthScale, y: originPoint.y};
+        // const northEndPoint = {x: originPoint.x, y: originPoint.y + this.length * this.lengthScale};
+        // const eastEndPoint = {x: originPoint.x - this.length * this.lengthScale, y: originPoint.y};
 
-        const xIn = new Float64Array(3);
-        const yIn = new Float64Array(3);
-        xIn[0] = originPoint.x;
-        xIn[1] = northEndPoint.x;
-        xIn[2] = eastEndPoint.x;
-        yIn[0] = originPoint.y;
-        yIn[1] = northEndPoint.y;
-        yIn[2] = eastEndPoint.y;
-        const transformed = AST.transformPointArrays(astTransform, xIn, yIn);
+        // const xIn = new Float64Array(3);
+        // const yIn = new Float64Array(3);
+        // xIn[0] = originPoint.x;
+        // xIn[1] = northEndPoint.x;
+        // xIn[2] = eastEndPoint.x;
+        // yIn[0] = originPoint.y;
+        // yIn[1] = northEndPoint.y;
+        // yIn[2] = eastEndPoint.y;
+        const transformed = AST.transformPoint(astTransform, originPoint.x, originPoint.y);
 
-        const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.y[0], transformed.y[1], transformed.x[0]);
-        const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x[0], transformed.x[2], transformed.y[0]);
+        const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y);
+        const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y);
+        // const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.y[0], transformed.y[1], transformed.x[0]);
+        // const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x[0], transformed.x[2], transformed.y[0]);
 
         return {northApproximatePoints, eastApproximatePoints};
     }

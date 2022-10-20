@@ -7,7 +7,7 @@ import {Anchor} from "./InvariantShapes";
 import {AppStore} from "stores";
 import {CompassAnnotationStore, FrameStore, RegionStore, RulerAnnotationStore} from "stores/Frame";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {add2D, midpoint2D, subtract2D, transformPoint} from "utilities";
+import {add2D, midpoint2D, pointDistance, subtract2D, transformPoint} from "utilities";
 
 interface CompassAnnotationProps {
     key: number;
@@ -112,20 +112,38 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         region.endEditing();
     };
 
-    // region.getEndPoints(frame.spatialTransformAST || frame.wcsInfo, frame.spatialReference ? true : false, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-    const approxPoints = region.getRegionApproximation(frame.spatialTransformAST || frame.wcsInfo, frame.spatialReference ? true : false);
+    const approxPoints = region.getRegionApproximation(frame.spatialTransformAST || frame.wcsInfo);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
-    const northPointArray = new Array<number>(northApproxPoints.length);
-    const eastPointArray = new Array<number>(eastApproxPoints.length);
+    const northPointArray = [];
+    const eastPointArray = [];
+    // const northPointArray = new Array<number>(northApproxPoints.length);
+    // const eastPointArray = new Array<number>(eastApproxPoints.length);
+
+    const northLength = pointDistance({x: northApproxPoints[northApproxPoints.length - 2], y: northApproxPoints[northApproxPoints.length - 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]});
+    const eastLength = pointDistance({x: eastApproxPoints[eastApproxPoints.length - 2], y: eastApproxPoints[eastApproxPoints.length - 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]});
 
     for (let i = 0; i < northApproxPoints.length; i += 2) {
+        if (
+            pointDistance({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]}) >= region.length ||
+            pointDistance({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]}) >= eastLength
+        ) {
+            //if the north distance is larger than the size of east distance
+            break;
+        }
         const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
         northPointArray[i] = point.x - mousePoint.current.x;
         northPointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
     for (let i = 0; i < eastApproxPoints.length; i += 2) {
+        if (
+            pointDistance({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]}) >= region.length ||
+            pointDistance({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]}) >= northLength
+        ) {
+            //if the east distance is larger than the size of north distance
+            break;
+        }
         const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
         eastPointArray[i] = point.x - mousePoint.current.x;
         eastPointArray[i + 1] = point.y - mousePoint.current.y;
@@ -140,14 +158,13 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     const system = AppStore.Instance.overlayStore.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
-    const length = region.length;
     // const scale = props.stageRef.current.scaleX();
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
     const scale = React.useRef(frame.zoomLevel); //store the initial frame zoomLevel
 
     React.useEffect(() => {
-        region.setLengthScale(imageRatio * scale.current / frame.zoomLevel);
+        region.setLengthScale((imageRatio * scale.current) / frame.zoomLevel);
     }, [frame.zoomLevel]);
 
     return (
