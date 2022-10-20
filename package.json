@@ -130,7 +130,12 @@
             "node_modules/(?!(konva|@blueprintjs))"
         ],
         "moduleNameMapper": {
-            "canvas": "jest-canvas-mock"
+            "canvas": "jest-canvas-mock",
+            "carta_computation": "<rootDir>/wasm_src/carta_computation/build/",
+            "ast_wrapper": "<rootDir>/wasm_src/ast_wrapper/build/",
+            "gsl_wrapper": "<rootDir>/wasm_src/gsl_wrapper/build/",
+            "zfp_wrapper": "<rootDir>/wasm_src/zfp_wrapper/build/",
+            "^!raw-loader!(.*)$": "<rootDir>/src/services/GLSL/$1"
         }            
     }    
 }
