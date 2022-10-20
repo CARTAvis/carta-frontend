@@ -123,9 +123,11 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     const northLength = pointDistance({x: northApproxPoints[northApproxPoints.length - 2], y: northApproxPoints[northApproxPoints.length - 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]});
     const eastLength = pointDistance({x: eastApproxPoints[eastApproxPoints.length - 2], y: eastApproxPoints[eastApproxPoints.length - 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]});
 
+    console.log(northApproxPoints, eastApproxPoints);
+
     for (let i = 0; i < northApproxPoints.length; i += 2) {
         if (
-            pointDistance({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]}) >= region.length ||
+            pointDistance({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]}) >= region.length * region.lengthScale ||
             pointDistance({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]}) >= eastLength
         ) {
             //if the north distance is larger than the size of east distance
@@ -138,7 +140,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 
     for (let i = 0; i < eastApproxPoints.length; i += 2) {
         if (
-            pointDistance({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]}) >= region.length ||
+            pointDistance({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]}) >= region.length * region.lengthScale ||
             pointDistance({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]}) >= northLength
         ) {
             //if the east distance is larger than the size of north distance
@@ -166,6 +168,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     React.useEffect(() => {
         region.setLengthScale((imageRatio * scale.current) / frame.zoomLevel);
     }, [frame.zoomLevel]);
+
+    console.log(region.lengthScale);
 
     return (
         <>
@@ -201,6 +205,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                 <Text
                     x={northPointArray[northPointArray.length - 2]}
                     y={northPointArray[northPointArray.length - 1]}
+                    offsetX={region.northTextOffset.x}
+                    offsetY={region.northTextOffset.y}
                     text={region.northLabel}
                     stroke={region.color}
                     fill={region.color}
@@ -212,6 +218,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                 <Text
                     x={eastPointArray[eastPointArray.length - 2]}
                     y={eastPointArray[eastPointArray.length - 1]}
+                    offsetX={region.eastTextOffset.x}
+                    offsetY={region.eastTextOffset.y}
                     text={region.eastLabel}
                     stroke={region.color}
                     fill={region.color}
@@ -433,6 +441,8 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                 <Text
                     x={centerPoints.x}
                     y={centerPoints.y}
+                    offsetX={region.textOffset.x}
+                    offsetY={region.textOffset.y}
                     text={distanceText}
                     stroke={region.color}
                     fill={region.color}

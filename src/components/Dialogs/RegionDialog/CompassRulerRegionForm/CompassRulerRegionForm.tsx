@@ -182,6 +182,84 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         );
     };
 
+    private textOffsetForm = () => {
+        return (
+            <div className="form-section appearance-form">
+                <H5>Text Offset</H5>
+                <div className="form-contents">
+                    {this.props.region.regionType === CARTA.RegionType.ANNCOMPASS && (
+                        <>
+                            <FormGroup inline={true} label="North X Offset" labelInfo="(px)">
+                                <SafeNumericInput
+                                    placeholder="North X Offset"
+                                    min={-50}
+                                    max={RegionStore.MAX_DASH_LENGTH}
+                                    value={(this.props.region as CompassAnnotationStore).northTextOffset.x}
+                                    stepSize={1}
+                                    onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, true)}
+                                />
+                            </FormGroup>
+                            <FormGroup inline={true} label="North Y Offset" labelInfo="(px)">
+                                <SafeNumericInput
+                                    placeholder="North Y Offset"
+                                    min={-50}
+                                    max={RegionStore.MAX_DASH_LENGTH}
+                                    value={(this.props.region as CompassAnnotationStore).northTextOffset.y}
+                                    stepSize={1}
+                                    onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, false)}
+                                />
+                            </FormGroup>
+                            <FormGroup inline={true} label="East X Offset" labelInfo="(px)">
+                                <SafeNumericInput
+                                    placeholder="East X Offset"
+                                    min={-50}
+                                    max={RegionStore.MAX_DASH_LENGTH}
+                                    value={(this.props.region as CompassAnnotationStore).eastTextOffset.x}
+                                    stepSize={1}
+                                    onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, true)}
+                                />
+                            </FormGroup>
+                            <FormGroup inline={true} label="East Y Offset" labelInfo="(px)">
+                                <SafeNumericInput
+                                    placeholder="East Y Offset"
+                                    min={-50}
+                                    max={RegionStore.MAX_DASH_LENGTH}
+                                    value={(this.props.region as CompassAnnotationStore).eastTextOffset.y}
+                                    stepSize={1}
+                                    onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, false)}
+                                />
+                            </FormGroup>
+                        </>
+                    )}
+                    {this.props.region.regionType === CARTA.RegionType.ANNRULER && (
+                        <>
+                            <FormGroup inline={true} label="X Offset" labelInfo="(px)">
+                                <SafeNumericInput
+                                    placeholder="X Offset"
+                                    min={-50}
+                                    max={RegionStore.MAX_DASH_LENGTH}
+                                    value={(this.props.region as RulerAnnotationStore).textOffset.x}
+                                    stepSize={1}
+                                    onValueChange={value => (this.props.region as RulerAnnotationStore).setTextOffset(value, true)}
+                                />
+                            </FormGroup>
+                            <FormGroup inline={true} label="Y Offset" labelInfo="(px)">
+                                <SafeNumericInput
+                                    placeholder="Y Offset"
+                                    min={-50}
+                                    max={RegionStore.MAX_DASH_LENGTH}
+                                    value={(this.props.region as RulerAnnotationStore).textOffset.y}
+                                    stepSize={1}
+                                    onValueChange={value => (this.props.region as RulerAnnotationStore).setTextOffset(value, false)}
+                                />
+                            </FormGroup>
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     render() {
         const appStore = AppStore.Instance;
         // dummy variables related to wcs to trigger re-render
@@ -196,6 +274,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
             <>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && this.compassArrowTipForm()}
                 {region.regionType === CARTA.RegionType.ANNRULER && this.rulerAuxiliaryLineForm()}
+                {this.textOffsetForm()}
                 <div className="form-section compass-ruler-annotation-form">
                     <H5>Properties</H5>
                     <div className="form-contents">

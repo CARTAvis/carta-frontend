@@ -48,6 +48,8 @@ export class CompassAnnotationStore extends RegionStore {
     @observable pointerWidth: number = 5;
     @observable pointerLength: number = 5;
     @observable lengthScale: number = 1;
+    @observable northTextOffset: Point2D = {x: 0, y: 0};
+    @observable eastTextOffset: Point2D = {x: 0, y: 0};
 
     constructor(
         backendService: BackendService,
@@ -94,27 +96,28 @@ export class CompassAnnotationStore extends RegionStore {
         this.length = Math.abs(length);
     };
 
+    @action setNorthTextOffset = (offset: number, isX: boolean) => {
+        if (isX) {
+            this.northTextOffset = {...this.northTextOffset, x: offset};
+        } else {
+            this.northTextOffset = {...this.northTextOffset, y: offset};
+        }
+    };
+
+    @action setEastTextOffset = (offset: number, isX: boolean) => {
+        if (isX) {
+            this.eastTextOffset = {...this.eastTextOffset, x: offset};
+        } else {
+            this.eastTextOffset = {...this.eastTextOffset, y: offset};
+        }
+    };
+
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {
         const originPoint = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
-        // const northEndPoint = {x: originPoint.x, y: originPoint.y + this.length * this.lengthScale};
-        // const eastEndPoint = {x: originPoint.x - this.length * this.lengthScale, y: originPoint.y};
-        // const northEndPoint = {x: originPoint.x, y: originPoint.y + this.length * this.lengthScale};
-        // const eastEndPoint = {x: originPoint.x - this.length * this.lengthScale, y: originPoint.y};
-
-        // const xIn = new Float64Array(3);
-        // const yIn = new Float64Array(3);
-        // xIn[0] = originPoint.x;
-        // xIn[1] = northEndPoint.x;
-        // xIn[2] = eastEndPoint.x;
-        // yIn[0] = originPoint.y;
-        // yIn[1] = northEndPoint.y;
-        // yIn[2] = eastEndPoint.y;
         const transformed = AST.transformPoint(astTransform, originPoint.x, originPoint.y);
 
         const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y);
         const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y);
-        // const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.y[0], transformed.y[1], transformed.x[0]);
-        // const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x[0], transformed.x[2], transformed.y[0]);
 
         return {northApproximatePoints, eastApproximatePoints};
     }
@@ -124,6 +127,7 @@ export class RulerAnnotationStore extends RegionStore {
     @observable fontSize: number = 10;
     @observable auxiliaryLineVisible: boolean = false;
     @observable auxiliaryLineDashLength: number = 0;
+    @observable textOffset: Point2D = {x: 0, y: 0};
 
     constructor(
         backendService: BackendService,
@@ -152,6 +156,14 @@ export class RulerAnnotationStore extends RegionStore {
 
     @action setAuxiliaryLineDashLength = (length: number) => {
         this.auxiliaryLineDashLength = length;
+    };
+
+    @action setTextOffset = (offset: number, isX: boolean) => {
+        if (isX) {
+            this.textOffset = {...this.textOffset, x: offset};
+        } else {
+            this.textOffset = {...this.textOffset, y: offset};
+        }
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {
