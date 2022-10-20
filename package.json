@@ -127,7 +127,7 @@
     },
     "jest": {
         "transformIgnorePatterns": [
-            "node_modules/(?!(konva))"
+            "node_modules/(?!(konva|@blueprintjs))"
         ],
         "moduleNameMapper": {
             "canvas": "jest-canvas-mock"

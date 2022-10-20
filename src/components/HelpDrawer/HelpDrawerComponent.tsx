@@ -51,7 +51,8 @@ import {
     STOKES_HYPERCUBE_DIALOG_HELP_CONTENT,
     VECTOR_OVERLAY_HELP_CONTENT
 } from "./HelpContent";
-import {AppStore, HelpStore, HelpType} from "stores";
+import {AppStore, HelpStore} from "stores";
+import {HelpType} from "stores/HelpStore";
 
 const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
     // Dialog
