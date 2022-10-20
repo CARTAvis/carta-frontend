@@ -473,7 +473,7 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis, double x, double y, double out[])
+EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis, double x, double y, double dist, double out[])
 {
     if (!wcsinfo)
     {
@@ -481,24 +481,22 @@ EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis,
         return 1;
     }
 
-    // double start[2];
+    // double start[2] = {x, y};
     // double finish[2];
 
     // if(axis == 1) {
-    //     start[0] = startValue;
-    //     start[1] = yValue;
     //     finish[0] = finishValue;
-    //     finish[1] = yValue;
+    //     finish[1] = y;
     // } else if (axis == 2) {
-    //     start[0] = yValue;
-    //     start[1] = startValue;
-    //     finish[0] = yValue;
+    //     finish[0] = x;
     //     finish[1] = finishValue;
     // }
 
     // double dist = astDistance(wcsinfo, start, finish);
-    double dist = 3.14;
+    // double dist = 0.01;
     double discreteDist = dist/npoint;
+
+    cout << dist << " dist" << endl;
 
     double output;
     double* xout = new double[npoint];

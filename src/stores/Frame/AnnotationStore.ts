@@ -39,9 +39,9 @@ export class TextAnnotationStore extends RegionStore {
 }
 
 export class CompassAnnotationStore extends RegionStore {
-    @observable length: number = 500;
-    @observable northLabel: string = "North";
-    @observable eastLabel: string = "East";
+    @observable length: number;
+    @observable northLabel: string = "N";
+    @observable eastLabel: string = "E";
     @observable isNorthArrowhead: boolean = true;
     @observable isEastArrowhead: boolean = true;
     @observable fontSize: number = 20;
@@ -66,6 +66,11 @@ export class CompassAnnotationStore extends RegionStore {
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
         makeObservable(this);
+        this.setLength(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1);
+        // this.setFontSize(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1 * 0.1);
+        // this.setPointerWidth(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1 * 0.05);
+        // this.setPointerLength(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1 * 0.05);
+        // this.setLineWidth(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1 * 0.01);
     }
 
     @action setLabel = (label: string, isNorth: boolean) => {
@@ -116,8 +121,15 @@ export class CompassAnnotationStore extends RegionStore {
         const originPoint = spatiallyMatched ? transformPoint(astTransform, this.controlPoints[0], false) : this.controlPoints[0];
         const transformed = AST.transformPoint(astTransform, originPoint.x, originPoint.y);
 
-        const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y);
-        const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y);
+        const delta1 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.includes("CDELT1"));
+        const delta2 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.includes("CDELT2"));
+        // console.log(Math.abs(delta1.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.width / 180),  Math.abs(delta2.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.height / 180))
+        console.log(this.activeFrame.frameInfo.fileInfoExtended);
+
+        // const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y, Math.abs(delta1.numericValue * Math.PI * width / 180));
+        // const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y, Math.abs(delta2.numericValue * Math.PI * height / 180));
+        const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y, delta1 ? Math.abs((delta1?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.width) / 180) : 6.18);
+        const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y, delta2 ? Math.abs((delta2?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.height) / 180) : 6.18);
 
         return {northApproximatePoints, eastApproximatePoints};
     }

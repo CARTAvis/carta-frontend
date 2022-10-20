@@ -223,7 +223,7 @@ Module.transformPointList = function (wcsInfo: number, xIn: Float64Array, yIn: F
     return result;
 };
 
-Module.transformAxPointList = function (wcsInfo: number, axis: number, x: number, y: number) {
+Module.transformAxPointList = function (wcsInfo: number, axis: number, x: number, y: number, dist: number) {
     // Return empty array if arguments are invalid
     // if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
     //     return {x: new Float64Array(1), y: new Float64Array(1)};
@@ -238,7 +238,7 @@ Module.transformAxPointList = function (wcsInfo: number, axis: number, x: number
     // Module.HEAPF64.set(yIn, yInPtr / 8);
     // Perform the AST transform
     //axis is the index of the axis to be 
-    Module.axPointList(wcsInfo, N, axis, x, y, outPtr);
+    Module.axPointList(wcsInfo, N, axis, x, y, dist, outPtr);
 
     // Copy result out to an object
     const out = new Float64Array(Module.HEAPF64.buffer, outPtr, 201 * 2);

@@ -99,10 +99,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             if (anchor.id() === "origin") {
                 region.setControlPoint(0, positionImageSpace);
             } else if (anchor.id() === "northTip") {
-                console.log(region.length, Math.abs(positionImageSpace.y - region.controlPoints[0].y));
                 region.setLength(Math.abs(positionImageSpace.y - region.controlPoints[0].y) / region.lengthScale);
             } else if (anchor.id() === "eastTip") {
-                console.log(region.length, Math.abs(positionImageSpace.x - region.controlPoints[0].x));
                 region.setLength(Math.abs(positionImageSpace.x - region.controlPoints[0].x) / region.lengthScale);
             }
         }
@@ -112,25 +110,29 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         region.endEditing();
     };
 
-    const approxPoints = region.getRegionApproximation(frame.spatialTransformAST || frame.wcsInfo);
+    const approxPoints = region.getRegionApproximation(frame.spatialTransformAST || frame.wcsInfo, frame.spatialReference ? true : false);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
     const northPointArray = [];
     const eastPointArray = [];
-    // const northPointArray = new Array<number>(northApproxPoints.length);
-    // const eastPointArray = new Array<number>(eastApproxPoints.length);
 
-    const northLength = pointDistance({x: northApproxPoints[northApproxPoints.length - 2], y: northApproxPoints[northApproxPoints.length - 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]});
-    const eastLength = pointDistance({x: eastApproxPoints[eastApproxPoints.length - 2], y: eastApproxPoints[eastApproxPoints.length - 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]});
+    // const a = transformedImageToCanvasPos({x: northApproxPoints[0], y: northApproxPoints[1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current)
+    // const b = transformedImageToCanvasPos({x: northApproxPoints[northApproxPoints.length - 2], y: northApproxPoints[northApproxPoints.length - 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current)
+    // const c = transformedImageToCanvasPos({x: eastApproxPoints[eastApproxPoints.length - 2], y: eastApproxPoints[eastApproxPoints.length - 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current)
+    // const northLength = pointDistance(b, a);
+    // const eastLength = pointDistance(c, a);
+    // const northLength = pointDistance({x: northApproxPoints[northApproxPoints.length - 2], y: northApproxPoints[northApproxPoints.length - 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]});
+    // const eastLength = pointDistance({x: eastApproxPoints[eastApproxPoints.length - 2], y: eastApproxPoints[eastApproxPoints.length - 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]});
 
-    console.log(northApproxPoints, eastApproxPoints);
+    // console.log(region.length,region.lengthScale, northLength, eastLength, northApproxPoints, eastApproxPoints)
 
     for (let i = 0; i < northApproxPoints.length; i += 2) {
         if (
-            pointDistance({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]}) >= region.length * region.lengthScale ||
-            pointDistance({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]}) >= eastLength
+            pointDistance({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]}) >=
+            region.length * region.lengthScale
+            // ||
+            // pointDistance({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]}) >= Math.min(northLength, eastLength)
         ) {
-            //if the north distance is larger than the size of east distance
             break;
         }
         const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
@@ -140,10 +142,11 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 
     for (let i = 0; i < eastApproxPoints.length; i += 2) {
         if (
-            pointDistance({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]}) >= region.length * region.lengthScale ||
-            pointDistance({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]}) >= northLength
+            pointDistance({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]}) >=
+            region.length * region.lengthScale
+            // ||
+            // pointDistance({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]}) >= Math.min(northLength, eastLength)
         ) {
-            //if the east distance is larger than the size of north distance
             break;
         }
         const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
@@ -168,8 +171,6 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     React.useEffect(() => {
         region.setLengthScale((imageRatio * scale.current) / frame.zoomLevel);
     }, [frame.zoomLevel]);
-
-    console.log(region.lengthScale);
 
     return (
         <>

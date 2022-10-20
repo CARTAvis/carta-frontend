@@ -316,22 +316,39 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                         <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
                                     </td>
                                 </tr>
-                                <tr className="compass-ruler-annotation-table-input">
-                                    <td>
-                                        {region.regionType === CARTA.RegionType.ANNCOMPASS ? "Center" : "Start"}
-                                        {wcsInfo ? "" : " (px)"}
-                                    </td>
-                                    {region.coordinate === RegionCoordinate.World && wcsInfo ? this.inputWCSMode(region, wcsInfo, WCSStart, WCSFinish, false) : this.inputPixelMode(region, wcsInfo, WCSStart, WCSFinish, false)}
-                                    <td colSpan={3}>
-                                        {wcsInfo ? (
-                                            <span className="info-string">
-                                                {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}
-                                            </span>
-                                        ) : (
-                                            ""
-                                        )}
-                                    </td>
-                                </tr>
+                                {region.regionType === CARTA.RegionType.ANNRULER && (
+                                    <tr className="compass-ruler-annotation-table-input">
+                                        <td>
+                                            Start
+                                            {wcsInfo ? "" : " (px)"}
+                                        </td>
+                                        {region.coordinate === RegionCoordinate.World && wcsInfo ? this.inputWCSMode(region, wcsInfo, WCSStart, WCSFinish, false) : this.inputPixelMode(region, wcsInfo, WCSStart, WCSFinish, false)}
+                                        <td colSpan={3}>
+                                            {wcsInfo ? (
+                                                <span className="info-string">
+                                                    {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}
+                                                </span>
+                                            ) : (
+                                                ""
+                                            )}
+                                        </td>
+                                    </tr>
+                                )}
+                                {region.regionType === CARTA.RegionType.ANNCOMPASS && (
+                                    <tr className="compass-ruler-annotation-table-input">
+                                        <td>Length (px)</td>
+                                        <td>
+                                            <FormGroup inline={true}>
+                                                <SafeNumericInput
+                                                    selectAllOnFocus
+                                                    buttonPosition="none"
+                                                    value={(region as CompassAnnotationStore).length}
+                                                    onBlur={event => (region as CompassAnnotationStore).setLength(Number(event.target.value))}
+                                                />
+                                            </FormGroup>
+                                        </td>
+                                    </tr>
+                                )}
                                 <tr className="compass-ruler-annotation-table-input">
                                     <td>
                                         {region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Finish"}
