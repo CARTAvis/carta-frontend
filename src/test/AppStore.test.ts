@@ -1,5 +1,5 @@
-import {AppStore} from '../stores';
+import {AppStore} from "../stores";
 
-test('create AppStore without crashing', () => {
+test("create AppStore without crashing", () => {
     const appStore = AppStore.Instance;
 });

@@ -1,8 +1,8 @@
 window.URL.createObjectURL = () => {};
 global.WebGL2RenderingContext = null;
-global.ResizeObserver = require('resize-observer-polyfill');
+global.ResizeObserver = require("resize-observer-polyfill");
 
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: query => ({
         matches: false,
@@ -12,6 +12,6 @@ Object.defineProperty(window, 'matchMedia', {
         removeListener: () => {}, // deprecated
         addEventListener: () => {},
         removeEventListener: () => {},
-        dispatchEvent: () => {},
-    }),
+        dispatchEvent: () => {}
+    })
 });
