@@ -1,5 +1,6 @@
 window.URL.createObjectURL = () => {};
 global.WebGL2RenderingContext = null;
+global.ResizeObserver = require('resize-observer-polyfill');
 
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
