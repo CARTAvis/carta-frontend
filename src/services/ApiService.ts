@@ -25,7 +25,7 @@ export class ApiService {
         return ApiService.staticInstance;
     }
 
-    public static RuntimeConfig: RuntimeConfig;
+    public static RuntimeConfig: RuntimeConfig = {};
 
     public static SetRuntimeConfig(data: any) {
         console.log("Setting runtime config");
