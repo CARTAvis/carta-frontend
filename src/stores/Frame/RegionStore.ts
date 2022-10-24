@@ -20,6 +20,15 @@ export enum RegionCoordinate {
     World = "World"
 }
 
+export enum POINTSHAPE {
+    SQUARE = "SQUARE",
+    CIRCLE = "CIRCLE",
+    BOX = "BOX",
+    DIAMOND = "DIAMOND",
+    CROSS = "CROSS",
+    X = "X"
+}
+
 export class RegionStore {
     readonly fileId: number;
     @observable regionId: number;
@@ -37,6 +46,7 @@ export class RegionStore {
     @observable locked: boolean = false;
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
+    @observable pointShape: POINTSHAPE = POINTSHAPE.SQUARE;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -615,6 +625,28 @@ export class RegionStore {
     @action setCoordinate = (coordinate: RegionCoordinate) => {
         if (coordinate) {
             this.coordinate = coordinate;
+        }
+    };
+
+    @action setPointShape = (pointShape: string) => {
+        switch (pointShape) {
+            case "CIRCLE":
+                this.pointShape = POINTSHAPE.CIRCLE;
+                break;
+            case "BOX":
+                this.pointShape = POINTSHAPE.BOX;
+                break;
+            case "DIAMOND":
+                this.pointShape = POINTSHAPE.DIAMOND;
+                break;
+            case "CROSS":
+                this.pointShape = POINTSHAPE.CROSS;
+                break;
+            case "X":
+                this.pointShape = POINTSHAPE.X;
+                break;
+            default:
+                this.pointShape = POINTSHAPE.SQUARE;
         }
     };
 

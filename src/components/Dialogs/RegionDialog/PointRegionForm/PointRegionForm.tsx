@@ -1,11 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
+import {Classes, H5, HTMLSelect, InputGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {RegionCoordinate, RegionStore} from "stores/Frame";
+import {POINTSHAPE, RegionCoordinate, RegionStore} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {SafeNumericInput, CoordinateComponent} from "components/Shared";
@@ -160,6 +160,14 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                                     <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
                                 </td>
                             </tr>
+                            {region.regionType === CARTA.RegionType.ANNPOINT && (
+                                <tr>
+                                    <td>Point Shape</td>
+                                    <td colSpan={2}>
+                                        <HTMLSelect options={Object.keys(POINTSHAPE).map(key => ({label: key, value: POINTSHAPE[key]}))} value={region.pointShape} onChange={ev => region.setPointShape(ev.target.value)} />
+                                    </td>
+                                </tr>
+                            )}
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>

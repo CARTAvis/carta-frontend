@@ -1,5 +1,7 @@
+import Konva from "konva";
 import {Group, Shape} from "react-konva";
 import {AppStore} from "stores";
+import {POINTSHAPE} from "stores/Frame";
 
 const POINT_WIDTH = 6;
 const POINT_DRAG_WIDTH = 13;
@@ -12,12 +14,51 @@ const CURSOR_CROSS_LENGTH = 10;
 const CURSOR_CROSS_THICKNESS_WIDE = 3;
 const CURSOR_CROSS_CENTER_SQUARE = 6;
 
-const HandleSquareDraw = (ctx, shape, width) => {
+const HandlePointShapeDraw = (ctx: Konva.Context, shape: Konva.Shape, width: number, pointShape?: POINTSHAPE) => {
     const inverseScale = 1 / shape.getStage().scaleX();
     const offset = -width * 0.5 * inverseScale;
     const squareSize = width * inverseScale;
     ctx.beginPath();
-    ctx.rect(offset, offset, squareSize, squareSize);
+    switch (pointShape) {
+        case POINTSHAPE.CIRCLE:
+            ctx.arc(0, 0, squareSize, 0, 2 * Math.PI, true);
+            ctx.closePath();
+            break;
+        case POINTSHAPE.BOX:
+            ctx.moveTo(-squareSize, -squareSize);
+            ctx.lineTo(squareSize, -squareSize);
+            ctx.moveTo(squareSize, -squareSize);
+            ctx.lineTo(squareSize, squareSize);
+            ctx.moveTo(squareSize, squareSize);
+            ctx.lineTo(-squareSize, squareSize);
+            ctx.moveTo(-squareSize, squareSize);
+            ctx.lineTo(-squareSize, -squareSize);
+            break;
+        case POINTSHAPE.DIAMOND:
+            ctx.moveTo(0, -squareSize);
+            ctx.lineTo(squareSize, 0);
+            ctx.lineTo(0, squareSize);
+            ctx.lineTo(-squareSize, 0);
+            ctx.closePath();
+            break;
+        case POINTSHAPE.CROSS:
+            ctx.moveTo(0, -squareSize);
+            ctx.lineTo(0, squareSize);
+            ctx.moveTo(-squareSize, 0);
+            ctx.lineTo(squareSize, 0);
+            ctx.closePath();
+            break;
+        case POINTSHAPE.X:
+            ctx.moveTo(-squareSize, -squareSize);
+            ctx.lineTo(squareSize, squareSize);
+            ctx.moveTo(squareSize, -squareSize);
+            ctx.lineTo(-squareSize, squareSize);
+            ctx.closePath();
+            break;
+        default:
+            ctx.rect(offset, offset, squareSize, squareSize);
+            ctx.closePath();
+    }
     ctx.fillStrokeShape(shape);
 };
 
@@ -34,20 +75,21 @@ interface PointProps {
     onDragMove: (ev) => void;
     onClick: (ev) => void;
     onDblClick: (ev) => void;
+    pointShape?: POINTSHAPE;
 }
 
 export const Point = (props: PointProps) => {
-    const handlePointDraw = (ctx, shape) => {
-        HandleSquareDraw(ctx, shape, POINT_WIDTH);
+    const handlePointDraw = (ctx: Konva.Context, shape: Konva.Shape) => {
+        HandlePointShapeDraw(ctx, shape, POINT_WIDTH, props.pointShape);
     };
 
-    const handlePointBoundDraw = (ctx, shape) => {
-        HandleSquareDraw(ctx, shape, POINT_DRAG_WIDTH);
+    const handlePointBoundDraw = (ctx: Konva.Context, shape: Konva.Shape) => {
+        HandlePointShapeDraw(ctx, shape, POINT_DRAG_WIDTH);
     };
 
     return (
         <Group>
-            <Shape x={props.x} y={props.y} opacity={props.opacity} rotation={props.rotation} fill={props.color} sceneFunc={handlePointDraw} />
+            <Shape x={props.x} y={props.y} opacity={props.opacity} rotation={props.rotation} fill={props.color} stroke={props.color} strokeScaleEnabled={false} sceneFunc={handlePointDraw} />
             {!AppStore.Instance.activeFrame?.regionSet.locked && (
                 <Shape
                     x={props.x}
@@ -88,7 +130,7 @@ interface AnchorProps {
 
 export const Anchor = (props: AnchorProps) => {
     const handleRectDraw = (ctx, shape) => {
-        HandleSquareDraw(ctx, shape, SQUARE_ANCHOR_WIDTH);
+        HandlePointShapeDraw(ctx, shape, SQUARE_ANCHOR_WIDTH);
     };
 
     const handleCircleDraw = (ctx, shape) => {
@@ -131,7 +173,7 @@ interface NonEditableAnchorProps {
 
 export const NonEditableAnchor = (props: NonEditableAnchorProps) => {
     const handleRectDraw = (ctx, shape) => {
-        HandleSquareDraw(ctx, shape, SQUARE_ANCHOR_WIDTH);
+        HandlePointShapeDraw(ctx, shape, SQUARE_ANCHOR_WIDTH);
     };
 
     return <Shape x={props.x} y={props.y} rotation={props.rotation} fill={"white"} strokeWidth={1} stroke={"black"} strokeScaleEnabled={false} opacity={0.5} listening={false} sceneFunc={handleRectDraw} />;
@@ -146,7 +188,7 @@ interface CursorMarkerProps {
 
 export const CursorMarker = (props: CursorMarkerProps) => {
     const handleSquareDraw = (ctx, shape) => {
-        HandleSquareDraw(ctx, shape, CURSOR_CROSS_CENTER_SQUARE);
+        HandlePointShapeDraw(ctx, shape, CURSOR_CROSS_CENTER_SQUARE);
     };
 
     const handleCrossDraw = (ctx, shape) => {

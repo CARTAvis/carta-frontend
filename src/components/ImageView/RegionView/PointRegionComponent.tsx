@@ -91,6 +91,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                 onDragMove={this.handleDrag}
                 onClick={this.handleClick}
                 onDblClick={this.handleDoubleClick}
+                pointShape={region.pointShape}
             />
         );
     }
