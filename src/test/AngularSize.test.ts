@@ -12,3 +12,18 @@ describe("test convertValueFromArcsec", () => {
         expect(AngularSize.convertValueFromArcsec(NaN, AngularSizeUnit.ARCSEC)).toBeUndefined();
     });
 });
+
+describe("test convertFromArcsec", () => {
+    let convertValueFromArcsecMock: jest.SpyInstance;
+    beforeAll(() => {    
+        convertValueFromArcsecMock = jest.spyOn(AngularSize, "convertValueFromArcsec");
+    });
+
+    test("creates AngularSize object with required unit", () => {
+        convertValueFromArcsecMock.mockImplementationOnce(() => 1);
+        const size = AngularSize.convertFromArcsec(1);
+        expect(convertValueFromArcsecMock).toBeCalledWith(1, AngularSizeUnit.ARCSEC);
+        expect(size?.value).toEqual(1);
+        expect(size?.unit).toEqual(AngularSizeUnit.ARCSEC);
+    });
+});
