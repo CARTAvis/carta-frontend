@@ -3,8 +3,8 @@ import {Group, Shape} from "react-konva";
 import {AppStore} from "stores";
 import {POINTSHAPE} from "stores/Frame";
 
-const POINT_WIDTH = 6;
-const POINT_DRAG_WIDTH = 13;
+// const POINT_WIDTH = 6;
+// const POINT_DRAG_WIDTH = 13;
 
 const SQUARE_ANCHOR_WIDTH = 7;
 const CIRCLE_ANCHOR_RADIUS = SQUARE_ANCHOR_WIDTH / Math.sqrt(2);
@@ -21,38 +21,30 @@ const HandlePointShapeDraw = (ctx: Konva.Context, shape: Konva.Shape, width: num
     ctx.beginPath();
     switch (pointShape) {
         case POINTSHAPE.CIRCLE:
-            ctx.arc(0, 0, squareSize, 0, 2 * Math.PI, true);
+        case POINTSHAPE.CIRCLE_LINED:
+            ctx.arc(0, 0, squareSize / 2, 0, 2 * Math.PI, true);
             ctx.closePath();
             break;
-        case POINTSHAPE.BOX:
-            ctx.moveTo(-squareSize, -squareSize);
-            ctx.lineTo(squareSize, -squareSize);
-            ctx.moveTo(squareSize, -squareSize);
-            ctx.lineTo(squareSize, squareSize);
-            ctx.moveTo(squareSize, squareSize);
-            ctx.lineTo(-squareSize, squareSize);
-            ctx.moveTo(-squareSize, squareSize);
-            ctx.lineTo(-squareSize, -squareSize);
-            break;
         case POINTSHAPE.DIAMOND:
-            ctx.moveTo(0, -squareSize);
-            ctx.lineTo(squareSize, 0);
-            ctx.lineTo(0, squareSize);
-            ctx.lineTo(-squareSize, 0);
+        case POINTSHAPE.DIAMOND_LINED:
+            ctx.moveTo(0, -squareSize / 2);
+            ctx.lineTo(squareSize / 2, 0);
+            ctx.lineTo(0, squareSize / 2);
+            ctx.lineTo(-squareSize / 2, 0);
             ctx.closePath();
             break;
         case POINTSHAPE.CROSS:
-            ctx.moveTo(0, -squareSize);
-            ctx.lineTo(0, squareSize);
-            ctx.moveTo(-squareSize, 0);
-            ctx.lineTo(squareSize, 0);
+            ctx.moveTo(0, -squareSize / 2);
+            ctx.lineTo(0, squareSize / 2);
+            ctx.moveTo(-squareSize / 2, 0);
+            ctx.lineTo(squareSize / 2, 0);
             ctx.closePath();
             break;
         case POINTSHAPE.X:
-            ctx.moveTo(-squareSize, -squareSize);
-            ctx.lineTo(squareSize, squareSize);
-            ctx.moveTo(squareSize, -squareSize);
-            ctx.lineTo(-squareSize, squareSize);
+            ctx.moveTo(-squareSize / 2, -squareSize / 2);
+            ctx.lineTo(squareSize / 2, squareSize / 2);
+            ctx.moveTo(squareSize / 2, -squareSize / 2);
+            ctx.lineTo(-squareSize / 2, squareSize / 2);
             ctx.closePath();
             break;
         default:
@@ -76,20 +68,24 @@ interface PointProps {
     onClick: (ev) => void;
     onDblClick: (ev) => void;
     pointShape?: POINTSHAPE;
+    pointWidth?: number;
 }
 
 export const Point = (props: PointProps) => {
+    const pointWidth = props.pointWidth && props.pointWidth !== 0 ? props.pointWidth : 6;
     const handlePointDraw = (ctx: Konva.Context, shape: Konva.Shape) => {
-        HandlePointShapeDraw(ctx, shape, POINT_WIDTH, props.pointShape);
+        HandlePointShapeDraw(ctx, shape, pointWidth, props.pointShape);
     };
 
     const handlePointBoundDraw = (ctx: Konva.Context, shape: Konva.Shape) => {
-        HandlePointShapeDraw(ctx, shape, POINT_DRAG_WIDTH);
+        HandlePointShapeDraw(ctx, shape, 7 + pointWidth);
     };
+
+    const fill = props.pointShape === POINTSHAPE.BOX || props.pointShape === POINTSHAPE.CIRCLE_LINED || props.pointShape === POINTSHAPE.DIAMOND_LINED ? null : props.color;
 
     return (
         <Group>
-            <Shape x={props.x} y={props.y} opacity={props.opacity} rotation={props.rotation} fill={props.color} stroke={props.color} strokeScaleEnabled={false} sceneFunc={handlePointDraw} />
+            <Shape x={props.x} y={props.y} opacity={props.opacity} rotation={props.rotation} fill={fill} stroke={props.color} strokeScaleEnabled={false} sceneFunc={handlePointDraw} />
             {!AppStore.Instance.activeFrame?.regionSet.locked && (
                 <Shape
                     x={props.x}

@@ -22,9 +22,11 @@ export enum RegionCoordinate {
 
 export enum POINTSHAPE {
     SQUARE = "SQUARE",
-    CIRCLE = "CIRCLE",
     BOX = "BOX",
+    CIRCLE = "CIRCLE",
+    CIRCLE_LINED = "CIRCLE_LINED",
     DIAMOND = "DIAMOND",
+    DIAMOND_LINED = "DIAMOND_LINED",
     CROSS = "CROSS",
     X = "X"
 }
@@ -47,6 +49,7 @@ export class RegionStore {
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
     @observable pointShape: POINTSHAPE = POINTSHAPE.SQUARE;
+    @observable pointWidth: number = 6;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -630,14 +633,23 @@ export class RegionStore {
 
     @action setPointShape = (pointShape: string) => {
         switch (pointShape) {
-            case "CIRCLE":
-                this.pointShape = POINTSHAPE.CIRCLE;
+            case "SQUARE":
+                this.pointShape = POINTSHAPE.SQUARE;
                 break;
             case "BOX":
                 this.pointShape = POINTSHAPE.BOX;
                 break;
+            case "CIRCLE":
+                this.pointShape = POINTSHAPE.CIRCLE;
+                break;
+            case "CIRCLE_LINED":
+                this.pointShape = POINTSHAPE.CIRCLE_LINED;
+                break;
             case "DIAMOND":
                 this.pointShape = POINTSHAPE.DIAMOND;
+                break;
+            case "DIAMOND_LINED":
+                this.pointShape = POINTSHAPE.DIAMOND_LINED;
                 break;
             case "CROSS":
                 this.pointShape = POINTSHAPE.CROSS;
@@ -648,6 +660,10 @@ export class RegionStore {
             default:
                 this.pointShape = POINTSHAPE.SQUARE;
         }
+    };
+
+    @action setPointWidth = (width: number) => {
+        this.pointWidth = width;
     };
 
     // Update the region with the backend

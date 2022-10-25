@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Classes, H5, HTMLSelect, InputGroup, Position} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position, Button, PopoverPosition, MenuItem, Icon} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
@@ -10,6 +10,7 @@ import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {SafeNumericInput, CoordinateComponent} from "components/Shared";
 import "./PointRegionForm.scss";
+import {IItemRendererProps, Select} from "@blueprintjs/select";
 
 const KEYCODE_ENTER = 13;
 
@@ -101,6 +102,51 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         ev.currentTarget.value = centerWCSPoint.y;
     };
 
+    private IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
+        let fillColor = color;
+        if (!fill) {
+            fillColor = "none";
+        }
+        return (
+            <span className="bp3-icon">
+                <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
+                    {path}
+                </svg>
+            </span>
+        );
+    };
+
+    private renderShapePopOver = (shape: POINTSHAPE, itemProps: IItemRendererProps) => {
+        const shapeItem = this.getPointShape(shape);
+        return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+    };
+
+    private getPointShape = (shape: POINTSHAPE) => {
+        const square = <path d="M 2 2 L 14 2 L 14 14 L 2 14 Z" />;
+        const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
+        const color = this.props.region.color;
+        switch (shape) {
+            case POINTSHAPE.SQUARE:
+                return this.IconWrapper(square, color, true);
+            case POINTSHAPE.BOX:
+                return <Icon icon="square" color={color} />;
+            case POINTSHAPE.CIRCLE:
+                return <Icon icon="full-circle" color={color} />;
+            case POINTSHAPE.CIRCLE_LINED:
+                return <Icon icon="circle" color={color} />;
+            case POINTSHAPE.DIAMOND:
+                return this.IconWrapper(rhomb, color, true);
+            case POINTSHAPE.DIAMOND_LINED:
+                return this.IconWrapper(rhomb, color, false);
+            case POINTSHAPE.CROSS:
+                return <Icon icon="plus" color={color} />;
+            case POINTSHAPE.X:
+                return <Icon icon="cross" color={color} />;
+            default:
+                return <Icon icon="square" color={color} />;
+        }
+    };
+
     public render() {
         // dummy variables related to wcs to trigger re-render
         // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
@@ -161,12 +207,30 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                                 </td>
                             </tr>
                             {region.regionType === CARTA.RegionType.ANNPOINT && (
-                                <tr>
-                                    <td>Point Shape</td>
-                                    <td colSpan={2}>
-                                        <HTMLSelect options={Object.keys(POINTSHAPE).map(key => ({label: key, value: POINTSHAPE[key]}))} value={region.pointShape} onChange={ev => region.setPointShape(ev.target.value)} />
-                                    </td>
-                                </tr>
+                                <>
+                                    <tr>
+                                        <td>Point Shape</td>
+                                        <td>
+                                            <Select
+                                                className="bp3-fill"
+                                                filterable={false}
+                                                items={Object.keys(POINTSHAPE)}
+                                                activeItem={region.pointShape}
+                                                onItemSelect={item => region.setPointShape(item)}
+                                                itemRenderer={this.renderShapePopOver}
+                                                popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                                            >
+                                                <Button icon={this.getPointShape(region.pointShape)} rightIcon="double-caret-vertical" />
+                                            </Select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Point Width</td>
+                                        <td>
+                                            <SafeNumericInput placeholder="Point Width" min={0.5} max={50} value={region.pointWidth} stepSize={0.5} onValueChange={width => region.setPointWidth(width)} />
+                                        </td>
+                                    </tr>
+                                </>
                             )}
                             <tr>
                                 <td>Coordinate</td>
