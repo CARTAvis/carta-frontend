@@ -438,7 +438,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
                 data.push(pointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
-                secondaryXData.push(profile.channelSecondaryValues?.slice(pointsAndProperties?.startIndex, pointsAndProperties?.endIndex) ?? []);
+                secondaryXData.push(profile.channelSecondaryValues?.slice(pointsAndProperties?.startIndex, pointsAndProperties?.endIndex + 1) ?? []);
 
                 if (pointsAndProperties) {
                     if (wantMeanRms) {
