@@ -44,7 +44,7 @@ export function toFixed(val: number, decimals: number = 0): string {
 }
 
 export function trimTrailingDecimals(value: string): string {
-    return value.replace(/(\d+?\.\d+?)0+/gm, "$1").replace(/(\d+)\.0+/gm, "$1");
+    return value.replace(/^(\d+?\.\d+?)0+$/, "$1");
 }
 
 export function getVariablePrecision(value: number): number {
