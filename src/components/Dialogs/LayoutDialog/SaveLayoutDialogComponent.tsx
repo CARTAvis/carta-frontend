@@ -26,11 +26,12 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     private clearInput = () => {
         this.layoutName = "";
+        AppStore.Instance.layoutStore.setOldLayoutName("");
     };
 
     private handleKeyDown = ev => {
         if (ev.keyCode === KEYCODE_ENTER && !this.isEmpty) {
-            this.saveLayout();
+            AppStore.Instance.layoutStore.isSave ? this.saveLayout() : this.renameLayout();
         }
     };
 
@@ -54,6 +55,14 @@ export class SaveLayoutDialogComponent extends React.Component {
         this.clearInput();
     };
 
+    private renameLayout = async () => {
+        const appStore = AppStore.Instance;
+
+        appStore.dialogStore.hideSaveLayoutDialog();
+        await appStore.layoutStore.renameLayout(appStore.layoutStore.oldLayoutName, this.layoutName);
+        this.clearInput();
+    };
+
     @computed get isEmpty(): boolean {
         return !this.layoutName;
     }
@@ -61,6 +70,7 @@ export class SaveLayoutDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
+        const isSave = appStore.layoutStore.isSave;
 
         const dialogProps: IDialogProps = {
             icon: "layout-grid",
@@ -70,20 +80,20 @@ export class SaveLayoutDialogComponent extends React.Component {
             lazy: true,
             isOpen: appStore.dialogStore.saveLayoutDialogVisible,
             onClose: appStore.dialogStore.hideSaveLayoutDialog,
-            title: "Save Layout"
+            title: isSave ? "Save Layout" : `Rename Layout`
         };
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_LAYOUT} defaultWidth={400} defaultHeight={185} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
-                    <FormGroup inline={true} label="Save current layout as:">
+                    <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>
                         <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Tooltip2 content="Layout name cannot be empty!" disabled={!this.isEmpty}>
-                            <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text="Save" disabled={this.isEmpty} />
+                            <AnchorButton intent={Intent.PRIMARY} onClick={isSave ? this.saveLayout : this.renameLayout} text={isSave ? "Save" : "Rename"} disabled={this.isEmpty} />
                         </Tooltip2>
                         <Button
                             intent={Intent.NONE}

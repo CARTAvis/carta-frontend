@@ -56,18 +56,11 @@ export class DialogStore {
 
     // Layout
     @observable saveLayoutDialogVisible: boolean;
-    @observable deleteLayoutDialogVisible: boolean;
     @action showSaveLayoutDialog = () => {
         this.saveLayoutDialogVisible = true;
     };
     @action hideSaveLayoutDialog = () => {
         this.saveLayoutDialogVisible = false;
-    };
-    @action showDeleteLayoutDialog = () => {
-        this.deleteLayoutDialogVisible = true;
-    };
-    @action hideDeleteLayoutDialog = () => {
-        this.deleteLayoutDialogVisible = false;
     };
 
     // File Browser

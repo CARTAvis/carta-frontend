@@ -25,12 +25,18 @@ export class LayoutStore {
     @observable currentLayoutName: string;
     @observable private layouts: any;
     @observable supportsServer: boolean;
+    @observable oldLayoutName: string;
+
+    @computed get isSave(): boolean {
+        return !this.oldLayoutName;
+    }
 
     private constructor() {
         makeObservable<LayoutStore, "layouts">(this);
         this.dockedLayout = null;
         this.layouts = {};
         this.supportsServer = false;
+        this.oldLayoutName = "";
         this.initLayoutsFromPresets();
     }
 
@@ -40,6 +46,10 @@ export class LayoutStore {
 
     public setLayoutToBeSaved = (layoutName: string) => {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
+    };
+
+    public setOldLayoutName = (oldLayoutName: string) => {
+        this.oldLayoutName = oldLayoutName;
     };
 
     @flow.bound *fetchLayouts() {
@@ -182,6 +192,62 @@ export class LayoutStore {
         } else {
             delete this.layouts[this.layoutNameToBeSaved];
             AlertStore.Instance.showAlert("Saving user-defined layout failed! ");
+        }
+    };
+
+    @flow.bound *renameLayout(oldName: string, newName: string) {
+        const appStore = AppStore.Instance;
+
+        if (!this.layouts || !newName || !this.dockedLayout) {
+            appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
+            return;
+        }
+
+        if (appStore.layoutStore.layoutExists(newName)) {
+            appStore.alertStore.showAlert("Layout name already exists.");
+            return;
+        }
+
+        if (!oldName || !this.layoutExists(oldName)) {
+            appStore.alertStore.showAlert(`Cannot rename layout ${oldName}! It does not exist.`);
+            return;
+        }
+
+        // save layout to layouts[] & server/local storage
+        const configToSave = this.layouts[oldName];
+        this.layouts[newName] = configToSave;
+        if (!PresetLayout.isPreset(this.layoutNameToBeSaved)) {
+            try {
+                const success = yield appStore.apiService.setLayout(newName, configToSave);
+                if (success) {
+                    appStore.apiService.clearLayout(oldName).then(
+                        success => {
+                            if (success) {
+                                delete this.layouts[oldName];
+                            }
+                            this.handleRenameResult(oldName, newName, success);
+                        },
+                        err => {
+                            console.log(err);
+                            this.handleRenameResult(oldName, newName, false);
+                        }
+                    );
+                }
+            } catch (err) {
+                console.log(err);
+                this.handleRenameResult(oldName, newName, false);
+            }
+        }
+    }
+
+    private handleRenameResult = (oldName: string, newName: string, success: boolean) => {
+        if (success) {
+            AppToaster.show(SuccessToast("layout-grid", `Layout ${oldName} renamed to ${newName} successfully.`, LayoutStore.ToasterTimeout));
+            if (oldName === this.currentLayoutName) {
+                this.currentLayoutName = newName;
+            }
+        } else {
+            AlertStore.Instance.showAlert("Renaming user-defined layout failed!");
         }
     };
 
