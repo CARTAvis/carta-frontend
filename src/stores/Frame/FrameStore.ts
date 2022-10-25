@@ -673,6 +673,17 @@ export class FrameStore {
         return result;
     }
 
+    @computed get isSecondarySpectralPropsEqual(): boolean {
+        let result = false;
+        if (this.spectralAxis?.type && this.spectralAxis?.specsys) {
+            const isTypeEqual = this.spectralAxis.type.code === (this.spectralTypeSecondary as string);
+            const isUnitEqual = this.spectralAxis.type.unit === (this.spectralUnitSecondary as string);
+            const isSpecsysEqual = this.spectralAxis.specsys === (this.spectralSystem as string);
+            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
+        }
+        return result;
+    }
+
     @computed get isRestFreqEditable(): boolean {
         return (
             (this.frameInfo?.fileInfoExtended?.depth > 1 || this.isPVImage) &&
@@ -1218,7 +1229,7 @@ export class FrameStore {
                 } else if (this.isCoordChannelSecondary) {
                     this.setChannelSecondaryValues(this.channelInfo.indexes);
                 } else {
-                    this.setChannelSecondaryValues(this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectralSecondary(this.channelInfo.values));
+                    this.setChannelSecondaryValues(this.isSecondarySpectralPropsEqual ? this.channelInfo.values : this.convertSpectralSecondary(this.channelInfo.values));
                 }
             }
         });
