@@ -206,6 +206,22 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         return newTicks;
     };
 
+    // prevent ticks overlapped
+    private skipLinearLongTicks = (axis: Scale) => {
+        if (axis.ticks && axis.ticks.length >= 4) {
+            const interTickPixelDist = axis.getPixelForValue(axis.ticks[2].value) - axis.getPixelForValue(axis.ticks[1].value);
+            if (interTickPixelDist < axis.ticks[0].label.length * 6 + 5) {
+                const ticks = [];
+                // keep the last tick label for skipping the last one might cause a loop change between axis.width and interTickDisk
+                const skipOdd = axis.ticks.length % 2 === 0;
+                for (let i = skipOdd ? 1 : 0; i < axis.ticks.length; i = i + 2) {
+                    ticks.push(axis.ticks[i]);
+                }
+                axis.ticks = ticks;
+            }
+        }
+    };
+
     private static FormatTicksScientific = (value: number, index: number, ticks: Tick[]) => {
         return toExponential(value, 2);
     };
@@ -383,12 +399,14 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     min: this.props.xMin,
                     max: this.props.xMax,
                     afterBuildTicks: (axis: Scale) => this.filterLinearTicks(axis, false),
+                    afterTickToLabelConversion: this.props.topAxisTickFormatter ? (axis: Scale) => this.skipLinearLongTicks(axis) : undefined,
                     type: "linear",
-                    display: this.props.showTopAxis !== undefined,
+                    display: this.props.showTopAxis,
                     ticks: {
                         includeBounds: false,
                         color: labelColor,
-                        maxRotation: 0
+                        maxRotation: 0,
+                        callback: this.props.topAxisTickFormatter ? this.props.topAxisTickFormatter : PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
                     }
                 },
                 "y-axis-0": {

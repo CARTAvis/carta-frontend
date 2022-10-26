@@ -580,11 +580,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 if (!this.widgetStore.isLineOrPolyline) {
+                    linePlotProps.showTopAxis = true;
                     if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
-                        linePlotProps.showTopAxis = true;
                         linePlotProps.topAxisTickFormatter = this.formatProfileAst;
-                    } else {
-                        linePlotProps.showTopAxis = false;
                     }
                 }
 
