@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import Konva from "konva";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {FrameStore, PointAnnotationStore, RegionStore} from "stores/Frame";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
 import {transformPoint} from "utilities";
@@ -58,7 +58,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     };
 
     public render() {
-        const region = this.props.region;
+        const region = this.props.region as PointAnnotationStore;
         const frame = this.props.frame;
         let centerPixelSpace: Point2D;
         let rotation: number;

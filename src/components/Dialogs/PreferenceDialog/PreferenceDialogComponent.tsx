@@ -4,9 +4,9 @@ import tinycolor from "tinycolor2";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Callout, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, FormGroup, HTMLSelect, Icon, IDialogProps, Intent, MenuItem, PopoverPosition, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {Select} from "@blueprintjs/select";
+import {IItemRendererProps, Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -30,7 +30,7 @@ import {
     ZoomPoint
 } from "models";
 import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
-import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
+import {ContourGeneratorType, FrameScaling, POINTSHAPE, RegionStore, RenderConfigStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import {TelemetryMode} from "services";
 import "./PreferenceDialogComponent.scss";
@@ -42,6 +42,7 @@ enum PreferenceDialogTabs {
     VECTOR_OVERLAY_CONFIG,
     WCS_OVERLAY_CONFIG,
     REGION,
+    ANNOTATION,
     PERFORMANCE,
     LOG_EVENT,
     CATALOG,
@@ -100,6 +101,9 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case PreferenceDialogTabs.REGION:
                 preference.resetRegionSettings();
+                break;
+            case PreferenceDialogTabs.ANNOTATION:
+                preference.resetAnnotationSettings();
                 break;
             case PreferenceDialogTabs.PERFORMANCE:
                 preference.resetPerformanceSettings();
@@ -556,6 +560,130 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
+        let annotationTypes = [];
+        RegionStore.AVAILABLE_ANNOTATION_TYPES.forEach((name, annotationType) => {
+            annotationTypes.push(
+                <option key={annotationType} value={annotationType}>
+                    {name}
+                </option>
+            );
+        });
+
+        const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
+            let fillColor = color;
+            if (!fill) {
+                fillColor = "none";
+            }
+            return (
+                <span className="bp3-icon">
+                    <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
+                        {path}
+                    </svg>
+                </span>
+            );
+        };
+
+        const renderShapePopOver = (shape: POINTSHAPE, itemProps: IItemRendererProps) => {
+            const shapeItem = getPointShape(shape);
+            return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        };
+
+        const getPointShape = (shape: POINTSHAPE) => {
+            const square = <path d="M 2 2 L 14 2 L 14 14 L 2 14 Z" />;
+            const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
+            const color = preference.annotationColor;
+            switch (shape) {
+                case POINTSHAPE.SQUARE:
+                    return IconWrapper(square, color, true);
+                case POINTSHAPE.BOX:
+                    return <Icon icon="square" color={color} />;
+                case POINTSHAPE.CIRCLE:
+                    return <Icon icon="full-circle" color={color} />;
+                case POINTSHAPE.CIRCLE_LINED:
+                    return <Icon icon="circle" color={color} />;
+                case POINTSHAPE.DIAMOND:
+                    return IconWrapper(rhomb, color, true);
+                case POINTSHAPE.DIAMOND_LINED:
+                    return IconWrapper(rhomb, color, false);
+                case POINTSHAPE.CROSS:
+                    return <Icon icon="plus" color={color} />;
+                case POINTSHAPE.X:
+                    return <Icon icon="cross" color={color} />;
+                default:
+                    return <Icon icon="square" color={color} />;
+            }
+        };
+
+        const annotationSettingsPanel = (
+            <React.Fragment>
+                <FormGroup inline={true} label="Color">
+                    <ColorPickerComponent
+                        color={preference.annotationColor}
+                        presetColors={SWATCH_COLORS}
+                        setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.ANNOTATION_COLOR, color.hex)}
+                        disableAlpha={true}
+                        darkTheme={appStore.darkTheme}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Line Width" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Line Width"
+                        min={RegionStore.MIN_LINE_WIDTH}
+                        max={RegionStore.MAX_LINE_WIDTH}
+                        value={preference.annotationLineWidth}
+                        stepSize={0.5}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Dash Length"
+                        min={0}
+                        max={RegionStore.MAX_DASH_LENGTH}
+                        value={preference.annotationDashLength}
+                        stepSize={1}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Annotation Type">
+                    <HTMLSelect value={preference.annotationType} onChange={ev => preference.setPreference(PreferenceKeys.ANNOTATION_TYPE, Number(ev.currentTarget.value))}>
+                        {annotationTypes}
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Annotation size" labelInfo="(px)">
+                    <SafeNumericInput placeholder="Annotation size" min={1} value={preference.annotationSize} stepSize={1} onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_SIZE, Math.max(1, value))} />
+                </FormGroup>
+                <FormGroup inline={true} label="Point Shape">
+                    <Select
+                        className="bp3-fill"
+                        filterable={false}
+                        items={Object.keys(POINTSHAPE)}
+                        activeItem={preference.pointAnnotationShape}
+                        onItemSelect={item => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)}
+                        itemRenderer={renderShapePopOver}
+                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
+                    >
+                        <Button icon={getPointShape(preference.pointAnnotationShape)} rightIcon="double-caret-vertical" />
+                    </Select>
+                </FormGroup>
+                <FormGroup inline={true} label="Point annotation width" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Point annotation width"
+                        min={1}
+                        value={preference.pointAnnotationWidth}
+                        stepSize={1}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_WIDTH, Math.max(1, value))}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Creation Mode">
+                    <RadioGroup selectedValue={preference.annotationCreationMode} onChange={ev => preference.setPreference(PreferenceKeys.ANNOTATION_CREATION_MODE, ev.currentTarget.value)}>
+                        <Radio label="Center to corner" value={RegionCreationMode.CENTER} />
+                        <Radio label="Corner to corner" value={RegionCreationMode.CORNER} />
+                    </RadioGroup>
+                </FormGroup>
+            </React.Fragment>
+        );
+
         const performancePanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Low bandwidth mode">
@@ -790,6 +918,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.WCS_OVERLAY_CONFIG} title="WCS and Image Overlay" panel={overlayConfigPanel} />
                         <Tab id={PreferenceDialogTabs.CATALOG} title="Catalog" panel={catalogPanel} />
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={regionSettingsPanel} />
+                        <Tab id={PreferenceDialogTabs.ANNOTATION} title="Annotation" panel={annotationSettingsPanel} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={performancePanel} />
                         {process.env.REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={telemetryPanel} />}
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel} />

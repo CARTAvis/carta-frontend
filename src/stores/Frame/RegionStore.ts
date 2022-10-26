@@ -48,8 +48,6 @@ export class RegionStore {
     @observable locked: boolean = false;
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
-    @observable pointShape: POINTSHAPE = POINTSHAPE.SQUARE;
-    @observable pointWidth: number = 6;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -91,6 +89,7 @@ export class RegionStore {
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.POLYLINE:
             case CARTA.RegionType.ANNPOLYLINE:
+            case CARTA.RegionType.ANNRULER:
                 return true;
             default:
                 return false;
@@ -100,17 +99,31 @@ export class RegionStore {
     public static RegionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
         switch (regionType) {
             case CARTA.RegionType.POINT:
+            case CARTA.RegionType.ANNPOINT:
                 return "symbol-square";
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
                 return "line";
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
                 return "square";
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
                 return "circle";
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
                 return "polygon-filter";
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 return "polyline";
+            case CARTA.RegionType.ANNVECTOR:
+                return "arrow-top-right";
+            case CARTA.RegionType.ANNCOMPASS:
+                return "compass";
+            case CARTA.RegionType.ANNTEXT:
+                return "font";
+            case CARTA.RegionType.ANNRULER:
+                return "distanceMeasuring";
             default:
                 return "error";
         }
@@ -629,41 +642,6 @@ export class RegionStore {
         if (coordinate) {
             this.coordinate = coordinate;
         }
-    };
-
-    @action setPointShape = (pointShape: string) => {
-        switch (pointShape) {
-            case "SQUARE":
-                this.pointShape = POINTSHAPE.SQUARE;
-                break;
-            case "BOX":
-                this.pointShape = POINTSHAPE.BOX;
-                break;
-            case "CIRCLE":
-                this.pointShape = POINTSHAPE.CIRCLE;
-                break;
-            case "CIRCLE_LINED":
-                this.pointShape = POINTSHAPE.CIRCLE_LINED;
-                break;
-            case "DIAMOND":
-                this.pointShape = POINTSHAPE.DIAMOND;
-                break;
-            case "DIAMOND_LINED":
-                this.pointShape = POINTSHAPE.DIAMOND_LINED;
-                break;
-            case "CROSS":
-                this.pointShape = POINTSHAPE.CROSS;
-                break;
-            case "X":
-                this.pointShape = POINTSHAPE.X;
-                break;
-            default:
-                this.pointShape = POINTSHAPE.SQUARE;
-        }
-    };
-
-    @action setPointWidth = (width: number) => {
-        this.pointWidth = width;
     };
 
     // Update the region with the backend

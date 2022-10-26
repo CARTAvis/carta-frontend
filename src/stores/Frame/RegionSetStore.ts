@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "stores";
-import {CURSOR_REGION_ID, FrameStore, RegionStore, CompassAnnotationStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
+import {CURSOR_REGION_ID, FrameStore, RegionStore, CompassAnnotationStore, RulerAnnotationStore, TextAnnotationStore, PointAnnotationStore} from "stores/Frame";
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
@@ -163,9 +163,9 @@ export class RegionSetStore {
                     points,
                     regionType,
                     regionId,
-                    this.preference.regionColor,
-                    this.preference.regionLineWidth,
-                    this.preference.regionDashLength,
+                    this.preference.annotationColor,
+                    this.preference.annotationLineWidth,
+                    this.preference.annotationDashLength,
                     rotation,
                     regionName
                 );
@@ -178,9 +178,9 @@ export class RegionSetStore {
                     points,
                     regionType,
                     regionId,
-                    this.preference.regionColor,
-                    this.preference.regionLineWidth,
-                    this.preference.regionDashLength,
+                    this.preference.annotationColor,
+                    this.preference.annotationLineWidth,
+                    this.preference.annotationDashLength,
                     rotation,
                     regionName
                 );
@@ -193,9 +193,46 @@ export class RegionSetStore {
                     points,
                     regionType,
                     regionId,
-                    this.preference.regionColor,
-                    this.preference.regionLineWidth,
-                    this.preference.regionDashLength,
+                    this.preference.annotationColor,
+                    this.preference.annotationLineWidth,
+                    this.preference.annotationDashLength,
+                    rotation,
+                    regionName
+                );
+                break;
+            case CARTA.RegionType.ANNPOINT:
+                region = new PointAnnotationStore(
+                    this.backendService,
+                    this.frame.frameInfo.fileId,
+                    this.frame,
+                    points,
+                    regionType,
+                    regionId,
+                    this.preference.annotationColor,
+                    this.preference.annotationLineWidth,
+                    this.preference.annotationDashLength,
+                    this.preference.pointAnnotationShape,
+                    this.preference.pointAnnotationWidth,
+                    rotation,
+                    regionName
+                );
+                break;
+            case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNRECTANGLE:
+            case CARTA.RegionType.ANNVECTOR:
+            case CARTA.RegionType.ANNPOLYGON:
+            case CARTA.RegionType.ANNPOLYLINE:
+            case CARTA.RegionType.ANNLINE:
+                region = new RegionStore(
+                    this.backendService,
+                    this.frame.frameInfo.fileId,
+                    this.frame,
+                    points,
+                    regionType,
+                    regionId,
+                    this.preference.annotationColor,
+                    this.preference.annotationLineWidth,
+                    this.preference.annotationDashLength,
                     rotation,
                     regionName
                 );

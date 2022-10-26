@@ -5,8 +5,69 @@ import * as AST from "ast_wrapper";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {FrameStore} from "stores/Frame";
-import {RegionStore} from "./RegionStore";
+import {POINTSHAPE, RegionStore} from "./RegionStore";
 import {transformPoint} from "utilities";
+
+export class PointAnnotationStore extends RegionStore {
+    @observable pointShape: POINTSHAPE;
+    @observable pointWidth: number;
+
+    constructor(
+        backendService: BackendService,
+        fileId: number,
+        activeFrame: FrameStore,
+        controlPoints: Point2D[],
+        regionType: CARTA.RegionType,
+        regionId: number = -1,
+        color: string = Colors.TURQUOISE5,
+        lineWidth: number = 2,
+        dashLength: number = 0,
+        pointShape: POINTSHAPE = POINTSHAPE.SQUARE,
+        pointWidth: number = 6,
+        rotation: number = 0,
+        name: string = ""
+    ) {
+        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
+        makeObservable(this);
+        this.pointShape = pointShape || POINTSHAPE.SQUARE;
+        this.pointWidth = pointWidth || 6;
+    }
+
+    @action setPointShape = (pointShape: string) => {
+        switch (pointShape) {
+            case "SQUARE":
+                this.pointShape = POINTSHAPE.SQUARE;
+                break;
+            case "BOX":
+                this.pointShape = POINTSHAPE.BOX;
+                break;
+            case "CIRCLE":
+                this.pointShape = POINTSHAPE.CIRCLE;
+                break;
+            case "CIRCLE_LINED":
+                this.pointShape = POINTSHAPE.CIRCLE_LINED;
+                break;
+            case "DIAMOND":
+                this.pointShape = POINTSHAPE.DIAMOND;
+                break;
+            case "DIAMOND_LINED":
+                this.pointShape = POINTSHAPE.DIAMOND_LINED;
+                break;
+            case "CROSS":
+                this.pointShape = POINTSHAPE.CROSS;
+                break;
+            case "X":
+                this.pointShape = POINTSHAPE.X;
+                break;
+            default:
+                this.pointShape = POINTSHAPE.SQUARE;
+        }
+    };
+
+    @action setPointWidth = (width: number) => {
+        this.pointWidth = width;
+    };
+}
 
 export class TextAnnotationStore extends RegionStore {
     @observable text: string = "Double click to edit text";

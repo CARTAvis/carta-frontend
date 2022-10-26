@@ -5,7 +5,7 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {POINTSHAPE, RegionCoordinate, RegionStore} from "stores/Frame";
+import {PointAnnotationStore, POINTSHAPE, RegionCoordinate, RegionStore} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {SafeNumericInput, CoordinateComponent} from "components/Shared";
@@ -153,7 +153,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
-        const region = this.props.region;
+        const region = this.props.region as PointAnnotationStore;
         if (!region || (region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT)) {
             return null;
         }
