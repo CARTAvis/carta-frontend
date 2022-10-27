@@ -170,6 +170,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 
     React.useEffect(() => {
         region.setLengthScale((imageRatio * scale.current) / frame.zoomLevel);
+        // eslint-disable-next-line
     }, [frame.zoomLevel]);
 
     return (
