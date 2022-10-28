@@ -1,5 +1,5 @@
 import React from "react";
-import {render, screen} from "@testing-library/react";
+import {logRoles, render, screen} from "@testing-library/react";
 import {ExportImageMenuComponent} from "../components/Shared";
 import {AppStore} from "../stores/AppStore";
 
@@ -18,7 +18,7 @@ describe("test ExportImageMenuComponent", () => {
     })
     
     test("renders", () => {
-        render(<ExportImageMenuComponent />);
-        screen.debug();
+        const {container} = render(<ExportImageMenuComponent />);        
+        logRoles(container);
     });
 });
