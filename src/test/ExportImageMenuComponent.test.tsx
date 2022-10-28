@@ -14,10 +14,6 @@ describe("test ExportImageMenuComponent", () => {
         exportImageMock = jest.spyOn(AppStore.Instance, "exportImage");
     });
     
-    afterEach(() => {
-        jest.restoreAllMocks();
-    })
-    
     test("renders four list items", () => {
         render(<ExportImageMenuComponent />);
         const listitems = screen.getAllByRole("listitem");

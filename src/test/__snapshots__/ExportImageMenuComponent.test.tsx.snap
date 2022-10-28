@@ -16,7 +16,7 @@ exports[`test ExportImageMenuComponent matches the snapshot 1`] = `
   >
     <a
       class="bp3-menu-item bp3-popover-dismiss"
-      label="undefinedE"
+      label="ctrl + E"
     >
       <div
         class="bp3-text-overflow-ellipsis bp3-fill"
@@ -26,7 +26,7 @@ exports[`test ExportImageMenuComponent matches the snapshot 1`] = `
       <span
         class="bp3-menu-item-label"
       >
-        undefinedE
+        ctrl + E
       </span>
     </a>
   </li>
