@@ -1,6 +1,6 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import {render, screen} from "@testing-library/react";
+import {fireEvent, render, screen} from "@testing-library/react";
 import {ExportImageMenuComponent} from "../components/Shared";
 import {AppStore} from "../stores/AppStore";
 
@@ -19,7 +19,7 @@ describe("test ExportImageMenuComponent", () => {
     })
     
     test("renders four list items", () => {
-        render(<ExportImageMenuComponent />);        
+        render(<ExportImageMenuComponent />);
         const listitems = screen.getAllByRole("listitem");
         
         expect(listitems?.length).toEqual(4);
@@ -28,4 +28,15 @@ describe("test ExportImageMenuComponent", () => {
         expect(listitems?.[2]).toHaveTextContent("High (200%)");
         expect(listitems?.[3]).toHaveTextContent("Highest (400%)");
     });
+
+    test("calls exportImage() with required image ratio when clicked", () => {
+        render(<ExportImageMenuComponent />);
+
+        fireEvent.click(screen.getByText(/Normal /));
+        expect(exportImageMock).toBeCalledWith(1);
+        fireEvent.click(screen.getByText(/High /));
+        expect(exportImageMock).toBeCalledWith(2);
+        fireEvent.click(screen.getByText(/Highest /));
+        expect(exportImageMock).toBeCalledWith(4);
+    })
 });
