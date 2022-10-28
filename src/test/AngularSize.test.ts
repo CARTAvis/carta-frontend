@@ -15,7 +15,7 @@ describe("test convertValueFromArcsec", () => {
 
 describe("test convertFromArcsec", () => {
     let convertValueFromArcsecMock: jest.SpyInstance;
-    beforeAll(() => {    
+    beforeAll(() => {
         convertValueFromArcsecMock = jest.spyOn(AngularSize, "convertValueFromArcsec");
     });
 
@@ -24,7 +24,7 @@ describe("test convertFromArcsec", () => {
             .mockImplementationOnce(() => 1)
             .mockImplementationOnce(() => 2)
             .mockImplementationOnce(() => 2);
-        
+
         let size = AngularSize.convertFromArcsec(1);
         expect(convertValueFromArcsecMock).toBeCalledWith(1, AngularSizeUnit.ARCSEC);
         expect(size?.value).toEqual(1);
@@ -42,10 +42,8 @@ describe("test convertFromArcsec", () => {
     });
 
     test("converts to milliarsec when needed", () => {
-        convertValueFromArcsecMock
-            .mockImplementationOnce(() => 1)
-            .mockImplementationOnce(() => 0.001);
-        
+        convertValueFromArcsecMock.mockImplementationOnce(() => 1).mockImplementationOnce(() => 0.001);
+
         let size = AngularSize.convertFromArcsec(0.001, true);
         expect(convertValueFromArcsecMock).toBeCalledWith(0.001, AngularSizeUnit.MILLIARCSEC);
         expect(size?.value).toEqual(1);
