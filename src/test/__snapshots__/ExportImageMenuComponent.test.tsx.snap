@@ -1,0 +1,60 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`test ExportImageMenuComponent matches the snapshot 1`] = `
+<div>
+  <li
+    class="bp3-menu-header"
+  >
+    <h6
+      class="bp3-heading"
+    >
+      Resolution
+    </h6>
+  </li>
+  <li
+    class=""
+  >
+    <a
+      class="bp3-menu-item bp3-popover-dismiss"
+      label="undefinedE"
+    >
+      <div
+        class="bp3-text-overflow-ellipsis bp3-fill"
+      >
+        Normal (100%)
+      </div>
+      <span
+        class="bp3-menu-item-label"
+      >
+        undefinedE
+      </span>
+    </a>
+  </li>
+  <li
+    class=""
+  >
+    <a
+      class="bp3-menu-item bp3-popover-dismiss"
+    >
+      <div
+        class="bp3-text-overflow-ellipsis bp3-fill"
+      >
+        High (200%)
+      </div>
+    </a>
+  </li>
+  <li
+    class=""
+  >
+    <a
+      class="bp3-menu-item bp3-popover-dismiss"
+    >
+      <div
+        class="bp3-text-overflow-ellipsis bp3-fill"
+      >
+        Highest (400%)
+      </div>
+    </a>
+  </li>
+</div>
+`;

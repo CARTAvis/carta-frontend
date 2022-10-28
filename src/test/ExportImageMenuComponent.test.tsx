@@ -38,5 +38,10 @@ describe("test ExportImageMenuComponent", () => {
         expect(exportImageMock).toBeCalledWith(2);
         fireEvent.click(screen.getByText(/Highest /));
         expect(exportImageMock).toBeCalledWith(4);
-    })
+    });
+
+    test("matches the snapshot", () => {
+        const {container} = render(<ExportImageMenuComponent />);
+        expect(container).toMatchSnapshot();
+    });
 });
