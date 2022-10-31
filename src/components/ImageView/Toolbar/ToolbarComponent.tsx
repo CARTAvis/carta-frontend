@@ -2,7 +2,7 @@ import * as React from "react";
 import classNames from "classnames";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, FormGroup, IconName, Menu, MenuItem, PopoverPosition, Position, Switch} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {AppStore, OverlayStore, SystemType} from "stores";
@@ -18,6 +18,8 @@ export class ToolbarComponentProps {
     visible: boolean;
     frame: FrameStore;
     activeLayer: ImageViewLayer;
+    annotationMode: boolean;
+    setAnnotationMode: (annotationMode: boolean) => void;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
     onRegionViewZoom: (zoom: number, isZoomToFit?: boolean) => void;
     onZoomToFit: () => void;
@@ -131,21 +133,20 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const regionMenu = (
             <Menu>
-                {Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text], index) => {
-                    const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-                    const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
-                    return <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
-                })}
-            </Menu>
-        );
-
-        const annotationMenu = (
-            <Menu>
-                {Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
-                    const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-                    const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
-                    return <MenuItem icon={annotationIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
-                })}
+                <FormGroup inline={true} label="Create annotation">
+                    <Switch className="region-annotation-switch-button" key={`region_annotaion_switch_button`} checked={this.props.annotationMode} onChange={ev => this.props.setAnnotationMode(ev.currentTarget.checked)} />
+                </FormGroup>
+                {this.props.annotationMode
+                    ? Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
+                          const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
+                          const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
+                          return <MenuItem icon={annotationIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
+                      })
+                    : Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text], index) => {
+                          const regionIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
+                          const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
+                          return <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
+                      })}
             </Menu>
         );
 
@@ -259,13 +260,23 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 <Tooltip2
                                     position={tooltipPosition}
                                     content={
-                                        <span>
-                                            Create region
-                                            <br />
-                                            <i>
-                                                <small>Click to select region type</small>
-                                            </i>
-                                        </span>
+                                        this.props.annotationMode ? (
+                                            <span>
+                                                Create annotation
+                                                <br />
+                                                <i>
+                                                    <small>Click to select annotation type</small>
+                                                </i>
+                                            </span>
+                                        ) : (
+                                            <span>
+                                                Create region
+                                                <br />
+                                                <i>
+                                                    <small>Click to select region type</small>
+                                                </i>
+                                            </span>
+                                        )
                                     }
                                 >
                                     <AnchorButton icon={regionIcon} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
@@ -299,22 +310,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
                             />
                         </Tooltip2>
-                        <Popover2 popoverClassName="annotation-menu" content={annotationMenu} position={Position.TOP} minimal={true}>
-                            <Tooltip2
-                                position={tooltipPosition}
-                                content={
-                                    <span>
-                                        Create annotation
-                                        <br />
-                                        <i>
-                                            <small>Click to select annotation type</small>
-                                        </i>
-                                    </span>
-                                }
-                            >
-                                <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)} />
-                            </Tooltip2>
-                        </Popover2>
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
                             <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} />
                         </Tooltip2>

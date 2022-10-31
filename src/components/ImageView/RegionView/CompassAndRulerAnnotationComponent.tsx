@@ -59,7 +59,6 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             const deltaPosition = subtract2D(imagePosition, oldImagePosition);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
-            console.log(newPoints[0]);
             mousePoint.current = konvaEvent.target.position();
         }
     };
@@ -110,21 +109,11 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         region.endEditing();
     };
 
-    const approxPoints = region.getRegionApproximation(frame.spatialTransformAST || frame.wcsInfo, frame.spatialReference ? true : false);
+    const approxPoints = region.getRegionApproximation(frame.wcsInfo, frame.spatialReference ? true : false, frame.spatialTransformAST);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
     const northPointArray = [];
     const eastPointArray = [];
-
-    // const a = transformedImageToCanvasPos({x: northApproxPoints[0], y: northApproxPoints[1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current)
-    // const b = transformedImageToCanvasPos({x: northApproxPoints[northApproxPoints.length - 2], y: northApproxPoints[northApproxPoints.length - 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current)
-    // const c = transformedImageToCanvasPos({x: eastApproxPoints[eastApproxPoints.length - 2], y: eastApproxPoints[eastApproxPoints.length - 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current)
-    // const northLength = pointDistance(b, a);
-    // const eastLength = pointDistance(c, a);
-    // const northLength = pointDistance({x: northApproxPoints[northApproxPoints.length - 2], y: northApproxPoints[northApproxPoints.length - 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]});
-    // const eastLength = pointDistance({x: eastApproxPoints[eastApproxPoints.length - 2], y: eastApproxPoints[eastApproxPoints.length - 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]});
-
-    // console.log(region.length,region.lengthScale, northLength, eastLength, northApproxPoints, eastApproxPoints)
 
     for (let i = 0; i < northApproxPoints.length; i += 2) {
         if (
@@ -172,6 +161,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         region.setLengthScale((imageRatio * scale.current) / frame.zoomLevel);
         // eslint-disable-next-line
     }, [frame.zoomLevel]);
+
+    console.log(frame.filename, northApproxPoints);
 
     return (
         <>
