@@ -16,6 +16,8 @@ import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, Catalo
 import {toFixed, ProcessedColumnData} from "utilities";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
 import "./CatalogOverlayComponent.scss";
+import {ImageViewLayer} from "components/ImageView/ImageViewComponent";
+import {RegionMode} from "stores/Frame";
 
 enum HeaderTableColumnName {
     Name = "Name",
@@ -453,6 +455,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
+        const catalogStore = CatalogStore.Instance;
+        const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
+
+        appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
+        frame.regionSet.setMode(RegionMode.MOVING);
+
         if (profileStore && catalogWidgetStore) {
             profileStore.resetCatalogFilterRequest();
             this.resetSelectedPointIndices();
