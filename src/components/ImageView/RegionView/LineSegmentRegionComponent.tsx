@@ -6,7 +6,7 @@ import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {FrameStore, RegionStore, VectorAnnotationStore} from "stores/Frame";
 import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, subtract2D, angle2D} from "utilities";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
@@ -347,6 +347,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                         strokeWidth={region.lineWidth}
                         opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                         dash={[region.dashLength]}
+                        fill={region.color}
                         listening={this.props.listening && !region.locked}
                         onClick={this.handleClick}
                         onDblClick={this.handleDoubleClick}
@@ -360,6 +361,8 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                         draggable={true}
                         points={pointArray}
                         hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
+                        pointerWidth={((region as VectorAnnotationStore).pointerWidth * imageRatio) / frame.zoomLevel}
+                        pointerLength={((region as VectorAnnotationStore).pointerLength * imageRatio) / frame.zoomLevel}
                     />
                 ) : (
                     <Line

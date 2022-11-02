@@ -71,7 +71,7 @@ export class PointAnnotationStore extends RegionStore {
 
 export class TextAnnotationStore extends RegionStore {
     @observable text: string = "Double click to edit text";
-    @observable fontSize: number = 10;
+    @observable fontSize: number = 20;
 
     constructor(
         backendService: BackendService,
@@ -99,15 +99,50 @@ export class TextAnnotationStore extends RegionStore {
     };
 }
 
+export class VectorAnnotationStore extends RegionStore {
+    @observable pointerWidth: number = 20;
+    @observable pointerLength: number = 20;
+    @observable lengthScale: number = 1;
+
+    constructor(
+        backendService: BackendService,
+        fileId: number,
+        activeFrame: FrameStore,
+        controlPoints: Point2D[],
+        regionType: CARTA.RegionType,
+        regionId: number = -1,
+        color: string = Colors.TURQUOISE5,
+        lineWidth: number = 2,
+        dashLength: number = 0,
+        rotation: number = 0,
+        name: string = ""
+    ) {
+        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
+        makeObservable(this);
+    }
+
+    @action setPointerWidth = (pointerWidth: number) => {
+        this.pointerWidth = pointerWidth;
+    };
+
+    @action setPointerLength = (pointerLength: number) => {
+        this.pointerLength = pointerLength;
+    };
+
+    @action setLengthScale = (lengthScale: number) => {
+        this.lengthScale = lengthScale;
+    };
+}
+
 export class CompassAnnotationStore extends RegionStore {
-    @observable length: number;
+    @observable length: number = 100;
     @observable northLabel: string = "N";
     @observable eastLabel: string = "E";
     @observable isNorthArrowhead: boolean = true;
     @observable isEastArrowhead: boolean = true;
     @observable fontSize: number = 20;
-    @observable pointerWidth: number = 5;
-    @observable pointerLength: number = 5;
+    @observable pointerWidth: number = 10;
+    @observable pointerLength: number = 10;
     @observable lengthScale: number = 1;
     @observable northTextOffset: Point2D = {x: 0, y: 0};
     @observable eastTextOffset: Point2D = {x: 0, y: 0};
@@ -127,7 +162,7 @@ export class CompassAnnotationStore extends RegionStore {
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
         makeObservable(this);
-        this.setLength(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1);
+        // this.setLength(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1);
     }
 
     @action setLabel = (label: string, isNorth: boolean) => {
@@ -180,16 +215,27 @@ export class CompassAnnotationStore extends RegionStore {
 
         const delta1 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.includes("CDELT1"));
         const delta2 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.includes("CDELT2"));
+        const frameView = this.activeFrame.requiredFrameView;
+        const top = frameView.yMax;
+        const bottom = frameView.yMin;
+        const left = frameView.xMin;
+        const right = frameView.xMax;
+        const width = right - left;
+        const height = top - bottom;
+        const angularWidth = Math.abs((delta1.numericValue * Math.PI * width) / 180);
+        const angularHeight = Math.abs((delta2.numericValue * Math.PI * height) / 180);
 
-        const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y, delta1 ? Math.abs((delta1?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.width) / 180) : 6.18);
-        const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y, delta2 ? Math.abs((delta2?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.height) / 180) : 6.18);
+        const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y, delta1 ? angularWidth : 6.18);
+        const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y, delta2 ? angularHeight : 6.18);
+        // const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y, delta1 ? Math.abs((delta1?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.width) / 180) : 6.18);
+        // const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y, delta2 ? Math.abs((delta2?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.height) / 180) : 6.18);
 
         return {northApproximatePoints, eastApproximatePoints};
     }
 }
 
 export class RulerAnnotationStore extends RegionStore {
-    @observable fontSize: number = 10;
+    @observable fontSize: number = 20;
     @observable auxiliaryLineVisible: boolean = false;
     @observable auxiliaryLineDashLength: number = 0;
     @observable textOffset: Point2D = {x: 0, y: 0};

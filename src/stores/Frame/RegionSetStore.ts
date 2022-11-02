@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "stores";
-import {CURSOR_REGION_ID, FrameStore, RegionStore, CompassAnnotationStore, RulerAnnotationStore, TextAnnotationStore, PointAnnotationStore} from "stores/Frame";
+import {CURSOR_REGION_ID, FrameStore, RegionStore, CompassAnnotationStore, RulerAnnotationStore, TextAnnotationStore, PointAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
@@ -217,9 +217,23 @@ export class RegionSetStore {
                     regionName
                 );
                 break;
+            case CARTA.RegionType.ANNVECTOR:
+                region = new VectorAnnotationStore(
+                    this.backendService,
+                    this.frame.frameInfo.fileId,
+                    this.frame,
+                    points,
+                    regionType,
+                    regionId,
+                    this.preference.annotationColor,
+                    this.preference.annotationLineWidth,
+                    this.preference.annotationDashLength,
+                    rotation,
+                    regionName
+                );
+                break;
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.ANNRECTANGLE:
-            case CARTA.RegionType.ANNVECTOR:
             case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.ANNPOLYLINE:
             case CARTA.RegionType.ANNLINE:
@@ -254,7 +268,6 @@ export class RegionSetStore {
                 break;
         }
 
-        console.log(region, points);
         this.regions.push(region);
         //Need to be removed
         if (!temporary) {

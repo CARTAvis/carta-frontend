@@ -203,10 +203,6 @@ void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* fi
     double middle[2];
     astOffset(plot, start, finish, dist / 2, middle);
     float up[] = {0.0f, 1.0f}; // horizontal text
-    cout << "start" << start[0] << " " << start[1] << endl;
-    cout << "finish" << finish[0] << " " << finish[1] << endl;
-    cout << "middle" << middle[0] << " " << middle[1] << endl;
-    cout << "dist" << dist << endl;
     string distString;
     const char* unit = astGetC(wcsinfo, "Unit(1)");
     if (strstr(unit, "degree") != nullptr || strstr(unit, "hh:mm:s") != nullptr)
@@ -273,8 +269,6 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     {
         const double x[] = {curveX1, curveX2};
         const double y[] = {curveY1, curveY2};
-        cout << "start" << x[0] << " " << y[0] << endl;
-        cout << "finish" << x[1] << " " << y[1] << endl;
         double xtran[2];
         double ytran[2];
         astTran2(wcsinfo, 2, x, y, 1, xtran, ytran);
@@ -473,6 +467,7 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
     return 0;
 }
 
+//point list along the direction of axis
 EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis, double x, double y, double dist, double out[])
 {
     if (!wcsinfo)

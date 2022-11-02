@@ -467,7 +467,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                         x={centerPixelSpace.x}
                         y={centerPixelSpace.y}
                         stroke={region.color}
-                        strokeWidth={region.lineWidth}
+                        strokeWidth={(region.lineWidth * imageRatio) / frame.zoomLevel}
                         opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                         dash={[region.dashLength]}
                         draggable={true}
@@ -485,6 +485,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                         offsetX={((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0}
                         offsetY={region.size.y / devicePixelRatio / 2.0}
                         text={region.text}
+                        fontSize={region.fontSize}
                     />
                 ) : (
                     <Line
@@ -543,7 +544,19 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE) {
                 shapeNode = <Rect {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} />;
             } else if (region.regionType === CARTA.RegionType.ANNTEXT) {
-                shapeNode = <Text {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} text={region.text} />;
+                shapeNode = (
+                    <Text
+                        {...commonProps}
+                        strokeWidth={(region.lineWidth * imageRatio) / frame.zoomLevel}
+                        width={(region.size.x / devicePixelRatio) * frame.aspectRatio}
+                        height={region.size.y / devicePixelRatio}
+                        offsetX={((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0}
+                        offsetY={region.size.y / devicePixelRatio / 2.0}
+                        text={region.text}
+                        fill={region.color}
+                        fontSize={(region.fontSize * imageRatio) / frame.zoomLevel}
+                    />
+                );
             } else {
                 shapeNode = <Ellipse {...commonProps} radiusY={width} radiusX={height * frame.aspectRatio} />;
             }

@@ -195,7 +195,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                     min={-50}
                                     max={RegionStore.MAX_DASH_LENGTH}
                                     value={(this.props.region as CompassAnnotationStore).northTextOffset.x}
-                                    stepSize={1}
+                                    stepSize={0.5}
                                     onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, true)}
                                 />
                             </FormGroup>
@@ -205,7 +205,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                     min={-50}
                                     max={RegionStore.MAX_DASH_LENGTH}
                                     value={(this.props.region as CompassAnnotationStore).northTextOffset.y}
-                                    stepSize={1}
+                                    stepSize={0.5}
                                     onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, false)}
                                 />
                             </FormGroup>
@@ -215,7 +215,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                     min={-50}
                                     max={RegionStore.MAX_DASH_LENGTH}
                                     value={(this.props.region as CompassAnnotationStore).eastTextOffset.x}
-                                    stepSize={1}
+                                    stepSize={0.5}
                                     onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, true)}
                                 />
                             </FormGroup>
@@ -225,7 +225,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                     min={-50}
                                     max={RegionStore.MAX_DASH_LENGTH}
                                     value={(this.props.region as CompassAnnotationStore).eastTextOffset.y}
-                                    stepSize={1}
+                                    stepSize={0.5}
                                     onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, false)}
                                 />
                             </FormGroup>
