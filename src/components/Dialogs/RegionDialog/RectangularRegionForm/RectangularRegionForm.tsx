@@ -1,12 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
-import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
+import {Classes, H5, HTMLSelect, InputGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {FrameStore, RegionCoordinate, RegionStore, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
+import {FrameStore, RegionCoordinate, RegionStore, TextAnnotationPosition, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {SafeNumericInput, CoordinateComponent} from "components/Shared";
@@ -432,6 +432,21 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         ev.currentTarget.value = existingValue;
     };
 
+    private textAnnotationPositionSelect = () => {
+        return (
+            <tr>
+                <td>Text Alignment</td>
+                <td colSpan={2}>
+                    <HTMLSelect
+                        options={Object.values(TextAnnotationPosition)}
+                        value={(this.props.region as TextAnnotationStore).position}
+                        onChange={ev => (this.props.region as TextAnnotationStore).setPosition(ev.target.value as TextAnnotationPosition)}
+                    />
+                </td>
+            </tr>
+        );
+    };
+
     public render() {
         // dummy variables related to wcs to trigger re-render
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -595,83 +610,88 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
 
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
-            <div className="form-section rectangular-region-form">
-                <H5>Properties</H5>
-                <div className="form-contents">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>Region Name</td>
-                                <td colSpan={2}>
-                                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
-                                </td>
-                            </tr>
-                            {region.regionType === CARTA.RegionType.ANNTEXT && (
+            <>
+                <div className="form-section rectangular-region-form">
+                    <H5>Properties</H5>
+                    <div className="form-contents">
+                        <table>
+                            <tbody>
                                 <tr>
-                                    <td>Text</td>
+                                    <td>Region Name</td>
                                     <td colSpan={2}>
-                                        <InputGroup placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} />
+                                        <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
                                     </td>
                                 </tr>
-                            )}
-                            <tr>
-                                <td>Coordinate</td>
-                                <td colSpan={2}>
-                                    <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Center {pxUnitSpan}</td>
-                                <td>{centerInputX}</td>
-                                <td>{centerInputY}</td>
-                                <td>
-                                    <span className="info-string">{centerInfoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Size {pxUnitSpan}</td>
-                                <td>{sizeWidthInput}</td>
-                                <td>{sizeHeightInput}</td>
-                                <td>
-                                    <span className="info-string">{sizeInfoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Bottom Left {pxUnitSpan}</td>
-                                <td>{bottomLeftInputX}</td>
-                                <td>{bottomLeftInputY}</td>
-                                <td>
-                                    <span className="info-string">{bottomLeftInfoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Top Right {pxUnitSpan}</td>
-                                <td>{topRightInputX}</td>
-                                <td>{topRightInputY}</td>
-                                <td>
-                                    <span className="info-string">{topRightInfoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
-                                </td>
-                                <td>
-                                    <SafeNumericInput
-                                        disabled={!this.props.frame?.hasSquarePixels}
-                                        selectAllOnFocus={true}
-                                        buttonPosition="none"
-                                        placeholder="P.A."
-                                        value={region.rotation}
-                                        onBlur={this.handleRotationChange}
-                                        onKeyDown={this.handleRotationChange}
-                                    />
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                {region.regionType === CARTA.RegionType.ANNTEXT && (
+                                    <>
+                                        <tr>
+                                            <td>Text</td>
+                                            <td colSpan={2}>
+                                                <InputGroup placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} />
+                                            </td>
+                                        </tr>
+                                        {this.textAnnotationPositionSelect()}
+                                    </>
+                                )}
+                                <tr>
+                                    <td>Coordinate</td>
+                                    <td colSpan={2}>
+                                        <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Center {pxUnitSpan}</td>
+                                    <td>{centerInputX}</td>
+                                    <td>{centerInputY}</td>
+                                    <td>
+                                        <span className="info-string">{centerInfoString}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Size {pxUnitSpan}</td>
+                                    <td>{sizeWidthInput}</td>
+                                    <td>{sizeHeightInput}</td>
+                                    <td>
+                                        <span className="info-string">{sizeInfoString}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Bottom Left {pxUnitSpan}</td>
+                                    <td>{bottomLeftInputX}</td>
+                                    <td>{bottomLeftInputY}</td>
+                                    <td>
+                                        <span className="info-string">{bottomLeftInfoString}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Top Right {pxUnitSpan}</td>
+                                    <td>{topRightInputX}</td>
+                                    <td>{topRightInputY}</td>
+                                    <td>
+                                        <span className="info-string">{topRightInfoString}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
+                                    </td>
+                                    <td>
+                                        <SafeNumericInput
+                                            disabled={!this.props.frame?.hasSquarePixels}
+                                            selectAllOnFocus={true}
+                                            buttonPosition="none"
+                                            placeholder="P.A."
+                                            value={region.rotation}
+                                            onBlur={this.handleRotationChange}
+                                            onKeyDown={this.handleRotationChange}
+                                        />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            </>
         );
     }
 }

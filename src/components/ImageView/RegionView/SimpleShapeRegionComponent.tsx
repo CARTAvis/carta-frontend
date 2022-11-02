@@ -5,7 +5,7 @@ import {Ellipse, Group, Line, Rect, Text} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore, TextAnnotationStore} from "stores/Frame";
+import {FrameStore, RegionStore, TextAnnotationStore, TextAnnotationPosition} from "stores/Frame";
 import {Point2D} from "models";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
@@ -412,9 +412,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         return anchorConfigs.map(config => {
             const centerReferenceImage = region.center;
+            const transformedCenter = frame.spatialReference && region.regionType === CARTA.RegionType.ANNTEXT ? transformPoint(frame.spatialTransformAST, centerReferenceImage, false) : centerReferenceImage;
+            let posImage = add2D(transformedCenter, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
 
-            let posImage = add2D(centerReferenceImage, rotate2D(config.offset, (region.rotation * Math.PI) / 180));
-            if (frame.spatialReference) {
+            if (frame.spatialReference && region.regionType !== CARTA.RegionType.ANNTEXT) {
                 posImage = transformPoint(frame.spatialTransformAST, posImage, false);
             }
 
@@ -435,6 +436,80 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 />
             );
         });
+    };
+
+    private getTextProps = (region: TextAnnotationStore, centerPixelSpace: Point2D) => {
+        const frame = this.props.frame;
+        let align: string;
+        let verticalAlign: string;
+
+        switch (region.position) {
+            case TextAnnotationPosition.UPPER_LEFT:
+                align = "left";
+                verticalAlign = "top";
+                break;
+            case TextAnnotationPosition.UPPER_RIGHT:
+                align = "right";
+                verticalAlign = "top";
+                break;
+            case TextAnnotationPosition.LOWER_LEFT:
+                align = "left";
+                verticalAlign = "bottom";
+                break;
+            case TextAnnotationPosition.LOWER_RIGHT:
+                align = "right";
+                verticalAlign = "bottom";
+                break;
+            case TextAnnotationPosition.TOP:
+                align = "center";
+                verticalAlign = "top";
+                break;
+            case TextAnnotationPosition.BOTTOM:
+                align = "center";
+                verticalAlign = "bottom";
+                break;
+            case TextAnnotationPosition.LEFT:
+                align = "left";
+                verticalAlign = "middle";
+                break;
+            case TextAnnotationPosition.RIGHT:
+                align = "right";
+                verticalAlign = "middle";
+                break;
+            case TextAnnotationPosition.CENTER:
+                align = "center";
+                verticalAlign = "middle";
+                break;
+        }
+
+        return {
+            rotation: frame.spatialReference ? (-frame.spatialTransform.rotation * 180) / Math.PI : -region.rotation,
+            x: centerPixelSpace.x,
+            y: centerPixelSpace.y,
+            stroke: region.color,
+            opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+            dash: [region.dashLength],
+            draggable: true,
+            listening: this.props.listening && !region.locked,
+            onDragStart: this.handleDragStart,
+            onDragEnd: this.handleDragEnd,
+            onDragMove: this.handleDrag,
+            onClick: this.handleClick,
+            onDblClick: this.handleDoubleClick,
+            onContextMenu: this.handleContextMenu,
+            perfectDrawEnabled: false,
+            strokeScaleEnabled: false,
+            strokeWidth: (region.lineWidth * AppStore.Instance.imageRatio) / frame.zoomLevel,
+            width: frame.spatialReference ? (region.size.x / devicePixelRatio) * frame.aspectRatio * frame.spatialTransform.scale : (region.size.x / devicePixelRatio) * frame.aspectRatio,
+            height: frame.spatialReference ? (region.size.y / devicePixelRatio) * frame.spatialTransform.scale : region.size.y / devicePixelRatio,
+            offsetX: frame.spatialReference ? (frame.spatialTransform.scale * ((region.size.x / devicePixelRatio) * frame.aspectRatio)) / 2.0 : ((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0,
+            offsetY: frame.spatialReference ? (frame.spatialTransform.scale * region.size.y) / devicePixelRatio / 2.0 : region.size.y / devicePixelRatio / 2.0,
+            align,
+            verticalAlign,
+            text: region.text,
+            fill: region.color,
+            fontSize: (region.fontSize * AppStore.Instance.imageRatio) / frame.zoomLevel
+        };
     };
 
     public render() {
@@ -460,32 +535,34 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
                 pointArray[i * 2 + 1] = approxPointPixelSpace.y - centerPixelSpace.y;
             }
 
+            console.log((frame.spatialTransform.rotation * 180) / Math.PI);
             shapeNode =
                 region.regionType === CARTA.RegionType.ANNTEXT ? (
                     <Text
-                        rotation={-region.rotation}
-                        x={centerPixelSpace.x}
-                        y={centerPixelSpace.y}
-                        stroke={region.color}
-                        strokeWidth={(region.lineWidth * imageRatio) / frame.zoomLevel}
-                        opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                        dash={[region.dashLength]}
-                        draggable={true}
-                        listening={this.props.listening && !region.locked}
-                        onDragStart={this.handleDragStart}
-                        onDragEnd={this.handleDragEnd}
-                        onDragMove={this.handleDrag}
-                        onClick={this.handleClick}
-                        onDblClick={this.handleDoubleClick}
-                        onContextMenu={this.handleContextMenu}
-                        perfectDrawEnabled={false}
-                        strokeScaleEnabled={false}
-                        width={(region.size.x / devicePixelRatio) * frame.aspectRatio}
-                        height={region.size.y / devicePixelRatio}
-                        offsetX={((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0}
-                        offsetY={region.size.y / devicePixelRatio / 2.0}
-                        text={region.text}
-                        fontSize={region.fontSize}
+                        // rotation={-region.rotation}
+                        // x={centerPixelSpace.x}
+                        // y={centerPixelSpace.y}
+                        // stroke={region.color}
+                        // strokeWidth={(region.lineWidth * imageRatio) / frame.zoomLevel}
+                        // opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
+                        // dash={[region.dashLength]}
+                        // draggable={true}
+                        // listening={this.props.listening && !region.locked}
+                        // onDragStart={this.handleDragStart}
+                        // onDragEnd={this.handleDragEnd}
+                        // onDragMove={this.handleDrag}
+                        // onClick={this.handleClick}
+                        // onDblClick={this.handleDoubleClick}
+                        // onContextMenu={this.handleContextMenu}
+                        // perfectDrawEnabled={false}
+                        // strokeScaleEnabled={false}
+                        // width={(region.size.x / devicePixelRatio) * frame.aspectRatio}
+                        // height={region.size.y / devicePixelRatio}
+                        // offsetX={((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0}
+                        // offsetY={region.size.y / devicePixelRatio / 2.0}
+                        // text={region.text}
+                        // fontSize={region.fontSize}
+                        {...this.getTextProps(region, centerPixelSpace)}
                     />
                 ) : (
                     <Line
@@ -546,15 +623,16 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             } else if (region.regionType === CARTA.RegionType.ANNTEXT) {
                 shapeNode = (
                     <Text
-                        {...commonProps}
-                        strokeWidth={(region.lineWidth * imageRatio) / frame.zoomLevel}
-                        width={(region.size.x / devicePixelRatio) * frame.aspectRatio}
-                        height={region.size.y / devicePixelRatio}
-                        offsetX={((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0}
-                        offsetY={region.size.y / devicePixelRatio / 2.0}
-                        text={region.text}
-                        fill={region.color}
-                        fontSize={(region.fontSize * imageRatio) / frame.zoomLevel}
+                        // {...commonProps}
+                        // strokeWidth={(region.lineWidth * imageRatio) / frame.zoomLevel}
+                        // width={(region.size.x / devicePixelRatio) * frame.aspectRatio}
+                        // height={region.size.y / devicePixelRatio}
+                        // offsetX={((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0}
+                        // offsetY={region.size.y / devicePixelRatio / 2.0}
+                        // text={region.text}
+                        // fill={region.color}
+                        // fontSize={(region.fontSize * imageRatio) / frame.zoomLevel}
+                        {...this.getTextProps(region, centerPixelSpace)}
                     />
                 );
             } else {

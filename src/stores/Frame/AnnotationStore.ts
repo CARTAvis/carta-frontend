@@ -8,6 +8,18 @@ import {FrameStore} from "stores/Frame";
 import {POINTSHAPE, RegionStore} from "./RegionStore";
 import {transformPoint} from "utilities";
 
+export enum TextAnnotationPosition {
+    UPPER_LEFT = "Upper Left",
+    CENTER = "Center",
+    UPPER_RIGHT = "Upper Right",
+    LOWER_LEFT = "Lower Left",
+    LOWER_RIGHT = "Lower Right",
+    TOP = "Top",
+    BOTTOM = "Bottom",
+    LEFT = "Left",
+    RIGHT = "Right"
+}
+
 export class PointAnnotationStore extends RegionStore {
     @observable pointShape: POINTSHAPE;
     @observable pointWidth: number;
@@ -72,6 +84,7 @@ export class PointAnnotationStore extends RegionStore {
 export class TextAnnotationStore extends RegionStore {
     @observable text: string = "Double click to edit text";
     @observable fontSize: number = 20;
+    @observable position: TextAnnotationPosition = TextAnnotationPosition.UPPER_LEFT;
 
     constructor(
         backendService: BackendService,
@@ -96,6 +109,10 @@ export class TextAnnotationStore extends RegionStore {
 
     @action setFontSize = (fontSize: number) => {
         this.fontSize = fontSize;
+    };
+
+    @action setPosition = (position: TextAnnotationPosition) => {
+        this.position = position;
     };
 }
 
