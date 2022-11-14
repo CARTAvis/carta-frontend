@@ -39,8 +39,13 @@ export class FittingDialogComponent extends React.Component {
         this.fittingResultTabId = FittingResultTabs.RESULT;
     }
 
-    private renderParamInput = (value: number, placeholder: string, onValueChange) => {
-        return <SafeNumericInput value={isFinite(value) ? value : ""} placeholder={placeholder} onValueChange={onValueChange} buttonPosition="none" />;
+    private renderParamInput = (value: number, placeholder: string, onValueChange, fixed: boolean, toggleFixed) => {
+        return (
+            <>
+                <SafeNumericInput value={isFinite(value) ? value : ""} placeholder={placeholder} onValueChange={onValueChange} buttonPosition="none" />
+                <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} />
+            </>
+        );
     };
 
     private exportResult = () => {
@@ -130,18 +135,18 @@ export class FittingDialogComponent extends React.Component {
                         )}
                     </FormGroup>
                     <FormGroup label="Center" inline={true} labelInfo="(px)">
-                        {this.renderParamInput(component?.center?.x, "Center X", component?.setCenterX)}
-                        {this.renderParamInput(component?.center?.y, "Center Y", component?.setCenterY)}
+                        {this.renderParamInput(component?.center?.x, "Center X", component?.setCenterX, component?.centerFixed?.x, component?.toggleCenterXFixed)}
+                        {this.renderParamInput(component?.center?.y, "Center Y", component?.setCenterY, component?.centerFixed?.y, component?.toggleCenterYFixed)}
                     </FormGroup>
                     <FormGroup label="Amplitude" inline={true} labelInfo={fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : ""}>
-                        {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
+                        {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude, component?.amplitudeFixed, component?.toggleAmplitudeFixed)}
                     </FormGroup>
                     <FormGroup label="FWHM" inline={true} labelInfo="(px)">
-                        {this.renderParamInput(component?.fwhm?.x, "Major Axis", component?.setFwhmX)}
-                        {this.renderParamInput(component?.fwhm?.y, "Minor Axis", component?.setFwhmY)}
+                        {this.renderParamInput(component?.fwhm?.x, "Major Axis", component?.setFwhmX, component?.fwhmFixed?.x, component?.toggleFwhmXFixed)}
+                        {this.renderParamInput(component?.fwhm?.y, "Minor Axis", component?.setFwhmY, component?.fwhmFixed?.y, component?.toggleFwhmYFixed)}
                     </FormGroup>
                     <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                        {this.renderParamInput(component?.pa, "Position Angle", component?.setPa)}
+                        {this.renderParamInput(component?.pa, "Position Angle", component?.setPa, component?.paFixed, component?.togglePaFixed)}
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
