@@ -61,23 +61,37 @@ export class RegionStore {
     public static RegionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
             case CARTA.RegionType.POINT:
-            case CARTA.RegionType.ANNPOINT:
                 return "Point";
+            case CARTA.RegionType.ANNPOINT:
+                return "Point - Ann";
             case CARTA.RegionType.LINE:
-            case CARTA.RegionType.ANNLINE:
                 return "Line";
+            case CARTA.RegionType.ANNLINE:
+                return "Line - Ann";
             case CARTA.RegionType.RECTANGLE:
-            case CARTA.RegionType.ANNRECTANGLE:
                 return "Rectangle";
+            case CARTA.RegionType.ANNRECTANGLE:
+                return "Rectangle - Ann";
             case CARTA.RegionType.ELLIPSE:
-            case CARTA.RegionType.ANNELLIPSE:
                 return "Ellipse";
+            case CARTA.RegionType.ANNELLIPSE:
+                return "Ellipse - Ann";
             case CARTA.RegionType.POLYGON:
-            case CARTA.RegionType.ANNPOLYGON:
                 return "Polygon";
+            case CARTA.RegionType.ANNPOLYGON:
+                return "Polygon - Ann";
             case CARTA.RegionType.POLYLINE:
-            case CARTA.RegionType.ANNPOLYLINE:
                 return "Polyline";
+            case CARTA.RegionType.ANNPOLYLINE:
+                return "Polyline - Ann";
+            case CARTA.RegionType.ANNVECTOR:
+                return "Vector - Ann";
+            case CARTA.RegionType.ANNTEXT:
+                return "Text - Ann";
+            case CARTA.RegionType.ANNCOMPASS:
+                return "Compass - Ann";
+            case CARTA.RegionType.ANNRULER:
+                return "Ruler - Ann";
             default:
                 return "Not Implemented";
         }
@@ -305,11 +319,17 @@ export class RegionStore {
         }
     }
 
+    @computed get isAnnotation(): boolean {
+        return this.regionType > 6;
+    }
+
     @computed get nameString(): string {
         if (this.regionId === CURSOR_REGION_ID) {
             return "Cursor";
         } else if (this.name && this.name !== "") {
             return this.name;
+        } else if (this.isAnnotation) {
+            return `Annotation ${this.regionId > CURSOR_REGION_ID ? this.regionId : "..."}`;
         } else {
             // temporary region id < 0, use "..." for representation
             return `Region ${this.regionId > CURSOR_REGION_ID ? this.regionId : "..."}`;

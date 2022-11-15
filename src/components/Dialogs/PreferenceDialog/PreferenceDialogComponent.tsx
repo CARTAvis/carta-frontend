@@ -635,6 +635,16 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Text Annotation Line Width" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Text Annotation Line Width"
+                        min={RegionStore.MIN_LINE_WIDTH}
+                        max={RegionStore.MAX_LINE_WIDTH}
+                        value={preference.textAnnotationLineWidth}
+                        stepSize={0.5}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Dash Length"

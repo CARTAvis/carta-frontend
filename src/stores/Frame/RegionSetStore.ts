@@ -73,6 +73,10 @@ export class RegionSetStore {
         return this.regions?.filter(r => r.isValid && r.regionId !== 0)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
     }
 
+    @computed get isNewRegionAnnotation(): boolean {
+        return this.newRegionType > 6;
+    }
+
     @action addPointRegion = (center: Point2D, cursorRegion = false) => {
         return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, false, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
     };
@@ -194,7 +198,7 @@ export class RegionSetStore {
                     regionType,
                     regionId,
                     this.preference.annotationColor,
-                    this.preference.annotationLineWidth,
+                    this.preference.textAnnotationLineWidth,
                     this.preference.annotationDashLength,
                     rotation,
                     regionName

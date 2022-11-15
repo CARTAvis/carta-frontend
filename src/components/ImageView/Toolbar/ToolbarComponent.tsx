@@ -1,6 +1,7 @@
 import * as React from "react";
 import classNames from "classnames";
 import {CSSProperties} from "react";
+import {reaction} from "mobx";
 import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, FormGroup, IconName, Menu, MenuItem, PopoverPosition, Position, Switch} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
@@ -103,6 +104,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     render() {
+        reaction(
+            () => this.props.frame.regionSet.newRegionType,
+            (type: CARTA.RegionType) => {
+                this.props.setAnnotationMode(this.props.frame.regionSet.isNewRegionAnnotation ? true : false);
+            }
+        );
+
         const appStore = AppStore.Instance;
         const preferenceStore = appStore.preferenceStore;
         const overlay = appStore.overlayStore;

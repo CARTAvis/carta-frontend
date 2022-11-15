@@ -146,7 +146,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const globalColor = this.props.overlaySettings.global.color;
         const titleColor = this.props.overlaySettings.title.color;
         const gridColor = this.props.overlaySettings.grid.color;
-        const gridVisible = this.props.overlaySettings.grid.visible;
         const borderColor = this.props.overlaySettings.border.color;
         const oticksColor = this.props.overlaySettings.ticks.color;
         const axesColor = this.props.overlaySettings.axes.color;

@@ -117,8 +117,8 @@ export class TextAnnotationStore extends RegionStore {
 }
 
 export class VectorAnnotationStore extends RegionStore {
-    @observable pointerWidth: number = 20;
-    @observable pointerLength: number = 20;
+    @observable pointerWidth: number = 10;
+    @observable pointerLength: number = 10;
     @observable lengthScale: number = 1;
 
     constructor(
@@ -161,8 +161,8 @@ export class CompassAnnotationStore extends RegionStore {
     @observable pointerWidth: number = 10;
     @observable pointerLength: number = 10;
     @observable lengthScale: number = 1;
-    @observable northTextOffset: Point2D = {x: 0, y: 0};
-    @observable eastTextOffset: Point2D = {x: 0, y: 0};
+    @observable northTextOffset: Point2D = {x: 5, y: 15};
+    @observable eastTextOffset: Point2D = {x: 15, y: 5};
 
     constructor(
         backendService: BackendService,
@@ -229,10 +229,11 @@ export class CompassAnnotationStore extends RegionStore {
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.FrameSet): any {
         const originPoint = spatiallyMatched ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
         const transformed = AST.transformPoint(astTransform, originPoint.x, originPoint.y);
+        console.log(transformed);
 
         const delta1 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.includes("CDELT1"));
         const delta2 = this.activeFrame.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.includes("CDELT2"));
-        const frameView = this.activeFrame.requiredFrameView;
+        const frameView = this.activeFrame.requiredFrameViewForRegionRender;
         const top = frameView.yMax;
         const bottom = frameView.yMin;
         const left = frameView.xMin;

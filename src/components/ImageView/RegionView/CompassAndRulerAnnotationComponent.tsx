@@ -8,6 +8,7 @@ import {AppStore} from "stores";
 import {CompassAnnotationStore, FrameStore, RegionStore, RulerAnnotationStore} from "stores/Frame";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, midpoint2D, pointDistance, subtract2D, transformPoint} from "utilities";
+import {Point2D} from "models";
 
 interface CompassAnnotationProps {
     key: number;
@@ -42,7 +43,6 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             props.onSelect?.(props.region);
             props.region.beginEditing();
             mousePoint.current = konvaEvent.currentTarget.position();
-            console.log(mousePoint.current);
         }
     };
 
@@ -54,7 +54,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         if (konvaEvent.target) {
             const oldPosition = adjustPosToUnityStage(mousePoint.current, props.stageRef.current);
             const oldImagePosition = canvasToTransformedImagePos(oldPosition.x, oldPosition.y, frame, props.layerWidth, props.layerHeight);
-            const position = adjustPosToUnityStage(konvaEvent.currentTarget.position(), props.stageRef.current);
+            const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
             const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
             const deltaPosition = subtract2D(imagePosition, oldImagePosition);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
@@ -94,8 +94,6 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             const originPoints = transformedImageToCanvasPos(controlPoint, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
             const distance = pointDistance(anchorPos, originPoints);
 
-            console.log(frame.filename, distance, frame.zoomLevel, imageRatio);
-
             if (frame.spatialReference) {
                 positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
             }
@@ -113,6 +111,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     };
 
     const imageRatio = AppStore.Instance.imageRatio;
+    const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
     const approxPoints = region.getRegionApproximation(frame.wcsInfo, frame.spatialReference ? true : false, frame.spatialTransformAST);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
@@ -123,12 +122,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 
     for (let i = 0; i < northApproxPoints.length; i += 2) {
         const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        if (
-            pointDistance(point, originPoints) >=
-            (region.length * imageRatio) / frame.zoomLevel
-            // ||
-            // pointDistance({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, {x: northApproxPoints[0], y: northApproxPoints[1]}) >= Math.min(northLength, eastLength)
-        ) {
+        if (pointDistance(point, originPoints) >= (region.length * imageRatio) / frame.zoomLevel) {
             break;
         }
         northPointArray[i] = point.x - mousePoint.current.x;
@@ -137,12 +131,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 
     for (let i = 0; i < eastApproxPoints.length; i += 2) {
         const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        if (
-            pointDistance(point, originPoints) >=
-            (region.length * imageRatio) / frame.zoomLevel
-            // ||
-            // pointDistance({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, {x: eastApproxPoints[0], y: eastApproxPoints[1]}) >= Math.min(northLength, eastLength)
-        ) {
+        if (pointDistance(point, originPoints) >= (region.length * imageRatio) / frame.zoomLevel) {
             break;
         }
         eastPointArray[i] = point.x - mousePoint.current.x;
@@ -151,18 +140,10 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 
     // Dummy variables for triggering re-render
     /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-
     const system = AppStore.Instance.overlayStore.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
-
-    // const scale = React.useRef(frame.zoomLevel); //store the initial frame zoomLevel
-
-    React.useEffect(() => {
-        region.setLengthScale(imageRatio / frame.zoomLevel);
-        // eslint-disable-next-line
-    }, [frame.zoomLevel]);
 
     return (
         <>
@@ -178,8 +159,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={eastPointArray}
-                    pointerWidth={(region.pointerWidth * imageRatio) / frame.zoomLevel}
-                    pointerLength={(region.pointerLength * imageRatio) / frame.zoomLevel}
+                    pointerWidth={(region.pointerWidth * imageRatio) / zoomLevel}
+                    pointerLength={(region.pointerLength * imageRatio) / zoomLevel}
                 />
                 <Arrow
                     stroke={region.color}
@@ -192,34 +173,34 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={northPointArray}
-                    pointerWidth={(region.pointerWidth * imageRatio) / frame.zoomLevel}
-                    pointerLength={(region.pointerLength * imageRatio) / frame.zoomLevel}
+                    pointerWidth={(region.pointerWidth * imageRatio) / zoomLevel}
+                    pointerLength={(region.pointerLength * imageRatio) / zoomLevel}
                 />
                 <Text
                     x={northPointArray[northPointArray.length - 2]}
                     y={northPointArray[northPointArray.length - 1]}
-                    offsetX={region.northTextOffset.x}
-                    offsetY={region.northTextOffset.y}
+                    offsetX={(region.northTextOffset.x * imageRatio) / zoomLevel}
+                    offsetY={(region.northTextOffset.y * imageRatio) / zoomLevel}
                     text={region.northLabel}
                     stroke={region.color}
                     fill={region.color}
-                    strokeWidth={(region.lineWidth * imageRatio) / frame.zoomLevel}
+                    strokeWidth={(region.lineWidth * imageRatio) / zoomLevel}
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    fontSize={(region.fontSize * imageRatio) / frame.zoomLevel}
+                    fontSize={(region.fontSize * imageRatio) / zoomLevel}
                 />
                 <Text
                     x={eastPointArray[eastPointArray.length - 2]}
                     y={eastPointArray[eastPointArray.length - 1]}
-                    offsetX={region.eastTextOffset.x}
-                    offsetY={region.eastTextOffset.y}
+                    offsetX={(region.eastTextOffset.x * imageRatio) / zoomLevel}
+                    offsetY={(region.eastTextOffset.y * imageRatio) / zoomLevel}
                     text={region.eastLabel}
                     stroke={region.color}
                     fill={region.color}
-                    strokeWidth={(region.lineWidth * imageRatio) / frame.zoomLevel}
+                    strokeWidth={(region.lineWidth * imageRatio) / zoomLevel}
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    fontSize={(region.fontSize * imageRatio) / frame.zoomLevel}
+                    fontSize={(region.fontSize * imageRatio) / zoomLevel}
                 />
             </Group>
             <Group>
@@ -348,6 +329,33 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
         region.endEditing();
     };
 
+    const getDistanceText = (wcsInfo: AST.FrameSet, start: Point2D, finish: Point2D) => {
+        const distance = ((AST.geodesicDistance(wcsInfo, start.x, start.y, finish.x, finish.y) / 3600) * Math.PI) / 180.0;
+        console.log(distance);
+        const unit = AST.getString(wcsInfo, "Unit(1)");
+        let distString: string;
+        if (unit.includes("degree") || unit.includes("hh:mm:s")) {
+            if (distance < Math.PI / 180.0 / 60.0) {
+                distString = (((distance * 180.0) / Math.PI) * 3600.0).toFixed(6).toString();
+                distString += '"';
+            } else if (distance < Math.PI / 180.0) {
+                distString = (((distance * 180.0) / Math.PI) * 60.0).toFixed(6).toString();
+                distString += "'";
+            } else {
+                distString = ((distance * 180.0) / Math.PI).toFixed(6).toString();
+                distString += "\u00B0";
+            }
+        } else {
+            distString = distance.toString();
+            if (unit[0] === "\0") {
+                distString += "pix";
+            }
+        }
+        return distString;
+    };
+
+    const imageRatio = AppStore.Instance.imageRatio;
+    const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
     const secondaryImagePointStart = frame.spatialReference ? transformPoint(frame.spatialTransformAST, region.controlPoints[0], false) : region.controlPoints[0];
     const secondaryImagePointFinish = frame.spatialReference ? transformPoint(frame.spatialTransformAST, region.controlPoints[1], false) : region.controlPoints[1];
     const canvasPosStart = transformedImageToCanvasPos(secondaryImagePointStart, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
@@ -381,12 +389,10 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
     }
 
     const centerPoints = midpoint2D({x: hypotenusePointArray[0], y: hypotenusePointArray[1]}, {x: hypotenusePointArray[hypotenusePointArray.length - 2], y: hypotenusePointArray[hypotenusePointArray.length - 1]});
-    const distance = AST.geodesicDistance(frame.wcsInfo, secondaryImagePointStart.x, secondaryImagePointStart.y, secondaryImagePointFinish.x, secondaryImagePointFinish.y);
-    const distanceText: string = distance.toString() + "\u00B0";
+    const distanceText = getDistanceText(frame.wcsInfo, secondaryImagePointStart, secondaryImagePointFinish);
 
     // Dummy variables for triggering re-render
     /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-    const imageRatio = AppStore.Instance.imageRatio;
     const system = AppStore.Instance.overlayStore.global.explicitSystem;
     const darktheme = AppStore.Instance.darkTheme;
     const title = frame.titleCustomText;
@@ -439,10 +445,10 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     text={distanceText}
                     stroke={region.color}
                     fill={region.color}
-                    strokeWidth={(region.lineWidth * imageRatio) / frame.zoomLevel}
+                    strokeWidth={imageRatio / zoomLevel}
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    fontSize={(region.fontSize * imageRatio) / frame.zoomLevel}
+                    fontSize={(region.fontSize * imageRatio) / zoomLevel}
                 />
             </Group>
             <Group>

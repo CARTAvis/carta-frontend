@@ -82,6 +82,7 @@ export enum PreferenceKeys {
     ANNOTATION_SIZE = "annotationSize",
     POINT_ANNOTATION_SHAPE = "pointAnnotationShape",
     POINT_ANNOTATION_WIDTH = "pointAnnotationWidth",
+    TEXT_ANNOTATION_LINE_WIDTH = "textAnnotationLineWidth",
 
     PERFORMANCE_IMAGE_COMPRESSION_QUALITY = "imageCompressionQuality",
     PERFORMANCE_ANIMATION_COMPRESSION_QUALITY = "animationCompressionQuality",
@@ -210,7 +211,8 @@ const DEFAULTS = {
         annotationCreationMode: RegionCreationMode.CENTER,
         annotationSize: 30,
         pointAnnotationShape: POINTSHAPE.SQUARE,
-        pointAnnotationWidth: 6
+        pointAnnotationWidth: 6,
+        textAnnotationLineWidth: 1
     },
     PERFORMANCE: {
         imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
@@ -542,6 +544,10 @@ export class PreferenceStore {
 
     @computed get pointAnnotationWidth(): number {
         return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? DEFAULTS.ANNOTATION.pointAnnotationWidth;
+    }
+
+    @computed get textAnnotationLineWidth(): number {
+        return this.preferences.get(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.textAnnotationLineWidth;
     }
 
     // getters for performance
