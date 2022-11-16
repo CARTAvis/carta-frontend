@@ -139,6 +139,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
+        const styleString = this.props.overlaySettings.styleString;
         const frameView = refFrame.requiredFrameView;
         const framePadding = this.props.overlaySettings.padding;
         const moving = frame.moving;
