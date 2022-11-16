@@ -478,7 +478,6 @@ export class AppStore {
             this.frames[existingFrameIndex].clearContours(false);
             this.frames[existingFrameIndex] = newFrame;
         } else {
-            // if(ack.fileId === 1000) newFrame.frameInfo.fileId = 1000 + this.frames[0]?.pvImages.length;
             this.frames.push(newFrame);
         }
 
@@ -1060,14 +1059,14 @@ export class AppStore {
         }
     };
 
-    @flow.bound *requestPV(message: CARTA.IPvRequest, frame: FrameStore, keep: boolean) {
+    @flow.bound *requestPV(message: CARTA.IPvRequest, frame: FrameStore, keepExisting: boolean) {
         if (!message || !frame) {
             return;
         }
 
         this.startFileLoading();
         // clear previously generated moment images under this frame
-        if (!keep) {
+        if (!keepExisting) {
             if (frame.pvImages) {
                 frame.pvImages.forEach(pvImage => this.closeFile(pvImage));
             }
