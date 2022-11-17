@@ -63,7 +63,14 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             this.props.onSelect?.(region);
 
             // Add a new control point to the region between two existing control points
-            if (region.regionType !== CARTA.RegionType.LINE && this.hoverIntersection && this.hoverIndex >= 0 && this.hoverIndex < region.controlPoints.length) {
+            if (
+                region.regionType !== CARTA.RegionType.LINE &&
+                region.regionType !== CARTA.RegionType.ANNLINE &&
+                region.regionType !== CARTA.RegionType.ANNVECTOR &&
+                this.hoverIntersection &&
+                this.hoverIndex >= 0 &&
+                this.hoverIndex < region.controlPoints.length
+            ) {
                 const currentControlPoints = region.controlPoints.slice(0);
                 currentControlPoints.splice(this.hoverIndex + 1, 0, this.hoverIntersection);
                 // Skip SET_REGION update, since the new control point lies on the line between two existing points
@@ -110,7 +117,11 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     positionImageSpace = transformPoint(frame.spatialTransformAST, positionImageSpace, true);
                 }
                 const isCtrlPressed = evt.ctrlKey || evt.metaKey;
-                if (region.regionType !== CARTA.RegionType.LINE || (this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
+                if (
+                    (region.regionType !== CARTA.RegionType.LINE && region.regionType !== CARTA.RegionType.ANNLINE && region.regionType !== CARTA.RegionType.ANNVECTOR) ||
+                    (this.props.isRegionCornerMode && !isCtrlPressed) ||
+                    (!this.props.isRegionCornerMode && isCtrlPressed)
+                ) {
                     region.setControlPoint(index, positionImageSpace);
                     this.hoverIntersection = null;
                 } else {
@@ -245,7 +256,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 onDragStart={this.handleAnchorDragStart}
                 onDragEnd={this.handleAnchorDragEnd}
                 onDragMove={this.handleAnchorDrag}
-                onDblClick={this.props.region.regionType === CARTA.RegionType.LINE ? null : this.handleAnchorDoubleClick}
+                onDblClick={
+                    this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR ? null : this.handleAnchorDoubleClick
+                }
                 isLineRegion={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR}
             />
         );
@@ -286,7 +299,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     return this.anchorNode(pCanvasPos.x, pCanvasPos.y, rotation, i);
                 });
 
-                if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
+                if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
                     // trigger rotation anchor re-render when zooming
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const zoomLevel = frame.spatialReference?.zoomLevel;
@@ -314,7 +327,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                     anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i);
                 }
 
-                if (region.regionType === CARTA.RegionType.LINE && frame.hasSquarePixels) {
+                if ((this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE || this.props.region.regionType === CARTA.RegionType.ANNVECTOR) && frame.hasSquarePixels) {
                     // trigger rotation anchor re-render when zooming
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const zoomLevel = frame.zoomLevel;
@@ -377,9 +390,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                         onClick={this.handleClick}
                         onDblClick={this.handleDoubleClick}
                         onContextMenu={this.handleContextMenu}
-                        onMouseEnter={region.regionType === CARTA.RegionType.LINE ? null : this.handleStrokeMouseEnter}
-                        onMouseLeave={region.regionType === CARTA.RegionType.LINE ? null : this.handleStrokeMouseLeave}
-                        onMouseMove={region.regionType === CARTA.RegionType.LINE ? null : this.handleMouseMove}
+                        onMouseEnter={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? null : this.handleStrokeMouseEnter}
+                        onMouseLeave={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? null : this.handleStrokeMouseLeave}
+                        onMouseMove={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? null : this.handleMouseMove}
                         onDragStart={this.handleDragStart}
                         onDragEnd={this.handleDragEnd}
                         onDragMove={this.handleDrag}

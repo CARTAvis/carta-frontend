@@ -466,7 +466,7 @@ export class RegionStore {
         if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
             this.simplePolygonTest();
         }
-        if ((this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) && controlPoints.length === 2) {
+        if ((this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) && controlPoints.length === 2) {
             this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
         }
         this.modifiedTimestamp = performance.now();
@@ -477,7 +477,7 @@ export class RegionStore {
     };
 
     @action setCenter = (p: Point2D, skipUpdate = false) => {
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
             const rotation = (this.rotation * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
@@ -493,7 +493,7 @@ export class RegionStore {
     };
 
     @action setSize = (p: Point2D, skipUpdate = false) => {
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
             const newStart = {x: this.center.x - p.x / 2, y: this.center.y - p.y / 2};
             const newEnd = {x: this.center.x + p.x / 2, y: this.center.y + p.y / 2};
             this.setControlPoints([newStart, newEnd]);
@@ -515,7 +515,7 @@ export class RegionStore {
                 this.simplePolygonTest(index);
             }
 
-            if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) {
+            if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
                 this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
             }
         }
@@ -540,7 +540,7 @@ export class RegionStore {
             this.simplePolygonTest();
         }
 
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
             this.rotation = points.length === 2 ? this.getLineAngle(points[0], points[1]) : 0;
         }
 
@@ -564,7 +564,7 @@ export class RegionStore {
         if (!this.activeFrame?.hasSquarePixels) {
             return;
         }
-        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
             const rotation = (((angle + 360) % 360) * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps

@@ -67,7 +67,13 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         const target = konvaEvent.target;
         const stage = target?.getStage();
         if (stage) {
-            stage.container().style.cursor = "move";
+            if (target.id().includes("origin")) {
+                stage.container().style.cursor = "move";
+            } else if (target.id().includes("eastTip")) {
+                stage.container().style.cursor = "ew-resize";
+            } else if (target.id().includes("northTip")) {
+                stage.container().style.cursor = "ns-resize";
+            }
         }
     };
 
@@ -202,6 +208,19 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
                 />
+                {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
+                <Line
+                    closed
+                    points={[
+                        northPointArray[northPointArray.length - 2],
+                        northPointArray[northPointArray.length - 1],
+                        eastPointArray[eastPointArray.length - 2],
+                        eastPointArray[eastPointArray.length - 1],
+                        eastPointArray[0],
+                        eastPointArray[1]
+                    ]}
+                    opacity={0}
+                />
             </Group>
             <Group>
                 {props.selected && (
@@ -252,6 +271,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
     const shapeRef = React.useRef();
     const mousePoint = React.useRef({x: 0, y: 0});
+    const distanceTextRef = React.useRef<Konva.Text>();
 
     const frame = props.frame;
     const region = props.region as RulerAnnotationStore;
@@ -331,7 +351,6 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
 
     const getDistanceText = (wcsInfo: AST.FrameSet, start: Point2D, finish: Point2D) => {
         const distance = ((AST.geodesicDistance(wcsInfo, start.x, start.y, finish.x, finish.y) / 3600) * Math.PI) / 180.0;
-        console.log(distance);
         const unit = AST.getString(wcsInfo, "Unit(1)");
         let distString: string;
         if (unit.includes("degree") || unit.includes("hh:mm:s")) {
@@ -398,6 +417,10 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
     const title = frame.titleCustomText;
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
+    React.useEffect(() => {
+        region.setTextOffset(distanceTextRef?.current?.textWidth / 2, true);
+    }, []);
+
     return (
         <>
             <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
@@ -438,6 +461,7 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     points={[...yPointArray, xPointArray[0], xPointArray[1]]} //Connect the lines together
                 />
                 <Text
+                    ref={distanceTextRef}
                     x={centerPoints.x}
                     y={centerPoints.y}
                     offsetX={region.textOffset.x}
@@ -445,11 +469,13 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     text={distanceText}
                     stroke={region.color}
                     fill={region.color}
-                    strokeWidth={imageRatio / zoomLevel}
+                    strokeWidth={(0.5 * imageRatio) / zoomLevel}
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
                 />
+                {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
+                {region.auxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}
             </Group>
             <Group>
                 {props.selected && (
