@@ -15,9 +15,9 @@ import {AppStore, CatalogStore, CatalogProfileStore, CatalogOnlineQueryProfileSt
 import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
 import {toFixed, ProcessedColumnData} from "utilities";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
-import "./CatalogOverlayComponent.scss";
 import {ImageViewLayer} from "components/ImageView/ImageViewComponent";
 import {RegionMode} from "stores/Frame";
+import "./CatalogOverlayComponent.scss";
 
 enum HeaderTableColumnName {
     Name = "Name",
