@@ -156,7 +156,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return spectralType === SpectralType.CHANNEL ? toFixed(data) : toFormattedNotationByDiff(data, diff);
     };
 
-    private genCursoInfoString = (data: Point2D[], smoothedData: Point2D[], secondaryXData: number[], cursorXValue: number, cursorXUnit: string, label: string): string => {
+    private genCursorInfoString = (data: Point2D[], smoothedData: Point2D[], secondaryXData: number[], cursorXValue: number, cursorXUnit: string, label: string): string => {
         const frame = this.widgetStore.effectiveFrame;
 
         let diffLeft: number = undefined;
@@ -181,8 +181,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 diffLeft = data.length === 1 ? 1e-9 : Math.abs(secondaryXData[currentIndex] - secondaryXData[neighborIndex]);
                 const secondaryXStr = this.precisionFormatting(secondaryXData[currentIndex], diffLeft, frame.spectralTypeSecondary);
 
-                if (frame.spectralTypeSecondary !== SpectralType.CHANNEL) secondaryXUnit = frame.spectralUnitSecondary;
-                else secondaryChannelString = "Channel";
+                if (frame.spectralTypeSecondary !== SpectralType.CHANNEL) {
+                    secondaryXUnit = frame.spectralUnitSecondary;
+                } else {
+                    secondaryChannelString = "Channel";
+                }
 
                 xLabel += secondaryChannelString === "Channel" ? `, Channel ${secondaryXStr}` : `, ${secondaryXStr}${secondaryXUnit ? ` ${secondaryXUnit}` : ""}`;
             }
@@ -212,7 +215,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const data = this.plotData.data[0];
                 const smoothedData = this.plotData.smoothedData[0];
                 const secondary = this.plotData.secondaryXData[0];
-                const cursorInfoString = this.genCursoInfoString(data, smoothedData, secondary, cursorXValue, cursorXUnit, label);
+                const cursorInfoString = this.genCursorInfoString(data, smoothedData, secondary, cursorXValue, cursorXUnit, label);
                 profilerInfo.push({
                     infoString: this.isMeanRmsVisible ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}` : cursorInfoString
                 });
@@ -221,7 +224,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const data = this.plotData.data[i];
                     const smoothedData = this.plotData.smoothedData[i];
                     const secondary = this.plotData.secondaryXData[i];
-                    const cursorInfoString = this.genCursoInfoString(data, smoothedData, secondary, cursorXValue, cursorXUnit, label);
+                    const cursorInfoString = this.genCursorInfoString(data, smoothedData, secondary, cursorXValue, cursorXUnit, label);
                     profilerInfo.push({
                         color: this.plotData.colors?.[i],
                         infoString: `${cursorInfoString}, ${this.plotData.labels?.[i]?.image}, ${this.plotData.labels?.[i]?.plot}`
