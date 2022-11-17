@@ -419,7 +419,7 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
 
     React.useEffect(() => {
         region.setTextOffset(distanceTextRef?.current?.textWidth / 2, true);
-    }, []);
+    }, [region]);
 
     return (
         <>
