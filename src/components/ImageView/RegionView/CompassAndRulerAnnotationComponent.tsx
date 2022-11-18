@@ -24,7 +24,8 @@ interface CompassAnnotationProps {
 
 export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     const shapeRef = React.useRef();
-
+    const northLabelRef = React.useRef<Konva.Text>();
+    const eastLabelRef = React.useRef<Konva.Text>();
     const frame = props.frame;
     const region = props.region as CompassAnnotationStore;
     const mousePoint = React.useRef({x: 0, y: 0});
@@ -151,6 +152,46 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     const title = frame.titleCustomText;
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
+    const getOffset = () => {
+        const northDiffX = northPointArray[northPointArray.length - 4] - northPointArray[northPointArray.length - 2];
+        const northDiffY = northPointArray[northPointArray.length - 3] - northPointArray[northPointArray.length - 1];
+        const eastDiffX = eastPointArray[eastPointArray.length - 4] - eastPointArray[eastPointArray.length - 2];
+        const eastDiffY = eastPointArray[eastPointArray.length - 3] - eastPointArray[eastPointArray.length - 1];
+        let northAngle = Math.atan(northDiffY / northDiffX);
+        let eastAngle = Math.atan(eastDiffY / eastDiffX);
+
+        let northXOffset = northLabelRef?.current?.textWidth / 2;
+        let northYOffset = northLabelRef?.current?.textHeight / 2;
+        let eastXOffset = eastLabelRef?.current?.textWidth / 2;
+        let eastYOffset = eastLabelRef?.current?.textHeight / 2;
+
+        const northTranslation = Math.min(northLabelRef?.current?.textWidth, northLabelRef?.current?.textHeight);
+        const eastTranslation = Math.min(eastLabelRef?.current?.textWidth, eastLabelRef?.current?.textHeight);
+
+        if (northDiffX < 0) {
+            northAngle += Math.PI;
+        }
+
+        if (eastDiffX < 0) {
+            eastAngle += Math.PI;
+        }
+
+        northXOffset += Math.cos(northAngle) * northTranslation;
+        northYOffset += Math.sin(northAngle) * northTranslation;
+        eastXOffset += Math.cos(eastAngle) * eastTranslation;
+        eastYOffset += Math.sin(eastAngle) * eastTranslation;
+
+        region.setNorthTextOffset((northXOffset * zoomLevel) / imageRatio, true);
+        region.setNorthTextOffset((northYOffset * zoomLevel) / imageRatio, false);
+        region.setEastTextOffset((eastXOffset * zoomLevel) / imageRatio, true);
+        region.setEastTextOffset((eastYOffset * zoomLevel) / imageRatio, false);
+    };
+
+    React.useEffect(() => {
+        getOffset();
+        // eslint-disable-next-line
+    }, []);
+
     return (
         <>
             <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
@@ -183,6 +224,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     pointerLength={(region.pointerLength * imageRatio) / zoomLevel}
                 />
                 <Text
+                    ref={northLabelRef}
                     x={northPointArray[northPointArray.length - 2]}
                     y={northPointArray[northPointArray.length - 1]}
                     offsetX={(region.northTextOffset.x * imageRatio) / zoomLevel}
@@ -196,6 +238,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
                 />
                 <Text
+                    ref={eastLabelRef}
                     x={eastPointArray[eastPointArray.length - 2]}
                     y={eastPointArray[eastPointArray.length - 1]}
                     offsetX={(region.eastTextOffset.x * imageRatio) / zoomLevel}
@@ -209,18 +252,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
                 />
                 {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
-                <Line
-                    closed
-                    points={[
-                        northPointArray[northPointArray.length - 2],
-                        northPointArray[northPointArray.length - 1],
-                        eastPointArray[eastPointArray.length - 2],
-                        eastPointArray[eastPointArray.length - 1],
-                        eastPointArray[0],
-                        eastPointArray[1]
-                    ]}
-                    opacity={0}
-                />
+                <Line closed points={[...northPointArray, eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], ...eastPointArray]} opacity={0} />
             </Group>
             <Group>
                 {props.selected && (
