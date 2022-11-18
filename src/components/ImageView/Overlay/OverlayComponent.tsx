@@ -179,6 +179,16 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
                     `${frame.spectralType && frame.spectralSystem ? `Label(2)=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
+        } else if (frame.isSpectralVsDirection && frame.spectralAxis?.valid) {
+            const spectralAxis = frame.spectralAxis?.dimension;
+            AST.set(
+                frame.wcsInfo,
+                `${frame.spectralType ? `System(${spectralAxis})=${frame.spectralType},` : ""}` +
+                    `${frame.spectralUnit ? `Unit(${spectralAxis})=${frame.spectralUnit},` : ""}` +
+                    `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
+                    `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
+                    `${frame.spectralType && frame.spectralSystem ? `Label(${spectralAxis})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
+            );
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});
