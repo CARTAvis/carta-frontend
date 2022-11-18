@@ -286,7 +286,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.widgetStore.setKeep(e.checked);
-                            console.log(this.widgetStore.keep);
                         }}
                     />
                 </FormGroup>
