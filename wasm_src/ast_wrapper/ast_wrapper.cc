@@ -673,6 +673,31 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* make2DSwappedFrameSet( AstFrameSet* originFram
     // Transform the pixel positions into world coordinates
     astTranN(originFrameSet, nsample, axisCount, nsample, posData, 1, axisCount, nsample, worldData);
 
+    // "Smooth" the delta rad that its max difference between two adjacent elements should not be greater than PI
+    bool smooth_delta_rad(false);
+    for (int i = 0; i < nsample - 1; ++i)
+    {
+        double rad_i = *(worldData + (dirAxis - 1) * nsample + i);
+        double rad_j = *(worldData + (dirAxis - 1) * nsample + i + 1);
+        if ((std::signbit(rad_i) != std::signbit(rad_j)) && (fabs(rad_i - rad_j) >= M_PI))
+        {
+            smooth_delta_rad = true;
+            break;
+        }
+    }
+
+    if (smooth_delta_rad)
+    {
+        for (int i = 0; i < nsample; ++i)
+        {
+            double tmp_rad = *(worldData + (dirAxis - 1) * nsample + i);
+            if (tmp_rad < 0)
+            {
+                *(worldData + (dirAxis - 1) * nsample + i) = M_PI * 2 + tmp_rad;
+            }
+        }
+    }
+
     // Create a lookup table that transforms 1D pixel axis (on the pixel axis that is being retained) into the
     // corresponding value on the retained celestial axis
     AstLutMap* dirLutMap = astLutMap(nsample, worldData + (dirAxis - 1) * nsample, 1.0, 1.0, " ");

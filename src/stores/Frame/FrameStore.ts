@@ -1036,7 +1036,6 @@ export class FrameStore {
         } else if (this.isSpectralVsDirection) {
             const astFrameSet = this.initSpectralVsDirectionFrame();
             if (astFrameSet) {
-                AST.set(astFrameSet, "Equinox=2005"); // To avoid negative angles on the RA axis
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfoSpectralVsDirection = AST.copy(astFrameSet);
                 this.updateSpectralVsDirectionWcs();
