@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed issue to show cursor info of smoothed profiles in the spatial and spectral profilers ([#1880](https://github.com/CARTAvis/carta-frontend/issues/1880), [#1938](https://github.com/CARTAvis/carta-frontend/pull/1938)).
 * Fixed mean and RMS not updating when smoothing in the spatial and spectral profilers ([#1838](https://github.com/CARTAvis/carta-frontend/issues/1838)).
 * Fixed limitations of the point size for catalog overlay rendering ([#1662](https://github.com/CARTAvis/carta-frontend/issues/1662) and [#1802](https://github.com/CARTAvis/carta-frontend/issues/1802)).
+* Fixed the issue of updating image view mode when catalog selection button is disabled ([#1967](https://github.com/CARTAvis/carta-frontend/issues/1967)).
 ### Changed
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
 
