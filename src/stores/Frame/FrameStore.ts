@@ -576,6 +576,18 @@ export class FrameStore {
         return (spectral === 1 && (dirX === 2 || dirY === 2)) || (spectral === 2 && (dirX === 1 || dirY === 1));
     }
 
+    @computed get depthAxisInfo(): string {
+        const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+        const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
+        if (dirX === 3 || dirX === 4) {
+            return "X pixel\ncoordinate";
+        } else if (dirY === 3 || dirY === 4) {
+            return "Y pixel\ncoordinate";
+        } else {
+            return "Unknown\ncoordinate";
+        }
+    }
+
     @computed get isSwappedXY(): boolean {
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
