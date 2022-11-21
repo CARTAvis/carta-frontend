@@ -214,7 +214,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 this.regionStartPoint = cursorPosImageSpace;
                 break;
             case CARTA.RegionType.ANNCOMPASS:
-                this.creatingRegion = frame.regionSet.addAnnCompassRegion([cursorPosImageSpace, cursorPosImageSpace], true);
+                this.creatingRegion = frame.regionSet.addAnnCompassRegion(cursorPosImageSpace, 100, true);
                 this.regionStartPoint = cursorPosImageSpace;
                 break;
             case CARTA.RegionType.ANNRULER:
@@ -344,11 +344,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNVECTOR:
                     this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
                     break;
-                case CARTA.RegionType.ANNCOMPASS:
-                    // const length = Math.min(Math.abs(this.regionStartPoint.x - cursorPosImageSpace.x), Math.abs(this.regionStartPoint.y - cursorPosImageSpace.y)) * 2;
-                    // (this.creatingRegion as CompassAnnotationStore).setLength(length);
-                    this.creatingRegion.setControlPoints([this.regionStartPoint]);
-                    break;
                 case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);
                     break;
@@ -373,11 +368,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
                     this.creatingRegion.setControlPoints([{x: cursorPosImageSpace.x - 2 * dx, y: cursorPosImageSpace.y - 2 * dy}, cursorPosImageSpace]);
-                    break;
-                case CARTA.RegionType.ANNCOMPASS:
-                    // const length = Math.min(Math.abs(this.regionStartPoint.x - cursorPosImageSpace.x), Math.abs(this.regionStartPoint.y - cursorPosImageSpace.y)) * 2;
-                    // (this.creatingRegion as CompassAnnotationStore).setLength(length);
-                    this.creatingRegion.setControlPoints([this.regionStartPoint]);
                     break;
                 case CARTA.RegionType.ANNRULER:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, cursorPosImageSpace]);

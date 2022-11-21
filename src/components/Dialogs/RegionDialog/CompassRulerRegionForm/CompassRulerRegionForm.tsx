@@ -66,46 +66,11 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         }
     };
 
-    private inputWCSMode = (region, wcsInfo, WCSStart, WCSFinish, finish: boolean) => {
-        return (
-            <>
-                <td>
-                    <FormGroup inline={true}>
-                        <SafeNumericInput
-                            selectAllOnFocus
-                            allowNumericCharactersOnly={false}
-                            buttonPosition="none"
-                            value={finish ? WCSFinish?.x : WCSStart?.x}
-                            onBlur={event => this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, true, finish, false)}
-                            onKeyDown={event => {
-                                if (event.type === "keydown" && event.key === KEYCODE_ENTER) this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, true, finish, false);
-                            }}
-                        />
-                    </FormGroup>
-                </td>
-                <td>
-                    <FormGroup inline={true}>
-                        <SafeNumericInput
-                            selectAllOnFocus
-                            allowNumericCharactersOnly={false}
-                            buttonPosition="none"
-                            value={finish ? WCSFinish?.y : WCSStart?.y}
-                            onBlur={event => this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, false, finish, false)}
-                            onKeyDown={event => {
-                                if (event.type === "keydown" && event.key === KEYCODE_ENTER) this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, false, finish, false);
-                            }}
-                        />
-                    </FormGroup>
-                </td>
-            </>
-        );
-    };
-
-    private inputPixelMode = (region, wcsInfo, WCSStart, WCSFinish, finish: boolean) => {
+    private coordinateInput = (region, wcsInfo, WCSStart, WCSFinish, finish: boolean, pixel: boolean) => {
         const handleOnKeyDown = (isX: boolean) => {
             return (event: React.KeyboardEvent<HTMLInputElement>) => {
                 if (event.type === "keydown" && event.key === KEYCODE_ENTER) {
-                    this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, isX, finish, true);
+                    this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, isX, finish, pixel);
                 }
             };
         };
@@ -117,8 +82,8 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                         <SafeNumericInput
                             selectAllOnFocus
                             buttonPosition="none"
-                            value={finish ? region?.controlPoints[1].x : region?.controlPoints[0].x}
-                            onBlur={event => this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, true, finish, true)}
+                            value={pixel ? (finish ? region?.controlPoints[1].x : region?.controlPoints[0].x) : finish ? WCSFinish?.x : WCSStart?.x}
+                            onBlur={event => this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, true, finish, pixel)}
                             onKeyDown={handleOnKeyDown(true)}
                         />
                     </FormGroup>
@@ -128,8 +93,8 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                         <SafeNumericInput
                             selectAllOnFocus
                             buttonPosition="none"
-                            value={finish ? region?.controlPoints[1].y : region?.controlPoints[0].y}
-                            onBlur={event => this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, false, finish, true)}
+                            value={pixel ? (finish ? region?.controlPoints[1].y : region?.controlPoints[0].y) : finish ? WCSFinish?.y : WCSStart?.y}
+                            onBlur={event => this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, false, finish, pixel)}
                             onKeyDown={handleOnKeyDown(false)}
                         />
                     </FormGroup>
@@ -316,24 +281,6 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                         <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
                                     </td>
                                 </tr>
-                                {region.regionType === CARTA.RegionType.ANNRULER && (
-                                    <tr className="compass-ruler-annotation-table-input">
-                                        <td>
-                                            Start
-                                            {wcsInfo ? "" : " (px)"}
-                                        </td>
-                                        {region.coordinate === RegionCoordinate.World && wcsInfo ? this.inputWCSMode(region, wcsInfo, WCSStart, WCSFinish, false) : this.inputPixelMode(region, wcsInfo, WCSStart, WCSFinish, false)}
-                                        <td colSpan={3}>
-                                            {wcsInfo ? (
-                                                <span className="info-string">
-                                                    {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}
-                                                </span>
-                                            ) : (
-                                                ""
-                                            )}
-                                        </td>
-                                    </tr>
-                                )}
                                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                                     <tr className="compass-ruler-annotation-table-input">
                                         <td>Length (px)</td>
@@ -351,20 +298,42 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                 )}
                                 <tr className="compass-ruler-annotation-table-input">
                                     <td>
-                                        {region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Finish"}
+                                        {region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Start"}
                                         {wcsInfo ? "" : " (px)"}
                                     </td>
-                                    {region.coordinate === RegionCoordinate.World && wcsInfo ? this.inputWCSMode(region, wcsInfo, WCSStart, WCSFinish, true) : this.inputPixelMode(region, wcsInfo, WCSStart, WCSFinish, true)}
+                                    {region.coordinate === RegionCoordinate.World && wcsInfo
+                                        ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, false)
+                                        : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, true)}
                                     <td colSpan={3}>
                                         {wcsInfo ? (
                                             <span className="info-string">
-                                                {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}
+                                                {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}
                                             </span>
                                         ) : (
                                             ""
                                         )}
                                     </td>
                                 </tr>
+                                {region.regionType === CARTA.RegionType.ANNRULER && (
+                                    <tr className="compass-ruler-annotation-table-input">
+                                        <td>
+                                            Finish
+                                            {wcsInfo ? "" : " (px)"}
+                                        </td>
+                                        {region.coordinate === RegionCoordinate.World && wcsInfo
+                                            ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, false)
+                                            : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, true)}
+                                        <td colSpan={3}>
+                                            {wcsInfo ? (
+                                                <span className="info-string">
+                                                    {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}
+                                                </span>
+                                            ) : (
+                                                ""
+                                            )}
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

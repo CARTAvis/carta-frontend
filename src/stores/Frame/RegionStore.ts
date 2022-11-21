@@ -218,6 +218,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.ANNTEXT:
+            case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints[SIZE_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
@@ -227,7 +228,6 @@ export class RegionStore {
             case CARTA.RegionType.LINE:
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
-            case CARTA.RegionType.ANNCOMPASS:
             case CARTA.RegionType.ANNRULER:
                 return subtract2D(this.controlPoints[0], this.controlPoints[1]);
             default:
@@ -254,12 +254,12 @@ export class RegionStore {
                 return this.size;
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNCOMPASS:
                 return scale2D(this.size, 2);
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
             case CARTA.RegionType.ANNPOLYLINE:
-            case CARTA.RegionType.ANNCOMPASS:
             case CARTA.RegionType.ANNRULER:
                 const boundingBox = minMax2D(this.controlPoints);
                 return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
@@ -302,12 +302,12 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.ANNTEXT:
+            case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
             case CARTA.RegionType.ANNPOLYLINE:
-            case CARTA.RegionType.ANNCOMPASS:
             case CARTA.RegionType.ANNRULER:
                 return this.controlPoints.length >= 1;
             case CARTA.RegionType.LINE:

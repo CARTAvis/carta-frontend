@@ -132,8 +132,8 @@ export class RegionSetStore {
         return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNTEXT, temporary, true);
     };
 
-    @action addAnnCompassRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNCOMPASS, temporary, true);
+    @action addAnnCompassRegion = (point: Point2D, length: number, temporary: boolean = false) => {
+        return this.addRegion([point, {x: length, y: length}], 0, CARTA.RegionType.ANNCOMPASS, temporary, true);
     };
 
     @action addAnnRulerRegion = (points: Point2D[], temporary: boolean = false) => {
