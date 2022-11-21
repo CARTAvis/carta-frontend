@@ -128,7 +128,7 @@ Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
 Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
 Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
-Module.make2DSwappedFrameSet = Module.cwrap("make2DSwappedFrameSet", "number", ["number", "number", "number", "number", "number", "number"]);
+Module.makeSwappedFrameSet = Module.cwrap("makeSwappedFrameSet", "number", ["number", "number", "number", "number", "number"]);
 
 Module.currentFormatStrings = [];
 

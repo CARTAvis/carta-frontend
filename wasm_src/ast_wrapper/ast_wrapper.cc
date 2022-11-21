@@ -588,9 +588,10 @@ EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin,
     return out;
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* make2DSwappedFrameSet( AstFrameSet* originFrameSet, int dirAxis, int spectralAxis, int pixelZ, int dirAxisSize, int axisCount)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* makeSwappedFrameSet(AstFrameSet* originFrameSet, int dirAxis, int spectralAxis, int pixelZ, int dirAxisSize)
 {
     astBegin;
+    int axisCount = 3;
 
     if (astGetI(originFrameSet, "Nin") != axisCount || astGetI(originFrameSet, "Nout") != axisCount)
     {

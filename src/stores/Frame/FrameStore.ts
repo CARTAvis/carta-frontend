@@ -1428,7 +1428,7 @@ export class FrameStore {
                 dirAxisSize = this.frameInfo.fileInfoExtended.height;
             }
             const requiredChannel = this.requiredChannel + 1;
-            this.wcsInfo = AST.make2DSwappedFrameSet(this.wcsInfoSpectralVsDirection, dirAxis, spectralAxis, requiredChannel, dirAxisSize, 3);
+            this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfoSpectralVsDirection, dirAxis, spectralAxis, requiredChannel, dirAxisSize);
         }
     };
 
