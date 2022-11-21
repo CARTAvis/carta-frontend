@@ -159,7 +159,7 @@ export class FrameStore {
     @observable secondarySpectralImages: FrameStore[];
     @observable secondaryRasterScalingImages: FrameStore[];
     @observable momentImages: FrameStore[];
-    @observable pvImage: FrameStore;
+    @observable pvImages: FrameStore[];
     @observable generatedPVRegionId: number;
     @observable fittingResult: string;
     @observable fittingLog: string;
@@ -429,7 +429,7 @@ export class FrameStore {
         const rawValues = new Array<number>(N);
 
         let getChannelIndexSimple = (value: number): number => {
-            if (!value) {
+            if (!value && value !== 0) {
                 return null;
             }
 
@@ -566,7 +566,21 @@ export class FrameStore {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
             const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
-            return axis1?.value?.match(/offset|position|offset position/i) ? true : false;
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
+            const axis1SpectralAxis2Spatial = axis1?.value?.match(/offset|position|offset position/i) && axis2?.value?.match(/freq/i);
+            const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position/i) && axis1?.value?.match(/freq/i);
+            return axis1SpatialAxis2Spectral || axis1SpectralAxis2Spatial ? true : false;
+        }
+        return false;
+    }
+
+    @computed get isReversedPVImage(): boolean {
+        if (this.isPVImage) {
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+            const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
+            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
+            const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position/i) && axis1?.value?.match(/freq/i);
+            return axis1SpatialAxis2Spectral ? true : false;
         }
         return false;
     }
@@ -619,11 +633,11 @@ export class FrameStore {
 
             // Fill up spectral dimension & type/unit/system
             if (dimension) {
-                const spectralHeader = entries.find(entry => entry.name.includes(`CTYPE${dimension}`));
+                const spectralHeader = entries.find(entry => entry.name.includes(`CTYPE${this.isReversedPVImage ? 1 : dimension}`));
                 const spectralValue = spectralHeader?.value.trim().toUpperCase();
                 const spectralType = STANDARD_SPECTRAL_TYPE_SETS.find(type => spectralValue === type.code);
-                const valueHeader = entries.find(entry => entry.name.includes(`CRVAL${dimension}`));
-                const unitHeader = entries.find(entry => entry.name.includes(`CUNIT${dimension}`));
+                const valueHeader = entries.find(entry => entry.name.includes(`CRVAL${this.isReversedPVImage ? 1 : dimension}`));
+                const unitHeader = entries.find(entry => entry.name.includes(`CUNIT${this.isReversedPVImage ? 1 : dimension}`));
                 const specSysHeader = entries.find(entry => entry.name.includes("SPECSYS"));
                 const specsys = specSysHeader?.value ? trimFitsComment(specSysHeader.value)?.toUpperCase() : undefined;
                 if (spectralType) {
@@ -992,7 +1006,7 @@ export class FrameStore {
         this.secondarySpectralImages = [];
         this.secondaryRasterScalingImages = [];
         this.momentImages = [];
-        this.pvImage = null;
+        this.pvImages = [];
         this.fittingResult = "";
         this.fittingLog = "";
 
@@ -2393,13 +2407,13 @@ export class FrameStore {
     };
 
     @action addPvImage = (frame: FrameStore) => {
-        if (frame && (!this.pvImage || this.pvImage.frameInfo.fileId !== frame.frameInfo.fileId)) {
-            this.pvImage = frame;
+        if (frame && (!this.pvImages || this.pvImages[-1]?.frameInfo.fileId !== frame.frameInfo.fileId)) {
+            this.pvImages?.push(frame);
         }
     };
 
     @action removePvImage = () => {
-        this.pvImage = null;
+        this.pvImages = [];
     };
 
     @action setIsRequestingPV = (val: boolean) => {

@@ -348,6 +348,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             }
         );
 
+        reaction(
+            () => this.effectiveFrame.channelValueBounds,
+            channelValueBounds => {
+                if (channelValueBounds) {
+                    this.updateRanges();
+                }
+            }
+        );
+
         autorun(() => {
             if (this.effectiveFrame) {
                 this.updateRanges();
