@@ -13,7 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added the functionality to mirror cursor position on spatially matched frame via hotkey "G" ([#1947](https://github.com/cartavis/carta-frontend/issues/1947)).
 * Added buttons to image fitting for exporting fitting result and full log ([#1397](https://github.com/cartavis/carta-frontend/issues/1397)).
 * Added support for image fitting with fixed parameters ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
-* Added tooltip to the Image column for Image List and Cursor Info overlay. ([#1948](https://github.com/CARTAvis/carta-frontend/issues/1948))
+* Added tooltip to the Image column for Image List and Cursor Info overlay ([#1948](https://github.com/CARTAvis/carta-frontend/issues/1948)).
+* Added additional cursor info option to spectral profile widget ([#1837](https://github.com/CARTAvis/carta-frontend/issues/1837)).
+* Added a selection option in the PV generator widget to swap x and y axis, an input for spectral axis limit, and a toggle button to let users decide whether or not to keep the previously generated PV images ([#1950](https://github.com/cartavis/carta-frontend/issues/1950), [#1951](https://github.com/cartavis/carta-frontend/issues/1951), [#1952](https://github.com/cartavis/carta-frontend/issues/1952)).
 * Added the AST coordinate support for swapped-axes image cubes ([#1953](https://github.com/CARTAvis/carta-frontend/issues/1953)).
 ### Fixed
 * Fixed issue of only enabling catalog selection button when there is a layer of catalog overlay ([#1826](https://github.com/CARTAvis/carta-frontend/issues/1826)).

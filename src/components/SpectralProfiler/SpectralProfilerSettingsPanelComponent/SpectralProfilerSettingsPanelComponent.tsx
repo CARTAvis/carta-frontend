@@ -1,7 +1,7 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, Tab, Tabs} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -184,11 +184,16 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                 <SpectralSettingsComponent
                                     frame={widgetStore.effectiveFrame}
                                     onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                    onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
                                     onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                    secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
                                     disable={widgetStore.effectiveFrame?.isPVImage}
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
                                     <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
+                                </FormGroup>
+                                <FormGroup inline={true} label={"Secondary Info"}>
+                                    <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
                                 </FormGroup>
                             </React.Fragment>
                         }
