@@ -4,6 +4,7 @@ export * from "./FloatingWidget/FloatingWidgetComponent";
 export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";
 export * from "./ImageView/ImageViewComponent";
 export * from "./ImageView/ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
+export * from "./Dialogs/DistanceMeasuringDialog/DistanceMeasuringDialog";
 export * from "./Log/LogComponent";
 export * from "./LayerList/LayerListComponent";
 export * from "./Menu/RootMenuComponent";

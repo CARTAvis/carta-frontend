@@ -1113,15 +1113,17 @@ export class OverlayStore {
         astString.addSection(this.numbers.styleString);
         astString.addSection(this.labels.styleString);
 
-        astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
-
         astString.add("LabelUp", 0);
         astString.add("TitleGap", this.titleGap / this.minSize);
         astString.add("NumLabGap", this.defaultGap / this.minSize);
         astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize);
         astString.add("TextGapType", "plot");
 
-        return astString.toString();
+        return (frame?: FrameStore) => {
+            frame ? astString.addSection(frame.distanceMeasuring?.styleString) : astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
+
+            return astString.toString();
+        };
     }
 
     @computed get minSize() {

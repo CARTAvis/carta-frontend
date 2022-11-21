@@ -94,7 +94,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 );
             };
 
-            let currentStyleString = settings.styleString;
+            let currentStyleString = settings.styleString(frame);
+
             // Override the AST tolerance during motion
             if (frame.moving) {
                 const tolVal = Math.max((settings.global.tolerance * 2) / 100.0, 0.1);
@@ -129,8 +130,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     };
 
     render() {
-        const styleString = this.props.overlaySettings.styleString;
-
         const frame = this.props.frame;
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
@@ -140,6 +139,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
+        const styleString = this.props.overlaySettings.styleString;
         const frameView = refFrame.requiredFrameView;
         const framePadding = this.props.overlaySettings.padding;
         const moving = frame.moving;
@@ -153,9 +153,15 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const numbersColor = this.props.overlaySettings.numbers.color;
         const labelsColor = this.props.overlaySettings.labels.color;
         const darktheme = AppStore.Instance.darkTheme;
+        const distanceMeasuring = frame.distanceMeasuring;
         const distanceMeasuringShowCurve = frame.distanceMeasuring.showCurve;
-        const distanceMeasuringStart = frame.distanceMeasuring.transformedStart;
-        const distanceMeasuringFinish = frame.distanceMeasuring.transformedFinish;
+        const distanceMeasuringStart = frame.distanceMeasuring.start;
+        const distanceMeasuringFinish = frame.distanceMeasuring.finish;
+        const distanceMeasuringTransformedStart = frame.distanceMeasuring.transformedStart;
+        const distanceMeasuringTransformedFinish = frame.distanceMeasuring.transformedFinish;
+        const distanceMeasuringColor = frame.distanceMeasuring.color;
+        const distanceMeasuringFontSize = frame.distanceMeasuring.fontSize;
+        const distanceMeasuringLineWidth = frame.distanceMeasuring.lineWidth;
         const title = frame.titleCustomText;
         const ratio = AppStore.Instance.imageRatio;
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
@@ -173,6 +179,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});
-        return <canvas className={className} style={{width: w, height: h}} id="overlay-canvas" key={styleString} ref={this.getRef} />;
+        return <canvas className={className} style={{width: w, height: h}} id="overlay-canvas" ref={this.getRef} />;
     }
 }

@@ -43,6 +43,38 @@ export function toFixed(val: number, decimals: number = 0): string {
     return String(val);
 }
 
+export function trimTrailingDecimals(value: string): string {
+    return value.replace(/^(\d+?\.\d+?)0+$/, "$1");
+}
+
+export function getVariablePrecision(value: number): number {
+    // Estimates the precision of input tick value. Input provides
+    // delta between neighboring tick values and iterates through
+    // up to 14 decimal places to determine the approxmiate
+    // precision.
+
+    let decimalPlacement = 0.1;
+    let precision = 3; // The additional 2-precision is added to accomdate for rounding and improve UX experience
+
+    for (let i = 0; i < 9; i++) {
+        if (value < decimalPlacement) {
+            decimalPlacement *= 0.1;
+            precision++;
+        } else {
+            return precision;
+        }
+    }
+    return precision;
+}
+
+export function toFormattedNotationByDiff(value: number, delta: number): string {
+    if (value === null || isNaN(value)) {
+        return null;
+    }
+    const precision = getVariablePrecision(Math.abs(delta));
+    return trimTrailingDecimals(value.toFixed(precision));
+}
+
 export function formattedNotation(value: number): string {
     if (value === null || isNaN(value)) {
         return null;
