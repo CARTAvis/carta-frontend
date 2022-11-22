@@ -588,7 +588,7 @@ EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin,
     return out;
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* makeSwappedFrameSet(AstFrameSet* originFrameSet, int dirAxis, int spectralAxis, int pixelZ, int dirAxisSize)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* makeSwappedFrameSet(AstFrameSet* originFrameSet, int dirAxis, int spectralAxis, int pixelZ, int nsample)
 {
     astBegin;
     int axisCount = 3;
@@ -619,9 +619,6 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* makeSwappedFrameSet(AstFrameSet* originFrameSe
 
     // Invert spectralMap to it goes from the spectral pixel axis to the spectral world axis
     astInvert(spectralMap);
-
-    // Number of samples along the slice.
-    int nsample = dirAxisSize;
 
     // Work space holding 3D pixel positions
     double* posData = static_cast<double*>(astMalloc(axisCount * nsample * sizeof(double)));

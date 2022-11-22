@@ -1489,13 +1489,7 @@ export class FrameStore {
             const dirXAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
             const dirYAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
             const dirAxis = dirXAxis < dirYAxis ? dirXAxis : dirYAxis;
-            let dirAxisSize;
-            if (dirAxis === 1) {
-                dirAxisSize = this.frameInfo.fileInfoExtended.width;
-            } else {
-                // For dirAxis === 2
-                dirAxisSize = this.frameInfo.fileInfoExtended.height;
-            }
+            const dirAxisSize = dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
             const requiredChannel = this.requiredChannel + 1;
             this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfoSpectralVsDirection, dirAxis, spectralAxis, requiredChannel, dirAxisSize);
             const dirFormat = dirXAxis < dirYAxis ? "hms.*" : "dms.*";
