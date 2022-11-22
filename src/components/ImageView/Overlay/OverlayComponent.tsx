@@ -170,11 +170,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (frame.isPVImage && frame.spectralAxis?.valid) {
             AST.set(
                 frame.wcsInfo,
-                `${frame.spectralType ? `System(2)=${frame.spectralType},` : ""}` +
-                    `${frame.spectralUnit ? `Unit(2)=${frame.spectralUnit},` : ""}` +
+                `${frame.spectralType ? `System(${frame.isReversedPVImage ? 1 : 2})=${frame.spectralType},` : ""}` +
+                    `${frame.spectralUnit ? `Unit(${frame.isReversedPVImage ? 1 : 2})=${frame.spectralUnit},` : ""}` +
                     `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
                     `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
-                    `${frame.spectralType && frame.spectralSystem ? `Label(2)=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
+                    `${frame.spectralType && frame.spectralSystem ? `Label(${frame.isReversedPVImage ? 1 : 2})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
         }
 
