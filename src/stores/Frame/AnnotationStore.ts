@@ -241,8 +241,8 @@ export class CompassAnnotationStore extends RegionStore {
         const right = frameView.xMax;
         const width = right - left;
         const height = top - bottom;
-        const angularWidth = Math.abs((delta1.numericValue * Math.PI * width) / 180);
-        const angularHeight = Math.abs((delta2.numericValue * Math.PI * height) / 180);
+        const angularWidth = delta1 ? Math.abs((delta1?.numericValue * Math.PI * width) / 180) : 6.18;
+        const angularHeight = delta2 ? Math.abs((delta2?.numericValue * Math.PI * height) / 180) : 6.18;
 
         const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y, delta1 ? angularWidth : 6.18);
         const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y, delta2 ? angularHeight : 6.18);
