@@ -500,7 +500,7 @@ char * EMSCRIPTEN_KEEPALIVE fitting(
         yInterceptError = sqrt(residualVariance * gsl_matrix_get(covar, index, index));
         orderInputsOut[0] = yIntercept;
         orderInputsOut[1] = yInterceptError;
-        snprintf(logBuffer, sizeof(logBuffer), "%s y intercept          = %.12e @yUnit +/- %.12e (%.3g%%)\n", logBuffer, yIntercept, yInterceptError, 100 * yInterceptError/ abs(yIntercept));
+        snprintf(logBuffer, sizeof(logBuffer), "%s y intercept          = %.12e @yUnit \u00b1 %.12e (%.3g%%)\n", logBuffer, yIntercept, yInterceptError, 100 * yInterceptError/ abs(yIntercept));
     } else {
         orderInputsOut[0] = orderInputs[0];
         orderInputsOut[1] = NAN;
@@ -513,7 +513,7 @@ char * EMSCRIPTEN_KEEPALIVE fitting(
         slopeError = sqrt(residualVariance * gsl_matrix_get(covar, index, index));
         orderInputsOut[2] = slope;
         orderInputsOut[3] = slopeError;
-        snprintf(logBuffer, sizeof(logBuffer), "%s slope                = %.12e @slopeUnit +/- %.12e (%.3g%%)\n", logBuffer, slope, slopeError, 100 * slopeError/ abs(slope));
+        snprintf(logBuffer, sizeof(logBuffer), "%s slope                = %.12e @slopeUnit \u00b1 %.12e (%.3g%%)\n", logBuffer, slope, slopeError, 100 * slopeError/ abs(slope));
     } else {
         orderInputsOut[2] = orderInputs[1];
         orderInputsOut[3] = NAN;
@@ -529,7 +529,7 @@ char * EMSCRIPTEN_KEEPALIVE fitting(
             index = gsl_matrix_get(parameterIndexes, i, 0);
             amp = gsl_vector_get(x, index);
             ampError = sqrt(residualVariance * gsl_matrix_get(covar, index, index));
-            snprintf(logBuffer, sizeof(logBuffer), "%s amp%zu                 = %.12e @yUnit +/- %.12e (%.3g%%)\n", logBuffer, i + 1, amp, ampError, 100 * ampError / abs(amp));
+            snprintf(logBuffer, sizeof(logBuffer), "%s amp%zu                 = %.12e @yUnit \u00b1 %.12e (%.3g%%)\n", logBuffer, i + 1, amp, ampError, 100 * ampError / abs(amp));
         } else {
             amp = inputs[i][0];
             ampError = NAN;
@@ -540,7 +540,7 @@ char * EMSCRIPTEN_KEEPALIVE fitting(
             index = gsl_matrix_get(parameterIndexes, i, 1);
             center = gsl_vector_get(x, index);
             centerError = sqrt(residualVariance * gsl_matrix_get(covar, index, index));
-            snprintf(logBuffer, sizeof(logBuffer), "%s center%zu              = %.12e @xUnit +/- %.12e (%.3g%%)\n", logBuffer, i + 1, center, centerError, 100 * centerError / abs(center));
+            snprintf(logBuffer, sizeof(logBuffer), "%s center%zu              = %.12e @xUnit \u00b1 %.12e (%.3g%%)\n", logBuffer, i + 1, center, centerError, 100 * centerError / abs(center));
         } else {
             center = inputs[i][1];
             centerError = NAN;
@@ -551,7 +551,7 @@ char * EMSCRIPTEN_KEEPALIVE fitting(
             index = gsl_matrix_get(parameterIndexes, i, 2);
             fwhm = gsl_vector_get(x, index);
             fwhmError = sqrt(residualVariance * gsl_matrix_get(covar, index, index));
-            snprintf(logBuffer, sizeof(logBuffer), "%s fwhm%zu                = %.12e @yUnit +/- %.12e (%.3g%%)\n", logBuffer, i + 1, fwhm, fwhmError, 100 * fwhmError / abs(fwhm));
+            snprintf(logBuffer, sizeof(logBuffer), "%s fwhm%zu                = %.12e @yUnit \u00b1 %.12e (%.3g%%)\n", logBuffer, i + 1, fwhm, fwhmError, 100 * fwhmError / abs(fwhm));
         } else {
             fwhm = inputs[i][2];
             fwhmError = NAN;
@@ -576,7 +576,7 @@ char * EMSCRIPTEN_KEEPALIVE fitting(
             } else {
                 integralError = integral * abs(fwhmError / fwhm);
             }
-            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function ~= %.12e @integralUnit +/- %.12e (%.3g%%)\n", logBuffer, integral, integralError, 100 * integralError / abs(integral));
+            snprintf(logBuffer, sizeof(logBuffer), "%s integral of function ~= %.12e @integralUnit \u00b1 %.12e (%.3g%%)\n", logBuffer, integral, integralError, 100 * integralError / abs(integral));
         }
 
         ampOut[2 * i] = amp;

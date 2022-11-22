@@ -219,6 +219,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 this.gl.uniform2f(shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
                 this.gl.uniform1f(shaderUniforms.ScaleAdjustment, scaleAdjustment);
                 this.gl.uniform1f(shaderUniforms.RotationAngle, rotationAngle);
+                this.gl.uniform1f(shaderUniforms.ZoomLevel, sourceFrame?.spatialReference?.zoomLevel ?? sourceFrame?.zoomLevel);
 
                 // size
                 this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 0);
@@ -226,9 +227,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const sizeTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Size);
                 if (!catalogWidgetStore.disableSizeMap && sizeTexture) {
                     this.gl.uniform1i(shaderUniforms.SizeMajorMapEnabled, 1);
-                    this.gl.activeTexture(GL2.TEXTURE2);
+                    this.gl.activeTexture(GL2.TEXTURE3);
                     this.gl.bindTexture(GL2.TEXTURE_2D, sizeTexture);
-                    this.gl.uniform1i(shaderUniforms.SizeTexture, 2);
+                    this.gl.uniform1i(shaderUniforms.SizeTexture, 3);
                 }
 
                 // color
@@ -237,9 +238,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 if (!catalogWidgetStore.disableColorMap && colorTexture) {
                     this.gl.uniform1i(shaderUniforms.CmapEnabled, 1);
                     this.gl.uniform1i(shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(catalogWidgetStore.colorMap));
-                    this.gl.activeTexture(GL2.TEXTURE3);
+                    this.gl.activeTexture(GL2.TEXTURE4);
                     this.gl.bindTexture(GL2.TEXTURE_2D, colorTexture);
-                    this.gl.uniform1i(shaderUniforms.ColorTexture, 3);
+                    this.gl.uniform1i(shaderUniforms.ColorTexture, 4);
                 }
 
                 this.gl.uniform1f(shaderUniforms.FeatherWidth, featherWidth);
@@ -249,17 +250,17 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const orientationTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Orientation);
                 if (!catalogWidgetStore.disableOrientationMap && orientationTexture) {
                     this.gl.uniform1i(shaderUniforms.OmapEnabled, 1);
-                    this.gl.activeTexture(GL2.TEXTURE4);
+                    this.gl.activeTexture(GL2.TEXTURE5);
                     this.gl.bindTexture(GL2.TEXTURE_2D, orientationTexture);
-                    this.gl.uniform1i(shaderUniforms.OrientationTexture, 4);
+                    this.gl.uniform1i(shaderUniforms.OrientationTexture, 5);
                 }
 
                 // selected source
                 const selectedSource = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SelectedSource);
                 if (selectedSource) {
-                    this.gl.activeTexture(GL2.TEXTURE5);
+                    this.gl.activeTexture(GL2.TEXTURE6);
                     this.gl.bindTexture(GL2.TEXTURE_2D, selectedSource);
-                    this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 5);
+                    this.gl.uniform1i(shaderUniforms.SelectedSourceTexture, 6);
                 }
 
                 // size minor
@@ -268,9 +269,9 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                 const sizeMinorTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.SizeMinor);
                 if (!catalogWidgetStore.disableSizeMinorMap && sizeMinorTexture && catalogWidgetStore.catalogShape === CatalogOverlayShape.ELLIPSE_LINED) {
                     this.gl.uniform1i(shaderUniforms.SizeMinorMapEnabled, 1);
-                    this.gl.activeTexture(GL2.TEXTURE6);
+                    this.gl.activeTexture(GL2.TEXTURE7);
                     this.gl.bindTexture(GL2.TEXTURE_2D, sizeMinorTexture);
-                    this.gl.uniform1i(shaderUniforms.SizeMinorTexture, 6);
+                    this.gl.uniform1i(shaderUniforms.SizeMinorTexture, 7);
                 }
 
                 // position
@@ -293,16 +294,21 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform1i(shaderUniforms.ControlMapTexture, 1);
                 }
 
-                const hasBuffer = this.catalogWebGLService.bindBuffer(fileId);
-                if (hasBuffer) {
+                const positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
+                if (positionTexture) {
+                    this.gl.activeTexture(GL2.TEXTURE2);
+                    this.gl.bindTexture(GL2.TEXTURE_2D, positionTexture);
+                    this.gl.uniform1i(shaderUniforms.PositionTexture, 2);
+                }
+
+                const hasSources = this.catalogWebGLService.updatePositionTexture(fileId);
+                if (hasSources) {
                     this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                     this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
                     this.gl.uniform1i(shaderUniforms.ShapeType, catalogWidgetStore.catalogShape);
                     this.gl.uniform1f(shaderUniforms.PointSize, pointSize * devicePixelRatio * AppStore.Instance.imageRatio);
 
-                    this.gl.vertexAttribPointer(this.catalogWebGLService.vertexPositionAttribute, 2, GL2.FLOAT, false, 0, 0);
-
-                    this.gl.drawArrays(GL2.POINTS, 0, count);
+                    this.gl.drawArrays(GL2.TRIANGLES, 0, count * 6);
                     this.gl.finish();
                 }
             }

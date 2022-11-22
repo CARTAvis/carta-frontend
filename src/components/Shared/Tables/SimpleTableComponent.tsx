@@ -15,6 +15,7 @@ export class SimpleTableComponentProps {
     isIndexZero?: boolean;
     boldIndex?: number[];
     updateTableRef?: (ref: Table) => void;
+    tooltipIndex?: number;
 }
 
 @observer
@@ -28,13 +29,18 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
         return <RowHeaderCell name={index.toString()} style={this.getFontStyle(rowIndex)} />;
     };
 
+    private getTooltip = (columnData: any, columnIndex: number, rowIndex: number) => {
+        const tooltip = rowIndex < columnData?.length ? columnData[rowIndex] : undefined;
+        return typeof this.props.tooltipIndex !== "undefined" && columnIndex === this.props.tooltipIndex ? tooltip : undefined;
+    };
+
     private renderDataColumn = (columnName: string, columnData: any) => {
         return (
             <Column
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)}>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)} tooltip={this.getTooltip(columnData, columnIndex, rowIndex)}>
                         {rowIndex < columnData?.length ? columnData[rowIndex] : undefined}
                     </Cell>
                 )}

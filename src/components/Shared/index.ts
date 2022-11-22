@@ -19,3 +19,4 @@ export * from "./SmoothingSettings/SmoothingSettingsComponent";
 export * from "./SpectralSettings/SpectralSettingsComponent";
 export * from "./Tables/FilterableTableComponent";
 export * from "./Tables/SimpleTableComponent";
+export * from "./CoordinateComponent/CoordinateComponent";

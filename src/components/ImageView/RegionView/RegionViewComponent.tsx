@@ -123,7 +123,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     updateDistanceMeasureFinishPos = _.throttle((x: number, y: number) => {
         const frame = this.props.frame;
-        frame.distanceMeasuring.finish = this.getDistanceMeasureImagePos(x, y);
+        const imagePos = this.getDistanceMeasureImagePos(x, y);
+        frame.distanceMeasuring.setFinish(imagePos.x, imagePos.y);
         frame.distanceMeasuring.updateTransformedPos(frame.spatialTransform);
     }, 100);
 
@@ -430,15 +431,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (!isAstBadPoint(wcsPos)) {
                 const dist = frame.distanceMeasuring;
                 if (!dist.isCreating && !dist.showCurve) {
-                    dist.start = imagePos;
+                    dist.setStart(imagePos.x, imagePos.y);
                     dist.setIsCreating(true);
                 } else if (dist.isCreating) {
-                    dist.finish = imagePos;
+                    dist.setFinish(imagePos.x, imagePos.y);
                     dist.updateTransformedPos(frame.spatialTransform);
                     dist.setIsCreating(false);
                 } else {
                     dist.resetPos();
-                    dist.start = imagePos;
+                    dist.setStart(imagePos.x, imagePos.y);
                     dist.setIsCreating(true);
                 }
             }
@@ -667,7 +668,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     x={0}
                     y={0}
                 >
-                    <Layer ref={this.layerRef}>
+                    <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.locked}>
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {creatingLine}
@@ -693,6 +694,7 @@ class RegionComponents extends React.Component<{frame: FrameStore; regions: Regi
 
     public render() {
         const regions = this.props.regions;
+
         if (!AppStore.Instance.fileBrowserStore.isLoadingDialogOpen && regions?.length) {
             const regionSet = this.props.frame?.regionSet;
             return regions.map(r => {

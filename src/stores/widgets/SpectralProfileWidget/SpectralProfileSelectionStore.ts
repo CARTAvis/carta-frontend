@@ -170,6 +170,7 @@ export class SpectralProfileSelectionStore {
 
     @computed get profiles(): {
         channelValues: number[];
+        channelSecondaryValues: number[];
         data: ProcessedSpectralProfile;
         colorKey: string;
         label: {image: string; plot: string};
@@ -185,6 +186,7 @@ export class SpectralProfileSelectionStore {
             if (frame) {
                 profiles.push({
                     channelValues: frame.channelValues,
+                    channelSecondaryValues: frame.channelSecondaryValues,
                     data: profileData,
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label,

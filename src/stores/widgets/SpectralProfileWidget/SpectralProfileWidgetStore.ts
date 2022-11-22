@@ -22,6 +22,7 @@ type Comments = string[];
 export type MultiPlotData = {
     numProfiles: number;
     data: DataPoints[];
+    secondaryXData: number[][];
     smoothedData: DataPoints[];
     fittingData: {x: number[]; y: Float32Array | Float64Array};
     colors: string[];
@@ -62,6 +63,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
     @observable settingsTabId: SpectralProfilerSettingsTabs;
 
+    @observable secondaryAxisCursorInfoVisible: boolean;
+
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
@@ -84,6 +87,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action setSpectralCoordinate = (coordStr: string) => {
         if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
+            this.clearXBounds();
+        }
+    };
+
+    @action setSpectralCoordinateSecondary = (coordStr: string) => {
+        if (this.effectiveFrame.setSpectralCoordinateSecondary(coordStr)) {
             this.clearXBounds();
         }
     };
@@ -285,6 +294,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = tabId;
     };
 
+    @action setSecondaryAxisCursorInfoVisible = (val: boolean) => {
+        this.secondaryAxisCursorInfoVisible = val;
+    };
+
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
@@ -295,6 +308,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
         this.meanRmsVisible = false;
+        this.secondaryAxisCursorInfoVisible = false;
         this.markerTextVisible = false;
         this.primaryLineColor = "auto-blue";
         this.lineColorMap = new Map<LineKey, string>([[SpectralProfileWidgetStore.PRIMARY_LINE_KEY, this.primaryLineColor]]);
@@ -330,6 +344,15 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             polarization => {
                 if (this.effectiveFrame && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
                     this.setIntensityUnit(this.effectiveFrame.headerUnit);
+                }
+            }
+        );
+
+        reaction(
+            () => this.effectiveFrame.channelValueBounds,
+            channelValueBounds => {
+                if (channelValueBounds) {
+                    this.updateRanges();
                 }
             }
         );
@@ -398,6 +421,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // Determine points/smoothingPoints/colors/yBound/progress
         let numProfiles = 0;
         let data = [];
+        let secondaryXData = [];
         let smoothedData = [];
         let colors = [];
         let labels = [];
@@ -407,9 +431,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let yMean = undefined;
         let yRms = undefined;
         let progressSum: number = 0;
-        let startEndIndexes: {startIndex: number; endIndex: number}[] = [];
+        let dataIndexes: {startIndex: number; endIndex: number}[] = [];
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
+
         profiles.forEach(profile => {
             if (profile?.data) {
                 numProfiles++;
@@ -419,12 +444,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
                 const intensityValues = this.intensityConversion ? this.intensityConversion(profile.data.values) : profile.data.values;
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
+
                 data.push(pointsAndProperties?.points ?? []);
                 smoothedData.push(pointsAndProperties?.smoothedPoints ?? []);
+                secondaryXData.push(profile.channelSecondaryValues?.slice(pointsAndProperties?.startIndex, pointsAndProperties?.endIndex + 1) ?? []);
+
                 if (pointsAndProperties) {
                     if (wantMeanRms) {
-                        yMean = pointsAndProperties.yMean;
-                        yRms = pointsAndProperties.yRms;
+                        if (this.smoothingStore.type === SmoothingType.NONE) {
+                            yMean = pointsAndProperties.yMean;
+                            yRms = pointsAndProperties.yRms;
+                        } else if (!this.smoothingStore.isOverlayOn) {
+                            yMean = pointsAndProperties.ySmoothedMean;
+                            yRms = pointsAndProperties.ySmoothedRms;
+                        }
                     }
                     if (xBound.xMin > pointsAndProperties.xBound.xMin) {
                         xBound.xMin = pointsAndProperties.xBound.xMin;
@@ -439,16 +472,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                         yBound.yMax = pointsAndProperties.yBound.yMax;
                     }
                     progressSum = progressSum + profile.data.progress;
-                    startEndIndexes.push({startIndex: pointsAndProperties.startIndex, endIndex: pointsAndProperties.endIndex});
+                    dataIndexes.push({startIndex: pointsAndProperties.startIndex, endIndex: pointsAndProperties.endIndex});
                 }
             }
         });
 
         let fittingData: {x: number[]; y: Float32Array | Float64Array};
-        if (profiles.length === 1 && startEndIndexes.length === 1) {
-            let x = profiles[0].channelValues.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
+        if (profiles.length === 1 && dataIndexes.length === 1) {
+            let x = profiles[0].channelValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             const intensityValues = this.intensityConversion ? this.intensityConversion(profiles[0].data.values) : profiles[0].data.values;
-            let y = intensityValues.slice(startEndIndexes[0].startIndex, startEndIndexes[0].endIndex + 1);
+            let y = intensityValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE) {
                 const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
                 x = smoothedData.x;
@@ -475,6 +508,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return {
             numProfiles: numProfiles,
             data: data,
+            secondaryXData: secondaryXData,
             smoothedData: smoothedData,
             fittingData: fittingData,
             colors: colors,
@@ -872,6 +906,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         yRms: number;
         startIndex: number;
         endIndex: number;
+        ySmoothedMean: number;
+        ySmoothedRms: number;
     } => {
         let points: Point2D[] = [];
         let smoothedPoints: Point2D[] = [];
@@ -879,6 +915,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let yBound = {yMin: Number.MAX_VALUE, yMax: -Number.MAX_VALUE};
         let yMean = undefined;
         let yRms = undefined;
+        let ySmoothedMean = undefined;
+        let ySmoothedRms = undefined;
 
         if (intensityValues?.length > 0 && frameChannelValues?.length > 0 && intensityValues.length === frameChannelValues.length) {
             // Variables for mean and RMS calculations
@@ -917,11 +955,29 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     }
                 }
             }
-            smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, intensityValues));
+            smoothedPoints = smoothedPoints.concat(this.smoothingStore.getSmoothingPoint2DArray(frameChannelValues, intensityValues, startIndex, endIndex));
 
             if (wantMeanRms && yCount > 0) {
                 yMean = ySum / yCount;
                 yRms = Math.sqrt(ySum2 / yCount - yMean * yMean);
+            }
+
+            if (wantMeanRms && smoothedPoints && this.smoothingStore.type !== SmoothingType.NONE) {
+                let ySmoothedSum = 0;
+                let ySmoothedSum2 = 0;
+                let ySmoothedCount = 0;
+                for (let i = 0; i < smoothedPoints.length; i++) {
+                    const ySmoothed = smoothedPoints[i].y;
+                    if (isFinite(ySmoothed)) {
+                        ySmoothedCount++;
+                        ySmoothedSum += ySmoothed;
+                        ySmoothedSum2 += ySmoothed * ySmoothed;
+                    }
+                }
+                if (ySmoothedCount > 0) {
+                    ySmoothedMean = ySmoothedSum / ySmoothedCount;
+                    ySmoothedRms = Math.sqrt(ySmoothedSum2 / ySmoothedCount - ySmoothedMean * ySmoothedMean);
+                }
             }
 
             return {
@@ -932,7 +988,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 yMean: yMean,
                 yRms: yRms,
                 startIndex: startIndex,
-                endIndex: endIndex
+                endIndex: endIndex,
+                ySmoothedMean: ySmoothedMean,
+                ySmoothedRms: ySmoothedRms
             };
         } else {
             return undefined;

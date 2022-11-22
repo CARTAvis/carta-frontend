@@ -2,6 +2,7 @@ import * as _ from "lodash";
 import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
 import * as Long from "long";
 import axios from "axios";
+import * as Semver from "semver";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
@@ -116,6 +117,7 @@ export class AppStore {
     // ImageViewer
     @observable activeLayer: ImageViewLayer;
     @observable cursorFrozen: boolean;
+    @observable cursorMirror: boolean = false;
     @observable toolbarExpanded: boolean;
     @observable imageRatio: number;
     @observable isExportingImage: boolean;
@@ -1058,17 +1060,19 @@ export class AppStore {
         }
     };
 
-    @flow.bound *requestPV(message: CARTA.IPvRequest, frame: FrameStore) {
+    @flow.bound *requestPV(message: CARTA.IPvRequest, frame: FrameStore, keepExisting: boolean) {
         if (!message || !frame) {
             return;
         }
 
         this.startFileLoading();
         // clear previously generated moment images under this frame
-        if (frame.pvImage) {
-            this.closeFile(frame.pvImage);
+        if (!keepExisting) {
+            if (frame.pvImages) {
+                frame.pvImages.forEach(pvImage => this.closeFile(pvImage));
+            }
+            frame.removePvImage();
         }
-        frame.removePvImage();
 
         this.restartTaskProgress();
 
@@ -1122,7 +1126,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.requestFitting(message);
             if (ack.success) {
-                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, ack.resultValues, ack.resultErrors, ack.log);
+                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, message.fixedParams, ack.resultValues, ack.resultErrors, ack.log);
                 if (ack.modelImage) {
                     if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, "", true)) {
                         this.fileCounter++;
@@ -1200,6 +1204,10 @@ export class AppStore {
 
     @action setCursorFrozen = (val: boolean) => {
         this.cursorFrozen = val;
+    };
+
+    @action toggleCursorMirror = () => {
+        this.cursorMirror = !this.cursorMirror;
     };
 
     @action toggleToolbarExpanded = () => {
@@ -1350,7 +1358,7 @@ export class AppStore {
             const response = await axios("https://api.github.com/repos/CARTAvis/carta/releases", {headers: {Accept: "application/vnd.github+json"}});
             const latestRelease = response?.data?.[0]?.tag_name;
 
-            if (latestRelease && this.preferenceStore.latestRelease !== latestRelease) {
+            if (latestRelease && Semver.gt(latestRelease, this.preferenceStore.latestRelease)) {
                 console.log("new release available: ", latestRelease);
                 this.updateNewRelease(latestRelease);
             }

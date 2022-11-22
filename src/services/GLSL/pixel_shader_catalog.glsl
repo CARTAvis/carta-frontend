@@ -14,6 +14,7 @@ uniform int uShapeType;
 uniform vec3 uSelectedSourceColor;
 uniform bool uOmapEnabled;
 
+in vec2 v_pointCoord;
 in vec3 v_colour;
 in float v_pointSize;
 in float v_orientation;
@@ -403,7 +404,7 @@ void main() {
     if (v_minorSize > v_pointSize) {
         side = v_minorSize;
     }
-    vec2 posPixelSpace = (0.5 - gl_PointCoord) * (side + v_featherWidth);
+    vec2 posPixelSpace = (0.5 - v_pointCoord) * (side + v_featherWidth);
     float rMax = v_pointSize * 0.5;
     float rMin = rMax - uLineThickness;
     float outline = 0.0;

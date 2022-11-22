@@ -15,7 +15,8 @@ import {
     StokesDialogComponent,
     TelemetryDialogComponent,
     VectorOverlayDialogComponent,
-    FittingDialogComponent
+    FittingDialogComponent,
+    DistanceMeasuringDialog
 } from "components/Dialogs";
 
 @observer
@@ -40,6 +41,7 @@ export class UIControllerComponent extends React.Component {
                 <TelemetryDialogComponent />
                 <SplashScreenComponent />
                 <FittingDialogComponent />
+                <DistanceMeasuringDialog />
             </React.Fragment>
         );
     }
