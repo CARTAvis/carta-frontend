@@ -153,16 +153,16 @@ export class RegionStore {
     ]);
 
     static readonly AVAILABLE_ANNOTATION_TYPES = new Map<CARTA.RegionType, string>([
-        [CARTA.RegionType.ANNPOINT, "Annotation Point"],
-        [CARTA.RegionType.ANNLINE, "Annotation Line"],
-        [CARTA.RegionType.ANNRECTANGLE, "Annotation Rectangle"],
-        [CARTA.RegionType.ANNELLIPSE, "Annotation Ellipse"],
-        [CARTA.RegionType.ANNPOLYGON, "Annotation Polygon"],
-        [CARTA.RegionType.ANNPOLYLINE, "Annotation Polyline"],
-        [CARTA.RegionType.ANNVECTOR, "Annotation Vector"],
-        [CARTA.RegionType.ANNTEXT, "Annotation Text"],
-        [CARTA.RegionType.ANNCOMPASS, "Annotation Compass"],
-        [CARTA.RegionType.ANNRULER, "Annotation Ruler"]
+        [CARTA.RegionType.ANNPOINT, "Point"],
+        [CARTA.RegionType.ANNLINE, "Line"],
+        [CARTA.RegionType.ANNRECTANGLE, "Rectangle"],
+        [CARTA.RegionType.ANNELLIPSE, "Ellipse"],
+        [CARTA.RegionType.ANNPOLYGON, "Polygon"],
+        [CARTA.RegionType.ANNPOLYLINE, "Polyline"],
+        [CARTA.RegionType.ANNVECTOR, "Vector"],
+        [CARTA.RegionType.ANNTEXT, "Text"],
+        [CARTA.RegionType.ANNCOMPASS, "Compass"],
+        [CARTA.RegionType.ANNRULER, "Ruler"]
     ]);
 
     public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {

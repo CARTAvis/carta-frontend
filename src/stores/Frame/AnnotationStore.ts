@@ -255,7 +255,7 @@ export class CompassAnnotationStore extends RegionStore {
 
 export class RulerAnnotationStore extends RegionStore {
     @observable fontSize: number = 13;
-    @observable auxiliaryLineVisible: boolean = false;
+    @observable auxiliaryLineVisible: boolean = true;
     @observable auxiliaryLineDashLength: number = 0;
     @observable textOffset: Point2D = {x: 0, y: 0};
 

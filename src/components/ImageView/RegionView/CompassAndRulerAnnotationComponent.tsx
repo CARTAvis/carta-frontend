@@ -496,8 +496,8 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     ref={distanceTextRef}
                     x={centerPoints.x}
                     y={centerPoints.y}
-                    offsetX={region.textOffset.x}
-                    offsetY={region.textOffset.y}
+                    offsetX={(region.textOffset.x * imageRatio) / zoomLevel}
+                    offsetY={(region.textOffset.y * imageRatio) / zoomLevel}
                     text={distanceText}
                     stroke={region.color}
                     fill={region.color}

@@ -29,15 +29,10 @@ interface ImagePanelComponentProps {
 export class ImagePanelComponent extends React.Component<ImagePanelComponentProps> {
     @observable pixelHighlightValue: number = NaN;
     @observable imageToolbarVisible: boolean = false;
-    @observable annotationMode: boolean = false;
 
     readonly activeLayer: ImageViewLayer;
 
     private regionViewRef: RegionViewComponent;
-
-    @action setAnnotationMode = (annotationMode: boolean) => {
-        this.annotationMode = annotationMode;
-    };
 
     @action setPixelHighlightValue = (val: number) => {
         if (!AppStore.Instance.isExportingImage) {
@@ -204,8 +199,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         visible={this.imageToolbarVisible}
                         frame={frame}
                         activeLayer={this.activeLayer}
-                        annotationMode={this.annotationMode}
-                        setAnnotationMode={this.setAnnotationMode}
                         onActiveLayerChange={appStore.updateActiveLayer}
                         onRegionViewZoom={this.onRegionViewZoom}
                         onZoomToFit={this.fitZoomFrameAndRegion}
