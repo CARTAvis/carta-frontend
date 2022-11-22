@@ -1498,6 +1498,8 @@ export class FrameStore {
             }
             const requiredChannel = this.requiredChannel + 1;
             this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfoSpectralVsDirection, dirAxis, spectralAxis, requiredChannel, dirAxisSize);
+            const dirFormat = dirXAxis < dirYAxis ? "hms.*" : "dms.*";
+            AST.set(this.wcsInfo, `Format(${dirAxis})=${dirFormat}`);
         }
     };
 
