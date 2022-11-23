@@ -60,7 +60,7 @@ interface ChannelUpdate {
     stokes: number;
 }
 
-const IMPORT_REGION_BATCH_SIZE = 100;
+const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
 
 export class AppStore {
