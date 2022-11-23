@@ -596,12 +596,15 @@ export class FrameStore {
     @computed get depthAxisInfo(): string {
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
+        const requiredChannel = this.requiredChannel + 1;
+        const world_coord = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel, true);
+        const world_value = AST.format(this.wcsInfoSpectralVsDirection, 3, world_coord.z);
         if (dirX === 3 || dirX === 4) {
-            return "X pixel\ncoordinate";
+            return `X coordinate\nWCS: ${world_value}`;
         } else if (dirY === 3 || dirY === 4) {
-            return "Y pixel\ncoordinate";
+            return `Y coordinate\nWCS: ${world_value}`;
         } else {
-            return "Unknown\ncoordinate";
+            return "Unknown coordinate";
         }
     }
 
