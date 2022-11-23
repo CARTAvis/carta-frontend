@@ -31,3 +31,4 @@ export * from "./PolarizationDefinition";
 export * from "./FileFilterMode";
 export * from "./Freq";
 export * from "./AngularSize";
+export * from "./Workspace";

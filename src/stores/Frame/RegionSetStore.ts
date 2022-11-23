@@ -97,8 +97,8 @@ export class RegionSetStore {
         return this.addRegion(points, 0, CARTA.RegionType.POLYLINE, temporary);
     };
 
-    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[]) => {
-        const region = this.addRegion(points, rotation, regionType, true, regionId, name);
+    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], temporary = true) => {
+        const region = this.addRegion(points, rotation, regionType, temporary, regionId, name);
         // additional imported style properties;
         if (color) {
             region.color = color;

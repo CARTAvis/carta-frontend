@@ -191,6 +191,10 @@ export class RootMenuComponent extends React.Component {
 
         const fileMenu = (
             <Menu>
+                <Menu.Item text="Open workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.loadWorkspace("testWorkspace")} />
+                <Menu.Item text="Save workspace" disabled={true && appStore.openFileDisabled} onClick={() => appStore.loadWorkspace("testWorkspace")} />
+                <Menu.Item text="Close workspace" disabled={appStore.openFileDisabled} onClick={appStore.closeWorkspace} />
+                <MenuDivider />
                 <Menu.Item text="Open image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
                 <Menu.Item text="Append image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
                 <Tooltip2 content={"not allowed in read-only mode"} disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY} position={Position.LEFT}>

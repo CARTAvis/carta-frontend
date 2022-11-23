@@ -35,7 +35,7 @@ import {
 import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "./Frame";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS, exampleWorkspace} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -249,6 +249,7 @@ export class AppStore {
     @observable fileLoading: boolean;
     @observable fileSaving: boolean;
     @observable resumingSession: boolean;
+    @observable loadingWorkspace: boolean;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -1921,6 +1922,71 @@ export class AppStore {
         this.initRequirements();
         this.resumingSession = false;
         this.backendService.connectionDropped = false;
+    };
+
+    @flow.bound public *loadWorkspace(_name: string) {
+        this.loadingWorkspace = true;
+
+        try {
+            // Some things should be reset when the user reconnects
+            this.animatorStore.stopAnimation();
+            this.tileService.clearRequestQueue();
+            this.removeAllFrames();
+
+            // TODO: Load workspace from backend or DB
+            // TODO: Validate workspace
+            const workspace = exampleWorkspace;
+
+            // Maps workspace file ID to new session's file ID
+            const frameIdMap = new Map<number, number>();
+            // Maps workspace region ID to new session's region ID
+            const regionIdMap = new Map<number, number>();
+
+            if (workspace.files) {
+                for (const fileInfo of workspace.files) {
+                    const frame: FrameStore = yield this.appendFile(fileInfo.path, undefined, fileInfo.hdu, false);
+                    if (frame) {
+                        frameIdMap.set(fileInfo.id, frame.frameInfo.fileId);
+                    }
+                }
+
+                for (const fileInfo of workspace.files) {
+                    if (!frameIdMap.has(fileInfo.id)) {
+                        continue;
+                    }
+
+                    const frame = this.frameMap.get(frameIdMap.get(fileInfo.id));
+                    if (!frame) {
+                        continue;
+                    }
+
+                    this.setSpatialMatchingEnabled(frame, fileInfo.spatialMatching);
+                    this.setSpectralMatchingEnabled(frame, fileInfo.spatialMatching);
+                    // TODO: apply render config
+                    if (fileInfo.regionsSet?.regions) {
+                        for (const regionInfo of fileInfo.regionsSet.regions) {
+                            const region = frame.regionSet.addExistingRegion(regionInfo.points, regionInfo.rotation, regionInfo.type, regionInfo.id, regionInfo.name, regionInfo.color, regionInfo.lineWidth, regionInfo.dashes, false);
+                            if (region) {
+                                regionIdMap.set(regionInfo.id, region.regionId);
+                            }
+                        }
+                    }
+                }
+            }
+
+            this.loadingWorkspace = false;
+            return true;
+        } catch (err) {
+            console.error(err);
+            this.loadingWorkspace = false;
+            return false;
+        }
+    }
+
+    @action closeWorkspace = () => {
+        this.animatorStore.stopAnimation();
+        this.tileService.clearRequestQueue();
+        this.removeAllFrames();
     };
 
     @action setActiveFrame = (frame: FrameStore) => {
