@@ -1538,7 +1538,15 @@ export class FrameStore {
             const dirAxisSize = dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
             const requiredChannel = this.requiredChannel + 1;
             this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfoSpectralVsDirection, dirAxis, spectralAxis, requiredChannel, dirAxisSize);
-            const dirFormat = dirXAxis < dirYAxis ? "hms.*" : "dms.*";
+
+            // Set the format of coordinate tick value
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+            const axisName = entries.find(entry => entry.name.includes(`CTYPE${dirAxis}`));
+            let axisValue = axisName?.value ? axisName?.value : "Unknown";
+            let dirFormat = dirXAxis < dirYAxis ? "hms.*" : "dms.*";
+            if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
+                dirFormat = "d.*";
+            }
             AST.set(this.wcsInfo, `Format(${dirAxis})=${dirFormat}`);
         }
     };
