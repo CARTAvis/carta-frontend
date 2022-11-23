@@ -242,7 +242,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const channelTick = numChannels > 10 ? channelTickPre : Array.from(Array(numChannels).keys());
             channelSlider = (
                 <div className="animator-slider">
-                    <Radio value={AnimationMode.CHANNEL} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL} onChange={this.onAnimationModeChanged} label="Channel" />
+                    <Radio
+                        value={AnimationMode.CHANNEL}
+                        disabled={appStore.animatorStore.animationActive}
+                        checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL}
+                        onChange={this.onAnimationModeChanged}
+                        label={activeFrame.channelType}
+                    />
                     {hideSliders && <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={1} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
                     {!hideSliders && (
                         <React.Fragment>

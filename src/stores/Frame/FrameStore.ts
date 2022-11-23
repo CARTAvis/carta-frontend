@@ -593,19 +593,62 @@ export class FrameStore {
         return (spectral === 1 && (dirX === 2 || dirY === 2)) || (spectral === 2 && (dirX === 1 || dirY === 1));
     }
 
+    @computed get channelType(): string {
+        if (this.isSpectralVsDirection) {
+            const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+            const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+            const axis3 = entries.find(entry => entry.name.includes("CTYPE3"));
+            const axis4 = entries.find(entry => entry.name.includes("CTYPE4"));
+            let dirName;
+            if (dirX === 3 || dirY === 3) {
+                dirName = axis3?.value ? axis3?.value : "Unknown";
+            } else if (dirX === 4 || dirY === 4) {
+                dirName = axis4?.value ? axis4?.value : "Unknown";
+            } else {
+                dirName = "Unknown";
+            }
+
+            if (dirName.match(/^RA/)) {
+                dirName = "RA";
+            } else if (dirName.match(/^GLON/)) {
+                dirName = "GLON";
+            } else if (dirName.match(/^DEC/)) {
+                dirName = "DEC";
+            } else if (dirName.match(/^GLAT/)) {
+                dirName = "GLAT";
+            }
+            return dirName;
+        }
+        return "Channel";
+    }
+
     @computed get depthAxisInfo(): string {
+        // Calculate the start of world coordinate
+        const requiredChannel = this.requiredChannel + 1;
+        const world_coord1 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel, true);
+        const world_value1 = AST.format(this.wcsInfoSpectralVsDirection, 3, world_coord1.z);
+
+        // Calculate the end of world coordinate
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
-        const requiredChannel = this.requiredChannel + 1;
-        const world_coord = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel, true);
-        const world_value = AST.format(this.wcsInfoSpectralVsDirection, 3, world_coord.z);
-        if (dirX === 3 || dirX === 4) {
-            return `X coordinate\nWCS: ${world_value}`;
-        } else if (dirY === 3 || dirY === 4) {
-            return `Y coordinate\nWCS: ${world_value}`;
-        } else {
-            return "Unknown coordinate";
+        const dirAxis = dirX < dirY ? dirX : dirY;
+        const dirAxisSize = dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
+        let pos: number[] = [1, 1];
+        if (dirAxis === 1 || dirAxis === 2) {
+            pos[dirAxis - 1] = dirAxisSize + 1;
         }
+        const world_coord2 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, pos[0], pos[1], requiredChannel, true);
+        const world_value2 = AST.format(this.wcsInfoSpectralVsDirection, 3, world_coord2.z);
+
+        if (dirX === 3 || dirX === 4 || dirY === 3 || dirY === 4) {
+            if (world_value1 === world_value2) {
+                return `WCS:\n${world_value1}`;
+            } else {
+                return `WCS range:\n${world_value1} ~\n${world_value2}`;
+            }
+        }
+        return "Unknown coordinate";
     }
 
     @computed get isSwappedXY(): boolean {
