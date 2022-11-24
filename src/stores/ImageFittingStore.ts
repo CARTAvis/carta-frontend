@@ -101,7 +101,8 @@ export class ImageFittingStore {
     }
 
     @computed get fitDisabled() {
-        const validFileId = this.effectiveFrame?.frameInfo && this.effectiveFrame?.frameInfo?.fileId >= 0;
+        const fileId = this.effectiveFrame?.frameInfo?.fileId;
+        const validFileId = isFinite(fileId) && fileId >= 0;
         const allFixed = this.components.every(c => c.allFixed === true);
         const validParams = this.components.every(c => c.validParams === true);
         return !validFileId || allFixed || !validParams || this.isFitting;
