@@ -1,11 +1,20 @@
-import {action, observable, makeObservable, computed} from "mobx";
+import {action, observable, makeObservable, computed, reaction} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {RegionWidgetStore, RegionsType, RegionId} from "./RegionWidgetStore";
+import {SpectralSystem} from "models";
+
+export enum PVAxis {
+    SPATIAL = "Spatial",
+    SPECTRAL = "Spectral"
+}
 
 export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;
+    @observable reverse: boolean;
+    @observable keep: boolean;
+    @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
 
     @computed get regionOptions(): IOptionProps[] {
         const appStore = AppStore.Instance;
@@ -28,15 +37,32 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action requestPV = () => {
         const frame = this.effectiveFrame;
+        let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
+        let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
+
+        if (channelIndexMin > channelIndexMax) {
+            const holder = channelIndexMax;
+            channelIndexMax = channelIndexMin;
+            channelIndexMin = holder;
+        }
+        if (channelIndexMin >= channelIndexMax) {
+            if (channelIndexMax === 0) {
+                channelIndexMax++;
+            }
+            channelIndexMin = channelIndexMax - 1;
+        }
         if (frame && this.effectiveRegion) {
             const requestMessage: CARTA.IPvRequest = {
                 fileId: frame.frameInfo.fileId,
                 regionId: this.effectiveRegionId,
-                width: this.width
+                width: this.width,
+                spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
+                reverse: this.reverse,
+                keep: this.keep
             };
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
-            AppStore.Instance.requestPV(requestMessage, frame);
+            AppStore.Instance.requestPV(requestMessage, frame, this.keep);
         }
     };
 
@@ -48,13 +74,49 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setSpectralCoordinate = (coordStr: string) => {
+        if (this.effectiveFrame.setSpectralCoordinate(coordStr)) {
+            return;
+        }
+    };
+
+    @action setSpectralSystem = (specsys: SpectralSystem) => {
+        if (this.effectiveFrame.setSpectralSystem(specsys)) {
+            return;
+        }
+    };
+
     @action setWidth = (val: number) => {
         this.width = val;
+    };
+
+    @action setReverse = (bool: boolean) => {
+        this.reverse = bool;
+    };
+
+    @action setKeep = (bool: boolean) => {
+        this.keep = bool;
+    };
+
+    @action setSpectralRange = (range: CARTA.IIntBounds) => {
+        if (isFinite(range.min) && isFinite(range.max)) {
+            this.range = range;
+        }
     };
 
     constructor() {
         super(RegionsType.LINE);
         makeObservable(this);
         this.width = 3;
+        this.reverse = false;
+        this.keep = false;
+        reaction(
+            () => this.effectiveFrame?.channelValueBounds,
+            channelValueBounds => {
+                if (channelValueBounds) {
+                    this.setSpectralRange(channelValueBounds);
+                }
+            }
+        );
     }
 }
