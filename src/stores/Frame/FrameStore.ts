@@ -623,32 +623,80 @@ export class FrameStore {
         return "Channel";
     }
 
-    @computed get depthAxisInfo(): string {
-        // Calculate the start of world coordinate
-        const requiredChannel = this.requiredChannel + 1;
-        const world_coord1 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel, true);
-        const world_value1 = AST.format(this.wcsInfoSpectralVsDirection, 3, world_coord1.z);
-
-        // Calculate the end of world coordinate
+    @computed
+    private get getDirAxisInfo(): {dirAxis: number; dirAxisSize: number; dirAxisFormat: string; depthAxisFormat: string} {
+        // For direction vs. spectral image, get rendered direction axis index and size
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
         const dirAxis = dirX < dirY ? dirX : dirY;
         const dirAxisSize = dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
-        let pos: number[] = [1, 1];
-        if (dirAxis === 1 || dirAxis === 2) {
-            pos[dirAxis - 1] = dirAxisSize + 1;
-        }
-        const world_coord2 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, pos[0], pos[1], requiredChannel, true);
-        const world_value2 = AST.format(this.wcsInfoSpectralVsDirection, 3, world_coord2.z);
 
-        if (dirX === 3 || dirX === 4 || dirY === 3 || dirY === 4) {
-            if (world_value1 === world_value2) {
-                return `WCS:\n${world_value1}`;
-            } else {
-                return `WCS range:\n${world_value1} ~\n${world_value2}`;
+        // Get rendered and hidden direction axes formats
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        const axisName = entries.find(entry => entry.name.includes(`CTYPE${dirAxis}`));
+        let axisValue = axisName?.value ? axisName?.value : "Unknown";
+        let dirAxisFormat = dirX < dirY ? "hms.*" : "dms.*";
+        let depthAxisFormat = dirX < dirY ? `dms.${WCS_PRECISION}` : `hms.${WCS_PRECISION}`;
+        if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
+            dirAxisFormat = "d.*";
+            depthAxisFormat = `d.${WCS_PRECISION}`;
+        }
+
+        return {dirAxis: dirAxis, dirAxisSize: dirAxisSize, dirAxisFormat: dirAxisFormat, depthAxisFormat: depthAxisFormat};
+    }
+
+    @computed
+    private get isProjDistort(): boolean {
+        const dirAxis = this.getDirAxisInfo?.dirAxis;
+        const dirAxisSize = this.getDirAxisInfo?.dirAxisSize;
+        let checkPoints: number[] = [1, 2, Math.floor(dirAxisSize / 2), dirAxisSize];
+        let wcsValues: number[] = [0, 0, 0, 0];
+        let coord: number[] = [1, 1];
+        const requiredChannel = this.requiredChannel + 1;
+        for (let i = 0; i < checkPoints.length; i++) {
+            coord[dirAxis - 1] = checkPoints[i];
+            const value = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, coord[0], coord[1], requiredChannel, true);
+            wcsValues[i] = value.z;
+        }
+
+        const minTolerance = 1e-6;
+        let tolerance = Math.abs(wcsValues[0] - wcsValues[1]);
+        tolerance = tolerance > minTolerance ? tolerance : minTolerance;
+        for (let i = 1; i < checkPoints.length; i++) {
+            for (let j = i + 1; j < checkPoints.length; j++) {
+                const delta = Math.abs(wcsValues[i] - wcsValues[j]);
+                if (delta > tolerance) {
+                    return true;
+                }
             }
         }
-        return "Unknown coordinate";
+        return false;
+    }
+
+    @computed get depthAxisInfo(): string {
+        if (this.isProjDistort) {
+            return "WCS: non-linear";
+        }
+
+        // Calculate the start of world coordinate
+        const depthAxisFormat = this.getDirAxisInfo?.depthAxisFormat;
+        AST.set(this.wcsInfoSpectralVsDirection, `Format(3)=${depthAxisFormat}`);
+        const requiredChannel = this.requiredChannel + 1;
+        const world_coord1 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel, true);
+        const world_value1 = AST.format(this.wcsInfoSpectralVsDirection, 3, world_coord1.z);
+        const world_coord2 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel + 1, true);
+        const world_value2 = AST.format(this.wcsInfoSpectralVsDirection, 3, world_coord2.z);
+
+        // Only show effective digit number
+        let endPos = world_value1.length;
+        let len = world_value1.length;
+        for (let i = len - WCS_PRECISION - 1; i < len; i++) {
+            if (world_value1.charAt(i) !== world_value2.charAt(i)) {
+                endPos = i + 2 < len ? i + 2 : len;
+                break;
+            }
+        }
+        return `WCS:\n${world_value1.substring(0, endPos)}`;
     }
 
     @computed get isSwappedXY(): boolean {
@@ -1532,21 +1580,11 @@ export class FrameStore {
     public updateSpectralVsDirectionWcs = () => {
         if (this.wcsInfoSpectralVsDirection) {
             const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
-            const dirXAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
-            const dirYAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
-            const dirAxis = dirXAxis < dirYAxis ? dirXAxis : dirYAxis;
-            const dirAxisSize = dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
+            const dirAxis = this.getDirAxisInfo?.dirAxis;
+            const dirAxisSize = this.getDirAxisInfo?.dirAxisSize;
+            const dirFormat = this.getDirAxisInfo?.dirAxisFormat;
             const requiredChannel = this.requiredChannel + 1;
             this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfoSpectralVsDirection, dirAxis, spectralAxis, requiredChannel, dirAxisSize);
-
-            // Set the format of coordinate tick value
-            const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const axisName = entries.find(entry => entry.name.includes(`CTYPE${dirAxis}`));
-            let axisValue = axisName?.value ? axisName?.value : "Unknown";
-            let dirFormat = dirXAxis < dirYAxis ? "hms.*" : "dms.*";
-            if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
-                dirFormat = "d.*";
-            }
             AST.set(this.wcsInfo, `Format(${dirAxis})=${dirFormat}, Unit(${dirAxis})=""`);
         }
     };
