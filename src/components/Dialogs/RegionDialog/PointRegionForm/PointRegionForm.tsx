@@ -5,7 +5,7 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {PointAnnotationStore, POINTSHAPE, RegionCoordinate, RegionStore} from "stores/Frame";
+import {PointAnnotationStore, RegionCoordinate, RegionStore} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {SafeNumericInput, CoordinateComponent} from "components/Shared";
@@ -116,31 +116,31 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         );
     };
 
-    private renderShapePopOver = (shape: POINTSHAPE, itemProps: IItemRendererProps) => {
+    private renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: IItemRendererProps) => {
         const shapeItem = this.getPointShape(shape);
         return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    private getPointShape = (shape: POINTSHAPE) => {
+    private getPointShape = (shape: CARTA.PointAnnotationShape) => {
         const square = <path d="M 2 2 L 14 2 L 14 14 L 2 14 Z" />;
         const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
         const color = this.props.region.color;
         switch (shape) {
-            case POINTSHAPE.SQUARE:
+            case CARTA.PointAnnotationShape.SQUARE:
                 return this.IconWrapper(square, color, true);
-            case POINTSHAPE.BOX:
+            case CARTA.PointAnnotationShape.BOX:
                 return <Icon icon="square" color={color} />;
-            case POINTSHAPE.CIRCLE:
+            case CARTA.PointAnnotationShape.CIRCLE:
                 return <Icon icon="full-circle" color={color} />;
-            case POINTSHAPE.CIRCLE_LINED:
+            case CARTA.PointAnnotationShape.CIRCLE_LINED:
                 return <Icon icon="circle" color={color} />;
-            case POINTSHAPE.DIAMOND:
+            case CARTA.PointAnnotationShape.DIAMOND:
                 return this.IconWrapper(rhomb, color, true);
-            case POINTSHAPE.DIAMOND_LINED:
+            case CARTA.PointAnnotationShape.DIAMOND_LINED:
                 return this.IconWrapper(rhomb, color, false);
-            case POINTSHAPE.CROSS:
+            case CARTA.PointAnnotationShape.CROSS:
                 return <Icon icon="plus" color={color} />;
-            case POINTSHAPE.X:
+            case CARTA.PointAnnotationShape.X:
                 return <Icon icon="cross" color={color} />;
             default:
                 return <Icon icon="square" color={color} />;
@@ -214,9 +214,9 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                                             <Select
                                                 className="bp3-fill"
                                                 filterable={false}
-                                                items={Object.keys(POINTSHAPE)}
+                                                items={Object.values(CARTA.PointAnnotationShape)}
                                                 activeItem={region.pointShape}
-                                                onItemSelect={item => region.setPointShape(item)}
+                                                onItemSelect={item => region.setPointShape(item as CARTA.PointAnnotationShape)}
                                                 itemRenderer={this.renderShapePopOver}
                                                 popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                                             >

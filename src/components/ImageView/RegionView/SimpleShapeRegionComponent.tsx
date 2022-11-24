@@ -392,8 +392,10 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
         // Ellipse has swapped axes
         const offset =
-            region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE || region.regionType === CARTA.RegionType.ANNTEXT
+            region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE
                 ? {x: region.size.x / 2, y: region.size.y / 2}
+                : region.regionType === CARTA.RegionType.ANNTEXT
+                ? {x: region.size.x / (2 * (frame.spatialTransform?.scale || 1)), y: region.size.y / (2 * (frame.spatialTransform?.scale || 1))}
                 : {x: region.size.y, y: region.size.x};
         let anchorConfigs = [
             {anchor: "top", offset: {x: 0, y: offset.y}},
@@ -440,6 +442,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
 
     private getTextProps = (region: TextAnnotationStore, centerPixelSpace: Point2D) => {
         const frame = this.props.frame;
+        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
         let align: string;
         let verticalAlign: string;
 
@@ -483,7 +486,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         }
 
         return {
-            rotation: frame.spatialReference ? (-frame.spatialTransform.rotation * 180) / Math.PI : -region.rotation,
+            rotation: frame.spatialReference ? (-frame.spatialTransform.rotation * 180) / Math.PI - region.rotation : -region.rotation,
             x: centerPixelSpace.x,
             y: centerPixelSpace.y,
             stroke: region.color,
@@ -499,16 +502,16 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             onContextMenu: this.handleContextMenu,
             perfectDrawEnabled: false,
             strokeScaleEnabled: false,
-            strokeWidth: (region.lineWidth * AppStore.Instance.imageRatio) / frame.zoomLevel,
-            width: frame.spatialReference ? (region.size.x / devicePixelRatio) * frame.aspectRatio * frame.spatialTransform.scale : (region.size.x / devicePixelRatio) * frame.aspectRatio,
-            height: frame.spatialReference ? (region.size.y / devicePixelRatio) * frame.spatialTransform.scale : region.size.y / devicePixelRatio,
-            offsetX: frame.spatialReference ? (frame.spatialTransform.scale * ((region.size.x / devicePixelRatio) * frame.aspectRatio)) / 2.0 : ((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0,
-            offsetY: frame.spatialReference ? (frame.spatialTransform.scale * region.size.y) / devicePixelRatio / 2.0 : region.size.y / devicePixelRatio / 2.0,
+            strokeWidth: (region.lineWidth * AppStore.Instance.imageRatio) / zoomLevel,
+            width: (region.size.x / devicePixelRatio) * frame.aspectRatio,
+            height: (region.size.y / devicePixelRatio) * frame.aspectRatio,
+            offsetX: frame.spatialReference ? (frame.spatialTransform.scale * ((region.size.x / devicePixelRatio) * frame.aspectRatio)) / (2.0 * frame.spatialTransform.scale) : ((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0,
+            offsetY: frame.spatialReference ? (frame.spatialTransform.scale * region.size.y) / devicePixelRatio / (2.0 * frame.spatialTransform.scale) : region.size.y / devicePixelRatio / 2.0,
             align,
             verticalAlign,
             text: region.text,
             fill: region.color,
-            fontSize: (region.fontSize * AppStore.Instance.imageRatio) / frame.zoomLevel
+            fontSize: (region.fontSize * AppStore.Instance.imageRatio) / zoomLevel
         };
     };
 

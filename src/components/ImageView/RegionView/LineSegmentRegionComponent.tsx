@@ -267,6 +267,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
+        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
         let rotation = -region.rotation + 90.0;
 
         let controlPoints = region.controlPoints;
@@ -374,8 +375,8 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                         draggable={true}
                         points={pointArray}
                         hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
-                        pointerWidth={((region as VectorAnnotationStore).pointerWidth * imageRatio) / frame.zoomLevel}
-                        pointerLength={((region as VectorAnnotationStore).pointerLength * imageRatio) / frame.zoomLevel}
+                        pointerWidth={((region as VectorAnnotationStore).pointerWidth * imageRatio) / zoomLevel}
+                        pointerLength={((region as VectorAnnotationStore).pointerLength * imageRatio) / zoomLevel}
                     />
                 ) : (
                     <Line

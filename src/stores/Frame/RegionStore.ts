@@ -20,16 +20,16 @@ export enum RegionCoordinate {
     World = "World"
 }
 
-export enum POINTSHAPE {
-    SQUARE = "SQUARE",
-    BOX = "BOX",
-    CIRCLE = "CIRCLE",
-    CIRCLE_LINED = "CIRCLE_LINED",
-    DIAMOND = "DIAMOND",
-    DIAMOND_LINED = "DIAMOND_LINED",
-    CROSS = "CROSS",
-    X = "X"
-}
+// export enum POINTSHAPE {
+//     SQUARE = "SQUARE",
+//     BOX = "BOX",
+//     CIRCLE = "CIRCLE",
+//     CIRCLE_LINED = "CIRCLE_LINED",
+//     DIAMOND = "DIAMOND",
+//     DIAMOND_LINED = "DIAMOND_LINED",
+//     CROSS = "CROSS",
+//     X = "X"
+// }
 
 export class RegionStore {
     readonly fileId: number;

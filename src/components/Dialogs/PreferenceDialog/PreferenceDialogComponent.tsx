@@ -30,7 +30,7 @@ import {
     ZoomPoint
 } from "models";
 import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
-import {ContourGeneratorType, FrameScaling, POINTSHAPE, RegionStore, RenderConfigStore} from "stores/Frame";
+import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import {TelemetryMode} from "services";
 import "./PreferenceDialogComponent.scss";
@@ -583,31 +583,31 @@ export class PreferenceDialogComponent extends React.Component {
             );
         };
 
-        const renderShapePopOver = (shape: POINTSHAPE, itemProps: IItemRendererProps) => {
+        const renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: IItemRendererProps) => {
             const shapeItem = getPointShape(shape);
             return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
         };
 
-        const getPointShape = (shape: POINTSHAPE) => {
+        const getPointShape = (shape: CARTA.PointAnnotationShape) => {
             const square = <path d="M 2 2 L 14 2 L 14 14 L 2 14 Z" />;
             const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
             const color = preference.annotationColor;
             switch (shape) {
-                case POINTSHAPE.SQUARE:
+                case CARTA.PointAnnotationShape.SQUARE:
                     return IconWrapper(square, color, true);
-                case POINTSHAPE.BOX:
+                case CARTA.PointAnnotationShape.BOX:
                     return <Icon icon="square" color={color} />;
-                case POINTSHAPE.CIRCLE:
+                case CARTA.PointAnnotationShape.CIRCLE:
                     return <Icon icon="full-circle" color={color} />;
-                case POINTSHAPE.CIRCLE_LINED:
+                case CARTA.PointAnnotationShape.CIRCLE_LINED:
                     return <Icon icon="circle" color={color} />;
-                case POINTSHAPE.DIAMOND:
+                case CARTA.PointAnnotationShape.DIAMOND:
                     return IconWrapper(rhomb, color, true);
-                case POINTSHAPE.DIAMOND_LINED:
+                case CARTA.PointAnnotationShape.DIAMOND_LINED:
                     return IconWrapper(rhomb, color, false);
-                case POINTSHAPE.CROSS:
+                case CARTA.PointAnnotationShape.CROSS:
                     return <Icon icon="plus" color={color} />;
-                case POINTSHAPE.X:
+                case CARTA.PointAnnotationShape.X:
                     return <Icon icon="cross" color={color} />;
                 default:
                     return <Icon icon="square" color={color} />;
@@ -667,7 +667,7 @@ export class PreferenceDialogComponent extends React.Component {
                     <Select
                         className="bp3-fill"
                         filterable={false}
-                        items={Object.keys(POINTSHAPE)}
+                        items={Object.values(CARTA.PointAnnotationShape)}
                         activeItem={preference.pointAnnotationShape}
                         onItemSelect={item => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)}
                         itemRenderer={renderShapePopOver}

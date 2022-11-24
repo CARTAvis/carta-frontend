@@ -32,7 +32,7 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "./Frame";
+import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, TextAnnotationStore} from "./Frame";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
 import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS} from "models";
@@ -988,7 +988,12 @@ export class AppStore {
                 name: region.name,
                 color: region.color,
                 lineWidth: region.lineWidth,
-                dashList: region.dashLength ? [region.dashLength] : []
+                dashList: region.dashLength ? [region.dashLength] : [],
+                pointShape: region.regionType === CARTA.RegionType.ANNPOINT ? (region as PointAnnotationStore).pointShape : undefined,
+                pointWidth: region.regionType === CARTA.RegionType.ANNPOINT ? (region as PointAnnotationStore).pointWidth : undefined,
+                textAnnotationText: region.regionType === CARTA.RegionType.ANNTEXT ? (region as TextAnnotationStore).text : undefined,
+                compassNorthLabel: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).northLabel : undefined,
+                compassEastLabel: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).eastLabel : undefined
             });
         }
 

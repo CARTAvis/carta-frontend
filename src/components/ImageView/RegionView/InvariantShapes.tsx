@@ -1,7 +1,7 @@
 import Konva from "konva";
 import {Group, Shape} from "react-konva";
+import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
-import {POINTSHAPE} from "stores/Frame";
 
 // const POINT_WIDTH = 6;
 // const POINT_DRAG_WIDTH = 13;
@@ -14,33 +14,33 @@ const CURSOR_CROSS_LENGTH = 10;
 const CURSOR_CROSS_THICKNESS_WIDE = 3;
 const CURSOR_CROSS_CENTER_SQUARE = 6;
 
-const HandlePointShapeDraw = (ctx: Konva.Context, shape: Konva.Shape, width: number, pointShape?: POINTSHAPE) => {
+const HandlePointShapeDraw = (ctx: Konva.Context, shape: Konva.Shape, width: number, pointShape?: CARTA.PointAnnotationShape) => {
     const inverseScale = 1 / shape.getStage().scaleX();
     const offset = -width * 0.5 * inverseScale;
     const squareSize = width * inverseScale;
     ctx.beginPath();
     switch (pointShape) {
-        case POINTSHAPE.CIRCLE:
-        case POINTSHAPE.CIRCLE_LINED:
+        case CARTA.PointAnnotationShape.CIRCLE:
+        case CARTA.PointAnnotationShape.CIRCLE_LINED:
             ctx.arc(0, 0, squareSize / 2, 0, 2 * Math.PI, true);
             ctx.closePath();
             break;
-        case POINTSHAPE.DIAMOND:
-        case POINTSHAPE.DIAMOND_LINED:
+        case CARTA.PointAnnotationShape.DIAMOND:
+        case CARTA.PointAnnotationShape.DIAMOND_LINED:
             ctx.moveTo(0, -squareSize / 2);
             ctx.lineTo(squareSize / 2, 0);
             ctx.lineTo(0, squareSize / 2);
             ctx.lineTo(-squareSize / 2, 0);
             ctx.closePath();
             break;
-        case POINTSHAPE.CROSS:
+        case CARTA.PointAnnotationShape.CROSS:
             ctx.moveTo(0, -squareSize / 2);
             ctx.lineTo(0, squareSize / 2);
             ctx.moveTo(-squareSize / 2, 0);
             ctx.lineTo(squareSize / 2, 0);
             ctx.closePath();
             break;
-        case POINTSHAPE.X:
+        case CARTA.PointAnnotationShape.X:
             ctx.moveTo(-squareSize / 2, -squareSize / 2);
             ctx.lineTo(squareSize / 2, squareSize / 2);
             ctx.moveTo(squareSize / 2, -squareSize / 2);
@@ -67,7 +67,7 @@ interface PointProps {
     onDragMove: (ev) => void;
     onClick: (ev) => void;
     onDblClick: (ev) => void;
-    pointShape?: POINTSHAPE;
+    pointShape?: CARTA.PointAnnotationShape;
     pointWidth?: number;
 }
 
@@ -81,7 +81,7 @@ export const Point = (props: PointProps) => {
         HandlePointShapeDraw(ctx, shape, 7 + pointWidth);
     };
 
-    const fill = props.pointShape === POINTSHAPE.BOX || props.pointShape === POINTSHAPE.CIRCLE_LINED || props.pointShape === POINTSHAPE.DIAMOND_LINED ? null : props.color;
+    const fill = props.pointShape === CARTA.PointAnnotationShape.BOX || props.pointShape === CARTA.PointAnnotationShape.CIRCLE_LINED || props.pointShape === CARTA.PointAnnotationShape.DIAMOND_LINED ? null : props.color;
 
     return (
         <Group>

@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable, flow} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BeamType, FileFilteringType} from "stores";
-import {ContourGeneratorType, FrameScaling, POINTSHAPE} from "stores/Frame";
+import {ContourGeneratorType, FrameScaling} from "stores/Frame";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint, CARTA_INFO} from "models";
 import {parseBoolean} from "utilities";
 import {ApiService, TelemetryMode} from "services";
@@ -210,7 +210,7 @@ const DEFAULTS = {
         annotationType: CARTA.RegionType.ANNRECTANGLE,
         annotationCreationMode: RegionCreationMode.CENTER,
         annotationSize: 30,
-        pointAnnotationShape: POINTSHAPE.SQUARE,
+        pointAnnotationShape: CARTA.PointAnnotationShape.SQUARE,
         pointAnnotationWidth: 6,
         textAnnotationLineWidth: 1
     },
@@ -538,7 +538,7 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.ANNOTATION_SIZE) ?? DEFAULTS.ANNOTATION.annotationSize;
     }
 
-    @computed get pointAnnotationShape(): POINTSHAPE {
+    @computed get pointAnnotationShape(): CARTA.PointAnnotationShape {
         return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_SHAPE) ?? DEFAULTS.ANNOTATION.pointAnnotationShape;
     }
 

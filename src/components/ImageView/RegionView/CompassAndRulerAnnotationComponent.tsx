@@ -7,7 +7,7 @@ import {Anchor} from "./InvariantShapes";
 import {AppStore} from "stores";
 import {CompassAnnotationStore, FrameStore, RegionStore, RulerAnnotationStore} from "stores/Frame";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {add2D, midpoint2D, pointDistance, subtract2D, transformPoint} from "utilities";
+import {add2D, pointDistance, subtract2D, transformPoint} from "utilities";
 import {Point2D} from "models";
 
 interface CompassAnnotationProps {
@@ -58,7 +58,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
             const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
             const deltaPosition = subtract2D(imagePosition, oldImagePosition);
-            const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
+            const newPoints = region.controlPoints.map((p, i) => (i === 0 ? add2D(p, deltaPosition) : p));
             region.setControlPoints(newPoints, false, false);
             mousePoint.current = konvaEvent.target.position();
         }
@@ -129,7 +129,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 
     for (let i = 0; i < northApproxPoints.length; i += 2) {
         const point = transformedImageToCanvasPos({x: northApproxPoints[i], y: northApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        if (pointDistance(point, originPoints) >= (region.length * imageRatio) / frame.zoomLevel) {
+        if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
             break;
         }
         northPointArray[i] = point.x - mousePoint.current.x;
@@ -138,7 +138,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 
     for (let i = 0; i < eastApproxPoints.length; i += 2) {
         const point = transformedImageToCanvasPos({x: eastApproxPoints[i], y: eastApproxPoints[i + 1]}, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
-        if (pointDistance(point, originPoints) >= (region.length * imageRatio) / frame.zoomLevel) {
+        if (pointDistance(point, originPoints) >= (region.length * imageRatio) / zoomLevel) {
             break;
         }
         eastPointArray[i] = point.x - mousePoint.current.x;
@@ -194,7 +194,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
+            <Group ref={shapeRef} listening={!region.locked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
                 <Arrow
                     stroke={region.color}
                     fill={region.color}
@@ -307,6 +307,7 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
 
     const frame = props.frame;
     const region = props.region as RulerAnnotationStore;
+    const initialZoomLevel = React.useRef(frame.spatialReference?.zoomLevel || frame.zoomLevel);
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
         props.onSelect(region);
@@ -439,7 +440,8 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
         hypotenusePointArray[i + 1] = point.y - mousePoint.current.y;
     }
 
-    const centerPoints = midpoint2D({x: hypotenusePointArray[0], y: hypotenusePointArray[1]}, {x: hypotenusePointArray[hypotenusePointArray.length - 2], y: hypotenusePointArray[hypotenusePointArray.length - 1]});
+    const centerPointIndex = Math.floor(hypotenusePointArray.length / 2) % 2 === 0 ? Math.floor(hypotenusePointArray.length / 2) : Math.floor(hypotenusePointArray.length / 2) + 1;
+    const centerPoints = {x: hypotenusePointArray[centerPointIndex], y: hypotenusePointArray[centerPointIndex + 1]};
     const distanceText = getDistanceText(frame.wcsInfo, secondaryImagePointStart, secondaryImagePointFinish);
 
     // Dummy variables for triggering re-render
@@ -449,9 +451,11 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
     const title = frame.titleCustomText;
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
+    const [textOffsetX, setTextOffsetX] = React.useState(0);
+
     React.useEffect(() => {
-        region.setTextOffset(distanceTextRef?.current?.textWidth / 2, true);
-    }, [region]);
+        setTextOffsetX((region.textOffset.x * imageRatio * initialZoomLevel.current) / zoomLevel + distanceTextRef?.current?.textWidth / 2);
+    }, [imageRatio, zoomLevel, region.textOffset.x]);
 
     return (
         <>
@@ -496,8 +500,8 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     ref={distanceTextRef}
                     x={centerPoints.x}
                     y={centerPoints.y}
-                    offsetX={(region.textOffset.x * imageRatio) / zoomLevel}
-                    offsetY={(region.textOffset.y * imageRatio) / zoomLevel}
+                    offsetX={textOffsetX}
+                    offsetY={(region.textOffset.y * imageRatio * initialZoomLevel.current) / zoomLevel}
                     text={distanceText}
                     stroke={region.color}
                     fill={region.color}
