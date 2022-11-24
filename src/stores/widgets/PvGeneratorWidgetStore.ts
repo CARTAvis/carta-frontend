@@ -14,7 +14,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable width: number;
     @observable reverse: boolean;
     @observable keep: boolean;
-    @observable range: CARTA.IIntBounds = {min: this.effectiveFrame.channelValueBounds?.min, max: this.effectiveFrame.channelValueBounds?.max};
+    @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
 
     @computed get regionOptions(): IOptionProps[] {
         const appStore = AppStore.Instance;
@@ -111,7 +111,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.reverse = false;
         this.keep = false;
         reaction(
-            () => this.effectiveFrame.channelValueBounds,
+            () => this.effectiveFrame?.channelValueBounds,
             channelValueBounds => {
                 if (channelValueBounds) {
                     this.setSpectralRange(channelValueBounds);
