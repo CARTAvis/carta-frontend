@@ -1547,7 +1547,7 @@ export class FrameStore {
             if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
                 dirFormat = "d.*";
             }
-            AST.set(this.wcsInfo, `Format(${dirAxis})=${dirFormat}`);
+            AST.set(this.wcsInfo, `Format(${dirAxis})=${dirFormat}, Unit(${dirAxis})=""`);
         }
     };
 
