@@ -108,7 +108,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             if (anchor.id() === "origin") {
                 region.setControlPoint(0, positionImageSpace);
             } else if (anchor.id() === "northTip" || anchor.id() === "eastTip") {
-                region.setLength((distance * frame.zoomLevel) / imageRatio);
+                region.setLength((distance * (frame.spatialReference?.zoomLevel || frame.zoomLevel)) / imageRatio);
             }
         }
     };
@@ -192,37 +192,27 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         // eslint-disable-next-line
     }, []);
 
+    const generateProps = (north: boolean) => {
+        return {
+            stroke: region.color,
+            fill: region.color,
+            strokeWidth: region.lineWidth,
+            strokeScaleEnabled: false,
+            opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+            dash: [region.dashLength],
+            closed: false,
+            perfectDrawEnabled: false,
+            points: north ? northPointArray : eastPointArray,
+            pointerWidth: (region.pointerWidth * imageRatio) / zoomLevel,
+            pointerLength: (region.pointerLength * imageRatio) / zoomLevel
+        };
+    };
+
     return (
         <>
             <Group ref={shapeRef} listening={!region.locked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
-                <Arrow
-                    stroke={region.color}
-                    fill={region.color}
-                    strokeWidth={region.lineWidth}
-                    strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    dash={[region.dashLength]}
-                    closed={false}
-                    perfectDrawEnabled={false}
-                    lineJoin={"round"}
-                    points={eastPointArray}
-                    pointerWidth={(region.pointerWidth * imageRatio) / zoomLevel}
-                    pointerLength={(region.pointerLength * imageRatio) / zoomLevel}
-                />
-                <Arrow
-                    stroke={region.color}
-                    fill={region.color}
-                    strokeWidth={region.lineWidth}
-                    strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    dash={[region.dashLength]}
-                    closed={false}
-                    perfectDrawEnabled={false}
-                    lineJoin={"round"}
-                    points={northPointArray}
-                    pointerWidth={(region.pointerWidth * imageRatio) / zoomLevel}
-                    pointerLength={(region.pointerLength * imageRatio) / zoomLevel}
-                />
+                {region.eastArrowhead ? <Arrow {...generateProps(false)} /> : <Line {...generateProps(false)} />}
+                {region.northArrowhead ? <Arrow {...generateProps(true)} /> : <Line {...generateProps(true)} />}
                 <Text
                     ref={northLabelRef}
                     x={northPointArray[northPointArray.length - 2]}

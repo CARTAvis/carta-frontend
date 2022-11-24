@@ -136,6 +136,8 @@ export class CompassAnnotationStore extends RegionStore {
     @observable lengthScale: number = 1;
     @observable northTextOffset: Point2D = {x: 0, y: 0};
     @observable eastTextOffset: Point2D = {x: 0, y: 0};
+    @observable northArrowhead: boolean = true;
+    @observable eastArrowhead: boolean = true;
     // @observable northTextOffset: Point2D = {x: 5, y: 15};
     // @observable eastTextOffset: Point2D = {x: 15, y: 5};
 
@@ -199,6 +201,14 @@ export class CompassAnnotationStore extends RegionStore {
         } else {
             this.eastTextOffset = {...this.eastTextOffset, y: offset};
         }
+    };
+
+    @action setNorthArrowhead = (northArrowhead: boolean) => {
+        this.northArrowhead = northArrowhead;
+    };
+
+    @action setEastArrowhead = (eastArrowhead: boolean) => {
+        this.eastArrowhead = eastArrowhead;
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.FrameSet): any {

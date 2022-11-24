@@ -993,7 +993,9 @@ export class AppStore {
                 pointWidth: region.regionType === CARTA.RegionType.ANNPOINT ? (region as PointAnnotationStore).pointWidth : undefined,
                 textAnnotationText: region.regionType === CARTA.RegionType.ANNTEXT ? (region as TextAnnotationStore).text : undefined,
                 compassNorthLabel: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).northLabel : undefined,
-                compassEastLabel: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).eastLabel : undefined
+                compassEastLabel: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).eastLabel : undefined,
+                isCompassNorthArrow: (region as CompassAnnotationStore).northArrowhead,
+                isCompassEastArrow: (region as CompassAnnotationStore).eastArrowhead
             });
         }
 

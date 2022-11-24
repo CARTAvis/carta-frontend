@@ -359,6 +359,7 @@ export class RegionSetStore {
                     case CARTA.RegionType.ELLIPSE:
                     case CARTA.RegionType.ANNELLIPSE:
                     case CARTA.RegionType.ANNTEXT:
+                    case CARTA.RegionType.ANNCOMPASS:
                         const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                         if (!isAstBadPoint(centerNewFrame)) {
                             const transform = new Transform2D(spatialTransformAST, centerNewFrame);
@@ -375,6 +376,8 @@ export class RegionSetStore {
                     case CARTA.RegionType.ANNLINE:
                     case CARTA.RegionType.POLYLINE:
                     case CARTA.RegionType.ANNPOLYLINE:
+                    case CARTA.RegionType.ANNVECTOR:
+                    case CARTA.RegionType.ANNRULER:
                         for (const point of region.controlPoints) {
                             const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
                             if (!isAstBadPoint(pointNewFrame)) {

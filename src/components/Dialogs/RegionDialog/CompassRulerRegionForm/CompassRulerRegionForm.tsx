@@ -110,7 +110,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
             <div className="form-section appearance-form">
                 <H5>Auxiliary Lines</H5>
                 <div className="form-contents">
-                    <FormGroup inline={true} label="Show auxiliary lines" labelInfo="(px)">
+                    <FormGroup inline={true} label="Show auxiliary lines">
                         <Switch checked={region.auxiliaryLineVisible} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => region.setAuxiliaryLineVisible(ev.target.checked)} />
                     </FormGroup>
                     <FormGroup inline={true} label="Auxiliary Lines Dash Length" labelInfo="(px)">
@@ -136,6 +136,12 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
             <div className="form-section appearance-form">
                 <H5>Arrow Pointer</H5>
                 <div className="form-contents">
+                    <FormGroup inline={true} label="Show North Arrowhead">
+                        <Switch checked={region.northArrowhead} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => region.setNorthArrowhead(ev.target.checked)} />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Show East Arrowhead">
+                        <Switch checked={region.eastArrowhead} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => region.setEastArrowhead(ev.target.checked)} />
+                    </FormGroup>
                     <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
                         <SafeNumericInput placeholder="Length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.pointerLength} stepSize={1} onValueChange={value => region.setPointerLength(value)} />
                     </FormGroup>
