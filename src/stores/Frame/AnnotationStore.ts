@@ -9,8 +9,8 @@ import {RegionStore} from "./RegionStore";
 import {transformPoint} from "utilities";
 
 export enum TextAnnotationPosition {
-    UPPER_LEFT = "Upper Left",
     CENTER = "Center",
+    UPPER_LEFT = "Upper Left",
     UPPER_RIGHT = "Upper Right",
     LOWER_LEFT = "Lower Left",
     LOWER_RIGHT = "Lower Right",
@@ -43,21 +43,24 @@ export class PointAnnotationStore extends RegionStore {
         makeObservable(this);
         this.pointShape = pointShape || CARTA.PointAnnotationShape.SQUARE;
         this.pointWidth = pointWidth || 6;
+        this.modifiedTimestamp = performance.now();
     }
 
     @action setPointShape = (pointShape: CARTA.PointAnnotationShape) => {
         this.pointShape = pointShape;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setPointWidth = (width: number) => {
         this.pointWidth = width;
+        this.modifiedTimestamp = performance.now();
     };
 }
 
 export class TextAnnotationStore extends RegionStore {
     @observable text: string = "Double click to edit text";
     @observable fontSize: number = 20;
-    @observable position: TextAnnotationPosition = TextAnnotationPosition.UPPER_LEFT;
+    @observable position: TextAnnotationPosition = TextAnnotationPosition.CENTER;
 
     constructor(
         backendService: BackendService,
@@ -74,25 +77,28 @@ export class TextAnnotationStore extends RegionStore {
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
         makeObservable(this);
+        this.modifiedTimestamp = performance.now();
     }
 
     @action setText = (text: string) => {
         this.text = text;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setFontSize = (fontSize: number) => {
         this.fontSize = fontSize;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setPosition = (position: TextAnnotationPosition) => {
         this.position = position;
+        this.modifiedTimestamp = performance.now();
     };
 }
 
 export class VectorAnnotationStore extends RegionStore {
     @observable pointerWidth: number = 10;
     @observable pointerLength: number = 10;
-    @observable lengthScale: number = 1;
 
     constructor(
         backendService: BackendService,
@@ -109,18 +115,17 @@ export class VectorAnnotationStore extends RegionStore {
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
         makeObservable(this);
+        this.modifiedTimestamp = performance.now();
     }
 
     @action setPointerWidth = (pointerWidth: number) => {
         this.pointerWidth = pointerWidth;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setPointerLength = (pointerLength: number) => {
         this.pointerLength = pointerLength;
-    };
-
-    @action setLengthScale = (lengthScale: number) => {
-        this.lengthScale = lengthScale;
+        this.modifiedTimestamp = performance.now();
     };
 }
 
@@ -128,12 +133,9 @@ export class CompassAnnotationStore extends RegionStore {
     @observable length: number = 100;
     @observable northLabel: string = "N";
     @observable eastLabel: string = "E";
-    @observable isNorthArrowhead: boolean = true;
-    @observable isEastArrowhead: boolean = true;
     @observable fontSize: number = 20;
     @observable pointerWidth: number = 10;
     @observable pointerLength: number = 10;
-    @observable lengthScale: number = 1;
     @observable northTextOffset: Point2D = {x: 0, y: 0};
     @observable eastTextOffset: Point2D = {x: 0, y: 0};
     @observable northArrowhead: boolean = true;
@@ -156,6 +158,7 @@ export class CompassAnnotationStore extends RegionStore {
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
         makeObservable(this);
+        this.modifiedTimestamp = performance.now();
         // this.setLength(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1);
     }
 
@@ -165,50 +168,59 @@ export class CompassAnnotationStore extends RegionStore {
         } else {
             this.eastLabel = label;
         }
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setFontSize = (fontSize: number) => {
         this.fontSize = fontSize;
-    };
-
-    @action setLengthScale = (lengthScale: number) => {
-        this.lengthScale = lengthScale;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setPointerWidth = (width: number) => {
         this.pointerWidth = width;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setPointerLength = (length: number) => {
         this.pointerLength = length;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setLength = (length: number) => {
         this.length = Math.abs(length);
+        this.modifiedTimestamp = performance.now();
     };
 
-    @action setNorthTextOffset = (offset: number, isX: boolean) => {
+    @action setNorthTextOffset = (offset: number, isX: boolean, skipTimeStampUpdate: boolean = false) => {
         if (isX) {
             this.northTextOffset = {...this.northTextOffset, x: offset};
         } else {
             this.northTextOffset = {...this.northTextOffset, y: offset};
         }
+        if (!skipTimeStampUpdate) {
+            this.modifiedTimestamp = performance.now();
+        }
     };
 
-    @action setEastTextOffset = (offset: number, isX: boolean) => {
+    @action setEastTextOffset = (offset: number, isX: boolean, skipTimeStampUpdate: boolean = false) => {
         if (isX) {
             this.eastTextOffset = {...this.eastTextOffset, x: offset};
         } else {
             this.eastTextOffset = {...this.eastTextOffset, y: offset};
         }
+        if (!skipTimeStampUpdate) {
+            this.modifiedTimestamp = performance.now();
+        }
     };
 
     @action setNorthArrowhead = (northArrowhead: boolean) => {
         this.northArrowhead = northArrowhead;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setEastArrowhead = (eastArrowhead: boolean) => {
         this.eastArrowhead = eastArrowhead;
+        this.modifiedTimestamp = performance.now();
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.FrameSet): any {
@@ -257,18 +269,22 @@ export class RulerAnnotationStore extends RegionStore {
     ) {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
         makeObservable(this);
+        this.modifiedTimestamp = performance.now();
     }
 
     @action setFontSize = (fontSize: number) => {
         this.fontSize = fontSize;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setAuxiliaryLineVisible = (isVisible: boolean) => {
         this.auxiliaryLineVisible = isVisible;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setAuxiliaryLineDashLength = (length: number) => {
         this.auxiliaryLineDashLength = length;
+        this.modifiedTimestamp = performance.now();
     };
 
     @action setTextOffset = (offset: number, isX: boolean) => {
@@ -277,6 +293,7 @@ export class RulerAnnotationStore extends RegionStore {
         } else {
             this.textOffset = {...this.textOffset, y: offset};
         }
+        this.modifiedTimestamp = performance.now();
     };
 
     public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {

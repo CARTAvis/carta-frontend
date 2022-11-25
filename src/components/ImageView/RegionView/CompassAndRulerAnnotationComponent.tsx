@@ -181,10 +181,10 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
         eastXOffset += Math.cos(eastAngle) * eastTranslation;
         eastYOffset += Math.sin(eastAngle) * eastTranslation;
 
-        region.setNorthTextOffset((northXOffset * zoomLevel) / imageRatio, true);
-        region.setNorthTextOffset((northYOffset * zoomLevel) / imageRatio, false);
-        region.setEastTextOffset((eastXOffset * zoomLevel) / imageRatio, true);
-        region.setEastTextOffset((eastYOffset * zoomLevel) / imageRatio, false);
+        region.setNorthTextOffset((northXOffset * zoomLevel) / imageRatio, true, true);
+        region.setNorthTextOffset((northYOffset * zoomLevel) / imageRatio, false, true);
+        region.setEastTextOffset((eastXOffset * zoomLevel) / imageRatio, true, true);
+        region.setEastTextOffset((eastYOffset * zoomLevel) / imageRatio, false, true);
     };
 
     React.useEffect(() => {

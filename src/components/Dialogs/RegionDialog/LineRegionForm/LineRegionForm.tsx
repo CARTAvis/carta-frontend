@@ -555,9 +555,9 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                         <table>
                             <tbody>
                                 <tr>
-                                    <td>Region Name</td>
+                                    <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
                                     <td colSpan={2}>
-                                        <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
+                                        <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                                     </td>
                                 </tr>
                                 <tr>

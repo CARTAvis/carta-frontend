@@ -201,9 +201,9 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                     <table>
                         <tbody>
                             <tr>
-                                <td>Region Name</td>
+                                <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
                                 <td colSpan={2}>
-                                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
+                                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                                 </td>
                             </tr>
                             {region.regionType === CARTA.RegionType.ANNPOINT && (
