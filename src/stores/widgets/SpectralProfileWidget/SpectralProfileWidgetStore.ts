@@ -201,7 +201,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     spectralRange: channelIndexRange,
                     mask: this.momentMask,
                     pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]}),
-                    keep: this.keep,
+                    keep: this.keep
                 };
                 frame.resetMomentRequestState();
                 frame.setIsRequestingMoments(true);

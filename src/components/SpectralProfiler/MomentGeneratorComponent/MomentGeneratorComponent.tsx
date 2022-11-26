@@ -242,10 +242,10 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                 <Divider />
                 <FormGroup inline={true} label={"Keep previous Moment Image"}>
                     <Switch
-                    onChange={event => {
-                        const e = event.target as HTMLInputElement;
-                        this.props.widgetStore.setKeep(e.checked);
-                    }}
+                        onChange={event => {
+                            const e = event.target as HTMLInputElement;
+                            this.props.widgetStore.setKeep(e.checked);
+                        }}
                     />
                 </FormGroup>
                 <div className="moment-generate">
