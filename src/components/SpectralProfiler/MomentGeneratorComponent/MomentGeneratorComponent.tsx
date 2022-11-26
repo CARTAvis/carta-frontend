@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position} from "@blueprintjs/core";
+import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {TaskProgressDialogComponent} from "components/Dialogs";
@@ -237,6 +237,15 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                             },
                             rightElement: <Button icon="cross" minimal={true} onClick={this.handleMomentsClear} />
                         }}
+                    />
+                </FormGroup>
+                <Divider />
+                <FormGroup inline={true} label={"Keep previous Moment Image"}>
+                    <Switch
+                    onChange={event => {
+                        const e = event.target as HTMLInputElement;
+                        this.props.widgetStore.setKeep(e.checked);
+                    }}
                     />
                 </FormGroup>
                 <div className="moment-generate">

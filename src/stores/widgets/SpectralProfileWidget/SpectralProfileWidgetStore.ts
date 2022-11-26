@@ -65,6 +65,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @observable secondaryAxisCursorInfoVisible: boolean;
 
+    @observable keep: boolean;
+
     // line key will be "Primary" in single line mode
     public static readonly PRIMARY_LINE_KEY = "Primary";
 
@@ -198,7 +200,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     regionId: regionId,
                     spectralRange: channelIndexRange,
                     mask: this.momentMask,
-                    pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]})
+                    pixelRange: new CARTA.FloatBounds({min: this.maskRange[0], max: this.maskRange[1]}),
+                    keep: this.keep,
                 };
                 frame.resetMomentRequestState();
                 frame.setIsRequestingMoments(true);
@@ -298,6 +301,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.secondaryAxisCursorInfoVisible = val;
     };
 
+    @action setKeep = (bool: boolean) => {
+        this.keep = bool;
+    };
+
     constructor(coordinate: string = "z") {
         super(RegionsType.CLOSED_AND_POINT);
         makeObservable<SpectralProfileWidgetStore, "spectralLinesMHz" | "updateRanges">(this);
@@ -326,6 +333,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.maskRange = [0, 1];
         this.selectedMoments = [CARTA.Moment.INTEGRATED_OF_THE_SPECTRUM];
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
+        this.keep = false;
 
         this.intensityConversion = undefined;
         this.setIntensityUnit(this.effectiveFrame?.headerUnit);
