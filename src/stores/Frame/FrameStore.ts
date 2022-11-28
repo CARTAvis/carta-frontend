@@ -649,9 +649,9 @@ export class FrameStore {
     private get isProjDistort(): boolean {
         const dirAxis = this.getDirAxisInfo?.dirAxis;
         const dirAxisSize = this.getDirAxisInfo?.dirAxisSize;
-        let checkPoints: number[] = [1, 2, Math.floor(dirAxisSize / 2), dirAxisSize];
-        let wcsValues: number[] = [0, 0, 0, 0];
-        let coord: number[] = [1, 1];
+        let checkPoints = [1, 2, Math.floor(dirAxisSize / 2), dirAxisSize];
+        let wcsValues = [0, 0, 0, 0];
+        let coord = [1, 1];
         const requiredChannel = this.requiredChannel + 1;
         for (let i = 0; i < checkPoints.length; i++) {
             coord[dirAxis - 1] = checkPoints[i];
@@ -682,21 +682,23 @@ export class FrameStore {
         const depthAxisFormat = this.getDirAxisInfo?.depthAxisFormat;
         AST.set(this.wcsInfoSpectralVsDirection, `Format(3)=${depthAxisFormat}`);
         const requiredChannel = this.requiredChannel + 1;
-        const world_coord1 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel, true);
-        const world_value1 = AST.format(this.wcsInfoSpectralVsDirection, 3, world_coord1.z);
-        const world_coord2 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel + 1, true);
-        const world_value2 = AST.format(this.wcsInfoSpectralVsDirection, 3, world_coord2.z);
+        const wcs1 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel, true);
+        const wcsVal1 = wcs1.z < 0 ? wcs1.z + 2 * Math.PI : wcs1.z;
+        const wcsStr1 = AST.format(this.wcsInfoSpectralVsDirection, 3, wcsVal1);
+        const wcs2 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel + 1, true);
+        const wcsVal2 = wcs2.z < 0 ? wcs2.z + 2 * Math.PI : wcs2.z;
+        const wcsStr2 = AST.format(this.wcsInfoSpectralVsDirection, 3, wcsVal2);
 
         // Only show effective digit number
-        let endPos = world_value1.length;
-        let len = world_value1.length;
+        let endPos = wcsStr1.length;
+        let len = wcsStr1.length;
         for (let i = len - WCS_PRECISION - 1; i < len; i++) {
-            if (world_value1.charAt(i) !== world_value2.charAt(i)) {
+            if (wcsStr1.charAt(i) !== wcsStr2.charAt(i)) {
                 endPos = i + 2 < len ? i + 2 : len;
                 break;
             }
         }
-        return `WCS:\n${world_value1.substring(0, endPos)}`;
+        return `WCS:\n${wcsStr1.substring(0, endPos)}`;
     }
 
     @computed get isSwappedXY(): boolean {
