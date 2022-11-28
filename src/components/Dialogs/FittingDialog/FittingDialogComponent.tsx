@@ -156,7 +156,7 @@ export class FittingDialogComponent extends React.Component {
                         <Tooltip2 content="Clear fitting parameters." position={Position.BOTTOM}>
                             <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
                         </Tooltip2>
-                        <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM}  disabled={fittingStore.fitDisabled} >
+                        <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} />
                         </Tooltip2>
                     </div>
