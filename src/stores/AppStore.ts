@@ -35,7 +35,7 @@ import {
 import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "./Frame";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS, exampleWorkspace} from "models";
+import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS, Workspace} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -1924,18 +1924,21 @@ export class AppStore {
         this.backendService.connectionDropped = false;
     };
 
-    @flow.bound public *loadWorkspace(_name: string) {
+    @flow.bound public *loadWorkspace(name: string) {
         this.loadingWorkspace = true;
 
         try {
+            // TODO: We should rather query _just_ the workspace we need
+            const workspaces = yield this.apiService.getWorkspaces();
+            const workspace = workspaces?.get(name);
+            if (!workspace) {
+                return false;
+            }
+
             // Some things should be reset when the user reconnects
             this.animatorStore.stopAnimation();
             this.tileService.clearRequestQueue();
             this.removeAllFrames();
-
-            // TODO: Load workspace from backend or DB
-            // TODO: Validate workspace
-            const workspace = exampleWorkspace;
 
             // Maps workspace file ID to new session's file ID
             const frameIdMap = new Map<number, number>();
@@ -1944,7 +1947,7 @@ export class AppStore {
 
             if (workspace.files) {
                 for (const fileInfo of workspace.files) {
-                    const frame: FrameStore = yield this.appendFile(fileInfo.path, undefined, fileInfo.hdu, false);
+                    const frame: FrameStore = yield this.appendFile(fileInfo.directory, fileInfo.filename, fileInfo.hdu, false);
                     if (frame) {
                         frameIdMap.set(fileInfo.id, frame.frameInfo.fileId);
                     }
@@ -1981,6 +1984,26 @@ export class AppStore {
             this.loadingWorkspace = false;
             return false;
         }
+    }
+
+    @flow.bound public *saveWorkspace(name: string) {
+        const workspace: Workspace = {
+            workspaceVersion: 0,
+            frontendVersion: 4,
+            description: "Example workspace",
+            files: []
+        };
+
+        for (const frame of this.frames) {
+            workspace.files.push({
+                id: frame.frameInfo.fileId,
+                directory: frame.frameInfo.directory,
+                filename: frame.filename,
+                hdu: frame.frameInfo.hdu
+            });
+        }
+
+        yield this.apiService.setWorkspace(name, workspace);
     }
 
     @action closeWorkspace = () => {

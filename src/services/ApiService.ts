@@ -2,7 +2,7 @@ import axios, {AxiosInstance} from "axios";
 import Ajv from "ajv";
 import {action, computed, makeObservable, observable} from "mobx";
 import {AppToaster} from "components/Shared";
-import {LayoutConfig, Snippet} from "models";
+import {LayoutConfig, Snippet, Workspace} from "models";
 
 const preferencesSchema = require("models/preferences_schema_2.json");
 const snippetSchema = require("models/snippet_schema_1.json");
@@ -515,6 +515,90 @@ export class ApiService {
                 const obj = JSON.parse(localStorage.getItem("savedSnippets")) ?? {};
                 delete obj[snippetName];
                 localStorage.setItem("savedSnippets", JSON.stringify(obj));
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    public getWorkspaces = async () => {
+        let savedWorkspaces: {[name: string]: any};
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspaces`;
+                const response = await this.axiosInstance.get(url);
+                if (response?.data?.success) {
+                    savedWorkspaces = response.data.workspaces;
+                } else {
+                    return undefined;
+                }
+            } catch (err) {
+                console.log(err);
+                return undefined;
+            }
+        } else {
+            try {
+                savedWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
+            } catch (err) {
+                console.log(err);
+                return undefined;
+            }
+        }
+        if (savedWorkspaces) {
+            const validWorkspaces = new Map<string, Workspace>();
+            for (const workspaceName of Object.keys(savedWorkspaces)) {
+                const workspace = savedWorkspaces[workspaceName];
+                const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
+                if (!valid) {
+                    //console.log(ApiService.WorkspaceValidator.errors);
+                } else {
+                    validWorkspaces.set(workspaceName, workspace);
+                }
+            }
+            return validWorkspaces;
+        } else {
+            return undefined;
+        }
+    };
+
+    public setWorkspace = async (workspaceName: string, workspace: Workspace) => {
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace`;
+                const response = await this.axiosInstance.put(url, {workspaceName, workspace});
+                return response?.data?.success;
+            } catch (err) {
+                console.log(err);
+                return false;
+            }
+        } else {
+            try {
+                const obj = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
+                obj[workspaceName] = workspace;
+                localStorage.setItem("savedWorkspaces", JSON.stringify(obj));
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+    };
+
+    public clearWorkspace = async (workspaceName: string) => {
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace`;
+                const response = await this.axiosInstance.delete(url, {data: {workspaceName}});
+                return response?.data?.success;
+            } catch (err) {
+                console.log(err);
+                return false;
+            }
+        } else {
+            try {
+                const obj = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
+                delete obj[workspaceName];
+                localStorage.setItem("savedWorkspaces", JSON.stringify(obj));
                 return true;
             } catch (err) {
                 return false;

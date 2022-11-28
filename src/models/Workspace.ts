@@ -31,7 +31,8 @@ export interface WorkspaceRegion {
 
 export interface WorkspaceFile {
     id: number;
-    path: string;
+    directory?: string;
+    filename: string;
     hdu?: string;
     spatialMatching?: boolean;
     spectralMatching?: boolean;
@@ -50,35 +51,3 @@ export interface Workspace {
     spatialReference?: number;
     spectralReference?: number;
 }
-
-export const exampleWorkspace: Workspace = {
-    workspaceVersion: 0,
-    frontendVersion: 4,
-    description: "Example workspace",
-    files: [
-        {
-            id: 1,
-            path: "fits/m51/m51_xray.fits",
-            spatialMatching: true,
-            spectralMatching: true
-        },
-        {
-            id: 2,
-            path: "fits/m51/h_m51_b_s05_drz_sci.fits",
-            spatialMatching: true,
-            spectralMatching: true
-        },
-        {
-            id: 3,
-            path: "fits/m51/h_m51_h_s05_drz_sci.fits",
-            spatialMatching: true,
-            spectralMatching: true
-        },
-        {
-            id: 4,
-            path: "fits/m51/h_m51_i_s05_drz_sci.fits",
-            spatialMatching: true,
-            spectralMatching: true
-        }
-    ]
-};
