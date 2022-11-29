@@ -320,9 +320,11 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
         if (konvaEvent.target) {
             const oldPosition = adjustPosToUnityStage(mousePoint.current, props.stageRef.current);
             const oldImagePosition = canvasToTransformedImagePos(oldPosition.x, oldPosition.y, frame, props.layerWidth, props.layerHeight);
+            const transformedOldImagePosition = frame.spatialReference ? frame.spatialTransform.transformCoordinate(oldImagePosition) : oldImagePosition;
             const position = adjustPosToUnityStage(konvaEvent.target.position(), props.stageRef.current);
             const imagePosition = canvasToTransformedImagePos(position.x, position.y, frame, props.layerWidth, props.layerHeight);
-            const deltaPosition = subtract2D(imagePosition, oldImagePosition);
+            const transformedImagePosition = frame.spatialReference ? frame.spatialTransform.transformCoordinate(imagePosition) : imagePosition;
+            const deltaPosition = subtract2D(transformedImagePosition, transformedOldImagePosition);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
             mousePoint.current = konvaEvent.target.position();

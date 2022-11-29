@@ -591,14 +591,26 @@ export class RegionStore {
     // Appearance properties don't need to be sync'd with the backend
     @action setColor = (color: string) => {
         this.color = color;
+
+        if (this.isAnnotation) {
+            this.modifiedTimestamp = performance.now();
+        }
     };
 
     @action setLineWidth = (lineWidth: number) => {
         this.lineWidth = lineWidth;
+
+        if (this.isAnnotation) {
+            this.modifiedTimestamp = performance.now();
+        }
     };
 
     @action setDashLength = (dashLength: number) => {
         this.dashLength = dashLength;
+
+        if (this.isAnnotation) {
+            this.modifiedTimestamp = performance.now();
+        }
     };
 
     @action beginCreating = () => {
