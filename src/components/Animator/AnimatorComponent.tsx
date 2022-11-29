@@ -264,7 +264,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 disabled={appStore.animatorStore.animationActive}
                             />
                             <div className="slider-info">
-                                <pre>{activeFrame.isSpectralVsDirection ? activeFrame.depthAxisInfo : activeFrame.simpleSpectralInfo}</pre>
+                                <pre>{activeFrame.depthAxisInfo}</pre>
                             </div>
                         </React.Fragment>
                     )}

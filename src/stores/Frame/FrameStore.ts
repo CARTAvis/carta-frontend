@@ -558,11 +558,6 @@ export class FrameStore {
         return spectralInfo;
     }
 
-    @computed get simpleSpectralInfo(): string {
-        const infoString = this.spectralInfo.freqString ? this.spectralInfo.freqString : this.spectralInfo.velocityString;
-        return `${this.spectralInfo.spectralString?.replace(/\w+\s\(/, "")?.replace(/\):\s/, "\u000A")}${infoString?.replace(/\w+:\s/, "\u000A")}`;
-    }
-
     @computed get isPVImage(): boolean {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
@@ -586,7 +581,7 @@ export class FrameStore {
         return false;
     }
 
-    @computed get isSpectralVsDirection(): boolean {
+    @computed get isSwappedZ(): boolean {
         const spectral = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
@@ -594,7 +589,7 @@ export class FrameStore {
     }
 
     @computed get channelType(): string {
-        if (this.isSpectralVsDirection) {
+        if (this.isSwappedZ) {
             const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
             const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
@@ -674,6 +669,15 @@ export class FrameStore {
     }
 
     @computed get depthAxisInfo(): string {
+        // For the case depth axis is spectral axis
+        if (!this.isSwappedZ) {
+            const infoString = this.spectralInfo.freqString ? this.spectralInfo.freqString : this.spectralInfo.velocityString;
+            return `${this.spectralInfo.spectralString?.replace(/\w+\s\(/, "")?.replace(/\):\s/, "\u000A")}${infoString?.replace(/\w+:\s/, "\u000A")}`;
+        }
+
+        // For the case depth axis is direction axis
+
+        // Check if the direction axis is projection distortion
         if (this.isProjDistort) {
             return "WCS: non-linear";
         }
@@ -682,23 +686,27 @@ export class FrameStore {
         const depthAxisFormat = this.getDirAxisInfo?.depthAxisFormat;
         AST.set(this.wcsInfoSpectralVsDirection, `Format(3)=${depthAxisFormat}`);
         const requiredChannel = this.requiredChannel + 1;
-        const wcs1 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel, true);
-        const wcsVal1 = wcs1.z < 0 ? wcs1.z + 2 * Math.PI : wcs1.z;
-        const wcsStr1 = AST.format(this.wcsInfoSpectralVsDirection, 3, wcsVal1);
-        const wcs2 = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, requiredChannel + 1, true);
-        const wcsVal2 = wcs2.z < 0 ? wcs2.z + 2 * Math.PI : wcs2.z;
-        const wcsStr2 = AST.format(this.wcsInfoSpectralVsDirection, 3, wcsVal2);
+
+        // Lambda function for WCS transformation
+        let wcs = (channel: number): string => {
+            const wcs = AST.transform3DPoint(this.wcsInfoSpectralVsDirection, 1, 1, channel, true);
+            const wcsVal = wcs.z < 0 ? wcs.z + 2 * Math.PI : wcs.z;
+            return AST.format(this.wcsInfoSpectralVsDirection, 3, wcsVal);
+        };
+
+        const wcs1 = wcs(requiredChannel);
+        const wcs2 = wcs(requiredChannel + 1);
 
         // Only show effective digit number
-        let endPos = wcsStr1.length;
-        let len = wcsStr1.length;
+        let endPos = wcs1.length;
+        let len = wcs1.length;
         for (let i = len - WCS_PRECISION - 1; i < len; i++) {
-            if (wcsStr1.charAt(i) !== wcsStr2.charAt(i)) {
+            if (wcs1.charAt(i) !== wcs2.charAt(i)) {
                 endPos = i + 2 < len ? i + 2 : len;
                 break;
             }
         }
-        return `WCS:\n${wcsStr1.substring(0, endPos)}`;
+        return `WCS:\n${wcs1.substring(0, endPos)}`;
     }
 
     @computed get isSwappedXY(): boolean {
@@ -1180,7 +1188,7 @@ export class FrameStore {
                 this.wcsInfo = AST.copy(astFrameSet);
                 AST.deleteObject(astFrameSet);
             }
-        } else if (this.isSpectralVsDirection) {
+        } else if (this.isSwappedZ) {
             const astFrameSet = this.initSpectralVsDirectionFrame();
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
@@ -2098,7 +2106,7 @@ export class FrameStore {
         }
 
         // Update the wcsInfo for swapped-axes cube image, since its rendering coordinate may dependent on channels
-        if (this.isSpectralVsDirection) {
+        if (this.isSwappedZ) {
             this.updateSpectralVsDirectionWcs();
         }
     }

@@ -164,7 +164,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringLineWidth = frame.distanceMeasuring.lineWidth;
         const title = frame.titleCustomText;
         const ratio = AppStore.Instance.imageRatio;
-        if (frame.isSpectralVsDirection) {
+        if (frame.isSwappedZ) {
             const requiredChannel = frame.requiredChannel;
         }
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
@@ -179,7 +179,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
                     `${frame.spectralType && frame.spectralSystem ? `Label(${frame.isReversedPVImage ? 1 : 2})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
-        } else if (frame.isSpectralVsDirection && frame.spectralAxis?.valid) {
+        } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {
             const spectralAxis = frame.spectralAxis?.dimension;
             AST.set(
                 frame.wcsInfo,
