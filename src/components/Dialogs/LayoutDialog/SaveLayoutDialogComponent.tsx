@@ -61,7 +61,7 @@ export class SaveLayoutDialogComponent extends React.Component {
     };
 
     @computed get isEmpty(): boolean {
-        return !this.layoutName;
+        return !this.layoutName?.trim();
     }
 
     @computed get validName(): boolean {
