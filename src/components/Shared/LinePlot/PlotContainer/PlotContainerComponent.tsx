@@ -401,7 +401,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     afterBuildTicks: (axis: Scale) => this.filterLinearTicks(axis, false),
                     afterTickToLabelConversion: this.props.topAxisTickFormatter ? (axis: Scale) => this.skipLinearLongTicks(axis) : undefined,
                     type: "linear",
-                    display: this.props.showTopAxis,
+                    display: this.props.showTopAxis === true,
                     ticks: {
                         includeBounds: false,
                         color: labelColor,
@@ -435,10 +435,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 padding: 5
             }
         };
-
-        if (this.props.topAxisTickFormatter) {
-            plotOptions.scales["x-axis-1"].ticks.callback = this.props.topAxisTickFormatter;
-        }
 
         if (this.props.logY) {
             plotOptions.scales["y-axis-0"].afterBuildTicks = this.filterYLogTicks;
