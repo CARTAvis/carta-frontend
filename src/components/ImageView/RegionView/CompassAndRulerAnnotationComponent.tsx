@@ -226,6 +226,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
+                    fontFamily={region.font}
+                    fontStyle={region.fontStyle}
                 />
                 <Text
                     ref={eastLabelRef}
@@ -240,6 +242,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
+                    fontFamily={region.font}
+                    fontStyle={region.fontStyle}
                 />
                 {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
                 <Line closed points={[...northPointArray, eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], ...eastPointArray]} opacity={0} />
@@ -501,6 +505,8 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     strokeScaleEnabled={false}
                     opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
                     fontSize={(region.fontSize * imageRatio) / zoomLevel}
+                    fontFamily={region.font}
+                    fontStyle={region.fontStyle}
                 />
                 {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
                 {region.auxiliaryLineVisible && <Line closed points={[xPointArray[0], xPointArray[1], hypotenusePointArray[0], hypotenusePointArray[1], yPointArray[0], yPointArray[1]]} opacity={0} />}

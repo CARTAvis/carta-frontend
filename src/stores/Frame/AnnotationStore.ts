@@ -20,6 +20,19 @@ export enum TextAnnotationPosition {
     RIGHT = "Right"
 }
 
+export enum FontStyle {
+    NORMAL = "Normal",
+    BOLD = "Bold",
+    ITALIC = "Italic",
+    BOLD_ITALIC = "Italic Bold"
+}
+
+export enum Font {
+    HELVETICA = "Helvetica",
+    TIMES = "Times",
+    COURIER = "Courier"
+}
+
 export class PointAnnotationStore extends RegionStore {
     @observable pointShape: CARTA.PointAnnotationShape;
     @observable pointWidth: number;
@@ -60,6 +73,8 @@ export class PointAnnotationStore extends RegionStore {
 export class TextAnnotationStore extends RegionStore {
     @observable text: string = "Double click to edit text";
     @observable fontSize: number = 20;
+    @observable fontStyle: FontStyle = FontStyle.NORMAL;
+    @observable font: Font = Font.HELVETICA;
     @observable position: TextAnnotationPosition = TextAnnotationPosition.CENTER;
 
     constructor(
@@ -87,6 +102,16 @@ export class TextAnnotationStore extends RegionStore {
 
     @action setFontSize = (fontSize: number) => {
         this.fontSize = fontSize;
+        this.modifiedTimestamp = performance.now();
+    };
+
+    @action setFontStyle = (fontStyle: FontStyle) => {
+        this.fontStyle = fontStyle;
+        this.modifiedTimestamp = performance.now();
+    };
+
+    @action setFont = (font: Font) => {
+        this.font = font;
         this.modifiedTimestamp = performance.now();
     };
 
@@ -134,6 +159,8 @@ export class CompassAnnotationStore extends RegionStore {
     @observable northLabel: string = "N";
     @observable eastLabel: string = "E";
     @observable fontSize: number = 20;
+    @observable fontStyle: FontStyle = FontStyle.NORMAL;
+    @observable font: Font = Font.HELVETICA;
     @observable pointerWidth: number = 10;
     @observable pointerLength: number = 10;
     @observable northTextOffset: Point2D = {x: 0, y: 0};
@@ -173,6 +200,16 @@ export class CompassAnnotationStore extends RegionStore {
 
     @action setFontSize = (fontSize: number) => {
         this.fontSize = fontSize;
+        this.modifiedTimestamp = performance.now();
+    };
+
+    @action setFontStyle = (fontStyle: FontStyle) => {
+        this.fontStyle = fontStyle;
+        this.modifiedTimestamp = performance.now();
+    };
+
+    @action setFont = (font: Font) => {
+        this.font = font;
         this.modifiedTimestamp = performance.now();
     };
 
@@ -250,6 +287,8 @@ export class CompassAnnotationStore extends RegionStore {
 
 export class RulerAnnotationStore extends RegionStore {
     @observable fontSize: number = 13;
+    @observable fontStyle: FontStyle = FontStyle.NORMAL;
+    @observable font: Font = Font.HELVETICA;
     @observable auxiliaryLineVisible: boolean = true;
     @observable auxiliaryLineDashLength: number = 0;
     @observable textOffset: Point2D = {x: 0, y: 0};
@@ -274,6 +313,16 @@ export class RulerAnnotationStore extends RegionStore {
 
     @action setFontSize = (fontSize: number) => {
         this.fontSize = fontSize;
+        this.modifiedTimestamp = performance.now();
+    };
+
+    @action setFontStyle = (fontStyle: FontStyle) => {
+        this.fontStyle = fontStyle;
+        this.modifiedTimestamp = performance.now();
+    };
+
+    @action setFont = (font: Font) => {
+        this.font = font;
         this.modifiedTimestamp = performance.now();
     };
 

@@ -32,7 +32,7 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, TextAnnotationStore} from "./Frame";
+import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "./Frame";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
 import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS} from "models";
@@ -984,18 +984,51 @@ export class AppStore {
 
         const regionStyles = new Map<number, CARTA.IRegionStyle>();
         for (const region of exportRegions.map(value => frame.regionSet.regions[value])) {
+            let annotationStyle: CARTA.IAnnotationStyle = {};
+
+            switch (region.regionType) {
+                case CARTA.RegionType.ANNPOINT:
+                    annotationStyle.pointShape = (region as PointAnnotationStore).pointShape;
+                    annotationStyle.pointWidth = (region as PointAnnotationStore).pointWidth;
+                    break;
+                case CARTA.RegionType.ANNTEXT:
+                    annotationStyle.textLabel0 = (region as TextAnnotationStore).text;
+                    annotationStyle.fontSize = (region as TextAnnotationStore).fontSize;
+                    // annotationStyle.fontStyle = (region as TextAnnotationStore).fontStyle;
+                    // annotationStyle.font = (region as TextAnnotationStore).font;
+                    break;
+                case CARTA.RegionType.ANNCOMPASS:
+                    annotationStyle.textLabel0 = (region as CompassAnnotationStore).northLabel;
+                    annotationStyle.textLabel1 = (region as CompassAnnotationStore).eastLabel;
+                    annotationStyle.isArrow0 = (region as CompassAnnotationStore).northArrowhead;
+                    annotationStyle.isArrow1 = (region as CompassAnnotationStore).eastArrowhead;
+                    annotationStyle.compassCoordinate = "PIXEL";
+                    annotationStyle.fontSize = (region as CompassAnnotationStore).fontSize;
+                    // annotationStyle.fontStyle = (region as CompassAnnotationStore).fontStyle;
+                    // annotationStyle.font = (region as CompassAnnotationStore).font;
+                    break;
+                case CARTA.RegionType.ANNRULER:
+                    annotationStyle.fontSize = (region as RulerAnnotationStore).fontSize;
+                    // annotationStyle.fontStyle = (region as RulerAnnotationStore).fontStyle;
+                    // annotationStyle.font = (region as RulerAnnotationStore).font;
+                    break;
+                default:
+                    break;
+            }
+
             regionStyles.set(region.regionId, {
                 name: region.name,
                 color: region.color,
                 lineWidth: region.lineWidth,
                 dashList: region.dashLength ? [region.dashLength] : [],
-                pointShape: region.regionType === CARTA.RegionType.ANNPOINT ? (region as PointAnnotationStore).pointShape : undefined,
-                pointWidth: region.regionType === CARTA.RegionType.ANNPOINT ? (region as PointAnnotationStore).pointWidth : undefined,
-                textAnnotationText: region.regionType === CARTA.RegionType.ANNTEXT ? (region as TextAnnotationStore).text : undefined,
-                compassNorthLabel: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).northLabel : undefined,
-                compassEastLabel: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).eastLabel : undefined,
-                isCompassNorthArrow: (region as CompassAnnotationStore).northArrowhead,
-                isCompassEastArrow: (region as CompassAnnotationStore).eastArrowhead
+                annotationStyle
+                // point_shape: region.regionType === CARTA.RegionType.ANNPOINT ? (region as PointAnnotationStore).pointShape : undefined,
+                // point_width: region.regionType === CARTA.RegionType.ANNPOINT ? (region as PointAnnotationStore).pointWidth : undefined,
+                // text_annotation_text: region.regionType === CARTA.RegionType.ANNTEXT ? (region as TextAnnotationStore).text : undefined,
+                // compass_north_label: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).northLabel : undefined,
+                // compass_east_label: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).eastLabel : undefined,
+                // is_arrow0: (region as CompassAnnotationStore).northArrowhead,
+                // is_arrow1: (region as CompassAnnotationStore).eastArrowhead
             });
         }
 

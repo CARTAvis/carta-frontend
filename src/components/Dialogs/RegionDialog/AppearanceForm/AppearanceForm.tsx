@@ -2,10 +2,10 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import * as _ from "lodash";
 import {ColorResult} from "react-color";
-import {FormGroup, H5} from "@blueprintjs/core";
+import {FormGroup, H5, HTMLSelect} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {RegionStore, TextAnnotationStore} from "stores/Frame";
+import {Font, FontStyle, RegionStore, TextAnnotationStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 import "./AppearanceForm.scss";
 
@@ -49,9 +49,21 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         </FormGroup>
                     )}
                     {(region.regionType === CARTA.RegionType.ANNCOMPASS || region.regionType === CARTA.RegionType.ANNTEXT || region.regionType === CARTA.RegionType.ANNRULER) && (
-                        <FormGroup inline={true} label="Font Size" labelInfo="(px)">
-                            <SafeNumericInput placeholder="Font Size" min={0.5} max={100} value={(region as TextAnnotationStore)?.fontSize} stepSize={1} onValueChange={value => (region as TextAnnotationStore)?.setFontSize(value)} />
-                        </FormGroup>
+                        <>
+                            <FormGroup inline={true} label="Font Size" labelInfo="(px)">
+                                <SafeNumericInput placeholder="Font Size" min={0.5} max={100} value={(region as TextAnnotationStore)?.fontSize} stepSize={1} onValueChange={value => (region as TextAnnotationStore)?.setFontSize(value)} />
+                            </FormGroup>
+                            <FormGroup inline={true} label="Font">
+                                <HTMLSelect options={Object.values(Font)} value={(this.props.region as TextAnnotationStore).font} onChange={ev => (this.props.region as TextAnnotationStore).setFont(ev.target.value as Font)} />
+                            </FormGroup>
+                            <FormGroup inline={true} label="Font Style">
+                                <HTMLSelect
+                                    options={Object.values(FontStyle)}
+                                    value={(this.props.region as TextAnnotationStore).fontStyle}
+                                    onChange={ev => (this.props.region as TextAnnotationStore).setFontStyle(ev.target.value as FontStyle)}
+                                />
+                            </FormGroup>
+                        </>
                     )}
                 </div>
             </div>

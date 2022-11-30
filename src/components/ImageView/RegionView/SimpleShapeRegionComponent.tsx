@@ -511,7 +511,9 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             verticalAlign,
             text: region.text,
             fill: region.color,
-            fontSize: (region.fontSize * AppStore.Instance.imageRatio) / zoomLevel
+            fontSize: (region.fontSize * AppStore.Instance.imageRatio) / zoomLevel,
+            fontFamily: region.font,
+            fontStyle: region.fontStyle
         };
     };
 
