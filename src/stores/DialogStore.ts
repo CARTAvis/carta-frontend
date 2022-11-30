@@ -1,7 +1,7 @@
 import {action, observable, makeObservable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {FileInfoType} from "components";
-import {SnippetStore} from "stores";
+import {SnippetStore, AppStore} from "stores";
 import {Snippet} from "models";
 
 export class DialogStore {
@@ -56,8 +56,9 @@ export class DialogStore {
 
     // Layout
     @observable saveLayoutDialogVisible: boolean;
-    @action showSaveLayoutDialog = () => {
+    @action showSaveLayoutDialog = (oldLayoutName?: string) => {
         this.saveLayoutDialogVisible = true;
+        AppStore.Instance.layoutStore.setOldLayoutName(oldLayoutName);
     };
     @action hideSaveLayoutDialog = () => {
         this.saveLayoutDialogVisible = false;

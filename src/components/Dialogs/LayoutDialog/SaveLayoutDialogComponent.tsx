@@ -2,7 +2,7 @@ import * as React from "react";
 import classNames from "classnames";
 import {observable, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, InputGroup, IDialogProps, Button, Intent, Classes} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
@@ -26,7 +26,6 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     private clearInput = () => {
         this.layoutName = "";
-        AppStore.Instance.layoutStore.setOldLayoutName("");
     };
 
     private handleKeyDown = ev => {
@@ -39,7 +38,7 @@ export class SaveLayoutDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
 
         appStore.dialogStore.hideSaveLayoutDialog();
-        appStore.layoutStore.setLayoutToBeSaved(this.layoutName);
+        appStore.layoutStore.setLayoutToBeSaved(this.layoutName.trim());
         if (appStore.layoutStore.layoutExists(this.layoutName)) {
             if (PresetLayout.isPreset(this.layoutName)) {
                 appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
@@ -57,14 +56,16 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     private renameLayout = async () => {
         const appStore = AppStore.Instance;
-
-        appStore.dialogStore.hideSaveLayoutDialog();
-        await appStore.layoutStore.renameLayout(appStore.layoutStore.oldLayoutName, this.layoutName);
+        await appStore.layoutStore.renameLayout(appStore.layoutStore.oldLayoutName, this.layoutName.trim());
         this.clearInput();
     };
 
     @computed get isEmpty(): boolean {
         return !this.layoutName;
+    }
+
+    @computed get validName(): boolean {
+        return this.layoutName.match(/^[^<>/|:&]+$/)?.length > 0;
     }
 
     render() {
@@ -87,20 +88,21 @@ export class SaveLayoutDialogComponent extends React.Component {
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_LAYOUT} defaultWidth={400} defaultHeight={185} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>
-                        <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
+                        <Tooltip2 isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain /, <, >, |, : or &"}>
+                            <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
+                        </Tooltip2>
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Tooltip2 content="Layout name cannot be empty!" disabled={!this.isEmpty}>
-                            <AnchorButton intent={Intent.PRIMARY} onClick={isSave ? this.saveLayout : this.renameLayout} text={isSave ? "Save" : "Rename"} disabled={this.isEmpty} />
+                            <AnchorButton intent={Intent.PRIMARY} onClick={isSave ? this.saveLayout : this.renameLayout} text={isSave ? "Save" : "Rename"} disabled={this.isEmpty || !this.validName} />
                         </Tooltip2>
                         <Button
                             intent={Intent.NONE}
                             text="Close"
                             onClick={() => {
                                 appStore.dialogStore.hideSaveLayoutDialog();
-                                this.clearInput();
                             }}
                         />
                     </div>

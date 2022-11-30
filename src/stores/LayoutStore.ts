@@ -213,6 +213,8 @@ export class LayoutStore {
             return;
         }
 
+        appStore.dialogStore.hideSaveLayoutDialog();
+
         // save layout to layouts[] & server/local storage
         const configToSave = this.layouts[oldName];
         this.layouts[newName] = configToSave;
