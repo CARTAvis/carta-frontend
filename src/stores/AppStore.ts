@@ -994,8 +994,8 @@ export class AppStore {
                 case CARTA.RegionType.ANNTEXT:
                     annotationStyle.textLabel0 = (region as TextAnnotationStore).text;
                     annotationStyle.fontSize = (region as TextAnnotationStore).fontSize;
-                    // annotationStyle.fontStyle = (region as TextAnnotationStore).fontStyle;
-                    // annotationStyle.font = (region as TextAnnotationStore).font;
+                    annotationStyle.fontStyle = (region as TextAnnotationStore).fontStyle;
+                    annotationStyle.font = (region as TextAnnotationStore).font;
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
                     annotationStyle.textLabel0 = (region as CompassAnnotationStore).northLabel;
@@ -1004,13 +1004,13 @@ export class AppStore {
                     annotationStyle.isArrow1 = (region as CompassAnnotationStore).eastArrowhead;
                     annotationStyle.compassCoordinate = "PIXEL";
                     annotationStyle.fontSize = (region as CompassAnnotationStore).fontSize;
-                    // annotationStyle.fontStyle = (region as CompassAnnotationStore).fontStyle;
-                    // annotationStyle.font = (region as CompassAnnotationStore).font;
+                    annotationStyle.fontStyle = (region as CompassAnnotationStore).fontStyle;
+                    annotationStyle.font = (region as CompassAnnotationStore).font;
                     break;
                 case CARTA.RegionType.ANNRULER:
                     annotationStyle.fontSize = (region as RulerAnnotationStore).fontSize;
-                    // annotationStyle.fontStyle = (region as RulerAnnotationStore).fontStyle;
-                    // annotationStyle.font = (region as RulerAnnotationStore).font;
+                    annotationStyle.fontStyle = (region as RulerAnnotationStore).fontStyle;
+                    annotationStyle.font = (region as RulerAnnotationStore).font;
                     break;
                 default:
                     break;
