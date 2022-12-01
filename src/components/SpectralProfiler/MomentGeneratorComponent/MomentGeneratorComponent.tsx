@@ -244,7 +244,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     <Switch
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
-                            this.props.widgetStore.setKeep(e.checked);
+                            widgetStore.setKeep(e.checked);
                         }}
                     />
                 </FormGroup>
