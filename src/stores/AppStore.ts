@@ -1002,7 +1002,7 @@ export class AppStore {
                     annotationStyle.textLabel1 = (region as CompassAnnotationStore).eastLabel;
                     annotationStyle.isArrow0 = (region as CompassAnnotationStore).northArrowhead;
                     annotationStyle.isArrow1 = (region as CompassAnnotationStore).eastArrowhead;
-                    annotationStyle.compassCoordinate = "PIXEL";
+                    annotationStyle.coordinateSystem = "PIXEL";
                     annotationStyle.fontSize = (region as CompassAnnotationStore).fontSize;
                     annotationStyle.fontStyle = (region as CompassAnnotationStore).fontStyle;
                     annotationStyle.font = (region as CompassAnnotationStore).font;
@@ -1011,6 +1011,7 @@ export class AppStore {
                     annotationStyle.fontSize = (region as RulerAnnotationStore).fontSize;
                     annotationStyle.fontStyle = (region as RulerAnnotationStore).fontStyle;
                     annotationStyle.font = (region as RulerAnnotationStore).font;
+                    annotationStyle.coordinateSystem = "PIXEL";
                     break;
                 default:
                     break;
@@ -1022,13 +1023,6 @@ export class AppStore {
                 lineWidth: region.lineWidth,
                 dashList: region.dashLength ? [region.dashLength] : [],
                 annotationStyle
-                // point_shape: region.regionType === CARTA.RegionType.ANNPOINT ? (region as PointAnnotationStore).pointShape : undefined,
-                // point_width: region.regionType === CARTA.RegionType.ANNPOINT ? (region as PointAnnotationStore).pointWidth : undefined,
-                // text_annotation_text: region.regionType === CARTA.RegionType.ANNTEXT ? (region as TextAnnotationStore).text : undefined,
-                // compass_north_label: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).northLabel : undefined,
-                // compass_east_label: region.regionType === CARTA.RegionType.ANNCOMPASS ? (region as CompassAnnotationStore).eastLabel : undefined,
-                // is_arrow0: (region as CompassAnnotationStore).northArrowhead,
-                // is_arrow1: (region as CompassAnnotationStore).eastArrowhead
             });
         }
 
