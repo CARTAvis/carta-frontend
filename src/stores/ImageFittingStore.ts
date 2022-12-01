@@ -118,6 +118,7 @@ export class ImageFittingStore {
             return;
         }
         this.setIsFitting(true);
+        this.setIsCancelling(false);
         const initialValues = [];
         const fixedParams = [];
         for (const c of this.components) {
@@ -146,7 +147,7 @@ export class ImageFittingStore {
 
     cancelFitting = () => {
         this.setIsCancelling(true);
-        if (this.progress < 1.0) {
+        if (this.progress < 1.0 && this.isFitting) {
             AppStore.Instance.backendService?.cancelRequestingFitting(this.effectiveFrame.frameInfo.fileId);
         }
     };
