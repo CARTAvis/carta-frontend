@@ -7,8 +7,8 @@ import {Cell, Column, SelectionModes, Table} from "@blueprintjs/table";
 import {Select, IItemRendererProps} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, BrowserMode, HelpType} from "stores";
-import {POLARIZATION_LABELS, STANDARD_POLARIZATIONS} from "models/PolarizationDefinition";
-import {getHeaderNumericValue} from "utilities/wcs/wcs";
+import {POLARIZATION_LABELS, STANDARD_POLARIZATIONS} from "models";
+import {getHeaderNumericValue} from "utilities";
 import {CARTA} from "carta-protobuf";
 import "./StokesDialogComponent.scss";
 
