@@ -4,13 +4,13 @@ import {fireEvent, render, screen} from "@testing-library/react";
 import {ExportImageMenuComponent} from "../components/Shared";
 import {AppStore} from "../stores/AppStore";
 
-describe("test ExportImageMenuComponent", () => {
-    let modifierStringMock: jest.SpyInstance;
-    let exportImageMock: jest.SpyInstance;
+describe("ExportImageMenuComponent", () => {
+    let mockModifierString: jest.SpyInstance;
+    let mockExportImage: jest.SpyInstance;
 
     beforeEach(() => {
-        modifierStringMock = jest.spyOn(AppStore.prototype, "modifierString", "get").mockImplementation(() => "ctrl + ");
-        exportImageMock = jest.spyOn(AppStore.Instance, "exportImage");
+        mockModifierString = jest.spyOn(AppStore.prototype, "modifierString", "get").mockImplementation(() => "ctrl + ");
+        mockExportImage = jest.spyOn(AppStore.Instance, "exportImage");
     });
 
     test("renders four list items", () => {
@@ -18,25 +18,20 @@ describe("test ExportImageMenuComponent", () => {
         const listitems = screen.getAllByRole("listitem");
 
         expect(listitems?.length).toEqual(4);
-        expect(listitems?.[0]).toHaveTextContent("Resolution");
-        expect(listitems?.[1]).toHaveTextContent("Normal (100%)ctrl + E");
-        expect(listitems?.[2]).toHaveTextContent("High (200%)");
-        expect(listitems?.[3]).toHaveTextContent("Highest (400%)");
+        expect(listitems?.[0]).toHaveTextContent(/^Resolution$/);
+        expect(listitems?.[1]).toHaveTextContent(/^Normal \(100%\)ctrl \+ E$/);
+        expect(listitems?.[2]).toHaveTextContent(/^High \(200%\)$/);
+        expect(listitems?.[3]).toHaveTextContent(/^Highest \(400%\)$/);
     });
 
     test("calls exportImage() with required image ratio when clicked", () => {
         render(<ExportImageMenuComponent />);
 
         fireEvent.click(screen.getByText(/Normal /));
-        expect(exportImageMock).toBeCalledWith(1);
+        expect(mockExportImage).toBeCalledWith(1);
         fireEvent.click(screen.getByText(/High /));
-        expect(exportImageMock).toBeCalledWith(2);
+        expect(mockExportImage).toBeCalledWith(2);
         fireEvent.click(screen.getByText(/Highest /));
-        expect(exportImageMock).toBeCalledWith(4);
-    });
-
-    test("matches the snapshot", () => {
-        const {container} = render(<ExportImageMenuComponent />);
-        expect(container).toMatchSnapshot();
+        expect(mockExportImage).toBeCalledWith(4);
     });
 });
