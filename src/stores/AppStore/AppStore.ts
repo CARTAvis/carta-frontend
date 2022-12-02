@@ -60,7 +60,7 @@ interface ChannelUpdate {
     stokes: number;
 }
 
-const IMPORT_REGION_BATCH_SIZE = 100;
+const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
 
 export class AppStore {
@@ -1060,17 +1060,19 @@ export class AppStore {
         }
     };
 
-    @flow.bound *requestPV(message: CARTA.IPvRequest, frame: FrameStore) {
+    @flow.bound *requestPV(message: CARTA.IPvRequest, frame: FrameStore, keepExisting: boolean) {
         if (!message || !frame) {
             return;
         }
 
         this.startFileLoading();
         // clear previously generated moment images under this frame
-        if (frame.pvImage) {
-            this.closeFile(frame.pvImage);
+        if (!keepExisting) {
+            if (frame.pvImages) {
+                frame.pvImages.forEach(pvImage => this.closeFile(pvImage));
+            }
+            frame.removePvImage();
         }
-        frame.removePvImage();
 
         this.restartTaskProgress();
 
