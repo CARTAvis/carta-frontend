@@ -131,7 +131,7 @@
         ],
         "moduleNameMapper": {
             "canvas": "jest-canvas-mock",
-            "zfp_wrapper": "<rootDir>/src/test/__mocks__/ZFPWorkerMock.js",
+            "zfp_wrapper": "<rootDir>/src/__mocks__/ZFPWorkerMock.js",
             "^!raw-loader!(.*)$": "<rootDir>/src/services/GLSL/$1"
         }            
     }    
