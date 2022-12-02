@@ -1,6 +1,6 @@
 export * from "./AlertStore";
 export * from "./AnimatorStore";
-export * from "./AppStore";
+export * from "./AppStore/AppStore";
 export * from "./FileBrowserStore";
 export * from "./LogStore";
 export * from "./OverlayStore";

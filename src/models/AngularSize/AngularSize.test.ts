@@ -1,4 +1,4 @@
-import {AngularSize, AngularSizeUnit} from "../models/AngularSize";
+import {AngularSize, AngularSizeUnit} from "./AngularSize";
 
 describe("AngularSize", () => {
     describe("convertValueFromArcsec", () => {

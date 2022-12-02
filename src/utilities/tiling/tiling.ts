@@ -1,4 +1,4 @@
-import {TileCoordinate} from "models/TileCoordinate";
+import {TileCoordinate} from "models/TileCoordinate/TileCoordinate";
 import {Point2D} from "models/Point2D";
 import {FrameView} from "models/FrameView";
 
