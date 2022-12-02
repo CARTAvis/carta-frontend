@@ -8,7 +8,7 @@ import {Select, IItemRendererProps} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, BrowserMode, HelpType} from "stores";
 import {POLARIZATION_LABELS, STANDARD_POLARIZATIONS} from "models/PolarizationDefinition";
-import {getHeaderNumericValue} from "utilities/wcs";
+import {getHeaderNumericValue} from "utilities/wcs/wcs";
 import {CARTA} from "carta-protobuf";
 import "./StokesDialogComponent.scss";
 

@@ -4,8 +4,7 @@ import {FittingFunction, FittingContinuum} from "components/SpectralProfiler/Pro
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
-import {getColorForTheme, toFixed, gaussian, lorentzian} from "utilities";
-import {autoDetecting} from "utilities/fitting_heuristics";
+import {autoDetecting, getColorForTheme, toFixed, gaussian, lorentzian} from "utilities";
 
 export class ProfileFittingStore {
     @observable function: FittingFunction;

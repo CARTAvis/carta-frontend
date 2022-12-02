@@ -1,8 +1,8 @@
 import Ajv from "ajv";
 import {AppStore, WidgetConfig, CatalogStore} from "stores";
 import {PresetLayout} from "models";
-import {smoothStepOffset} from "utilities/math";
-import {findDeep} from "utilities/parsing";
+import {smoothStepOffset} from "utilities/math/math";
+import {findDeep} from "utilities";
 import {CatalogOverlayComponent} from "components";
 
 const layoutSchema = require("models/layout_schema_2.json");

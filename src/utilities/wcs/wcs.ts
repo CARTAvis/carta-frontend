@@ -3,8 +3,7 @@ import * as AST from "ast_wrapper";
 import {Point2D, WCSPoint2D, SpectralType, SPECTRAL_DEFAULT_UNIT} from "models";
 import {NumberFormatType} from "stores";
 import {FrameStore} from "stores/Frame";
-import {add2D, polygonPerimeter, rotate2D, scale2D, subtract2D, magDir2D} from "./math2d";
-import {trimFitsComment} from "./parsing";
+import {add2D, polygonPerimeter, rotate2D, scale2D, subtract2D, magDir2D, trimFitsComment} from "utilities";
 
 export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType): boolean {
     if (!wcsString || !format) {
