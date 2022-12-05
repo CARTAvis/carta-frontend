@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added tooltip to the Image column for Image List and Cursor Info overlay ([#1948](https://github.com/CARTAvis/carta-frontend/issues/1948)).
 * Added additional cursor info option to spectral profile widget ([#1837](https://github.com/CARTAvis/carta-frontend/issues/1837)).
 * Added a selection option in the PV generator widget to swap x and y axis, an input for spectral axis limit, and a toggle button to let users decide whether or not to keep the previously generated PV images ([#1950](https://github.com/cartavis/carta-frontend/issues/1950), [#1951](https://github.com/cartavis/carta-frontend/issues/1951), [#1952](https://github.com/cartavis/carta-frontend/issues/1952)).
+* Added a toggle button to let users decide whether or not to keep the previously generated moment images ([#2054](https://github.com/CARTAvis/carta-frontend/issues/2054)).
 ### Fixed
 * Fixed issue of only enabling catalog selection button when there is a layer of catalog overlay ([#1826](https://github.com/CARTAvis/carta-frontend/issues/1826)).
 * Fixed the issue of the corrupted spatial profile when cursor is moving ([#1602](https://github.com/CARTAvis/carta-frontend/issues/1602)).
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed mean and RMS not updating when smoothing in the spatial and spectral profilers ([#1838](https://github.com/CARTAvis/carta-frontend/issues/1838)).
 * Fixed limitations of the point size for catalog overlay rendering ([#1662](https://github.com/CARTAvis/carta-frontend/issues/1662) and [#1802](https://github.com/CARTAvis/carta-frontend/issues/1802)).
 * Fixed the issue of updating image view mode when catalog selection button is disabled ([#1967](https://github.com/CARTAvis/carta-frontend/issues/1967)).
+* Improved the performance of loading regions in batches ([#2040](https://github.com/CARTAvis/carta-frontend/issues/2040))
 ### Changed
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
 
