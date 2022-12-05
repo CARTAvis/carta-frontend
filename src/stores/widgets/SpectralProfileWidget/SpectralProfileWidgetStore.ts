@@ -2,7 +2,7 @@ import {action, autorun, computed, observable, makeObservable, override, reactio
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
-import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/widgets";
+import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
 import {FindIntensityUnitType, GetFreqInGHz, GetIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, SpectralSystem, POLARIZATIONS} from "models";
 import tinycolor from "tinycolor2";

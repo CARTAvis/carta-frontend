@@ -3,7 +3,7 @@ import {AppStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
 import {LayoutConfig, PresetLayout} from "models";
 import {AppToaster, SuccessToast} from "components/Shared";
-import {ApiService} from "../services";
+import {ApiService} from "../../services";
 
 const MAX_LAYOUT = 10;
 

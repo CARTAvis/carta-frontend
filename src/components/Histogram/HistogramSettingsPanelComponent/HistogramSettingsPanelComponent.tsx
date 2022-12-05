@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {computed, autorun} from "mobx";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
-import {HistogramWidgetStore} from "stores/widgets";
+import {HistogramWidgetStore} from "stores/Widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
 import {LineKey} from "models";

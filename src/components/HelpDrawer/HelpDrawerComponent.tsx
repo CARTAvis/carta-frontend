@@ -52,7 +52,7 @@ import {
     VECTOR_OVERLAY_HELP_CONTENT
 } from "./HelpContent";
 import {AppStore, HelpStore} from "stores";
-import {HelpType} from "stores/HelpStore";
+import {HelpType} from "stores/HelpStore/HelpStore";
 
 const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
     // Dialog

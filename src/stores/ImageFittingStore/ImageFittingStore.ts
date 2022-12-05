@@ -2,7 +2,7 @@ import {action, observable, makeObservable, computed} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, NumberFormatType} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
-import {ACTIVE_FILE_ID} from "stores/widgets";
+import {ACTIVE_FILE_ID} from "stores/Widgets";
 import {AngularSize, AngularSizeUnit, Point2D} from "models";
 import {angle2D, getFormattedWCSPoint, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
 

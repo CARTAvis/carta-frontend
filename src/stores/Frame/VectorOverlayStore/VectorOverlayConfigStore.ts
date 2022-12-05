@@ -2,7 +2,7 @@ import {action, observable, makeObservable} from "mobx";
 import tinycolor from "tinycolor2";
 import {RGBColor} from "react-color";
 import {PreferenceStore} from "stores";
-import {FrameStore} from "./FrameStore";
+import {FrameStore} from "../FrameStore";
 
 export enum VectorOverlaySource {
     None = -1,

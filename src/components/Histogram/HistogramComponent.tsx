@@ -9,7 +9,7 @@ import {CARTA} from "carta-protobuf";
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {HistogramWidgetStore} from "stores/widgets";
+import {HistogramWidgetStore} from "stores/Widgets";
 import {WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
 import {FrameStore} from "stores/Frame";
 import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";

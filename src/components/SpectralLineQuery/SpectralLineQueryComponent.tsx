@@ -10,7 +10,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {SafeNumericInput, FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
 import {SpectralLineQuerySplashScreenComponent} from "./SpectralLineQuerySplashScreenComponent";
 import {AppStore, HelpType, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit, SplataloguePingStatus} from "stores/widgets";
+import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit, SplataloguePingStatus} from "stores/Widgets";
 import "./SpectralLineQueryComponent.scss";
 
 enum HeaderTableColumnName {

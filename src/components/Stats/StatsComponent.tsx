@@ -6,7 +6,7 @@ import {HTMLTable, NonIdealState, FormGroup, HTMLSelect} from "@blueprintjs/core
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {DefaultWidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
-import {StatsWidgetStore} from "stores/widgets";
+import {StatsWidgetStore} from "stores/Widgets";
 import {toExponential, exportTsvFile} from "utilities";
 import {RegionSelectorComponent} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";

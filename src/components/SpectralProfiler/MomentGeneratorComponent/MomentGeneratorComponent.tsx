@@ -6,7 +6,7 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
+import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/Widgets";
 import {AppStore} from "stores";
 import {MOMENT_TEXT} from "models";
 import "./MomentGeneratorComponent.scss";

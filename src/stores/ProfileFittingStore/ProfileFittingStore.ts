@@ -1,7 +1,7 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import * as GSL from "gsl_wrapper";
 import {FittingFunction, FittingContinuum} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
-import {SpectralProfileWidgetStore} from "stores/widgets";
+import {SpectralProfileWidgetStore} from "stores/Widgets";
 import {Point2D} from "models";
 import {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
 import {autoDetecting, getColorForTheme, toFixed, gaussian, lorentzian} from "utilities";

@@ -11,7 +11,7 @@ import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoCompone
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
+import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
 import {Point2D, POLARIZATIONS} from "models";
 import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme} from "utilities";
 import "./SpatialProfilerComponent.scss";

@@ -2,11 +2,11 @@ import {action, computed, observable, makeObservable, override} from "mobx";
 import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
-import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {RegionWidgetStore, RegionsType} from "../RegionWidgetStore/RegionWidgetStore";
 import {getColorsForValues, isAutoColor} from "utilities";
 import {SpectralSystem} from "models";
 import tinycolor from "tinycolor2";
-import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
+import {ProfileSmoothingStore} from "stores";
 import {StokesAnalysisSettingsTabs} from "components";
 
 export enum StokesCoordinate {

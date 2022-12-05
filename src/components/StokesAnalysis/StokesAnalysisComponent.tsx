@@ -11,7 +11,7 @@ import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/S
 import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AppStore, AnimatorStore, DefaultWidgetConfig, HelpType, WidgetsStore, WidgetProps, SpectralProfileStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
+import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/Widgets";
 import {Point2D, SpectralColorMap, SpectralType} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray, getColorForTheme} from "utilities";
 import "./StokesAnalysisComponent.scss";

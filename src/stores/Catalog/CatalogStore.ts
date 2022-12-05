@@ -4,7 +4,7 @@ import {AppStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, WidgetsSt
 import {FrameStore} from "stores/Frame";
 import {CatalogWebGLService} from "services";
 import {CatalogSystemType} from "models";
-import {CatalogWidgetStore} from "stores/widgets";
+import {CatalogWidgetStore} from "stores/Widgets";
 import {minMaxArray} from "utilities";
 
 type CatalogOverlayCoords = {

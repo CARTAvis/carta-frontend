@@ -12,7 +12,7 @@ import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
 import {AppStore, CatalogStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
-import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
+import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/Widgets";
 import {toFixed, ProcessedColumnData} from "utilities";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
 import {ImageViewLayer} from "components/ImageView/ImageViewComponent";

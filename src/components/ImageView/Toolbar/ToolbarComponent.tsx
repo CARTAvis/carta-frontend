@@ -6,7 +6,7 @@ import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, PopoverPosition, Po
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {AppStore, OverlayStore} from "stores";
-import {SystemType} from "stores/OverlayStore";
+import {SystemType} from "stores/OverlayStore/OverlayStore";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {ImageViewLayer} from "components";
 import {ExportImageMenuComponent} from "components/Shared";

@@ -3,7 +3,7 @@ import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
-import {StokesAnalysisWidgetStore} from "stores/widgets";
+import {StokesAnalysisWidgetStore} from "stores/Widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {LineKey} from "models";
 import "./StokesAnalysisSettingsPanelComponent.scss";

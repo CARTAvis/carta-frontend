@@ -5,7 +5,7 @@ import {FormGroup, Tabs, Tab, TabId, HTMLSelect, AnchorButton, Position, Switch}
 import {Tooltip2} from "@blueprintjs/popover2";
 import ReactResizeDetector from "react-resize-detector";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {PvGeneratorWidgetStore, RegionId, PVAxis} from "stores/widgets";
+import {PvGeneratorWidgetStore, RegionId, PVAxis} from "stores/Widgets";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {Point2D, SpectralSystem} from "models";

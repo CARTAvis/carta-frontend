@@ -10,7 +10,7 @@ import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigC
 import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
-import {RenderConfigWidgetStore} from "stores/widgets";
+import {RenderConfigWidgetStore} from "stores/Widgets";
 import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {Point2D} from "models";

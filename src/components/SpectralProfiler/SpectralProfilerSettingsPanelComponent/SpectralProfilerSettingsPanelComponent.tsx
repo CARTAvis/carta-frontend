@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
-import {SpectralProfileWidgetStore} from "stores/widgets";
+import {SpectralProfileWidgetStore} from "stores/Widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
 import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";

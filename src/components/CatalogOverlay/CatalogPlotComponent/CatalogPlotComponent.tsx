@@ -12,7 +12,7 @@ import ReactResizeDetector from "react-resize-detector";
 import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
 import {CatalogUpdateMode, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig, CatalogOnlineQueryProfileStore} from "stores";
-import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStoreProps, CatalogWidgetStore, CatalogPlotType} from "stores/widgets";
+import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStoreProps, CatalogWidgetStore, CatalogPlotType} from "stores/Widgets";
 import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed, minMaxArray} from "utilities";

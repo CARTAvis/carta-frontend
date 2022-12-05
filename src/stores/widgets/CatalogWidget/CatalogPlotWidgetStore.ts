@@ -1,5 +1,5 @@
 import {action, observable, computed, makeObservable} from "mobx";
-import {CatalogPlotType} from "stores/widgets";
+import {CatalogPlotType} from "stores/Widgets";
 import {CatalogOverlay, Point2D} from "models";
 import {toExponential} from "utilities";
 

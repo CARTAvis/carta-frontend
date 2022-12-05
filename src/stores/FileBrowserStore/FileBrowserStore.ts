@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
-import {RegionId} from "stores/widgets";
+import {RegionId} from "stores/Widgets";
 import {AppToaster, ErrorToast} from "components/Shared";
 import {FileInfoType} from "components";
 import {Freq, FrequencyUnit, LineOption, ToFileListFilterMode} from "models";

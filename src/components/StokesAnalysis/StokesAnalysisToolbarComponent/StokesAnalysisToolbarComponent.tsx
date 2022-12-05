@@ -5,7 +5,7 @@ import {AnchorButton, FormGroup, Switch, ButtonGroup} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {StokesAnalysisWidgetStore} from "stores/widgets";
+import {StokesAnalysisWidgetStore} from "stores/Widgets";
 import {StokesAnalysisComponent, StokesAnalysisSettingsTabs} from "components";
 import {RegionSelectorComponent} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";

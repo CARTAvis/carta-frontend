@@ -29,7 +29,7 @@ import {
     CatalogOverlayPlotSettingsPanelComponent,
     LayerListSettingsPanelComponent
 } from "components";
-import {AppStore, HelpStore, HelpType, LayoutStore, CatalogStore} from "stores";
+import {AppStore, HelpStore, HelpType, LayoutStore, CatalogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {
     EmptyWidgetStore,
     HistogramWidgetStore,
@@ -47,8 +47,7 @@ import {
     CatalogPlotType,
     LayerListWidgetStore,
     PvGeneratorWidgetStore
-} from "./widgets";
-import {PreferenceKeys, PreferenceStore} from "./PreferenceStore";
+} from ".";
 import {ImagePanelMode} from "models";
 
 export enum WidgetType {

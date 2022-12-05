@@ -11,7 +11,7 @@ import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelC
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
 import {AppStore, HelpType} from "stores";
 import {FrameStore} from "stores/Frame";
-import {RenderConfigWidgetStore} from "stores/widgets";
+import {RenderConfigWidgetStore} from "stores/Widgets";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed, getColorForTheme} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";

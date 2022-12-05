@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Tabs, Tab, FormGroup} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent, SafeNumericInput} from "components/Shared";
-import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
+import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
 import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
 import {LineKey} from "models";

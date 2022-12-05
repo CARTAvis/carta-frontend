@@ -9,7 +9,7 @@ import classNames from "classnames";
 import ReactResizeDetector from "react-resize-detector";
 import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {LayerListSettingsTabs} from "stores/widgets";
+import {LayerListSettingsTabs} from "stores/Widgets";
 import "./LayerListComponent.scss";
 
 @observer

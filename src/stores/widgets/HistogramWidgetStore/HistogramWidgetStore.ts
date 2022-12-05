@@ -1,7 +1,7 @@
 import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {RegionWidgetStore, RegionsType} from "../RegionWidgetStore/RegionWidgetStore";
 import {isAutoColor} from "utilities";
 import {POLARIZATIONS, VALID_COORDINATES} from "models";
 import tinycolor from "tinycolor2";

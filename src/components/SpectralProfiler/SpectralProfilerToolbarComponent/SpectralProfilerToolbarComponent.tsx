@@ -5,7 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {AnchorButton, ButtonGroup, Checkbox, Intent, Menu, MenuItem, Position} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {AppStore} from "stores";
-import {MultiProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
+import {MultiProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/Widgets";
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
 import {LineOption} from "models";

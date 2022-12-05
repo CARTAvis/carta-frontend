@@ -3,7 +3,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import {computed, makeObservable} from "mobx";
 import {AppStore, WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
-import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/widgets";
+import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/Widgets";
 import {SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType, FrequencyUnit} from "models";
 import {Alignment, Button, FormGroup, HTMLSelect, MenuDivider, MenuItem, PopoverPosition, Tab, Tabs, Text} from "@blueprintjs/core";
 import {IItemRendererProps, Select} from "@blueprintjs/select";

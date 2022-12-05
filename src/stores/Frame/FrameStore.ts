@@ -66,7 +66,7 @@ import {
     trimFitsComment
 } from "utilities";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
-import {RegionId} from "stores/widgets";
+import {RegionId} from "stores/Widgets";
 
 export interface FrameInfo {
     fileId: number;

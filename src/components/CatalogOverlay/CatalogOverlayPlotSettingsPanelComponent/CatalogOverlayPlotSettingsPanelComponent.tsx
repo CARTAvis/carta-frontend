@@ -7,7 +7,7 @@ import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPos
 import {Tooltip2} from "@blueprintjs/popover2";
 import {Select, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import {AppStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, CatalogOnlineQueryProfileStore} from "stores";
-import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, ValueClip} from "stores/widgets";
+import {CatalogOverlayShape, CatalogWidgetStore, CatalogSettingsTabs, ValueClip} from "stores/Widgets";
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {CatalogOverlay} from "models";

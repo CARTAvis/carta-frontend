@@ -2,7 +2,7 @@ import {action, observable, makeObservable, computed, reaction} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
-import {RegionWidgetStore, RegionsType, RegionId} from "./RegionWidgetStore";
+import {RegionWidgetStore, RegionsType, RegionId} from "../RegionWidgetStore/RegionWidgetStore";
 import {SpectralSystem} from "models";
 
 export enum PVAxis {

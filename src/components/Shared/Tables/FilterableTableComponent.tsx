@@ -9,7 +9,7 @@ import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ControlHeader} from "stores";
 import {CatalogApiService} from "services";
-import {SpectralLineHeaders} from "stores/widgets";
+import {SpectralLineHeaders} from "stores/Widgets";
 import {CatalogType} from "models";
 import {ProcessedColumnData} from "utilities";
 import "./FilterableTableComponent.scss";

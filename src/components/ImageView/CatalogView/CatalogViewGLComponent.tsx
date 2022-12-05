@@ -7,7 +7,7 @@ import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {ImageViewLayer} from "../ImageViewComponent";
-import {CatalogOverlayShape} from "stores/widgets";
+import {CatalogOverlayShape} from "stores/Widgets";
 import {closestCatalogIndexToCursor, GL2, rotate2D, scale2D, subtract2D} from "utilities";
 import "./CatalogViewGLComponent.scss";
 

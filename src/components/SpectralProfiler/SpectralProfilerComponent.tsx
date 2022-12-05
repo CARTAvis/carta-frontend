@@ -11,7 +11,7 @@ import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotCon
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
 import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
-import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
+import {MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
 import {Point2D, SpectralType} from "models";
 import {binarySearchByX, clamp, formattedExponential, toFormattedNotationByDiff, toExponential, toFixed, getColorForTheme} from "utilities";
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";

@@ -1,7 +1,7 @@
 import tinycolor from "tinycolor2";
 import {action, autorun, computed, observable, override, makeObservable} from "mobx";
 import * as _ from "lodash";
-import {RegionWidgetStore, RegionId, RegionsType} from "./RegionWidgetStore";
+import {RegionWidgetStore, RegionId, RegionsType} from "../RegionWidgetStore/RegionWidgetStore";
 import {CARTA} from "carta-protobuf";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
