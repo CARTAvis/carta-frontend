@@ -88,8 +88,8 @@ export class FittingDialogComponent extends React.Component {
             <Pre className="fitting-result-pre">
                 <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
                 <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
-                    <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
-                        <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
+                    <Tooltip2 content={"Export as txt"} position={Position.LEFT} disabled={fittingStore.effectiveFrame.fittingResult === ""}>
+                        <AnchorButton icon="th" onClick={this.exportResult} disabled={fittingStore.effectiveFrame.fittingResult === ""}></AnchorButton>
                     </Tooltip2>
                 </ButtonGroup>
             </Pre>
@@ -99,8 +99,8 @@ export class FittingDialogComponent extends React.Component {
             <Pre className="fitting-result-pre">
                 <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
                 <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
-                    <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
-                        <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
+                    <Tooltip2 content={"Export as txt"} position={Position.LEFT} disabled={fittingStore.effectiveFrame.fittingLog === ""}>
+                        <AnchorButton icon="th" onClick={this.exportFullLog} disabled={fittingStore.effectiveFrame.fittingLog === ""}></AnchorButton>
                     </Tooltip2>
                 </ButtonGroup>
             </Pre>
