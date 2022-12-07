@@ -1885,8 +1885,8 @@ export class AppStore {
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
 
-        // Ignore & remove generated in-memory images(moments/PV, fileId >= 1000)
-        const inMemoryImages = this.frames.filter(frame => frame.frameInfo.fileId >= 1000);
+        // Ignore & remove generated in-memory images (moments fileId >= 1000, PV/model/residual fileId < 0)
+        const inMemoryImages = this.frames.filter(frame => frame.frameInfo.fileId >= 1000 || frame.frameInfo.fileId < 0);
         inMemoryImages.forEach(frame => this.removeFrame(frame));
 
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
