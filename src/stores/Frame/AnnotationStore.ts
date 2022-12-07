@@ -225,6 +225,7 @@ export class CompassAnnotationStore extends RegionStore {
 
     @action setLength = (length: number) => {
         this.length = Math.abs(length);
+        this.setControlPoint(1, {x: length, y: length});
         this.modifiedTimestamp = performance.now();
     };
 
