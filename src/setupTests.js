@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-window.URL.createObjectURL = () => { };
+window.URL.createObjectURL = () => {};
 global.WebGL2RenderingContext = null;
 global.ResizeObserver = require("resize-observer-polyfill");
 
