@@ -605,7 +605,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* makeSwappedFrameSet(AstFrameSet* originFrameSe
         return nullptr;
     }
 
-    AstMapping* originMap = static_cast<AstMapping*> astGetMapping(originFrameSet, AST__CURRENT, AST__BASE);
+    AstMapping* originMap = static_cast<AstMapping*> astGetMapping(originFrameSet, AST__BASE, AST__CURRENT);
 
     AstMapping* spectralMap = nullptr;
     int spectralAxisOut;
@@ -616,9 +616,6 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* makeSwappedFrameSet(AstFrameSet* originFrameSe
         std::cerr << "The spectral axis cannot be split from the original axes!\n";
         return nullptr;
     }
-
-    // Invert spectralMap to it goes from the spectral pixel axis to the spectral world axis
-    astInvert(spectralMap);
 
     // Work space holding 3D pixel positions
     double* posData = static_cast<double*>(astMalloc(axisCount * nsample * sizeof(double)));
