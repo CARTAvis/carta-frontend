@@ -33,6 +33,8 @@ export enum Font {
     COURIER = "Courier"
 }
 
+const NUMBER_OF_POINT_TRANSFORMED = 201;
+
 export class PointAnnotationStore extends RegionStore {
     @observable pointShape: CARTA.PointAnnotationShape;
     @observable pointWidth: number;
@@ -67,6 +69,25 @@ export class PointAnnotationStore extends RegionStore {
     @action setPointWidth = (width: number) => {
         this.pointWidth = width;
         this.modifiedTimestamp = performance.now();
+    };
+
+    public getAnnotationStyles = () => {
+        return {
+            pointShape: this.pointShape,
+            pointWidth: this.pointWidth
+        };
+    };
+
+    public getAnnotationStylesForExport = () => {
+        return {
+            pointShape: this.pointShape,
+            pointWidth: this.pointWidth
+        };
+    };
+
+    public initializeStyles = (annotationStyles: {pointShape: CARTA.PointAnnotationShape; pointWidth: number}) => {
+        this.setPointShape(annotationStyles.pointShape);
+        this.setPointWidth(annotationStyles.pointWidth);
     };
 }
 
@@ -119,6 +140,33 @@ export class TextAnnotationStore extends RegionStore {
         this.position = position;
         this.modifiedTimestamp = performance.now();
     };
+
+    public getAnnotationStyles = () => {
+        return {
+            textLabel0: this.text,
+            fontSize: this.fontSize,
+            fontStyle: this.fontStyle,
+            font: this.font,
+            position: this.position
+        };
+    };
+
+    public getAnnotationStylesForExport = () => {
+        return {
+            textLabel0: this.text,
+            fontSize: this.fontSize,
+            fontStyle: this.fontStyle,
+            font: this.font
+        };
+    };
+
+    public initializeStyles = (annotationStyles: {textLabel0: string; fontSize: number; fontStyle: FontStyle; font: Font; position: TextAnnotationPosition}) => {
+        this.setText(annotationStyles.textLabel0 ?? this.text);
+        this.setFontSize(annotationStyles.fontSize ?? this.fontSize);
+        this.setFontStyle(annotationStyles.fontStyle ?? this.fontStyle);
+        this.setFont(annotationStyles.font ?? this.font);
+        this.setPosition(annotationStyles.position ?? this.position);
+    };
 }
 
 export class VectorAnnotationStore extends RegionStore {
@@ -151,6 +199,18 @@ export class VectorAnnotationStore extends RegionStore {
     @action setPointerLength = (pointerLength: number) => {
         this.pointerLength = pointerLength;
         this.modifiedTimestamp = performance.now();
+    };
+
+    public getAnnotationStyles = () => {
+        return {
+            pointerWidth: this.pointerWidth,
+            pointerLength: this.pointerLength
+        };
+    };
+
+    public initializeStyles = (annotationStyles: {pointerWidth: number; pointerLength: number}) => {
+        this.setPointerWidth(annotationStyles.pointerWidth ?? this.pointerWidth);
+        this.setPointerLength(annotationStyles.pointerLength ?? this.pointerLength);
     };
 }
 
@@ -277,13 +337,73 @@ export class CompassAnnotationStore extends RegionStore {
         const angularWidth = delta1 ? Math.abs((delta1?.numericValue * Math.PI * width) / 180) : 6.18;
         const angularHeight = delta2 ? Math.abs((delta2?.numericValue * Math.PI * height) / 180) : 6.18;
 
-        const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y, delta1 ? angularWidth : 6.18);
-        const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y, delta2 ? angularHeight : 6.18);
+        const northApproximatePoints = AST.transformAxPointList(astTransform, NUMBER_OF_POINT_TRANSFORMED, 2, transformed.x, transformed.y, delta1 ? angularWidth : 6.18);
+        const eastApproximatePoints = AST.transformAxPointList(astTransform, NUMBER_OF_POINT_TRANSFORMED, 1, transformed.x, transformed.y, delta2 ? angularHeight : 6.18);
         // const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y, delta1 ? Math.abs((delta1?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.width) / 180) : 6.18);
         // const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y, delta2 ? Math.abs((delta2?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.height) / 180) : 6.18);
 
         return {northApproximatePoints, eastApproximatePoints};
     }
+
+    public getAnnotationStyles = () => {
+        return {
+            textLabel0: this.northLabel,
+            textLabel1: this.eastLabel,
+            isArrow0: this.northArrowhead,
+            isArrow1: this.eastArrowhead,
+            fontSize: this.fontSize,
+            fontStyle: this.fontStyle,
+            font: this.font,
+            northTextOffset: this.northTextOffset,
+            eastTextOffset: this.eastTextOffset,
+            pointerWidth: this.pointerWidth,
+            pointerLength: this.pointerLength,
+            length: this.length
+        };
+    };
+
+    public getAnnotationStylesForExport = () => {
+        return {
+            textLabel0: this.northLabel,
+            textLabel1: this.eastLabel,
+            isArrow0: this.northArrowhead,
+            isArrow1: this.eastArrowhead,
+            fontSize: this.fontSize,
+            fontStyle: this.fontStyle,
+            font: this.font,
+            coordinateSystem: "PIXEL"
+        };
+    };
+
+    public initializeStyles = (annotationStyles: {
+        northLabel: string;
+        eastLabel: string;
+        fontSize: number;
+        fontStyle: FontStyle;
+        font: Font;
+        pointerWidth: number;
+        pointerLength: number;
+        length: number;
+        northTextOffset: Point2D;
+        eastTextOffset: Point2D;
+        isArrow0: boolean;
+        isArrow1: boolean;
+    }) => {
+        this.setLabel(annotationStyles.northLabel ?? this.northLabel, true);
+        this.setLabel(annotationStyles.eastLabel ?? this.eastLabel, false);
+        this.setFontSize(annotationStyles.fontSize ?? this.fontSize);
+        this.setFontStyle(annotationStyles.fontStyle ?? this.fontStyle);
+        this.setFont(annotationStyles.font ?? this.font);
+        this.setPointerWidth(annotationStyles.pointerWidth ?? this.pointerWidth);
+        this.setPointerLength(annotationStyles.pointerLength ?? this.pointerLength);
+        this.setLength(annotationStyles.length ?? this.length);
+        this.setNorthTextOffset(annotationStyles.northTextOffset?.x ?? this.northTextOffset.x, true);
+        this.setNorthTextOffset(annotationStyles.northTextOffset?.y ?? this.northTextOffset.y, false);
+        this.setEastTextOffset(annotationStyles.eastTextOffset?.x ?? this.eastTextOffset.x, true);
+        this.setEastTextOffset(annotationStyles.eastTextOffset?.y ?? this.eastTextOffset.y, false);
+        this.setNorthArrowhead(annotationStyles.isArrow0 ?? this.northArrowhead);
+        this.setEastArrowhead(annotationStyles.isArrow1 ?? this.eastArrowhead);
+    };
 }
 
 export class RulerAnnotationStore extends RegionStore {
@@ -369,24 +489,58 @@ export class RulerAnnotationStore extends RegionStore {
         const finishY = transformed.y[1];
         const cornerY = transformed.y[0];
 
-        const finishToCornerX = new Float64Array(2);
-        finishToCornerX[0] = finishX;
-        finishToCornerX[1] = cornerX;
-        const finishToCornerY = new Float64Array(2);
-        finishToCornerY[0] = finishY;
-        finishToCornerY[1] = cornerY;
+        // const finishToCornerX = new Float64Array(2);
+        // finishToCornerX[0] = finishX;
+        // finishToCornerX[1] = cornerX;
+        // const finishToCornerY = new Float64Array(2);
+        // finishToCornerY[0] = finishY;
+        // finishToCornerY[1] = cornerY;
 
-        const cornerToStartX = new Float64Array(2);
-        cornerToStartX[0] = cornerX;
-        cornerToStartX[1] = startX;
-        const cornerToStartY = new Float64Array(2);
-        cornerToStartY[0] = cornerY;
-        cornerToStartY[1] = startY;
+        // const cornerToStartX = new Float64Array(2);
+        // cornerToStartX[0] = cornerX;
+        // cornerToStartX[1] = startX;
+        // const cornerToStartY = new Float64Array(2);
+        // cornerToStartY[0] = cornerY;
+        // cornerToStartY[1] = startY;
 
-        xApproximatePoints = AST.transformPointList(astTransform, cornerToStartX, cornerToStartY);
-        yApproximatePoints = AST.transformPointList(astTransform, finishToCornerX, finishToCornerY);
-        hypotenuseApproximatePoints = AST.transformPointList(astTransform, transformed.x, transformed.y);
+        const corner = {x: cornerX, y: cornerY};
+        const start = {x: startX, y: startY};
+        const finish = {x: finishX, y: finishY};
+
+        xApproximatePoints = AST.transformPointList(astTransform, NUMBER_OF_POINT_TRANSFORMED, corner, start);
+        yApproximatePoints = AST.transformPointList(astTransform, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
+        hypotenuseApproximatePoints = AST.transformPointList(astTransform, NUMBER_OF_POINT_TRANSFORMED, start, finish);
 
         return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints};
     }
+
+    public getAnnotationStyles = () => {
+        return {
+            fontSize: this.fontSize,
+            fontStyle: this.fontStyle,
+            font: this.font,
+            auxiliaryLineVisible: this.auxiliaryLineVisible,
+            auxiliaryLineDashLength: this.auxiliaryLineDashLength,
+            textOffset: this.textOffset
+        };
+    };
+
+    public getAnnotationStylesForExport = () => {
+        return {
+            fontSize: this.fontSize,
+            fontStyle: this.fontStyle,
+            font: this.font,
+            coordinateSystem: "PIXEL"
+        };
+    };
+
+    public initializeStyles = (annotationStyles: {fontSize: number; fontStyle: FontStyle; font: Font; auxiliaryLineVisible: boolean; auxiliaryLineDashLength: number; textOffset: Point2D}) => {
+        this.setFontSize(annotationStyles.fontSize ?? this.fontSize);
+        this.setFontStyle(annotationStyles.fontStyle ?? this.fontStyle);
+        this.setFont(annotationStyles.font ?? this.font);
+        this.setAuxiliaryLineVisible(annotationStyles.auxiliaryLineVisible ?? this.auxiliaryLineVisible);
+        this.setAuxiliaryLineDashLength(annotationStyles.auxiliaryLineDashLength ?? this.auxiliaryLineDashLength);
+        this.setTextOffset(annotationStyles.textOffset?.x ?? this.textOffset.x, true);
+        this.setTextOffset(annotationStyles.textOffset?.y ?? this.textOffset.y, false);
+    };
 }

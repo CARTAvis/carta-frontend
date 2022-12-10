@@ -2,7 +2,7 @@ import {action, computed, observable, makeObservable} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "stores";
-import {CURSOR_REGION_ID, FrameStore, RegionStore, CompassAnnotationStore, RulerAnnotationStore, TextAnnotationStore, PointAnnotationStore, VectorAnnotationStore, TextAnnotationPosition, FontStyle, Font} from "stores/Frame";
+import {CURSOR_REGION_ID, FrameStore, RegionStore, CompassAnnotationStore, RulerAnnotationStore, TextAnnotationStore, PointAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
@@ -74,7 +74,7 @@ export class RegionSetStore {
     }
 
     @computed get isNewRegionAnnotation(): boolean {
-        return this.newRegionType > 6;
+        return RegionStore.AVAILABLE_ANNOTATION_TYPES.has(this.newRegionType);
     }
 
     @action addPointRegion = (center: Point2D, cursorRegion = false) => {
@@ -157,43 +157,47 @@ export class RegionSetStore {
             switch (regionType) {
                 case CARTA.RegionType.ANNTEXT:
                     const textAnnotation = region as TextAnnotationStore;
-                    textAnnotation.setText(annotationStyles.textAnnotationText ?? textAnnotation.text);
-                    textAnnotation.setFontSize(annotationStyles.fontSize ?? textAnnotation.fontSize);
-                    textAnnotation.setFontStyle(annotationStyles.fontStyle ?? textAnnotation.fontStyle);
-                    textAnnotation.setFont(annotationStyles.font ?? textAnnotation.font);
-                    textAnnotation.setPosition(annotationStyles.textPosition ?? textAnnotation.position);
+                    // textAnnotation.setText(annotationStyles.textAnnotationText ?? textAnnotation.text);
+                    // textAnnotation.setFontSize(annotationStyles.fontSize ?? textAnnotation.fontSize);
+                    // textAnnotation.setFontStyle(annotationStyles.fontStyle ?? textAnnotation.fontStyle);
+                    // textAnnotation.setFont(annotationStyles.font ?? textAnnotation.font);
+                    // textAnnotation.setPosition(annotationStyles.textPosition ?? textAnnotation.position);
+                    textAnnotation.initializeStyles(annotationStyles);
                     break;
                 case CARTA.RegionType.ANNVECTOR:
                     const vectorAnnotation = region as VectorAnnotationStore;
-                    vectorAnnotation.setPointerWidth(annotationStyles.vectorPointerWidth ?? vectorAnnotation.pointerWidth);
-                    vectorAnnotation.setPointerLength(annotationStyles.vectorPointerLength ?? vectorAnnotation.pointerLength);
+                    // vectorAnnotation.setPointerWidth(annotationStyles.vectorPointerWidth ?? vectorAnnotation.pointerWidth);
+                    // vectorAnnotation.setPointerLength(annotationStyles.vectorPointerLength ?? vectorAnnotation.pointerLength);
+                    vectorAnnotation.initializeStyles(annotationStyles);
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
                     const compassAnnotation = region as CompassAnnotationStore;
-                    compassAnnotation.setLabel(annotationStyles.compassNorthLabel ?? compassAnnotation.northLabel, true);
-                    compassAnnotation.setLabel(annotationStyles.compassEastLabel ?? compassAnnotation.eastLabel, false);
-                    compassAnnotation.setFontSize(annotationStyles.fontSize ?? compassAnnotation.fontSize);
-                    compassAnnotation.setFontStyle(annotationStyles.fontStyle ?? compassAnnotation.fontStyle);
-                    compassAnnotation.setFont(annotationStyles.font ?? compassAnnotation.font);
-                    compassAnnotation.setPointerWidth(annotationStyles.compassPointerWidth ?? compassAnnotation.pointerWidth);
-                    compassAnnotation.setPointerLength(annotationStyles.compassPointerLength ?? compassAnnotation.pointerLength);
-                    compassAnnotation.setLength(annotationStyles.compassLength ?? compassAnnotation.length);
-                    compassAnnotation.setNorthTextOffset(annotationStyles.compassNorthTextOffset?.x ?? compassAnnotation.northTextOffset.x, true);
-                    compassAnnotation.setNorthTextOffset(annotationStyles.compassNorthTextOffset?.y ?? compassAnnotation.northTextOffset.y, false);
-                    compassAnnotation.setEastTextOffset(annotationStyles.compassEastTextOffset?.x ?? compassAnnotation.eastTextOffset.x, true);
-                    compassAnnotation.setEastTextOffset(annotationStyles.compassEastTextOffset?.y ?? compassAnnotation.eastTextOffset.y, false);
-                    compassAnnotation.setNorthArrowhead(annotationStyles.compassNorthArrowhead ?? compassAnnotation.northArrowhead);
-                    compassAnnotation.setEastArrowhead(annotationStyles.compassEastArrowhead ?? compassAnnotation.eastArrowhead);
+                    // compassAnnotation.setLabel(annotationStyles.compassNorthLabel ?? compassAnnotation.northLabel, true);
+                    // compassAnnotation.setLabel(annotationStyles.compassEastLabel ?? compassAnnotation.eastLabel, false);
+                    // compassAnnotation.setFontSize(annotationStyles.fontSize ?? compassAnnotation.fontSize);
+                    // compassAnnotation.setFontStyle(annotationStyles.fontStyle ?? compassAnnotation.fontStyle);
+                    // compassAnnotation.setFont(annotationStyles.font ?? compassAnnotation.font);
+                    // compassAnnotation.setPointerWidth(annotationStyles.compassPointerWidth ?? compassAnnotation.pointerWidth);
+                    // compassAnnotation.setPointerLength(annotationStyles.compassPointerLength ?? compassAnnotation.pointerLength);
+                    // compassAnnotation.setLength(annotationStyles.compassLength ?? compassAnnotation.length);
+                    // compassAnnotation.setNorthTextOffset(annotationStyles.compassNorthTextOffset?.x ?? compassAnnotation.northTextOffset.x, true);
+                    // compassAnnotation.setNorthTextOffset(annotationStyles.compassNorthTextOffset?.y ?? compassAnnotation.northTextOffset.y, false);
+                    // compassAnnotation.setEastTextOffset(annotationStyles.compassEastTextOffset?.x ?? compassAnnotation.eastTextOffset.x, true);
+                    // compassAnnotation.setEastTextOffset(annotationStyles.compassEastTextOffset?.y ?? compassAnnotation.eastTextOffset.y, false);
+                    // compassAnnotation.setNorthArrowhead(annotationStyles.compassNorthArrowhead ?? compassAnnotation.northArrowhead);
+                    // compassAnnotation.setEastArrowhead(annotationStyles.compassEastArrowhead ?? compassAnnotation.eastArrowhead);
+                    compassAnnotation.initializeStyles(annotationStyles);
                     break;
                 case CARTA.RegionType.ANNRULER:
                     const rulerAnnotation = region as RulerAnnotationStore;
-                    rulerAnnotation.setFontSize(annotationStyles.fontSize ?? rulerAnnotation.fontSize);
-                    rulerAnnotation.setFontStyle(annotationStyles.fontStyle ?? rulerAnnotation.fontStyle);
-                    rulerAnnotation.setFont(annotationStyles.font ?? rulerAnnotation.font);
-                    rulerAnnotation.setAuxiliaryLineVisible(annotationStyles.rulerAuxiliaryLineVisible ?? rulerAnnotation.auxiliaryLineVisible);
-                    rulerAnnotation.setAuxiliaryLineDashLength(annotationStyles.rulerAuxiliaryLineDashLength ?? rulerAnnotation.auxiliaryLineDashLength);
-                    rulerAnnotation.setTextOffset(annotationStyles.rulerTextOffset?.x ?? rulerAnnotation.textOffset.x, true);
-                    rulerAnnotation.setTextOffset(annotationStyles.rulerTextOffset?.y ?? rulerAnnotation.textOffset.y, false);
+                    // rulerAnnotation.setFontSize(annotationStyles.fontSize ?? rulerAnnotation.fontSize);
+                    // rulerAnnotation.setFontStyle(annotationStyles.fontStyle ?? rulerAnnotation.fontStyle);
+                    // rulerAnnotation.setFont(annotationStyles.font ?? rulerAnnotation.font);
+                    // rulerAnnotation.setAuxiliaryLineVisible(annotationStyles.rulerAuxiliaryLineVisible ?? rulerAnnotation.auxiliaryLineVisible);
+                    // rulerAnnotation.setAuxiliaryLineDashLength(annotationStyles.rulerAuxiliaryLineDashLength ?? rulerAnnotation.auxiliaryLineDashLength);
+                    // rulerAnnotation.setTextOffset(annotationStyles.rulerTextOffset?.x ?? rulerAnnotation.textOffset.x, true);
+                    // rulerAnnotation.setTextOffset(annotationStyles.rulerTextOffset?.y ?? rulerAnnotation.textOffset.y, false);
+                    rulerAnnotation.initializeStyles(annotationStyles);
                     break;
                 default:
                     break;
@@ -401,57 +405,60 @@ export class RegionSetStore {
                 let newControlPoints: Point2D[] = [];
                 let rotation: number = 0;
 
-                let fontSize: number;
-                let fontStyle: FontStyle;
-                let font: Font;
+                let annotationStyles;
 
-                let compassNorthLabel: string;
-                let compassEastLabel: string;
+                // let fontSize: number;
+                // let fontStyle: FontStyle;
+                // let font: Font;
 
-                let compassPointerWidth: number;
-                let compassPointerLength: number;
-                let compassLength: number;
-                let compassNorthOffset: Point2D;
-                let compassEastOffset: Point2D;
-                let compassNorthArrowhead: boolean;
-                let compassEastArrowhead: boolean;
+                // let compassNorthLabel: string;
+                // let compassEastLabel: string;
 
-                let textAnnotationText: string;
+                // let compassPointerWidth: number;
+                // let compassPointerLength: number;
+                // let compassLength: number;
+                // let compassNorthOffset: Point2D;
+                // let compassEastOffset: Point2D;
+                // let compassNorthArrowhead: boolean;
+                // let compassEastArrowhead: boolean;
 
-                let textPosition: TextAnnotationPosition;
+                // let textAnnotationText: string;
 
-                let pointShape: CARTA.PointAnnotationShape;
-                let pointWidth: number;
+                // let textPosition: TextAnnotationPosition;
 
-                let vectorPointerWidth: number;
-                let vectorPointerLength: number;
+                // let pointShape: CARTA.PointAnnotationShape;
+                // let pointWidth: number;
 
-                let rulerAuxiliaryLineVisible: boolean;
-                let rulerAuxiliaryLineDashLength: number;
-                let rulerTextOffset: Point2D;
+                // let vectorPointerWidth: number;
+                // let vectorPointerLength: number;
+
+                // let rulerAuxiliaryLineVisible: boolean;
+                // let rulerAuxiliaryLineDashLength: number;
+                // let rulerTextOffset: Point2D;
 
                 switch (region.regionType) {
-                    case CARTA.RegionType.RECTANGLE:
-                    case CARTA.RegionType.ANNRECTANGLE:
-                    case CARTA.RegionType.ELLIPSE:
                     case CARTA.RegionType.ANNELLIPSE:
                     case CARTA.RegionType.ANNTEXT:
                     case CARTA.RegionType.ANNCOMPASS:
-                        textAnnotationText = (region as TextAnnotationStore).text;
-                        fontSize = (region as TextAnnotationStore).fontSize;
-                        fontStyle = (region as TextAnnotationStore).fontStyle;
-                        font = (region as TextAnnotationStore).font;
-                        textPosition = (region as TextAnnotationStore).position;
+                    case CARTA.RegionType.RECTANGLE:
+                    case CARTA.RegionType.ANNRECTANGLE:
+                    case CARTA.RegionType.ELLIPSE:
+                        // textAnnotationText = (region as TextAnnotationStore).text;
+                        // fontSize = (region as TextAnnotationStore).fontSize;
+                        // fontStyle = (region as TextAnnotationStore).fontStyle;
+                        // font = (region as TextAnnotationStore).font;
+                        // textPosition = (region as TextAnnotationStore).position;
+                        annotationStyles = region.regionType === CARTA.RegionType.ANNTEXT ? (region as TextAnnotationStore).getAnnotationStyles : (region as CompassAnnotationStore).getAnnotationStyles;
 
-                        compassNorthLabel = (region as CompassAnnotationStore).northLabel;
-                        compassEastLabel = (region as CompassAnnotationStore).eastLabel;
-                        compassPointerWidth = (region as CompassAnnotationStore).pointerWidth;
-                        compassPointerLength = (region as CompassAnnotationStore).pointerLength;
-                        compassLength = (region as CompassAnnotationStore).length;
-                        compassNorthOffset = (region as CompassAnnotationStore).northTextOffset;
-                        compassEastOffset = (region as CompassAnnotationStore).eastTextOffset;
-                        compassNorthArrowhead = (region as CompassAnnotationStore).northArrowhead;
-                        compassEastArrowhead = (region as CompassAnnotationStore).eastArrowhead;
+                        // compassNorthLabel = (region as CompassAnnotationStore).northLabel;
+                        // compassEastLabel = (region as CompassAnnotationStore).eastLabel;
+                        // compassPointerWidth = (region as CompassAnnotationStore).pointerWidth;
+                        // compassPointerLength = (region as CompassAnnotationStore).pointerLength;
+                        // compassLength = (region as CompassAnnotationStore).length;
+                        // compassNorthOffset = (region as CompassAnnotationStore).northTextOffset;
+                        // compassEastOffset = (region as CompassAnnotationStore).eastTextOffset;
+                        // compassNorthArrowhead = (region as CompassAnnotationStore).northArrowhead;
+                        // compassEastArrowhead = (region as CompassAnnotationStore).eastArrowhead;
 
                         const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                         if (!isAstBadPoint(centerNewFrame)) {
@@ -471,19 +478,31 @@ export class RegionSetStore {
                     case CARTA.RegionType.ANNPOINT:
                     case CARTA.RegionType.ANNVECTOR:
                     case CARTA.RegionType.ANNRULER:
-                        pointShape = (region as PointAnnotationStore).pointShape;
-                        pointWidth = (region as PointAnnotationStore).pointWidth;
+                        // pointShape = (region as PointAnnotationStore).pointShape;
+                        // pointWidth = (region as PointAnnotationStore).pointWidth;
 
-                        vectorPointerWidth = (region as VectorAnnotationStore).pointerWidth;
-                        vectorPointerLength = (region as VectorAnnotationStore).pointerLength;
+                        // vectorPointerWidth = (region as VectorAnnotationStore).pointerWidth;
+                        // vectorPointerLength = (region as VectorAnnotationStore).pointerLength;
 
-                        fontSize = (region as RulerAnnotationStore).fontSize;
-                        fontStyle = (region as RulerAnnotationStore).fontStyle;
-                        font = (region as RulerAnnotationStore).font;
+                        // fontSize = (region as RulerAnnotationStore).fontSize;
+                        // fontStyle = (region as RulerAnnotationStore).fontStyle;
+                        // font = (region as RulerAnnotationStore).font;
 
-                        rulerAuxiliaryLineVisible = (region as RulerAnnotationStore).auxiliaryLineVisible;
-                        rulerAuxiliaryLineDashLength = (region as RulerAnnotationStore).auxiliaryLineDashLength;
-                        rulerTextOffset = (region as RulerAnnotationStore).textOffset;
+                        // rulerAuxiliaryLineVisible = (region as RulerAnnotationStore).auxiliaryLineVisible;
+                        // rulerAuxiliaryLineDashLength = (region as RulerAnnotationStore).auxiliaryLineDashLength;
+                        // rulerTextOffset = (region as RulerAnnotationStore).textOffset;
+
+                        switch (region.regionType) {
+                            case CARTA.RegionType.ANNPOINT:
+                                annotationStyles = (region as PointAnnotationStore).getAnnotationStyles();
+                                break;
+                            case CARTA.RegionType.ANNVECTOR:
+                                annotationStyles = (region as VectorAnnotationStore).getAnnotationStyles();
+                                break;
+                            case CARTA.RegionType.ANNRULER:
+                                annotationStyles = (region as RulerAnnotationStore).getAnnotationStyles();
+                                break;
+                        }
 
                         for (const point of region.controlPoints) {
                             const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
@@ -496,33 +515,33 @@ export class RegionSetStore {
                         break;
                 }
 
-                const annotationStyles = {
-                    fontSize,
-                    fontStyle,
-                    font,
-                    compassNorthLabel,
-                    compassEastLabel,
-                    compassPointerWidth,
-                    compassPointerLength,
-                    compassLength,
-                    compassNorthOffset,
-                    compassEastOffset,
-                    compassNorthArrowhead,
-                    compassEastArrowhead,
+                // const annotationStyles = {
+                //     fontSize,
+                //     fontStyle,
+                //     font,
+                //     compassNorthLabel,
+                //     compassEastLabel,
+                //     compassPointerWidth,
+                //     compassPointerLength,
+                //     compassLength,
+                //     compassNorthOffset,
+                //     compassEastOffset,
+                //     compassNorthArrowhead,
+                //     compassEastArrowhead,
 
-                    textAnnotationText,
-                    textPosition,
+                //     textAnnotationText,
+                //     textPosition,
 
-                    pointShape,
-                    pointWidth,
+                //     pointShape,
+                //     pointWidth,
 
-                    vectorPointerWidth,
-                    vectorPointerLength,
+                //     vectorPointerWidth,
+                //     vectorPointerLength,
 
-                    rulerAuxiliaryLineVisible,
-                    rulerAuxiliaryLineDashLength,
-                    rulerTextOffset
-                };
+                //     rulerAuxiliaryLineVisible,
+                //     rulerAuxiliaryLineDashLength,
+                //     rulerTextOffset
+                // };
 
                 if (newControlPoints.length) {
                     let newRegion: RegionStore;
@@ -534,8 +553,7 @@ export class RegionSetStore {
                         newRegion = this.addRegion(newControlPoints, 0, CARTA.RegionType.ANNPOINT);
                         newRegion.setName(region.name);
                         newRegion.setColor(region.color);
-                        (newRegion as PointAnnotationStore).setPointShape(annotationStyles.pointShape);
-                        (newRegion as PointAnnotationStore).setPointWidth(annotationStyles.pointWidth);
+                        (newRegion as PointAnnotationStore).initializeStyles(annotationStyles);
                     } else {
                         newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : [], annotationStyles);
                         newRegion.endCreating();

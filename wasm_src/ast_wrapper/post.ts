@@ -196,8 +196,11 @@ Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn:
     return result;
 };
 
-Module.transformPointList = function (wcsInfo: number, xIn: Float64Array, yIn: Float64Array) {
+Module.transformPointList = function (wcsInfo: number, npoint: number, start: {x: number, y: number}, finish: {x: number, y: number}) {
     // Return empty array if arguments are invalid
+    const yIn = new Float64Array([start.y, finish.y]);
+    const xIn = new Float64Array([start.x, finish.x]);
+
     if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
         return {x: new Float64Array(1), y: new Float64Array(1)};
     }
@@ -210,7 +213,7 @@ Module.transformPointList = function (wcsInfo: number, xIn: Float64Array, yIn: F
     Module.HEAPF64.set(xIn, xInPtr / 8);
     Module.HEAPF64.set(yIn, yInPtr / 8);
     // Perform the AST transform
-    Module.pointList(wcsInfo, 201, xInPtr, yInPtr, outPtr);
+    Module.pointList(wcsInfo, npoint, xInPtr, yInPtr, outPtr);
 
     // Copy result out to an object
     const out = new Float64Array(Module.HEAPF64.buffer, outPtr, 201 * 2);
@@ -223,14 +226,14 @@ Module.transformPointList = function (wcsInfo: number, xIn: Float64Array, yIn: F
     return result;
 };
 
-Module.transformAxPointList = function (wcsInfo: number, axis: number, x: number, y: number, dist: number) {
+Module.transformAxPointList = function (wcsInfo: number, npoint: number, axis: number, x: number, y: number, dist: number) {
     // Return empty array if arguments are invalid
     // if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
     //     return {x: new Float64Array(1), y: new Float64Array(1)};
     // }
 
     // Allocate and assign WASM memory
-    const N = 201;
+    const N = npoint;
     // const xInPtr = Module._malloc(N * 8);
     // const yInPtr = Module._malloc(N * 8);
     const outPtr = Module._malloc(201 * 2 * 8);

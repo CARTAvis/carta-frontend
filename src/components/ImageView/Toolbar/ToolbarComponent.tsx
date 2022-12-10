@@ -130,7 +130,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const tooltipPosition: PopoverPosition = "top";
 
         const annotationMenu = (
-            <Menu>
+            <Menu style={{padding: 0}}>
                 {Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
                     const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
                     const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);

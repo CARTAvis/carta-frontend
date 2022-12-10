@@ -49,8 +49,8 @@ export function getFormattedCoordinates(frameSet: FrameSet, x: number, y: number
 export function getWCSValueFromFormattedString(frameSet: FrameSet, formatString: {x: string, y: string}): {x: number, y: number};
 export function transformPointArrays(frameSet: FrameSet, xIn: Float64Array, yIn: Float64Array, forward?: boolean): {x: Float64Array, y: Float64Array};
 export function transformPoint(frameSet: FrameSet, x: number, y: number, forward?: boolean): {x: number, y: number};
-export function transformPointList(frameSet: FrameSet, x: Float64Array, y: Float64Array);
-export function transformAxPointList(frameSet: FrameSet, axis: number, x: number, y: number, dist: number);
+export function transformPointList(frameSet: FrameSet, npoint: number, start: {x: number, y: number}, finish: {x: number, y: number});
+export function transformAxPointList(frameSet: FrameSet, npoint: number, axis: number, x: number, y: number, dist: number);
 export function transform3DPoint(frameSet: FrameSet, x: number, y: number, z: number, forward?: boolean): {x: number, y: number, z: number};
 export function transformSpectralPoint(specFrame: SpecFrame, specType: string, specUnit: string, specSys: string, z: number, forward?: boolean);
 export function transformSpectralPointArray(specFrame: SpecFrame, specType: string, specUnit: string, specSys: string, zIn: Float64Array | Array<number>, forward?: boolean): Float64Array;

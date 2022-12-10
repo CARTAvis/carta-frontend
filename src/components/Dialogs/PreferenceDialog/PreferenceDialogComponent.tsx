@@ -4,14 +4,14 @@ import tinycolor from "tinycolor2";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Callout, Checkbox, FormGroup, HTMLSelect, Icon, IDialogProps, Intent, MenuItem, PopoverPosition, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {AnchorButton, Button, Callout, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, Select} from "@blueprintjs/select";
+import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
-import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, SuccessToast} from "components/Shared";
+import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, SuccessToast, PointShapeSelectComponent} from "components/Shared";
 import {
     CompressionQuality,
     CursorInfoVisibility,
@@ -569,50 +569,50 @@ export class PreferenceDialogComponent extends React.Component {
             );
         });
 
-        const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
-            let fillColor = color;
-            if (!fill) {
-                fillColor = "none";
-            }
-            return (
-                <span className="bp3-icon">
-                    <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
-                        {path}
-                    </svg>
-                </span>
-            );
-        };
+        // const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
+        //     let fillColor = color;
+        //     if (!fill) {
+        //         fillColor = "none";
+        //     }
+        //     return (
+        //         <span className="bp3-icon">
+        //             <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
+        //                 {path}
+        //             </svg>
+        //         </span>
+        //     );
+        // };
 
-        const renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: IItemRendererProps) => {
-            const shapeItem = getPointShape(shape);
-            return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
-        };
+        // const renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: IItemRendererProps) => {
+        //     const shapeItem = getPointShape(shape);
+        //     return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
+        // };
 
-        const getPointShape = (shape: CARTA.PointAnnotationShape) => {
-            const square = <path d="M 2 2 L 14 2 L 14 14 L 2 14 Z" />;
-            const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
-            const color = preference.annotationColor;
-            switch (shape) {
-                case CARTA.PointAnnotationShape.SQUARE:
-                    return IconWrapper(square, color, true);
-                case CARTA.PointAnnotationShape.BOX:
-                    return <Icon icon="square" color={color} />;
-                case CARTA.PointAnnotationShape.CIRCLE:
-                    return <Icon icon="full-circle" color={color} />;
-                case CARTA.PointAnnotationShape.CIRCLE_LINED:
-                    return <Icon icon="circle" color={color} />;
-                case CARTA.PointAnnotationShape.DIAMOND:
-                    return IconWrapper(rhomb, color, true);
-                case CARTA.PointAnnotationShape.DIAMOND_LINED:
-                    return IconWrapper(rhomb, color, false);
-                case CARTA.PointAnnotationShape.CROSS:
-                    return <Icon icon="plus" color={color} />;
-                case CARTA.PointAnnotationShape.X:
-                    return <Icon icon="cross" color={color} />;
-                default:
-                    return <Icon icon="square" color={color} />;
-            }
-        };
+        // const getPointShape = (shape: CARTA.PointAnnotationShape) => {
+        //     const square = <path d="M 2 2 L 14 2 L 14 14 L 2 14 Z" />;
+        //     const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
+        //     const color = preference.annotationColor;
+        //     switch (shape) {
+        //         case CARTA.PointAnnotationShape.SQUARE:
+        //             return IconWrapper(square, color, true);
+        //         case CARTA.PointAnnotationShape.BOX:
+        //             return <Icon icon="square" color={color} />;
+        //         case CARTA.PointAnnotationShape.CIRCLE:
+        //             return <Icon icon="full-circle" color={color} />;
+        //         case CARTA.PointAnnotationShape.CIRCLE_LINED:
+        //             return <Icon icon="circle" color={color} />;
+        //         case CARTA.PointAnnotationShape.DIAMOND:
+        //             return IconWrapper(rhomb, color, true);
+        //         case CARTA.PointAnnotationShape.DIAMOND_LINED:
+        //             return IconWrapper(rhomb, color, false);
+        //         case CARTA.PointAnnotationShape.CROSS:
+        //             return <Icon icon="plus" color={color} />;
+        //         case CARTA.PointAnnotationShape.X:
+        //             return <Icon icon="cross" color={color} />;
+        //         default:
+        //             return <Icon icon="square" color={color} />;
+        //     }
+        // };
 
         const annotationSettingsPanel = (
             <React.Fragment>
@@ -664,7 +664,7 @@ export class PreferenceDialogComponent extends React.Component {
                     <SafeNumericInput placeholder="Annotation size" min={1} value={preference.annotationSize} stepSize={1} onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_SIZE, Math.max(1, value))} />
                 </FormGroup>
                 <FormGroup inline={true} label="Point Shape">
-                    <Select
+                    {/* <Select
                         className="bp3-fill"
                         filterable={false}
                         items={Object.values(CARTA.PointAnnotationShape)}
@@ -674,7 +674,8 @@ export class PreferenceDialogComponent extends React.Component {
                         popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
                     >
                         <Button icon={getPointShape(preference.pointAnnotationShape)} rightIcon="double-caret-vertical" />
-                    </Select>
+                    </Select> */}
+                    <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.pointAnnotationShape} />
                 </FormGroup>
                 <FormGroup inline={true} label="Point annotation width" labelInfo="(px)">
                     <SafeNumericInput

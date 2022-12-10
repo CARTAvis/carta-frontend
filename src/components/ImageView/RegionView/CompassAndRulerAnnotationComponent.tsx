@@ -22,6 +22,8 @@ interface CompassAnnotationProps {
     onDoubleClick?: (region: RegionStore) => void;
 }
 
+const NEW_ANCHOR_MAX_DISTANCE = 16;
+
 export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     const shapeRef = React.useRef();
     const northLabelRef = React.useRef<Konva.Text>();
@@ -204,7 +206,8 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
             perfectDrawEnabled: false,
             points: north ? northPointArray : eastPointArray,
             pointerWidth: (region.pointerWidth * imageRatio) / zoomLevel,
-            pointerLength: (region.pointerLength * imageRatio) / zoomLevel
+            pointerLength: (region.pointerLength * imageRatio) / zoomLevel,
+            hitStrokeWidth: NEW_ANCHOR_MAX_DISTANCE * 2
         };
     };
 
@@ -246,7 +249,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     fontStyle={region.fontStyle}
                 />
                 {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
-                <Line closed points={[...northPointArray, eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], ...eastPointArray]} opacity={0} />
+                {/* <Line closed points={[...northPointArray, eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], ...eastPointArray]} opacity={0} /> */}
             </Group>
             <Group>
                 {props.selected && (
@@ -455,7 +458,17 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
 
     return (
         <>
-            <Group ref={shapeRef} listening={!region.locked} draggable onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
+            <Group
+                ref={shapeRef}
+                listening={!region.locked}
+                draggable
+                onClick={handleClick}
+                onDblClick={handleDoubleClick}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragMove={handleDrag}
+                hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
+            >
                 <Line
                     stroke={region.color}
                     fill={region.color}
@@ -467,6 +480,7 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={[...hypotenusePointArray, yPointArray[0], yPointArray[1]]} //Connect the lines together
+                    hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
                 />
                 <Line
                     stroke={region.color}
@@ -479,6 +493,7 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={[...xPointArray, hypotenusePointArray[0], hypotenusePointArray[1]]} //Connect the lines together
+                    hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
                 />
                 <Line
                     stroke={region.color}
@@ -491,6 +506,7 @@ export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
                     points={[...yPointArray, xPointArray[0], xPointArray[1]]} //Connect the lines together
+                    hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
                 />
                 <Text
                     ref={distanceTextRef}
