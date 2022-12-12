@@ -826,7 +826,8 @@ export class PreferenceStore {
             PreferenceKeys.ANNOTATION_TYPE,
             PreferenceKeys.ANNOTATION_SIZE,
             PreferenceKeys.POINT_ANNOTATION_SHAPE,
-            PreferenceKeys.POINT_ANNOTATION_WIDTH
+            PreferenceKeys.POINT_ANNOTATION_WIDTH,
+            PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH
         ]);
     };
 
@@ -903,8 +904,6 @@ export class PreferenceStore {
                 PreferenceKeys.WCS_OVERLAY_BEAM_TYPE,
                 PreferenceKeys.REGION_COLOR,
                 PreferenceKeys.REGION_CREATION_MODE,
-                PreferenceKeys.ANNOTATION_COLOR,
-                PreferenceKeys.ANNOTATION_CREATION_MODE,
                 PreferenceKeys.WCS_OVERLAY_AST_COLOR,
                 PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION,
                 PreferenceKeys.PIXEL_GRID_COLOR
@@ -918,8 +917,6 @@ export class PreferenceStore {
                 PreferenceKeys.CONTOUR_CONFIG_NUM_LEVELS,
                 PreferenceKeys.REGION_DASH_LENGTH,
                 PreferenceKeys.REGION_TYPE,
-                PreferenceKeys.ANNOTATION_DASH_LENGTH,
-                PreferenceKeys.ANNOTATION_TYPE,
                 PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
                 PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
                 PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE,
@@ -941,12 +938,7 @@ export class PreferenceStore {
                 PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH,
                 PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY,
                 PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
-                PreferenceKeys.REGION_LINE_WIDTH,
-                PreferenceKeys.REGION_SIZE,
-                PreferenceKeys.ANNOTATION_LINE_WIDTH,
-                PreferenceKeys.ANNOTATION_SIZE,
-                PreferenceKeys.POINT_ANNOTATION_SHAPE,
-                PreferenceKeys.POINT_ANNOTATION_WIDTH
+                PreferenceKeys.REGION_LINE_WIDTH
             ];
 
             const booleanKeys = [
