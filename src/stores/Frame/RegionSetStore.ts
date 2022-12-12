@@ -448,7 +448,15 @@ export class RegionSetStore {
                         // fontStyle = (region as TextAnnotationStore).fontStyle;
                         // font = (region as TextAnnotationStore).font;
                         // textPosition = (region as TextAnnotationStore).position;
-                        annotationStyles = region.regionType === CARTA.RegionType.ANNTEXT ? (region as TextAnnotationStore).getAnnotationStyles : (region as CompassAnnotationStore).getAnnotationStyles;
+
+                        switch (region.regionType) {
+                            case CARTA.RegionType.ANNTEXT:
+                                annotationStyles = (region as TextAnnotationStore).getAnnotationStyles();
+                                break;
+                            case CARTA.RegionType.ANNCOMPASS:
+                                annotationStyles = (region as CompassAnnotationStore).getAnnotationStyles();
+                                break;
+                        }
 
                         // compassNorthLabel = (region as CompassAnnotationStore).northLabel;
                         // compassEastLabel = (region as CompassAnnotationStore).eastLabel;
