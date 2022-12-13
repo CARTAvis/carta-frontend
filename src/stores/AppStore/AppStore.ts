@@ -1024,11 +1024,14 @@ export class AppStore {
         }
 
         this.startFileLoading();
-        // clear previously generated moment images under this frame
-        if (frame.momentImages && frame.momentImages.length > 0) {
-            frame.momentImages.forEach(momentFrame => this.closeFile(momentFrame));
+        // clear previously generated moment images under this frame if keep is false
+        if (!message.keep) {
+            if (frame.momentImages && frame.momentImages.length > 0) {
+                frame.momentImages.forEach(momentFrame => this.closeFile(momentFrame));
+            }
+
+            frame.removeMomentImage();
         }
-        frame.removeMomentImage();
 
         this.restartTaskProgress();
 

@@ -29,7 +29,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             minWidth: 280,
             minHeight: 225,
             defaultWidth: 550,
-            defaultHeight: 600,
+            defaultHeight: 650,
             title: "spectral-profiler-settings",
             isCloseable: true,
             parentId: "spectal-profiler",

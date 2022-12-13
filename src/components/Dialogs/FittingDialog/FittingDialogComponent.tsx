@@ -87,22 +87,26 @@ export class FittingDialogComponent extends React.Component {
         const fittingResultPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
-                <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
-                    <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
-                        <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
-                    </Tooltip2>
-                </ButtonGroup>
+                {fittingStore.effectiveFrame?.fittingResult !== "" && (
+                    <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
+                        <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
+                            <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
+                        </Tooltip2>
+                    </ButtonGroup>
+                )}
             </Pre>
         );
 
         const fullLogPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
-                <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
-                    <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
-                        <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
-                    </Tooltip2>
-                </ButtonGroup>
+                {fittingStore.effectiveFrame?.fittingLog !== "" && (
+                    <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
+                        <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
+                            <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
+                        </Tooltip2>
+                    </ButtonGroup>
+                )}
             </Pre>
         );
 
