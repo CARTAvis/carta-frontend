@@ -47,18 +47,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 <FormGroup label={"Color map"} inline={true}>
                     <ColormapComponent inverted={renderConfig.inverted} selectedItem={renderConfig.colorMap} onItemSelect={renderConfig.setColorMap} />
                 </FormGroup>
-                <FormGroup inline={true} label="NaN Color">
-                    <ColorPickerComponent
-                        color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
-                        presetColors={[...SWATCH_COLORS, "transparent"]}
-                        setColor={(color: ColorResult) => {
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex === "transparent" ? "#000000" : color.hex);
-                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgb.a);
-                        }}
-                        disableAlpha={false}
-                        darkTheme={appStore.darkTheme}
-                    />
-                </FormGroup>
                 <FormGroup label={"Invert color map"} inline={true}>
                     <Switch checked={renderConfig.inverted} onChange={this.handleInvertedChanged} />
                 </FormGroup>
@@ -102,6 +90,18 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         contrastMax={RenderConfigStore.CONTRAST_MAX}
                     />
                 </Collapse>
+                <FormGroup inline={true} label="NaN Color">
+                    <ColorPickerComponent
+                        color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
+                        presetColors={[...SWATCH_COLORS, "transparent"]}
+                        setColor={(color: ColorResult) => {
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, color.hex === "transparent" ? "#000000" : color.hex);
+                            preference.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, color.rgb.a);
+                        }}
+                        disableAlpha={false}
+                        darkTheme={appStore.darkTheme}
+                    />
+                </FormGroup>
             </React.Fragment>
         );
     }
