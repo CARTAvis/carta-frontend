@@ -196,7 +196,7 @@ Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn:
     return result;
 };
 
-Module.transformPointList = function (wcsInfo: number, npoint: number, start: {x: number, y: number}, finish: {x: number, y: number}) {
+Module.getGeodesicPointArray = function (wcsInfo: number, npoint: number, start: {x: number, y: number}, finish: {x: number, y: number}) {
     // Return empty array if arguments are invalid
     const yIn = new Float64Array([start.y, finish.y]);
     const xIn = new Float64Array([start.x, finish.x]);
@@ -226,7 +226,7 @@ Module.transformPointList = function (wcsInfo: number, npoint: number, start: {x
     return result;
 };
 
-Module.transformAxPointList = function (wcsInfo: number, npoint: number, axis: number, x: number, y: number, dist: number) {
+Module.getAxisPointArray = function (wcsInfo: number, npoint: number, axis: number, x: number, y: number, dist: number) {
     // Return empty array if arguments are invalid
     // if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
     //     return {x: new Float64Array(1), y: new Float64Array(1)};

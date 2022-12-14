@@ -337,8 +337,8 @@ export class CompassAnnotationStore extends RegionStore {
         const angularWidth = delta1 ? Math.abs((delta1?.numericValue * Math.PI * width) / 180) : 6.18;
         const angularHeight = delta2 ? Math.abs((delta2?.numericValue * Math.PI * height) / 180) : 6.18;
 
-        const northApproximatePoints = AST.transformAxPointList(astTransform, NUMBER_OF_POINT_TRANSFORMED, 2, transformed.x, transformed.y, delta1 ? angularWidth : 6.18);
-        const eastApproximatePoints = AST.transformAxPointList(astTransform, NUMBER_OF_POINT_TRANSFORMED, 1, transformed.x, transformed.y, delta2 ? angularHeight : 6.18);
+        const northApproximatePoints = AST.getAxisPointArray(astTransform, NUMBER_OF_POINT_TRANSFORMED, 2, transformed.x, transformed.y, delta1 ? angularWidth : 6.18);
+        const eastApproximatePoints = AST.getAxisPointArray(astTransform, NUMBER_OF_POINT_TRANSFORMED, 1, transformed.x, transformed.y, delta2 ? angularHeight : 6.18);
         // const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y, delta1 ? Math.abs((delta1?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.width) / 180) : 6.18);
         // const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y, delta2 ? Math.abs((delta2?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.height) / 180) : 6.18);
 
@@ -507,9 +507,9 @@ export class RulerAnnotationStore extends RegionStore {
         const start = {x: startX, y: startY};
         const finish = {x: finishX, y: finishY};
 
-        xApproximatePoints = AST.transformPointList(astTransform, NUMBER_OF_POINT_TRANSFORMED, corner, start);
-        yApproximatePoints = AST.transformPointList(astTransform, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
-        hypotenuseApproximatePoints = AST.transformPointList(astTransform, NUMBER_OF_POINT_TRANSFORMED, start, finish);
+        xApproximatePoints = AST.getGeodesicPointArray(astTransform, NUMBER_OF_POINT_TRANSFORMED, corner, start);
+        yApproximatePoints = AST.getGeodesicPointArray(astTransform, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
+        hypotenuseApproximatePoints = AST.getGeodesicPointArray(astTransform, NUMBER_OF_POINT_TRANSFORMED, start, finish);
 
         return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints};
     }

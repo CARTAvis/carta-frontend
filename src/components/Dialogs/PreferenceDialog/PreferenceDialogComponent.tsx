@@ -655,11 +655,6 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Annotation Type">
-                    <HTMLSelect value={preference.annotationType} onChange={ev => preference.setPreference(PreferenceKeys.ANNOTATION_TYPE, Number(ev.currentTarget.value))}>
-                        {annotationTypes}
-                    </HTMLSelect>
-                </FormGroup>
                 <FormGroup inline={true} label="Annotation size" labelInfo="(px)">
                     <SafeNumericInput placeholder="Annotation size" min={1} value={preference.annotationSize} stepSize={1} onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_SIZE, Math.max(1, value))} />
                 </FormGroup>

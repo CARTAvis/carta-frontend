@@ -77,7 +77,6 @@ export enum PreferenceKeys {
     ANNOTATION_COLOR = "annotationColor",
     ANNOTATION_LINE_WIDTH = "annotationLineWidth",
     ANNOTATION_DASH_LENGTH = "annotationDashLength",
-    ANNOTATION_TYPE = "annotationType",
     ANNOTATION_CREATION_MODE = "annotationCreationMode",
     ANNOTATION_SIZE = "annotationSize",
     POINT_ANNOTATION_SHAPE = "pointAnnotationShape",
@@ -526,10 +525,6 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.ANNOTATION_DASH_LENGTH) ?? DEFAULTS.ANNOTATION.annotationDashLength;
     }
 
-    @computed get annotationType(): CARTA.RegionType {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_TYPE) ?? DEFAULTS.ANNOTATION.annotationType;
-    }
-
     @computed get annotationCreationMode(): string {
         return this.preferences.get(PreferenceKeys.ANNOTATION_CREATION_MODE) ?? DEFAULTS.ANNOTATION.annotationCreationMode;
     }
@@ -823,7 +818,6 @@ export class PreferenceStore {
             PreferenceKeys.ANNOTATION_CREATION_MODE,
             PreferenceKeys.ANNOTATION_DASH_LENGTH,
             PreferenceKeys.ANNOTATION_LINE_WIDTH,
-            PreferenceKeys.ANNOTATION_TYPE,
             PreferenceKeys.ANNOTATION_SIZE,
             PreferenceKeys.POINT_ANNOTATION_SHAPE,
             PreferenceKeys.POINT_ANNOTATION_WIDTH,
