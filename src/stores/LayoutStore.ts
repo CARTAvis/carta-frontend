@@ -203,7 +203,12 @@ export class LayoutStore {
             return;
         }
 
-        if (appStore.layoutStore.layoutExists(newName)) {
+        if (PresetLayout.isPreset(newName)) {
+            appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
+            return;
+        }
+
+        if (this.layoutExists(newName)) {
             appStore.alertStore.showAlert("Layout name already exists.");
             return;
         }
@@ -222,7 +227,7 @@ export class LayoutStore {
             try {
                 const success = yield appStore.apiService.setLayout(newName, configToSave);
                 if (success) {
-                    appStore.apiService.clearLayout(oldName).then(
+                    yield appStore.apiService.clearLayout(oldName).then(
                         success => {
                             if (success) {
                                 delete this.layouts[oldName];
@@ -253,14 +258,14 @@ export class LayoutStore {
         }
     };
 
-    @action deleteLayout = (layoutName: string) => {
+    @flow.bound *deleteLayout(layoutName: string) {
         const appStore = AppStore.Instance;
         if (!layoutName || !this.layoutExists(layoutName)) {
             appStore.alertStore.showAlert(`Cannot delete layout ${layoutName}! It does not exist.`);
             return;
         }
 
-        appStore.apiService.clearLayout(layoutName).then(
+        yield appStore.apiService.clearLayout(layoutName).then(
             success => {
                 if (success) {
                     delete this.layouts[layoutName];
@@ -275,7 +280,7 @@ export class LayoutStore {
                 this.handleDeleteResult(layoutName, false);
             }
         );
-    };
+    }
 
     private handleDeleteResult = (layoutName: string, success: boolean) => {
         if (success) {
