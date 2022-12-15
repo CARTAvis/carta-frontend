@@ -463,11 +463,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
         if (this.plotData) {
-            const isXCoordinate = this.widgetStore.coordinate.indexOf("x") >= 0;
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 // handle the value when cursor is in profiler
                 if (this.pointInfo && this.nearestCursorPoint) {
-                    const wcsLabel = this.pointInfo?.infoWCS && !this.lineAxis ? `WCS: ${isXCoordinate ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
+                    const wcsLabel = this.pointInfo?.infoWCS && !this.lineAxis ? `WCS: ${this.widgetStore.isXProfile ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
                     const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(this.nearestCursorPoint.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${this.nearestCursorPoint.x} px, `;
                     const valueLabel = `${this.nearestCursorPoint.y !== undefined ? formattedExponential(this.nearestCursorPoint.y, 5) : ""}`;
 
@@ -484,8 +483,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
                 // get value directly from point region
                 if (this.pointInfo?.posImageSpace) {
-                    const wcsLabel = this.pointInfo?.infoWCS ? `WCS: ${isXCoordinate ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
-                    const imageLabel = `Image: ${toFixed(isXCoordinate ? this.pointInfo.posImageSpace.x : this.pointInfo.posImageSpace.y)} px, `;
+                    const wcsLabel = this.pointInfo?.infoWCS ? `WCS: ${this.widgetStore.isXProfile ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
+                    const imageLabel = `Image: ${toFixed(this.widgetStore.isXProfile ? this.pointInfo.posImageSpace.x : this.pointInfo.posImageSpace.y)} px, `;
                     const valueLabel = `${this.profileStore?.value !== undefined ? formattedExponential(this.profileStore.value, 5) : ""}`;
 
                     const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues, this.profileStore.x);
