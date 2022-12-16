@@ -988,33 +988,15 @@ export class AppStore {
 
             switch (region.regionType) {
                 case CARTA.RegionType.ANNPOINT:
-                    // annotationStyle.pointShape = (region as PointAnnotationStore).pointShape;
-                    // annotationStyle.pointWidth = (region as PointAnnotationStore).pointWidth;
                     annotationStyle = (region as PointAnnotationStore).getAnnotationStylesForExport();
                     break;
                 case CARTA.RegionType.ANNTEXT:
-                    // annotationStyle.textLabel0 = (region as TextAnnotationStore).text;
-                    // annotationStyle.fontSize = (region as TextAnnotationStore).fontSize;
-                    // annotationStyle.fontStyle = (region as TextAnnotationStore).fontStyle;
-                    // annotationStyle.font = (region as TextAnnotationStore).font;
                     annotationStyle = (region as TextAnnotationStore).getAnnotationStylesForExport();
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
-                    // annotationStyle.textLabel0 = (region as CompassAnnotationStore).northLabel;
-                    // annotationStyle.textLabel1 = (region as CompassAnnotationStore).eastLabel;
-                    // annotationStyle.isArrow0 = (region as CompassAnnotationStore).northArrowhead;
-                    // annotationStyle.isArrow1 = (region as CompassAnnotationStore).eastArrowhead;
-                    // annotationStyle.coordinateSystem = "PIXEL";
-                    // annotationStyle.fontSize = (region as CompassAnnotationStore).fontSize;
-                    // annotationStyle.fontStyle = (region as CompassAnnotationStore).fontStyle;
-                    // annotationStyle.font = (region as CompassAnnotationStore).font;
                     annotationStyle = (region as CompassAnnotationStore).getAnnotationStylesForExport();
                     break;
                 case CARTA.RegionType.ANNRULER:
-                    // annotationStyle.fontSize = (region as RulerAnnotationStore).fontSize;
-                    // annotationStyle.fontStyle = (region as RulerAnnotationStore).fontStyle;
-                    // annotationStyle.font = (region as RulerAnnotationStore).font;
-                    // annotationStyle.coordinateSystem = "PIXEL";
                     annotationStyle = (region as RulerAnnotationStore).getAnnotationStylesForExport();
                     break;
                 default:

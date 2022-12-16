@@ -349,8 +349,8 @@ export class CompassAnnotationStore extends RegionStore {
         return {
             textLabel0: this.northLabel,
             textLabel1: this.eastLabel,
-            isArrow0: this.northArrowhead,
-            isArrow1: this.eastArrowhead,
+            isNorthArrow: this.northArrowhead,
+            isEastArrow: this.eastArrowhead,
             fontSize: this.fontSize,
             fontStyle: this.fontStyle,
             font: this.font,
@@ -366,8 +366,8 @@ export class CompassAnnotationStore extends RegionStore {
         return {
             textLabel0: this.northLabel,
             textLabel1: this.eastLabel,
-            isArrow0: this.northArrowhead,
-            isArrow1: this.eastArrowhead,
+            isNorthArrow: this.northArrowhead,
+            isEastArrow: this.eastArrowhead,
             fontSize: this.fontSize,
             fontStyle: this.fontStyle,
             font: this.font,
@@ -386,8 +386,8 @@ export class CompassAnnotationStore extends RegionStore {
         length: number;
         northTextOffset: Point2D;
         eastTextOffset: Point2D;
-        isArrow0: boolean;
-        isArrow1: boolean;
+        isNorthArrow: boolean;
+        isEastArrow: boolean;
     }) => {
         this.setLabel(annotationStyles.northLabel ?? this.northLabel, true);
         this.setLabel(annotationStyles.eastLabel ?? this.eastLabel, false);
@@ -401,8 +401,8 @@ export class CompassAnnotationStore extends RegionStore {
         this.setNorthTextOffset(annotationStyles.northTextOffset?.y ?? this.northTextOffset.y, false);
         this.setEastTextOffset(annotationStyles.eastTextOffset?.x ?? this.eastTextOffset.x, true);
         this.setEastTextOffset(annotationStyles.eastTextOffset?.y ?? this.eastTextOffset.y, false);
-        this.setNorthArrowhead(annotationStyles.isArrow0 ?? this.northArrowhead);
-        this.setEastArrowhead(annotationStyles.isArrow1 ?? this.eastArrowhead);
+        this.setNorthArrowhead(annotationStyles.isNorthArrow ?? this.northArrowhead);
+        this.setEastArrowhead(annotationStyles.isEastArrow ?? this.eastArrowhead);
     };
 }
 
