@@ -90,7 +90,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         contrastMax={RenderConfigStore.CONTRAST_MAX}
                     />
                 </Collapse>
-                <FormGroup inline={true} label="NaN Color">
+                <FormGroup inline={true} label="NaN Color" className="nan-color-button">
                     <ColorPickerComponent
                         color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
