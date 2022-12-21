@@ -330,6 +330,8 @@ export class RootMenuComponent extends React.Component {
                                     Latency: {latencyString}
                                     <br />
                                     Session ID: {appStore.backendService.sessionId}
+                                    <br />
+                                    <button onClick={() => {navigator.clipboard.writeText(appStore.backendService.sessionId.toString())}}>Copy Session ID</button>
                                 </small>
                             </i>
                         </span>
@@ -476,9 +478,9 @@ export class RootMenuComponent extends React.Component {
                         <Icon icon={"console"} intent={"warning"} />
                     </Tooltip2>
                 )}
-                <Tooltip2 content={connectivityTooltip}>
+                <Popover2 content={connectivityTooltip}>
                     <Icon icon={"symbol-circle"} className={connectivityClass} />
-                </Tooltip2>
+                </Popover2>
                 <div id="hidden-status-info">
                     <span id="info-session-id">{appStore.backendService.sessionId}</span>
                 </div>
