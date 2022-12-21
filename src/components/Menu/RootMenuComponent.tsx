@@ -331,7 +331,13 @@ export class RootMenuComponent extends React.Component {
                                     <br />
                                     Session ID: {appStore.backendService.sessionId}
                                     <br />
-                                    <button onClick={() => {navigator.clipboard.writeText(appStore.backendService.sessionId.toString())}}>Copy Session ID</button>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(appStore.backendService.sessionId.toString());
+                                        }}
+                                    >
+                                        Copy Session ID
+                                    </button>
                                 </small>
                             </i>
                         </span>
