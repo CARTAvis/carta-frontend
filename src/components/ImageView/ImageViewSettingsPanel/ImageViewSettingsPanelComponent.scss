@@ -60,4 +60,11 @@
         margin: 15px;
         border: 1px solid $light-gray3;
     }
+
+    .panel-pan-and-zoom {
+        .coordinate-panel {
+            width: auto;
+            height: 30px;
+        }
+    }
 }

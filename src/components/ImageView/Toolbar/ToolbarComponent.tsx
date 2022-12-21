@@ -282,7 +282,20 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
                             </Tooltip2>
                         )}
-                        <Tooltip2 position={tooltipPosition} content="Select and pan mode">
+                        <Tooltip2
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Select and pan mode
+                                    <span>
+                                        <br />
+                                        <i>
+                                            <small>Double Click to open the settings.</small>
+                                        </i>
+                                    </span>
+                                </span>
+                            }
+                        >
                             <AnchorButton
                                 icon={"hand"}
                                 onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}

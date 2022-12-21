@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {ItemRenderer, Select} from "@blueprintjs/select";
 import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
-import {AutoColorPickerComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {AutoColorPickerComponent, CoordinateComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {ColorbarStore} from "stores/Frame";
 import {ImagePanelMode} from "models";
@@ -14,6 +14,7 @@ import "./ImageViewSettingsPanelComponent.scss";
 
 enum ImageViewSettingsPanelTabs {
     GLOBAL = "Global",
+    PAN_AND_ZOOM = "Pan and Zoom",
     TITLE = "Title",
     TICKS = "Ticks",
     GRIDS = "Grids",
@@ -200,6 +201,28 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         );
 
+        const panAndZoomPanel = (
+            <div className="panel-pan-and-zoom">
+                <FormGroup inline={true} label="Coordinate">
+                    <CoordinateComponent />
+                </FormGroup>
+                <FormGroup inline={true} label="Center (X)">
+                    <SafeNumericInput buttonPosition="none" />
+                </FormGroup>
+                <FormGroup inline={true} label="Center (Y)">
+                    <SafeNumericInput buttonPosition="none" />
+                </FormGroup>
+                <FormGroup inline={true} label="Size (X)">
+                    <SafeNumericInput buttonPosition="none" />
+                </FormGroup>
+                <FormGroup inline={true} label="Size (Y)">
+                    <SafeNumericInput buttonPosition="none" />
+                </FormGroup>
+                <FormGroup inline={true} label="Zoom level">
+                    <SafeNumericInput buttonPosition="none" />
+                </FormGroup>
+            </div>
+        );
         const titlePanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
@@ -702,6 +725,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             <div className={className}>
                 <Tabs id="imageViewSettingsTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
                     <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} title={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} panel={panAndZoomPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={titlePanel} />
                     <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={ticksPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.GRIDS} title={ImageViewSettingsPanelTabs.GRIDS} panel={gridPanel} />
