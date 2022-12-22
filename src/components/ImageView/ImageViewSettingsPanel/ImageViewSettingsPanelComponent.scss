@@ -66,5 +66,17 @@
             width: auto;
             height: 30px;
         }
+
+        .bp3-form-content {
+            display: flex;
+
+            .info-string {
+                line-height: 30px;
+                margin-left: 20px;
+                font-size: x-small;
+                font-family: monospace;
+                user-select: text;
+            }
+        }
     }
 }

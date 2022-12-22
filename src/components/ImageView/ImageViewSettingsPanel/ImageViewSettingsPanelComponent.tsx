@@ -208,18 +208,19 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <FormGroup inline={true} label="Center (X)">
                     <SafeNumericInput buttonPosition="none" />
+                    <span className="info-string">Image: 0.000 px</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Center (Y)">
                     <SafeNumericInput buttonPosition="none" />
+                    <span className="info-string">Image: 0.000 px</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (X)">
                     <SafeNumericInput buttonPosition="none" />
+                    <span className="info-string">Image: 0.000 px</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (Y)">
                     <SafeNumericInput buttonPosition="none" />
-                </FormGroup>
-                <FormGroup inline={true} label="Zoom level">
-                    <SafeNumericInput buttonPosition="none" />
+                    <span className="info-string">Image: 0.000 px</span>
                 </FormGroup>
             </div>
         );
