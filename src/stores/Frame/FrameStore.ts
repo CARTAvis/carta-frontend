@@ -821,7 +821,7 @@ export class FrameStore {
         if (imageWidth <= 0) {
             return 1.0;
         }
-        return (this.renderWidth * this.pixelRatio / this.aspectRatio) / imageWidth;
+        return (this.renderWidth * this.pixelRatio) / this.aspectRatio / imageWidth;
     }
 
     @computed
@@ -1955,7 +1955,7 @@ export class FrameStore {
 
     @action zoomToSizeX = (x: number) => {
         if (x > 0 && isFinite(x)) {
-            this.setZoom((this.renderWidth * this.pixelRatio / this.aspectRatio) / x);
+            this.setZoom((this.renderWidth * this.pixelRatio) / this.aspectRatio / x);
         }
     };
 
@@ -2012,7 +2012,7 @@ export class FrameStore {
     };
 
     @action setCursorValue = (position: Point2D, channel: number, value: number) => {
-        this.cursorValue = { position, channel, value };
+        this.cursorValue = {position, channel, value};
     };
 
     @action updateCursorRegion = (pos: Point2D) => {
