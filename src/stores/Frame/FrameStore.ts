@@ -53,7 +53,9 @@ import {
     getFormattedWCSPoint,
     getHeaderNumericValue,
     getPixelSize,
+    getPixelValueFromWCS,
     getTransformedChannel,
+    getValueFromArcsecString,
     isAstBadPoint,
     minMax2D,
     multiply2D,
@@ -203,6 +205,10 @@ export class FrameStore {
         }
     }
 
+    @computed get pixelRatio(): number {
+        return this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
+    }
+
     @computed get aspectRatio(): number {
         if (isFinite(this.framePixelRatio)) {
             return this.framePixelRatio;
@@ -220,10 +226,9 @@ export class FrameStore {
 
     // Frame view of center = initial center && zoom = 1
     @computed get unitFrameView(): FrameView {
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
         // Required image dimensions
-        const imageWidth = (pixelRatio * this.renderWidth) / this.aspectRatio;
-        const imageHeight = pixelRatio * this.renderHeight;
+        const imageWidth = (this.pixelRatio * this.renderWidth) / this.aspectRatio;
+        const imageHeight = this.pixelRatio * this.renderHeight;
 
         const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
         const mipExact = Math.max(1.0, mipAdjustment);
@@ -278,10 +283,9 @@ export class FrameStore {
                 };
             }
 
-            const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
             // Required image dimensions
-            const imageWidth = (pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
-            const imageHeight = (pixelRatio * this.renderHeight) / this.zoomLevel;
+            const imageWidth = (this.pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
+            const imageHeight = (this.pixelRatio * this.renderHeight) / this.zoomLevel;
 
             const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
             const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
@@ -814,22 +818,19 @@ export class FrameStore {
     @computed
     private get calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
-        const pixelRatio = (this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0) / this.aspectRatio;
-
         if (imageWidth <= 0) {
             return 1.0;
         }
-        return (this.renderWidth * pixelRatio) / imageWidth;
+        return (this.renderWidth * this.pixelRatio / this.aspectRatio) / imageWidth;
     }
 
     @computed
     private get calculateZoomY() {
         const imageHeight = this.frameInfo.fileInfoExtended.height;
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
         if (imageHeight <= 0) {
             return 1.0;
         }
-        return (this.renderHeight * pixelRatio) / imageHeight;
+        return (this.renderHeight * this.pixelRatio) / imageHeight;
     }
 
     @computed get contourProgress(): number {
@@ -1940,7 +1941,7 @@ export class FrameStore {
         this.setChannels(newChannel, isComputedPolarization ? this.polarizations[newStokes] : newStokes, true);
     }
 
-    @action setZoom(zoom: number, absolute: boolean = false) {
+    @action setZoom = (zoom: number, absolute: boolean = false) => {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
@@ -1950,9 +1951,29 @@ export class FrameStore {
             this.replaceZoomTimeoutHandler();
             this.zooming = true;
         }
-    }
+    };
 
-    @action setCenter(x: number, y: number, enableSpatialTransform: boolean = true) {
+    @action zoomToSizeX = (x: number) => {
+        if (x > 0 && isFinite(x)) {
+            this.setZoom((this.renderWidth * this.pixelRatio / this.aspectRatio) / x);
+        }
+    };
+
+    @action zoomToSizeXWcs = (wcsX: string) => {
+        this.zoomToSizeX(this.getImageXValueFromArcsec(getValueFromArcsecString(wcsX)));
+    };
+
+    @action zoomToSizeY = (y: number) => {
+        if (y > 0 && isFinite(y)) {
+            this.setZoom((this.renderHeight * this.pixelRatio) / y);
+        }
+    };
+
+    @action zoomToSizeYWcs = (wcsY: string) => {
+        this.zoomToSizeY(this.getImageYValueFromArcsec(getValueFromArcsecString(wcsY)));
+    };
+
+    @action setCenter = (x: number, y: number, enableSpatialTransform: boolean = true) => {
         if (this.spatialReference) {
             let centerPointRefImage = {x, y};
             if (enableSpatialTransform) {
@@ -1962,9 +1983,16 @@ export class FrameStore {
         } else {
             this.center = {x, y};
         }
-    }
+    };
 
-    @action setCursorPosition(posImageSpace: Point2D) {
+    @action setCenterWcs = (wcsX: string, wcsY: string, enableSpatialTransform: boolean = true) => {
+        const center = getPixelValueFromWCS(this.wcsInfo, {x: wcsX, y: wcsY});
+        if (isFinite(center?.x) && isFinite(center?.y)) {
+            this.setCenter(center.x, center.y, enableSpatialTransform);
+        }
+    };
+
+    @action setCursorPosition = (posImageSpace: Point2D) => {
         if (this.spatialReference) {
             this.spatialReference.setCursorPosition(transformPoint(this.spatialTransformAST, posImageSpace, true));
         } else {
@@ -1977,15 +2005,15 @@ export class FrameStore {
         this.cursorMoving = true;
         clearTimeout(this.cursorMovementHandle);
         this.cursorMovementHandle = setTimeout(this.endCursorMove, FrameStore.CursorMovementDuration);
-    }
+    };
 
     @action private endCursorMove = () => {
         this.cursorMoving = false;
     };
 
-    @action setCursorValue(position: Point2D, channel: number, value: number) {
-        this.cursorValue = {position, channel, value};
-    }
+    @action setCursorValue = (position: Point2D, channel: number, value: number) => {
+        this.cursorValue = { position, channel, value };
+    };
 
     @action updateCursorRegion = (pos: Point2D) => {
         const isHoverImage = pos.x + 0.5 >= 0 && pos.x + 0.5 <= this.frameInfo.fileInfoExtended.width && pos.y + 0.5 >= 0 && pos.y + 0.5 <= this.frameInfo.fileInfoExtended.height;
@@ -2007,7 +2035,7 @@ export class FrameStore {
     };
 
     // Sets a new zoom level and pans to keep the given point fixed
-    @action zoomToPoint(x: number, y: number, zoom: number, absolute: boolean = false) {
+    @action zoomToPoint = (x: number, y: number, zoom: number, absolute: boolean = false) => {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
@@ -2022,7 +2050,7 @@ export class FrameStore {
             }
             this.setZoom(zoom);
         }
-    }
+    };
 
     @action fitZoom = (): number => {
         if (this.spatialReference) {
@@ -2040,9 +2068,8 @@ export class FrameStore {
             const {minPoint, maxPoint} = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
             const rangeY = maxPoint.y - minPoint.y;
-            const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
-            const zoomX = (this.spatialReference.renderWidth * pixelRatio) / rangeX;
-            const zoomY = (this.spatialReference.renderHeight * pixelRatio) / rangeY;
+            const zoomX = (this.spatialReference.renderWidth * this.pixelRatio) / rangeX;
+            const zoomY = (this.spatialReference.renderHeight * this.pixelRatio) / rangeY;
             const zoom = Math.min(zoomX, zoomY);
             this.spatialReference.setZoom(zoom, true);
             return zoom;
