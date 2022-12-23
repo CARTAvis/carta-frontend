@@ -44,7 +44,8 @@ import {
     POLARIZATION_LABELS,
     POLARIZATIONS,
     Transform2D,
-    ZoomPoint
+    ZoomPoint,
+    WCSPoint2D
 } from "models";
 import {
     clamp,
@@ -957,6 +958,13 @@ export class FrameStore {
 
     get headerRestFreq(): number {
         return this.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "RESTFRQ")?.numericValue;
+    }
+
+    @computed get centerWCS(): WCSPoint2D {
+        if (!this.wcsInfo) {
+            return null;
+        }
+        return getFormattedWCSPoint(this.wcsInfoForTransformation, this.center);
     }
 
     constructor(frameInfo: FrameInfo) {
@@ -1973,7 +1981,11 @@ export class FrameStore {
         this.zoomToSizeY(this.getImageYValueFromArcsec(getValueFromArcsecString(wcsY)));
     };
 
-    @action setCenter = (x: number, y: number, enableSpatialTransform: boolean = true) => {
+    @action setCenter = (x: number, y: number, enableSpatialTransform: boolean = true): boolean => {
+        if (!isFinite(x) || !isFinite(y)) {
+            return false;
+        }
+
         if (this.spatialReference) {
             let centerPointRefImage = {x, y};
             if (enableSpatialTransform) {
@@ -1983,13 +1995,16 @@ export class FrameStore {
         } else {
             this.center = {x, y};
         }
+        return true;
     };
 
-    @action setCenterWcs = (wcsX: string, wcsY: string, enableSpatialTransform: boolean = true) => {
-        const center = getPixelValueFromWCS(this.wcsInfo, {x: wcsX, y: wcsY});
+    @action setCenterWcs = (wcsX: string, wcsY: string, enableSpatialTransform: boolean = true): boolean => {
+        const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
         if (isFinite(center?.x) && isFinite(center?.y)) {
             this.setCenter(center.x, center.y, enableSpatialTransform);
+            return true;
         }
+        return false;
     };
 
     @action setCursorPosition = (posImageSpace: Point2D) => {

@@ -5,9 +5,9 @@ import {observer} from "mobx-react";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {ItemRenderer, Select} from "@blueprintjs/select";
 import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
-import {AutoColorPickerComponent, CoordinateComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
-import {ColorbarStore} from "stores/Frame";
+import {ColorbarStore, RegionCoordinate} from "stores/Frame";
 import {ImagePanelMode} from "models";
 import {SWATCH_COLORS} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
@@ -69,9 +69,14 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
     @observable selectedTab: TabId = ImageViewSettingsPanelTabs.GLOBAL;
+    @observable panAndZoomCoord: RegionCoordinate = RegionCoordinate.Image;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTab = tab;
+    };
+
+    @action private setPanAndZoomCoord = (coord: RegionCoordinate) => {
+        this.panAndZoomCoord = coord;
     };
 
     constructor(props: any) {
@@ -144,6 +149,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const disabledIfExterior = !interior && "Does not apply to exterior labelling.";
         const disabledIfNoWcs = !global.validWcs && "This image has no valid WCS data.";
 
+        const frame = appStore.activeFrame;
+        const isPVImage = frame?.isPVImage;
+
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Enable multi-panel">
@@ -204,14 +212,30 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const panAndZoomPanel = (
             <div className="panel-pan-and-zoom">
                 <FormGroup inline={true} label="Coordinate">
-                    <CoordinateComponent />
+                    <CoordinateComponent selectedValue={this.panAndZoomCoord} onChange={ev => this.setPanAndZoomCoord(ev.currentTarget.value as RegionCoordinate)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Center (X)">
-                    <SafeNumericInput buttonPosition="none" />
+                    <CoordNumericInput
+                        coord={this.panAndZoomCoord}
+                        inputType={InputType.XCoord}
+                        value={frame?.center?.x}
+                        onChange={val => frame?.setCenter(parseFloat(val), frame?.center?.y)}
+                        valueWcs={frame?.centerWCS?.x}
+                        onChangeWcs={val => frame?.setCenterWcs(val, frame?.centerWCS?.y)}
+                        wcsDisabled={isPVImage}
+                    />
                     <span className="info-string">Image: 0.000 px</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Center (Y)">
-                    <SafeNumericInput buttonPosition="none" />
+                    <CoordNumericInput
+                        coord={this.panAndZoomCoord}
+                        inputType={InputType.YCoord}
+                        value={frame?.center?.y}
+                        onChange={val => frame?.setCenter(frame?.center?.x, parseFloat(val))}
+                        valueWcs={frame?.centerWCS?.y}
+                        onChangeWcs={val => frame?.setCenterWcs(frame?.centerWCS?.x, val)}
+                        wcsDisabled={isPVImage}
+                    />
                     <span className="info-string">Image: 0.000 px</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (X)">
@@ -709,8 +733,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
-        const frame = appStore.activeFrame;
-        const isPVImage = frame?.isPVImage;
         const spectralPanel = isPVImage ? (
             <div className="panel-container">
                 <p>For spatial-spectral image</p>
