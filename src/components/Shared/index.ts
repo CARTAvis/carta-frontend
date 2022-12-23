@@ -20,3 +20,5 @@ export * from "./SpectralSettings/SpectralSettingsComponent";
 export * from "./Tables/FilterableTableComponent";
 export * from "./Tables/SimpleTableComponent";
 export * from "./CoordinateComponent/CoordinateComponent";
+export * from "./CoordNumericInput/CoordNumericInput";
+export * from "./RotationNumericInput/RotationNumericInput";
