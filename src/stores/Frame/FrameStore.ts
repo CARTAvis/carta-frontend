@@ -645,11 +645,10 @@ export class FrameStore {
         const dirAxisSize = this.getDirAxisInfo?.dirAxisSize;
         let checkPoints = [1, 2, Math.floor(dirAxisSize / 2), dirAxisSize];
         let wcsValues = [0, 0, 0, 0];
-        let coord = [1, 1];
-        const requiredChannel = this.requiredChannel + 1;
+        let coord = [0, 0];
         for (let i = 0; i < checkPoints.length; i++) {
             coord[dirAxis - 1] = checkPoints[i];
-            const value = AST.transform3DPoint(this.wcsInfo3DSwappedZ, coord[0], coord[1], requiredChannel, true);
+            const value = AST.transform3DPoint(this.wcsInfo3DSwappedZ, coord[0], coord[1], this.requiredChannel, true);
             wcsValues[i] = value.z;
         }
 
@@ -684,17 +683,16 @@ export class FrameStore {
         // Calculate the start of world coordinate
         const depthAxisFormat = this.getDirAxisInfo?.depthAxisFormat;
         AST.set(this.wcsInfo3DSwappedZ, `Format(3)=${depthAxisFormat}`);
-        const requiredChannel = this.requiredChannel + 1;
 
         // Lambda function for WCS transformation
         let wcs = (channel: number): string => {
-            const wcs = AST.transform3DPoint(this.wcsInfo3DSwappedZ, 1, 1, channel, true);
+            const wcs = AST.transform3DPoint(this.wcsInfo3DSwappedZ, 0, 0, channel, true);
             const wcsVal = wcs.z < 0 ? wcs.z + 2 * Math.PI : wcs.z;
             return AST.format(this.wcsInfo3DSwappedZ, 3, wcsVal);
         };
 
-        const wcs1 = wcs(requiredChannel);
-        const wcs2 = wcs(requiredChannel + 1);
+        const wcs1 = wcs(this.requiredChannel);
+        const wcs2 = wcs(this.requiredChannel + 1);
 
         // Only show effective digit number
         let endPos = wcs1.length;
@@ -1592,8 +1590,7 @@ export class FrameStore {
             const dirAxis = this.getDirAxisInfo?.dirAxis;
             const dirAxisSize = this.getDirAxisInfo?.dirAxisSize;
             const dirFormat = this.getDirAxisInfo?.dirAxisFormat;
-            const requiredChannel = this.requiredChannel + 1;
-            this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3DSwappedZ, dirAxis, spectralAxis, requiredChannel, dirAxisSize);
+            this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3DSwappedZ, dirAxis, spectralAxis, this.requiredChannel, dirAxisSize);
             AST.set(this.wcsInfo, `Format(${dirAxis})=${dirFormat}, Unit(${dirAxis})=""`);
         }
     };
