@@ -80,9 +80,11 @@ export class CatalogApiProcessing {
         const wcsCopy = AST.copy(frame.wcsInfo);
         const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY;
-        AST.set(wcsCopy, `System=${SystemType.ICRS}`);
-        AST.set(wcsCopy, `Format(${xAxis})=${raformat}`);
-        AST.set(wcsCopy, `Format(${yAxis})=${deformat}`);
+        if ((xAxis === 1 && yAxis === 2) || (xAxis === 2 && yAxis === 1)) {
+            AST.set(wcsCopy, `System=${SystemType.ICRS}`);
+            AST.set(wcsCopy, `Format(${xAxis})=${raformat}`);
+            AST.set(wcsCopy, `Format(${yAxis})=${deformat}`);
+        }
         const fraction = Math.PI / 180.0;
 
         for (let i = 0; i < headers.length; i++) {

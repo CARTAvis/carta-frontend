@@ -319,9 +319,11 @@ export class CatalogOnlineQueryConfigStore {
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
             const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX;
             const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY;
-            AST.set(wcsCopy, `System=${sys}`);
-            astString.add(`Format(${xAxis})`, format);
-            astString.add(`Format(${yAxis})`, format);
+            if ((xAxis === 1 && yAxis === 2) || (xAxis === 2 && yAxis === 1)) {
+                AST.set(wcsCopy, `System=${sys}`);
+                astString.add(`Format(${xAxis})`, format);
+                astString.add(`Format(${yAxis})`, format);
+            }
             const pointWCS = transformPoint(wcsCopy, pixelCoords);
             const normVals = AST.normalizeCoordinates(wcsCopy, pointWCS.x, pointWCS.y);
             p = AST.getFormattedCoordinates(wcsCopy, normVals.x, normVals.y, astString.toString(), true);
@@ -340,9 +342,11 @@ export class CatalogOnlineQueryConfigStore {
             const wcsCopy = AST.copy(frame.wcsInfo);
             const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX;
             const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY;
-            AST.set(wcsCopy, `System=${SystemType.ICRS}`);
-            AST.set(wcsCopy, `Format(${xAxis})=${format}`);
-            AST.set(wcsCopy, `Format(${yAxis})=${format}`);
+            if ((xAxis === 1 && yAxis === 2) || (xAxis === 2 && yAxis === 1)) {
+                AST.set(wcsCopy, `System=${SystemType.ICRS}`);
+                AST.set(wcsCopy, `Format(${xAxis})=${format}`);
+                AST.set(wcsCopy, `Format(${yAxis})=${format}`);
+            }
             p = getPixelValueFromWCS(wcsCopy, {x: coords.x.toString(), y: coords.y.toString()});
             AST.deleteObject(wcsCopy);
         }
