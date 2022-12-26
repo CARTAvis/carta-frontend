@@ -597,7 +597,7 @@ export class FrameStore {
             const axis4 = entries.find(entry => entry.name.includes("CTYPE4"));
             let dirName;
             if (dirX === 3 || dirY === 3) {
-                dirName = axis3?.value ? axis3?.value : "Unknown";
+                dirName = axis3?.value ?? "Unknown";
             } else if (dirX === 4 || dirY === 4) {
                 dirName = axis4?.value ? axis4?.value : "Unknown";
             } else {
