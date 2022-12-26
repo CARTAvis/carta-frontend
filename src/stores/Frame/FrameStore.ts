@@ -581,14 +581,14 @@ export class FrameStore {
         return false;
     }
 
-    @computed get isSwappedZ(): boolean {
+    get isSwappedZ(): boolean {
         const spectral = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
         return (spectral === 1 && (dirX === 2 || dirY === 2)) || (spectral === 2 && (dirX === 1 || dirY === 1));
     }
 
-    @computed get channelType(): string {
+    get channelType(): string {
         if (this.isSwappedZ) {
             const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
             const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
@@ -618,7 +618,6 @@ export class FrameStore {
         return "Channel";
     }
 
-    @computed
     private get getDirAxisInfo(): {dirAxis: number; dirAxisSize: number; dirAxisFormat: string; depthAxisFormat: string} {
         // For direction vs. spectral image, get rendered direction axis index and size
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
@@ -709,7 +708,7 @@ export class FrameStore {
         return `WCS:\n${wcs1.substring(0, endPos)}`;
     }
 
-    @computed get isSwappedXY(): boolean {
+    get isSwappedXY(): boolean {
         const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
         const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
         return dirX === 2 && dirY === 1;
