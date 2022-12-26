@@ -628,7 +628,7 @@ export class FrameStore {
         // Get rendered and hidden direction axes formats
         const entries = this.frameInfo.fileInfoExtended.headerEntries;
         const axisName = entries.find(entry => entry.name.includes(`CTYPE${dirAxis}`));
-        let axisValue = axisName?.value ? axisName?.value : "Unknown";
+        let axisValue = axisName?.value ?? "Unknown";
         let dirAxisFormat = dirX < dirY ? "hms.*" : "dms.*";
         let depthAxisFormat = dirX < dirY ? `dms.${WCS_PRECISION}` : `hms.${WCS_PRECISION}`;
         if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
