@@ -100,6 +100,11 @@ export class FrameStore {
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
     private zoomTimeoutHandler;
 
+    private dirAxis: number;
+    private dirAxisSize: number;
+    private dirAxisFormat: string;
+    private depthAxisFormat: string;
+
     public requiredFrameViewForRegionRender: FrameView;
 
     public wcsInfo: AST.FrameSet;
@@ -618,36 +623,13 @@ export class FrameStore {
         return "Channel";
     }
 
-    private get getDirAxisInfo(): {dirAxis: number; dirAxisSize: number; dirAxisFormat: string; depthAxisFormat: string} {
-        // For direction vs. spectral image, get rendered direction axis index and size
-        const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
-        const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
-        const dirAxis = dirX < dirY ? dirX : dirY;
-        const dirAxisSize = dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
-
-        // Get rendered and hidden direction axes formats
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const axisName = entries.find(entry => entry.name.includes(`CTYPE${dirAxis}`));
-        let axisValue = axisName?.value ?? "Unknown";
-        let dirAxisFormat = dirX < dirY ? "hms.*" : "dms.*";
-        let depthAxisFormat = dirX < dirY ? `dms.${WCS_PRECISION}` : `hms.${WCS_PRECISION}`;
-        if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
-            dirAxisFormat = "d.*";
-            depthAxisFormat = `d.${WCS_PRECISION}`;
-        }
-
-        return {dirAxis: dirAxis, dirAxisSize: dirAxisSize, dirAxisFormat: dirAxisFormat, depthAxisFormat: depthAxisFormat};
-    }
-
     @computed
     private get isProjDistort(): boolean {
-        const dirAxis = this.getDirAxisInfo?.dirAxis;
-        const dirAxisSize = this.getDirAxisInfo?.dirAxisSize;
-        let checkPoints = [1, 2, Math.floor(dirAxisSize / 2), dirAxisSize];
+        let checkPoints = [1, 2, Math.floor(this.dirAxisSize / 2), this.dirAxisSize];
         let wcsValues = [0, 0, 0, 0];
         let coord = [0, 0];
         for (let i = 0; i < checkPoints.length; i++) {
-            coord[dirAxis - 1] = checkPoints[i];
+            coord[this.dirAxis - 1] = checkPoints[i];
             const value = AST.transform3DPoint(this.wcsInfo3DSwappedZ, coord[0], coord[1], this.requiredChannel, true);
             wcsValues[i] = value.z;
         }
@@ -681,8 +663,7 @@ export class FrameStore {
         }
 
         // Calculate the start of world coordinate
-        const depthAxisFormat = this.getDirAxisInfo?.depthAxisFormat;
-        AST.set(this.wcsInfo3DSwappedZ, `Format(3)=${depthAxisFormat}`);
+        AST.set(this.wcsInfo3DSwappedZ, `Format(3)=${this.depthAxisFormat}`);
 
         // Lambda function for WCS transformation
         let wcs = (channel: number): string => {
@@ -1130,6 +1111,11 @@ export class FrameStore {
 
         this.distanceMeasuring = new DistanceMeasuringStore();
 
+        this.dirAxis = -1;
+        this.dirAxisSize = -1;
+        this.dirAxisFormat = "";
+        this.depthAxisFormat = "";
+
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
         if (astColor !== this.overlayStore.global.color) {
@@ -1190,6 +1176,7 @@ export class FrameStore {
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfo3DSwappedZ = AST.copy(astFrameSet);
+                this.getDirAxisInfo();
                 this.updateSpectralVsDirectionWcs();
                 AST.deleteObject(astFrameSet);
             }
@@ -1587,13 +1574,30 @@ export class FrameStore {
     public updateSpectralVsDirectionWcs = () => {
         if (this.wcsInfo3DSwappedZ) {
             const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
-            const dirAxis = this.getDirAxisInfo?.dirAxis;
-            const dirAxisSize = this.getDirAxisInfo?.dirAxisSize;
-            const dirFormat = this.getDirAxisInfo?.dirAxisFormat;
-            this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3DSwappedZ, dirAxis, spectralAxis, this.requiredChannel, dirAxisSize);
-            AST.set(this.wcsInfo, `Format(${dirAxis})=${dirFormat}, Unit(${dirAxis})=""`);
+            this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3DSwappedZ, this.dirAxis, spectralAxis, this.requiredChannel, this.dirAxisSize);
+            AST.set(this.wcsInfo, `Format(${this.dirAxis})=${this.dirAxisFormat}, Unit(${this.dirAxis})=""`);
         }
     };
+
+    private getDirAxisInfo() {
+        // For direction vs. spectral image, get rendered direction axis index and size
+        const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+        const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
+        this.dirAxis = dirX < dirY ? dirX : dirY;
+        this.dirAxisSize = this.dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
+
+        // Get rendered and hidden direction axes formats
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        const axisName = entries.find(entry => entry.name.includes(`CTYPE${this.dirAxis}`));
+        let axisValue = axisName?.value ?? "Unknown";
+        if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
+            this.dirAxisFormat = "d.*";
+            this.depthAxisFormat = `d.${WCS_PRECISION}`;
+        } else {
+            this.dirAxisFormat = dirX < dirY ? "hms.*" : "dms.*";
+            this.depthAxisFormat = dirX < dirY ? `dms.${WCS_PRECISION}` : `hms.${WCS_PRECISION}`;
+        }
+    }
 
     private sanitizeChannelNumber(channel: number) {
         if (!isFinite(channel)) {
