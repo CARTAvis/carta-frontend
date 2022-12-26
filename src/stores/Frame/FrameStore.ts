@@ -599,7 +599,7 @@ export class FrameStore {
             if (dirX === 3 || dirY === 3) {
                 dirName = axis3?.value ?? "Unknown";
             } else if (dirX === 4 || dirY === 4) {
-                dirName = axis4?.value ? axis4?.value : "Unknown";
+                dirName = axis4?.value ?? "Unknown";
             } else {
                 dirName = "Unknown";
             }
