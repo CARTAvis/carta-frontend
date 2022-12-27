@@ -293,7 +293,8 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.bindTexture(GL2.TEXTURE_2D, controlMap.getTextureX(this.gl));
                     this.gl.uniform1i(shaderUniforms.ControlMapTexture, 1);
                 }
-
+                
+                const hasSources = this.catalogWebGLService.updatePositionTexture(fileId);
                 const positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
                 if (positionTexture) {
                     this.gl.activeTexture(GL2.TEXTURE2);
@@ -301,7 +302,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform1i(shaderUniforms.PositionTexture, 2);
                 }
 
-                const hasSources = this.catalogWebGLService.updatePositionTexture(fileId);
                 if (hasSources) {
                     this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                     this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);
