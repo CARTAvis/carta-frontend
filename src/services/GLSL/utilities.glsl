@@ -75,8 +75,8 @@ vec2 controlMapLookup(sampler2D controlMapTexture, vec2 pos, vec2 controlMapSize
     vec2 range = controlMapMax - controlMapMin;
     vec2 shiftedPoint = pos - controlMapMin;
     vec2 index = shiftedPoint / range * controlMapSize;
-    if (controlMapMax == controlMapMin) {
-        return bicubicFilter(controlMapTexture, vec2(0, 0), controlMapSize).rg;
+    if(range.x == 0.0 && range.y == 0.0) {
+        index = vec2(0, 0);
     }
     return bicubicFilter(controlMapTexture, index, controlMapSize).rg;
 }
