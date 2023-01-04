@@ -465,17 +465,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const newOrigin = add2D(origin, centerMovementCanvas);
             // Correct the origin if region view is ever resized
             const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, refFrameZoom));
-            stage.position(this.props.frame.spatialReference ? origin : correctedOrigin);
-        }
-    };
-
-    public centerStage = () => {
-        const stage = this.stageRef.current;
-        if (stage) {
-            const zoom = stage.scaleX();
-            const newOrigin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - zoom);
-            // Correct the origin if region view is ever resized
-            const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, zoom));
             stage.position(correctedOrigin);
         }
     };
