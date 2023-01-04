@@ -488,7 +488,7 @@ export class RootMenuComponent extends React.Component {
                     </Tooltip2>
                 )}
                 <Tooltip2 content={connectivityTooltip} hoverCloseDelay={3000}>
-                    <Icon icon={"symbol-circle"} className={connectivityClass}  />
+                    <Icon icon={"symbol-circle"} className={connectivityClass} />
                 </Tooltip2>
                 <div id="hidden-status-info">
                     <span id="info-session-id">{appStore.backendService.sessionId}</span>
