@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Button, Classes, Icon, Intent, Menu, MenuDivider, Position, Switch} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, Position, Switch} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
@@ -331,13 +331,16 @@ export class RootMenuComponent extends React.Component {
                                     <br />
                                     Session ID: {appStore.backendService.sessionId}
                                     <br />
-                                    <button
+                                    <AnchorButton
                                         onClick={() => {
-                                            navigator.clipboard.writeText(appStore.backendService.sessionId.toString());
+                                            navigator.clipboard.writeText(appStore.backendService.sessionId.toString()).then(() => {
+                                                alert("Session ID copied!");
+                                            });
                                         }}
+                                        className="snippet-run-button"
                                     >
                                         Copy Session ID
-                                    </button>
+                                    </AnchorButton>
                                 </small>
                             </i>
                         </span>
