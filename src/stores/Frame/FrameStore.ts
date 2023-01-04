@@ -664,11 +664,14 @@ export class FrameStore {
 
         // Calculate the start of world coordinate
         AST.set(this.wcsInfo3DSwappedZ, `Format(3)=${this.depthAxisFormat}`);
+        const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+        const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
 
         // Lambda function for WCS transformation
         let wcs = (channel: number): string => {
             const wcs = AST.transform3DPoint(this.wcsInfo3DSwappedZ, 0, 0, channel, true);
-            const wcsVal = wcs.z < 0 ? wcs.z + 2 * Math.PI : wcs.z;
+            // The range of depth axis is 0~360 for RA/longitude, or -90~+90 for DEC/latitude
+            const wcsVal = dirX > dirY && wcs.z < 0 ? wcs.z + 2 * Math.PI : wcs.z;
             return AST.format(this.wcsInfo3DSwappedZ, 3, wcsVal);
         };
 
