@@ -8,7 +8,7 @@ import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {PointAnnotationStore, RegionCoordinate, RegionStore} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
-import {SafeNumericInput, CoordinateComponent, PointShapeSelectComponent} from "components/Shared";
+import {SafeNumericInput, CoordinateComponent} from "components/Shared";
 import "./PointRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
@@ -205,33 +205,6 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                                     <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                                 </td>
                             </tr>
-                            {region.regionType === CARTA.RegionType.ANNPOINT && (
-                                <>
-                                    <tr>
-                                        <td>Point Shape</td>
-                                        <td>
-                                            {/* <Select
-                                                className="bp3-fill"
-                                                filterable={false}
-                                                items={Object.values(CARTA.PointAnnotationShape)}
-                                                activeItem={region.pointShape}
-                                                onItemSelect={item => region.setPointShape(item as CARTA.PointAnnotationShape)}
-                                                itemRenderer={this.renderShapePopOver}
-                                                popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                                            >
-                                                <Button icon={this.getPointShape(region.pointShape)} rightIcon="double-caret-vertical" />
-                                            </Select> */}
-                                            <PointShapeSelectComponent handleChange={region.setPointShape} pointShape={region.pointShape} />
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Point Width</td>
-                                        <td>
-                                            <SafeNumericInput placeholder="Point Width" min={0.5} max={50} value={region.pointWidth} stepSize={0.5} onValueChange={width => region.setPointWidth(width)} />
-                                        </td>
-                                    </tr>
-                                </>
-                            )}
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>

@@ -1,11 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, IDialogProps, Intent, NonIdealState, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
-import {RegionStore} from "stores/Frame";
+import {CompassAnnotationStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
@@ -15,6 +15,7 @@ import {LineRegionForm} from "./LineRegionForm/LineRegionForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
 import {CustomIcon} from "icons/CustomIcons";
 import "./RegionDialogComponent.scss";
+import {PointShapeSelectComponent, SafeNumericInput} from "components/Shared";
 
 @observer
 export class RegionDialogComponent extends React.Component {
@@ -62,7 +63,25 @@ export class RegionDialogComponent extends React.Component {
                 case CARTA.RegionType.ANNPOINT:
                     bodyContent = (
                         <React.Fragment>
-                            <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
+                            <AppearanceForm region={region} darkTheme={appStore.darkTheme}>
+                                {region.regionType === CARTA.RegionType.ANNPOINT && (
+                                    <>
+                                        <FormGroup inline={true} label="Shape">
+                                            <PointShapeSelectComponent handleChange={(region as PointAnnotationStore).setPointShape} pointShape={(region as PointAnnotationStore).pointShape} />
+                                        </FormGroup>
+                                        <FormGroup inline={true} label="Size" labelInfo="(px)">
+                                            <SafeNumericInput
+                                                placeholder="Point size"
+                                                min={0.5}
+                                                max={50}
+                                                value={(region as PointAnnotationStore).pointWidth}
+                                                stepSize={0.5}
+                                                onValueChange={width => (region as PointAnnotationStore).setPointWidth(width)}
+                                            />
+                                        </FormGroup>
+                                    </>
+                                )}
+                            </AppearanceForm>
                             <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
                         </React.Fragment>
                     );
@@ -106,7 +125,32 @@ export class RegionDialogComponent extends React.Component {
                 case CARTA.RegionType.ANNVECTOR:
                     bodyContent = (
                         <React.Fragment>
-                            <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
+                            <AppearanceForm region={region} darkTheme={appStore.darkTheme}>
+                                {region.regionType === CARTA.RegionType.ANNVECTOR && (
+                                    <div className="form-contents">
+                                        <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
+                                            <SafeNumericInput
+                                                placeholder="Length"
+                                                min={0}
+                                                max={RegionStore.MAX_DASH_LENGTH}
+                                                value={(region as VectorAnnotationStore).pointerLength}
+                                                stepSize={1}
+                                                onValueChange={value => (region as VectorAnnotationStore).setPointerLength(value)}
+                                            />
+                                        </FormGroup>
+                                        <FormGroup inline={true} label="Arrow Tip Width" labelInfo="(px)">
+                                            <SafeNumericInput
+                                                placeholder="Width"
+                                                min={0}
+                                                max={RegionStore.MAX_DASH_LENGTH}
+                                                value={(region as VectorAnnotationStore).pointerWidth}
+                                                stepSize={1}
+                                                onValueChange={value => (region as VectorAnnotationStore).setPointerWidth(value)}
+                                            />
+                                        </FormGroup>
+                                    </div>
+                                )}
+                            </AppearanceForm>
                             <LineRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
                         </React.Fragment>
                     );
@@ -116,7 +160,82 @@ export class RegionDialogComponent extends React.Component {
                 case CARTA.RegionType.ANNRULER:
                     bodyContent = (
                         <React.Fragment>
-                            <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
+                            <AppearanceForm region={region} darkTheme={appStore.darkTheme}>
+                                {region.regionType === CARTA.RegionType.ANNCOMPASS && (
+                                    <div className="form-contents">
+                                        <FormGroup inline={true} label="Show North Arrowhead">
+                                            <Switch
+                                                checked={(region as CompassAnnotationStore).northArrowhead}
+                                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as CompassAnnotationStore).setNorthArrowhead(ev.target.checked)}
+                                            />
+                                        </FormGroup>
+                                        <FormGroup inline={true} label="Show East Arrowhead">
+                                            <Switch checked={(region as CompassAnnotationStore).eastArrowhead} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as CompassAnnotationStore).setEastArrowhead(ev.target.checked)} />
+                                        </FormGroup>
+                                        <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
+                                            <SafeNumericInput
+                                                placeholder="Length"
+                                                min={0}
+                                                max={RegionStore.MAX_DASH_LENGTH}
+                                                value={(region as CompassAnnotationStore).pointerLength}
+                                                stepSize={1}
+                                                onValueChange={value => (region as CompassAnnotationStore).setPointerLength(value)}
+                                            />
+                                        </FormGroup>
+                                        <FormGroup inline={true} label="Arrow Tip Width" labelInfo="(px)">
+                                            <SafeNumericInput
+                                                placeholder="Width"
+                                                min={0}
+                                                max={RegionStore.MAX_DASH_LENGTH}
+                                                value={(region as CompassAnnotationStore).pointerWidth}
+                                                stepSize={1}
+                                                onValueChange={value => (region as CompassAnnotationStore).setPointerWidth(value)}
+                                            />
+                                        </FormGroup>
+                                    </div>
+                                )}
+                                {region.regionType === CARTA.RegionType.ANNRULER && (
+                                    <div className="form-contents">
+                                        <FormGroup inline={true} label="Show auxiliary lines">
+                                            <Switch
+                                                checked={(region as RulerAnnotationStore).auxiliaryLineVisible}
+                                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryLineVisible(ev.target.checked)}
+                                            />
+                                        </FormGroup>
+                                        <FormGroup inline={true} label="Auxiliary Lines Dash Length" labelInfo="(px)">
+                                            <SafeNumericInput
+                                                disabled={!(region as RulerAnnotationStore).auxiliaryLineVisible}
+                                                placeholder="Dash Length"
+                                                min={0}
+                                                max={RegionStore.MAX_DASH_LENGTH}
+                                                value={(region as RulerAnnotationStore).auxiliaryLineDashLength}
+                                                stepSize={1}
+                                                onValueChange={value => (region as RulerAnnotationStore).setAuxiliaryLineDashLength(value)}
+                                            />
+                                        </FormGroup>
+                                        <FormGroup inline={true} label="Text X Offset" labelInfo="(px)">
+                                            <SafeNumericInput
+                                                placeholder="Text X Offset"
+                                                min={-50}
+                                                max={RegionStore.MAX_DASH_LENGTH}
+                                                value={(region as RulerAnnotationStore).textOffset.x}
+                                                stepSize={1}
+                                                onValueChange={value => (region as RulerAnnotationStore).setTextOffset(value, true)}
+                                            />
+                                        </FormGroup>
+                                        <FormGroup inline={true} label="Text Y Offset" labelInfo="(px)">
+                                            <SafeNumericInput
+                                                placeholder="Text Y Offset"
+                                                min={-50}
+                                                max={RegionStore.MAX_DASH_LENGTH}
+                                                value={(region as RulerAnnotationStore).textOffset.y}
+                                                stepSize={1}
+                                                onValueChange={value => (region as RulerAnnotationStore).setTextOffset(value, false)}
+                                            />
+                                        </FormGroup>
+                                    </div>
+                                )}
+                            </AppearanceForm>
                             <CompassRulerRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
                         </React.Fragment>
                     );

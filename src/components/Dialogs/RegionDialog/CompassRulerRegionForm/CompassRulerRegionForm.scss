@@ -22,5 +22,19 @@
                 margin-bottom: 0;
             }
         }
+
+        .compass-label-offset-row {
+            .bp3-input {
+                width: 125px;
+                margin: 0;
+            }
+            .bp3-numeric-input {
+                width: 100px;
+                margin-right: 30px;
+            }
+            .bp3-form-group {
+                margin: 0 0 5px;
+            }
+        }
     }
 }

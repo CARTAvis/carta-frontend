@@ -635,7 +635,7 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Text Annotation Line Width" labelInfo="(px)">
+                {/* <FormGroup inline={true} label="Text Annotation Line Width" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Text Annotation Line Width"
                         min={RegionStore.MIN_LINE_WIDTH}
@@ -644,7 +644,7 @@ export class PreferenceDialogComponent extends React.Component {
                         stepSize={0.5}
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
                     />
-                </FormGroup>
+                </FormGroup> */}
                 <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Dash Length"
@@ -672,9 +672,9 @@ export class PreferenceDialogComponent extends React.Component {
                     </Select> */}
                     <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.pointAnnotationShape} />
                 </FormGroup>
-                <FormGroup inline={true} label="Point annotation width" labelInfo="(px)">
+                <FormGroup inline={true} label="Point Size" labelInfo="(px)">
                     <SafeNumericInput
-                        placeholder="Point annotation width"
+                        placeholder="Point Size"
                         min={1}
                         value={preference.pointAnnotationWidth}
                         stepSize={1}

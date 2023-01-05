@@ -1,12 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
-import {Classes, FormGroup, H5, InputGroup, Position} from "@blueprintjs/core";
+import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {FrameStore, RegionCoordinate, RegionStore, VectorAnnotationStore, WCS_PRECISION} from "stores/Frame";
+import {FrameStore, RegionCoordinate, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, length2D} from "utilities";
 import {SafeNumericInput, CoordinateComponent} from "components/Shared";
@@ -385,23 +385,23 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         ev.currentTarget.value = existingValue;
     };
 
-    private vectorArrowTipForm = () => {
-        const region = this.props.region as VectorAnnotationStore;
+    // private vectorArrowTipForm = () => {
+    //     const region = this.props.region as VectorAnnotationStore;
 
-        return (
-            <div className="form-section appearance-form">
-                <H5>Arrow Pointer</H5>
-                <div className="form-contents">
-                    <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
-                        <SafeNumericInput placeholder="Length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.pointerLength} stepSize={1} onValueChange={value => region.setPointerLength(value)} />
-                    </FormGroup>
-                    <FormGroup inline={true} label="Arrow Tip Width" labelInfo="(px)">
-                        <SafeNumericInput placeholder="Width" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.pointerWidth} stepSize={1} onValueChange={value => region.setPointerWidth(value)} />
-                    </FormGroup>
-                </div>
-            </div>
-        );
-    };
+    //     return (
+    //         <div className="form-section appearance-form">
+    //             <H5>Arrow Pointer</H5>
+    //             <div className="form-contents">
+    //                 <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
+    //                     <SafeNumericInput placeholder="Length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.pointerLength} stepSize={1} onValueChange={value => region.setPointerLength(value)} />
+    //                 </FormGroup>
+    //                 <FormGroup inline={true} label="Arrow Tip Width" labelInfo="(px)">
+    //                     <SafeNumericInput placeholder="Width" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.pointerWidth} stepSize={1} onValueChange={value => region.setPointerWidth(value)} />
+    //                 </FormGroup>
+    //             </div>
+    //         </div>
+    //     );
+    // };
 
     public render() {
         // dummy variables related to wcs to trigger re-render
@@ -548,7 +548,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
             <>
-                {region.regionType === CARTA.RegionType.ANNVECTOR && this.vectorArrowTipForm()}
+                {/* {region.regionType === CARTA.RegionType.ANNVECTOR && this.vectorArrowTipForm()} */}
                 <div className="form-section line-region-form">
                     <H5>Properties</H5>
                     <div className="form-contents">
