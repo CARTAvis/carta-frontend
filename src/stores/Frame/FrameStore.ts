@@ -110,7 +110,6 @@ export class FrameStore {
     public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
-    public readonly wcsInfo3DSwappedZ: AST.FrameSet;
     public readonly validWcs: boolean;
     public readonly frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
@@ -587,23 +586,30 @@ export class FrameStore {
     }
 
     get isSwappedZ(): boolean {
-        const spectral = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
-        const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
-        const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
-        return (spectral === 1 && (dirX === 2 || dirY === 2)) || (spectral === 2 && (dirX === 1 || dirY === 1));
+        return (this.spectral === 1 && (this.dirX === 2 || this.dirY === 2)) || (this.spectral === 2 && (this.dirX === 1 || this.dirY === 1));
+    }
+
+    get dirX(): number {
+        return this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+    }
+
+    get dirY(): number {
+        return this.frameInfo.fileInfoExtended.axesNumbers.dirY;
+    }
+
+    get spectral(): number {
+        return this.frameInfo.fileInfoExtended.axesNumbers.spectral;
     }
 
     get channelType(): string {
         if (this.isSwappedZ) {
-            const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
-            const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
             const axis3 = entries.find(entry => entry.name.includes("CTYPE3"));
             const axis4 = entries.find(entry => entry.name.includes("CTYPE4"));
             let dirName;
-            if (dirX === 3 || dirY === 3) {
+            if (this.dirX === 3 || this.dirY === 3) {
                 dirName = axis3?.value ?? "Unknown";
-            } else if (dirX === 4 || dirY === 4) {
+            } else if (this.dirX === 4 || this.dirY === 4) {
                 dirName = axis4?.value ?? "Unknown";
             } else {
                 dirName = "Unknown";
@@ -630,7 +636,7 @@ export class FrameStore {
         let coord = [0, 0];
         for (let i = 0; i < checkPoints.length; i++) {
             coord[this.dirAxis - 1] = checkPoints[i];
-            const value = AST.transform3DPoint(this.wcsInfo3DSwappedZ, coord[0], coord[1], this.requiredChannel, true);
+            const value = AST.transform3DPoint(this.wcsInfo3D, coord[0], coord[1], this.requiredChannel, true);
             wcsValues[i] = value.z;
         }
 
@@ -663,16 +669,14 @@ export class FrameStore {
         }
 
         // Calculate the start of world coordinate
-        AST.set(this.wcsInfo3DSwappedZ, `Format(3)=${this.depthAxisFormat}`);
-        const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
-        const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
+        AST.set(this.wcsInfo3D, `Format(3)=${this.depthAxisFormat}`);
 
         // Lambda function for WCS transformation
         let wcs = (channel: number): string => {
-            const wcs = AST.transform3DPoint(this.wcsInfo3DSwappedZ, 0, 0, channel, true);
+            const wcs = AST.transform3DPoint(this.wcsInfo3D, 0, 0, channel, true);
             // The range of depth axis is 0~360 for RA/longitude, or -90~+90 for DEC/latitude
-            const wcsVal = dirX > dirY && wcs.z < 0 ? wcs.z + 2 * Math.PI : wcs.z;
-            return AST.format(this.wcsInfo3DSwappedZ, 3, wcsVal);
+            const wcsVal = this.dirX > this.dirY && wcs.z < 0 ? wcs.z + 2 * Math.PI : wcs.z;
+            return AST.format(this.wcsInfo3D, 3, wcsVal);
         };
 
         const wcs1 = wcs(this.requiredChannel);
@@ -691,9 +695,7 @@ export class FrameStore {
     }
 
     get isSwappedXY(): boolean {
-        const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
-        const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
-        return dirX === 2 && dirY === 1;
+        return this.dirX === 2 && this.dirY === 1;
     }
 
     @computed get isUVImage(): boolean {
@@ -720,9 +722,8 @@ export class FrameStore {
 
             // Locate spectral dimension from axis 1~4
             let dimension = undefined;
-            const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
-            if (spectralAxis > 0) {
-                dimension = spectralAxis;
+            if (this.spectral > 0) {
+                dimension = this.spectral;
             }
 
             // Fill up spectral dimension & type/unit/system
@@ -1178,7 +1179,7 @@ export class FrameStore {
             const astFrameSet = this.initSpectralVsDirectionFrame();
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
-                this.wcsInfo3DSwappedZ = AST.copy(astFrameSet);
+                this.wcsInfo3D = AST.copy(astFrameSet);
                 this.getDirAxisInfo();
                 this.updateSpectralVsDirectionWcs();
                 AST.deleteObject(astFrameSet);
@@ -1222,10 +1223,8 @@ export class FrameStore {
                 if (this.wcsInfo) {
                     // init 2D(Sky) wcs copy for the precision of region coordinate transformation
                     this.wcsInfoForTransformation = AST.copy(this.wcsInfo);
-                    const xAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
-                    const yAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
-                    AST.set(this.wcsInfoForTransformation, `Format(${xAxis})=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
-                    AST.set(this.wcsInfoForTransformation, `Format(${yAxis})=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
+                    AST.set(this.wcsInfoForTransformation, `Format(${this.dirX})=${AppStore.Instance.overlayStore.numbers.formatTypeX}.${WCS_PRECISION}`);
+                    AST.set(this.wcsInfoForTransformation, `Format(${this.dirY})=${AppStore.Instance.overlayStore.numbers.formatTypeY}.${WCS_PRECISION}`);
                     this.validWcs = true;
                     this.overlayStore.setDefaultsFromAST(this);
                 }
@@ -1575,18 +1574,15 @@ export class FrameStore {
     };
 
     public updateSpectralVsDirectionWcs = () => {
-        if (this.wcsInfo3DSwappedZ) {
-            const spectralAxis = this.frameInfo.fileInfoExtended.axesNumbers.spectral;
-            this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3DSwappedZ, this.dirAxis, spectralAxis, this.requiredChannel, this.dirAxisSize);
+        if (this.wcsInfo3D) {
+            this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3D, this.dirAxis, this.spectral, this.requiredChannel, this.dirAxisSize);
             AST.set(this.wcsInfo, `Format(${this.dirAxis})=${this.dirAxisFormat}, Unit(${this.dirAxis})=""`);
         }
     };
 
     private getDirAxisInfo() {
         // For direction vs. spectral image, get rendered direction axis index and size
-        const dirX = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
-        const dirY = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
-        this.dirAxis = dirX < dirY ? dirX : dirY;
+        this.dirAxis = this.dirX < this.dirY ? this.dirX : this.dirY;
         this.dirAxisSize = this.dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
 
         // Get rendered and hidden direction axes formats
@@ -1597,8 +1593,8 @@ export class FrameStore {
             this.dirAxisFormat = "d.*";
             this.depthAxisFormat = `d.${WCS_PRECISION}`;
         } else {
-            this.dirAxisFormat = dirX < dirY ? "hms.*" : "dms.*";
-            this.depthAxisFormat = dirX < dirY ? `dms.${WCS_PRECISION}` : `hms.${WCS_PRECISION}`;
+            this.dirAxisFormat = this.dirX < this.dirY ? "hms.*" : "dms.*";
+            this.depthAxisFormat = this.dirX < this.dirY ? `dms.${WCS_PRECISION}` : `hms.${WCS_PRECISION}`;
         }
     }
 
@@ -1691,13 +1687,11 @@ export class FrameStore {
 
             let precisionX = 0;
             let precisionY = 0;
-            const xAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirX;
-            const yAxis = this.frameInfo.fileInfoExtended.axesNumbers.dirY;
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
-                astString.add(`Format(${xAxis})`, this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringX(precisionX));
-                astString.add(`Format(${yAxis})`, this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringY(precisionY));
+                astString.add(`Format(${this.dirX})`, this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringX(precisionX));
+                astString.add(`Format(${this.dirY})`, this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringY(precisionY));
                 astString.add("System", this.isPVImage || this.isUVImage ? "cartesian" : this.overlayStore.global.explicitSystem);
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
@@ -2487,6 +2481,12 @@ export class FrameStore {
 
         if (!this.wcsInfo3D || !frame.wcsInfo3D) {
             console.log(`Error creating spectral transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. One of the files is missing spectral information`);
+            this.spectralReference = null;
+            return false;
+        }
+
+        if (this.dirX !== frame.dirX || this.dirY !== frame.dirY || this.spectral !== frame.spectral) {
+            console.log(`Error creating spectral transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. At least one of axis numbers is not matched`);
             this.spectralReference = null;
             return false;
         }

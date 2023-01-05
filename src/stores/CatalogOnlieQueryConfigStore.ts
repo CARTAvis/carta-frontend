@@ -317,12 +317,10 @@ export class CatalogOnlineQueryConfigStore {
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
-            const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX;
-            const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY;
-            if ((xAxis === 1 && yAxis === 2) || (xAxis === 2 && yAxis === 1)) {
+            if ((frame.dirX === 1 && frame.dirY === 2) || (frame.dirX === 2 && frame.dirY === 1)) {
                 AST.set(wcsCopy, `System=${sys}`);
-                astString.add(`Format(${xAxis})`, format);
-                astString.add(`Format(${yAxis})`, format);
+                astString.add(`Format(${frame.dirX})`, format);
+                astString.add(`Format(${frame.dirY})`, format);
             }
             const pointWCS = transformPoint(wcsCopy, pixelCoords);
             const normVals = AST.normalizeCoordinates(wcsCopy, pointWCS.x, pointWCS.y);
@@ -340,12 +338,10 @@ export class CatalogOnlineQueryConfigStore {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
             const format = `${NumberFormatType.Degrees}.${precision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
-            const xAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirX;
-            const yAxis = frame.frameInfo.fileInfoExtended.axesNumbers.dirY;
-            if ((xAxis === 1 && yAxis === 2) || (xAxis === 2 && yAxis === 1)) {
+            if ((frame.dirX === 1 && frame.dirY === 2) || (frame.dirX === 2 && frame.dirY === 1)) {
                 AST.set(wcsCopy, `System=${SystemType.ICRS}`);
-                AST.set(wcsCopy, `Format(${xAxis})=${format}`);
-                AST.set(wcsCopy, `Format(${yAxis})=${format}`);
+                AST.set(wcsCopy, `Format(${frame.dirX})=${format}`);
+                AST.set(wcsCopy, `Format(${frame.dirY})=${format}`);
             }
             p = getPixelValueFromWCS(wcsCopy, {x: coords.x.toString(), y: coords.y.toString()});
             AST.deleteObject(wcsCopy);
