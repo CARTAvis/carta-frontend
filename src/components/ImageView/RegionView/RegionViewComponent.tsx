@@ -182,7 +182,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 this.polygonRegionCreating(mouseEvent);
                 break;
             case CARTA.RegionType.ANNPOINT:
-                this.creatingRegion = frame.regionSet.addAnnPointRegion(cursorPosImageSpace, false);
+                this.creatingRegion = frame.regionSet.addAnnPointRegion(cursorPosImageSpace, frame.pointShapeCache, false);
                 this.regionStartPoint = cursorPosImageSpace;
                 break;
             case CARTA.RegionType.ANNRECTANGLE:

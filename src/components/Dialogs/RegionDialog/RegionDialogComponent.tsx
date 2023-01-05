@@ -32,6 +32,14 @@ export class RegionDialogComponent extends React.Component {
 
     private handleFocusClicked = () => AppStore.Instance.activeFrame.regionSet.selectedRegion.focusCenter();
 
+    private handlePointShapeChange = (item: CARTA.PointAnnotationShape) => {
+        const appStore = AppStore.Instance;
+        const region = appStore.activeFrame.regionSet.selectedRegion;
+        const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
+        (region as PointAnnotationStore).setPointShape(item);
+        frame.pointShapeCache = item;
+    };
+
     public render() {
         const appStore = AppStore.Instance;
 
@@ -67,7 +75,7 @@ export class RegionDialogComponent extends React.Component {
                                 {region.regionType === CARTA.RegionType.ANNPOINT && (
                                     <>
                                         <FormGroup inline={true} label="Shape">
-                                            <PointShapeSelectComponent handleChange={(region as PointAnnotationStore).setPointShape} pointShape={(region as PointAnnotationStore).pointShape} />
+                                            <PointShapeSelectComponent handleChange={this.handlePointShapeChange} pointShape={(region as PointAnnotationStore).pointShape} />
                                         </FormGroup>
                                         <FormGroup inline={true} label="Size" labelInfo="(px)">
                                             <SafeNumericInput

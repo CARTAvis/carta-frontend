@@ -26,6 +26,7 @@ export class RegionSetStore {
     @observable opacity: number = 1;
     @observable locked: boolean = false;
     @observable isHoverImage: Boolean = false;
+    private pointShapeCache: CARTA.PointAnnotationShape;
 
     private readonly frame: FrameStore;
     private readonly backendService: BackendService;
@@ -100,7 +101,8 @@ export class RegionSetStore {
     @action addPolylineRegion = (points: Point2D[], temporary: boolean = false) => {
         return this.addRegion(points, 0, CARTA.RegionType.POLYLINE, temporary);
     };
-    @action addAnnPointRegion = (center: Point2D, cursorRegion = false) => {
+    @action addAnnPointRegion = (center: Point2D, shape: CARTA.PointAnnotationShape, cursorRegion = false) => {
+        this.pointShapeCache = shape;
         return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, cursorRegion, true, this.getTempRegionId());
     };
 
@@ -267,7 +269,7 @@ export class RegionSetStore {
                     this.preference.annotationColor,
                     this.preference.annotationLineWidth,
                     this.preference.annotationDashLength,
-                    this.preference.pointAnnotationShape,
+                    this.pointShapeCache || this.preference.pointAnnotationShape,
                     this.preference.pointAnnotationWidth,
                     rotation,
                     regionName
