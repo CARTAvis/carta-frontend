@@ -29,7 +29,6 @@ interface ImagePanelComponentProps {
 export class ImagePanelComponent extends React.Component<ImagePanelComponentProps> {
     @observable pixelHighlightValue: number = NaN;
     @observable imageToolbarVisible: boolean = false;
-    readonly activeLayer: ImageViewLayer;
 
     private regionViewRef: RegionViewComponent;
 
@@ -42,8 +41,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     constructor(props: ImagePanelComponentProps) {
         super(props);
         makeObservable(this);
-
-        this.activeLayer = AppStore.Instance.activeLayer;
     }
 
     componentDidMount() {
@@ -129,6 +126,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     render() {
         const appStore = AppStore.Instance;
         const overlayStore = appStore.overlayStore;
+        const activeLayer = appStore.activeLayer;
 
         const frame = this.props.frame;
         if (frame?.isRenderable && appStore.astReady) {
@@ -191,13 +189,13 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         onClickToCenter={this.onClickToCenter}
                         overlaySettings={overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                        docked={this.props.docked && this.activeLayer !== ImageViewLayer.Catalog}
+                        docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />
                     <ToolbarComponent
                         docked={this.props.docked}
                         visible={this.imageToolbarVisible}
                         frame={frame}
-                        activeLayer={this.activeLayer}
+                        activeLayer={activeLayer}
                         onActiveLayerChange={appStore.updateActiveLayer}
                         onRegionViewZoom={this.onRegionViewZoom}
                         onZoomToFit={this.fitZoomFrameAndRegion}
