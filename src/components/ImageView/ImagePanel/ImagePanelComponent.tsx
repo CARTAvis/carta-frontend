@@ -62,7 +62,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         if (frame) {
             const zoom = frame.fitZoom();
             if (zoom) {
-                this.onRegionViewZoom(zoom, true);
+                this.onRegionViewZoom(zoom);
             }
         }
     };
@@ -71,12 +71,9 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         this.regionViewRef = ref;
     };
 
-    private onRegionViewZoom = (zoom: number, isZoomToFit: boolean = false) => {
+    private onRegionViewZoom = (zoom: number) => {
         const frame = this.props.frame;
         if (frame) {
-            if (isZoomToFit) {
-                this.regionViewRef?.centerStage();
-            }
             this.regionViewRef?.stageZoomToPoint(frame.renderWidth / 2, frame.renderHeight / 2, zoom);
         }
     };
