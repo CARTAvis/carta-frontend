@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed mean and RMS not updating when smoothing in the spatial and spectral profilers ([#1838](https://github.com/CARTAvis/carta-frontend/issues/1838)).
 * Fixed limitations of the point size for catalog overlay rendering ([#1662](https://github.com/CARTAvis/carta-frontend/issues/1662) and [#1802](https://github.com/CARTAvis/carta-frontend/issues/1802)).
 * Fixed the issue of updating image view mode when catalog selection button is disabled ([#1967](https://github.com/CARTAvis/carta-frontend/issues/1967)).
+* Fixed the region position offset mismatch problem after zooming to fit for spatially matched images. ([#2028](https://github.com/CARTAvis/carta-frontend/issues/2028)).
 * Improved the performance of loading regions in batches ([#2040](https://github.com/CARTAvis/carta-frontend/issues/2040))
 * Fixed offset between cusorInfo and upper wcs axis in the spatial profilers ([#1319](https://github.com/CARTAvis/carta-frontend/issues/1319)).
 ### Changed
