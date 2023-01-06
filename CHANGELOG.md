@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Added a button for NaN pixel color selection in render config overlay ([#1946](https://github.com/cartavis/carta-frontend/issues/1946))
 * Added a setting dialog for the angular distance measurement ([#1201](https://github.com/cartavis/carta-frontend/issues/1201)).
 * Added the functionality to show/hide and lock all regions ([#1796](https://github.com/cartavis/carta-frontend/issues/1796)).
 * Added a method to auto-scrolling the selected region into the region list view ([#1797](https://github.com/CARTAvis/carta-frontend/issues/1797)).
