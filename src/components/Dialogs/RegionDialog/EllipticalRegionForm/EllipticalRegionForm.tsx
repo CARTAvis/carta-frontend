@@ -41,8 +41,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         this.props.region.setName(ev.currentTarget.value);
     };
 
-    private handleCenterXChange = (valueString: string): boolean => {
-        const value = parseFloat(valueString);
+    private handleCenterXChange = (value: number): boolean => {
         const existingValue = this.props.region.center.x;
         if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setCenter({x: value, y: this.props.region.center.y});
@@ -51,8 +50,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         return false;
     };
 
-    private handleCenterYChange = (valueString: string): boolean => {
-        const value = parseFloat(valueString);
+    private handleCenterYChange = (value: number): boolean => {
         const existingValue = this.props.region.center.y;
         if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setCenter({x: this.props.region.center.x, y: value});
@@ -85,8 +83,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         return false;
     };
 
-    private handleMajorAxisChange = (valueString: string): boolean => {
-        const value = parseFloat(valueString);
+    private handleMajorAxisChange = (value: number): boolean => {
         const existingValue = this.props.region.size.x;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setSize({x: value, y: this.props.region.size.y});
@@ -105,8 +102,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         return false;
     };
 
-    private handleMinorAxisChange = (valueString: string): boolean => {
-        const value = parseFloat(valueString);
+    private handleMinorAxisChange = (value: number): boolean => {
         const existingValue = this.props.region.size.y;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setSize({x: this.props.region.size.x, y: value});

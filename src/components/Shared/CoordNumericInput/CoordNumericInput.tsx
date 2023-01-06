@@ -81,7 +81,7 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled, sizeP
 type ImageCoordNumericInputProps = {
     inputType: InputType;
     value: number;
-    onChange: (val: string) => boolean; // return success or not for resetting displayed value
+    onChange: (val: number) => boolean; // return success or not for resetting displayed value
     sizePlaceholder?: string;
 };
 
@@ -92,7 +92,7 @@ const ImageCoordNumericInput = ({inputType, value, onChange, sizePlaceholder = "
         }
         const valueString = ev.currentTarget.value;
 
-        if (!onChange(valueString)) {
+        if (!onChange(parseFloat(valueString))) {
             // reset displayed value if it's not updated successfully
             ev.currentTarget.value = value;
         }
@@ -120,7 +120,7 @@ interface CoordNumericInputProps {
     coord: RegionCoordinate;
     inputType: InputType;
     value: number;
-    onChange: (val: string) => boolean;
+    onChange: (val: number) => boolean;
     valueWcs: string;
     onChangeWcs: (val: string) => boolean;
     wcsDisabled: boolean;

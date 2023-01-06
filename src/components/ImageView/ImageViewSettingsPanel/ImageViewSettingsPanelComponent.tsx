@@ -223,7 +223,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         coord={this.panAndZoomCoord}
                         inputType={InputType.XCoord}
                         value={frame?.center?.x}
-                        onChange={val => frame?.setCenter(parseFloat(val), frame?.center?.y)}
+                        onChange={val => frame?.setCenter(val, frame?.center?.y)}
                         valueWcs={frame?.centerWCS?.x}
                         onChangeWcs={val => frame?.setCenterWcs(val, frame?.centerWCS?.y)}
                         wcsDisabled={isPVImage}
@@ -235,7 +235,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         coord={this.panAndZoomCoord}
                         inputType={InputType.YCoord}
                         value={frame?.center?.y}
-                        onChange={val => frame?.setCenter(frame?.center?.x, parseFloat(val))}
+                        onChange={val => frame?.setCenter(frame?.center?.x, val)}
                         valueWcs={frame?.centerWCS?.y}
                         onChangeWcs={val => frame?.setCenterWcs(frame?.centerWCS?.x, val)}
                         wcsDisabled={isPVImage}
@@ -247,7 +247,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         coord={this.panAndZoomCoord}
                         inputType={InputType.Size}
                         value={frame?.fovSize?.x}
-                        onChange={val => frame?.zoomToSizeX(parseFloat(val))}
+                        onChange={frame?.zoomToSizeX}
                         valueWcs={frame?.fovSizeWCS?.x}
                         onChangeWcs={frame?.zoomToSizeXWcs}
                         wcsDisabled={isPVImage}
@@ -260,7 +260,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         coord={this.panAndZoomCoord}
                         inputType={InputType.Size}
                         value={frame?.fovSize?.y}
-                        onChange={val => frame?.zoomToSizeY(parseFloat(val))}
+                        onChange={frame?.zoomToSizeY}
                         valueWcs={frame?.fovSizeWCS?.y}
                         onChangeWcs={frame?.zoomToSizeYWcs}
                         wcsDisabled={isPVImage}
