@@ -9,7 +9,7 @@ import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputT
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {ColorbarStore, RegionCoordinate} from "stores/Frame";
 import {ImagePanelMode} from "models";
-import {SWATCH_COLORS} from "utilities";
+import {SWATCH_COLORS, toFixed} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
 
 enum ImageViewSettingsPanelTabs {
@@ -69,7 +69,7 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
     @observable selectedTab: TabId = ImageViewSettingsPanelTabs.GLOBAL;
-    @observable panAndZoomCoord: RegionCoordinate = RegionCoordinate.Image;
+    @observable panAndZoomCoord: RegionCoordinate = RegionCoordinate.World;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTab = tab;
@@ -209,12 +209,16 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         );
 
+        const getFovInfoString = (value: number, valueWcs: string) => {
+            return this.panAndZoomCoord === RegionCoordinate.Image ? `WCS: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
+        };
+        const fovLabelInfo = this.panAndZoomCoord === RegionCoordinate.Image ? "(px)" : "";
         const panAndZoomPanel = (
             <div className="panel-pan-and-zoom">
                 <FormGroup inline={true} label="Coordinate">
                     <CoordinateComponent selectedValue={this.panAndZoomCoord} onChange={ev => this.setPanAndZoomCoord(ev.currentTarget.value as RegionCoordinate)} />
                 </FormGroup>
-                <FormGroup inline={true} label="Center (X)">
+                <FormGroup inline={true} label="Center (X)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
                         coord={this.panAndZoomCoord}
                         inputType={InputType.XCoord}
@@ -224,9 +228,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChangeWcs={val => frame?.setCenterWcs(val, frame?.centerWCS?.y)}
                         wcsDisabled={isPVImage}
                     />
-                    <span className="info-string">Image: 0.000 px</span>
+                    <span className="info-string">{getFovInfoString(frame?.center?.x, frame?.centerWCS?.x)}</span>
                 </FormGroup>
-                <FormGroup inline={true} label="Center (Y)">
+                <FormGroup inline={true} label="Center (Y)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
                         coord={this.panAndZoomCoord}
                         inputType={InputType.YCoord}
@@ -236,9 +240,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         onChangeWcs={val => frame?.setCenterWcs(frame?.centerWCS?.x, val)}
                         wcsDisabled={isPVImage}
                     />
-                    <span className="info-string">Image: 0.000 px</span>
+                    <span className="info-string">{getFovInfoString(frame?.center?.y, frame?.centerWCS?.y)}</span>
                 </FormGroup>
-                <FormGroup inline={true} label="Size (X)">
+                <FormGroup inline={true} label="Size (X)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
                         coord={this.panAndZoomCoord}
                         inputType={InputType.Size}
@@ -249,9 +253,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         wcsDisabled={isPVImage}
                         sizePlaceholder="Width"
                     />
-                    <span className="info-string">Image: 0.000 px</span>
+                    <span className="info-string">{getFovInfoString(frame?.fovSize?.x, frame?.fovSizeWCS?.x)}</span>
                 </FormGroup>
-                <FormGroup inline={true} label="Size (Y)">
+                <FormGroup inline={true} label="Size (Y)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput
                         coord={this.panAndZoomCoord}
                         inputType={InputType.Size}
@@ -262,7 +266,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         wcsDisabled={isPVImage}
                         sizePlaceholder="Height"
                     />
-                    <span className="info-string">Image: 0.000 px</span>
+                    <span className="info-string">{getFovInfoString(frame?.fovSize?.y, frame?.fovSizeWCS?.y)}</span>
                 </FormGroup>
             </div>
         );
@@ -491,7 +495,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         );
 
         const colorbarPanel = (
-            <div className="panel-container">
+            <div className="panel-colorbar">
                 <FormGroup inline={true} label="Visible">
                     <Switch checked={colorbar.visible} onChange={ev => colorbar.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>

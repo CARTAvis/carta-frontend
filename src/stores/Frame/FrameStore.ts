@@ -58,6 +58,7 @@ import {
     getTransformedChannel,
     getValueFromArcsecString,
     isAstBadPoint,
+    isWCSStringFormatValid,
     minMax2D,
     multiply2D,
     ProtobufProcessing,
@@ -2015,6 +2016,9 @@ export class FrameStore {
     };
 
     @action setCenterWcs = (wcsX: string, wcsY: string, enableSpatialTransform: boolean = true): boolean => {
+        if (!isWCSStringFormatValid(wcsX, AppStore.Instance.overlayStore.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+            return false;
+        }
         const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
         if (isFinite(center?.x) && isFinite(center?.y)) {
             this.setCenter(center.x, center.y, enableSpatialTransform);

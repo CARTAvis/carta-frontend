@@ -28,7 +28,7 @@
             margin-left: 0px;
         }
         .bp3-label {
-            width: 12em;
+            width: 10em;
             text-align: right;
         }
     }
@@ -61,6 +61,12 @@
         border: 1px solid $light-gray3;
     }
 
+    .panel-colorbar {
+        .bp3-label {
+            width: 12em;
+        }
+    }
+
     .panel-pan-and-zoom {
         .coordinate-panel {
             width: auto;
@@ -69,6 +75,10 @@
 
         .bp3-form-content {
             display: flex;
+
+            .bp3-numeric-input input {
+                width: 125px !important;
+            }
 
             .info-string {
                 line-height: 30px;
