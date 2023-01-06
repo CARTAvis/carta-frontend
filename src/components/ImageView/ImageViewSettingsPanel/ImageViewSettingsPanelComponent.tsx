@@ -239,11 +239,29 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <span className="info-string">Image: 0.000 px</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (X)">
-                    <SafeNumericInput buttonPosition="none" />
+                    <CoordNumericInput
+                        coord={this.panAndZoomCoord}
+                        inputType={InputType.Size}
+                        value={frame?.fovSize?.x}
+                        onChange={val => frame?.zoomToSizeX(parseFloat(val))}
+                        valueWcs={frame?.fovSizeWCS?.x}
+                        onChangeWcs={frame?.zoomToSizeXWcs}
+                        wcsDisabled={isPVImage}
+                        sizePlaceholder="Width"
+                    />
                     <span className="info-string">Image: 0.000 px</span>
                 </FormGroup>
                 <FormGroup inline={true} label="Size (Y)">
-                    <SafeNumericInput buttonPosition="none" />
+                    <CoordNumericInput
+                        coord={this.panAndZoomCoord}
+                        inputType={InputType.Size}
+                        value={frame?.fovSize?.y}
+                        onChange={val => frame?.zoomToSizeY(parseFloat(val))}
+                        valueWcs={frame?.fovSizeWCS?.y}
+                        onChangeWcs={frame?.zoomToSizeYWcs}
+                        wcsDisabled={isPVImage}
+                        sizePlaceholder="Height"
+                    />
                     <span className="info-string">Image: 0.000 px</span>
                 </FormGroup>
             </div>

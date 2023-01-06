@@ -303,6 +303,18 @@ export class FrameStore {
         }
     }
 
+    @computed get fovSize(): Point2D {
+        return {x: this.requiredFrameView?.xMax - this.requiredFrameView?.xMin, y: this.requiredFrameView?.yMax - this.requiredFrameView?.yMin};
+    }
+
+    @computed get fovSizeWCS(): WCSPoint2D {
+        const wcsSize = this.getWcsSizeInArcsec(this.fovSize);
+        if (wcsSize) {
+            return {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)};
+        }
+        return null;
+    }
+
     @computed get spatialTransform() {
         if (this.spatialReference && this.spatialTransformAST) {
             const center = transformPoint(this.spatialTransformAST, this.spatialReference.center, false);
@@ -961,7 +973,7 @@ export class FrameStore {
     }
 
     @computed get centerWCS(): WCSPoint2D {
-        if (!this.wcsInfo) {
+        if (!this.wcsInfoForTransformation) {
             return null;
         }
         return getFormattedWCSPoint(this.wcsInfoForTransformation, this.center);
@@ -1961,24 +1973,28 @@ export class FrameStore {
         }
     };
 
-    @action zoomToSizeX = (x: number) => {
+    @action zoomToSizeX = (x: number): boolean => {
         if (x > 0 && isFinite(x)) {
             this.setZoom((this.renderWidth * this.pixelRatio) / this.aspectRatio / x);
+            return true;
         }
+        return false;
     };
 
-    @action zoomToSizeXWcs = (wcsX: string) => {
-        this.zoomToSizeX(this.getImageXValueFromArcsec(getValueFromArcsecString(wcsX)));
+    @action zoomToSizeXWcs = (wcsX: string): boolean => {
+        return this.zoomToSizeX(this.getImageXValueFromArcsec(getValueFromArcsecString(wcsX)));
     };
 
-    @action zoomToSizeY = (y: number) => {
+    @action zoomToSizeY = (y: number): boolean => {
         if (y > 0 && isFinite(y)) {
             this.setZoom((this.renderHeight * this.pixelRatio) / y);
+            return true;
         }
+        return false;
     };
 
-    @action zoomToSizeYWcs = (wcsY: string) => {
-        this.zoomToSizeY(this.getImageYValueFromArcsec(getValueFromArcsecString(wcsY)));
+    @action zoomToSizeYWcs = (wcsY: string): boolean => {
+        return this.zoomToSizeY(this.getImageYValueFromArcsec(getValueFromArcsecString(wcsY)));
     };
 
     @action setCenter = (x: number, y: number, enableSpatialTransform: boolean = true): boolean => {
