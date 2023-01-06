@@ -2015,14 +2015,13 @@ export class FrameStore {
         return true;
     };
 
-    @action setCenterWcs = (wcsX: string, wcsY: string, enableSpatialTransform: boolean = true): boolean => {
+    @action setCenterWcs = (wcsX: string, wcsY: string): boolean => {
         if (!isWCSStringFormatValid(wcsX, AppStore.Instance.overlayStore.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             return false;
         }
         const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
         if (isFinite(center?.x) && isFinite(center?.y)) {
-            this.setCenter(center.x, center.y, enableSpatialTransform);
-            return true;
+            return this.setCenter(center.x, center.y);
         }
         return false;
     };
