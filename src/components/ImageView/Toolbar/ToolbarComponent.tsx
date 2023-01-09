@@ -19,7 +19,7 @@ export class ToolbarComponentProps {
     frame: FrameStore;
     activeLayer: ImageViewLayer;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
-    onRegionViewZoom: (zoom: number, isZoomToFit?: boolean) => void;
+    onRegionViewZoom: (zoom: number) => void;
     onZoomToFit: () => void;
 }
 

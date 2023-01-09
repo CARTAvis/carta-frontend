@@ -1507,6 +1507,8 @@ export class FrameStore {
 
     public getCursorInfo(cursorPosImageSpace: Point2D) {
         let cursorPosWCS, cursorPosFormatted;
+        let precisionX = 0;
+        let precisionY = 0;
         if (this.validWcs || this.isPVImage || this.isUVImage) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
@@ -1522,9 +1524,6 @@ export class FrameStore {
             cursorPosWCS = cursorNeighbourhood[0];
 
             const normalizedNeighbourhood = cursorNeighbourhood.map(pos => AST.normalizeCoordinates(this.wcsInfo, pos.x, pos.y));
-
-            let precisionX = 0;
-            let precisionY = 0;
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
@@ -1562,7 +1561,8 @@ export class FrameStore {
             posImageSpace: cursorPosImageSpace,
             isInsideImage: isInsideImage,
             posWCS: cursorPosWCS,
-            infoWCS: cursorPosFormatted
+            infoWCS: cursorPosFormatted,
+            precision: {x: precisionX, y: precisionY}
         };
     }
 
