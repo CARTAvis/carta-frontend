@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, AnchorButton, Button, Classes, Icon, Intent, Menu, MenuDivider, Position, Switch} from "@blueprintjs/core";
+import {Alert, Button, Classes, Icon, Intent, Menu, MenuDivider, Position, Switch} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
@@ -178,6 +178,26 @@ export class RootMenuComponent extends React.Component {
         if (ApiService.RuntimeConfig.dashboardAddress) {
             serverMenu.push(<Menu.Item key="dashboard" text="Dashboard" onClick={this.handleDashboardClicked} />);
         }
+        serverMenu.push(
+            <Menu.Item
+                text="Copy session ID to clipboard"
+                onClick={() => {
+                    navigator.clipboard.writeText(appStore.backendService.sessionId.toString()).then(() => {
+                        alert("Session URL copied!");
+                    });
+                }}
+            />
+        );
+        serverMenu.push(
+            <Menu.Item
+                text="Copy session URL to clipboard"
+                onClick={() => {
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                        alert("Session URL copied!");
+                    });
+                }}
+            />
+        );
 
         let serverSubMenu: React.ReactNode;
         if (serverMenu.length) {
@@ -330,17 +350,6 @@ export class RootMenuComponent extends React.Component {
                                     Latency: {latencyString}
                                     <br />
                                     Session ID: {appStore.backendService.sessionId}
-                                    <br />
-                                    <AnchorButton
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(appStore.backendService.sessionId.toString()).then(() => {
-                                                alert("Session ID copied!");
-                                            });
-                                        }}
-                                        className="snippet-run-button"
-                                    >
-                                        Copy Session ID
-                                    </AnchorButton>
                                 </small>
                             </i>
                         </span>
@@ -487,7 +496,7 @@ export class RootMenuComponent extends React.Component {
                         <Icon icon={"console"} intent={"warning"} />
                     </Tooltip2>
                 )}
-                <Tooltip2 content={connectivityTooltip} hoverCloseDelay={3000}>
+                <Tooltip2 content={connectivityTooltip}>
                     <Icon icon={"symbol-circle"} className={connectivityClass} />
                 </Tooltip2>
                 <div id="hidden-status-info">
