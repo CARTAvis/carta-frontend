@@ -2011,6 +2011,10 @@ export class FrameStore {
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
             this.center = {x, y};
+            for (const frame of this.secondarySpatialImages) {
+                const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.center, false);
+                frame.center = centerPointSecondaryImage;
+            }
         }
         return true;
     };
@@ -2077,10 +2081,7 @@ export class FrameStore {
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR) {
-                this.center = {
-                    x: x + (this.zoomLevel / zoom) * (this.center.x - x),
-                    y: y + (this.zoomLevel / zoom) * (this.center.y - y)
-                };
+                this.setCenter(x + (this.zoomLevel / zoom) * (this.center.x - x), y + (this.zoomLevel / zoom) * (this.center.y - y));
             }
             this.setZoom(zoom);
         }
@@ -2110,6 +2111,10 @@ export class FrameStore {
         } else {
             this.zoomLevel = this.zoomLevelForFit;
             this.initCenter();
+            for (const frame of this.secondarySpatialImages) {
+                const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.center, false);
+                frame.center = centerPointSecondaryImage;
+            }
             return this.zoomLevel;
         }
     };
@@ -2275,6 +2280,9 @@ export class FrameStore {
             const cursorPosImage = transformPoint(this.spatialTransformAST, spatialRefCursorPos, false);
             this.cursorInfo = this.getCursorInfo(cursorPosImage);
         }
+
+        // udpate center position for setting inputs
+        this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
 
         this.spatialReference.frameRegionSet.migrateRegionsFromExistingSet(this.frameRegionSet, this.spatialTransformAST, true);
         // Remove old regions after migration
