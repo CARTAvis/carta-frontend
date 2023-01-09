@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Added a button for NaN pixel color selection in render config overlay ([#1946](https://github.com/cartavis/carta-frontend/issues/1946))
 * Added a setting dialog for the angular distance measurement ([#1201](https://github.com/cartavis/carta-frontend/issues/1201)).
 * Added the functionality to show/hide and lock all regions ([#1796](https://github.com/cartavis/carta-frontend/issues/1796)).
 * Added a method to auto-scrolling the selected region into the region list view ([#1797](https://github.com/CARTAvis/carta-frontend/issues/1797)).
@@ -24,7 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed mean and RMS not updating when smoothing in the spatial and spectral profilers ([#1838](https://github.com/CARTAvis/carta-frontend/issues/1838)).
 * Fixed limitations of the point size for catalog overlay rendering ([#1662](https://github.com/CARTAvis/carta-frontend/issues/1662) and [#1802](https://github.com/CARTAvis/carta-frontend/issues/1802)).
 * Fixed the issue of updating image view mode when catalog selection button is disabled ([#1967](https://github.com/CARTAvis/carta-frontend/issues/1967)).
-* Improved the performance of loading regions in batches ([#2040](https://github.com/CARTAvis/carta-frontend/issues/2040))
+* Fixed the issue of stuck image viewer after changing single/multi panel mode after catalog selection ([#1989](https://github.com/CARTAvis/carta-frontend/issues/1989)).
+* Fixed empty tsv file export for xy profiler ([#2021](https://github.com/CARTAvis/carta-frontend/issues/2021)).
+* Fixed missing catalog overlay for single source catalog files ([#2034](https://github.com/CARTAvis/carta-frontend/issues/2034)).
+* Fixed the region position offset mismatch problem after zooming to fit for spatially matched images. ([#2028](https://github.com/CARTAvis/carta-frontend/issues/2028)).
+* Improved the performance of loading regions in batches ([#2040](https://github.com/CARTAvis/carta-frontend/issues/2040)).
+* Fixed offset between cusorInfo and upper wcs axis in the spatial profilers ([#1319](https://github.com/CARTAvis/carta-frontend/issues/1319)).
 ### Changed
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
 
