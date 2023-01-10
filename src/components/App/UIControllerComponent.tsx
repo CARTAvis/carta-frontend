@@ -18,10 +18,14 @@ import {
     FittingDialogComponent,
     DistanceMeasuringDialog
 } from "components/Dialogs";
+import {WorkspaceDialogComponent} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
+import {AppStore} from "stores";
 
 @observer
 export class UIControllerComponent extends React.Component {
     render() {
+        const appStore = AppStore.Instance;
+
         return (
             <React.Fragment>
                 <RootMenuComponent />
@@ -33,6 +37,7 @@ export class UIControllerComponent extends React.Component {
                 <FileBrowserDialogComponent />
                 <PreferenceDialogComponent />
                 <SaveLayoutDialogComponent />
+                {appStore.dialogStore.saveWorkspaceDialogVisible ? <WorkspaceDialogComponent /> : null}
                 <CodeSnippetDialogComponent />
                 <AboutDialogComponent />
                 <ExternalPageDialogComponent />

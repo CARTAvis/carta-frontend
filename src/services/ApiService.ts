@@ -2,7 +2,7 @@ import axios, {AxiosInstance} from "axios";
 import Ajv from "ajv";
 import {action, computed, makeObservable, observable} from "mobx";
 import {AppToaster} from "components/Shared";
-import {LayoutConfig, Snippet, Workspace} from "models";
+import {LayoutConfig, Snippet, Workspace, WorkspaceListItem} from "models";
 
 const preferencesSchema = require("models/preferences_schema_2.json");
 const snippetSchema = require("models/snippet_schema_1.json");
@@ -522,14 +522,13 @@ export class ApiService {
         }
     };
 
-    public getWorkspaces = async () => {
-        let savedWorkspaces: {[name: string]: any};
+    public getWorkspaceList = async () => {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
-                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspaces`;
-                const response = await this.axiosInstance.get(url);
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/list/workspaces`;
+                const response = await this.axiosInstance.get<{workspaces: WorkspaceListItem[]; success: boolean}>(url);
                 if (response?.data?.success) {
-                    savedWorkspaces = response.data.workspaces;
+                    return response.data.workspaces;
                 } else {
                     return undefined;
                 }
@@ -539,26 +538,60 @@ export class ApiService {
             }
         } else {
             try {
-                savedWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
+                const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
+                if (existingWorkspaces) {
+                    const validWorkspaces = new Array<WorkspaceListItem>();
+                    for (const workspaceName of Object.keys(existingWorkspaces)) {
+                        const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
+                        if (!valid) {
+                            //console.log(ApiService.WorkspaceValidator.errors);
+                        } else {
+                            validWorkspaces.push({name: workspaceName, date: Date.now()});
+                        }
+                    }
+                    return validWorkspaces;
+                } else {
+                    return undefined;
+                }
             } catch (err) {
                 console.log(err);
                 return undefined;
             }
         }
-        if (savedWorkspaces) {
-            const validWorkspaces = new Map<string, Workspace>();
-            for (const workspaceName of Object.keys(savedWorkspaces)) {
-                const workspace = savedWorkspaces[workspaceName];
-                const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
-                if (!valid) {
-                    //console.log(ApiService.WorkspaceValidator.errors);
+    };
+
+    public getWorkspace = async (name: string) => {
+        if (ApiService.RuntimeConfig.apiAddress) {
+            try {
+                const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace/${name}`;
+                const response = await this.axiosInstance.get<{workspace: Workspace; success: boolean}>(url);
+                if (response?.data?.success) {
+                    return response.data.workspace;
                 } else {
-                    validWorkspaces.set(workspaceName, workspace);
+                    return undefined;
                 }
+            } catch (err) {
+                console.log(err);
+                return undefined;
             }
-            return validWorkspaces;
         } else {
-            return undefined;
+            try {
+                const existingWorkspaces = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
+                const workspace = existingWorkspaces?.[name];
+                if (workspace) {
+                    const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
+                    if (!valid) {
+                        //console.log(ApiService.WorkspaceValidator.errors);
+                    } else {
+                        return workspace;
+                    }
+                } else {
+                    return undefined;
+                }
+            } catch (err) {
+                console.log(err);
+                return undefined;
+            }
         }
     };
 

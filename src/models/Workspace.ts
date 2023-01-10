@@ -51,3 +51,8 @@ export interface Workspace {
     spatialReference?: number;
     spectralReference?: number;
 }
+
+export interface WorkspaceListItem {
+    name: string;
+    date: number;
+}

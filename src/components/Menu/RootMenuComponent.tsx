@@ -192,7 +192,7 @@ export class RootMenuComponent extends React.Component {
         const fileMenu = (
             <Menu>
                 <Menu.Item text="Open workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.loadWorkspace("testWorkspace")} />
-                <Menu.Item text="Save workspace" disabled={true && appStore.openFileDisabled} onClick={() => appStore.saveWorkspace("testWorkspace")} />
+                <Menu.Item text="Save workspace" disabled={appStore.openFileDisabled} onClick={appStore.dialogStore.showSaveWorkspaceDialog} />
                 <Menu.Item text="Close workspace" disabled={appStore.openFileDisabled} onClick={appStore.closeWorkspace} />
                 <MenuDivider />
                 <Menu.Item text="Open image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />

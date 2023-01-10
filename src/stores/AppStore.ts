@@ -1931,10 +1931,10 @@ export class AppStore {
         this.loadingWorkspace = true;
 
         try {
-            // TODO: We should rather query _just_ the workspace we need
-            const workspaces = yield this.apiService.getWorkspaces();
-            const workspace = workspaces?.get(name);
+            const workspace = yield this.apiService.getWorkspace(name);
             if (!workspace) {
+                this.loadingWorkspace = false;
+                AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
                 return false;
             }
 
