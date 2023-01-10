@@ -1,4 +1,3 @@
-import "./ImageViewComponent.scss";
 import * as React from "react";
 import $ from "jquery";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
