@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Added two entries in Service sub-menu to copy the session ID and the session URL to clipboard ([#1930](https://github.com/cartavis/carta-frontend/issues/1930))
 * Added a button for NaN pixel color selection in render config overlay ([#1946](https://github.com/cartavis/carta-frontend/issues/1946))
 * Added a setting dialog for the angular distance measurement ([#1201](https://github.com/cartavis/carta-frontend/issues/1201)).
 * Added the functionality to show/hide and lock all regions ([#1796](https://github.com/cartavis/carta-frontend/issues/1796)).
