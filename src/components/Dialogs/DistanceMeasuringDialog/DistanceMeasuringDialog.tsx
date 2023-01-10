@@ -29,8 +29,8 @@ export class DistanceMeasuringDialog extends React.Component {
         this.WCSMode = value === undefined ? !this.WCSMode : value;
     };
 
-    private handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
-        const WCSMode = formEvent.currentTarget.value === CoordinateMode.Image ? false : true;
+    private handleChangeWCSMode = (coord: CoordinateMode) => {
+        const WCSMode = coord === CoordinateMode.Image ? false : true;
         this.setWCSMode(WCSMode);
     };
 
@@ -227,7 +227,7 @@ export class DistanceMeasuringDialog extends React.Component {
                                         <td>Coordinate</td>
                                         <td colSpan={2}>
                                             <CoordinateComponent
-                                                onChange={(ev: React.FormEvent<HTMLInputElement>) => this.handleChangeWCSMode(ev)}
+                                                onChange={this.handleChangeWCSMode}
                                                 selectedValue={this.WCSMode && wcsInfo ? CoordinateMode.World : CoordinateMode.Image}
                                                 disableCoordinate={!wcsInfo}
                                             />

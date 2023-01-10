@@ -213,7 +213,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>
-                                    <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
+                                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                                 </td>
                             </tr>
                             <tr>

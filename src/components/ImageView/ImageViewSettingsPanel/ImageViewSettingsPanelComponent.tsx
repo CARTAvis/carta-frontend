@@ -216,7 +216,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const panAndZoomPanel = (
             <div className="panel-pan-and-zoom">
                 <FormGroup inline={true} label="Coordinate">
-                    <CoordinateComponent selectedValue={this.panAndZoomCoord} onChange={ev => this.setPanAndZoomCoord(ev.currentTarget.value as CoordinateMode)} />
+                    <CoordinateComponent selectedValue={this.panAndZoomCoord} onChange={this.setPanAndZoomCoord} />
                 </FormGroup>
                 <FormGroup inline={true} label="Center (X)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput

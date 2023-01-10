@@ -163,7 +163,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>
-                                    <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
+                                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                                 </td>
                             </tr>
                             <tr>
