@@ -97,15 +97,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         }
 
         return (
-            <FontSelect
-                activeItem={currentFont}
-                itemRenderer={renderFont}
-                items={astFonts}
-                disabled={!visible}
-                filterable={false}
-                popoverProps={{minimal: true, popoverClassName: "fontselect"}}
-                onItemSelect={font => fontSetter(font.id)}
-            >
+            <FontSelect activeItem={currentFont} itemRenderer={renderFont} items={astFonts} disabled={!visible} filterable={false} popoverProps={{minimal: true, popoverClassName: "fontselect"}} onItemSelect={font => fontSetter(font.id)}>
                 <Button text={<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>} disabled={!visible} rightIcon="double-caret-vertical" />
             </FontSelect>
         );

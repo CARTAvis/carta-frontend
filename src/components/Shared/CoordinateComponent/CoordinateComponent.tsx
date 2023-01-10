@@ -16,12 +16,7 @@ export class CoordinateComponent extends React.Component<ICoordinateComponentPro
     public render() {
         return (
             <div className="coordinate-panel">
-                <RadioGroup
-                    inline={true}
-                    onChange={ev => this.props.onChange(ev.currentTarget.value as CoordinateMode)}
-                    selectedValue={this.props.selectedValue}
-                    disabled={this.props.disableCoordinate}
-                >
+                <RadioGroup inline={true} onChange={ev => this.props.onChange(ev.currentTarget.value as CoordinateMode)} selectedValue={this.props.selectedValue} disabled={this.props.disableCoordinate}>
                     <Radio label={CoordinateMode.Image} value={CoordinateMode.Image} />
                     <Radio label={CoordinateMode.World} value={CoordinateMode.World} />
                 </RadioGroup>

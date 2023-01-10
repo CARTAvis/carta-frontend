@@ -226,11 +226,7 @@ export class DistanceMeasuringDialog extends React.Component {
                                     <tr className="distance-measuring-settings-table-coordinate">
                                         <td>Coordinate</td>
                                         <td colSpan={2}>
-                                            <CoordinateComponent
-                                                onChange={this.handleChangeWCSMode}
-                                                selectedValue={this.WCSMode && wcsInfo ? CoordinateMode.World : CoordinateMode.Image}
-                                                disableCoordinate={!wcsInfo}
-                                            />
+                                            <CoordinateComponent onChange={this.handleChangeWCSMode} selectedValue={this.WCSMode && wcsInfo ? CoordinateMode.World : CoordinateMode.Image} disableCoordinate={!wcsInfo} />
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
