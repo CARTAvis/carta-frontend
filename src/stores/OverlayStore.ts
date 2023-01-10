@@ -143,11 +143,9 @@ export class OverlayGlobalSettings {
         this.system = system;
 
         // update distance measuring position tranformation before plotting
-        for (const frame of AppStore.Instance.frames) {
-            const wcsInfo = frame?.wcsInfo;
-            if (wcsInfo && this.explicitSystem) {
-                AST.set(wcsInfo, `System=${this.explicitSystem}`);
-            }
+        const wcsInfo = AppStore.Instance.activeFrame?.wcsInfo;
+        if (wcsInfo && this.explicitSystem) {
+            AST.set(wcsInfo, `System=${this.explicitSystem}`);
         }
     }
 
