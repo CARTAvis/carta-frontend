@@ -39,3 +39,11 @@ export function WarningToast(message: string): IToastProps {
         }
     };
 }
+
+export function InfoToast(message: string): IToastProps {
+    return {
+        intent: "success",
+        message: message,
+        timeout: 3000
+    };
+}

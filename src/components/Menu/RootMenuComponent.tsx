@@ -7,7 +7,7 @@ import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {CARTA} from "carta-protobuf";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
-import {ExportImageMenuComponent} from "../Shared";
+import {AppToaster, ExportImageMenuComponent, InfoToast} from "components/Shared";
 import {CARTA_INFO, PresetLayout, Snippet} from "models";
 import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -183,7 +183,7 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session ID to clipboard"
                 onClick={() => {
                     navigator.clipboard.writeText(appStore.backendService.sessionId.toString()).then(() => {
-                        alert("Session URL copied!");
+                        AppToaster.show(InfoToast("Session ID copied!"));
                     });
                 }}
             />
@@ -193,7 +193,7 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session URL to clipboard"
                 onClick={() => {
                     navigator.clipboard.writeText(window.location.href).then(() => {
-                        alert("Session URL copied!");
+                        AppToaster.show(InfoToast("Session URL copied!"));
                     });
                 }}
             />
