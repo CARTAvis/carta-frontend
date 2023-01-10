@@ -19,10 +19,14 @@ export class ImageFittingStore {
         return ImageFittingStore.staticInstance;
     }
 
-    @observable selectedFileId: number;
+    @observable selectedFileId: number = ACTIVE_FILE_ID;
     @observable components: ImageFittingIndividualStore[];
     @observable selectedComponentIndex: number;
-    @observable isFitting: boolean;
+    @observable createModelImage: boolean = true;
+    @observable createResidualImage: boolean = true;
+    @observable isFitting: boolean = false;
+    @observable progress: number = 0;
+    @observable isCancelling: boolean = false;
 
     @action setSelectedFileId = (id: number) => {
         this.selectedFileId = id;
@@ -58,8 +62,30 @@ export class ImageFittingStore {
         this.selectedComponentIndex = index;
     };
 
+    @action toggleCreateModelImage = () => {
+        this.createModelImage = !this.createModelImage;
+    };
+
+    @action toggleCreateResidualImage = () => {
+        this.createResidualImage = !this.createResidualImage;
+    };
+
     @action setIsFitting = (isFitting: boolean) => {
         this.isFitting = isFitting;
+    };
+
+    @action setProgress = (progress: number) => {
+        this.progress = progress;
+    };
+
+    @action setIsCancelling = (isCancelling: boolean) => {
+        this.isCancelling = isCancelling;
+    };
+
+    @action resetFittingState = () => {
+        this.isFitting = false;
+        this.progress = 0;
+        this.isCancelling = false;
     };
 
     @computed get frameOptions() {
@@ -75,7 +101,8 @@ export class ImageFittingStore {
     }
 
     @computed get fitDisabled() {
-        const validFileId = this.effectiveFrame?.frameInfo && this.effectiveFrame?.frameInfo?.fileId >= 0;
+        const fileId = this.effectiveFrame?.frameInfo?.fileId;
+        const validFileId = isFinite(fileId) && fileId >= 0;
         const allFixed = this.components.every(c => c.allFixed === true);
         const validParams = this.components.every(c => c.validParams === true);
         return !validFileId || allFixed || !validParams || this.isFitting;
@@ -83,9 +110,7 @@ export class ImageFittingStore {
 
     constructor() {
         makeObservable(this);
-        this.selectedFileId = ACTIVE_FILE_ID;
         this.clearComponents();
-        this.selectedComponentIndex = 0;
     }
 
     fitImage = () => {
@@ -93,6 +118,7 @@ export class ImageFittingStore {
             return;
         }
         this.setIsFitting(true);
+        this.setIsCancelling(false);
         const initialValues = [];
         const fixedParams = [];
         for (const c of this.components) {
@@ -112,9 +138,18 @@ export class ImageFittingStore {
             initialValues,
             fixedParams,
             regionId,
-            fovInfo
+            fovInfo,
+            createModelImage: this.createModelImage,
+            createResidualImage: this.createResidualImage
         };
         AppStore.Instance.requestFitting(message);
+    };
+
+    cancelFitting = () => {
+        this.setIsCancelling(true);
+        if (this.progress < 1.0 && this.isFitting) {
+            AppStore.Instance.backendService?.cancelRequestingFitting(this.effectiveFrame.frameInfo.fileId);
+        }
     };
 
     setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, fixedParams: boolean[], values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], fittingLog: string) => {

@@ -1133,10 +1133,39 @@ export class AppStore {
             return;
         }
 
+        if (message.createModelImage || message.createResidualImage) {
+            this.startFileLoading();
+        }
+        const frame = this.getFrame(message.fileId);
+        if (frame?.fittingModelImage) {
+            this.closeFile(frame.fittingModelImage);
+        }
+        if (frame?.fittingResidualImage) {
+            this.closeFile(frame.fittingResidualImage);
+        }
+        frame?.resetFitting();
+        this.restartTaskProgress();
+
         try {
             const ack = yield this.backendService.requestFitting(message);
             if (ack.success) {
                 this.imageFittingStore.setResultString(message.regionId, message.fovInfo, message.fixedParams, ack.resultValues, ack.resultErrors, ack.log);
+                if (ack.modelImage) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, "", true)) {
+                        this.fileCounter++;
+                        frame?.addFittingModelImage(this.getFrame(ack.modelImage.fileId));
+                    } else {
+                        AppToaster.show({icon: "warning-sign", message: "Load model image failed.", intent: "danger", timeout: 3000});
+                    }
+                }
+                if (ack.residualImage) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(ack.residualImage), this.fileBrowserStore.startingDirectory, "", true)) {
+                        this.fileCounter++;
+                        frame?.addFittingResidualImage(this.getFrame(ack.residualImage.fileId));
+                    } else {
+                        AppToaster.show({icon: "warning-sign", message: "Load residual image failed.", intent: "danger", timeout: 3000});
+                    }
+                }
             }
             if (ack.message) {
                 AppToaster.show(WarningToast(`Image fitting: ${ack.message}.`));
@@ -1145,7 +1174,11 @@ export class AppStore {
             AppToaster.show(ErrorToast(`Image fitting failed: ${err}.`));
         }
 
-        this.imageFittingStore.setIsFitting(false);
+        this.setActiveFrameById(message.fileId);
+        if (message.createModelImage || message.createResidualImage) {
+            this.endFileLoading();
+        }
+        this.imageFittingStore.resetFittingState();
     }
 
     @action setAstReady = (val: boolean) => {
@@ -1461,7 +1494,7 @@ export class AppStore {
                         AppToaster.show(ErrorToast("Disconnected from server"));
                         this.alertStore
                             .showRetryAlert(
-                                "You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images or PV images generated via the GUI will be unloaded.",
+                                "You have been disconnected from the server. Do you want to reconnect? Please note that temporary images such as moment images, PV images, or fitting model/residual images generated via the GUI will be unloaded.",
                                 "offline",
                                 true
                             )
@@ -1581,6 +1614,7 @@ export class AppStore {
         this.tileService.tileStream.subscribe(this.handleTileStream);
         this.backendService.listProgressStream.subscribe(this.handleFileProgressStream);
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
+        this.backendService.fittingProgressStream.subscribe(this.handleFittingProgressStream);
         this.backendService.vectorTileStream.subscribe(this.handleVectorTileStream);
 
         // Set auth token from URL if it exists
@@ -1820,6 +1854,14 @@ export class AppStore {
         }
     };
 
+    handleFittingProgressStream = (fittingProgress: CARTA.FittingProgress) => {
+        if (!fittingProgress) {
+            return;
+        }
+        this.imageFittingStore.setProgress(fittingProgress.progress);
+        this.updateTaskProgress(fittingProgress.progress);
+    };
+
     handleVectorTileStream = (vectorTileData: CARTA.IVectorOverlayTileData) => {
         const updatedFrame = this.getFrame(vectorTileData.fileId);
         if (updatedFrame) {
@@ -1863,8 +1905,8 @@ export class AppStore {
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
 
-        // Ignore & remove generated in-memory images(moments/PV, fileId >= 1000)
-        const inMemoryImages = this.frames.filter(frame => frame.frameInfo.fileId >= 1000);
+        // Ignore & remove generated in-memory images (moments fileId >= 1000, PV/model/residual fileId < 0)
+        const inMemoryImages = this.frames.filter(frame => frame.frameInfo.fileId >= 1000 || frame.frameInfo.fileId < 0);
         inMemoryImages.forEach(frame => this.removeFrame(frame));
 
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
