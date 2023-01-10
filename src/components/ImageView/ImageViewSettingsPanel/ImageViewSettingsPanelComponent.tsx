@@ -13,8 +13,8 @@ import {SWATCH_COLORS, toFixed} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
 
 enum ImageViewSettingsPanelTabs {
-    GLOBAL = "Global",
     PAN_AND_ZOOM = "Pan and Zoom",
+    GLOBAL = "Global",
     TITLE = "Title",
     TICKS = "Ticks",
     GRIDS = "Grids",
@@ -68,7 +68,7 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
-    @observable selectedTab: TabId = ImageViewSettingsPanelTabs.GLOBAL;
+    @observable selectedTab: TabId = ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
     @observable panAndZoomCoord: CoordinateMode = CoordinateMode.World;
 
     @action private setSelectedTab = (tab: TabId) => {
@@ -152,63 +152,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const frame = appStore.activeFrame;
         const isPVImage = frame?.isPVImage;
 
-        const globalPanel = (
-            <div className="panel-container">
-                <FormGroup inline={true} label="Enable multi-panel">
-                    <Switch checked={preferences.imageMultiPanelEnabled} onChange={ev => appStore.widgetsStore.setImageMultiPanelEnabled(ev.currentTarget.checked)} />
-                </FormGroup>
-                <FormGroup inline={true} label="Multi-panel mode" disabled={!preferences.imageMultiPanelEnabled}>
-                    <HTMLSelect value={preferences.imagePanelMode} disabled={!preferences.imageMultiPanelEnabled} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
-                        <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
-                        <option value={ImagePanelMode.Fixed}>Fixed grid size</option>
-                    </HTMLSelect>
-                </FormGroup>
-                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.imageMultiPanelEnabled}>
-                    <SafeNumericInput
-                        placeholder="Columns"
-                        min={1}
-                        value={preferences.imagePanelColumns}
-                        disabled={!preferences.imageMultiPanelEnabled}
-                        stepSize={1}
-                        minorStepSize={null}
-                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.imageMultiPanelEnabled}>
-                    <SafeNumericInput
-                        placeholder="Rows"
-                        min={1}
-                        disabled={!preferences.imageMultiPanelEnabled}
-                        value={preferences.imagePanelRows}
-                        stepSize={1}
-                        minorStepSize={null}
-                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_ROWS, value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Overlay color">
-                    <AutoColorPickerComponent color={global.color} presetColors={SWATCH_COLORS} setColor={global.setColor} disableAlpha={true} />
-                </FormGroup>
-                <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
-                    <SafeNumericInput placeholder="Tolerance" min={0.1} value={global.tolerance} stepSize={0.1} minorStepSize={null} majorStepSize={10} onValueChange={(value: number) => global.setTolerance(value)} />
-                </FormGroup>
-                <FormGroup inline={true} label="Labelling">
-                    <HTMLSelect
-                        options={Object.keys(LabelType).map(key => ({label: key, value: LabelType[key]}))}
-                        value={global.labelType}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setLabelType(event.currentTarget.value as LabelType)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Coordinate system" disabled={!global.validWcs} helperText={disabledIfNoWcs}>
-                    <HTMLSelect
-                        options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}
-                        value={global.system}
-                        disabled={!global.validWcs}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
-                    />
-                </FormGroup>
-            </div>
-        );
-
         const getFovInfoString = (value: number, valueWcs: string) => {
             return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
         };
@@ -270,6 +213,64 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
             </div>
         );
+
+        const globalPanel = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Enable multi-panel">
+                    <Switch checked={preferences.imageMultiPanelEnabled} onChange={ev => appStore.widgetsStore.setImageMultiPanelEnabled(ev.currentTarget.checked)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Multi-panel mode" disabled={!preferences.imageMultiPanelEnabled}>
+                    <HTMLSelect value={preferences.imagePanelMode} disabled={!preferences.imageMultiPanelEnabled} onChange={event => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_MODE, event.currentTarget.value as ImagePanelMode)}>
+                        <option value={ImagePanelMode.Dynamic}>Dynamic grid size</option>
+                        <option value={ImagePanelMode.Fixed}>Fixed grid size</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Columns" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.imageMultiPanelEnabled}>
+                    <SafeNumericInput
+                        placeholder="Columns"
+                        min={1}
+                        value={preferences.imagePanelColumns}
+                        disabled={!preferences.imageMultiPanelEnabled}
+                        stepSize={1}
+                        minorStepSize={null}
+                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_COLUMNS, value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Rows" labelInfo={preferences.imagePanelMode === ImagePanelMode.Dynamic ? "(Maximum)" : "(Fixed)"} disabled={!preferences.imageMultiPanelEnabled}>
+                    <SafeNumericInput
+                        placeholder="Rows"
+                        min={1}
+                        disabled={!preferences.imageMultiPanelEnabled}
+                        value={preferences.imagePanelRows}
+                        stepSize={1}
+                        minorStepSize={null}
+                        onValueChange={value => preferences.setPreference(PreferenceKeys.IMAGE_PANEL_ROWS, value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Overlay color">
+                    <AutoColorPickerComponent color={global.color} presetColors={SWATCH_COLORS} setColor={global.setColor} disableAlpha={true} />
+                </FormGroup>
+                <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
+                    <SafeNumericInput placeholder="Tolerance" min={0.1} value={global.tolerance} stepSize={0.1} minorStepSize={null} majorStepSize={10} onValueChange={(value: number) => global.setTolerance(value)} />
+                </FormGroup>
+                <FormGroup inline={true} label="Labelling">
+                    <HTMLSelect
+                        options={Object.keys(LabelType).map(key => ({label: key, value: LabelType[key]}))}
+                        value={global.labelType}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setLabelType(event.currentTarget.value as LabelType)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Coordinate system" disabled={!global.validWcs} helperText={disabledIfNoWcs}>
+                    <HTMLSelect
+                        options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}
+                        value={global.system}
+                        disabled={!global.validWcs}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
+                    />
+                </FormGroup>
+            </div>
+        );
+
         const titlePanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
@@ -769,8 +770,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         return (
             <div className={className}>
                 <Tabs id="imageViewSettingsTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
-                    <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} title={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} panel={panAndZoomPanel} />
+                    <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={titlePanel} />
                     <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={ticksPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.GRIDS} title={ImageViewSettingsPanelTabs.GRIDS} panel={gridPanel} />

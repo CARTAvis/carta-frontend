@@ -7,7 +7,7 @@ import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {AppStore, OverlayStore, SystemType} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
-import {ImageViewLayer} from "components";
+import {ImageViewComponent, ImageViewLayer} from "components";
 import {ExportImageMenuComponent} from "components/Shared";
 import {toFixed} from "utilities";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
@@ -83,6 +83,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         } else {
             this.props.frame.regionSet.setMode(RegionMode.MOVING);
         }
+    };
+
+    private handlePanZoomShortCutClicked = () => {
+        const type = ImageViewComponent.WIDGET_CONFIG.type;
+        AppStore.Instance.widgetsStore.createFloatingSettingsWidget("Image View", type, type);
     };
 
     exportImageTooltip = () => {
@@ -299,6 +304,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             <AnchorButton
                                 icon={"hand"}
                                 onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
+                                onDoubleClick={this.handlePanZoomShortCutClicked}
                                 active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
                             />
                         </Tooltip2>
