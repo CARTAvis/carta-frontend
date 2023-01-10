@@ -7,7 +7,7 @@ import {ItemRenderer, Select} from "@blueprintjs/select";
 import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
-import {ColorbarStore, RegionCoordinate} from "stores/Frame";
+import {ColorbarStore, CoordinateMode} from "stores/Frame";
 import {ImagePanelMode} from "models";
 import {SWATCH_COLORS, toFixed} from "utilities";
 import "./ImageViewSettingsPanelComponent.scss";
@@ -69,13 +69,13 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
     @observable selectedTab: TabId = ImageViewSettingsPanelTabs.GLOBAL;
-    @observable panAndZoomCoord: RegionCoordinate = RegionCoordinate.World;
+    @observable panAndZoomCoord: CoordinateMode = CoordinateMode.World;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTab = tab;
     };
 
-    @action private setPanAndZoomCoord = (coord: RegionCoordinate) => {
+    @action private setPanAndZoomCoord = (coord: CoordinateMode) => {
         this.panAndZoomCoord = coord;
     };
 
@@ -210,13 +210,13 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         );
 
         const getFovInfoString = (value: number, valueWcs: string) => {
-            return this.panAndZoomCoord === RegionCoordinate.Image ? `WCS: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
+            return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
         };
-        const fovLabelInfo = this.panAndZoomCoord === RegionCoordinate.Image ? "(px)" : "";
+        const fovLabelInfo = this.panAndZoomCoord === CoordinateMode.Image ? "(px)" : "";
         const panAndZoomPanel = (
             <div className="panel-pan-and-zoom">
                 <FormGroup inline={true} label="Coordinate">
-                    <CoordinateComponent selectedValue={this.panAndZoomCoord} onChange={ev => this.setPanAndZoomCoord(ev.currentTarget.value as RegionCoordinate)} />
+                    <CoordinateComponent selectedValue={this.panAndZoomCoord} onChange={ev => this.setPanAndZoomCoord(ev.currentTarget.value as CoordinateMode)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Center (X)" labelInfo={fovLabelInfo}>
                     <CoordNumericInput

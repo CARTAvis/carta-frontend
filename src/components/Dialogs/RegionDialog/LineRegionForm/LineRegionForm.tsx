@@ -6,7 +6,7 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {FrameStore, RegionCoordinate, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {FrameStore, CoordinateMode, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, length2D} from "utilities";
 import {SafeNumericInput, CoordinateComponent} from "components/Shared";
@@ -399,7 +399,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         // start
         const startWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.startPoint);
         let startInputX, startInputY;
-        if (region.coordinate === RegionCoordinate.Image) {
+        if (region.coordinate === CoordinateMode.Image) {
             startInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.startPoint.x} onBlur={this.handleStartXChange} onKeyDown={this.handleStartXChange} />;
             startInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.startPoint.y} onBlur={this.handleStartYChange} onKeyDown={this.handleStartYChange} />;
         } else {
@@ -430,12 +430,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 </Tooltip2>
             );
         }
-        const startInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(startWCSPoint)}` : `Image: ${Point2D.ToString(this.startPoint, "px", 3)}`;
+        const startInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(startWCSPoint)}` : `Image: ${Point2D.ToString(this.startPoint, "px", 3)}`;
 
         // end
         const endWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.endPoint);
         let endInputX, endInputY;
-        if (region.coordinate === RegionCoordinate.Image) {
+        if (region.coordinate === CoordinateMode.Image) {
             endInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.endPoint.x} onBlur={this.handleEndXChange} onKeyDown={this.handleEndXChange} />;
             endInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.endPoint.y} onBlur={this.handleEndYChange} onKeyDown={this.handleEndYChange} />;
         } else {
@@ -466,13 +466,13 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 </Tooltip2>
             );
         }
-        const endInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(endWCSPoint)}` : `Image: ${Point2D.ToString(this.endPoint, "px", 3)}`;
+        const endInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(endWCSPoint)}` : `Image: ${Point2D.ToString(this.endPoint, "px", 3)}`;
 
         // center
         const centerPoint = region.center;
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let centerInputX, centerInputY;
-        if (region.coordinate === RegionCoordinate.Image) {
+        if (region.coordinate === CoordinateMode.Image) {
             centerInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange} />;
             centerInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
         } else {
@@ -503,12 +503,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 </Tooltip2>
             );
         }
-        const centerInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
         // length
         const length = length2D(region.size);
         let lengthInput;
-        if (region.coordinate === RegionCoordinate.Image) {
+        if (region.coordinate === CoordinateMode.Image) {
             lengthInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Length" value={length} onBlur={this.handleLengthChange} onKeyDown={this.handleLengthChange} />;
         } else {
             lengthInput = (
@@ -525,9 +525,9 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 </Tooltip2>
             );
         }
-        const lengthInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${this.lengthWCS}` : `Image: ${length.toFixed(3)} px`;
+        const lengthInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${this.lengthWCS}` : `Image: ${length.toFixed(3)} px`;
 
-        const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
+        const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
             <div className="form-section line-region-form">
                 <H5>Properties</H5>

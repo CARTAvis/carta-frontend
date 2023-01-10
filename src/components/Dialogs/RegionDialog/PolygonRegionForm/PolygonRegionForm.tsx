@@ -6,7 +6,7 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {RegionCoordinate, RegionStore} from "stores/Frame";
+import {CoordinateMode, RegionStore} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 import {SafeNumericInput, CoordinateComponent} from "components/Shared";
@@ -94,11 +94,11 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
             return null;
         }
 
-        const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
+        const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         const pointRows = region.controlPoints.map((point, index) => {
             const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, point);
             let xInput, yInput;
-            if (region.coordinate === RegionCoordinate.Image) {
+            if (region.coordinate === CoordinateMode.Image) {
                 xInput = (
                     <SafeNumericInput
                         selectAllOnFocus={true}
@@ -147,7 +147,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     </Tooltip2>
                 );
             }
-            const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
+            const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
             return (
                 <tr key={index}>
                     <td>

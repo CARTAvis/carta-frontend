@@ -1,7 +1,7 @@
 import {Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {RegionCoordinate} from "stores/Frame";
+import {CoordinateMode} from "stores/Frame";
 import {SafeNumericInput} from "..";
 
 const KEYCODE_ENTER = 13;
@@ -117,7 +117,7 @@ const ImageCoordNumericInput = ({inputType, value, onChange, sizePlaceholder = "
 };
 
 interface CoordNumericInputProps {
-    coord: RegionCoordinate;
+    coord: CoordinateMode;
     inputType: InputType;
     value: number;
     onChange: (val: number) => boolean;
@@ -128,7 +128,7 @@ interface CoordNumericInputProps {
 }
 
 export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, onChangeWcs, wcsDisabled, sizePlaceholder = ""}: CoordNumericInputProps) => {
-    if (coord === RegionCoordinate.Image) {
+    if (coord === CoordinateMode.Image) {
         return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} sizePlaceholder={sizePlaceholder} />;
     } else {
         return <WcsCoordNumericInput inputType={inputType} valueWcs={valueWcs} onChangeWcs={onChangeWcs} disabled={wcsDisabled} sizePlaceholder={sizePlaceholder} />;

@@ -2,13 +2,13 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {HTMLSelect, Radio, RadioGroup} from "@blueprintjs/core";
 import {AppStore, SystemType} from "stores";
-import {RegionCoordinate, RegionStore} from "stores/Frame";
+import {CoordinateMode, RegionStore} from "stores/Frame";
 import "./CoordinateComponent.scss";
 
 interface ICoordinateComponentProps {
     region?: RegionStore;
     disableCoordinate?: boolean;
-    selectedValue?: RegionCoordinate;
+    selectedValue?: CoordinateMode;
     onChange?: (ev: React.FormEvent<HTMLInputElement>) => void;
 }
 
@@ -20,12 +20,12 @@ export class CoordinateComponent extends React.Component<ICoordinateComponentPro
             <div className="coordinate-panel">
                 <RadioGroup
                     inline={true}
-                    onChange={this.props.onChange || (ev => region?.setCoordinate(ev.currentTarget.value as RegionCoordinate))}
+                    onChange={this.props.onChange || (ev => region?.setCoordinate(ev.currentTarget.value as CoordinateMode))}
                     selectedValue={this.props.selectedValue || region?.coordinate}
                     disabled={this.props.disableCoordinate}
                 >
-                    <Radio label={RegionCoordinate.Image} value={RegionCoordinate.Image} />
-                    <Radio label={RegionCoordinate.World} value={RegionCoordinate.World} />
+                    <Radio label={CoordinateMode.Image} value={CoordinateMode.Image} />
+                    <Radio label={CoordinateMode.World} value={CoordinateMode.World} />
                 </RadioGroup>
                 <HTMLSelect
                     options={Object.keys(SystemType).map(key => ({label: key, value: SystemType[key]}))}

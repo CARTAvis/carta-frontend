@@ -5,7 +5,7 @@ import {ColorResult} from "react-color";
 import {FormGroup, IDialogProps, NonIdealState, H5} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {AppStore, DialogStore, HelpType} from "stores";
-import {DistanceMeasuringStore, RegionCoordinate} from "stores/Frame";
+import {DistanceMeasuringStore, CoordinateMode} from "stores/Frame";
 import {CustomIcon} from "icons/CustomIcons";
 import {SafeNumericInput, ColorPickerComponent, CoordinateComponent} from "components/Shared";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -30,7 +30,7 @@ export class DistanceMeasuringDialog extends React.Component {
     };
 
     private handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
-        const WCSMode = formEvent.currentTarget.value === RegionCoordinate.Image ? false : true;
+        const WCSMode = formEvent.currentTarget.value === CoordinateMode.Image ? false : true;
         this.setWCSMode(WCSMode);
     };
 
@@ -228,7 +228,7 @@ export class DistanceMeasuringDialog extends React.Component {
                                         <td colSpan={2}>
                                             <CoordinateComponent
                                                 onChange={(ev: React.FormEvent<HTMLInputElement>) => this.handleChangeWCSMode(ev)}
-                                                selectedValue={this.WCSMode && wcsInfo ? RegionCoordinate.World : RegionCoordinate.Image}
+                                                selectedValue={this.WCSMode && wcsInfo ? CoordinateMode.World : CoordinateMode.Image}
                                                 disableCoordinate={!wcsInfo}
                                             />
                                         </td>
