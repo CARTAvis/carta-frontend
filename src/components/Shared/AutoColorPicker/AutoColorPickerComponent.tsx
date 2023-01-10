@@ -79,7 +79,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
             <ColorSelect
                 activeItem={color}
                 onItemSelect={color => this.props.setColor(color)}
-                popoverProps={{minimal: true, position: PopoverPosition.BOTTOM_LEFT, popoverClassName: "colorselect"}}
+                popoverProps={{minimal: true, popoverClassName: "colorselect"}}
                 filterable={false}
                 items={[...AUTO_COLOR_OPTIONS, CUSTOM_COLOR_OPTION]}
                 itemRenderer={this.renderColorSelectItem}
