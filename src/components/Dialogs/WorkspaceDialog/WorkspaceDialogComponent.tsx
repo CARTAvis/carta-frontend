@@ -1,15 +1,15 @@
 import * as React from "react";
+import {useCallback, useEffect, useState} from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import moment from "moment/moment";
 import {AnchorButton, InputGroup, IDialogProps, Button, Intent, Classes, NonIdealState, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
+import {Cell, Column, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
 import {WorkspaceListItem} from "models";
 import "./WorkspaceDialogComponent.scss";
-import {Cell, Column, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
-import {useCallback, useEffect, useState} from "react";
-import moment from "moment/moment";
 
 export const WorkspaceDialogComponent = observer(() => {
     const [workspaceList, setWorkspaceList] = useState<WorkspaceListItem[]>();
