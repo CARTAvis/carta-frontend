@@ -1,111 +1,179 @@
 import * as React from "react";
 import classNames from "classnames";
-import {observable, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, InputGroup, IDialogProps, Button, Intent, Classes} from "@blueprintjs/core";
+import {AnchorButton, InputGroup, IDialogProps, Button, Intent, Classes, NonIdealState, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
 import {WorkspaceListItem} from "models";
 import "./WorkspaceDialogComponent.scss";
+import {Cell, Column, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
+import {useCallback, useEffect, useState} from "react";
+import moment from "moment/moment";
 
-const KEYCODE_ENTER = 13;
+export const WorkspaceDialogComponent = observer(() => {
+    const [workspaceList, setWorkspaceList] = useState<WorkspaceListItem[]>();
+    const [isFetching, setIsFetching] = useState(false);
+    const [fetchErrorMessage, setFetchErrorMessage] = useState("");
+    const [workspaceName, setWorkspaceName] = useState("");
 
-@observer
-export class WorkspaceDialogComponent extends React.Component<any, {workspaceName: string; workspaceList: WorkspaceListItem[]}> {
-    @observable private workspaceName: string = "";
+    const appStore = AppStore.Instance;
 
-    constructor(props: any) {
-        super(props);
-        makeObservable(this);
-    }
+    const fetchWorkspaces = useCallback(async () => {
+        setIsFetching(true);
+        setFetchErrorMessage("");
 
-    componentDidMount() {
-        const appStore = AppStore.Instance;
-        appStore.apiService.getWorkspaceList().then(console.log);
-    }
-
-    private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
-        this.workspaceName = ev.currentTarget.value;
-    };
-
-    private clearInput = () => {
-        this.workspaceName = "";
-    };
-
-    private handleKeyDown = ev => {
-        if (ev.keyCode === KEYCODE_ENTER && !this.isEmpty) {
-            this.saveWorkspace();
+        try {
+            const workspaces = await appStore.apiService.getWorkspaceList();
+            console.log(workspaces);
+            setWorkspaceList(workspaces);
+        } catch (err) {
+            setFetchErrorMessage(err);
         }
-    };
+        setIsFetching(false);
+    }, []);
 
-    private saveWorkspace = async () => {
-        const appStore = AppStore.Instance;
+    const handleInput = useCallback((ev: React.FormEvent<HTMLInputElement>) => {
+        setWorkspaceName(ev.currentTarget.value);
+    }, []);
 
+    const handleKeyDown = useCallback(
+        (ev: React.KeyboardEvent<HTMLInputElement>) => {
+            if (ev.key === "Enter" && workspaceName) {
+                handleSaveClicked();
+            }
+        },
+        [workspaceName]
+    );
+
+    const handleCloseClicked = useCallback(() => {
         appStore.dialogStore.hideSaveWorkspaceDialog();
-        // appStore.layoutStore.setLayoutToBeSaved(this.workspaceName);
-        // if (appStore.layoutStore.layoutExists(this.workspaceName)) {
-        //     if (PresetLayout.isPreset(this.workspaceName)) {
-        //         appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
-        //     } else {
-        //         const confirmed = await appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.workspaceName}?`);
-        //         if (confirmed) {
-        //             await appStore.layoutStore.saveLayout();
-        //         }
-        //     }
-        // } else {
-        //     await appStore.layoutStore.saveLayout();
-        // }
-        this.clearInput();
+        setWorkspaceName("");
+        setWorkspaceList(undefined);
+    }, []);
+
+    const handleSaveClicked = useCallback(() => {
+        // TODO: actually save worksapce
+    }, [workspaceName]);
+
+    // Fetch workspaces at start
+    useEffect(() => {
+        if (appStore.dialogStore.saveWorkspaceDialogVisible) {
+            fetchWorkspaces();
+        }
+    }, [appStore.dialogStore.saveWorkspaceDialogVisible]);
+
+    const className = classNames("workspace-dialog", {"bp3-dark": appStore.darkTheme});
+
+    const dialogProps: IDialogProps = {
+        icon: "layout-grid",
+        backdropClassName: "minimal-dialog-backdrop",
+        className: className,
+        canOutsideClickClose: false,
+        lazy: true,
+        isOpen: appStore.dialogStore.saveWorkspaceDialogVisible,
+        onClose: appStore.dialogStore.hideSaveWorkspaceDialog,
+        title: "Save Workspace"
     };
 
-    @computed get isEmpty(): boolean {
-        return !this.workspaceName;
-    }
+    const handleEntryClicked = (entry: WorkspaceListItem) => {
+        setWorkspaceName(entry.name);
+    };
 
-    render() {
-        const appStore = AppStore.Instance;
+    const renderFilenames = useCallback(
+        (rowIndex: number) => {
+            const entry = workspaceList?.[rowIndex];
+            if (!entry) {
+                return <Cell loading={true} />;
+            }
+            return (
+                <Cell className="filename-cell" tooltip={entry.name}>
+                    <React.Fragment>
+                        <div onClick={() => handleEntryClicked(entry)}>
+                            <span className="cell-text">{entry.name}</span>
+                        </div>
+                    </React.Fragment>
+                </Cell>
+            );
+        },
+        [workspaceList]
+    );
 
-        if (!appStore.dialogStore.saveWorkspaceDialogVisible) {
-            return null;
-        }
+    const renderDates = useCallback(
+        (rowIndex: number) => {
+            const entry = workspaceList?.[rowIndex];
+            if (!entry) {
+                return <Cell loading={true} />;
+            }
 
-        const className = classNames("workspace-dialog", {"bp3-dark": appStore.darkTheme});
+            const unixDate = entry.date;
+            let dateString: string;
+            if (unixDate > 0) {
+                const t = moment.unix(unixDate);
+                const isToday = moment(0, "HH").diff(t) <= 0;
+                if (isToday) {
+                    dateString = t.format("HH:mm");
+                } else {
+                    dateString = t.format("D MMM YYYY");
+                }
+            }
 
-        const dialogProps: IDialogProps = {
-            icon: "layout-grid",
-            backdropClassName: "minimal-dialog-backdrop",
-            className: className,
-            canOutsideClickClose: false,
-            lazy: true,
-            isOpen: appStore.dialogStore.saveWorkspaceDialogVisible,
-            onClose: appStore.dialogStore.hideSaveWorkspaceDialog,
-            title: "Save Workspace"
-        };
+            return (
+                <Cell className="time-cell">
+                    <React.Fragment>
+                        <div onClick={() => handleEntryClicked(entry)}>
+                            <span className="cell-text">{dateString}</span>
+                        </div>
+                    </React.Fragment>
+                </Cell>
+            );
+        },
+        [workspaceList]
+    );
 
-        return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_WORKSPACE} defaultWidth={425} defaultHeight={200} minWidth={425} minHeight={200} enableResizing={true}>
-                <div className={Classes.DIALOG_BODY}>
-                    <FormGroup inline={true} label="Save current workspace as:">
-                        <InputGroup className="workspace-name-input" placeholder="Enter workspace name" value={this.workspaceName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
-                    </FormGroup>
-                </div>
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Tooltip2 content="Workspace name cannot be empty!" disabled={!this.isEmpty}>
-                            <AnchorButton intent={Intent.PRIMARY} onClick={this.saveWorkspace} text="Save" disabled={this.isEmpty} />
-                        </Tooltip2>
-                        <Button
-                            intent={Intent.NONE}
-                            text="Close"
-                            onClick={() => {
-                                appStore.dialogStore.hideSaveWorkspaceDialog();
-                                this.clearInput();
-                            }}
-                        />
-                    </div>
-                </div>
-            </DraggableDialogComponent>
+    let tableContent: React.ReactNode;
+    if (isFetching) {
+        tableContent = <NonIdealState icon={<Spinner intent="primary" />} title="Loading workspaces" />;
+    } else if (fetchErrorMessage) {
+        tableContent = <NonIdealState icon="error" title="Error" description={fetchErrorMessage} />;
+    } else if (!workspaceList?.length) {
+        tableContent = <NonIdealState icon="search" title="No results" description="There are no workspaces available" />;
+    } else {
+        tableContent = (
+            <Table
+                className={classNames("browser-table", {"bp3-dark": appStore.darkTheme})}
+                enableRowReordering={false}
+                renderMode={RenderMode.NONE}
+                selectionModes={SelectionModes.NONE}
+                enableGhostCells={false}
+                enableMultipleSelection={false}
+                enableRowResizing={false}
+                columnWidths={[300, 80]}
+                defaultRowHeight={22}
+                enableRowHeader={false}
+                numRows={workspaceList?.length}
+                loadingOptions={isFetching ? [TableLoadingOption.CELLS] : []}
+            >
+                <Column name="Name" cellRenderer={renderFilenames} />
+                <Column name="Date" cellRenderer={renderDates} />
+            </Table>
         );
     }
-}
+
+    return (
+        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_WORKSPACE} defaultWidth={400} defaultHeight={400} minWidth={425} minHeight={400} enableResizing={true}>
+            <div className={Classes.DIALOG_BODY}>
+                <div className="workspace-table-container">{tableContent}</div>
+                <InputGroup className="workspace-name-input" placeholder="Enter workspace name" value={workspaceName} autoFocus={true} onChange={handleInput} onKeyDown={handleKeyDown} />
+            </div>
+            <div className={Classes.DIALOG_FOOTER}>
+                <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                    <Tooltip2 content="Workspace name cannot be empty!" disabled={!workspaceName}>
+                        <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text="Save" disabled={!workspaceName} />
+                    </Tooltip2>
+                    <Button intent={Intent.NONE} text="Close" onClick={handleCloseClicked} />
+                </div>
+            </div>
+        </DraggableDialogComponent>
+    );
+});
