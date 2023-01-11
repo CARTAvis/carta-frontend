@@ -533,11 +533,6 @@ export class OverlayNumberSettings {
         astString.add("Size(NumLab)", this.fontSize * AppStore.Instance.imageRatio);
         astString.add("Color(NumLab)", AstColorsIndex.NUMBER, this.customColor);
 
-        // Add settings for individual axes
-        const frame = AppStore.Instance.activeFrame;
-        astString.add(`Format(${frame.dirX})`, this.formatStringX);
-        astString.add(`Format(${frame.dirY})`, this.formatStringY);
-
         return astString.toString();
     }
 

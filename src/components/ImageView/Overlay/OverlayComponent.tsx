@@ -189,6 +189,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
                     `${frame.spectralType && frame.spectralSystem ? `Label(${spectralAxis})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
+        } else {
+            AST.set(frame.wcsInfo, `Format(${frame.dirX})=hms.*, Format(${frame.dirY})=dms.*`);
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});
