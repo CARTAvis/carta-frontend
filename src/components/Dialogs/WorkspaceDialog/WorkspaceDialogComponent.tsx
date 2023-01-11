@@ -148,14 +148,14 @@ export const WorkspaceDialogComponent = observer(() => {
                 enableGhostCells={false}
                 enableMultipleSelection={false}
                 enableRowResizing={false}
-                columnWidths={[300, 80]}
+                columnWidths={[260, 120]}
                 defaultRowHeight={22}
                 enableRowHeader={false}
                 numRows={workspaceList?.length}
                 loadingOptions={isFetching ? [TableLoadingOption.CELLS] : []}
             >
                 <Column name="Name" cellRenderer={renderFilenames} />
-                <Column name="Date" cellRenderer={renderDates} />
+                <Column name="Last modified" cellRenderer={renderDates} />
             </Table>
         );
     }
