@@ -169,7 +169,7 @@ export class RootMenuComponent extends React.Component {
         let serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
-        if (apiService.authenticated && ApiService.RuntimeConfig.apiAddress) {
+        if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
             serverMenu.push(<Menu.Item key="restart" text="Restart Service" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.stopServer} />);
         }
         if (ApiService.RuntimeConfig.logoutAddress || ApiService.RuntimeConfig.googleClientId) {
