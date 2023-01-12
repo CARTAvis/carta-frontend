@@ -190,10 +190,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     `${frame.spectralType && frame.spectralSystem ? `Label(${spectralAxis})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
             );
         } else {
-            const formatStringX = this.props.overlaySettings.numbers.formatStringX ?? frame.dirXFormat;
-            const formatStyingY = this.props.overlaySettings.numbers.formatStringY ?? frame.dirYFormat;
-
-            AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}`);
+            const formatStringX = this.props.overlaySettings.numbers.formatStringX;
+            const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
+            const explicitSystem = this.props.overlaySettings.global.explicitSystem;
+            if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
+                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}`);
+                AST.set(frame.wcsInfo, `System=${explicitSystem}`);
+            }
         }
 
         const className = classNames("overlay-canvas", {docked: this.props.docked});
