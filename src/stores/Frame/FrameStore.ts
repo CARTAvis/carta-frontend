@@ -104,6 +104,8 @@ export class FrameStore {
     private dirAxisSize: number;
     private dirAxisFormat: string;
     private depthAxisFormat: string;
+    private xAxisFormat: string;
+    private yAxisFormat: string;
 
     public requiredFrameViewForRegionRender: FrameView;
 
@@ -601,6 +603,34 @@ export class FrameStore {
 
     get spectral(): number {
         return this.frameInfo.fileInfoExtended.axesNumbers.spectral;
+    }
+
+    get dirXFormat(): string {
+        if (this.xAxisFormat.length === 0) {
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+            const axisName = entries.find(entry => entry.name.includes(`CTYPE${this.dirX}`));
+            let axisValue = axisName?.value ?? "Unknown";
+            if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
+                this.xAxisFormat = "d.*";
+            } else {
+                this.xAxisFormat = "hms.*";
+            }
+        }
+        return this.xAxisFormat;
+    }
+
+    get dirYFormat(): string {
+        if (this.yAxisFormat.length === 0) {
+            const entries = this.frameInfo.fileInfoExtended.headerEntries;
+            const axisName = entries.find(entry => entry.name.includes(`CTYPE${this.dirY}`));
+            let axisValue = axisName?.value ?? "Unknown";
+            if (axisValue.match(/^GLON/) || axisValue.match(/^GLAT/)) {
+                this.yAxisFormat = "d.*";
+            } else {
+                this.yAxisFormat = "dms.*";
+            }
+        }
+        return this.yAxisFormat;
     }
 
     get channelType(): string {
@@ -1121,6 +1151,8 @@ export class FrameStore {
         this.dirAxisSize = -1;
         this.dirAxisFormat = "";
         this.depthAxisFormat = "";
+        this.xAxisFormat = "";
+        this.yAxisFormat = "";
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
