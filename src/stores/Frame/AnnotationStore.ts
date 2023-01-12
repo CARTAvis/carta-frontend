@@ -8,17 +8,17 @@ import {FrameStore} from "stores/Frame";
 import {RegionStore} from "./RegionStore";
 import {transformPoint} from "utilities";
 
-export enum TextAnnotationPosition {
-    CENTER = "Center",
-    UPPER_LEFT = "Upper Left",
-    UPPER_RIGHT = "Upper Right",
-    LOWER_LEFT = "Lower Left",
-    LOWER_RIGHT = "Lower Right",
-    TOP = "Top",
-    BOTTOM = "Bottom",
-    LEFT = "Left",
-    RIGHT = "Right"
-}
+// export enum CARTA.TextAnnotationPosition {
+//     CENTER = "Center",
+//     UPPER_LEFT = "Upper Left",
+//     UPPER_RIGHT = "Upper Right",
+//     LOWER_LEFT = "Lower Left",
+//     LOWER_RIGHT = "Lower Right",
+//     TOP = "Top",
+//     BOTTOM = "Bottom",
+//     LEFT = "Left",
+//     RIGHT = "Right"
+// }
 
 export enum FontStyle {
     NORMAL = "Normal",
@@ -96,7 +96,7 @@ export class TextAnnotationStore extends RegionStore {
     @observable fontSize: number = 20;
     @observable fontStyle: FontStyle = FontStyle.NORMAL;
     @observable font: Font = Font.HELVETICA;
-    @observable position: TextAnnotationPosition = TextAnnotationPosition.CENTER;
+    @observable position: CARTA.TextAnnotationPosition = CARTA.TextAnnotationPosition.CENTER;
 
     constructor(
         backendService: BackendService,
@@ -136,7 +136,7 @@ export class TextAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    @action setPosition = (position: TextAnnotationPosition) => {
+    @action setPosition = (position: CARTA.TextAnnotationPosition) => {
         this.position = position;
         this.modifiedTimestamp = performance.now();
     };
@@ -147,7 +147,7 @@ export class TextAnnotationStore extends RegionStore {
             fontSize: this.fontSize,
             fontStyle: this.fontStyle,
             font: this.font,
-            position: this.position
+            textPosition: this.position
         };
     };
 
@@ -156,16 +156,17 @@ export class TextAnnotationStore extends RegionStore {
             textLabel0: this.text,
             fontSize: this.fontSize,
             fontStyle: this.fontStyle,
-            font: this.font
+            font: this.font,
+            textPosition: this.position
         };
     };
 
-    public initializeStyles = (annotationStyles: {textLabel0: string; fontSize: number; fontStyle: FontStyle; font: Font; position: TextAnnotationPosition}) => {
+    public initializeStyles = (annotationStyles: {textLabel0: string; fontSize: number; fontStyle: FontStyle; font: Font; textPosition: CARTA.TextAnnotationPosition}) => {
         this.setText(annotationStyles.textLabel0 ?? this.text);
         this.setFontSize(annotationStyles.fontSize ?? this.fontSize);
         this.setFontStyle(annotationStyles.fontStyle ?? this.fontStyle);
         this.setFont(annotationStyles.font ?? this.font);
-        this.setPosition(annotationStyles.position ?? this.position);
+        this.setPosition(annotationStyles.textPosition ?? this.position);
     };
 }
 

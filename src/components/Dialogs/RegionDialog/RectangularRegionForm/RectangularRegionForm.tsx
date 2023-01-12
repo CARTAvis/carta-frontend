@@ -6,7 +6,7 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {FrameStore, RegionCoordinate, RegionStore, TextAnnotationPosition, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
+import {FrameStore, RegionCoordinate, RegionStore, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 import {SafeNumericInput, CoordinateComponent} from "components/Shared";
@@ -438,9 +438,9 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 <td>Text Alignment</td>
                 <td colSpan={2}>
                     <HTMLSelect
-                        options={Object.values(TextAnnotationPosition)}
-                        value={(this.props.region as TextAnnotationStore).position}
-                        onChange={ev => (this.props.region as TextAnnotationStore).setPosition(ev.target.value as TextAnnotationPosition)}
+                        options={Object.keys(CARTA.TextAnnotationPosition)}
+                        value={CARTA.TextAnnotationPosition[(this.props.region as TextAnnotationStore).position]}
+                        onChange={ev => (this.props.region as TextAnnotationStore).setPosition(CARTA.TextAnnotationPosition[ev.target.value])}
                     />
                 </td>
             </tr>

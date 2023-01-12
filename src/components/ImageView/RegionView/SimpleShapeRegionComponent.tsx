@@ -5,7 +5,7 @@ import {Ellipse, Group, Line, Rect, Text} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore, TextAnnotationStore, TextAnnotationPosition} from "stores/Frame";
+import {FrameStore, RegionStore, TextAnnotationStore} from "stores/Frame";
 import {Point2D} from "models";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
@@ -447,39 +447,39 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
         let verticalAlign: string;
 
         switch (region.position) {
-            case TextAnnotationPosition.UPPER_LEFT:
+            case CARTA.TextAnnotationPosition.UPPER_LEFT:
                 align = "left";
                 verticalAlign = "top";
                 break;
-            case TextAnnotationPosition.UPPER_RIGHT:
+            case CARTA.TextAnnotationPosition.UPPER_RIGHT:
                 align = "right";
                 verticalAlign = "top";
                 break;
-            case TextAnnotationPosition.LOWER_LEFT:
+            case CARTA.TextAnnotationPosition.LOWER_LEFT:
                 align = "left";
                 verticalAlign = "bottom";
                 break;
-            case TextAnnotationPosition.LOWER_RIGHT:
+            case CARTA.TextAnnotationPosition.LOWER_RIGHT:
                 align = "right";
                 verticalAlign = "bottom";
                 break;
-            case TextAnnotationPosition.TOP:
+            case CARTA.TextAnnotationPosition.TOP:
                 align = "center";
                 verticalAlign = "top";
                 break;
-            case TextAnnotationPosition.BOTTOM:
+            case CARTA.TextAnnotationPosition.BOTTOM:
                 align = "center";
                 verticalAlign = "bottom";
                 break;
-            case TextAnnotationPosition.LEFT:
+            case CARTA.TextAnnotationPosition.LEFT:
                 align = "left";
                 verticalAlign = "middle";
                 break;
-            case TextAnnotationPosition.RIGHT:
+            case CARTA.TextAnnotationPosition.RIGHT:
                 align = "right";
                 verticalAlign = "middle";
                 break;
-            case TextAnnotationPosition.CENTER:
+            case CARTA.TextAnnotationPosition.CENTER:
                 align = "center";
                 verticalAlign = "middle";
                 break;
