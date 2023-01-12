@@ -182,8 +182,12 @@ export class RootMenuComponent extends React.Component {
             <Menu.Item
                 text="Copy session ID to clipboard"
                 onClick={async () => {
-                    await navigator.clipboard.writeText(appStore.backendService.sessionId.toString());
-                    AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
+                    try {
+                        await navigator.clipboard?.writeText(appStore.backendService.sessionId.toString());
+                        AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
+                    } catch (err) {
+                        console.log(err);
+                    }
                 }}
             />
         );
@@ -191,8 +195,12 @@ export class RootMenuComponent extends React.Component {
             <Menu.Item
                 text="Copy session URL to clipboard"
                 onClick={async () => {
-                    await navigator.clipboard.writeText(window.location.href);
-                    AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
+                    try {
+                        await navigator.clipboard?.writeText(window.location.href);
+                        AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
+                    } catch (err) {
+                        console.log(err);
+                    }
                 }}
             />
         );
