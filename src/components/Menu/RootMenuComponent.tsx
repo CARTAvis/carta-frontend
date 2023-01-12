@@ -7,7 +7,7 @@ import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {CARTA} from "carta-protobuf";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
-import {AppToaster, ExportImageMenuComponent, InfoToast} from "components/Shared";
+import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {CARTA_INFO, PresetLayout, Snippet} from "models";
 import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -181,20 +181,18 @@ export class RootMenuComponent extends React.Component {
         serverMenu.push(
             <Menu.Item
                 text="Copy session ID to clipboard"
-                onClick={() => {
-                    navigator.clipboard.writeText(appStore.backendService.sessionId.toString()).then(() => {
-                        AppToaster.show(InfoToast("Session ID copied!"));
-                    });
+                onClick={async () => {
+                    await navigator.clipboard.writeText(appStore.backendService.sessionId.toString());
+                    AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
                 }}
             />
         );
         serverMenu.push(
             <Menu.Item
                 text="Copy session URL to clipboard"
-                onClick={() => {
-                    navigator.clipboard.writeText(window.location.href).then(() => {
-                        AppToaster.show(InfoToast("Session URL copied!"));
-                    });
+                onClick={async () => {
+                    await navigator.clipboard.writeText(window.location.href);
+                    AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                 }}
             />
         );
