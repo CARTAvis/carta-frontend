@@ -20,6 +20,7 @@ export class ImageFittingStore {
     }
 
     @observable selectedFileId: number = ACTIVE_FILE_ID;
+    @observable selectedRegionId: number = FOV_REGION_ID;
     @observable components: ImageFittingIndividualStore[];
     @observable selectedComponentIndex: number;
     @observable createModelImage: boolean = true;
@@ -30,6 +31,10 @@ export class ImageFittingStore {
 
     @action setSelectedFileId = (id: number) => {
         this.selectedFileId = id;
+    };
+
+    @action setSelectedRegionId = (id: number) => {
+        this.selectedRegionId = id;
     };
 
     @action setComponents = (num: number) => {
@@ -92,6 +97,14 @@ export class ImageFittingStore {
         return [{value: ACTIVE_FILE_ID, label: "Active"}, ...(AppStore.Instance.frameNames ?? [])];
     }
 
+    @computed get regionOptions() {
+        const closedRegions = this.effectiveFrame?.regionSet?.regions.filter(r => !r.isTemporary && r.isClosedRegion);
+        const options = closedRegions.map(r => {
+            return {value: r.regionId, label: r.nameString};
+        });
+        return [{value: FOV_REGION_ID, label: "Field of View"}, {value: IMAGE_REGION_ID, label: "Image"}, ...(options ?? [])];
+    }
+
     @computed get effectiveFrame(): FrameStore {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.frames?.length > 0) {
@@ -130,8 +143,12 @@ export class ImageFittingStore {
             });
             fixedParams.push(...c.fixedParams);
         }
-        const fovInfo = this.getFovInfo();
-        const regionId = fovInfo ? FOV_REGION_ID : IMAGE_REGION_ID;
+        let fovInfo = null;
+        let regionId = this.selectedRegionId;
+        if (regionId === FOV_REGION_ID) {
+            fovInfo = this.getFovInfo();
+            regionId = fovInfo ? FOV_REGION_ID : IMAGE_REGION_ID;
+        }
 
         const message: CARTA.IFittingRequest = {
             fileId: this.effectiveFrame.frameInfo.fileId,
