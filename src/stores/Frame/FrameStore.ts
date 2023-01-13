@@ -979,6 +979,9 @@ export class FrameStore {
     }
 
     @computed get centerWCS(): WCSPoint2D {
+        // re-calculate with different wcs system
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
         if (!this.wcsInfoForTransformation) {
             return null;
         }
