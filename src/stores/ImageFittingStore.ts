@@ -213,19 +213,24 @@ export class ImageFittingStore {
 
                 let fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
                 let fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
-                let fwhmUnit = {x: AngularSizeUnit.ARCSEC, y: AngularSizeUnit.ARCSEC};
+                let fwhmUnit = AngularSizeUnit.ARCSEC;
                 if (fwhmValueWCS && fwhmErrorWCS) {
-                    ({value: fwhmValueWCS.x, unit: fwhmUnit.x} = AngularSize.convertFromArcsec(fwhmValueWCS.x, true));
-                    fwhmErrorWCS.x = AngularSize.convertValueFromArcsec(fwhmErrorWCS.x, fwhmUnit.x);
-                    ({value: fwhmValueWCS.y, unit: fwhmUnit.y} = AngularSize.convertFromArcsec(fwhmValueWCS.y, true));
-                    fwhmErrorWCS.y = AngularSize.convertValueFromArcsec(fwhmErrorWCS.y, fwhmUnit.y);
+                    if (fwhmValueWCS.x < fwhmValueWCS.y) {
+                        ({value: fwhmValueWCS.x, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.x, true));
+                        fwhmValueWCS.y = AngularSize.convertValueFromArcsec(fwhmValueWCS.y, fwhmUnit);
+                    } else {
+                        ({value: fwhmValueWCS.y, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.y, true));
+                        fwhmValueWCS.x = AngularSize.convertValueFromArcsec(fwhmValueWCS.x, fwhmUnit);
+                    }
+                    fwhmErrorWCS.x = AngularSize.convertValueFromArcsec(fwhmErrorWCS.x, fwhmUnit);
+                    fwhmErrorWCS.y = AngularSize.convertValueFromArcsec(fwhmErrorWCS.y, fwhmUnit);
                 }
 
                 results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerFixedX ? "" : "arcsec", centerFixedX);
                 results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerFixedY ? "" : "arcsec", centerFixedY);
                 results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit.x, fwhmFixedX);
-                results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit.y, fwhmFixedY);
+                results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
+                results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
                 results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
 
                 log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerFixedX ? "" : "arcsec", centerFixedX);
@@ -233,9 +238,9 @@ export class ImageFittingStore {
                 log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerFixedY ? "" : "arcsec", centerFixedY);
                 log += toExpFormat("               ", value.center?.y, error.center?.y, "px", centerFixedY);
                 log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit.x, fwhmFixedX);
+                log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
                 log += toExpFormat("               ", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
-                log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit.y, fwhmFixedY);
+                log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
                 log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
                 log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
             }
