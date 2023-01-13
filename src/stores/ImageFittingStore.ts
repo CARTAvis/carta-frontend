@@ -215,7 +215,7 @@ export class ImageFittingStore {
                 let fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
                 let fwhmUnit = AngularSizeUnit.ARCSEC;
                 if (fwhmValueWCS && fwhmErrorWCS) {
-                    if (fwhmValueWCS.x < fwhmValueWCS.y) {
+                    if (Math.abs(fwhmValueWCS.x) < Math.abs(fwhmValueWCS.y)) {
                         ({value: fwhmValueWCS.x, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.x, true));
                         fwhmValueWCS.y = AngularSize.convertValueFromArcsec(fwhmValueWCS.y, fwhmUnit);
                     } else {
