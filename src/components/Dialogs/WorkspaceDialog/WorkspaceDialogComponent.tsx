@@ -51,7 +51,7 @@ export const WorkspaceDialogComponent = observer(() => {
     };
 
     const handleCloseClicked = useCallback(() => {
-        appStore.dialogStore.hideSaveWorkspaceDialog();
+        appStore.dialogStore.hideWorkspaceDialog();
         setWorkspaceName("");
         setWorkspaceList(undefined);
     }, [appStore]);
@@ -132,7 +132,7 @@ export const WorkspaceDialogComponent = observer(() => {
         canOutsideClickClose: false,
         lazy: true,
         isOpen: mode !== WorkspaceDialogMode.Hidden,
-        onClose: appStore.dialogStore.hideSaveWorkspaceDialog,
+        onClose: appStore.dialogStore.hideWorkspaceDialog,
         title: mode === WorkspaceDialogMode.Save ? "Save Workspace" : "Open Workspace"
     };
 
@@ -151,7 +151,7 @@ export const WorkspaceDialogComponent = observer(() => {
                 openWorkspace(entry.name);
             }
         },
-        [mode, saveWorkspace]
+        [mode, saveWorkspace, openWorkspace]
     );
 
     const renderFilenames = useCallback(

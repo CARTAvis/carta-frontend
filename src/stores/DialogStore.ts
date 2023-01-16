@@ -70,7 +70,7 @@ export class DialogStore {
         this.fileBrowserDialogVisible = false;
         this.workspaceDialogMode = mode;
     };
-    @action hideSaveWorkspaceDialog = () => {
+    @action hideWorkspaceDialog = () => {
         this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
     };
 

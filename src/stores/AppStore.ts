@@ -33,13 +33,12 @@ import {
     WidgetsStore
 } from ".";
 import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "./Frame";
-import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
+import {clamp, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS, Workspace} from "models";
+import {CatalogInfo, CatalogType, COMPUTED_POLARIZATIONS, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, SpectralType, Theme, TileCoordinate, ToFileListFilterMode, WCSMatchingType, Workspace} from "models";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {ProtobufProcessing} from "utilities";
 import GitCommit from "../static/gitInfo";
 
 interface FrameOption extends IOptionProps {
@@ -204,7 +203,8 @@ export class AppStore {
         }
     };
 
-    @flow.bound *loadDefaultFiles() {
+    @flow.bound
+    *loadDefaultFiles() {
         const url = new URL(window.location.href);
         const folderSearchParam = url.searchParams.get("folder");
 
@@ -521,7 +521,8 @@ export class AppStore {
         return true;
     };
 
-    @flow.bound *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean) {
+    @flow.bound
+    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean) {
         this.startFileLoading();
 
         if (imageArithmetic) {
@@ -616,7 +617,8 @@ export class AppStore {
      * @param {boolean=} imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string
      * @return {Promise<FrameStore>} [async] the FrameStore the opened file
      */
-    @flow.bound *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) {
+    @flow.bound
+    *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
         return yield this.loadFile(path, filename, hdu, imageArithmetic);
@@ -630,12 +632,14 @@ export class AppStore {
      * @param {boolean=} imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string
      * @return {Promise<FrameStore>} [async] the FrameStore of the opened file
      */
-    @flow.bound *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) {
+    @flow.bound
+    *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) {
         this.removeAllFrames();
         return yield this.loadFile(path, filename, hdu, imageArithmetic);
     }
 
-    @flow.bound *saveFile(directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean, restFreq?: number) {
+    @flow.bound
+    *saveFile(directory: string, filename: string, fileType: CARTA.FileType, regionId?: number, channels?: number[], stokes?: number[], shouldDropDegenerateAxes?: boolean, restFreq?: number) {
         if (!this.activeFrame) {
             throw new Error("No active image");
         }
@@ -655,7 +659,8 @@ export class AppStore {
         }
     }
 
-    @flow.bound *closeFile(frame: FrameStore, confirmClose: boolean = true) {
+    @flow.bound
+    *closeFile(frame: FrameStore, confirmClose: boolean = true) {
         if (!frame) {
             return;
         }
@@ -821,7 +826,8 @@ export class AppStore {
     };
 
     // Open catalog file
-    @flow.bound *appendCatalog(directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) {
+    @flow.bound
+    *appendCatalog(directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) {
         if (!this.activeFrame) {
             AppToaster.show(ErrorToast("Please load the image file"));
             throw new Error("No image file");
@@ -931,7 +937,8 @@ export class AppStore {
     };
 
     // Region file actions
-    @flow.bound *importRegion(directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) {
+    @flow.bound
+    *importRegion(directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) {
         if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
             AppToaster.show(ErrorToast("Region type not supported"));
             return;
@@ -976,7 +983,8 @@ export class AppStore {
         this.fileBrowserStore.updateLoadingState(batchEnd / regions.length, batchEnd, regions.length);
     };
 
-    @flow.bound *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) {
+    @flow.bound
+    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) {
         const frame = this.activeFrame;
         // Prevent exporting if only the cursor region exists
         if (!frame.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
@@ -1019,7 +1027,8 @@ export class AppStore {
         }
     };
 
-    @flow.bound *requestMoment(message: CARTA.IMomentRequest, frame: FrameStore) {
+    @flow.bound
+    *requestMoment(message: CARTA.IMomentRequest, frame: FrameStore) {
         if (!message || !frame) {
             return;
         }
@@ -1064,7 +1073,8 @@ export class AppStore {
         }
     };
 
-    @flow.bound *requestPV(message: CARTA.IPvRequest, frame: FrameStore, keepExisting: boolean) {
+    @flow.bound
+    *requestPV(message: CARTA.IPvRequest, frame: FrameStore, keepExisting: boolean) {
         if (!message || !frame) {
             return;
         }
@@ -1109,7 +1119,8 @@ export class AppStore {
         }
     };
 
-    @flow.bound *requestFitting(message: CARTA.IFittingRequest) {
+    @flow.bound
+    *requestFitting(message: CARTA.IFittingRequest) {
         if (!message) {
             return;
         }
@@ -1881,7 +1892,8 @@ export class AppStore {
         }
     };
 
-    @flow.bound private *resumeSession() {
+    @flow.bound
+    private *resumeSession() {
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
@@ -1969,7 +1981,8 @@ export class AppStore {
         this.backendService.connectionDropped = false;
     };
 
-    @flow.bound public *loadWorkspace(name: string) {
+    @flow.bound
+    public *loadWorkspace(name: string) {
         this.loadingWorkspace = true;
 
         try {
@@ -2031,13 +2044,19 @@ export class AppStore {
         }
     }
 
-    @flow.bound public *saveWorkspace(name: string) {
+    @flow.bound
+    public *saveWorkspace(name: string) {
         const workspace: Workspace = {
             workspaceVersion: 0,
             frontendVersion: 4,
             description: "Example workspace",
             files: []
         };
+
+        const thumbnail = yield exportScreenshot();
+        if (thumbnail) {
+            workspace.thumbnail = thumbnail;
+        }
 
         for (const frame of this.frames) {
             workspace.files.push({
@@ -2048,8 +2067,7 @@ export class AppStore {
             });
         }
 
-        const result = yield this.apiService.setWorkspace(name, workspace);
-        return result;
+        return this.apiService.setWorkspace(name, workspace);
     }
 
     @action closeWorkspace = () => {

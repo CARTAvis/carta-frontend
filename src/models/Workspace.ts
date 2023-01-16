@@ -50,6 +50,7 @@ export interface Workspace {
     files?: WorkspaceFile[];
     spatialReference?: number;
     spectralReference?: number;
+    thumbnail?: string;
 }
 
 export interface WorkspaceListItem {

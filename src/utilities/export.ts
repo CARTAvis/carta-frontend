@@ -1,4 +1,5 @@
 import moment from "moment";
+import html2canvas from "html2canvas";
 
 export function getTimestamp(format: string = "YYYY-MM-DD-HH-mm-ss") {
     return moment(new Date()).format(format);
@@ -32,4 +33,40 @@ export function exportTxtFile(fileName: string, content: string) {
     a.dispatchEvent(new MouseEvent("click"));
 
     return null;
+}
+
+export async function exportScreenshot(maxWidth = 512, format = "image/jpeg", quality = 0.85) {
+    try {
+        const canvas = await html2canvas(document.body, {
+            allowTaint: true,
+            foreignObjectRendering: true,
+            ignoreElements: el => {
+                // Dont' render out file browser or workspace dialogs
+                const className = el?.className;
+                if (typeof className === "string") {
+                    return className.includes("workspace-dialog") || className.includes("file-browser-dialog");
+                }
+                return false;
+            }
+        });
+
+        const thumbnailCanvas: HTMLCanvasElement = document.createElement("canvas");
+        let width: number;
+        let height: number;
+        if (maxWidth <= 0) {
+            width = canvas.width;
+            height = canvas.height;
+        } else {
+            width = maxWidth;
+            height = maxWidth * (canvas.height / canvas.width);
+        }
+        thumbnailCanvas.width = width;
+        thumbnailCanvas.height = height;
+        const ctx = thumbnailCanvas.getContext("2d");
+        ctx.drawImage(canvas, 0, 0, width, height);
+        return thumbnailCanvas.toDataURL(format, quality);
+    } catch (err) {
+        console.log(err);
+    }
+    return undefined;
 }
