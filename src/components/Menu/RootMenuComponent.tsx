@@ -15,6 +15,7 @@ import {ApiService, ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import "./RootMenuComponent.scss";
+import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
 
 @observer
 export class RootMenuComponent extends React.Component {
@@ -191,8 +192,8 @@ export class RootMenuComponent extends React.Component {
 
         const fileMenu = (
             <Menu>
-                <Menu.Item text="Open workspace" disabled={appStore.openFileDisabled} onClick={appStore.dialogStore.showSaveWorkspaceDialog} />
-                <Menu.Item text="Save workspace" disabled={appStore.openFileDisabled} onClick={appStore.dialogStore.showSaveWorkspaceDialog} />
+                <Menu.Item text="Open workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Open)} />
+                <Menu.Item text="Save workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Save)} />
                 <Menu.Item text="Close workspace" disabled={appStore.openFileDisabled} onClick={appStore.closeWorkspace} />
                 <MenuDivider />
                 <Menu.Item text="Open image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />

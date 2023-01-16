@@ -2048,7 +2048,8 @@ export class AppStore {
             });
         }
 
-        yield this.apiService.setWorkspace(name, workspace);
+        const result = yield this.apiService.setWorkspace(name, workspace);
+        return result;
     }
 
     @action closeWorkspace = () => {

@@ -1,8 +1,9 @@
-import {action, observable, makeObservable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {FileInfoType} from "components";
 import {SnippetStore} from "stores";
 import {Snippet} from "models";
+import {WorkspaceDialogMode} from "components/Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
 
 export class DialogStore {
     private static staticInstance: DialogStore;
@@ -64,17 +65,19 @@ export class DialogStore {
     };
 
     // Workspace
-    @observable saveWorkspaceDialogVisible: boolean;
-    @action showSaveWorkspaceDialog = () => {
-        this.saveWorkspaceDialogVisible = true;
+    @observable workspaceDialogMode = WorkspaceDialogMode.Hidden;
+    @action showWorkspaceDialog = (mode = WorkspaceDialogMode.Save) => {
+        this.fileBrowserDialogVisible = false;
+        this.workspaceDialogMode = mode;
     };
     @action hideSaveWorkspaceDialog = () => {
-        this.saveWorkspaceDialogVisible = false;
+        this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
     };
 
     // File Browser
     @observable fileBrowserDialogVisible: boolean = false;
     @action showFileBrowserDialog = () => {
+        this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
         this.fileBrowserDialogVisible = true;
     };
     @action hideFileBrowserDialog = () => {

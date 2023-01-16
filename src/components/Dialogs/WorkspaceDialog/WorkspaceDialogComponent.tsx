@@ -4,12 +4,18 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import moment from "moment/moment";
 import {AnchorButton, InputGroup, IDialogProps, Button, Intent, Classes, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
+import {Cell, Column, IRegion, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
 import {WorkspaceListItem} from "models";
 import "./WorkspaceDialogComponent.scss";
+import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
+
+export enum WorkspaceDialogMode {
+    Hidden,
+    Save,
+    Open
+}
 
 export const WorkspaceDialogComponent = observer(() => {
     const [workspaceList, setWorkspaceList] = useState<WorkspaceListItem[]>();
@@ -18,20 +24,21 @@ export const WorkspaceDialogComponent = observer(() => {
     const [workspaceName, setWorkspaceName] = useState("");
 
     const appStore = AppStore.Instance;
+    const mode = appStore.dialogStore.workspaceDialogMode;
 
     const fetchWorkspaces = useCallback(async () => {
         setIsFetching(true);
+        await appStore.delay(250);
         setFetchErrorMessage("");
 
         try {
             const workspaces = await appStore.apiService.getWorkspaceList();
-            console.log(workspaces);
             setWorkspaceList(workspaces);
         } catch (err) {
             setFetchErrorMessage(err);
         }
         setIsFetching(false);
-    }, [appStore.apiService]);
+    }, [appStore]);
 
     const handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
         setWorkspaceName(ev.currentTarget.value);
@@ -43,22 +50,78 @@ export const WorkspaceDialogComponent = observer(() => {
         }
     };
 
-    const handleCloseClicked = () => {
+    const handleCloseClicked = useCallback(() => {
         appStore.dialogStore.hideSaveWorkspaceDialog();
         setWorkspaceName("");
         setWorkspaceList(undefined);
-    };
+    }, [appStore]);
+
+    const saveWorkspace = useCallback(
+        async (name: string) => {
+            if (!name) {
+                return;
+            }
+
+            setIsFetching(true);
+            try {
+                const res = await appStore.saveWorkspace(name);
+                if (res) {
+                    AppToaster.show(SuccessToast("floppy-disk", "Workspace saved"));
+                    handleCloseClicked();
+                    return;
+                }
+            } catch (err) {
+                console.log(err);
+            }
+            AppToaster.show(ErrorToast("Error saving workspace"));
+            setIsFetching(false);
+        },
+        [appStore, handleCloseClicked]
+    );
+
+    const openWorkspace = useCallback(
+        async (name: string) => {
+            if (!name) {
+                return;
+            }
+
+            setIsFetching(true);
+            try {
+                const res = await appStore.loadWorkspace(name);
+                if (res) {
+                    AppToaster.show(SuccessToast("floppy-disk", "Workspace loaded"));
+                    handleCloseClicked();
+                    return;
+                }
+            } catch (err) {
+                console.log(err);
+            }
+            AppToaster.show(ErrorToast("Error loading workspace"));
+            setIsFetching(false);
+        },
+        [appStore, handleCloseClicked]
+    );
 
     const handleSaveClicked = () => {
-        // TODO: actually save worksapce
+        if (!workspaceName) {
+            return;
+        }
+        saveWorkspace(workspaceName);
+    };
+
+    const handleOpenClicked = () => {
+        if (!workspaceName || !workspaceList.find(item => item.name === workspaceName)) {
+            return;
+        }
+        openWorkspace(workspaceName);
     };
 
     // Fetch workspaces at start
     useEffect(() => {
-        if (appStore.dialogStore.saveWorkspaceDialogVisible) {
+        if (mode !== WorkspaceDialogMode.Hidden) {
             fetchWorkspaces();
         }
-    }, [appStore.dialogStore.saveWorkspaceDialogVisible, fetchWorkspaces]);
+    }, [mode, fetchWorkspaces]);
 
     const className = classNames("workspace-dialog", {"bp3-dark": appStore.darkTheme});
 
@@ -68,14 +131,28 @@ export const WorkspaceDialogComponent = observer(() => {
         className: className,
         canOutsideClickClose: false,
         lazy: true,
-        isOpen: appStore.dialogStore.saveWorkspaceDialogVisible,
+        isOpen: mode !== WorkspaceDialogMode.Hidden,
         onClose: appStore.dialogStore.hideSaveWorkspaceDialog,
-        title: "Save Workspace"
+        title: mode === WorkspaceDialogMode.Save ? "Save Workspace" : "Open Workspace"
     };
 
     const handleEntryClicked = (entry: WorkspaceListItem) => {
         setWorkspaceName(entry.name);
     };
+
+    const handleDoubleClick = useCallback(
+        (entry: WorkspaceListItem) => {
+            if (!entry?.name) {
+                return;
+            }
+            if (mode === WorkspaceDialogMode.Save) {
+                saveWorkspace(entry.name);
+            } else {
+                openWorkspace(entry.name);
+            }
+        },
+        [mode, saveWorkspace]
+    );
 
     const renderFilenames = useCallback(
         (rowIndex: number) => {
@@ -86,14 +163,14 @@ export const WorkspaceDialogComponent = observer(() => {
             return (
                 <Cell className="filename-cell" tooltip={entry.name}>
                     <React.Fragment>
-                        <div onClick={() => handleEntryClicked(entry)}>
+                        <div onClick={() => handleEntryClicked(entry)} onDoubleClick={() => handleDoubleClick(entry)}>
                             <span className="cell-text">{entry.name}</span>
                         </div>
                     </React.Fragment>
                 </Cell>
             );
         },
-        [workspaceList]
+        [workspaceList, handleDoubleClick]
     );
 
     const renderDates = useCallback(
@@ -128,6 +205,9 @@ export const WorkspaceDialogComponent = observer(() => {
         [workspaceList]
     );
 
+    const selectedItemIndex = workspaceList?.findIndex(item => item.name === workspaceName);
+    const selectedRegions: IRegion[] = selectedItemIndex >= 0 ? [{rows: [selectedItemIndex, selectedItemIndex]}] : [];
+
     let tableContent: React.ReactNode;
     if (isFetching) {
         tableContent = <NonIdealState icon={<Spinner intent="primary" />} title="Loading workspaces" />;
@@ -138,10 +218,11 @@ export const WorkspaceDialogComponent = observer(() => {
     } else {
         tableContent = (
             <Table
-                className={classNames("browser-table", {"bp3-dark": appStore.darkTheme})}
+                className={classNames("workspace-table", {"bp3-dark": appStore.darkTheme})}
                 enableRowReordering={false}
                 renderMode={RenderMode.NONE}
-                selectionModes={SelectionModes.NONE}
+                selectionModes={SelectionModes.ROWS_ONLY}
+                selectedRegions={selectedRegions}
                 enableGhostCells={false}
                 enableMultipleSelection={false}
                 enableRowResizing={false}
@@ -165,9 +246,11 @@ export const WorkspaceDialogComponent = observer(() => {
             </div>
             <div className={Classes.DIALOG_FOOTER}>
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                    <Tooltip2 content="Workspace name cannot be empty!" disabled={!workspaceName}>
-                        <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text="Save" disabled={!workspaceName} />
-                    </Tooltip2>
+                    {mode === WorkspaceDialogMode.Save ? (
+                        <AnchorButton intent={Intent.PRIMARY} onClick={handleSaveClicked} text="Save" disabled={isFetching || !workspaceName} />
+                    ) : (
+                        <AnchorButton intent={Intent.PRIMARY} onClick={handleOpenClicked} text="Open" disabled={isFetching || !selectedRegions?.length} />
+                    )}
                     <Button intent={Intent.NONE} text="Close" onClick={handleCloseClicked} />
                 </div>
             </div>
