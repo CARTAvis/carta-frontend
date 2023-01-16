@@ -269,6 +269,21 @@ export class ImageFittingStore {
 
         frame.setFittingResult(results);
         frame.setFittingLog(log);
+        frame.setFittingResultRegionParams(this.getRegionParams(values));
+    };
+
+    createRegions = () => {
+        const preferenceStore = AppStore.Instance.preferenceStore;
+        const defaultColor = preferenceStore?.regionColor;
+        const defaultLineWidth = preferenceStore?.regionLineWidth;
+        const defaultDashLength = [2];
+        const params = this.effectiveFrame?.fittingResultRegionParams;
+        params.forEach((param, index) => {
+            const temporaryId = -1 - index;
+            const name = `Fitting result: Component #${index + 1}`;
+            const newRegion = this.effectiveFrame?.regionSet?.addExistingRegion(param.points, param.rotation, CARTA.RegionType.ELLIPSE, temporaryId, name, defaultColor, defaultLineWidth, defaultDashLength);
+            newRegion.endCreating();
+        });
     };
 
     private getFovInfo = () => {
@@ -338,6 +353,14 @@ export class ImageFittingStore {
             log += this.effectiveFrame.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
         }
         return log;
+    };
+
+    private getRegionParams = (values: CARTA.IGaussianComponent[]): {points: Point2D[]; rotation: number}[] => {
+        return values.map(value => {
+            const center = {x: value?.center?.x, y: value?.center?.y};
+            const size = {x: value?.fwhm?.x, y: value?.fwhm?.y};
+            return {points: [center, size], rotation: value?.pa};
+        });
     };
 }
 
