@@ -23,6 +23,7 @@ export class ImageFittingStore {
     @observable selectedRegionId: number = FOV_REGION_ID;
     @observable components: ImageFittingIndividualStore[];
     @observable selectedComponentIndex: number;
+    @observable backgroundOffset: number = 0;
     @observable createModelImage: boolean = true;
     @observable createResidualImage: boolean = true;
     @observable isFitting: boolean = false;
@@ -54,6 +55,7 @@ export class ImageFittingStore {
     @action clearComponents = () => {
         this.components = [new ImageFittingIndividualStore()];
         this.selectedComponentIndex = 0;
+        this.backgroundOffset = 0;
     };
 
     @action deleteSelectedComponent = () => {
@@ -65,6 +67,16 @@ export class ImageFittingStore {
 
     @action setSelectedComponentIndex = (index: number) => {
         this.selectedComponentIndex = index;
+    };
+
+    @action setBackgroundOffset = (offset: number) => {
+        if (isFinite(offset)) {
+            this.backgroundOffset = offset;
+        }
+    };
+
+    @action resetBackgroundOffset = () => {
+        this.backgroundOffset = 0;
     };
 
     @action toggleCreateModelImage = () => {
@@ -157,7 +169,8 @@ export class ImageFittingStore {
             regionId,
             fovInfo,
             createModelImage: this.createModelImage,
-            createResidualImage: this.createResidualImage
+            createResidualImage: this.createResidualImage,
+            offset: this.backgroundOffset
         };
         AppStore.Instance.requestFitting(message);
     };

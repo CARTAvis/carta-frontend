@@ -6,7 +6,7 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {AppStore, HelpType} from "stores";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {SafeNumericInput} from "components/Shared";
+import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {exportTxtFile, getTimestamp} from "utilities";
 import "./FittingDialogComponent.scss";
@@ -94,7 +94,7 @@ export class FittingDialogComponent extends React.Component {
             <Pre className="fitting-result-pre">
                 <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
                 {fittingStore.effectiveFrame?.fittingResult !== "" && (
-                    <ButtonGroup className="output-button" style={{ opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0 }}>
+                    <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
                         {createRegionButton}
                         <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
                             <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
@@ -108,7 +108,7 @@ export class FittingDialogComponent extends React.Component {
             <Pre className="fitting-result-pre">
                 <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
                 {fittingStore.effectiveFrame?.fittingLog !== "" && (
-                    <ButtonGroup className="output-button" style={{ opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0 }}>
+                    <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
                         {createRegionButton}
                         <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
                             <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
@@ -117,6 +117,8 @@ export class FittingDialogComponent extends React.Component {
                 )}
             </Pre>
         );
+
+        const unitString = fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : "";
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={200} defaultWidth={600} defaultHeight={660} enableResizing={true}>
@@ -150,7 +152,7 @@ export class FittingDialogComponent extends React.Component {
                         {this.renderParamInput(component?.center?.x, "Center X", component?.setCenterX, component?.centerFixed?.x, component?.toggleCenterXFixed)}
                         {this.renderParamInput(component?.center?.y, "Center Y", component?.setCenterY, component?.centerFixed?.y, component?.toggleCenterYFixed)}
                     </FormGroup>
-                    <FormGroup label="Amplitude" inline={true} labelInfo={fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : ""}>
+                    <FormGroup label="Amplitude" inline={true} labelInfo={<span title={unitString}>{unitString}</span>}>
                         {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude, component?.amplitudeFixed, component?.toggleAmplitudeFixed)}
                     </FormGroup>
                     <FormGroup label="FWHM" inline={true} labelInfo="(px)">
@@ -160,6 +162,16 @@ export class FittingDialogComponent extends React.Component {
                     <FormGroup label="P.A." inline={true} labelInfo="(deg)">
                         {this.renderParamInput(component?.pa, "Position Angle", component?.setPa, component?.paFixed, component?.togglePaFixed)}
                     </FormGroup>
+                    <ClearableNumericInputComponent
+                        label="Background"
+                        inline={true}
+                        labelInfo={<span title={unitString}>{unitString}</span>}
+                        value={fittingStore.backgroundOffset}
+                        placeholder="Offset"
+                        onValueChanged={fittingStore.setBackgroundOffset}
+                        onValueCleared={fittingStore.resetBackgroundOffset}
+                        tooltipContent=""
+                    />
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
