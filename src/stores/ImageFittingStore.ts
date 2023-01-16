@@ -281,7 +281,7 @@ export class ImageFittingStore {
         params.forEach((param, index) => {
             const temporaryId = -1 - index;
             const name = `Fitting result: Component #${index + 1}`;
-            const newRegion = this.effectiveFrame?.regionSet?.addExistingRegion(param.points, param.rotation, CARTA.RegionType.ELLIPSE, temporaryId, name, defaultColor, defaultLineWidth, defaultDashLength);
+            const newRegion = this.effectiveFrame?.regionSet?.addExistingRegion(param.points.slice(), param.rotation, CARTA.RegionType.ELLIPSE, temporaryId, name, defaultColor, defaultLineWidth, defaultDashLength);
             newRegion.endCreating();
         });
     };
