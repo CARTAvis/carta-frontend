@@ -31,37 +31,34 @@ export const WorkspaceDialogComponent = observer(() => {
             setFetchErrorMessage(err);
         }
         setIsFetching(false);
-    }, []);
+    }, [appStore.apiService]);
 
-    const handleInput = useCallback((ev: React.FormEvent<HTMLInputElement>) => {
+    const handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
         setWorkspaceName(ev.currentTarget.value);
-    }, []);
+    };
 
-    const handleKeyDown = useCallback(
-        (ev: React.KeyboardEvent<HTMLInputElement>) => {
-            if (ev.key === "Enter" && workspaceName) {
-                handleSaveClicked();
-            }
-        },
-        [workspaceName]
-    );
+    const handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
+        if (ev.key === "Enter" && workspaceName) {
+            handleSaveClicked();
+        }
+    };
 
-    const handleCloseClicked = useCallback(() => {
+    const handleCloseClicked = () => {
         appStore.dialogStore.hideSaveWorkspaceDialog();
         setWorkspaceName("");
         setWorkspaceList(undefined);
-    }, []);
+    };
 
-    const handleSaveClicked = useCallback(() => {
+    const handleSaveClicked = () => {
         // TODO: actually save worksapce
-    }, [workspaceName]);
+    };
 
     // Fetch workspaces at start
     useEffect(() => {
         if (appStore.dialogStore.saveWorkspaceDialogVisible) {
             fetchWorkspaces();
         }
-    }, [appStore.dialogStore.saveWorkspaceDialogVisible]);
+    }, [appStore.dialogStore.saveWorkspaceDialogVisible, fetchWorkspaces]);
 
     const className = classNames("workspace-dialog", {"bp3-dark": appStore.darkTheme});
 
