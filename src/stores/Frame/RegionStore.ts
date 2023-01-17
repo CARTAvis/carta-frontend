@@ -290,9 +290,10 @@ export class RegionStore {
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.ANNELLIPSE:
-            case CARTA.RegionType.ANNTEXT:
             case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
+            case CARTA.RegionType.ANNTEXT:
+                return this.controlPoints.length === 2;
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:

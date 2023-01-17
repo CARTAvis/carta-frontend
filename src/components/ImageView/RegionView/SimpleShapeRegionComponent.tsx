@@ -32,9 +32,16 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     private editOppositeAnchorCanvasPos: Point2D;
     private editStartCenterPoint: Point2D;
     private previousCursorStyle: string;
+    private textRef: any = React.createRef();
 
     componentDidUpdate() {
         AppStore.Instance.resetImageRatio();
+    }
+
+    componentDidMount() {
+        if (this.props.region.regionType === CARTA.RegionType.ANNTEXT && this.props.region.size.x === 0 && this.props.region.size.y === 0) {
+            this.props.region.setControlPoint(1, {x: (this.textRef.current.textWidth * devicePixelRatio) / this.props.frame.aspectRatio, y: (this.textRef.current.textHeight * devicePixelRatio) / this.props.frame.aspectRatio}, true);
+        }
     }
 
     private handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
@@ -503,8 +510,8 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             perfectDrawEnabled: false,
             strokeScaleEnabled: false,
             strokeWidth: (region.lineWidth * AppStore.Instance.imageRatio) / zoomLevel,
-            width: (region.size.x / devicePixelRatio) * frame.aspectRatio,
-            height: (region.size.y / devicePixelRatio) * frame.aspectRatio,
+            width: (region.size.x / devicePixelRatio) * frame.aspectRatio || undefined,
+            height: (region.size.y / devicePixelRatio) * frame.aspectRatio || undefined,
             offsetX: frame.spatialReference ? (frame.spatialTransform.scale * ((region.size.x / devicePixelRatio) * frame.aspectRatio)) / (2.0 * frame.spatialTransform.scale) : ((region.size.x / devicePixelRatio) * frame.aspectRatio) / 2.0,
             offsetY: frame.spatialReference ? (frame.spatialTransform.scale * region.size.y) / devicePixelRatio / (2.0 * frame.spatialTransform.scale) : region.size.y / devicePixelRatio / 2.0,
             align,
@@ -518,7 +525,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
     };
 
     public render() {
-        const region = this.props.region as TextAnnotationStore;
+        const region = this.props.region as TextAnnotationStore; // set as TextAnnotationStore because it has all the attributes of rectangles
         const frame = this.props.frame;
 
         let shapeNode: React.ReactNode;
@@ -600,7 +607,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.ANNRECTANGLE) {
                 shapeNode = <Rect {...commonProps} width={width * frame.aspectRatio} height={height} offsetX={(width * frame.aspectRatio) / 2.0} offsetY={height / 2.0} />;
             } else if (region.regionType === CARTA.RegionType.ANNTEXT) {
-                shapeNode = <Text {...this.getTextProps(region, centerPixelSpace)} />;
+                shapeNode = <Text ref={this.textRef} {...this.getTextProps(region, centerPixelSpace)} />;
             } else {
                 shapeNode = <Ellipse {...commonProps} radiusY={width} radiusX={height * frame.aspectRatio} />;
             }
