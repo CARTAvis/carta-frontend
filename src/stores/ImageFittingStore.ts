@@ -24,6 +24,7 @@ export class ImageFittingStore {
     @observable components: ImageFittingIndividualStore[];
     @observable selectedComponentIndex: number;
     @observable backgroundOffset: number = 0;
+    @observable solverType: CARTA.FittingSolverType = CARTA.FittingSolverType.Cholesky;
     @observable createModelImage: boolean = true;
     @observable createResidualImage: boolean = true;
     @observable isFitting: boolean = false;
@@ -56,6 +57,7 @@ export class ImageFittingStore {
         this.components = [new ImageFittingIndividualStore()];
         this.selectedComponentIndex = 0;
         this.backgroundOffset = 0;
+        this.solverType = CARTA.FittingSolverType.Cholesky;
     };
 
     @action deleteSelectedComponent = () => {
@@ -77,6 +79,10 @@ export class ImageFittingStore {
 
     @action resetBackgroundOffset = () => {
         this.backgroundOffset = 0;
+    };
+
+    @action setSolverType = (type: CARTA.FittingSolverType) => {
+        this.solverType = type;
     };
 
     @action toggleCreateModelImage = () => {
@@ -115,6 +121,15 @@ export class ImageFittingStore {
             return {value: r.regionId, label: r.nameString};
         });
         return [{value: FOV_REGION_ID, label: "Field of View"}, {value: IMAGE_REGION_ID, label: "Image"}, ...(options ?? [])];
+    }
+
+    get solverOptions() {
+        return [
+            {value: CARTA.FittingSolverType.Qr, label: "QR"},
+            {value: CARTA.FittingSolverType.Cholesky, label: "Cholesky"},
+            {value: CARTA.FittingSolverType.Mcholesky, label: "modified Cholesky"},
+            {value: CARTA.FittingSolverType.Svd, label: "SVD"}
+        ];
     }
 
     @computed get effectiveFrame(): FrameStore {
@@ -170,7 +185,8 @@ export class ImageFittingStore {
             fovInfo,
             createModelImage: this.createModelImage,
             createResidualImage: this.createResidualImage,
-            offset: this.backgroundOffset
+            offset: this.backgroundOffset,
+            solver: this.solverType
         };
         AppStore.Instance.requestFitting(message);
     };

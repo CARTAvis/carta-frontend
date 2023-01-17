@@ -172,6 +172,9 @@ export class FittingDialogComponent extends React.Component {
                         onValueCleared={fittingStore.resetBackgroundOffset}
                         tooltipContent=""
                     />
+                    <FormGroup label="Solver" inline={true}>
+                        <HTMLSelect value={fittingStore.solverType} options={fittingStore.solverOptions} onChange={ev => fittingStore.setSolverType(parseInt(ev.target.value))} />
+                    </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
