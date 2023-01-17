@@ -157,6 +157,10 @@ export class RegionSetStore {
 
         if (annotationStyles) {
             switch (regionType) {
+                case CARTA.RegionType.ANNPOINT:
+                    const pointAnnotation = region as PointAnnotationStore;
+                    pointAnnotation.initializeStyles(annotationStyles);
+                    break;
                 case CARTA.RegionType.ANNTEXT:
                     const textAnnotation = region as TextAnnotationStore;
                     // textAnnotation.setText(annotationStyles.textAnnotationText ?? textAnnotation.text);

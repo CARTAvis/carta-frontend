@@ -247,6 +247,7 @@ export class CompassAnnotationStore extends RegionStore {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
         makeObservable(this);
         this.modifiedTimestamp = performance.now();
+        this.setLength(controlPoints[1].x)
         // this.setLength(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1);
     }
 
@@ -377,8 +378,8 @@ export class CompassAnnotationStore extends RegionStore {
     };
 
     public initializeStyles = (annotationStyles: {
-        northLabel: string;
-        eastLabel: string;
+        textLabel0: string;
+        textLabel1: string;
         fontSize: number;
         fontStyle: FontStyle;
         font: Font;
@@ -390,8 +391,9 @@ export class CompassAnnotationStore extends RegionStore {
         isNorthArrow: boolean;
         isEastArrow: boolean;
     }) => {
-        this.setLabel(annotationStyles.northLabel ?? this.northLabel, true);
-        this.setLabel(annotationStyles.eastLabel ?? this.eastLabel, false);
+        console.log(annotationStyles)
+        this.setLabel(annotationStyles.textLabel0 ?? this.northLabel, true);
+        this.setLabel(annotationStyles.textLabel1 ?? this.eastLabel, false);
         this.setFontSize(annotationStyles.fontSize ?? this.fontSize);
         this.setFontStyle(annotationStyles.fontStyle ?? this.fontStyle);
         this.setFont(annotationStyles.font ?? this.font);
