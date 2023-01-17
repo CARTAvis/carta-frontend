@@ -5,6 +5,7 @@ import {FrameStore, RegionStore} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/widgets";
 import {AngularSize, AngularSizeUnit, Point2D} from "models";
 import {angle2D, getFormattedWCSPoint, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
+import {AppToaster, SuccessToast} from "components/Shared";
 
 const FOV_REGION_ID = 0;
 const IMAGE_REGION_ID = -1;
@@ -301,18 +302,25 @@ export class ImageFittingStore {
         frame.setFittingResultRegionParams(this.getRegionParams(values));
     };
 
-    createRegions = () => {
+    createRegions = async () => {
         const preferenceStore = AppStore.Instance.preferenceStore;
         const defaultColor = preferenceStore?.regionColor;
         const defaultLineWidth = preferenceStore?.regionLineWidth;
         const defaultDashLength = [2];
         const params = this.effectiveFrame?.fittingResultRegionParams;
-        params.forEach((param, index) => {
-            const temporaryId = -1 - index;
-            const name = `Fitting result: Component #${index + 1}`;
-            const newRegion = this.effectiveFrame?.regionSet?.addExistingRegion(param.points.slice(), param.rotation, CARTA.RegionType.ELLIPSE, temporaryId, name, defaultColor, defaultLineWidth, defaultDashLength);
-            newRegion.endCreating();
-        });
+        try {
+            await Promise.allSettled(
+                params.map((param, index) => {
+                    const temporaryId = -1 - index;
+                    const name = `Fitting result: Component #${index + 1}`;
+                    const newRegion = this.effectiveFrame?.regionSet?.addExistingRegion(param.points.slice(), param.rotation, CARTA.RegionType.ELLIPSE, temporaryId, name, defaultColor, defaultLineWidth, defaultDashLength);
+                    return newRegion.endCreating();
+                })
+            );
+            AppToaster.show(SuccessToast("tick", `Created ${params.length} ellipse regions.`));
+        } catch (err) {
+            console.log(err);
+        }
     };
 
     private getFovInfo = () => {
