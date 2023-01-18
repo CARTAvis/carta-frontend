@@ -126,8 +126,20 @@ export class TextAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    @action setFontStyle = (fontStyle: FontStyle) => {
-        this.fontStyle = fontStyle;
+    @action setFontStyle = (fontStyle: string) => {
+        switch (fontStyle) {
+            case "bold":
+                this.fontStyle = FontStyle.BOLD;
+                break;
+            case "italic":
+                this.fontStyle = FontStyle.ITALIC;
+                break;
+            case "bold_italic":
+                this.fontStyle = FontStyle.BOLD_ITALIC;
+                break;
+            default:
+                this.fontStyle = fontStyle as FontStyle;
+        }
         this.modifiedTimestamp = performance.now();
     };
 
@@ -247,7 +259,7 @@ export class CompassAnnotationStore extends RegionStore {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
         makeObservable(this);
         this.modifiedTimestamp = performance.now();
-        this.setLength(controlPoints[1].x)
+        this.setLength(controlPoints[1].x);
         // this.setLength(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1);
     }
 
@@ -265,8 +277,20 @@ export class CompassAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    @action setFontStyle = (fontStyle: FontStyle) => {
-        this.fontStyle = fontStyle;
+    @action setFontStyle = (fontStyle: string) => {
+        switch (fontStyle) {
+            case "bold":
+                this.fontStyle = FontStyle.BOLD;
+                break;
+            case "italic":
+                this.fontStyle = FontStyle.ITALIC;
+                break;
+            case "bold_italic":
+                this.fontStyle = FontStyle.BOLD_ITALIC;
+                break;
+            default:
+                this.fontStyle = fontStyle as FontStyle;
+        }
         this.modifiedTimestamp = performance.now();
     };
 
@@ -391,7 +415,7 @@ export class CompassAnnotationStore extends RegionStore {
         isNorthArrow: boolean;
         isEastArrow: boolean;
     }) => {
-        console.log(annotationStyles)
+        console.log(annotationStyles);
         this.setLabel(annotationStyles.textLabel0 ?? this.northLabel, true);
         this.setLabel(annotationStyles.textLabel1 ?? this.eastLabel, false);
         this.setFontSize(annotationStyles.fontSize ?? this.fontSize);
@@ -440,8 +464,20 @@ export class RulerAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    @action setFontStyle = (fontStyle: FontStyle) => {
-        this.fontStyle = fontStyle;
+    @action setFontStyle = (fontStyle: string) => {
+        switch (fontStyle) {
+            case "bold":
+                this.fontStyle = FontStyle.BOLD;
+                break;
+            case "italic":
+                this.fontStyle = FontStyle.ITALIC;
+                break;
+            case "bold_italic":
+                this.fontStyle = FontStyle.BOLD_ITALIC;
+                break;
+            default:
+                this.fontStyle = fontStyle as FontStyle;
+        }
         this.modifiedTimestamp = performance.now();
     };
 
