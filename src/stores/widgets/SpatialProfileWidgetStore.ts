@@ -1,14 +1,15 @@
-import tinycolor from "tinycolor2";
-import {action, autorun, computed, observable, override, makeObservable} from "mobx";
-import * as _ from "lodash";
-import {RegionWidgetStore, RegionId, RegionsType} from "./RegionWidgetStore";
 import {CARTA} from "carta-protobuf";
+import * as _ from "lodash";
+import {action, autorun, computed, makeObservable, observable, override} from "mobx";
+import tinycolor from "tinycolor2";
+
+import {SpatialProfilerSettingsTabs} from "components";
+import {LineSettings, PlotType} from "components/Shared";
+import {LineOption, POLARIZATIONS, VALID_XY_COORDINATES} from "models";
 import {AppStore, ProfileSmoothingStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
-import {PlotType, LineSettings} from "components/Shared";
-import {SpatialProfilerSettingsTabs} from "components";
+import {RegionId, RegionsType, RegionWidgetStore} from "stores/widgets";
 import {clamp, isAutoColor} from "utilities";
-import {LineOption, VALID_XY_COORDINATES, POLARIZATIONS} from "models";
 
 const DEFAULT_STOKES = "current";
 

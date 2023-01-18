@@ -1,8 +1,9 @@
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
+
+import {WCSType} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore, OverlayBeamStore, WCS_PRECISION} from "stores/Frame";
-import {WCSType} from "models";
 import {clamp, getColorForTheme, toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = "auto-blue";

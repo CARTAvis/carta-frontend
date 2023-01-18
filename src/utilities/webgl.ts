@@ -1,5 +1,5 @@
 import {AlertStore} from "stores";
-import {TemplateNodes} from "./templates";
+import {TemplateNodes} from "utilities";
 
 export const GL2 = WebGL2RenderingContext;
 

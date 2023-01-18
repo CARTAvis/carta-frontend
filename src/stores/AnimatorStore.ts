@@ -1,9 +1,10 @@
-import {action, computed, observable, makeObservable, flow} from "mobx";
 import {CARTA} from "carta-protobuf";
+import {action, computed, flow, makeObservable, observable} from "mobx";
+
+import {FrameView, Point2D} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, GetRequiredTiles, getTransformedChannelList, mapToObject} from "utilities";
-import {FrameView, Point2D} from "models";
 
 export enum AnimationMode {
     CHANNEL = 0,

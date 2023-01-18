@@ -1,8 +1,10 @@
-import {observable, computed, action, makeObservable, flow} from "mobx";
-import {AlertStore} from "stores";
+import {action, computed, flow, makeObservable, observable} from "mobx";
+
 import {AppToaster, SuccessToast} from "components/Shared";
+import {Snippet} from "models";
 import {ApiService} from "services";
-import {Snippet} from "models/Snippet";
+import {AlertStore} from "stores";
+
 import {exampleSnippets} from "./ExampleSnippets";
 
 export class SnippetStore {

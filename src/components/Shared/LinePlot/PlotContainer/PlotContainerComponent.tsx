@@ -1,11 +1,12 @@
 import * as React from "react";
-import * as _ from "lodash";
-import tinycolor from "tinycolor2";
-import {Chart, ChartArea, ChartDataset, ChartOptions, Plugin, Scale, Tick} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
-import {clamp, toExponential, toFixed} from "utilities";
+import {Chart, ChartArea, ChartDataset, ChartOptions, Plugin, Scale, Tick} from "chart.js";
+import * as _ from "lodash";
+import tinycolor from "tinycolor2";
+
 import {PlotType} from "components/Shared";
+import {clamp, toExponential, toFixed} from "utilities";
 
 export enum TickType {
     Automatic,

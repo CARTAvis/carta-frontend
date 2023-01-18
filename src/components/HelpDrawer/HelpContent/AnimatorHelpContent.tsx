@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonAnimator from "static/help/widgetButton_animator.png";
 import widgetButtonAnimator_d from "static/help/widgetButton_animator_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const ANIMATOR_HELP_CONTENT = (
     <div>

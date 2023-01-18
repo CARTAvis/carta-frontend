@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonSpatialProfiler from "static/help/widgetButton_spatialProfiler.png";
 import widgetButtonSpatialProfiler_d from "static/help/widgetButton_spatialProfiler_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const SPATIAL_PROFILER_HELP_CONTENT = (
     <div>

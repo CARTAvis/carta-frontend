@@ -1,10 +1,12 @@
 import * as React from "react";
-import classNames from "classnames";
-import {observer} from "mobx-react";
 import {AnchorButton, Classes, Dialog, ProgressBar} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
+import classNames from "classnames";
+import {observer} from "mobx-react";
+
 import {AppStore} from "stores";
 import {toFixed} from "utilities";
+
 import "./TaskProgressDialogComponent.scss";
 
 interface TaskProgressDialogComponentProps {

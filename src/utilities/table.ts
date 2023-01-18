@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
-import {ColumnArray, ProcessedColumnData} from "utilities";
-import {getComparisonOperatorAndValue} from ".";
+
+import {ColumnArray, getComparisonOperatorAndValue, ProcessedColumnData} from "utilities";
 
 export function getDataTypeString(dataType: CARTA.ColumnType): string {
     switch (dataType) {

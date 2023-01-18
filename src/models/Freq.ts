@@ -1,4 +1,4 @@
-import {FrequencyUnit} from "./SpectralDefinition";
+import {FrequencyUnit} from "models";
 
 export class Freq {
     value: number;

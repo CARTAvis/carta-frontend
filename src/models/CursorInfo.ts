@@ -1,4 +1,4 @@
-import {Point2D} from "./Point2D";
+import {Point2D} from "models";
 
 export enum CursorInfoVisibility {
     Always = "always",

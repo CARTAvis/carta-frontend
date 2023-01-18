@@ -1,11 +1,12 @@
-import * as CARTACompute from "carta_computation";
-import {action, observable, makeObservable, computed, reaction} from "mobx";
 import {Colors} from "@blueprintjs/core";
+import * as CARTACompute from "carta_computation";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
+
+import {CatalogOverlay} from "models";
+import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {FrameScaling} from "stores/Frame";
-import {CatalogOverlay} from "models";
-import {minMaxArray, clamp} from "utilities";
-import {CatalogWebGLService, CatalogTextureType} from "services";
+import {clamp, minMaxArray} from "utilities";
 
 export enum CatalogPlotType {
     ImageOverlay = "Image Overlay",
