@@ -86,8 +86,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     private handlePanZoomShortCutClicked = () => {
-        const type = ImageViewComponent.WIDGET_CONFIG.type;
-        AppStore.Instance.widgetsStore.createFloatingSettingsWidget("Image View", type, type);
+        const widgetsStore = AppStore.Instance.widgetsStore;
+        const parentType = ImageViewComponent.WIDGET_CONFIG.type;
+        const settingsWidget = widgetsStore.floatingWidgets?.find(w => w.parentType === parentType);
+        if (settingsWidget) {
+            widgetsStore.removeFloatingWidget(settingsWidget.id);
+        }
+        // delay to wait for the settings widget tab status to reset
+        setTimeout(() => {widgetsStore.createFloatingSettingsWidget("Image View", parentType, parentType)}, 0);
     };
 
     exportImageTooltip = () => {
