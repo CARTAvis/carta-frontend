@@ -95,7 +95,9 @@
         "eject": "react-scripts eject",
         "reformat": "npx prettier --write ./src",
         "checkformat": "npx prettier --check ./src",
-        "prepack": "npm run build-libs-docker; npm run build-docker"
+        "prepack": "npm run build-libs-docker; npm run build-docker",
+        "fix-eslint": "npx eslint --fix ./src",
+        "check-eslint": "npx eslint ./src"
     },
     "eslintConfig": {
         "extends": "react-app",
