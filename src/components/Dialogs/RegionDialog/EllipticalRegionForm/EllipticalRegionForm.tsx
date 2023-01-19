@@ -8,7 +8,7 @@ import {AppStore} from "stores";
 import {FrameStore, CoordinateMode, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {Point2D, WCSPoint2D} from "models";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
-import {CoordinateComponent, CoordNumericInput, InputType, RotationNumericInput} from "components/Shared";
+import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType} from "components/Shared";
 import "./EllipticalRegionForm.scss";
 
 @observer
@@ -121,8 +121,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         return false;
     };
 
-    private handleRotationChange = (valueString: string): boolean => {
-        const value = parseFloat(valueString);
+    private handleRotationChange = (value: number): boolean => {
         const existingValue = this.props.region.rotation;
         if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setRotation(value);
@@ -237,7 +236,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                                     P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
                                 </td>
                                 <td>
-                                    <RotationNumericInput value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} />
+                                    <ImageCoordNumericInput value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
                                 </td>
                             </tr>
                         </tbody>

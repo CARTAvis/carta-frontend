@@ -78,15 +78,15 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
     );
 };
 
-type ImageCoordNumericInputProps = {
+interface ImageCoordNumericInputProps {
     inputType?: InputType;
     value: number;
     onChange: (val: number) => boolean; // return success or not for resetting displayed value
     disabled?: boolean;
     customPlaceholder?: string;
-};
+}
 
-const ImageCoordNumericInput = ({inputType, value, onChange, disabled = false, customPlaceholder = ""}: ImageCoordNumericInputProps) => {
+export const ImageCoordNumericInput = ({inputType, value, onChange, disabled = false, customPlaceholder = ""}: ImageCoordNumericInputProps) => {
     const handleChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
