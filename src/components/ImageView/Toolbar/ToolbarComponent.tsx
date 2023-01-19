@@ -93,7 +93,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             widgetsStore.removeFloatingWidget(settingsWidget.id);
         }
         // delay to wait for the settings widget tab status to reset
-        setTimeout(() => {widgetsStore.createFloatingSettingsWidget("Image View", parentType, parentType)}, 0);
+        setTimeout(() => {
+            widgetsStore.createFloatingSettingsWidget("Image View", parentType, parentType);
+        }, 0);
     };
 
     exportImageTooltip = () => {
