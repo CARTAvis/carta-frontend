@@ -186,7 +186,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         valueWcs={frame?.fovSizeWCS?.x}
                         onChangeWcs={frame?.zoomToSizeXWcs}
                         wcsDisabled={isPVImage}
-                        sizePlaceholder="Width"
+                        customPlaceholder="Width"
                     />
                     <span className="info-string">{getFovInfoString(frame?.fovSize?.x, frame?.fovSizeWCS?.x)}</span>
                 </FormGroup>
@@ -199,7 +199,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                         valueWcs={frame?.fovSizeWCS?.y}
                         onChangeWcs={frame?.zoomToSizeYWcs}
                         wcsDisabled={isPVImage}
-                        sizePlaceholder="Height"
+                        customPlaceholder="Height"
                     />
                     <span className="info-string">{getFovInfoString(frame?.fovSize?.y, frame?.fovSizeWCS?.y)}</span>
                 </FormGroup>

@@ -16,11 +16,11 @@ type WcsCoordNumericInputProps = {
     inputType: InputType;
     valueWcs: string;
     onChangeWcs: (val: string) => boolean; // return success or not for resetting displayed value
-    disabled: boolean;
-    sizePlaceholder?: string;
+    disabled?: boolean;
+    customPlaceholder?: string;
 };
 
-const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled, sizePlaceholder = ""}: WcsCoordNumericInputProps) => {
+const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = false, customPlaceholder = ""}: WcsCoordNumericInputProps) => {
     const handleChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -64,11 +64,11 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled, sizeP
         case InputType.YCoord:
             placeholder = "Y WCS Coordinate";
             break;
-        case InputType.Size:
-            placeholder = sizePlaceholder ?? "";
-            break;
         default:
             break;
+    }
+    if (customPlaceholder) {
+        placeholder = customPlaceholder;
     }
 
     return (
@@ -79,13 +79,14 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled, sizeP
 };
 
 type ImageCoordNumericInputProps = {
-    inputType: InputType;
+    inputType?: InputType;
     value: number;
     onChange: (val: number) => boolean; // return success or not for resetting displayed value
-    sizePlaceholder?: string;
+    disabled?: boolean;
+    customPlaceholder?: string;
 };
 
-const ImageCoordNumericInput = ({inputType, value, onChange, sizePlaceholder = ""}: ImageCoordNumericInputProps) => {
+const ImageCoordNumericInput = ({inputType, value, onChange, disabled = false, customPlaceholder = ""}: ImageCoordNumericInputProps) => {
     const handleChange = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -106,14 +107,14 @@ const ImageCoordNumericInput = ({inputType, value, onChange, sizePlaceholder = "
         case InputType.YCoord:
             placeholder = "Y Coordinate";
             break;
-        case InputType.Size:
-            placeholder = sizePlaceholder ?? "";
-            break;
         default:
             break;
     }
+    if (customPlaceholder) {
+        placeholder = customPlaceholder;
+    }
 
-    return <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder={placeholder} value={value} onBlur={handleChange} onKeyDown={handleChange} />;
+    return <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder={placeholder} disabled={disabled}  value={value} onBlur={handleChange} onKeyDown={handleChange} />;
 };
 
 interface CoordNumericInputProps {
@@ -123,14 +124,15 @@ interface CoordNumericInputProps {
     onChange: (val: number) => boolean;
     valueWcs: string;
     onChangeWcs: (val: string) => boolean;
-    wcsDisabled: boolean;
-    sizePlaceholder?: string;
+    disabled?: boolean;
+    wcsDisabled?: boolean;
+    customPlaceholder?: string;
 }
 
-export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, onChangeWcs, wcsDisabled, sizePlaceholder = ""}: CoordNumericInputProps) => {
+export const CoordNumericInput = ({coord, inputType, value, onChange, valueWcs, onChangeWcs, disabled = false, wcsDisabled = false, customPlaceholder = ""}: CoordNumericInputProps) => {
     if (coord === CoordinateMode.Image) {
-        return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} sizePlaceholder={sizePlaceholder} />;
+        return <ImageCoordNumericInput inputType={inputType} value={value} onChange={onChange} disabled={disabled} customPlaceholder={customPlaceholder} />;
     } else {
-        return <WcsCoordNumericInput inputType={inputType} valueWcs={valueWcs} onChangeWcs={onChangeWcs} disabled={wcsDisabled} sizePlaceholder={sizePlaceholder} />;
+        return <WcsCoordNumericInput inputType={inputType} valueWcs={valueWcs} onChangeWcs={onChangeWcs} disabled={disabled || wcsDisabled} customPlaceholder={customPlaceholder} />;
     }
 };

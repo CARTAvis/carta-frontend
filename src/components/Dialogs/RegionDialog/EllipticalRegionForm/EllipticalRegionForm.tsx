@@ -181,7 +181,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 valueWcs={sizeWCS?.x}
                 onChangeWcs={this.handleMajorAxisWCSChange}
                 wcsDisabled={!this.props.wcsInfo}
-                sizePlaceholder="Semi-major"
+                customPlaceholder="Semi-major"
             />
         );
         const sizeHeightInput = (
@@ -193,7 +193,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                 valueWcs={sizeWCS?.y}
                 onChangeWcs={this.handleMinorAxisWCSChange}
                 wcsDisabled={!this.props.wcsInfo}
-                sizePlaceholder="Semi-minor"
+                customPlaceholder="Semi-minor"
             />
         );
         const sizeInfoString = region.coordinate === CoordinateMode.Image ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
