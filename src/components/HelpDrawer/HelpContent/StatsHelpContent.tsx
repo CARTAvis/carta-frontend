@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonStatistics from "static/help/widgetButton_statistics.png";
 import widgetButtonStatistics_d from "static/help/widgetButton_statistics_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const STATS_HELP_CONTENT = (
     <div>

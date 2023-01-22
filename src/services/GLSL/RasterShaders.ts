@@ -1,6 +1,6 @@
-import rasterVertexShader from "!raw-loader!./vertex_shader_raster.glsl";
 import rasterPixelShader from "!raw-loader!./pixel_shader_raster.glsl";
 import utilities from "!raw-loader!./utilities.glsl";
+import rasterVertexShader from "!raw-loader!./vertex_shader_raster.glsl";
 
 const pixelMacros = `
 #define LINEAR 0

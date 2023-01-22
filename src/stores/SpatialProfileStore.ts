@@ -1,5 +1,6 @@
-import {action, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
+import {action, makeObservable, observable} from "mobx";
+
 import {ProcessedSpatialProfile, ProtobufProcessing} from "utilities";
 
 type Coordinate = string; // combination of I/Q/U/V stokes & x/y spatial axis, e.g. "Ix", "Qy"

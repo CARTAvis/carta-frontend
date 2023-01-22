@@ -1,13 +1,14 @@
-import {action, computed, observable, makeObservable, override} from "mobx";
-import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
-import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
-import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {getColorsForValues, isAutoColor} from "utilities";
-import {SpectralSystem} from "models";
+import {ChartArea} from "chart.js";
+import {action, computed, makeObservable, observable, override} from "mobx";
 import tinycolor from "tinycolor2";
-import {ProfileSmoothingStore} from "stores/ProfileSmoothingStore";
+
 import {StokesAnalysisSettingsTabs} from "components";
+import {LineSettings, PlotType, ScatterSettings} from "components/Shared";
+import {SpectralSystem} from "models";
+import {ProfileSmoothingStore} from "stores";
+import {RegionsType, RegionWidgetStore} from "stores/widgets";
+import {getColorsForValues, isAutoColor} from "utilities";
 
 export enum StokesCoordinate {
     CurrentZ = "z",

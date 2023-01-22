@@ -1,11 +1,13 @@
 import * as React from "react";
+import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
-import {computed, autorun} from "mobx";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
-import {HistogramWidgetStore} from "stores/widgets";
-import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
-import {parseNumber} from "utilities";
+
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps} from "components/Shared";
 import {LineKey} from "models";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {HistogramWidgetStore} from "stores/widgets";
+import {parseNumber} from "utilities";
+
 import "./HistogramSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;

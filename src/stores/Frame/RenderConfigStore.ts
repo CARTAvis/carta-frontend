@@ -1,5 +1,6 @@
-import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
+import {action, computed, makeObservable, observable} from "mobx";
+
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";

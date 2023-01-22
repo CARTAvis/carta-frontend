@@ -1,14 +1,16 @@
 import * as React from "react";
+import ReactResizeDetector from "react-resize-detector";
+import {AnchorButton, FormGroup, HTMLSelect, Position, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {Tooltip2} from "@blueprintjs/popover2";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, Tabs, Tab, TabId, HTMLSelect, AnchorButton, Position, Switch} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import ReactResizeDetector from "react-resize-detector";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {PvGeneratorWidgetStore, RegionId, PVAxis} from "stores/widgets";
-import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+
 import {TaskProgressDialogComponent} from "components/Dialogs";
+import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/widgets";
+
 import "./PvGeneratorComponent.scss";
 
 export enum PvGeneratorComponentTabs {

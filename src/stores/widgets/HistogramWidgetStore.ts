@@ -1,10 +1,12 @@
-import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {PlotType, LineSettings} from "components/Shared";
-import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {isAutoColor} from "utilities";
-import {POLARIZATIONS, VALID_COORDINATES} from "models";
+import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
+
+import {LineSettings, PlotType} from "components/Shared";
+import {POLARIZATIONS, VALID_COORDINATES} from "models";
+import {isAutoColor} from "utilities";
+
+import {RegionsType, RegionWidgetStore} from "./RegionWidgetStore";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;

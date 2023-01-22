@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonStokes from "static/help/widgetButton_stokes.png";
 import widgetButtonStokes_d from "static/help/widgetButton_stokes_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const STOKES_ANALYSIS_HELP_CONTENT = (
     <div>

@@ -1,4 +1,5 @@
 import {action, makeObservable, observable} from "mobx";
+
 import {BeamType, PreferenceStore} from "stores";
 
 export class OverlayBeamStore {

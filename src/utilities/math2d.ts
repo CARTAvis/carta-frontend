@@ -1,4 +1,4 @@
-import {Point2D} from "../models";
+import {Point2D} from "models";
 
 type Point3D = {x: number; y: number; z?: number};
 

@@ -1,7 +1,11 @@
 import * as React from "react";
+import {Classes, Drawer, IDrawerProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {Classes, Drawer, IDrawerProps} from "@blueprintjs/core";
+
+import {AppStore} from "stores";
+import {HelpStore, HelpType} from "stores/HelpStore";
+
 import {
     ANIMATOR_HELP_CONTENT,
     CATALOG_HISTOGRAM_PLOT_HELP_CONTENT,
@@ -32,9 +36,9 @@ import {
     RENDER_CONFIG_SETTINGS_HELP_CONTENT,
     SAVE_LAYOUT_HELP_CONTENT,
     SPATIAL_PROFILER_HELP_CONTENT,
+    SPATIAL_PROFILER_SETTINGS_COMPUTATION_HELP_CONTENT,
     SPATIAL_PROFILER_SETTINGS_SMOOTHING_HELP_CONTENT,
     SPATIAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT,
-    SPATIAL_PROFILER_SETTINGS_COMPUTATION_HELP_CONTENT,
     SPECTRAL_LINE_QUERY_HELP_CONTENT,
     SPECTRAL_PROFILER_HELP_CONTENT,
     SPECTRAL_PROFILER_SETTINGS_CONVERSION_HELP_CONTENT,
@@ -51,7 +55,6 @@ import {
     STOKES_HYPERCUBE_DIALOG_HELP_CONTENT,
     VECTOR_OVERLAY_HELP_CONTENT
 } from "./HelpContent";
-import {AppStore, HelpStore, HelpType} from "stores";
 
 const HELP_CONTENT_MAP = new Map<HelpType, JSX.Element>([
     // Dialog

@@ -1,12 +1,13 @@
 import * as React from "react";
-import tinycolor from "tinycolor2";
-import {observer} from "mobx-react";
-import {action, makeObservable, observable} from "mobx";
-import {Button, Collapse, FormGroup, Switch} from "@blueprintjs/core";
 import {ColorResult} from "react-color";
+import {Button, Collapse, FormGroup, Switch} from "@blueprintjs/core";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+import tinycolor from "tinycolor2";
+
+import {BiasContrastSelectComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {AppStore, PreferenceKeys} from "stores";
 import {FrameScaling, RenderConfigStore} from "stores/Frame";
-import {BiasContrastSelectComponent, ColormapComponent, ColorPickerComponent, ScalingSelectComponent, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
 
 interface ColormapConfigProps {

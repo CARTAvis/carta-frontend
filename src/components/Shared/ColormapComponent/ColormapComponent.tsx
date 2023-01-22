@@ -1,10 +1,10 @@
 import * as React from "react";
-import {MenuItem, IPopoverProps, Button} from "@blueprintjs/core";
+import {Button, IPopoverProps, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {RenderConfigStore} from "stores/Frame";
-
 // Static assets
 import allMaps from "static/allmaps.png";
+
+import {RenderConfigStore} from "stores/Frame";
 
 interface ColormapComponentProps {
     selectedItem: string;

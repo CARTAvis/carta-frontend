@@ -1,34 +1,23 @@
-import {action, autorun, computed, observable, makeObservable, reaction} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
-import {
-    CENTER_POINT_INDEX,
-    SIZE_POINT_INDEX,
-    ColorbarStore,
-    ContourConfigStore,
-    ContourStore,
-    DistanceMeasuringStore,
-    OverlayBeamStore,
-    RegionSetStore,
-    RegionStore,
-    RenderConfigStore,
-    RestFreqStore,
-    VectorOverlayConfigStore,
-    VectorOverlayStore
-} from "stores/Frame";
+import {CARTA} from "carta-protobuf";
+import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
+
 import {
     CatalogControlMap,
     ChannelInfo,
+    COMPUTED_POLARIZATIONS,
     ControlMap,
     CursorInfo,
     FrameView,
+    FULL_POLARIZATIONS,
     GenCoordinateLabel,
     IsSpectralSystemSupported,
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
     Point2D,
+    POLARIZATION_LABELS,
+    POLARIZATIONS,
     SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
     SPECTRAL_TYPE_STRING,
@@ -38,14 +27,28 @@ import {
     SpectralTypeSet,
     SpectralUnit,
     STANDARD_POLARIZATIONS,
-    COMPUTED_POLARIZATIONS,
-    FULL_POLARIZATIONS,
     STANDARD_SPECTRAL_TYPE_SETS,
-    POLARIZATION_LABELS,
-    POLARIZATIONS,
     Transform2D,
     ZoomPoint
 } from "models";
+import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
+import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
+import {
+    CENTER_POINT_INDEX,
+    ColorbarStore,
+    ContourConfigStore,
+    ContourStore,
+    DistanceMeasuringStore,
+    OverlayBeamStore,
+    RegionSetStore,
+    RegionStore,
+    RenderConfigStore,
+    RestFreqStore,
+    SIZE_POINT_INDEX,
+    VectorOverlayConfigStore,
+    VectorOverlayStore
+} from "stores/Frame";
+import {RegionId} from "stores/widgets";
 import {
     clamp,
     formattedArcsec,
@@ -65,8 +68,6 @@ import {
     transformPoint,
     trimFitsComment
 } from "utilities";
-import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
-import {RegionId} from "stores/widgets";
 
 export interface FrameInfo {
     fileId: number;
