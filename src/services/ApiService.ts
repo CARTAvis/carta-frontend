@@ -561,19 +561,16 @@ export class ApiService {
         }
     };
 
-    public getWorkspace = async (name: string) => {
+    public getWorkspace = async (name: string): Promise<Workspace | undefined> => {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace/${name}`;
                 const response = await this.axiosInstance.get<{workspace: Workspace; success: boolean}>(url);
                 if (response?.data?.success) {
                     return response.data.workspace;
-                } else {
-                    return undefined;
                 }
             } catch (err) {
                 console.log(err);
-                return undefined;
             }
         } else {
             try {
@@ -581,19 +578,17 @@ export class ApiService {
                 const workspace = existingWorkspaces?.[name];
                 if (workspace) {
                     const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
-                    if (!valid) {
-                        //console.log(ApiService.WorkspaceValidator.errors);
-                    } else {
+                    if (valid) {
                         return workspace;
+                    } else {
+                        //console.log(ApiService.WorkspaceValidator.errors);
                     }
-                } else {
-                    return undefined;
                 }
             } catch (err) {
                 console.log(err);
-                return undefined;
             }
         }
+        return undefined;
     };
 
     public setWorkspace = async (workspaceName: string, workspace: Workspace): Promise<boolean> => {

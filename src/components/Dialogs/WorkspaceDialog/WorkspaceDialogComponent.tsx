@@ -12,6 +12,8 @@ import {AppStore, HelpType} from "stores";
 
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
 
+import {WorkspaceInfoComponent} from "./WorkspaceInfoComponent";
+
 import "./WorkspaceDialogComponent.scss";
 
 export enum WorkspaceDialogMode {
@@ -25,13 +27,13 @@ export const WorkspaceDialogComponent = observer(() => {
     const [isFetching, setIsFetching] = useState(false);
     const [fetchErrorMessage, setFetchErrorMessage] = useState("");
     const [workspaceName, setWorkspaceName] = useState("");
+    const [selectedWorkspace, setSelectedWorkspace] = useState<WorkspaceListItem>();
 
     const appStore = AppStore.Instance;
     const mode = appStore.dialogStore.workspaceDialogMode;
 
     const fetchWorkspaces = useCallback(async () => {
         setIsFetching(true);
-        await appStore.delay(250);
         setFetchErrorMessage("");
 
         try {
@@ -121,6 +123,8 @@ export const WorkspaceDialogComponent = observer(() => {
 
     // Fetch workspaces at start
     useEffect(() => {
+        setSelectedWorkspace(undefined);
+        setIsFetching(false);
         if (mode !== WorkspaceDialogMode.Hidden) {
             fetchWorkspaces();
         }
@@ -141,6 +145,7 @@ export const WorkspaceDialogComponent = observer(() => {
 
     const handleEntryClicked = (entry: WorkspaceListItem) => {
         setWorkspaceName(entry.name);
+        setSelectedWorkspace(entry);
     };
 
     const handleDoubleClick = useCallback(
@@ -242,9 +247,14 @@ export const WorkspaceDialogComponent = observer(() => {
     }
 
     return (
-        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_WORKSPACE} defaultWidth={400} defaultHeight={400} minWidth={425} minHeight={400} enableResizing={true}>
+        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_WORKSPACE} defaultWidth={950} defaultHeight={750} minWidth={950} minHeight={750} enableResizing={true}>
             <div className={Classes.DIALOG_BODY}>
-                <div className="workspace-table-container">{tableContent}</div>
+                <div className="workspace-container">
+                    <div className="workspace-table-container">{tableContent}</div>
+                    <div className="workspace-info-container">
+                        <WorkspaceInfoComponent workspaceListItem={selectedWorkspace} />
+                    </div>
+                </div>
                 <InputGroup className="workspace-name-input" placeholder="Enter workspace name" value={workspaceName} autoFocus={true} onChange={handleInput} onKeyDown={handleKeyDown} />
             </div>
             <div className={Classes.DIALOG_FOOTER}>

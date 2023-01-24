@@ -13,13 +13,24 @@
         }
     }
 
-    .workspace-table-container {
+    .workspace-container {
         position: relative;
         height: calc(100% - 55px);
+        display: flex;
 
-        .bp3-non-ideal-state {
-            position: absolute;
-            z-index: 1;
+        .workspace-table-container {
+            height: 100%;
+
+            .bp3-non-ideal-state {
+                position: absolute;
+                z-index: 1;
+            }
+        }
+
+        .workspace-info-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
     }
 
