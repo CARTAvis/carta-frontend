@@ -1,6 +1,7 @@
 import * as AST from "ast_wrapper";
-import {Point2D} from "./Point2D";
-import {add2D, transformPoint, length2D, scaleAndRotateAboutPoint2D, subtract2D} from "utilities";
+
+import {Point2D} from "models";
+import {add2D, length2D, scaleAndRotateAboutPoint2D, subtract2D, transformPoint} from "utilities";
 
 export class Transform2D {
     translation: Point2D;

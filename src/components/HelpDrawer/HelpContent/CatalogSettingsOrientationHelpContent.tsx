@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import demoImageOverlayOrientationMapping from "static/help/demo_image_overlay_orientation_mapping.png";
 import demoImageOverlayOrientationMapping_d from "static/help/demo_image_overlay_orientation_mapping_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const CATALOG_SETTINGS_ORIENTATION_HELP_CONTENT = (
     <div>

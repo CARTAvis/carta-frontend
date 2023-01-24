@@ -1,4 +1,4 @@
-import {toFixed} from "utilities/units";
+import {toFixed} from "utilities";
 
 export class Point2D {
     x: number;

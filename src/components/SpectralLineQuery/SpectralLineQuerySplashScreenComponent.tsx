@@ -1,11 +1,13 @@
 import * as React from "react";
-import classNames from "classnames";
-import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, Intent, Position, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
+import classNames from "classnames";
+import {observer} from "mobx-react";
+import splatalogueLogoPng from "static/splatalogue_logo.png";
+
 import {AppStore} from "stores";
 import {SplataloguePingStatus} from "stores/widgets";
-import splatalogueLogoPng from "static/splatalogue_logo.png";
+
 import "./SpectralLineQuerySplashScreenComponent.scss";
 
 @observer

@@ -1,23 +1,25 @@
 import * as React from "react";
 import {observer} from "mobx-react";
+
 import {HelpDrawerComponent, RootMenuComponent, SplashScreenComponent} from "components";
 import {
     AboutDialogComponent,
     CatalogQueryDialogComponent,
     CodeSnippetDialogComponent,
     ContourDialogComponent,
+    DistanceMeasuringDialog,
     ExternalPageDialogComponent,
     FileBrowserDialogComponent,
     FileInfoDialogComponent,
+    FittingDialogComponent,
     PreferenceDialogComponent,
     RegionDialogComponent,
     SaveLayoutDialogComponent,
     StokesDialogComponent,
     TelemetryDialogComponent,
-    VectorOverlayDialogComponent,
-    FittingDialogComponent,
-    DistanceMeasuringDialog
+    VectorOverlayDialogComponent
 } from "components/Dialogs";
+
 import {WorkspaceDialogComponent} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
 
 @observer

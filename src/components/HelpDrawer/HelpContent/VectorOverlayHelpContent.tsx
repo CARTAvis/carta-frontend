@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import dialogButtonVectorOverlay from "static/help/dialogButton_vectorOverlay.png";
 import dialogButtonVectorOverlay_d from "static/help/dialogButton_vectorOverlay_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const VECTOR_OVERLAY_HELP_CONTENT = (
     <div>

@@ -1,15 +1,18 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
+import {AnchorButton, Button, Classes, IDialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
+import {Cell, Column, IRegion, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 import moment from "moment/moment";
-import {AnchorButton, InputGroup, IDialogProps, Button, Intent, Classes, NonIdealState, Spinner} from "@blueprintjs/core";
-import {Cell, Column, IRegion, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
+
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, HelpType} from "stores";
 import {WorkspaceListItem} from "models";
-import "./WorkspaceDialogComponent.scss";
+import {AppStore, HelpType} from "stores";
+
 import {AppToaster, ErrorToast, SuccessToast} from "../../Shared";
+
+import "./WorkspaceDialogComponent.scss";
 
 export enum WorkspaceDialogMode {
     Hidden,

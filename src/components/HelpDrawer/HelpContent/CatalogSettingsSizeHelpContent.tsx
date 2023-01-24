@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import demoImageOverlaySizeMapping from "static/help/demo_image_overlay_Size_mapping.png";
 import demoImageOverlaySizeMapping_d from "static/help/demo_image_overlay_Size_mapping_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const CATALOG_SETTINGS_SIZE_HELP_CONTENT = (
     <div>

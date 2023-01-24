@@ -1,7 +1,9 @@
 import * as AST from "ast_wrapper";
+
 import {CatalogStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {ControlMap} from "models";
+
+import {ControlMap} from "./ControlMap";
 
 export class CatalogControlMap extends ControlMap {
     private boundaryUpdated: boolean;

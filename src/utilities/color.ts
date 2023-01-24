@@ -1,6 +1,7 @@
 // Static assets
-import allMaps from "static/allmaps.png";
 import {Colors} from "@blueprintjs/core";
+import allMaps from "static/allmaps.png";
+
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
 

@@ -1,6 +1,8 @@
 import {FrameScaling} from "stores/Frame";
-import {Point2D} from "./Point2D";
+
 import {CARTA} from "../../protobuf/build";
+
+import {Point2D} from "./Point2D";
 
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;

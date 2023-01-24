@@ -1,9 +1,10 @@
-import {action, makeObservable, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
+import {action, makeObservable, observable} from "mobx";
+
 import {FileInfoType} from "components";
-import {SnippetStore} from "stores";
-import {Snippet} from "models";
 import {WorkspaceDialogMode} from "components/Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
+import {Snippet} from "models";
+import {SnippetStore} from "stores";
 
 export class DialogStore {
     private static staticInstance: DialogStore;

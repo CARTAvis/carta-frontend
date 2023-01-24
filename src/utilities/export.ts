@@ -1,5 +1,5 @@
-import moment from "moment";
 import html2canvas from "html2canvas";
+import moment from "moment";
 
 export function getTimestamp(format: string = "YYYY-MM-DD-HH-mm-ss") {
     return moment(new Date()).format(format);

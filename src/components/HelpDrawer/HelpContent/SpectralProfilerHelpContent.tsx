@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonSpectralProfiler from "static/help/widgetButton_spectralProfiler.png";
 import widgetButtonSpectralProfiler_d from "static/help/widgetButton_spectralProfiler_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const SPECTRAL_PROFILER_HELP_CONTENT = (
     <div>
