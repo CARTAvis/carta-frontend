@@ -48,42 +48,58 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
 
     let totalRegions = 0;
     for (const file of workspace.files) {
-        if (!file.spatialMatching || file.id === workspace.spatialReference) {
+        if (!file.references?.spatial || file.id === workspace.references?.spatial) {
             totalRegions += file.regionsSet?.regions?.length ?? 0;
         }
     }
 
-    const spatialReference = workspace.spatialReference ? workspace.files?.find(f => f.id === workspace.spectralReference) : null;
+    const spatialReference = workspace.files?.find(f => f.id === workspace.references.spatial);
+    const spectralReference = workspace.files?.find(f => f.id === workspace.references.spectral);
+    const rasterReference = workspace.files?.find(f => f.id === workspace.references.raster);
 
     return (
         <div className="workspace-info">
             <Callout className="workspace-thumbnail">{workspace.thumbnail ? <img src={workspace.thumbnail} /> : <NonIdealState icon="media" title="No thumbnail" />}</Callout>
             <Callout className="workspace-properties">
                 <table className="info-table">
-                    <tr className="entry">
-                        <td className="entry-title">Name</td>
-                        <td className="entry-value">{workspaceListItem.name}</td>
-                    </tr>
-                    <tr className="entry">
-                        <td className="entry-title">Number of regions</td>
-                        <td className="entry-value">{totalRegions}</td>
-                    </tr>
-                    {spatialReference ? (
+                    <tbody>
                         <tr className="entry">
-                            <td className="entry-title">Spatial reference</td>
-                            <td className="entry-value">{spatialReference.filename}</td>
+                            <td className="entry-title">Name</td>
+                            <td className="entry-value">{workspaceListItem.name}</td>
                         </tr>
-                    ) : null}
-                    <tr className="entry">
-                        <td className="entry-title">Files</td>
-                        <td className="entry-value">
-                            <ul>
-                                {workspace.files.map(f => (
-                                    <li>{f.filename}</li>
-                                ))}
-                            </ul>
-                        </td>
-                    </tr>
+                        <tr className="entry">
+                            <td className="entry-title">Number of regions</td>
+                            <td className="entry-value">{totalRegions}</td>
+                        </tr>
+                        {spatialReference ? (
+                            <tr className="entry">
+                                <td className="entry-title">Spatial reference</td>
+                                <td className="entry-value">{spatialReference.filename}</td>
+                            </tr>
+                        ) : null}
+                        {spectralReference ? (
+                            <tr className="entry">
+                                <td className="entry-title">Spectral reference</td>
+                                <td className="entry-value">{spectralReference.filename}</td>
+                            </tr>
+                        ) : null}
+                        {rasterReference ? (
+                            <tr className="entry">
+                                <td className="entry-title">Raster scaling reference</td>
+                                <td className="entry-value">{rasterReference.filename}</td>
+                            </tr>
+                        ) : null}
+                        <tr className="entry">
+                            <td className="entry-title">Files</td>
+                            <td className="entry-value">
+                                <ul>
+                                    {workspace.files.map(f => (
+                                        <li key={f.id}>{f.filename}</li>
+                                    ))}
+                                </ul>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </Callout>
         </div>

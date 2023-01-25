@@ -11,7 +11,24 @@ import * as Semver from "semver";
 
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {CatalogInfo, CatalogType, COMPUTED_POLARIZATIONS, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, SpectralType, Theme, TileCoordinate, ToFileListFilterMode, WCSMatchingType, Workspace} from "models";
+import {
+    CatalogInfo,
+    CatalogType,
+    COMPUTED_POLARIZATIONS,
+    FileId,
+    FrameView,
+    ImagePanelMode,
+    Point2D,
+    PresetLayout,
+    RegionId,
+    SpectralType,
+    Theme,
+    TileCoordinate,
+    ToFileListFilterMode,
+    WCSMatchingType,
+    Workspace,
+    WorkspaceFile
+} from "models";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
 import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/widgets";
@@ -450,7 +467,7 @@ export class AppStore {
         return frameMap;
     }
 
-    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string, generated: boolean = false): boolean => {
+    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string, generated: boolean = false, setAsActive: boolean = true): boolean => {
         if (!ack) {
             return false;
         }
@@ -498,7 +515,9 @@ export class AppStore {
             this.setSpectralReference(newFrame);
         }
 
-        this.setActiveFrame(newFrame);
+        if (setAsActive) {
+            this.setActiveFrame(newFrame);
+        }
         // init image associated catalog
         this.catalogStore.updateImageAssociatedCatalogId(newFrame.frameInfo.fileId, []);
 
@@ -525,7 +544,7 @@ export class AppStore {
     };
 
     @flow.bound
-    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean) {
+    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true) {
         this.startFileLoading();
 
         if (imageArithmetic) {
@@ -558,7 +577,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.loadFile(path, filename, hdu, this.fileCounter, imageArithmetic);
             this.fileCounter++;
-            if (!this.addFrame(ack, path, hdu)) {
+            if (!this.addFrame(ack, path, hdu, setAsActive)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
@@ -621,10 +640,10 @@ export class AppStore {
      * @return {Promise<FrameStore>} [async] the FrameStore the opened file
      */
     @flow.bound
-    *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) {
+    *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic);
+        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive);
     }
 
     /**
@@ -1989,7 +2008,7 @@ export class AppStore {
         this.loadingWorkspace = true;
 
         try {
-            const workspace = yield this.apiService.getWorkspace(name);
+            const workspace: Workspace = yield this.apiService.getWorkspace(name);
             if (!workspace) {
                 this.loadingWorkspace = false;
                 AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
@@ -2008,9 +2027,19 @@ export class AppStore {
 
             if (workspace.files) {
                 for (const fileInfo of workspace.files) {
-                    const frame: FrameStore = yield this.appendFile(fileInfo.directory, fileInfo.filename, fileInfo.hdu, false);
+                    const frame: FrameStore = yield this.appendFile(fileInfo.directory, fileInfo.filename, fileInfo.hdu, false, false);
                     if (frame) {
                         frameIdMap.set(fileInfo.id, frame.frameInfo.fileId);
+                        // References
+                        if (workspace.references?.spatial === fileInfo.id) {
+                            this.setSpatialReference(frame);
+                        }
+                        if (workspace.references?.spectral === fileInfo.id) {
+                            this.setSpectralReference(frame);
+                        }
+                        if (workspace.references?.raster === fileInfo.id) {
+                            this.setRasterScalingReference(frame);
+                        }
                     }
                 }
 
@@ -2024,18 +2053,44 @@ export class AppStore {
                         continue;
                     }
 
-                    this.setSpatialMatchingEnabled(frame, fileInfo.spatialMatching);
-                    this.setSpectralMatchingEnabled(frame, fileInfo.spatialMatching);
-                    // TODO: apply render config
-                    if (fileInfo.regionsSet?.regions) {
+                    if (workspace.selectedFile === frame.frameInfo.fileId) {
+                        this.setActiveFrame(frame);
+                    }
+
+                    if (fileInfo.renderConfig) {
+                        frame.renderConfig.updateFromWorkspace(fileInfo.renderConfig);
+                    }
+
+                    if (workspace.references && fileInfo.references) {
+                        if (this.spatialReference && fileInfo.references.spatial === workspace.references.spatial) {
+                            this.setSpatialMatchingEnabled(frame, true);
+                        }
+                        if (this.spectralReference && fileInfo.references.spectral === workspace.references.spectral) {
+                            this.setSpectralMatchingEnabled(frame, true);
+                        }
+                        if (this.rasterScalingReference && fileInfo.references.raster === workspace.references.raster) {
+                            this.setRasterScalingMatchingEnabled(frame, true);
+                        }
+                    }
+
+                    // Apply regions if spatial matching isn't enabled
+                    if (!frame.spatialReference && fileInfo.regionsSet?.regions) {
                         for (const regionInfo of fileInfo.regionsSet.regions) {
                             const region = frame.regionSet.addExistingRegion(regionInfo.points, regionInfo.rotation, regionInfo.type, regionInfo.id, regionInfo.name, regionInfo.color, regionInfo.lineWidth, regionInfo.dashes, false);
                             if (region) {
                                 regionIdMap.set(regionInfo.id, region.regionId);
+                                if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
+                                    frame.regionSet.selectRegion(region);
+                                }
                             }
                         }
                     }
                 }
+            }
+
+            // Sync up raster scaling once all images are loaded and configured
+            if (this.rasterScalingReference) {
+                this.rasterScalingReference.renderConfig.updateSiblings();
             }
 
             this.loadingWorkspace = false;
@@ -2053,7 +2108,8 @@ export class AppStore {
             workspaceVersion: 0,
             frontendVersion: 4,
             description: "Example workspace",
-            files: []
+            files: [],
+            references: {}
         };
 
         const thumbnail = yield exportScreenshot();
@@ -2061,13 +2117,71 @@ export class AppStore {
             workspace.thumbnail = thumbnail;
         }
 
+        if (this.spatialReference) {
+            workspace.references.spatial = this.spatialReference.frameInfo.fileId;
+        }
+        if (this.spectralReference) {
+            workspace.references.spectral = this.spectralReference.frameInfo.fileId;
+        }
+        if (this.rasterScalingReference) {
+            workspace.references.raster = this.rasterScalingReference.frameInfo.fileId;
+        }
+
         for (const frame of this.frames) {
-            workspace.files.push({
+            const workspaceFile: WorkspaceFile = {
                 id: frame.frameInfo.fileId,
                 directory: frame.frameInfo.directory,
                 filename: frame.filename,
-                hdu: frame.frameInfo.hdu
-            });
+                hdu: frame.frameInfo.hdu,
+                references: {}
+            };
+            if (frame.spatialReference) {
+                workspaceFile.references.spatial = frame.spatialReference.frameInfo.fileId;
+            } else if (frame.regionSet?.regions.length) {
+                workspaceFile.regionsSet = {
+                    regions: [],
+                    selectedRegion: frame.regionSet.selectedRegion?.regionId
+                };
+                for (const region of frame.regionSet.regions) {
+                    workspaceFile.regionsSet.regions.push({
+                        id: region.regionId,
+                        type: region.regionType,
+                        rotation: region.rotation,
+                        points: region.controlPoints,
+                        name: region.name,
+                        color: region.color,
+                        lineWidth: region.lineWidth,
+                        dashes: region.dashLength ? [region.dashLength] : []
+                    });
+                }
+            }
+
+            if (frame.spectralReference) {
+                workspaceFile.references.spectral = frame.spectralReference.frameInfo.fileId;
+            }
+            if (frame.rasterScalingReference) {
+                workspaceFile.references.raster = frame.rasterScalingReference.frameInfo.fileId;
+            }
+
+            // Render config (TODO: A more extensible way of saving/loading state for simple stores)
+            const {scaling, colorMap, bias, contrast, gamma, alpha, inverted, useCubeHistogram, useCubeHistogramContours, selectedPercentile, scaleMin, scaleMax, visible} = frame.renderConfig;
+            workspaceFile.renderConfig = {
+                scaling,
+                colorMap,
+                bias,
+                contrast,
+                gamma,
+                alpha,
+                inverted,
+                useCubeHistogram,
+                useCubeHistogramContours,
+                selectedPercentile,
+                scaleMin,
+                scaleMax,
+                visible
+            };
+
+            workspace.files.push(workspaceFile);
         }
 
         return this.apiService.setWorkspace(name, workspace);

@@ -6,7 +6,7 @@ import {Point2D} from "./Point2D";
 
 export interface WorkspaceRenderConfig {
     scaling?: FrameScaling;
-    colormap?: string;
+    colorMap?: string;
     bias?: number;
     contrast?: number;
     gamma?: number;
@@ -16,7 +16,7 @@ export interface WorkspaceRenderConfig {
     useCubeHistogramContours?: boolean;
     selectedPercentile?: number[];
     scaleMin?: number[];
-    scaleMax?: number;
+    scaleMax?: number[];
     visible?: boolean;
 }
 
@@ -36,8 +36,11 @@ export interface WorkspaceFile {
     directory?: string;
     filename: string;
     hdu?: string;
-    spatialMatching?: boolean;
-    spectralMatching?: boolean;
+    references?: {
+        spatial?: number;
+        spectral?: number;
+        raster?: number;
+    };
     renderConfig?: WorkspaceRenderConfig;
     regionsSet?: {
         selectedRegion?: number;
@@ -50,8 +53,12 @@ export interface Workspace {
     frontendVersion: number;
     description?: string;
     files?: WorkspaceFile[];
-    spatialReference?: number;
-    spectralReference?: number;
+    references?: {
+        spatial?: number;
+        spectral?: number;
+        raster?: number;
+    };
+    selectedFile?: number;
     thumbnail?: string;
 }
 
