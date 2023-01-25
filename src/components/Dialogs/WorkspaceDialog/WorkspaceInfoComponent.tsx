@@ -53,9 +53,9 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
         }
     }
 
-    const spatialReference = workspace.files?.find(f => f.id === workspace.references.spatial);
-    const spectralReference = workspace.files?.find(f => f.id === workspace.references.spectral);
-    const rasterReference = workspace.files?.find(f => f.id === workspace.references.raster);
+    const spatialReference = workspace.files?.find(f => f.id === workspace.references?.spatial);
+    const spectralReference = workspace.files?.find(f => f.id === workspace.references?.spectral);
+    const rasterReference = workspace.files?.find(f => f.id === workspace.references?.raster);
 
     return (
         <div className="workspace-info">

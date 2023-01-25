@@ -2143,6 +2143,10 @@ export class AppStore {
                     selectedRegion: frame.regionSet.selectedRegion?.regionId
                 };
                 for (const region of frame.regionSet.regions) {
+                    // Skip cursor region
+                    if (region.regionId === 0) {
+                        continue;
+                    }
                     workspaceFile.regionsSet.regions.push({
                         id: region.regionId,
                         type: region.regionType,
@@ -2182,6 +2186,10 @@ export class AppStore {
             };
 
             workspace.files.push(workspaceFile);
+        }
+
+        if (this.activeFrame) {
+            workspace.selectedFile = this.activeFrameFileId;
         }
 
         return this.apiService.setWorkspace(name, workspace);
