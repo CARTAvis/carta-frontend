@@ -1,9 +1,11 @@
 import * as React from "react";
-import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, IOptionProps, Switch} from "@blueprintjs/core";
+import {observer} from "mobx-react";
+
+import {AutoColorPickerComponent, LineSettings, PlotType, PlotTypeSelectorComponent, SafeNumericInput} from "components/Shared";
 import {ProfileSmoothingStore} from "stores";
-import {AutoColorPickerComponent, SafeNumericInput, PlotTypeSelectorComponent, PlotType, LineSettings} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
+
 import "./SmoothingSettingsComponent.scss";
 
 export enum SmoothingType {

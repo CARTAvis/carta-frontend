@@ -1,11 +1,13 @@
-import {action, computed, observable, makeObservable, flow} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {action, computed, flow, makeObservable, observable} from "mobx";
+
+import {CARTA_INFO, CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, ImagePanelMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {ApiService} from "services";
+import {TelemetryMode} from "services/TelemetryService";
 import {BeamType, FileFilteringType} from "stores";
 import {ContourGeneratorType, FrameScaling} from "stores/Frame";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, ImagePanelMode, FileFilterMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint, CARTA_INFO} from "models";
 import {parseBoolean} from "utilities";
-import {ApiService, TelemetryMode} from "services";
 
 export enum PreferenceKeys {
     SILENT_FILE_SORTING_STRING = "fileSortingString",

@@ -1,13 +1,14 @@
-import {action, computed, observable, makeObservable, autorun, flow} from "mobx";
 import {IOptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
+
+import {FileInfoType} from "components";
+import {AppToaster, ErrorToast} from "components/Shared";
+import {Freq, FrequencyUnit, LineOption, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
 import {RegionId} from "stores/widgets";
-import {AppToaster, ErrorToast} from "components/Shared";
-import {FileInfoType} from "components";
-import {Freq, FrequencyUnit, LineOption, ToFileListFilterMode} from "models";
 import {getDataTypeString, ProcessedColumnData} from "utilities";
 
 export enum BrowserMode {

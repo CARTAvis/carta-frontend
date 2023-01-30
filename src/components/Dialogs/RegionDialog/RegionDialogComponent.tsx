@@ -3,17 +3,20 @@ import {observer} from "mobx-react";
 import {AnchorButton, Classes, FormGroup, IDialogProps, Intent, NonIdealState, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
+
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, HelpType} from "stores";
 import {CompassAnnotationStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, VectorAnnotationStore} from "stores/Frame";
-import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
-import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
-import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
+
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
-import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
+import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {LineRegionForm} from "./LineRegionForm/LineRegionForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
 import {CustomIcon} from "icons/CustomIcons";
+import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
+import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
+import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
+
 import "./RegionDialogComponent.scss";
 import {PointShapeSelectComponent, SafeNumericInput} from "components/Shared";
 

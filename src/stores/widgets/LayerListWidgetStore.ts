@@ -1,5 +1,6 @@
-import {action, computed, makeObservable, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
+import {action, computed, makeObservable, observable} from "mobx";
+
 import {AppStore} from "stores";
 
 export enum LayerListSettingsTabs {

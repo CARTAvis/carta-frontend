@@ -1,15 +1,17 @@
 import * as React from "react";
+import {AnchorButton, ButtonGroup, Position} from "@blueprintjs/core";
+import {IconName} from "@blueprintjs/icons";
+import {Tooltip2} from "@blueprintjs/popover2";
+import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {AnchorButton, ButtonGroup, Position} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {AppStore, WidgetsStore} from "stores";
-import {CARTA} from "carta-protobuf";
-import {RegionMode, RegionStore} from "stores/Frame";
+
 import {ImageViewLayer} from "components";
-import {RegionCreationMode} from "models";
-import {IconName} from "@blueprintjs/icons";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {RegionCreationMode} from "models";
+import {AppStore, WidgetsStore} from "stores";
+import {RegionMode, RegionStore} from "stores/Frame";
+
 import "./ToolbarMenuComponent.scss";
 
 @observer

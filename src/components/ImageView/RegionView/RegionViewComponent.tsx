@@ -1,21 +1,24 @@
 import * as React from "react";
-import * as _ from "lodash";
+import {Layer, Line, Stage} from "react-konva";
+import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
+import Konva from "konva";
+import * as _ from "lodash";
 import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
-import {Layer, Line, Stage} from "react-konva";
-import Konva from "konva";
-import {CARTA} from "carta-protobuf";
+
+import {ImageViewLayer} from "components";
+import {CursorInfo, Point2D, ZoomPoint} from "models";
 import {AppStore, OverlayStore, PreferenceStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
-import {CursorRegionComponent} from "./CursorRegionComponent";
-import {PointRegionComponent} from "./PointRegionComponent";
-import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
-import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
-import {ImageViewLayer} from "../ImageViewComponent";
-import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
-import {CursorInfo, Point2D, ZoomPoint} from "models";
 import {add2D, average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
+
+import {CursorRegionComponent} from "./CursorRegionComponent";
+import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
+import {PointRegionComponent} from "./PointRegionComponent";
+import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
+import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
+
 import "./RegionViewComponent.scss";
 import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
 

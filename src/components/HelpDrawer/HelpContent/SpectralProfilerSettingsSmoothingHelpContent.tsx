@@ -1,16 +1,17 @@
-import {ImageComponent} from "../ImageComponent";
-import smoothingBoxcar from "static/help/smoothing_boxcar.png";
-import smoothingGaussian from "static/help/smoothing_gaussian.png";
-import smoothingHanning from "static/help/smoothing_hanning.png";
 import smoothingBinning from "static/help/smoothing_binning.png";
-import smoothingSG from "static/help/smoothing_SG.png";
-import smoothingDecimation from "static/help/smoothing_decimation.png";
-import smoothingBoxcar_d from "static/help/smoothing_boxcar_d.png";
-import smoothingGaussian_d from "static/help/smoothing_gaussian_d.png";
-import smoothingHanning_d from "static/help/smoothing_hanning_d.png";
 import smoothingBinning_d from "static/help/smoothing_binning_d.png";
-import smoothingSG_d from "static/help/smoothing_SG_d.png";
+import smoothingBoxcar from "static/help/smoothing_boxcar.png";
+import smoothingBoxcar_d from "static/help/smoothing_boxcar_d.png";
+import smoothingDecimation from "static/help/smoothing_decimation.png";
 import smoothingDecimation_d from "static/help/smoothing_decimation_d.png";
+import smoothingGaussian from "static/help/smoothing_gaussian.png";
+import smoothingGaussian_d from "static/help/smoothing_gaussian_d.png";
+import smoothingHanning from "static/help/smoothing_hanning.png";
+import smoothingHanning_d from "static/help/smoothing_hanning_d.png";
+import smoothingSG from "static/help/smoothing_SG.png";
+import smoothingSG_d from "static/help/smoothing_SG_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const SPECTRAL_PROFILER_SETTINGS_SMOOTHING_HELP_CONTENT = (
     <div>

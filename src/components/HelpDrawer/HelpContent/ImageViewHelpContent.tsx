@@ -1,28 +1,29 @@
-import {ImageComponent} from "../ImageComponent";
-import catalogSelectionButton from "static/help/imageTools_catalogSelectionButton.png";
-import catalogSelectionButton_d from "static/help/imageTools_catalogSelectionButton_d.png";
 import contourButton from "static/help/dialogButton_contourConfig.png";
 import contourButton_d from "static/help/dialogButton_contourConfig_d.png";
-import vectorOverlayButton from "static/help/dialogButton_vectorOverlay.png";
-import vectorOverlayButton_d from "static/help/dialogButton_vectorOverlay_d.png";
-import exportPNGButton from "static/help/imageTools_exportButton.png";
-import exportPNGButton_d from "static/help/imageTools_exportButton_d.png";
 import imageInfoButton from "static/help/dialogButton_fileHeader.png";
 import imageInfoButton_d from "static/help/dialogButton_fileHeader_d.png";
+import vectorOverlayButton from "static/help/dialogButton_vectorOverlay.png";
+import vectorOverlayButton_d from "static/help/dialogButton_vectorOverlay_d.png";
 import imageTools from "static/help/imageTools_annotated.png";
 import imageTools_d from "static/help/imageTools_annotated_d.png";
-import regionButton from "static/help/imageTools_regionButton.png";
-import regionButton_d from "static/help/imageTools_regionButton_d.png";
-import WCSMatchButton from "static/help/imageTools_matchButton.png";
-import WCSMatchButton_d from "static/help/imageTools_matchButton_d.png";
-import zoomButton from "static/help/imageTools_zoomButtons.png";
-import zoomButton_d from "static/help/imageTools_zoomButtons_d.png";
-import widgetButtonCatalog from "static/help/widgetButton_catalog.png";
-import widgetButtonCatalog_d from "static/help/widgetButton_catalog_d.png";
+import catalogSelectionButton from "static/help/imageTools_catalogSelectionButton.png";
+import catalogSelectionButton_d from "static/help/imageTools_catalogSelectionButton_d.png";
 import distanceMeasureButton from "static/help/imageTools_distanceMeasureButton.png";
 import distanceMeasureButton_d from "static/help/imageTools_distanceMeasureButton_d.png";
+import exportPNGButton from "static/help/imageTools_exportButton.png";
+import exportPNGButton_d from "static/help/imageTools_exportButton_d.png";
+import WCSMatchButton from "static/help/imageTools_matchButton.png";
+import WCSMatchButton_d from "static/help/imageTools_matchButton_d.png";
+import regionButton from "static/help/imageTools_regionButton.png";
+import regionButton_d from "static/help/imageTools_regionButton_d.png";
+import zoomButton from "static/help/imageTools_zoomButtons.png";
+import zoomButton_d from "static/help/imageTools_zoomButtons_d.png";
 import regionButtonSet from "static/help/regionButtonSet.png";
 import regionButtonSet_d from "static/help/regionButtonSet_d.png";
+import widgetButtonCatalog from "static/help/widgetButton_catalog.png";
+import widgetButtonCatalog_d from "static/help/widgetButton_catalog_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const IMAGE_VIEW_HELP_CONTENT = (
     <div>

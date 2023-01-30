@@ -1,19 +1,23 @@
 import * as React from "react";
+import ReactResizeDetector from "react-resize-detector";
+import {Colors, NonIdealState} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import {ChartArea} from "chart.js";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, NonIdealState} from "@blueprintjs/core";
-import ReactResizeDetector from "react-resize-detector";
-import {ChartArea} from "chart.js";
-import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType, SmoothingType} from "components/Shared";
-import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
-import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {AppStore, AnimatorStore, DefaultWidgetConfig, HelpType, WidgetsStore, WidgetProps, SpectralProfileStore} from "stores";
+
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {Point2D, SpectralColorMap, SpectralType} from "models";
+import {AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, SpectralProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
-import {Point2D, SpectralColorMap, SpectralType} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation, minMaxArray, getColorForTheme} from "utilities";
+import {binarySearchByX, clamp, closestPointIndexToCursor, formattedNotation, getColorForTheme, minMaxArray, minMaxPointArrayZ, normalising, polarizationAngle, polarizedIntensity, toExponential, toFixed} from "utilities";
+
+import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+
+import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
+
 import "./StokesAnalysisComponent.scss";
 
 type Border = {xMin: number; xMax: number; yMin: number; yMax: number};

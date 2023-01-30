@@ -1,9 +1,11 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {computed, makeObservable} from "mobx";
 import {Checkbox, Icon, IconName} from "@blueprintjs/core";
-import {FileBrowserStore, SelectionMode} from "stores";
+import {computed, makeObservable} from "mobx";
+import {observer} from "mobx-react";
+
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {FileBrowserStore, SelectionMode} from "stores";
+
 import "./RegionSelectComponent.scss";
 
 @observer

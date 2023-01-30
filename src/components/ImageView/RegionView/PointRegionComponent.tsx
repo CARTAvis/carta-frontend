@@ -1,12 +1,14 @@
 import * as React from "react";
-import {observer} from "mobx-react";
 import Konva from "konva";
+import {observer} from "mobx-react";
+
 import {AppStore} from "stores";
-import {FrameStore, PointAnnotationStore, RegionStore} from "stores/Frame";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {Point2D} from "models";
+import {FrameStore, PointAnnotationStore, RegionStore} from "stores/Frame";
 import {transformPoint} from "utilities";
+
 import {Point} from "./InvariantShapes";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 
 interface PointRegionComponentProps {
     region: RegionStore;

@@ -5,12 +5,14 @@ import {Group, Line, Arrow} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
+
+import {Point2D} from "models";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore, VectorAnnotationStore} from "stores/Frame";
-import {Point2D} from "models";
-import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, subtract2D, angle2D} from "utilities";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {add2D, angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, transformPoint} from "utilities";
+
 import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 
 interface LineSegmentRegionComponentProps {
     region: RegionStore;

@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonSpectralLineQuery from "static/help/widgetButton_spectralLineQuery.png";
 import widgetButtonSpectralLineQuery_d from "static/help/widgetButton_spectralLineQuery_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
     <div>

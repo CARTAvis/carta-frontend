@@ -1,13 +1,24 @@
-import * as _ from "lodash";
-import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
-import * as Long from "long";
-import axios from "axios";
-import * as Semver from "semver";
 import {Classes, Colors, IOptionProps, setHotkeysDialogProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
 import * as AST from "ast_wrapper";
+import axios from "axios";
 import * as CARTACompute from "carta_computation";
 import {CARTA} from "carta-protobuf";
+import * as _ from "lodash";
+import * as Long from "long";
+import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
+import * as Semver from "semver";
+
+import {getImageViewCanvas, ImageViewLayer} from "components";
+import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
+import {CatalogInfo, CatalogType, COMPUTED_POLARIZATIONS, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, SpectralType, Theme, TileCoordinate, ToFileListFilterMode, WCSMatchingType} from "models";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
+import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore, CompassAnnotationStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
+import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/widgets";
+import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+
+import GitCommit from "../static/gitInfo";
+
 import {
     AlertStore,
     AnimationMode,
@@ -32,15 +43,6 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "./Frame";
-import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject} from "utilities";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CatalogInfo, CatalogType, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, Theme, TileCoordinate, WCSMatchingType, SpectralType, ToFileListFilterMode, COMPUTED_POLARIZATIONS} from "models";
-import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
-import {getImageViewCanvas, ImageViewLayer} from "components";
-import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {ProtobufProcessing} from "utilities";
-import GitCommit from "../static/gitInfo";
 
 interface FrameOption extends IOptionProps {
     hasZAxis: boolean;

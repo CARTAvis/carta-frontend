@@ -1,8 +1,9 @@
 import * as AST from "ast_wrapper";
-import {action, observable, makeObservable, reaction, computed} from "mobx";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
+
 import {CatalogSystemType, Point2D} from "models";
-import {AppStore, OverlayStore, NumberFormatType, ASTSettingsString, SystemType} from "stores";
 import {CatalogDatabase} from "services";
+import {AppStore, ASTSettingsString, NumberFormatType, OverlayStore, SystemType} from "stores";
 import {clamp, getPixelValueFromWCS, transformPoint, VizierResource} from "utilities";
 
 export enum RadiusUnits {

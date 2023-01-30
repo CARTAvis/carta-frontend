@@ -1,9 +1,11 @@
-import {action, observable, makeObservable, computed, reaction} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore} from "stores";
-import {RegionWidgetStore, RegionsType, RegionId} from "./RegionWidgetStore";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
+
 import {SpectralSystem} from "models";
+import {AppStore} from "stores";
+
+import {RegionId, RegionsType, RegionWidgetStore} from "./RegionWidgetStore";
 
 export enum PVAxis {
     SPATIAL = "Spatial",

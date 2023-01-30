@@ -1,7 +1,8 @@
-import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
+import {action, computed, makeObservable, observable} from "mobx";
+
+import {AbstractCatalogProfileStore, CatalogInfo, CatalogType} from "models";
 import {ControlHeader, PreferenceStore} from "stores";
-import {AbstractCatalogProfileStore, CatalogType, CatalogInfo} from "models";
 import {ProcessedColumnData} from "utilities";
 
 export class CatalogOnlineQueryProfileStore extends AbstractCatalogProfileStore {

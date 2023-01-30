@@ -4,12 +4,14 @@ import {observer} from "mobx-react";
 import {Ellipse, Group, Line, Rect, Text} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
+
+import {Point2D} from "models";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore, TextAnnotationStore} from "stores/Frame";
-import {Point2D} from "models";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, angle2D, rotate2D, scale2D, subtract2D, transformPoint} from "utilities";
+
 import {Anchor} from "./InvariantShapes";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 
 interface SimpleShapeRegionComponentProps {
     region: RegionStore;
