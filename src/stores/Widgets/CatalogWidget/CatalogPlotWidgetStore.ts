@@ -1,4 +1,4 @@
-import {action, computed, makeObservable,observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 import {CatalogOverlay, Point2D} from "models";
 import {CatalogPlotType} from "stores/Widgets";

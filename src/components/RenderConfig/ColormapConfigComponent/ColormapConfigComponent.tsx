@@ -3,7 +3,7 @@ import {Button, Collapse, FormGroup, Switch} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {BiasContrastSelectComponent, ColormapComponent, SafeNumericInput,ScalingSelectComponent} from "components/Shared";
+import {BiasContrastSelectComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {FrameScaling, RenderConfigStore} from "stores/Frame";
 
 interface ColormapConfigProps {

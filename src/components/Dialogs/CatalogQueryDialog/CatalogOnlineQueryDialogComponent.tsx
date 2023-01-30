@@ -1,7 +1,7 @@
 import * as React from "react";
-import {AnchorButton, Button, FormGroup, Icon, IDialogProps, InputGroup, Intent, MenuItem, NonIdealState, Overlay, PopoverPosition,Position, Spinner} from "@blueprintjs/core";
+import {AnchorButton, Button, FormGroup, Icon, IDialogProps, InputGroup, Intent, MenuItem, NonIdealState, Overlay, PopoverPosition, Position, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, MultiSelect,Select} from "@blueprintjs/select";
+import {IItemRendererProps, MultiSelect, Select} from "@blueprintjs/select";
 import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";

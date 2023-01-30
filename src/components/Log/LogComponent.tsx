@@ -1,10 +1,10 @@
 import * as React from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
-import {Button, Code, Colors, FormGroup, HTMLSelect, Intent,NonIdealState, Tag} from "@blueprintjs/core";
+import {Button, Code, Colors, FormGroup, HTMLSelect, Intent, NonIdealState, Tag} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {DefaultWidgetConfig, HelpType, LogStore,WidgetProps} from "stores";
+import {DefaultWidgetConfig, HelpType, LogStore, WidgetProps} from "stores";
 
 import "./LogComponent.scss";
 

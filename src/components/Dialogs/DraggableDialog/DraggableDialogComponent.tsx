@@ -2,7 +2,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {ResizeEnable, Rnd} from "react-rnd";
-import {Button,Dialog, IDialogProps} from "@blueprintjs/core";
+import {Button, Dialog, IDialogProps} from "@blueprintjs/core";
 
 import {HelpStore, HelpType} from "stores";
 

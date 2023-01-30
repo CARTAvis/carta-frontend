@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {FormGroup, HTMLSelect,HTMLTable, NonIdealState} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, HTMLTable, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
@@ -9,9 +9,9 @@ import {observer} from "mobx-react";
 import {RegionSelectorComponent} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {FULL_POLARIZATIONS, POLARIZATIONS} from "models";
-import {AppStore,DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {StatsWidgetStore} from "stores/Widgets";
-import {exportTsvFile,toExponential} from "utilities";
+import {exportTsvFile, toExponential} from "utilities";
 
 import "./StatsComponent.scss";
 

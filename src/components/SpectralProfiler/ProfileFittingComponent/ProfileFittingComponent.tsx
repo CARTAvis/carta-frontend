@@ -1,13 +1,13 @@
 import * as React from "react";
-import {AnchorButton, Button,FormGroup, HTMLSelect, Intent, Pre, Slider, Switch, Text} from "@blueprintjs/core";
+import {AnchorButton, Button, FormGroup, HTMLSelect, Intent, Pre, Slider, Switch, Text} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
-import {action, autorun, makeObservable,observable} from "mobx";
+import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {AppStore,ProfileFittingStore} from "stores";
+import {AppStore, ProfileFittingStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/Widgets";
-import {exportTxtFile,getTimestamp} from "utilities";
+import {exportTxtFile, getTimestamp} from "utilities";
 
 import "./ProfileFittingComponent.scss";
 

@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, makeObservable,observable, ObservableMap} from "mobx";
+import {action, makeObservable, observable, ObservableMap} from "mobx";
 
 import {ProcessedSpectralProfile} from "utilities";
 

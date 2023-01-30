@@ -5,7 +5,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {SpectralSystem} from "models";
 import {AppStore} from "stores";
 
-import {RegionId,RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export enum PVAxis {
     SPATIAL = "Spatial",

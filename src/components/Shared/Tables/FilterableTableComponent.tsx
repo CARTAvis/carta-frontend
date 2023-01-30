@@ -2,7 +2,7 @@ import * as React from "react";
 import {Checkbox, Icon, InputGroup, Label, Position} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, ColumnHeaderCell, IRegion,RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, IRegion, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";

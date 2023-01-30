@@ -1,5 +1,5 @@
 import * as React from "react";
-import {INumericInputProps,NumericInput} from "@blueprintjs/core";
+import {INumericInputProps, NumericInput} from "@blueprintjs/core";
 
 export interface SafeNumericInputProps extends INumericInputProps {
     intOnly?: boolean;

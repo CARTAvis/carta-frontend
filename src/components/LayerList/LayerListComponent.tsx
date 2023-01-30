@@ -3,12 +3,12 @@ import {CSSProperties} from "react";
 import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, ColumnHeaderCell, IMenuContext,RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, IMenuContext, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AppStore,DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {FrameStore} from "stores/Frame";
 import {LayerListSettingsTabs} from "stores/Widgets";
 

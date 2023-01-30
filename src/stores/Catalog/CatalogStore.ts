@@ -1,5 +1,5 @@
 import * as AST from "ast_wrapper";
-import {action, computed, makeObservable,observable, ObservableMap} from "mobx";
+import {action, computed, makeObservable, observable, ObservableMap} from "mobx";
 
 import {CatalogSystemType} from "models";
 import {CatalogWebGLService} from "services";

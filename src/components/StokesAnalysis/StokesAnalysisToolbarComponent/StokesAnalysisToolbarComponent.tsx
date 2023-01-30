@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup,FormGroup, Switch} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, FormGroup, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";

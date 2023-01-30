@@ -10,9 +10,9 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, BrowserMode,DefaultWidgetConfig, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
+import {AppStore, BrowserMode, DefaultWidgetConfig, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
 import {FrameStore, RegionsOpacity, RegionStore, WCS_PRECISION} from "stores/Frame";
-import {clamp,formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
+import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
 
 import "./RegionListComponent.scss";
 

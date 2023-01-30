@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, makeObservable,observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 
 import {ProcessedSpatialProfile, ProtobufProcessing} from "utilities";
 

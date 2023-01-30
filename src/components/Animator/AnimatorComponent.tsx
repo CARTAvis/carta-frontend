@@ -7,7 +7,7 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {AnimationMode, AnimatorStore, AppStore,DefaultWidgetConfig, HelpType, PlayMode, WidgetProps} from "stores";
+import {AnimationMode, AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, PlayMode, WidgetProps} from "stores";
 
 import "./AnimatorComponent.scss";
 

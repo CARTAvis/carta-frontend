@@ -1,7 +1,7 @@
 import * as React from "react";
 import {AnchorButton, Button, ButtonGroup, FormGroup, Icon, MenuItem, PopoverPosition, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, ItemPredicate,Select} from "@blueprintjs/select";
+import {IItemRendererProps, ItemPredicate, Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import FuzzySearch from "fuzzy-search";
 import {action, autorun, computed, makeObservable} from "mobx";
@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 import {CatalogOverlayComponent} from "components";
 import {AutoColorPickerComponent, ClearableNumericInputComponent, ColormapComponent, SafeNumericInput, ScalingSelectComponent} from "components/Shared";
 import {CatalogOverlay} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore,CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {CatalogOverlayShape, CatalogSettingsTabs, CatalogWidgetStore, ValueClip} from "stores/Widgets";
 import {getColorForTheme, SWATCH_COLORS} from "utilities";
 

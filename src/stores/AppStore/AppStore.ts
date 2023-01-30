@@ -11,7 +11,7 @@ import * as Semver from "semver";
 
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
-import {CatalogInfo, CatalogType, COMPUTED_POLARIZATIONS,FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, SpectralType, Theme, TileCoordinate, ToFileListFilterMode, WCSMatchingType} from "models";
+import {CatalogInfo, CatalogType, COMPUTED_POLARIZATIONS, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, SpectralType, Theme, TileCoordinate, ToFileListFilterMode, WCSMatchingType} from "models";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
 import {
     AlertStore,
@@ -38,7 +38,7 @@ import {
     WidgetsStore
 } from "stores";
 import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "stores/Frame";
-import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject,ProtobufProcessing} from "utilities";
+import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "../Widgets";

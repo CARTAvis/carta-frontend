@@ -1,9 +1,9 @@
 import * as GoldenLayout from "golden-layout";
-import {action, computed, flow,makeObservable, observable} from "mobx";
+import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {LayoutConfig, PresetLayout} from "models";
-import {AlertStore,AppStore} from "stores";
+import {AlertStore, AppStore} from "stores";
 
 import {ApiService} from "../../services";
 

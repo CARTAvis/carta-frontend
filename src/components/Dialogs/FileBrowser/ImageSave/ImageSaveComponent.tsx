@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, HTMLSelect, Intent,IOptionProps, Label, NumericInput, Switch, Text} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Intent, IOptionProps, Label, NumericInput, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";

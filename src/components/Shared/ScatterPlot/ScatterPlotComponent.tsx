@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Group, Layer, Line, Rect,Ring, Stage} from "react-konva";
+import {Group, Layer, Line, Rect, Ring, Stage} from "react-konva";
 import ReactResizeDetector from "react-resize-detector";
 import {Colors} from "@blueprintjs/core";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
@@ -7,12 +7,12 @@ import {Chart, ChartArea, Tick} from "chart.js";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {InteractionMode,ZoomMode} from "components/Shared/LinePlot/LinePlotComponent";
-import {MultiPlotProps,PlotContainerComponent, TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {InteractionMode, ZoomMode} from "components/Shared/LinePlot/LinePlotComponent";
+import {MultiPlotProps, PlotContainerComponent, TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {Point2D} from "models";
 import {AppStore} from "stores";
-import {clamp, exportTsvFile,getTimestamp, toExponential} from "utilities";
+import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
 
 import {PlotType} from "../PlotTypeSelector/PlotTypeSelectorComponent";
 

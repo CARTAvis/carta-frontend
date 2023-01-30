@@ -1,5 +1,5 @@
 import * as AST from "ast_wrapper";
-import {action, computed, makeObservable,observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 import {ImageViewLayer} from "components";
 import {Point2D, Transform2D} from "models";

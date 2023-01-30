@@ -3,10 +3,10 @@ import * as CARTACompute from "carta_computation";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {CatalogOverlay} from "models";
-import {CatalogTextureType,CatalogWebGLService} from "services";
+import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, PreferenceStore} from "stores";
 import {FrameScaling} from "stores/Frame";
-import {clamp,minMaxArray} from "utilities";
+import {clamp, minMaxArray} from "utilities";
 
 export enum CatalogPlotType {
     ImageOverlay = "Image Overlay",

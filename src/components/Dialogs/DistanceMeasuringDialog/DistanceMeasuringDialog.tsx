@@ -1,15 +1,15 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {FormGroup, H5,IDialogProps, NonIdealState} from "@blueprintjs/core";
+import {FormGroup, H5, IDialogProps, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
-import {action, makeObservable,observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {ColorPickerComponent, CoordinateComponent,SafeNumericInput} from "components/Shared";
+import {ColorPickerComponent, CoordinateComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {Point2D,WCSPoint2D} from "models";
+import {Point2D, WCSPoint2D} from "models";
 import {AppStore, DialogStore, HelpType} from "stores";
 import {DistanceMeasuringStore, RegionCoordinate} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";

@@ -1,7 +1,7 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, Dialog, FormGroup,InputGroup, Intent, TagInput} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, Dialog, FormGroup, InputGroup, Intent, TagInput} from "@blueprintjs/core";
 import classNames from "classnames";
-import {action,computed, makeObservable} from "mobx";
+import {action, computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AlertStore, AppStore, SnippetStore} from "stores";

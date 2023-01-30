@@ -9,7 +9,7 @@ import {SpectralSystem} from "models";
 import {ProfileSmoothingStore} from "stores";
 import {getColorsForValues, isAutoColor} from "utilities";
 
-import {RegionsType,RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export enum StokesCoordinate {
     CurrentZ = "z",

@@ -1,5 +1,5 @@
 import * as AST from "ast_wrapper";
-import {action, computed,makeObservable, observable, reaction} from "mobx";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {CatalogSystemType, Point2D} from "models";
 import {CatalogDatabase} from "services";

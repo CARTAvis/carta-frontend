@@ -10,9 +10,9 @@ import {observer} from "mobx-react";
 import {PlotType} from "components/Shared";
 import {Point2D} from "models";
 import {AppStore} from "stores";
-import {clamp, exportTsvFile,getTimestamp, toExponential} from "utilities";
+import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
 
-import {MultiPlotProps,PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerComponent";
+import {MultiPlotProps, PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 
 import "./LinePlotComponent.scss";

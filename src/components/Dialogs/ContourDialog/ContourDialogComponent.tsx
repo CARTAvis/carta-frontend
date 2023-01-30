@@ -13,7 +13,7 @@ import {Point2D} from "models";
 import {AppStore, HelpType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {clamp, getColorForTheme,toExponential, toFixed} from "utilities";
+import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
 
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";

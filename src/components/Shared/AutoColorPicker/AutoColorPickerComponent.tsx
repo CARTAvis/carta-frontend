@@ -1,11 +1,11 @@
 import * as React from "react";
-import {ColorResult,SketchPicker} from "react-color";
-import {Button, MenuItem,PopoverPosition} from "@blueprintjs/core";
+import {ColorResult, SketchPicker} from "react-color";
+import {Button, MenuItem, PopoverPosition} from "@blueprintjs/core";
 import {Popover2} from "@blueprintjs/popover2";
 import {Select} from "@blueprintjs/select";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {computed,makeObservable, observable} from "mobx";
+import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {AppStore} from "stores";

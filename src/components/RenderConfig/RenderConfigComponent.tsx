@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {Button, ButtonGroup, Colors,FormGroup, HTMLSelect, IOptionProps, NonIdealState} from "@blueprintjs/core";
+import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, IOptionProps, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
@@ -12,7 +12,7 @@ import {Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {clamp, getColorForTheme, scaleValue,toExponential, toFixed} from "utilities";
+import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
 
 import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 

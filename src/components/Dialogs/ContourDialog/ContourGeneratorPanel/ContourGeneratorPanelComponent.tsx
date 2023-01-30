@@ -4,7 +4,7 @@ import {Select} from "@blueprintjs/select";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ClearableNumericInputComponent, SafeNumericInput,SCALING_POPOVER_PROPS, ScalingSelectComponent} from "components/Shared";
+import {ClearableNumericInputComponent, SafeNumericInput, SCALING_POPOVER_PROPS, ScalingSelectComponent} from "components/Shared";
 import {ContourGeneratorType, FrameScaling, FrameStore} from "stores/Frame";
 import {getPercentiles, scaleValue} from "utilities";
 

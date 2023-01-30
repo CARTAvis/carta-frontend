@@ -1,6 +1,6 @@
 import * as React from "react";
 import {AnchorButton, Button, IDialogProps, Intent, MenuItem, PopoverPosition} from "@blueprintjs/core";
-import {IItemRendererProps,Select} from "@blueprintjs/select";
+import {IItemRendererProps, Select} from "@blueprintjs/select";
 import {Cell, Column, SelectionModes, Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";

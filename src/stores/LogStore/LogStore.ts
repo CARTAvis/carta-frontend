@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable,observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 export class LogEntry {
     tags: string[];

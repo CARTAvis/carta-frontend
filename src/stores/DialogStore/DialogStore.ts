@@ -1,5 +1,5 @@
 import {TabId} from "@blueprintjs/core";
-import {action, makeObservable,observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 
 import {FileInfoType} from "components";
 import {Snippet} from "models";

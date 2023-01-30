@@ -1,6 +1,6 @@
 import * as React from "react";
 import {AnchorButton, FormGroup, NumericInput, NumericInputProps} from "@blueprintjs/core";
-import {Placement,Tooltip2} from "@blueprintjs/popover2";
+import {Placement, Tooltip2} from "@blueprintjs/popover2";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 

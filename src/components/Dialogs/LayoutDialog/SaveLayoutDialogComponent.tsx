@@ -1,8 +1,8 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes,FormGroup, IDialogProps, InputGroup, Intent} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, FormGroup, IDialogProps, InputGroup, Intent} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
-import {computed, makeObservable,observable} from "mobx";
+import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";

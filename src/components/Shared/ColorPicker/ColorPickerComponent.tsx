@@ -1,10 +1,10 @@
 import * as React from "react";
-import {ColorResult, RGBColor,SketchPicker} from "react-color";
+import {ColorResult, RGBColor, SketchPicker} from "react-color";
 import {Button, PopoverPosition} from "@blueprintjs/core";
 import {Popover2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action,makeObservable, observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 

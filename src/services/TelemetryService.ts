@@ -1,5 +1,5 @@
 import axios, {AxiosInstance} from "axios";
-import {DBSchema, IDBPDatabase,openDB} from "idb";
+import {DBSchema, IDBPDatabase, openDB} from "idb";
 import jwt_decode from "jwt-decode";
 import {computed, flow, makeObservable, observable} from "mobx";
 import {v1 as uuidv1} from "uuid";

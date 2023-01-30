@@ -6,7 +6,7 @@ import {computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ClearableNumericInputComponent} from "components/Shared";
-import {FrequencyUnit,SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType} from "models";
+import {FrequencyUnit, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/Widgets";
 

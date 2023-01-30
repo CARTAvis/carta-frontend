@@ -25,10 +25,11 @@ import {
     SpectralProfilerSettingsPanelComponent,
     StatsComponent,
     StokesAnalysisComponent,
-    StokesAnalysisSettingsPanelComponent} from "components";
+    StokesAnalysisSettingsPanelComponent
+} from "components";
 import {ImageViewSettingsPanelComponent} from "components/ImageView/ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
 import {PvGeneratorComponent} from "components/PvGenerator/PvGeneratorComponent";
-import {CatalogStore,WidgetConfig, WidgetsStore} from "stores";
+import {CatalogStore, WidgetConfig, WidgetsStore} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {

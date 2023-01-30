@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {Point2D} from "models";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
-import {add2D, angle2D,average2D, closestPointOnLine, rotate2D, subtract2D, transformPoint} from "utilities";
+import {add2D, angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, transformPoint} from "utilities";
 
 import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";

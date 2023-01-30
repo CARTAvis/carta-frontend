@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button,IPopoverProps, MenuItem} from "@blueprintjs/core";
+import {Button, IPopoverProps, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import gammaPng from "static/equations/gamma.png";
 // Equation PNG images

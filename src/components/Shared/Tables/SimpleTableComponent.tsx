@@ -1,6 +1,6 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {Cell, Column, RenderMode, RowHeaderCell,SelectionModes, Table} from "@blueprintjs/table";
+import {Cell, Column, RenderMode, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 

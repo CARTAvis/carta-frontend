@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Layer, Line, Rect, Stage, Text} from "react-konva";
 import {fonts} from "ast_wrapper";
-import {action, makeObservable,observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ProfilerInfoComponent} from "components/Shared";

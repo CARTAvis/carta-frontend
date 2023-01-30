@@ -1,9 +1,9 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
-import {AnchorButton, Button,ButtonGroup, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, FormGroup, Intent, MenuItem, NonIdealState, PopoverPosition, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, ItemPredicate,Select} from "@blueprintjs/select";
+import {IItemRendererProps, ItemPredicate, Select} from "@blueprintjs/select";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
 import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
@@ -12,12 +12,12 @@ import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components/ImageView/ImageViewComponent";
-import {ClearableNumericInputComponent,FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
+import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
-import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, PreferenceKeys,PreferenceStore, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {RegionMode} from "stores/Frame";
-import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs,CatalogWidgetStore} from "stores/Widgets";
-import {ProcessedColumnData,toFixed} from "utilities";
+import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
+import {ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";
 

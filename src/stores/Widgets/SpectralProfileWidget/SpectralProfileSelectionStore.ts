@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
-import {LineKey, LineOption, POLARIZATION_LABELS, POLARIZATIONS,STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
+import {LineKey, LineOption, POLARIZATION_LABELS, POLARIZATIONS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/Widgets";

@@ -1,11 +1,11 @@
 import * as React from "react";
 import {Tab, Tabs} from "@blueprintjs/core";
-import {autorun,computed} from "mobx";
+import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, ScatterPlotSettingsPanelComponentProps, SmoothingSettingsComponent,SpectralSettingsComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, ScatterPlotSettingsPanelComponentProps, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
 import {LineKey} from "models";
-import {AppStore,DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisSettingsPanelComponent.scss";

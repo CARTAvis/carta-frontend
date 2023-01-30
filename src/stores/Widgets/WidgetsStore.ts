@@ -1,6 +1,6 @@
 import * as GoldenLayout from "golden-layout";
 import $ from "jquery";
-import {action, computed, makeObservable,observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 
 import {
     AnimatorComponent,
@@ -28,7 +28,8 @@ import {
     StatsComponent,
     StokesAnalysisComponent,
     // setting Panel
-    StokesAnalysisSettingsPanelComponent} from "components";
+    StokesAnalysisSettingsPanelComponent
+} from "components";
 import {ImagePanelMode} from "models";
 import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 
@@ -48,7 +49,8 @@ import {
     SpectralLineQueryWidgetStore,
     SpectralProfileWidgetStore,
     StatsWidgetStore,
-    StokesAnalysisWidgetStore} from ".";
+    StokesAnalysisWidgetStore
+} from ".";
 
 export enum WidgetType {
     Region = "Region List Widget",

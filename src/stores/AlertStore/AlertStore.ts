@@ -1,7 +1,7 @@
 import React from "react";
 import {MaybeElement} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
-import {action, makeObservable,observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 
 import {Deferred} from "services";
 

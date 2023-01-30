@@ -8,7 +8,7 @@ import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {FilterableTableComponent, FilterableTableComponentProps,SafeNumericInput} from "components/Shared";
+import {FilterableTableComponent, FilterableTableComponentProps, SafeNumericInput} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, SpectralLineQueryWidgetStore, SplataloguePingStatus} from "stores/Widgets";
 

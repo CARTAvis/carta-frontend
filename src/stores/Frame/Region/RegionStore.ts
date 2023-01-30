@@ -1,7 +1,7 @@
 import {Colors, IconName} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {action, computed, flow,makeObservable, observable} from "mobx";
+import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {CustomIconName} from "icons/CustomIcons";
 import {Point2D} from "models";

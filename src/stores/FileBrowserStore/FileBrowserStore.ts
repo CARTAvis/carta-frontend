@@ -1,6 +1,6 @@
 import {IOptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, flow,makeObservable, observable} from "mobx";
+import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";

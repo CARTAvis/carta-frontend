@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
-import {ACTIVE_FILE_ID,RegionId, RegionsType, RegionWidgetStore} from "stores/Widgets";
+import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "stores/Widgets";
 
 import "./RegionSelectorComponent.scss";
 

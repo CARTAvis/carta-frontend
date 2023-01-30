@@ -13,7 +13,6 @@ import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
 
 import "./ImageViewComponent.scss";
 
-
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",
     Catalog = "catalog",

@@ -7,14 +7,14 @@ import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, SmoothingType,VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {Point2D, SpectralColorMap, SpectralType} from "models";
-import {AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, SpectralProfileStore,WidgetProps, WidgetsStore} from "stores";
+import {AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, SpectralProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/Widgets";
-import {binarySearchByX, clamp, closestPointIndexToCursor, formattedNotation, getColorForTheme,minMaxArray, minMaxPointArrayZ, normalising, polarizationAngle, polarizedIntensity, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, closestPointIndexToCursor, formattedNotation, getColorForTheme, minMaxArray, minMaxPointArrayZ, normalising, polarizationAngle, polarizedIntensity, toExponential, toFixed} from "utilities";
 
-import {MultiPlotProps,TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 

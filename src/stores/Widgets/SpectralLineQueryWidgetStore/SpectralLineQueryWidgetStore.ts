@@ -1,11 +1,11 @@
 import {NumberRange} from "@blueprintjs/core";
 import {Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
-import {action, autorun, computed, flow,makeObservable, observable} from "mobx";
+import {action, autorun, computed, flow, makeObservable, observable} from "mobx";
 
 import {SplatalogueService} from "services";
 import {AppStore, ControlHeader} from "stores";
-import {booleanFiltering, numericFiltering, ProcessedColumnData, ProtobufProcessing,SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
+import {booleanFiltering, numericFiltering, ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
 
 export enum SplataloguePingStatus {
     Checking,

@@ -1,9 +1,9 @@
 import * as React from "react";
 import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {autorun,computed} from "mobx";
+import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SmoothingSettingsComponent,SpectralSettingsComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";

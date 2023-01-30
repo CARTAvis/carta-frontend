@@ -1,5 +1,5 @@
 import {Position} from "@blueprintjs/core";
-import {action, makeObservable,observable} from "mobx";
+import {action, makeObservable, observable} from "mobx";
 
 export enum HelpType {
     // Dialogs

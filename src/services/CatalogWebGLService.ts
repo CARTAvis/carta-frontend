@@ -1,4 +1,4 @@
-import {createTextureFromArray, getShaderProgram, GL2,initWebGL2, loadImageTexture} from "utilities";
+import {createTextureFromArray, getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import allMaps from "../static/allmaps.png";
 
