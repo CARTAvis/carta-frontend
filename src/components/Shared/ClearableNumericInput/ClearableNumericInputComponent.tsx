@@ -1,8 +1,9 @@
 import * as React from "react";
 import {AnchorButton, FormGroup, NumericInput, NumericInputProps} from "@blueprintjs/core";
-import {Tooltip2, Placement} from "@blueprintjs/popover2";
-import {observer} from "mobx-react";
+import {Placement,Tooltip2} from "@blueprintjs/popover2";
 import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {toExponential} from "utilities";
 
 const KEYCODE_ENTER = 13;

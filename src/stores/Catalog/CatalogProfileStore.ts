@@ -1,7 +1,8 @@
-import {action, computed, observable, makeObservable} from "mobx";
 import {CARTA} from "carta-protobuf";
+import {action, computed, makeObservable,observable} from "mobx";
+
+import {AbstractCatalogProfileStore, CatalogInfo,CatalogSystemType, CatalogType} from "models";
 import {PreferenceStore} from "stores";
-import {AbstractCatalogProfileStore, CatalogType, CatalogSystemType, CatalogInfo} from "models";
 import {ProcessedColumnData} from "utilities";
 
 export enum CatalogCoordinate {

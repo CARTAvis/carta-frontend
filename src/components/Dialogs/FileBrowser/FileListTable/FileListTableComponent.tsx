@@ -1,15 +1,17 @@
 import * as React from "react";
-import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
-import {observer} from "mobx-react";
+import {Button, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, Regions, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import {IRegion} from "@blueprintjs/table/src/regions";
-import {Button, Icon, Label, NonIdealState, Spinner} from "@blueprintjs/core";
-import globToRegExp from "glob-to-regexp";
-import moment from "moment";
-import FuzzySearch from "fuzzy-search";
 import {CARTA} from "carta-protobuf";
+import FuzzySearch from "fuzzy-search";
+import globToRegExp from "glob-to-regexp";
+import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
+import {observer} from "mobx-react";
+import moment from "moment";
+
 import {BrowserMode, FileFilteringType, ISelectedFile} from "stores";
 import {toFixed} from "utilities";
+
 import "./FileListTableComponent.scss";
 
 interface FileEntry extends ISelectedFile {

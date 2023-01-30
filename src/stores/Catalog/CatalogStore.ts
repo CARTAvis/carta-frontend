@@ -1,9 +1,10 @@
 import * as AST from "ast_wrapper";
-import {action, observable, ObservableMap, computed, makeObservable} from "mobx";
-import {AppStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, WidgetsStore} from "stores";
-import {FrameStore} from "stores/Frame";
-import {CatalogWebGLService} from "services";
+import {action, computed, makeObservable,observable, ObservableMap} from "mobx";
+
 import {CatalogSystemType} from "models";
+import {CatalogWebGLService} from "services";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, WidgetsStore} from "stores";
+import {FrameStore} from "stores/Frame";
 import {CatalogWidgetStore} from "stores/Widgets";
 import {minMaxArray} from "utilities";
 

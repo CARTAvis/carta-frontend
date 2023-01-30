@@ -1,11 +1,13 @@
 import * as React from "react";
-import {observer} from "mobx-react";
 import {computed} from "mobx";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
-import {RenderConfigWidgetStore} from "stores/Widgets";
-import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore} from "stores";
-import {parseNumber} from "utilities";
+import {observer} from "mobx-react";
+
+import {LinePlotSettingsPanelComponent,LinePlotSettingsPanelComponentProps} from "components/Shared";
 import {LineKey} from "models";
+import {DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {RenderConfigWidgetStore} from "stores/Widgets";
+import {parseNumber} from "utilities";
+
 import "./RenderConfigSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;

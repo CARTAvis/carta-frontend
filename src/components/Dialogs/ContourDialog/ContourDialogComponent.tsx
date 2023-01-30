@@ -1,20 +1,23 @@
 import * as React from "react";
-import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
-import {observer} from "mobx-react";
 import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, Tab, Tabs, TagInput} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
+import {action, autorun, computed, makeObservable, observable, runInAction} from "mobx";
+import {observer} from "mobx-react";
+
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
-import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
-import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
+import {CustomIcon} from "icons/CustomIcons";
+import {Point2D} from "models";
 import {AppStore, HelpType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {Point2D} from "models";
-import {clamp, toExponential, toFixed, getColorForTheme} from "utilities";
-import {CustomIcon} from "icons/CustomIcons";
+import {clamp, getColorForTheme,toExponential, toFixed} from "utilities";
+
+import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
+import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
+
 import "./ContourDialogComponent.scss";
 
 enum ContourDialogTabs {

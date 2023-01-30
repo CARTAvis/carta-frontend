@@ -1,17 +1,18 @@
 import * as React from "react";
-import * as _ from "lodash";
-import tinycolor from "tinycolor2";
-import classNames from "classnames";
-import {action, makeObservable, observable} from "mobx";
-import {observer} from "mobx-react";
+import {ColorResult} from "react-color";
 import {AnchorButton, Button, Callout, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {Select} from "@blueprintjs/select";
-import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
+import * as _ from "lodash";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+import tinycolor from "tinycolor2";
+
 import {DraggableDialogComponent} from "components/Dialogs";
-import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, SuccessToast} from "components/Shared";
+import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {
     CompressionQuality,
     CursorInfoVisibility,
@@ -29,10 +30,11 @@ import {
     Zoom,
     ZoomPoint
 } from "models";
+import {TelemetryMode} from "services";
 import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
-import {TelemetryMode} from "services";
+
 import "./PreferenceDialogComponent.scss";
 
 enum PreferenceDialogTabs {

@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonPVGenerator from "static/help/widgetButton_pvGenerator.png";
 import widgetButtonPVGenerator_d from "static/help/widgetButton_pvGenerator_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const PV_GENERATOR_HELP_CONTENT = (
     <div>

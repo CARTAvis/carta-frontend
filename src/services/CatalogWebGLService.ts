@@ -1,6 +1,8 @@
-import {createTextureFromArray, getShaderProgram, initWebGL2, loadImageTexture, GL2} from "utilities";
-import {catalogShaders} from "./GLSL";
+import {createTextureFromArray, getShaderProgram, GL2,initWebGL2, loadImageTexture} from "utilities";
+
 import allMaps from "../static/allmaps.png";
+
+import {catalogShaders} from "./GLSL";
 
 export enum CatalogTextureType {
     Position,

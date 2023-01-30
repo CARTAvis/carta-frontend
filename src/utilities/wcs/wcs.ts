@@ -1,9 +1,10 @@
-import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {Point2D, WCSPoint2D, SpectralType, SPECTRAL_DEFAULT_UNIT} from "models";
+import {CARTA} from "carta-protobuf";
+
+import {Point2D, SPECTRAL_DEFAULT_UNIT,SpectralType, WCSPoint2D} from "models";
 import {NumberFormatType} from "stores";
 import {FrameStore} from "stores/Frame";
-import {add2D, polygonPerimeter, rotate2D, scale2D, subtract2D, magDir2D, trimFitsComment} from "utilities";
+import {add2D, magDir2D, polygonPerimeter, rotate2D, scale2D, subtract2D, trimFitsComment} from "utilities";
 
 export function isWCSStringFormatValid(wcsString: string, format: NumberFormatType): boolean {
     if (!wcsString || !format) {

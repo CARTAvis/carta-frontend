@@ -1,10 +1,12 @@
-import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {observer} from "mobx-react";
+
 import {AppStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
-import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID} from "stores/Widgets";
+import {ACTIVE_FILE_ID,RegionId, RegionsType, RegionWidgetStore} from "stores/Widgets";
+
 import "./RegionSelectorComponent.scss";
 
 @observer

@@ -1,4 +1,5 @@
 import {Point2D} from "models";
+
 import {binarySearchByX} from "./array";
 
 test("test binarySearchByX with sorted array in incremental/decremental order", () => {

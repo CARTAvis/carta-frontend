@@ -1,15 +1,15 @@
 import * as React from "react";
-import {observable, action, autorun, makeObservable} from "mobx";
-import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, HTMLSelect, Slider, Pre, Text, Intent, Switch, Button} from "@blueprintjs/core";
+import {AnchorButton, Button,FormGroup, HTMLSelect, Intent, Pre, Slider, Switch, Text} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {action, autorun, makeObservable,observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {SafeNumericInput} from "components/Shared";
-import {ProfileFittingStore} from "stores";
+import {AppStore,ProfileFittingStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/Widgets";
-import {AppStore} from "stores";
-import {getTimestamp} from "utilities";
+import {exportTxtFile,getTimestamp} from "utilities";
+
 import "./ProfileFittingComponent.scss";
-import {exportTxtFile} from "utilities";
 
 export enum FittingFunction {
     GAUSSIAN = 0,

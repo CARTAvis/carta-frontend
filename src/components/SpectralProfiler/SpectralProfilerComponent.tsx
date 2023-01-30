@@ -1,20 +1,24 @@
 import * as React from "react";
-import * as _ from "lodash";
-import classNames from "classnames";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
-import {observer} from "mobx-react";
-import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
-import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, SmoothingType, PlotType} from "components/Shared";
-import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
-import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
-import {MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
+import {Colors, NonIdealState} from "@blueprintjs/core";
+import classNames from "classnames";
+import * as _ from "lodash";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType,SmoothingType} from "components/Shared";
 import {Point2D, SpectralType} from "models";
-import {binarySearchByX, clamp, formattedExponential, toFormattedNotationByDiff, toExponential, toFixed, getColorForTheme} from "utilities";
+import {AnimatorStore, AppStore, DefaultWidgetConfig,HelpType, WidgetProps, WidgetsStore} from "stores";
+import {MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
+import {binarySearchByX, clamp, formattedExponential, getColorForTheme,toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
+
+import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+
 import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
+import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
+import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
+
 import "./SpectralProfilerComponent.scss";
 
 const INFO_HEIGHT_MIN = 28;

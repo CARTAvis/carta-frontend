@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import dialogButtonPreferences from "static/help/dialogButton_preferences.png";
 import dialogButtonPreferences_d from "static/help/dialogButton_preferences_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const PREFERENCES_HELP_CONTENT = (
     <div>

@@ -1,13 +1,16 @@
 import * as React from "react";
-import {computed, autorun} from "mobx";
-import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
-import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
+import {autorun,computed} from "mobx";
+import {observer} from "mobx-react";
+
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SmoothingSettingsComponent,SpectralSettingsComponent} from "components/Shared";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/Widgets";
-import {WidgetProps, DefaultWidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
+
+import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";
+
 import "./SpectralProfilerSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;

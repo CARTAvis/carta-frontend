@@ -1,7 +1,8 @@
-import {action, observable, makeObservable} from "mobx";
-import tinycolor from "tinycolor2";
 import {RGBColor} from "react-color";
 import {CARTA} from "carta-protobuf";
+import {action, makeObservable,observable} from "mobx";
+import tinycolor from "tinycolor2";
+
 import {PreferenceStore} from "stores";
 
 export enum ContourGeneratorType {

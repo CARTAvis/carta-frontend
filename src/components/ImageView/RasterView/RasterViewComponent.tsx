@@ -1,12 +1,14 @@
 import * as React from "react";
-import tinycolor from "tinycolor2";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+import tinycolor from "tinycolor2";
+
+import {FrameView, Point2D, TileCoordinate} from "models";
+import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {FrameView, Point2D, TileCoordinate} from "models";
-import {GetRequiredTiles, GL2, LayerToMip, add2D, scale2D, smoothStep, getColorForTheme} from "utilities";
-import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
+import {add2D, getColorForTheme,GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
+
 import "./RasterViewComponent.scss";
 
 export class RasterViewComponentProps {

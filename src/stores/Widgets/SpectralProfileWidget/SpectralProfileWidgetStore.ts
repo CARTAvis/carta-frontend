@@ -1,12 +1,13 @@
-import {action, autorun, computed, observable, makeObservable, override, reaction} from "mobx";
 import {IOptionProps, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {PlotType, LineSettings, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
-import {RegionWidgetStore, RegionsType, RegionId, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {AppStore, ProfileSmoothingStore, ProfileFittingStore} from "stores";
-import {FindIntensityUnitType, GetFreqInGHz, GetIntensityOptions, GetIntensityConversion, LineKey, Point2D, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, SpectralSystem, POLARIZATIONS} from "models";
+import {action, autorun, computed, makeObservable, observable, override, reaction} from "mobx";
 import tinycolor from "tinycolor2";
+
 import {SpectralProfilerSettingsTabs} from "components";
+import {LineSettings, PlotType, SmoothingType,VERTICAL_RANGE_PADDING} from "components/Shared";
+import {FindIntensityUnitType, GetFreqInGHz, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS,SpectralSystem} from "models";
+import {AppStore, ProfileFittingStore,ProfileSmoothingStore} from "stores";
+import {RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {clamp, getAngleInRad, getColorForTheme, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {

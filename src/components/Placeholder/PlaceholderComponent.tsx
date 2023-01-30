@@ -1,6 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {HelpType, DefaultWidgetConfig} from "stores";
+
+import {DefaultWidgetConfig,HelpType} from "stores";
+
 import "./PlaceholderComponent.scss";
 
 class PlaceholderComponentProps {

@@ -1,12 +1,14 @@
 import * as React from "react";
-import classNames from "classnames";
-import {observer} from "mobx-react";
-import {action, makeObservable, observable} from "mobx";
+import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, Button, ButtonGroup, ControlGroup, HTMLSelect, IconName, Menu, MenuItem, NonIdealState, NumberRange, Position, Radio, RangeSlider, Slider} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
-import ReactResizeDetector from "react-resize-detector";
-import {AnimationMode, PlayMode, DefaultWidgetConfig, WidgetProps, HelpType, AnimatorStore, AppStore} from "stores";
+import classNames from "classnames";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {SafeNumericInput} from "components/Shared";
+import {AnimationMode, AnimatorStore, AppStore,DefaultWidgetConfig, HelpType, PlayMode, WidgetProps} from "stores";
+
 import "./AnimatorComponent.scss";
 
 enum NumericInputType {

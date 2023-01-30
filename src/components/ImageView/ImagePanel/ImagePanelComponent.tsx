@@ -1,21 +1,24 @@
 import * as React from "react";
 import classNames from "classnames";
-import {observer} from "mobx-react";
 import {action, computed, makeObservable, observable} from "mobx";
-import {OverlayComponent} from "../Overlay/OverlayComponent";
-import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
-import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
-import {RasterViewComponent} from "../RasterView/RasterViewComponent";
-import {ToolbarComponent} from "../Toolbar/ToolbarComponent";
-import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
-import {RegionViewComponent} from "../RegionView/RegionViewComponent";
-import {ContourViewComponent} from "../ContourView/ContourViewComponent";
-import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
-import {VectorOverlayViewComponent} from "../VectorOverlayView/VectorOverlayView";
-import {ImageViewLayer} from "../ImageViewComponent";
+import {observer} from "mobx-react";
+
+import {CursorInfo, CursorInfoVisibility, Zoom} from "models";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {CursorInfo, CursorInfoVisibility, Zoom} from "models";
+
+import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
+import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
+import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
+import {ContourViewComponent} from "../ContourView/ContourViewComponent";
+import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
+import {ImageViewLayer} from "../ImageViewComponent";
+import {OverlayComponent} from "../Overlay/OverlayComponent";
+import {RasterViewComponent} from "../RasterView/RasterViewComponent";
+import {RegionViewComponent} from "../RegionView/RegionViewComponent";
+import {ToolbarComponent} from "../Toolbar/ToolbarComponent";
+import {VectorOverlayViewComponent} from "../VectorOverlayView/VectorOverlayView";
+
 import "./ImagePanelComponent.scss";
 
 interface ImagePanelComponentProps {

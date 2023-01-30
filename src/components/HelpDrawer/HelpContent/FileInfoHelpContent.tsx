@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import dialogButtonFileHeader from "static/help/dialogButton_fileHeader.png";
 import dialogButtonFileHeader_d from "static/help/dialogButton_fileHeader_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const FILE_INFO_HELP_CONTENT = (
     <div>

@@ -1,10 +1,11 @@
-import {action, computed, observable, makeObservable} from "mobx";
 import * as GSL from "gsl_wrapper";
-import {FittingFunction, FittingContinuum} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
-import {SpectralProfileWidgetStore} from "stores/Widgets";
-import {Point2D} from "models";
+import {action, computed, makeObservable,observable} from "mobx";
+
 import {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
-import {autoDetecting, getColorForTheme, toFixed, gaussian, lorentzian} from "utilities";
+import {FittingContinuum,FittingFunction} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
+import {Point2D} from "models";
+import {SpectralProfileWidgetStore} from "stores/Widgets";
+import {autoDetecting, gaussian, getColorForTheme, lorentzian,toFixed} from "utilities";
 
 export class ProfileFittingStore {
     @observable function: FittingFunction;

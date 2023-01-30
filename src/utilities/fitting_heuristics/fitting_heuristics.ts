@@ -1,7 +1,8 @@
-import * as _ from "lodash";
 import * as GSL from "gsl_wrapper";
-import {ProfileFittingIndividualStore} from "stores";
+import * as _ from "lodash";
+
 import {FittingFunction} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
+import {ProfileFittingIndividualStore} from "stores";
 
 export function hanningSmoothing(data: number[]) {
     // hanning width = 3

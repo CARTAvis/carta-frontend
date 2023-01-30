@@ -1,8 +1,8 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {observer} from "mobx-react";
-import {Cell, Column, Table, SelectionModes, RenderMode, RowHeaderCell} from "@blueprintjs/table";
+import {Cell, Column, RenderMode, RowHeaderCell,SelectionModes, Table} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
+import {observer} from "mobx-react";
 
 export class SimpleTableComponentProps {
     dataset: Map<number, any>;

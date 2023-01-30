@@ -1,11 +1,13 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {action, autorun, computed, makeObservable} from "mobx";
-import {Text, Label, FormGroup, IOptionProps, HTMLSelect, Switch, NumericInput, Intent} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Intent,IOptionProps, Label, NumericInput, Switch, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FileBrowserStore} from "stores";
-import {FrequencyUnit, SpectralSystem} from "models";
+import {action, autorun, computed, makeObservable} from "mobx";
+import {observer} from "mobx-react";
+
 import {ClearableNumericInputComponent} from "components/Shared";
+import {FrequencyUnit, SpectralSystem} from "models";
+import {AppStore, FileBrowserStore} from "stores";
+
 import "./ImageSaveComponent.scss";
 
 @observer

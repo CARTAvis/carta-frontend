@@ -1,4 +1,5 @@
 import {IconName, IOptionProps} from "@blueprintjs/core";
+
 import {CustomIconName} from "icons/CustomIcons";
 
 export type FileId = number;

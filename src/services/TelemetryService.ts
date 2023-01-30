@@ -1,10 +1,11 @@
-import jwt_decode from "jwt-decode";
 import axios, {AxiosInstance} from "axios";
+import {DBSchema, IDBPDatabase,openDB} from "idb";
+import jwt_decode from "jwt-decode";
 import {computed, flow, makeObservable, observable} from "mobx";
 import {v1 as uuidv1} from "uuid";
-import {openDB, DBSchema, IDBPDatabase} from "idb";
-import {PreferenceKeys, PreferenceStore} from "stores";
+
 import {CARTA_INFO} from "models";
+import {PreferenceKeys, PreferenceStore} from "stores";
 import {getUnixTimestamp} from "utilities";
 
 export enum TelemetryMode {

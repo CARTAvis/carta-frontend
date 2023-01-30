@@ -1,14 +1,16 @@
 import * as React from "react";
-import {observer} from "mobx-react";
 import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
+import {CARTA} from "carta-protobuf";
+import {observer} from "mobx-react";
+
+import {CoordinateComponent,SafeNumericInput} from "components/Shared";
+import {Point2D, WCSPoint2D} from "models";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {RegionCoordinate, RegionStore} from "stores/Frame";
-import {Point2D, WCSPoint2D} from "models";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
-import {SafeNumericInput, CoordinateComponent} from "components/Shared";
+
 import "./PointRegionForm.scss";
 
 const KEYCODE_ENTER = 13;

@@ -1,18 +1,21 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {action, computed, makeObservable, observable} from "mobx";
-import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
-import {Colors} from "@blueprintjs/core";
+import {Group, Layer, Line, Rect,Ring, Stage} from "react-konva";
 import ReactResizeDetector from "react-resize-detector";
-import {Layer, Stage, Group, Line, Ring, Rect} from "react-konva";
+import {Colors} from "@blueprintjs/core";
+import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {Chart, ChartArea, Tick} from "chart.js";
-import {PlotContainerComponent, TickType, MultiPlotProps} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {action, computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {InteractionMode,ZoomMode} from "components/Shared/LinePlot/LinePlotComponent";
+import {MultiPlotProps,PlotContainerComponent, TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
-import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
-import {PlotType} from "../PlotTypeSelector/PlotTypeSelectorComponent";
 import {Point2D} from "models";
-import {clamp, toExponential, getTimestamp, exportTsvFile} from "utilities";
 import {AppStore} from "stores";
+import {clamp, exportTsvFile,getTimestamp, toExponential} from "utilities";
+
+import {PlotType} from "../PlotTypeSelector/PlotTypeSelectorComponent";
+
 import "./ScatterPlotComponent.scss";
 
 type Point3D = {x: number; y: number; z?: number};

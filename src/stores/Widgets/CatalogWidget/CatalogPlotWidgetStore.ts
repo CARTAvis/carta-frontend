@@ -1,6 +1,7 @@
-import {action, observable, computed, makeObservable} from "mobx";
-import {CatalogPlotType} from "stores/Widgets";
+import {action, computed, makeObservable,observable} from "mobx";
+
 import {CatalogOverlay, Point2D} from "models";
+import {CatalogPlotType} from "stores/Widgets";
 import {toExponential} from "utilities";
 
 export interface CatalogPlotWidgetStoreProps {

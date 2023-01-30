@@ -1,34 +1,34 @@
 import * as React from "react";
 import {observer} from "mobx-react";
+
 import {
     AnimatorComponent,
+    CatalogOverlayComponent,
+    CatalogOverlayPlotSettingsPanelComponent,
+    CatalogPlotComponent,
     CursorInfoComponent,
     FloatingWidgetComponent,
     HistogramComponent,
+    HistogramSettingsPanelComponent,
     ImageViewComponent,
     LayerListComponent,
+    LayerListSettingsPanelComponent,
     LogComponent,
     PlaceholderComponent,
     RegionListComponent,
     RenderConfigComponent,
+    RenderConfigSettingsPanelComponent,
     SpatialProfilerComponent,
-    SpectralProfilerComponent,
+    SpatialProfilerSettingsPanelComponent,
     SpectralLineQueryComponent,
+    SpectralProfilerComponent,
+    SpectralProfilerSettingsPanelComponent,
     StatsComponent,
     StokesAnalysisComponent,
-    CatalogOverlayComponent,
-    CatalogPlotComponent,
-    StokesAnalysisSettingsPanelComponent,
-    SpectralProfilerSettingsPanelComponent,
-    SpatialProfilerSettingsPanelComponent,
-    RenderConfigSettingsPanelComponent,
-    HistogramSettingsPanelComponent,
-    CatalogOverlayPlotSettingsPanelComponent,
-    LayerListSettingsPanelComponent
-} from "components";
-import {WidgetConfig, WidgetsStore, CatalogStore} from "stores";
+    StokesAnalysisSettingsPanelComponent} from "components";
 import {ImageViewSettingsPanelComponent} from "components/ImageView/ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
 import {PvGeneratorComponent} from "components/PvGenerator/PvGeneratorComponent";
+import {CatalogStore,WidgetConfig, WidgetsStore} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {

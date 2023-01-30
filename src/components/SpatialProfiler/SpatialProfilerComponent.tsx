@@ -1,19 +1,22 @@
 import * as React from "react";
-import * as _ from "lodash";
+import ReactResizeDetector from "react-resize-detector";
+import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import {Tick} from "chart.js";
+import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
-import {Tick} from "chart.js";
-import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
-import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, SmoothingType,VERTICAL_RANGE_PADDING} from "components/Shared";
+import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
-import {Point2D, POLARIZATIONS} from "models";
-import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme} from "utilities";
+import {binarySearchByX, clamp, formattedExponential, getColorForTheme,toFixed, transformPoint} from "utilities";
+
+import {MultiPlotProps,TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+
 import "./SpatialProfilerComponent.scss";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)

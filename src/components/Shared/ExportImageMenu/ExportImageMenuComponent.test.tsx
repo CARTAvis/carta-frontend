@@ -1,7 +1,9 @@
 import React from "react";
 import {fireEvent, render, screen} from "@testing-library/react";
-import {ExportImageMenuComponent} from "./ExportImageMenuComponent";
+
 import {AppStore} from "stores";
+
+import {ExportImageMenuComponent} from "./ExportImageMenuComponent";
 
 describe("ExportImageMenuComponent", () => {
     let mockModifierString: jest.SpyInstance;

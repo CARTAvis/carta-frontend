@@ -1,6 +1,7 @@
-import {action, observable, computed, makeObservable} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {action, computed, makeObservable,observable} from "mobx";
+
 import {AppStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
 

@@ -1,7 +1,9 @@
-import {action, observable, makeObservable} from "mobx";
-import tinycolor from "tinycolor2";
 import {RGBColor} from "react-color";
+import {action, makeObservable,observable} from "mobx";
+import tinycolor from "tinycolor2";
+
 import {PreferenceStore} from "stores";
+
 import {FrameStore} from "../FrameStore";
 
 export enum VectorOverlaySource {

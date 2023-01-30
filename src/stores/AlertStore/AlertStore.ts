@@ -1,7 +1,8 @@
-import {action, observable, makeObservable} from "mobx";
 import React from "react";
-import {IconName} from "@blueprintjs/icons";
 import {MaybeElement} from "@blueprintjs/core";
+import {IconName} from "@blueprintjs/icons";
+import {action, makeObservable,observable} from "mobx";
+
 import {Deferred} from "services";
 
 export enum AlertType {

@@ -1,7 +1,8 @@
-import {action, computed, observable, makeObservable} from "mobx";
-import {PlotType, SmoothingType, LineSettings} from "components/Shared";
-import {Point2D} from "models";
 import * as GSL from "gsl_wrapper";
+import {action, computed, makeObservable,observable} from "mobx";
+
+import {LineSettings,PlotType, SmoothingType} from "components/Shared";
+import {Point2D} from "models";
 
 export class ProfileSmoothingStore {
     @observable type: SmoothingType;

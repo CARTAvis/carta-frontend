@@ -1,11 +1,13 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {action, computed, makeObservable, observable} from "mobx";
 import {Button, FormGroup, MenuItem, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import {action, computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {ClearableNumericInputComponent, SafeNumericInput,SCALING_POPOVER_PROPS, ScalingSelectComponent} from "components/Shared";
 import {ContourGeneratorType, FrameScaling, FrameStore} from "stores/Frame";
-import {ScalingSelectComponent, ClearableNumericInputComponent, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
 import {getPercentiles, scaleValue} from "utilities";
+
 import "./ContourGeneratorPanelComponent.scss";
 
 const GeneratorSelect = Select.ofType<ContourGeneratorType>();

@@ -1,9 +1,11 @@
 import * as React from "react";
+import {AnchorButton, Button, Classes, Dialog, FormGroup,InputGroup, Intent, TagInput} from "@blueprintjs/core";
 import classNames from "classnames";
-import {computed, makeObservable, action} from "mobx";
+import {action,computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, InputGroup, Button, Intent, Classes, Dialog, TagInput, FormGroup} from "@blueprintjs/core";
+
 import {AlertStore, AppStore, SnippetStore} from "stores";
+
 import "./SaveSnippetDialogComponent.scss";
 
 const KEYCODE_ENTER = 13;

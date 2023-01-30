@@ -1,54 +1,54 @@
 import * as GoldenLayout from "golden-layout";
 import $ from "jquery";
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, computed, makeObservable,observable} from "mobx";
+
 import {
     AnimatorComponent,
+    CatalogOverlayComponent,
+    CatalogOverlayPlotSettingsPanelComponent,
+    CatalogPlotComponent,
     CursorInfoComponent,
     HistogramComponent,
+    HistogramSettingsPanelComponent,
     ImageViewComponent,
+    ImageViewSettingsPanelComponent,
     LayerListComponent,
+    LayerListSettingsPanelComponent,
     LogComponent,
     PlaceholderComponent,
+    PvGeneratorComponent,
     RegionListComponent,
     RenderConfigComponent,
+    RenderConfigSettingsPanelComponent,
     SpatialProfilerComponent,
+    SpatialProfilerSettingsPanelComponent,
     SpectralLineQueryComponent,
     SpectralProfilerComponent,
+    SpectralProfilerSettingsPanelComponent,
     StatsComponent,
     StokesAnalysisComponent,
-    CatalogOverlayComponent,
-    CatalogPlotComponent,
-    PvGeneratorComponent,
     // setting Panel
-    StokesAnalysisSettingsPanelComponent,
-    SpectralProfilerSettingsPanelComponent,
-    SpatialProfilerSettingsPanelComponent,
-    RenderConfigSettingsPanelComponent,
-    HistogramSettingsPanelComponent,
-    ImageViewSettingsPanelComponent,
-    CatalogOverlayPlotSettingsPanelComponent,
-    LayerListSettingsPanelComponent
-} from "components";
-import {AppStore, HelpStore, HelpType, LayoutStore, CatalogStore, PreferenceKeys, PreferenceStore} from "stores";
+    StokesAnalysisSettingsPanelComponent} from "components";
+import {ImagePanelMode} from "models";
+import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
+
 import {
+    ACTIVE_FILE_ID,
+    CatalogPlotType,
+    CatalogPlotWidgetStore,
+    CatalogPlotWidgetStoreProps,
+    CatalogWidgetStore,
     EmptyWidgetStore,
     HistogramWidgetStore,
+    LayerListWidgetStore,
+    PvGeneratorWidgetStore,
     RegionWidgetStore,
     RenderConfigWidgetStore,
     SpatialProfileWidgetStore,
     SpectralLineQueryWidgetStore,
     SpectralProfileWidgetStore,
     StatsWidgetStore,
-    StokesAnalysisWidgetStore,
-    CatalogWidgetStore,
-    CatalogPlotWidgetStore,
-    CatalogPlotWidgetStoreProps,
-    ACTIVE_FILE_ID,
-    CatalogPlotType,
-    LayerListWidgetStore,
-    PvGeneratorWidgetStore
-} from ".";
-import {ImagePanelMode} from "models";
+    StokesAnalysisWidgetStore} from ".";
 
 export enum WidgetType {
     Region = "Region List Widget",

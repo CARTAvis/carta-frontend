@@ -1,17 +1,19 @@
 import * as React from "react";
-import classNames from "classnames";
 import {CSSProperties} from "react";
-import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
-import {AppStore, OverlayStore} from "stores";
-import {SystemType} from "stores/OverlayStore/OverlayStore";
-import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
+import classNames from "classnames";
+import {observer} from "mobx-react";
+
 import {ImageViewLayer} from "components";
 import {ExportImageMenuComponent} from "components/Shared";
-import {toFixed} from "utilities";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {AppStore, OverlayStore} from "stores";
+import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
+import {SystemType} from "stores/OverlayStore/OverlayStore";
+import {toFixed} from "utilities";
+
 import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {

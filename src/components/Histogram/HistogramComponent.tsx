@@ -1,19 +1,23 @@
 import * as React from "react";
-import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
-import classNames from "classnames";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
-import {observer} from "mobx-react";
 import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
+import classNames from "classnames";
+import * as _ from "lodash";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "components/Shared";
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {HistogramWidgetStore} from "stores/Widgets";
-import {WidgetProps, HelpType, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
-import {FrameStore} from "stores/Frame";
-import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
 import {Point2D, POLARIZATIONS} from "models";
+import {AppStore, DefaultWidgetConfig,HelpType, WidgetProps, WidgetsStore} from "stores";
+import {FrameStore} from "stores/Frame";
+import {HistogramWidgetStore} from "stores/Widgets";
+import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
+
+import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+
+import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
+
 import "./HistogramComponent.scss";
 
 @observer

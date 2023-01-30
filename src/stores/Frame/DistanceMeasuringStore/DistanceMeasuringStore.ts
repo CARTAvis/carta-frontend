@@ -1,9 +1,10 @@
 import * as AST from "ast_wrapper";
-import {action, computed, observable, makeObservable} from "mobx";
+import {action, computed, makeObservable,observable} from "mobx";
+
 import {ImageViewLayer} from "components";
+import {Point2D, Transform2D} from "models";
 import {AppStore, AstColorsIndex, ASTSettingsString} from "stores";
 import {getColorForTheme} from "utilities";
-import {Point2D, Transform2D} from "models";
 
 export class DistanceMeasuringStore {
     @observable start: Point2D;

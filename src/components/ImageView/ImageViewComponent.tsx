@@ -1,15 +1,18 @@
-import "./ImageViewComponent.scss";
 import * as React from "react";
+import ReactResizeDetector from "react-resize-detector";
+import {NonIdealState, Spinner} from "@blueprintjs/core";
 import $ from "jquery";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import ReactResizeDetector from "react-resize-detector";
-import {NonIdealState, Spinner} from "@blueprintjs/core";
-import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
-import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
+
 import {Point2D, Zoom} from "models";
+import {AppStore, DefaultWidgetConfig, HelpType, Padding, WidgetProps} from "stores";
 import {toFixed} from "utilities";
+
+import {ImagePanelComponent} from "./ImagePanel/ImagePanelComponent";
+
 import "./ImageViewComponent.scss";
+
 
 export enum ImageViewLayer {
     RegionCreating = "regionCreating",

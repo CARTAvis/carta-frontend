@@ -1,13 +1,15 @@
 import * as React from "react";
-import classNames from "classnames";
-import {observer} from "mobx-react";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Intent} from "@blueprintjs/core";
-import {FloatingWidgetManagerComponent, UIControllerComponent} from "./components";
+import classNames from "classnames";
+import {observer} from "mobx-react";
+
 import {TaskProgressDialogComponent} from "./components/Dialogs";
-import {AlertStore, AlertType, AppStore} from "./stores";
+import {FloatingWidgetManagerComponent, UIControllerComponent} from "./components";
 import {HotkeyTargetContainer} from "./HotkeyWrapper";
 import {ApiService} from "./services";
+import {AlertStore, AlertType, AppStore} from "./stores";
+
 import "./App.scss";
 import "./layout-base.scss";
 import "./layout-theme.scss";
