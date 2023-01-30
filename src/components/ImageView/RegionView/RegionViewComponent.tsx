@@ -7,12 +7,11 @@ import * as _ from "lodash";
 import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
+import {ImageViewLayer} from "components";
 import {CursorInfo, Point2D, ZoomPoint} from "models";
 import {AppStore, OverlayStore, PreferenceStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {add2D, average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
-
-import {ImageViewLayer} from "../ImageViewComponent";
 
 import {CursorRegionComponent} from "./CursorRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
@@ -469,17 +468,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const newOrigin = add2D(origin, centerMovementCanvas);
             // Correct the origin if region view is ever resized
             const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, refFrameZoom));
-            stage.position(correctedOrigin);
-        }
-    };
-
-    public centerStage = () => {
-        const stage = this.stageRef.current;
-        if (stage) {
-            const zoom = stage.scaleX();
-            const newOrigin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - zoom);
-            // Correct the origin if region view is ever resized
-            const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, zoom));
             stage.position(correctedOrigin);
         }
     };

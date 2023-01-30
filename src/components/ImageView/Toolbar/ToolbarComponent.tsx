@@ -9,9 +9,9 @@ import {observer} from "mobx-react";
 import {ImageViewLayer} from "components";
 import {ExportImageMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {AppStore, OverlayStore} from "stores";
+import {AppStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
-import {SystemType} from "stores/OverlayStore/OverlayStore";
+import {OverlayStore, SystemType} from "stores/OverlayStore/OverlayStore";
 import {toFixed} from "utilities";
 
 import "./ToolbarComponent.scss";
@@ -22,7 +22,7 @@ export class ToolbarComponentProps {
     frame: FrameStore;
     activeLayer: ImageViewLayer;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
-    onRegionViewZoom: (zoom: number, isZoomToFit?: boolean) => void;
+    onRegionViewZoom: (zoom: number) => void;
     onZoomToFit: () => void;
 }
 

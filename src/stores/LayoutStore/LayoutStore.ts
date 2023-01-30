@@ -3,9 +3,8 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {LayoutConfig, PresetLayout} from "models";
+import {ApiService} from "services";
 import {AlertStore, AppStore} from "stores";
-
-import {ApiService} from "../../services";
 
 const MAX_LAYOUT = 10;
 

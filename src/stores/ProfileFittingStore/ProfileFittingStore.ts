@@ -2,10 +2,20 @@ import * as GSL from "gsl_wrapper";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {LinePlotInsideBoxMarker, LinePlotInsideTextMarker} from "components/Shared/LinePlot/LinePlotComponent";
-import {FittingContinuum, FittingFunction} from "components/SpectralProfiler/ProfileFittingComponent/ProfileFittingComponent";
 import {Point2D} from "models";
 import {SpectralProfileWidgetStore} from "stores/Widgets";
 import {autoDetecting, gaussian, getColorForTheme, lorentzian, toFixed} from "utilities";
+
+export enum FittingFunction {
+    GAUSSIAN = 0,
+    LORENTZIAN = 1
+}
+
+export enum FittingContinuum {
+    NONE = -1,
+    ZEROTH_ORDER = 0,
+    FIRST_ORDER = 1
+}
 
 export class ProfileFittingStore {
     @observable function: FittingFunction;

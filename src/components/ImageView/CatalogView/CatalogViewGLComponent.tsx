@@ -3,14 +3,13 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
+import {ImageViewLayer} from "components";
 import {canvasToTransformedImagePos} from "components/ImageView/RegionView/shared";
 import {CatalogTextureType, CatalogWebGLService} from "services";
 import {AppStore, CatalogStore, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
 import {CatalogOverlayShape} from "stores/Widgets";
 import {closestCatalogIndexToCursor, GL2, rotate2D, scale2D, subtract2D} from "utilities";
-
-import {ImageViewLayer} from "../ImageViewComponent";
 
 import "./CatalogViewGLComponent.scss";
 
@@ -297,6 +296,7 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform1i(shaderUniforms.ControlMapTexture, 1);
                 }
 
+                const hasSources = this.catalogWebGLService.updatePositionTexture(fileId);
                 const positionTexture = this.catalogWebGLService.getDataTexture(fileId, CatalogTextureType.Position);
                 if (positionTexture) {
                     this.gl.activeTexture(GL2.TEXTURE2);
@@ -304,7 +304,6 @@ export class CatalogViewGLComponent extends React.Component<CatalogViewGLCompone
                     this.gl.uniform1i(shaderUniforms.PositionTexture, 2);
                 }
 
-                const hasSources = this.catalogWebGLService.updatePositionTexture(fileId);
                 if (hasSources) {
                     this.gl.uniform3f(shaderUniforms.PointColor, color.r / 255.0, color.g / 255.0, color.b / 255.0);
                     this.gl.uniform3f(shaderUniforms.SelectedSourceColor, selectedSourceColor.r / 255.0, selectedSourceColor.g / 255.0, selectedSourceColor.b / 255.0);

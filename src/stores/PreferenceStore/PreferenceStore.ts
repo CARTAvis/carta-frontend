@@ -3,7 +3,8 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {CARTA_INFO, CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, ImagePanelMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
-import {ApiService, TelemetryMode} from "services";
+import {ApiService} from "services";
+import {TelemetryMode} from "services/TelemetryService";
 import {BeamType, FileFilteringType} from "stores";
 import {ContourGeneratorType, FrameScaling} from "stores/Frame";
 import {parseBoolean} from "utilities";

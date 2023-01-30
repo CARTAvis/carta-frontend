@@ -4,7 +4,6 @@ export * from "./CatalogOverlay/CatalogOverlayComponent";
 export * from "./CatalogOverlay/CatalogOverlayPlotSettingsPanelComponent/CatalogOverlayPlotSettingsPanelComponent";
 export * from "./CatalogOverlay/CatalogPlotComponent/CatalogPlotComponent";
 export * from "./CursorInfo/CursorInfoComponent";
-export * from "./Dialogs/DistanceMeasuringDialog/DistanceMeasuringDialog";
 export * from "./FileInfo/FileInfoComponent";
 export * from "./FloatingWidget/FloatingWidgetComponent";
 export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";

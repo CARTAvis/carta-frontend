@@ -1,9 +1,9 @@
 import allMaps from "static/allmaps.png";
 
+import {TEXTURE_SIZE, TILE_SIZE} from "services";
 import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import {rasterShaders} from "./GLSL";
-import {TEXTURE_SIZE, TILE_SIZE} from "./TileService";
 
 interface ShaderUniforms {
     MinVal: WebGLUniformLocation;

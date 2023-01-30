@@ -2,9 +2,8 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {VectorOverlayWebGLService} from "services";
+import {FrameStore} from "stores/Frame";
 import {createTextureFromArray, equalIfBothFinite} from "utilities";
-
-import {FrameStore} from "../FrameStore";
 
 export interface VectorOverlayTile {
     texture: WebGLTexture;

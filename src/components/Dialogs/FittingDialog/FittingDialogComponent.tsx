@@ -1,11 +1,11 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Classes, Dialog, FormGroup, HTMLSelect, Icon, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Tab, Tabs, Text} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {DraggableDialogComponent} from "components/Dialogs";
+import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, HelpType} from "stores";
@@ -80,7 +80,7 @@ export class FittingDialogComponent extends React.Component {
 
         if (!appStore || appStore.frameNum <= 0 || !fittingStore.effectiveFrame) {
             return (
-                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={200} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
             );
@@ -113,7 +113,7 @@ export class FittingDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={200} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup label="Data Source" inline={true}>
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
@@ -157,10 +157,12 @@ export class FittingDialogComponent extends React.Component {
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
+                        <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
                         <Tooltip2 content="Clear fitting parameters." position={Position.BOTTOM}>
                             <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
                         </Tooltip2>
-                        <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM}>
+                        <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} />
                         </Tooltip2>
                     </div>
@@ -171,15 +173,15 @@ export class FittingDialogComponent extends React.Component {
                         <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
                     </Tabs>
                 </div>
-                <Dialog className={classNames(Classes.ALERT, {"bp3-dark": appStore.darkTheme})} isOpen={fittingStore.isFitting}>
-                    <div className={Classes.ALERT_BODY}>
-                        <Icon icon="time" iconSize={40} />
-                        <div className={Classes.ALERT_CONTENTS}>
-                            <p>Image fitting processing ...</p>
-                            <p>Calculation may take a long time, depending on the size of the file and the number of Gaussian components.</p>
-                        </div>
-                    </div>
-                </Dialog>
+                <TaskProgressDialogComponent
+                    isOpen={fittingStore.isFitting}
+                    progress={fittingStore?.progress ?? 0}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={true}
+                    onCancel={fittingStore.cancelFitting}
+                    text={"Image fitting processing"}
+                    isCancelling={fittingStore.isCancelling}
+                />
             </DraggableDialogComponent>
         );
     }

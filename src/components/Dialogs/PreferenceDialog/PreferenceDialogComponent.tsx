@@ -11,8 +11,7 @@ import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, SuccessToast} from "components/Shared";
-import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
+import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
 import {
     CompressionQuality,
     CursorInfoVisibility,

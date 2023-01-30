@@ -664,7 +664,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             // data part
             rows.push("# x\ty");
             const useScientificForm = plotName === "histogram" || this.props.tickTypeX === TickType.Scientific;
-            const data = this.props.fullResolutionData?.length > 0 ? this.props.fullResolutionData : this.props.data;
+            const data = this.props.fullResolutionData?.some(data => data !== undefined) ? this.props.fullResolutionData : this.props.data;
             rows = rows.concat(data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
 
             exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);

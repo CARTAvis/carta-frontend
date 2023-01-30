@@ -11,10 +11,12 @@ import {
     HistogramComponent,
     HistogramSettingsPanelComponent,
     ImageViewComponent,
+    ImageViewSettingsPanelComponent,
     LayerListComponent,
     LayerListSettingsPanelComponent,
     LogComponent,
     PlaceholderComponent,
+    PvGeneratorComponent,
     RegionListComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
@@ -27,8 +29,6 @@ import {
     StokesAnalysisComponent,
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {ImageViewSettingsPanelComponent} from "components/ImageView/ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
-import {PvGeneratorComponent} from "components/PvGenerator/PvGeneratorComponent";
 import {CatalogStore, WidgetConfig, WidgetsStore} from "stores";
 
 @observer

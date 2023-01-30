@@ -4,9 +4,8 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
+import {AppStore, BrowserMode} from "stores";
 import {RegionMode} from "stores/Frame";
-
-import {AppStore, BrowserMode} from "./stores";
 
 // There are some issues with the Blueprint hotkey target decorator, so this rather hacky workaround is needed for now
 // Once the issues are fixed, the decorator can be used and the functions can be made non-static

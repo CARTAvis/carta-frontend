@@ -3,6 +3,8 @@ import * as ReactDOM from "react-dom";
 import {FocusStyleManager} from "@blueprintjs/core";
 import axios from "axios";
 
+import {ApiService} from "services";
+
 // Pre-load static assets
 import allMaps from "./static/allmaps.png";
 import gammaPng from "./static/equations/gamma.png";
@@ -12,7 +14,6 @@ import powerPng from "./static/equations/power.png";
 import sqrtPng from "./static/equations/sqrt.png";
 import squaredPng from "./static/equations/squared.png";
 import {App} from "./App";
-import {ApiService} from "./services";
 
 import "./index.scss";
 

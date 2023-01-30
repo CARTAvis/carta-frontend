@@ -4,11 +4,12 @@ import {Alert, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {TaskProgressDialogComponent} from "./components/Dialogs";
-import {FloatingWidgetManagerComponent, UIControllerComponent} from "./components";
+import {FloatingWidgetManagerComponent, UIControllerComponent} from "components";
+import {TaskProgressDialogComponent} from "components/Dialogs";
+import {ApiService} from "services";
+import {AlertStore, AlertType, AppStore} from "stores";
+
 import {HotkeyTargetContainer} from "./HotkeyWrapper";
-import {ApiService} from "./services";
-import {AlertStore, AlertType, AppStore} from "./stores";
 
 import "./App.scss";
 import "./layout-base.scss";

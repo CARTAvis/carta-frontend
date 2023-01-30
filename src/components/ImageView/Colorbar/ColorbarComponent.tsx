@@ -4,12 +4,11 @@ import {fonts} from "ast_wrapper";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
+import {Font} from "components";
 import {ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorForTheme} from "utilities";
-
-import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
 
 import "./ColorbarComponent.scss";
 

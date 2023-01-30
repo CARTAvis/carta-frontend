@@ -5,22 +5,11 @@ import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {SafeNumericInput} from "components/Shared";
-import {AppStore, ProfileFittingStore} from "stores";
+import {AppStore, FittingContinuum, FittingFunction, ProfileFittingStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/Widgets";
 import {exportTxtFile, getTimestamp} from "utilities";
 
 import "./ProfileFittingComponent.scss";
-
-export enum FittingFunction {
-    GAUSSIAN = 0,
-    LORENTZIAN = 1
-}
-
-export enum FittingContinuum {
-    NONE = -1,
-    ZEROTH_ORDER = 0,
-    FIRST_ORDER = 1
-}
 
 export interface ProfileFittingComponentProps {
     fittingStore: ProfileFittingStore;

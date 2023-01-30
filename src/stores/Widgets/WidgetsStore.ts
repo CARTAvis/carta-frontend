@@ -32,7 +32,6 @@ import {
 } from "components";
 import {ImagePanelMode} from "models";
 import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
-
 import {
     ACTIVE_FILE_ID,
     CatalogPlotType,
@@ -50,7 +49,7 @@ import {
     SpectralProfileWidgetStore,
     StatsWidgetStore,
     StokesAnalysisWidgetStore
-} from ".";
+} from "stores/Widgets";
 
 export enum WidgetType {
     Region = "Region List Widget",

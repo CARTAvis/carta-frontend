@@ -3,6 +3,7 @@ import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
+import {ImageViewLayer} from "components";
 import {CursorInfo, CursorInfoVisibility, Zoom} from "models";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
@@ -12,7 +13,6 @@ import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
 import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
-import {ImageViewLayer} from "../ImageViewComponent";
 import {OverlayComponent} from "../Overlay/OverlayComponent";
 import {RasterViewComponent} from "../RasterView/RasterViewComponent";
 import {RegionViewComponent} from "../RegionView/RegionViewComponent";
@@ -32,7 +32,6 @@ interface ImagePanelComponentProps {
 export class ImagePanelComponent extends React.Component<ImagePanelComponentProps> {
     @observable pixelHighlightValue: number = NaN;
     @observable imageToolbarVisible: boolean = false;
-    readonly activeLayer: ImageViewLayer;
 
     private regionViewRef: RegionViewComponent;
 
@@ -45,8 +44,6 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     constructor(props: ImagePanelComponentProps) {
         super(props);
         makeObservable(this);
-
-        this.activeLayer = AppStore.Instance.activeLayer;
     }
 
     componentDidMount() {
@@ -68,7 +65,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         if (frame) {
             const zoom = frame.fitZoom();
             if (zoom) {
-                this.onRegionViewZoom(zoom, true);
+                this.onRegionViewZoom(zoom);
             }
         }
     };
@@ -77,12 +74,9 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
         this.regionViewRef = ref;
     };
 
-    private onRegionViewZoom = (zoom: number, isZoomToFit: boolean = false) => {
+    private onRegionViewZoom = (zoom: number) => {
         const frame = this.props.frame;
         if (frame) {
-            if (isZoomToFit) {
-                this.regionViewRef?.centerStage();
-            }
             this.regionViewRef?.stageZoomToPoint(frame.renderWidth / 2, frame.renderHeight / 2, zoom);
         }
     };
@@ -132,6 +126,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
     render() {
         const appStore = AppStore.Instance;
         const overlayStore = appStore.overlayStore;
+        const activeLayer = appStore.activeLayer;
 
         const frame = this.props.frame;
         if (frame?.isRenderable && appStore.astReady) {
@@ -194,13 +189,13 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         onClickToCenter={this.onClickToCenter}
                         overlaySettings={overlayStore}
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
-                        docked={this.props.docked && this.activeLayer !== ImageViewLayer.Catalog}
+                        docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />
                     <ToolbarComponent
                         docked={this.props.docked}
                         visible={this.imageToolbarVisible}
                         frame={frame}
-                        activeLayer={this.activeLayer}
+                        activeLayer={activeLayer}
                         onActiveLayerChange={appStore.updateActiveLayer}
                         onRegionViewZoom={this.onRegionViewZoom}
                         onZoomToFit={this.fitZoomFrameAndRegion}

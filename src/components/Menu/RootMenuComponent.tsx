@@ -7,14 +7,13 @@ import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
+import {ExportImageMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
 import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, WidgetType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {toFixed} from "utilities";
-
-import {ExportImageMenuComponent} from "../Shared";
 
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
