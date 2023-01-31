@@ -6,6 +6,7 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
+
 import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, PresetLayout, Snippet} from "models";
