@@ -1,5 +1,5 @@
 import React from "react";
-import {Arrow, Group, Line,Text} from "react-konva";
+import {Arrow, Group, Line, Text} from "react-konva";
 import * as AST from "ast_wrapper";
 import Konva from "konva";
 import {observer} from "mobx-react";

@@ -4,10 +4,10 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent,SafeNumericInput} from "components/Shared";
-import {Point2D,WCSPoint2D} from "models";
+import {CoordinateComponent, SafeNumericInput} from "components/Shared";
+import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CompassAnnotationStore,RegionCoordinate, RegionStore} from "stores/Frame";
+import {CompassAnnotationStore, RegionCoordinate, RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./CompassRulerRegionForm.scss";
@@ -105,164 +105,6 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         );
     };
 
-    // private rulerAuxiliaryLineForm = () => {
-    //     const region = this.props.region as RulerAnnotationStore;
-
-    //     return (
-    //         <div className="form-section appearance-form">
-    //             <H5>Auxiliary Lines</H5>
-    //             <div className="form-contents">
-    //                 <FormGroup inline={true} label="Show auxiliary lines">
-    //                     <Switch checked={region.auxiliaryLineVisible} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => region.setAuxiliaryLineVisible(ev.target.checked)} />
-    //                 </FormGroup>
-    //                 <FormGroup inline={true} label="Auxiliary Lines Dash Length" labelInfo="(px)">
-    //                     <SafeNumericInput
-    //                         disabled={!region.auxiliaryLineVisible}
-    //                         placeholder="Dash Length"
-    //                         min={0}
-    //                         max={RegionStore.MAX_DASH_LENGTH}
-    //                         value={region.auxiliaryLineDashLength}
-    //                         stepSize={1}
-    //                         onValueChange={value => region.setAuxiliaryLineDashLength(value)}
-    //                     />
-    //                 </FormGroup>
-    //             </div>
-    //         </div>
-    //     );
-    // };
-
-    // private compassArrowTipForm = () => {
-    //     const region = this.props.region as CompassAnnotationStore;
-
-    //     return (
-    //         <div className="form-section appearance-form">
-    //             <H5>Arrow Pointer</H5>
-    //             <div className="form-contents">
-    //                 <FormGroup inline={true} label="Show North Arrowhead">
-    //                     <Switch checked={region.northArrowhead} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => region.setNorthArrowhead(ev.target.checked)} />
-    //                 </FormGroup>
-    //                 <FormGroup inline={true} label="Show East Arrowhead">
-    //                     <Switch checked={region.eastArrowhead} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => region.setEastArrowhead(ev.target.checked)} />
-    //                 </FormGroup>
-    //                 <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
-    //                     <SafeNumericInput placeholder="Length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.pointerLength} stepSize={1} onValueChange={value => region.setPointerLength(value)} />
-    //                 </FormGroup>
-    //                 <FormGroup inline={true} label="Arrow Tip Width" labelInfo="(px)">
-    //                     <SafeNumericInput placeholder="Width" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.pointerWidth} stepSize={1} onValueChange={value => region.setPointerWidth(value)} />
-    //                 </FormGroup>
-    //             </div>
-    //         </div>
-    //     );
-    // };
-
-    // private textOffsetForm = () => {
-    //     return (
-    //         <div className="form-section appearance-form">
-    //             <H5>Text Offset</H5>
-    //             <div className="form-contents">
-    //                 {this.props.region.regionType === CARTA.RegionType.ANNCOMPASS && (
-    //                     <>
-    //                         <FormGroup inline={true} label="North X Offset" labelInfo="(px)">
-    //                             <SafeNumericInput
-    //                                 placeholder="North X Offset"
-    //                                 min={-50}
-    //                                 max={RegionStore.MAX_DASH_LENGTH}
-    //                                 value={(this.props.region as CompassAnnotationStore).northTextOffset.x}
-    //                                 stepSize={0.5}
-    //                                 onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, true)}
-    //                             />
-    //                         </FormGroup>
-    //                         <FormGroup inline={true} label="North Y Offset" labelInfo="(px)">
-    //                             <SafeNumericInput
-    //                                 placeholder="North Y Offset"
-    //                                 min={-50}
-    //                                 max={RegionStore.MAX_DASH_LENGTH}
-    //                                 value={(this.props.region as CompassAnnotationStore).northTextOffset.y}
-    //                                 stepSize={0.5}
-    //                                 onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, false)}
-    //                             />
-    //                         </FormGroup>
-    //                         <FormGroup inline={true} label="East X Offset" labelInfo="(px)">
-    //                             <SafeNumericInput
-    //                                 placeholder="East X Offset"
-    //                                 min={-50}
-    //                                 max={RegionStore.MAX_DASH_LENGTH}
-    //                                 value={(this.props.region as CompassAnnotationStore).eastTextOffset.x}
-    //                                 stepSize={0.5}
-    //                                 onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, true)}
-    //                             />
-    //                         </FormGroup>
-    //                         <FormGroup inline={true} label="East Y Offset" labelInfo="(px)">
-    //                             <SafeNumericInput
-    //                                 placeholder="East Y Offset"
-    //                                 min={-50}
-    //                                 max={RegionStore.MAX_DASH_LENGTH}
-    //                                 value={(this.props.region as CompassAnnotationStore).eastTextOffset.y}
-    //                                 stepSize={0.5}
-    //                                 onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, false)}
-    //                             />
-    //                         </FormGroup>
-    //                     </>
-    //                 )}
-    //                 {this.props.region.regionType === CARTA.RegionType.ANNRULER && (
-    //                     <>
-    //                         <FormGroup inline={true} label="X Offset" labelInfo="(px)">
-    //                             <SafeNumericInput
-    //                                 placeholder="X Offset"
-    //                                 min={-50}
-    //                                 max={RegionStore.MAX_DASH_LENGTH}
-    //                                 value={(this.props.region as RulerAnnotationStore).textOffset.x}
-    //                                 stepSize={1}
-    //                                 onValueChange={value => (this.props.region as RulerAnnotationStore).setTextOffset(value, true)}
-    //                             />
-    //                         </FormGroup>
-    //                         <FormGroup inline={true} label="Y Offset" labelInfo="(px)">
-    //                             <SafeNumericInput
-    //                                 placeholder="Y Offset"
-    //                                 min={-50}
-    //                                 max={RegionStore.MAX_DASH_LENGTH}
-    //                                 value={(this.props.region as RulerAnnotationStore).textOffset.y}
-    //                                 stepSize={1}
-    //                                 onValueChange={value => (this.props.region as RulerAnnotationStore).setTextOffset(value, false)}
-    //                             />
-    //                         </FormGroup>
-    //                     </>
-    //                 )}
-    //             </div>
-    //         </div>
-    //     );
-    // };
-
-    // private rulerTextOffsetForm = () => {
-    //     return (
-    //         <div className="form-section appearance-form">
-    //             <H5>Text Offset</H5>
-    //             <div className="form-contents">
-    //                 <FormGroup inline={true} label="X Offset" labelInfo="(px)">
-    //                     <SafeNumericInput
-    //                         placeholder="X Offset"
-    //                         min={-50}
-    //                         max={RegionStore.MAX_DASH_LENGTH}
-    //                         value={(this.props.region as RulerAnnotationStore).textOffset.x}
-    //                         stepSize={1}
-    //                         onValueChange={value => (this.props.region as RulerAnnotationStore).setTextOffset(value, true)}
-    //                     />
-    //                 </FormGroup>
-    //                 <FormGroup inline={true} label="Y Offset" labelInfo="(px)">
-    //                     <SafeNumericInput
-    //                         placeholder="Y Offset"
-    //                         min={-50}
-    //                         max={RegionStore.MAX_DASH_LENGTH}
-    //                         value={(this.props.region as RulerAnnotationStore).textOffset.y}
-    //                         stepSize={1}
-    //                         onValueChange={value => (this.props.region as RulerAnnotationStore).setTextOffset(value, false)}
-    //                     />
-    //                 </FormGroup>
-    //             </div>
-    //         </div>
-    //     );
-    // };
-
     private compassTextOffsetForm = (isNorth: boolean) => {
         return (
             <>
@@ -342,7 +184,6 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
 
         return (
             <>
-                {/* {region.regionType === CARTA.RegionType.ANNRULER && this.rulerTextOffsetForm()} */}
                 <div className="form-section compass-ruler-annotation-form">
                     <H5>Properties</H5>
                     <div className="form-contents">
@@ -409,7 +250,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                     {region.coordinate === RegionCoordinate.World && wcsInfo
                                         ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, false)
                                         : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, true)}
-                                    <td colSpan={3}>
+                                    <td colSpan={1}>
                                         {wcsInfo ? (
                                             <span className="info-string">
                                                 {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}
@@ -428,7 +269,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                         {region.coordinate === RegionCoordinate.World && wcsInfo
                                             ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, false)
                                             : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, true)}
-                                        <td colSpan={3}>
+                                        <td>
                                             {wcsInfo ? (
                                                 <span className="info-string">
                                                     {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}

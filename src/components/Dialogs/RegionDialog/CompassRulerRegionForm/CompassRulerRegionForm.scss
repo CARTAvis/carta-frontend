@@ -2,6 +2,9 @@
     user-select: none;
 
     .form-contents {
+        td {
+            white-space: nowrap;
+        }
         .bp3-numeric-input {
             width: 125px;
 
@@ -11,10 +14,10 @@
         }
 
         .info-string {
-            margin-left: 5px;
             font-size: x-small;
             font-family: monospace;
             user-select: text;
+            white-space: nowrap;
         }
 
         .compass-ruler-annotation-table-input {

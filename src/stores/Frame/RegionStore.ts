@@ -502,7 +502,7 @@ export class RegionStore {
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             }
-            if (this.regionType === CARTA.RegionType.POLYGON) {
+            if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
                 this.simplePolygonTest(index);
             }
 

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Arrow,Group, Line} from "react-konva";
+import {Arrow, Group, Line} from "react-konva";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import Konva from "konva";
@@ -379,55 +379,17 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 {region.regionType === CARTA.RegionType.ANNVECTOR ? (
                     <Arrow
                         {...commonProps}
-                        // x={centerPointCanvasSpace.x}
-                        // y={centerPointCanvasSpace.y}
-                        // stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
-                        // strokeWidth={region.lineWidth}
-                        // opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                        // dash={[region.dashLength]}
                         fill={region.color}
-                        // listening={this.props.listening && !region.locked}
-                        // onClick={this.handleClick}
-                        // onDblClick={this.handleDoubleClick}
-                        // onContextMenu={this.handleContextMenu}
-                        // onDragStart={this.handleDragStart}
-                        // onDragEnd={this.handleDragEnd}
-                        // onDragMove={this.handleDrag}
-                        // perfectDrawEnabled={false}
-                        // strokeScaleEnabled={false}
-                        // lineJoin={"round"}
-                        // draggable={true}
-                        // points={pointArray}
-                        // hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
                         pointerWidth={((region as VectorAnnotationStore).pointerWidth * imageRatio) / zoomLevel}
                         pointerLength={((region as VectorAnnotationStore).pointerLength * imageRatio) / zoomLevel}
                     />
                 ) : (
                     <Line
                         {...commonProps}
-                        // x={centerPointCanvasSpace.x}
-                        // y={centerPointCanvasSpace.y}
-                        // stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
-                        // strokeWidth={region.lineWidth}
-                        // opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                        // dash={[region.dashLength]}
                         closed={!region.creating && (region.regionType === CARTA.RegionType.POLYGON || region.regionType === CARTA.RegionType.ANNPOLYGON)}
-                        // listening={this.props.listening && !region.locked}
-                        // onClick={this.handleClick}
-                        // onDblClick={this.handleDoubleClick}
-                        // onContextMenu={this.handleContextMenu}
                         onMouseEnter={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? null : this.handleStrokeMouseEnter}
                         onMouseLeave={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? null : this.handleStrokeMouseLeave}
                         onMouseMove={this.props.region.regionType === CARTA.RegionType.LINE || this.props.region.regionType === CARTA.RegionType.ANNLINE ? null : this.handleMouseMove}
-                        // onDragStart={this.handleDragStart}
-                        // onDragEnd={this.handleDragEnd}
-                        // onDragMove={this.handleDrag}
-                        // perfectDrawEnabled={false}
-                        // strokeScaleEnabled={false}
-                        // lineJoin={"round"}
-                        // draggable={true}
-                        // points={pointArray}
-                        // hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
                     />
                 )}
                 <Group>
