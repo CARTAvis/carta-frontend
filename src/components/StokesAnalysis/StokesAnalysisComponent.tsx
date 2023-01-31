@@ -11,7 +11,7 @@ import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoCompone
 import {Point2D, SpectralColorMap, SpectralType} from "models";
 import {AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, SpectralProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
+import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/Widgets";
 import {binarySearchByX, clamp, closestPointIndexToCursor, formattedNotation, getColorForTheme, minMaxArray, minMaxPointArrayZ, normalising, polarizationAngle, polarizedIntensity, toExponential, toFixed} from "utilities";
 
 import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";

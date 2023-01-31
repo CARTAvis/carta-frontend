@@ -11,7 +11,7 @@ import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoCompone
 import {Point2D} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore, RenderConfigStore} from "stores/Frame";
-import {RenderConfigWidgetStore} from "stores/widgets";
+import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
 
 import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";

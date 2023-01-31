@@ -11,7 +11,7 @@ import {ExportImageMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
-import {OverlayStore, SystemType} from "stores/OverlayStore";
+import {OverlayStore, SystemType} from "stores/OverlayStore/OverlayStore";
 import {toFixed} from "utilities";
 
 import "./ToolbarComponent.scss";

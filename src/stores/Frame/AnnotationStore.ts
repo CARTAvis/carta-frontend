@@ -8,7 +8,7 @@ import {BackendService} from "services";
 import {FrameStore} from "stores/Frame";
 import {transformPoint} from "utilities";
 
-import {RegionStore} from "./RegionStore";
+import {RegionStore} from "./Region/RegionStore";
 
 // export enum CARTA.TextAnnotationPosition {
 //     CENTER = "Center",

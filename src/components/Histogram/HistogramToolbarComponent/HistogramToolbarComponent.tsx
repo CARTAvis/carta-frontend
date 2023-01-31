@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 import {RegionSelectorComponent} from "components/Shared";
 import {FULL_POLARIZATIONS} from "models";
 import {AppStore} from "stores";
-import {HistogramWidgetStore} from "stores/widgets";
+import {HistogramWidgetStore} from "stores/Widgets";
 
 import "./HistogramToolbarComponent.scss";
 

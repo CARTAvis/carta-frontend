@@ -7,7 +7,7 @@ import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {ExportImageMenuComponent} from "components/Shared";
+import {AppToaster, ExportImageMenuComponent, SuccessToast} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {CARTA_INFO, PresetLayout, Snippet} from "models";
 import {ApiService, ConnectionStatus} from "services";
@@ -172,7 +172,7 @@ export class RootMenuComponent extends React.Component {
         let serverMenu: React.ReactNode[] = [];
 
         const apiService = appStore.apiService;
-        if (apiService.authenticated && ApiService.RuntimeConfig.apiAddress) {
+        if (apiService.authenticated && ApiService.RuntimeConfig.dashboardAddress) {
             serverMenu.push(<Menu.Item key="restart" text="Restart Service" disabled={!appStore.apiService.authenticated} onClick={appStore.apiService.stopServer} />);
         }
         if (ApiService.RuntimeConfig.logoutAddress || ApiService.RuntimeConfig.googleClientId) {
@@ -181,6 +181,32 @@ export class RootMenuComponent extends React.Component {
         if (ApiService.RuntimeConfig.dashboardAddress) {
             serverMenu.push(<Menu.Item key="dashboard" text="Dashboard" onClick={this.handleDashboardClicked} />);
         }
+        serverMenu.push(
+            <Menu.Item
+                text="Copy session ID to clipboard"
+                onClick={async () => {
+                    try {
+                        await navigator.clipboard?.writeText(appStore.backendService.sessionId.toString());
+                        AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
+                    } catch (err) {
+                        console.log(err);
+                    }
+                }}
+            />
+        );
+        serverMenu.push(
+            <Menu.Item
+                text="Copy session URL to clipboard"
+                onClick={async () => {
+                    try {
+                        await navigator.clipboard?.writeText(window.location.href);
+                        AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
+                    } catch (err) {
+                        console.log(err);
+                    }
+                }}
+            />
+        );
 
         let serverSubMenu: React.ReactNode;
         if (serverMenu.length) {
