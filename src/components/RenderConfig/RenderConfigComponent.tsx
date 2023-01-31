@@ -1,20 +1,24 @@
 import * as React from "react";
-import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
+import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, IOptionProps, NonIdealState} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, Colors} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
-import {HistogramConfigComponent} from "./HistogramConfigComponent/HistogramConfigComponent";
-import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
-import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
+
 import {TaskProgressDialogComponent} from "components/Dialogs";
-import {RenderConfigWidgetStore} from "stores/widgets";
-import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore, WidgetsStore} from "stores";
-import {FrameStore, RenderConfigStore} from "stores/Frame";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, SafeNumericInput} from "components/Shared";
 import {Point2D} from "models";
-import {clamp, toExponential, toFixed, getColorForTheme, scaleValue} from "utilities";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {FrameStore, RenderConfigStore} from "stores/Frame";
+import {RenderConfigWidgetStore} from "stores/Widgets";
+import {clamp, getColorForTheme, scaleValue, toExponential, toFixed} from "utilities";
+
+import {MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+
+import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
+import {HistogramConfigComponent} from "./HistogramConfigComponent/HistogramConfigComponent";
+
 import "./RenderConfigComponent.scss";
 
 const KEYCODE_ENTER = 13;

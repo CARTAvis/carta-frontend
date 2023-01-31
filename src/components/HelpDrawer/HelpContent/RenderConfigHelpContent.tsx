@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonRenderConfig from "static/help/widgetButton_renderConfig.png";
 import widgetButtonRenderConfig_d from "static/help/widgetButton_renderConfig_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const RENDER_CONFIG_HELP_CONTENT = (
     <div>

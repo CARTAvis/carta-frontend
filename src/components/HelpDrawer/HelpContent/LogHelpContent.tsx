@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonLog from "static/help/widgetButton_log.png";
 import widgetButtonLog_d from "static/help/widgetButton_log_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const LOG_HELP_CONTENT = (
     <div>

@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonImageList from "static/help/widgetButton_imageList.png";
 import widgetButtonImageList_d from "static/help/widgetButton_imageList_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const LAYER_LIST_HELP_CONTENT = (
     <div>

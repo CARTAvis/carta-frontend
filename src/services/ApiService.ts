@@ -1,6 +1,7 @@
-import axios, {AxiosInstance} from "axios";
 import Ajv from "ajv";
+import axios, {AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
+
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet} from "models";
 
@@ -25,7 +26,7 @@ export class ApiService {
         return ApiService.staticInstance;
     }
 
-    public static RuntimeConfig: RuntimeConfig;
+    public static RuntimeConfig: RuntimeConfig = {};
 
     public static SetRuntimeConfig(data: any) {
         console.log("Setting runtime config");

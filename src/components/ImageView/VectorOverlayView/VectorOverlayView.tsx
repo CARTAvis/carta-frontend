@@ -1,10 +1,12 @@
 import * as React from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
+
+import {VectorOverlayWebGLService} from "services";
 import {AppStore} from "stores";
 import {FrameStore, RenderConfigStore, VectorOverlaySource} from "stores/Frame";
 import {GL2, rotate2D, scale2D, subtract2D} from "utilities";
-import {VectorOverlayWebGLService} from "services";
+
 import "./VectorOverlayView.scss";
 
 export interface VectorOverlayViewComponentProps {

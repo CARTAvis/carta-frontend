@@ -1,6 +1,8 @@
-import {getShaderProgram, initWebGL2, loadImageTexture, GL2} from "utilities";
-import {vectorOverlayShaders} from "./GLSL";
+import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
+
 import allMaps from "../static/allmaps.png";
+
+import {vectorOverlayShaders} from "./GLSL";
 
 interface ShaderUniforms {
     DataTexture: WebGLUniformLocation;

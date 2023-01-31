@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import {AppStore} from "stores";
 
 export class ImageComponent extends React.Component<{

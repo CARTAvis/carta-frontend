@@ -1,4 +1,5 @@
 import {Group, Shape} from "react-konva";
+
 import {AppStore} from "stores";
 
 const POINT_WIDTH = 6;

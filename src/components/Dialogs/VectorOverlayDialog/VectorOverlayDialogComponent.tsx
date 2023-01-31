@@ -1,15 +1,17 @@
 import * as React from "react";
-import {action, computed, makeObservable, observable} from "mobx";
-import {observer} from "mobx-react";
+import {ColorResult} from "react-color";
 import {AnchorButton, Button, Classes, DialogProps, FormGroup, HTMLSelect, Intent, MenuItem, NonIdealState, Radio, RadioGroup, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {ColorResult} from "react-color";
+import {action, computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {DraggableDialogComponent} from "components/Dialogs";
+import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, HelpType} from "stores";
 import {FrameStore, VectorOverlaySource} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
-import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {CustomIcon} from "icons/CustomIcons";
+
 import "./VectorOverlayDialogComponent.scss";
 
 enum VectorOverlayDialogTabs {
