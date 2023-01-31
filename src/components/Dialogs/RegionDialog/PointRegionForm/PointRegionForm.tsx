@@ -6,8 +6,8 @@ import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
 import {CoordinateComponent, SafeNumericInput} from "components/Shared";
-import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {Point2D, WCSPoint2D} from "models";
+import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {PointAnnotationStore, RegionCoordinate, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 

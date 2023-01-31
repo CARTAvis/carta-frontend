@@ -1,24 +1,24 @@
 import * as React from "react";
-import {observer} from "mobx-react";
 import {AnchorButton, Classes, FormGroup, IDialogProps, Intent, NonIdealState, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
+import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
+import {PointShapeSelectComponent, SafeNumericInput} from "components/Shared";
+import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, HelpType} from "stores";
 import {CompassAnnotationStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
+import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {LineRegionForm} from "./LineRegionForm/LineRegionForm";
-import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
-import {CustomIcon} from "icons/CustomIcons";
 import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 
 import "./RegionDialogComponent.scss";
-import {PointShapeSelectComponent, SafeNumericInput} from "components/Shared";
 
 @observer
 export class RegionDialogComponent extends React.Component {

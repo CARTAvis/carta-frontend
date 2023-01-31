@@ -13,6 +13,7 @@ import {AppStore, OverlayStore, PreferenceStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
 import {add2D, average2D, isAstBadPoint, length2D, pointDistanceSquared, scale2D, subtract2D, transformPoint} from "utilities";
 
+import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
 import {CursorRegionComponent} from "./CursorRegionComponent";
 import {LineSegmentRegionComponent} from "./LineSegmentRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
@@ -20,7 +21,6 @@ import {adjustPosToMutatedStage, canvasToImagePos, canvasToTransformedImagePos, 
 import {SimpleShapeRegionComponent} from "./SimpleShapeRegionComponent";
 
 import "./RegionViewComponent.scss";
-import {CompassAnnotation, RulerAnnotation} from "./CompassAndRulerAnnotationComponent";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;

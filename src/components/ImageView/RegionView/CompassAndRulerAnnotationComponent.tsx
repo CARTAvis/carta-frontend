@@ -1,14 +1,16 @@
 import React from "react";
-import {observer} from "mobx-react";
-import {Group, Arrow, Text, Line} from "react-konva";
-import Konva from "konva";
+import {Arrow, Group, Line,Text} from "react-konva";
 import * as AST from "ast_wrapper";
-import {Anchor} from "./InvariantShapes";
+import Konva from "konva";
+import {observer} from "mobx-react";
+
+import {Point2D} from "models";
 import {AppStore} from "stores";
 import {CompassAnnotationStore, FrameStore, RegionStore, RulerAnnotationStore} from "stores/Frame";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 import {add2D, pointDistance, subtract2D, transformPoint} from "utilities";
-import {Point2D} from "models";
+
+import {Anchor} from "./InvariantShapes";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 
 interface CompassAnnotationProps {
     key: number;

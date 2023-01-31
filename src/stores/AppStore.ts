@@ -13,7 +13,7 @@ import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {CatalogInfo, CatalogType, COMPUTED_POLARIZATIONS, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, SpectralType, Theme, TileCoordinate, ToFileListFilterMode, WCSMatchingType} from "models";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
-import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore, CompassAnnotationStore, PointAnnotationStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
+import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/widgets";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 

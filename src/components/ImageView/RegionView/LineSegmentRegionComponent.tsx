@@ -1,10 +1,10 @@
 import * as React from "react";
+import {Arrow,Group, Line} from "react-konva";
+import {Colors} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import Konva from "konva";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Group, Line, Arrow} from "react-konva";
-import Konva from "konva";
-import {CARTA} from "carta-protobuf";
-import {Colors} from "@blueprintjs/core";
 
 import {Point2D} from "models";
 import {AppStore} from "stores";

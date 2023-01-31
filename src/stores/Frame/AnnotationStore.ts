@@ -1,12 +1,14 @@
-import {action, observable, makeObservable} from "mobx";
 import {Colors} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
+import {CARTA} from "carta-protobuf";
+import {action, makeObservable,observable} from "mobx";
+
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {FrameStore} from "stores/Frame";
-import {RegionStore} from "./RegionStore";
 import {transformPoint} from "utilities";
+
+import {RegionStore} from "./RegionStore";
 
 // export enum CARTA.TextAnnotationPosition {
 //     CENTER = "Center",

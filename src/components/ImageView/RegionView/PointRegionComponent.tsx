@@ -2,8 +2,8 @@ import * as React from "react";
 import Konva from "konva";
 import {observer} from "mobx-react";
 
-import {AppStore} from "stores";
 import {Point2D} from "models";
+import {AppStore} from "stores";
 import {FrameStore, PointAnnotationStore, RegionStore} from "stores/Frame";
 import {transformPoint} from "utilities";
 

@@ -1,13 +1,15 @@
 import * as React from "react";
-import {observer} from "mobx-react";
 import {FormGroup, H5, InputGroup} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
+import {CARTA} from "carta-protobuf";
+import {observer} from "mobx-react";
+
+import {CoordinateComponent,SafeNumericInput} from "components/Shared";
+import {Point2D,WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {RegionStore, RegionCoordinate, CompassAnnotationStore} from "stores/Frame";
-import {SafeNumericInput, CoordinateComponent} from "components/Shared";
-import {WCSPoint2D, Point2D} from "models";
-import {getPixelValueFromWCS, getFormattedWCSPoint, isWCSStringFormatValid} from "utilities";
+import {CompassAnnotationStore,RegionCoordinate, RegionStore} from "stores/Frame";
+import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+
 import "./CompassRulerRegionForm.scss";
 
 const KEYCODE_ENTER = "Enter";

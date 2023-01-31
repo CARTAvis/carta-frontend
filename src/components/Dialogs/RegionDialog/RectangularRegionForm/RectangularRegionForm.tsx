@@ -7,8 +7,8 @@ import {computed} from "mobx";
 import {observer} from "mobx-react";
 
 import {CoordinateComponent, SafeNumericInput} from "components/Shared";
-import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {Point2D, WCSPoint2D} from "models";
+import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {FrameStore, RegionCoordinate, RegionStore, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 

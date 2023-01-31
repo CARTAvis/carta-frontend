@@ -1,9 +1,9 @@
 import * as React from "react";
+import {Ellipse, Group, Line, Rect, Text} from "react-konva";
+import {CARTA} from "carta-protobuf";
+import Konva from "konva";
 import {action} from "mobx";
 import {observer} from "mobx-react";
-import {Ellipse, Group, Line, Rect, Text} from "react-konva";
-import Konva from "konva";
-import {CARTA} from "carta-protobuf";
 
 import {Point2D} from "models";
 import {AppStore} from "stores";

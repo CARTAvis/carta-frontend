@@ -5,7 +5,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
 import {PreferenceStore} from "stores";
-import {CURSOR_REGION_ID, FrameStore, RegionStore, CompassAnnotationStore, RulerAnnotationStore, TextAnnotationStore, PointAnnotationStore, VectorAnnotationStore} from "stores/Frame";
+import {CompassAnnotationStore, CURSOR_REGION_ID, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
 
 export enum RegionMode {

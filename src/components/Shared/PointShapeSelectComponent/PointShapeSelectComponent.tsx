@@ -1,8 +1,9 @@
 import React from "react";
-import {observer} from "mobx-react";
-import {Button, MenuItem, Icon, PopoverPosition} from "@blueprintjs/core";
+import {Button, Icon, MenuItem, PopoverPosition} from "@blueprintjs/core";
 import {IItemRendererProps, Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
+import {observer} from "mobx-react";
+
 import {AppStore} from "stores";
 
 export const PointShapeSelectComponent = observer((props: {handleChange: (pointShape: CARTA.PointAnnotationShape) => void; pointShape: CARTA.PointAnnotationShape}) => {
