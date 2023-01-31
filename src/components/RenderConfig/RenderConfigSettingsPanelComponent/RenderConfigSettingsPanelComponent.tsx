@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps} from "components/Shared";
 import {LineKey} from "models";
 import {DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {RenderConfigWidgetStore} from "stores/widgets";
+import {RenderConfigWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import "./RenderConfigSettingsPanelComponent.scss";

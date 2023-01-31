@@ -9,7 +9,7 @@ import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/widgets";
+import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
 
 import "./PvGeneratorComponent.scss";
 

@@ -16,7 +16,7 @@ import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTabl
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {RegionMode} from "stores/Frame";
-import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/widgets";
+import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
 import {ProcessedColumnData, toFixed} from "utilities";
 
 import "./CatalogOverlayComponent.scss";

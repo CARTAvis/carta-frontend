@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 import splatalogueLogoPng from "static/splatalogue_logo.png";
 
 import {AppStore} from "stores";
-import {SplataloguePingStatus} from "stores/widgets";
+import {SplataloguePingStatus} from "stores/Widgets";
 
 import "./SpectralLineQuerySplashScreenComponent.scss";
 

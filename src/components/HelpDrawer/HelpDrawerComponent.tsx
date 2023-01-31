@@ -3,8 +3,8 @@ import {Classes, Drawer, IDrawerProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {AppStore} from "stores";
-import {HelpStore, HelpType} from "stores/HelpStore";
+import {AppStore, HelpStore} from "stores";
+import {HelpType} from "stores/HelpStore/HelpStore";
 
 import {
     ANIMATOR_HELP_CONTENT,

@@ -11,7 +11,7 @@ import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent} from "
 import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {HistogramWidgetStore} from "stores/widgets";
+import {HistogramWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
 
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";

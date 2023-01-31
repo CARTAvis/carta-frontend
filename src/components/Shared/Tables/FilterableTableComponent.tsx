@@ -11,7 +11,7 @@ import {observer} from "mobx-react";
 import {CatalogType} from "models";
 import {CatalogApiService} from "services";
 import {AppStore, ControlHeader} from "stores";
-import {SpectralLineHeaders} from "stores/widgets";
+import {SpectralLineHeaders} from "stores/Widgets";
 import {ProcessedColumnData} from "utilities";
 
 import "./FilterableTableComponent.scss";

@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {ClearableNumericInputComponent} from "components/Shared";
 import {FrequencyUnit, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/widgets";
+import {LayerListSettingsTabs, LayerListWidgetStore} from "stores/Widgets";
 
 import "./LayerListSettingsPanelComponent.scss";
 
