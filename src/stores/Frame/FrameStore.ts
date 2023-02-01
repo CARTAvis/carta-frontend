@@ -30,7 +30,8 @@ import {
     STANDARD_SPECTRAL_TYPE_SETS,
     Transform2D,
     WCSPoint2D,
-    ZoomPoint} from "models";
+    ZoomPoint
+} from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
 import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
 import {

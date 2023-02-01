@@ -7,7 +7,7 @@ import {CustomIconName} from "icons/CustomIcons";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {AppStore} from "stores";
-import {CoordinateMode,FrameStore} from "stores/Frame";
+import {CoordinateMode, FrameStore} from "stores/Frame";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 
 export const CURSOR_REGION_ID = 0;

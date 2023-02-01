@@ -11,7 +11,7 @@ import {ColorPickerComponent, CoordinateComponent, SafeNumericInput} from "compo
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore, DialogStore, HelpType} from "stores";
-import {CoordinateMode,DistanceMeasuringStore} from "stores/Frame";
+import {CoordinateMode, DistanceMeasuringStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
 
 import "./DistanceMeasuringDialog.scss";
