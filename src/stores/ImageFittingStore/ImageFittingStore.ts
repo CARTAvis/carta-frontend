@@ -2,11 +2,11 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
-import {AngularSize, AngularSizeUnit, Point2D} from "models";
+import {AngularSize, AngularSizeUnit, Point2D, WCSPoint2D} from "models";
 import {AppStore, NumberFormatType} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
-import {angle2D, getFormattedWCSPoint, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
+import {angle2D, formattedArcsec, getFormattedWCSPoint, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
 
 const FOV_REGION_ID = 0;
 const IMAGE_REGION_ID = -1;
@@ -44,7 +44,7 @@ export class ImageFittingStore {
     @action setComponents = (num: number) => {
         if (num > this.components.length) {
             for (let i = this.components.length; i < num; i++) {
-                this.components.push(new ImageFittingIndividualStore());
+                this.components.push(new ImageFittingIndividualStore(this.effectiveFrame));
                 this.selectedComponentIndex = this.components.length - 1;
             }
         } else if (num < this.components.length) {
@@ -56,7 +56,7 @@ export class ImageFittingStore {
     };
 
     @action clearComponents = () => {
-        this.components = [new ImageFittingIndividualStore()];
+        this.components = [new ImageFittingIndividualStore(this.effectiveFrame)];
         this.selectedComponentIndex = 0;
         this.backgroundOffset = 0;
         this.solverType = CARTA.FittingSolverType.Cholesky;
@@ -403,6 +403,7 @@ export class ImageFittingStore {
 }
 
 export class ImageFittingIndividualStore {
+    private readonly frame: FrameStore;
     @observable center: Point2D;
     @observable amplitude: number;
     @observable fwhm: Point2D;
@@ -484,8 +485,9 @@ export class ImageFittingIndividualStore {
         this.paFixed = !this.paFixed;
     };
 
-    constructor() {
+    constructor(frame: FrameStore) {
         makeObservable(this);
+        this.frame = frame;
         this.center = {x: NaN, y: NaN};
         this.amplitude = NaN;
         this.fwhm = {x: NaN, y: NaN};
@@ -494,6 +496,21 @@ export class ImageFittingIndividualStore {
         this.amplitudeFixed = false;
         this.fwhmFixed = {x: false, y: false};
         this.paFixed = false;
+    }
+
+    @computed get centerWcs(): WCSPoint2D {
+        if (!this.frame?.wcsInfoForTransformation) {
+            return null;
+        }
+        return getFormattedWCSPoint(this.frame.wcsInfoForTransformation, this.center);
+    }
+
+    @computed get fwhmWcs(): WCSPoint2D {
+        const wcsSize = this.frame?.getWcsSizeInArcsec(this.fwhm);
+        if (!wcsSize) {
+            return null;
+        }
+        return {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)};
     }
 
     @computed get validParams(): boolean {
