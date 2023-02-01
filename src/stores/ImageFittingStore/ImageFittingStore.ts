@@ -412,28 +412,52 @@ export class ImageFittingIndividualStore {
     @observable fwhmFixed: {x: boolean; y: boolean};
     @observable paFixed: boolean;
 
-    @action setCenterX = (val: number) => {
-        this.center.x = val;
+    @action setCenterX = (val: number): boolean => {
+        if (isFinite(val)) {
+            this.center.x = val;
+            return true;
+        }
+        return false;
     };
 
-    @action setCenterY = (val: number) => {
-        this.center.y = val;
+    @action setCenterY = (val: number): boolean => {
+        if (isFinite(val)) {
+            this.center.y = val;
+            return true;
+        }
+        return false;
     };
 
-    @action setAmplitude = (val: number) => {
-        this.amplitude = val;
+    @action setAmplitude = (val: number): boolean => {
+        if (isFinite(val)) {
+            this.amplitude = val;
+            return true;
+        }
+        return false;
     };
 
-    @action setFwhmX = (val: number) => {
-        this.fwhm.x = val;
+    @action setFwhmX = (val: number): boolean => {
+        if (isFinite(val) && val > 0) {
+            this.fwhm.x = val;
+            return true;
+        }
+        return false;
     };
 
-    @action setFwhmY = (val: number) => {
-        this.fwhm.y = val;
+    @action setFwhmY = (val: number): boolean => {
+        if (isFinite(val) && val > 0) {
+            this.fwhm.y = val;
+            return true;
+        }
+        return false;
     };
 
-    @action setPa = (val: number) => {
-        this.pa = val;
+    @action setPa = (val: number): boolean => {
+        if (isFinite(val)) {
+            this.pa = val;
+            return true;
+        }
+        return false;
     };
 
     @action toggleCenterXFixed = () => {
