@@ -1,15 +1,17 @@
 import * as React from "react";
+import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {ItemRenderer, Select} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
-import {observer} from "mobx-react";
 import {action, autorun, makeObservable, observable} from "mobx";
-import {ItemRenderer, Select} from "@blueprintjs/select";
-import {Button, Collapse, Divider, FormGroup, HTMLSelect, InputGroup, MenuItem, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {observer} from "mobx-react";
+
 import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {ImagePanelMode} from "models";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
 import {ColorbarStore, CoordinateMode} from "stores/Frame";
-import {ImagePanelMode} from "models";
 import {SWATCH_COLORS, toFixed} from "utilities";
+
 import "./ImageViewSettingsPanelComponent.scss";
 
 enum ImageViewSettingsPanelTabs {

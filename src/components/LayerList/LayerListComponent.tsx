@@ -1,15 +1,17 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {action, makeObservable, observable} from "mobx";
-import {observer} from "mobx-react";
+import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table, IMenuContext} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell, IMenuContext, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import classNames from "classnames";
-import ReactResizeDetector from "react-resize-detector";
-import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore} from "stores";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {FrameStore} from "stores/Frame";
-import {LayerListSettingsTabs} from "stores/widgets";
+import {LayerListSettingsTabs} from "stores/Widgets";
+
 import "./LayerListComponent.scss";
 
 @observer

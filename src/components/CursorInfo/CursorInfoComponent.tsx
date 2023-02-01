@@ -1,13 +1,15 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {action, makeObservable, observable} from "mobx";
-import {NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
+import {NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {SimpleTableComponent} from "components/Shared";
-import {formattedExponential, toFixed} from "utilities";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {FrameStore} from "stores/Frame";
+import {formattedExponential, toFixed} from "utilities";
+
 import "./CursorInfoComponent.scss";
 
 @observer

@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import dialogButtonOnlineCatalogQuery from "static/help/dialogButton_catalogQuery.png";
 import dialogButtonOnlineCatalogQuery_d from "static/help/dialogButton_catalogQuery_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const ONLINE_CATALOG_QUERY_HELP_CONTENT = (
     <div>

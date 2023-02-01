@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import dialogButtonImageFitting from "static/help/dialogButton_imageFitting.png";
 import dialogButtonImageFitting_d from "static/help/dialogButton_imageFitting_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const IMAGE_FITTING_HELP_CONTENT = (
     <div>

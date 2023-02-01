@@ -1,7 +1,9 @@
 import {Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
+
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {CoordinateMode} from "stores/Frame";
+
 import {SafeNumericInput} from "..";
 
 const KEYCODE_ENTER = 13;

@@ -1,14 +1,16 @@
-import {observer} from "mobx-react";
-import {CARTA} from "carta-protobuf";
 import * as React from "react";
-import {AnchorButton, FormGroup, Switch, ButtonGroup} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, FormGroup, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
-import {StokesAnalysisWidgetStore} from "stores/widgets";
+import {CARTA} from "carta-protobuf";
+import {observer} from "mobx-react";
+
 import {StokesAnalysisComponent, StokesAnalysisSettingsTabs} from "components";
 import {RegionSelectorComponent} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
+import {AppStore} from "stores";
+import {FrameStore} from "stores/Frame";
+import {StokesAnalysisWidgetStore} from "stores/Widgets";
+
 import "./StokesAnalysisToolbarComponent.scss";
 
 @observer

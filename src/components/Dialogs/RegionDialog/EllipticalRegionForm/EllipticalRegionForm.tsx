@@ -1,14 +1,16 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {computed} from "mobx";
 import {Classes, H5, InputGroup} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AppStore} from "stores";
-import {FrameStore, CoordinateMode, RegionStore, WCS_PRECISION} from "stores/Frame";
-import {Point2D, WCSPoint2D} from "models";
-import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
+import {CARTA} from "carta-protobuf";
+import {computed} from "mobx";
+import {observer} from "mobx-react";
+
 import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType} from "components/Shared";
+import {Point2D, WCSPoint2D} from "models";
+import {AppStore} from "stores";
+import {CoordinateMode, FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
+
 import "./EllipticalRegionForm.scss";
 
 @observer
