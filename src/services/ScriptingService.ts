@@ -1,6 +1,7 @@
+import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {toJS} from "mobx";
-import {CARTA} from "carta-protobuf";
+
 import {AppStore} from "stores";
 
 export class ExecutionEntry {

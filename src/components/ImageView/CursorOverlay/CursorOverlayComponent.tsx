@@ -1,9 +1,11 @@
 import * as React from "react";
+import {CSSProperties} from "react";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {CSSProperties} from "react";
+
 import {CursorInfo, SpectralInfo} from "models";
 import {formattedExponential, toFixed} from "utilities";
+
 import "./CursorOverlayComponent.scss";
 
 class CursorOverlayProps {

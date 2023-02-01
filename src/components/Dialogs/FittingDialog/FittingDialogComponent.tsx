@@ -1,14 +1,16 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {action, makeObservable, observable} from "mobx";
 import {AnchorButton, ButtonGroup, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
-import {AppStore, HelpType} from "stores";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
+import {AppStore, HelpType} from "stores";
 import {exportTxtFile, getTimestamp} from "utilities";
+
 import "./FittingDialogComponent.scss";
 
 enum FittingResultTabs {

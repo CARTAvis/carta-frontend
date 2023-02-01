@@ -1,15 +1,17 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {action, makeObservable, observable} from "mobx";
+import AutoSizer from "react-virtualized-auto-sizer";
+import {FixedSizeList as List} from "react-window";
 import {Button, ButtonGroup, ControlGroup, Divider, FormGroup, HTMLSelect, InputGroup, IOptionProps, NonIdealState, Position, Pre, Spinner, Tab, TabId, Tabs, Text} from "@blueprintjs/core";
 import {Popover2, Popover2InteractionKind} from "@blueprintjs/popover2";
-import {FixedSizeList as List} from "react-window";
-import AutoSizer from "react-virtualized-auto-sizer";
 import {CARTA} from "carta-protobuf";
-import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {ImageSaveComponent, RegionSelectComponent} from "components/Dialogs";
+import {SimpleTableComponent, SimpleTableComponentProps} from "components/Shared";
 import {AppStore} from "stores";
 import {exportTxtFile} from "utilities";
+
 import "./FileInfoComponent.scss";
 
 export enum FileInfoType {

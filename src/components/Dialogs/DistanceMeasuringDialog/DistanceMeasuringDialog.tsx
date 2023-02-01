@@ -1,17 +1,19 @@
 import * as React from "react";
-import {observable, action, makeObservable} from "mobx";
-import {observer} from "mobx-react";
 import {ColorResult} from "react-color";
-import {FormGroup, IDialogProps, NonIdealState, H5} from "@blueprintjs/core";
+import {FormGroup, H5, IDialogProps, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {ImageViewLayer} from "components";
+import {DraggableDialogComponent} from "components/Dialogs";
+import {ColorPickerComponent, CoordinateComponent, SafeNumericInput} from "components/Shared";
+import {CustomIcon} from "icons/CustomIcons";
+import {Point2D, WCSPoint2D} from "models";
 import {AppStore, DialogStore, HelpType} from "stores";
 import {DistanceMeasuringStore, RegionCoordinate} from "stores/Frame";
-import {CustomIcon} from "icons/CustomIcons";
-import {SafeNumericInput, ColorPickerComponent, CoordinateComponent} from "components/Shared";
-import {DraggableDialogComponent} from "components/Dialogs";
-import {WCSPoint2D, Point2D} from "models";
-import {getPixelValueFromWCS, getFormattedWCSPoint, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
-import {ImageViewLayer} from "components";
+import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
+
 import "./DistanceMeasuringDialog.scss";
 
 const KEYCODE_ENTER = "Enter";

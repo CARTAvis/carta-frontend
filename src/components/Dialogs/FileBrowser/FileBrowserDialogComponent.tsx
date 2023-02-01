@@ -1,17 +1,20 @@
 import * as React from "react";
-import * as _ from "lodash";
-import classNames from "classnames";
-import {observer} from "mobx-react";
-import {action, computed, flow, makeObservable, observable, runInAction} from "mobx";
-import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, BreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
-import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
+import classNames from "classnames";
+import * as _ from "lodash";
+import {action, computed, flow, makeObservable, observable, runInAction} from "mobx";
+import {observer} from "mobx-react";
+
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
+import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {SimpleTableComponentProps} from "components/Shared";
 import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
+
+import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
+
 import "./FileBrowserDialogComponent.scss";
 
 @observer

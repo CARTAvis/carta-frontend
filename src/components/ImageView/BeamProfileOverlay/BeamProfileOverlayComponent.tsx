@@ -1,12 +1,14 @@
 import * as React from "react";
-import classNames from "classnames";
-import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
+import classNames from "classnames";
+import {observer} from "mobx-react";
+
+import {Point2D} from "models";
 import {AppStore, BeamType} from "stores";
 import {FrameStore} from "stores/Frame";
-import {Point2D} from "models";
 import {getColorForTheme} from "utilities";
+
 import "./BeamProfileOverlayComponent.scss";
 
 interface BeamProfileOverlayComponentProps {

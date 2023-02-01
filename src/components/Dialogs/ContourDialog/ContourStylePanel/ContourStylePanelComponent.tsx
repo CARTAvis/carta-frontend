@@ -1,11 +1,13 @@
 import * as React from "react";
-import {observer} from "mobx-react";
+import {ColorResult} from "react-color";
 import {Button, FormGroup, HTMLSelect, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {ColorResult} from "react-color";
-import {ContourDashMode, FrameStore} from "stores/Frame";
+import {observer} from "mobx-react";
+
 import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
+import {ContourDashMode, FrameStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
+
 import "./ContourStylePanelComponent.scss";
 
 const DashModeSelect = Select.ofType<ContourDashMode>();
