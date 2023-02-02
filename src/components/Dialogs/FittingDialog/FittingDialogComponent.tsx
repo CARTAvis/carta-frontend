@@ -124,10 +124,12 @@ export class FittingDialogComponent extends React.Component {
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={200} defaultWidth={600} defaultHeight={660} enableResizing={true}>
-                <div className={Classes.DIALOG_BODY}>
+                <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data Source" inline={true}>
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
                     </FormGroup>
+                </div>
+                <div className={classNames(Classes.DIALOG_BODY, "unpinned-input-panel")}>
                     <FormGroup label="Region" inline={true}>
                         <HTMLSelect value={fittingStore.selectedRegionId} options={fittingStore.regionOptions} onChange={ev => fittingStore.setSelectedRegionId(parseInt(ev.target.value))} />
                     </FormGroup>
@@ -190,7 +192,7 @@ export class FittingDialogComponent extends React.Component {
                         </Tooltip2>
                     </div>
                 </div>
-                <div className={classNames(Classes.DIALOG_BODY, "fitting-result")} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+                <div className={classNames(Classes.DIALOG_BODY, "fitting-result-panel")} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                     <Tabs id="fittingResultTabs" vertical={true} selectedTabId={this.fittingResultTabId} onChange={this.setFittingResultTabId}>
                         <Tab id={FittingResultTabs.RESULT} title="Fitting Result" panel={fittingResultPanel} />
                         <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
