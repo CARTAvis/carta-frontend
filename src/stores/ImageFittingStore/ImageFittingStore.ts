@@ -6,7 +6,7 @@ import {AngularSize, AngularSizeUnit, Point2D, WCSPoint2D} from "models";
 import {AppStore, NumberFormatType} from "stores";
 import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
-import {angle2D, formattedArcsec, getFormattedWCSPoint, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
+import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
 
 const FOV_REGION_ID = 0;
 const IMAGE_REGION_ID = -1;
@@ -429,6 +429,14 @@ export class ImageFittingIndividualStore {
         return false;
     };
 
+    @action private setCenter = (center: Point2D): boolean => {
+        if (isFinite(center?.x) && isFinite(center?.y)) {
+            this.center = center;
+            return true;
+        }
+        return false;
+    };
+
     @action setAmplitude = (val: number): boolean => {
         if (isFinite(val)) {
             this.amplitude = val;
@@ -499,7 +507,7 @@ export class ImageFittingIndividualStore {
     }
 
     @computed get centerWcs(): WCSPoint2D {
-        if (!this.frame?.wcsInfoForTransformation) {
+        if (!this.frame?.wcsInfoForTransformation || !isFinite(this.center?.x) || !isFinite(this.center?.y)) {
             return null;
         }
         return getFormattedWCSPoint(this.frame.wcsInfoForTransformation, this.center);
@@ -524,4 +532,50 @@ export class ImageFittingIndividualStore {
     @computed get allFixed(): boolean {
         return this.fixedParams.every(p => p === true);
     }
+
+    setCenterXWcs = (val: string): boolean => {
+        if (!isWCSStringFormatValid(val, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+            return false;
+        }
+        if (!this.frame?.wcsInfoForTransformation) {
+            return false;
+        }
+        // initialize center Y with the wcs coordinate of the origin (0, 0) if it's not set yet
+        const centerYWcs = this.centerWcs?.y ?? getFormattedWCSPoint(this.frame.wcsInfoForTransformation, {x: 0, y: 0})?.y;
+        const center = getPixelValueFromWCS(this.frame.wcsInfoForTransformation, {x: val, y: centerYWcs});
+        if (!center) {
+            return false;
+        }
+        return this.setCenter(center);
+    };
+
+    setCenterYWcs = (val: string): boolean => {
+        if (!isWCSStringFormatValid(val, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+            return false;
+        }
+        if (!this.frame?.wcsInfoForTransformation) {
+            return false;
+        }
+        // initialize center X with the wcs coordinate of the origin (0, 0) if it's not set yet
+        const centerXWcs = this.centerWcs?.x ?? getFormattedWCSPoint(this.frame.wcsInfoForTransformation, {x: 0, y: 0})?.x;
+        const center = getPixelValueFromWCS(this.frame.wcsInfoForTransformation, {x: centerXWcs, y: val});
+        if (!center) {
+            return false;
+        }
+        return this.setCenter(center);
+    };
+
+    setFwhmXWcs = (val: string): boolean => {
+        if (val) {
+            return this.setFwhmX(this.frame?.getImageXValueFromArcsec(getValueFromArcsecString(val)));
+        }
+        return false;
+    };
+
+    setFwhmYWcs = (val: string): boolean => {
+        if (val) {
+            return this.setFwhmY(this.frame?.getImageYValueFromArcsec(getValueFromArcsecString(val)));
+        }
+        return false;
+    };
 }
