@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import dialogButtonContourConfig from "static/help/dialogButton_contourConfig.png";
 import dialogButtonContourConfig_d from "static/help/dialogButton_contourConfig_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const CONTOUR_HELP_CONTENT = (
     <div>

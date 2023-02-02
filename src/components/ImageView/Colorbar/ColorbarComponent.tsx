@@ -1,13 +1,15 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {action, observable, makeObservable} from "mobx";
 import {Layer, Line, Rect, Stage, Text} from "react-konva";
 import {fonts} from "ast_wrapper";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {Font} from "components";
 import {ProfilerInfoComponent} from "components/Shared";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {Font} from "../ImageViewSettingsPanel/ImageViewSettingsPanelComponent";
 import {clamp, getColorForTheme} from "utilities";
+
 import "./ColorbarComponent.scss";
 
 export interface ColorbarComponentProps {

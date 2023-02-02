@@ -1,14 +1,16 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {CARTA} from "carta-protobuf";
 import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, MenuItem, Position, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {ItemPredicate, ItemRenderer, MultiSelect} from "@blueprintjs/select";
+import {CARTA} from "carta-protobuf";
+import {observer} from "mobx-react";
+
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
-import {AppStore} from "stores";
 import {MOMENT_TEXT} from "models";
+import {AppStore} from "stores";
+import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/Widgets";
+
 import "./MomentGeneratorComponent.scss";
 
 const MomentMultiSelect = MultiSelect.ofType<CARTA.Moment>();

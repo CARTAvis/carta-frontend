@@ -1,14 +1,16 @@
 import * as React from "react";
-import classNames from "classnames";
-import {observer} from "mobx-react";
-import {CARTA} from "carta-protobuf";
 import {AnchorButton, ButtonGroup, Checkbox, Intent, Menu, MenuItem, Position} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
-import {AppStore} from "stores";
-import {MultiProfileCategory, SpectralProfileWidgetStore, SpectralProfileSelectionStore} from "stores/widgets";
+import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
+import {observer} from "mobx-react";
+
 import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "components";
 import {CustomIcon} from "icons/CustomIcons";
 import {LineOption} from "models";
+import {AppStore} from "stores";
+import {MultiProfileCategory, SpectralProfileSelectionStore, SpectralProfileWidgetStore} from "stores/Widgets";
+
 import "./SpectralProfilerToolbarComponent.scss";
 
 type MultiSelectItem = string | CARTA.StatsType;

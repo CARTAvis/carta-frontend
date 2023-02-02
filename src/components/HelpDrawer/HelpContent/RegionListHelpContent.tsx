@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonRegionList from "static/help/widgetButton_regionList.png";
 import widgetButtonRegionList_d from "static/help/widgetButton_regionList_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const REGION_LIST_HELP_CONTENT = (
     <div>

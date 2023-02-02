@@ -1,12 +1,14 @@
-import {observer} from "mobx-react";
 import * as React from "react";
-import {autorun} from "mobx";
 import {FormGroup, HTMLSelect} from "@blueprintjs/core";
-import {AppStore} from "stores";
-import {HistogramWidgetStore} from "stores/widgets";
+import {autorun} from "mobx";
+import {observer} from "mobx-react";
+
 import {RegionSelectorComponent} from "components/Shared";
-import "./HistogramToolbarComponent.scss";
 import {FULL_POLARIZATIONS} from "models";
+import {AppStore} from "stores";
+import {HistogramWidgetStore} from "stores/Widgets";
+
+import "./HistogramToolbarComponent.scss";
 
 @observer
 export class HistogramToolbarComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {

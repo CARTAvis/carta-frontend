@@ -1,16 +1,19 @@
 import * as React from "react";
-import * as prism from "prismjs";
-import {observer} from "mobx-react";
+import Editor from "react-simple-code-editor";
+import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
-import Editor from "react-simple-code-editor";
+import {observer} from "mobx-react";
+import * as prism from "prismjs";
+
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, WarningToast} from "components/Shared";
-import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
-import {AppStore, SnippetStore} from "stores";
 import {Snippet} from "models";
+import {AppStore, SnippetStore} from "stores";
+
+import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
 import {ThemeProvider} from "./ThemeProvider";
+
 import "./CodeSnippetDialogComponent.scss";
 
 const KEYCODE_ENTER = 13;

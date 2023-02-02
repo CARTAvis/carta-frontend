@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Added two entries in Service sub-menu to copy the session ID and the session URL to clipboard ([#1930](https://github.com/cartavis/carta-frontend/issues/1930))
 * Added a button for NaN pixel color selection in render config overlay ([#1946](https://github.com/cartavis/carta-frontend/issues/1946))
 * Added a setting dialog for the angular distance measurement ([#1201](https://github.com/cartavis/carta-frontend/issues/1201)).
 * Added the functionality to show/hide and lock all regions ([#1796](https://github.com/cartavis/carta-frontend/issues/1796)).
@@ -34,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed offset between cusorInfo and upper wcs axis in the spatial profilers ([#1319](https://github.com/CARTAvis/carta-frontend/issues/1319)).
 ### Changed
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
+* Set white color or black color, based on the theme, as the background for the image view PNG export ([#2029](https://github.com/CARTAvis/carta-frontend/issues/2029)). 
 
 ## [3.0.1]
 
