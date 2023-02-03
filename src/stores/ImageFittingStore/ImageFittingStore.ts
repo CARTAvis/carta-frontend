@@ -125,11 +125,11 @@ export class ImageFittingStore {
         return [{value: FOV_REGION_ID, label: "Field of View"}, {value: IMAGE_REGION_ID, label: "Image"}, ...(options ?? [])];
     }
 
+    // Mcholesky is not supported because it's not available in all gsl versions
     get solverOptions() {
         return [
             {value: CARTA.FittingSolverType.Qr, label: "QR"},
             {value: CARTA.FittingSolverType.Cholesky, label: "Cholesky"},
-            {value: CARTA.FittingSolverType.Mcholesky, label: "modified Cholesky"},
             {value: CARTA.FittingSolverType.Svd, label: "SVD"}
         ];
     }
