@@ -310,7 +310,7 @@ export class ImageFittingStore {
         const defaultDashLength = [2];
         const params = this.effectiveFrame?.fittingResultRegionParams;
         try {
-            await Promise.allSettled(
+            await Promise.all(
                 params.map((param, index) => {
                     const temporaryId = -1 - index;
                     const name = `Fitting result: Component #${index + 1}`;
