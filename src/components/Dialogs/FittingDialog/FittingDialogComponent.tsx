@@ -1,4 +1,5 @@
 import * as React from "react";
+import SplitPane from "react-split-pane";
 import {AnchorButton, ButtonGroup, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
@@ -80,7 +81,7 @@ export class FittingDialogComponent extends React.Component {
 
         if (!appStore || appStore.frameNum <= 0 || !fittingStore.effectiveFrame) {
             return (
-                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={200} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={265} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
             );
@@ -123,81 +124,85 @@ export class FittingDialogComponent extends React.Component {
         const unitString = fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : "";
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={200} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={265} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data Source" inline={true}>
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
                     </FormGroup>
                 </div>
-                <div className={classNames(Classes.DIALOG_BODY, "unpinned-input-panel")}>
-                    <FormGroup label="Region" inline={true}>
-                        <HTMLSelect value={fittingStore.selectedRegionId} options={fittingStore.regionOptions} onChange={ev => fittingStore.setSelectedRegionId(parseInt(ev.target.value))} />
-                    </FormGroup>
-                    <FormGroup label="Components" inline={true}>
-                        <SafeNumericInput className="components-input" value={fittingStore.components.length} min={1} max={20} stepSize={1} onValueChange={val => fittingStore.setComponents(Math.round(val))} />
-                        {fittingStore.components.length > 1 && (
-                            <>
-                                <Slider
-                                    value={fittingStore.selectedComponentIndex + 1}
-                                    min={1}
-                                    stepSize={1}
-                                    max={fittingStore.components.length}
-                                    showTrackFill={false}
-                                    onChange={val => fittingStore.setSelectedComponentIndex(val - 1)}
-                                    disabled={fittingStore.components.length <= 1}
-                                />
-                                <Tooltip2 content="Delete current component.">
-                                    <AnchorButton icon={"trash"} onClick={fittingStore.deleteSelectedComponent} />
+                <SplitPane split="horizontal" defaultSize="50%">
+                    <div className="upper-pane">
+                        <div className={classNames(Classes.DIALOG_BODY, "unpinned-input-panel")}>
+                            <FormGroup label="Region" inline={true}>
+                                <HTMLSelect value={fittingStore.selectedRegionId} options={fittingStore.regionOptions} onChange={ev => fittingStore.setSelectedRegionId(parseInt(ev.target.value))} />
+                            </FormGroup>
+                            <FormGroup label="Components" inline={true}>
+                                <SafeNumericInput className="components-input" value={fittingStore.components.length} min={1} max={20} stepSize={1} onValueChange={val => fittingStore.setComponents(Math.round(val))} />
+                                {fittingStore.components.length > 1 && (
+                                    <>
+                                        <Slider
+                                            value={fittingStore.selectedComponentIndex + 1}
+                                            min={1}
+                                            stepSize={1}
+                                            max={fittingStore.components.length}
+                                            showTrackFill={false}
+                                            onChange={val => fittingStore.setSelectedComponentIndex(val - 1)}
+                                            disabled={fittingStore.components.length <= 1}
+                                        />
+                                        <Tooltip2 content="Delete current component.">
+                                            <AnchorButton icon={"trash"} onClick={fittingStore.deleteSelectedComponent} />
+                                        </Tooltip2>
+                                    </>
+                                )}
+                            </FormGroup>
+                            <FormGroup label="Center" inline={true} labelInfo="(px)">
+                                {this.renderParamInput(component?.center?.x, "Center X", component?.setCenterX, component?.centerFixed?.x, component?.toggleCenterXFixed)}
+                                {this.renderParamInput(component?.center?.y, "Center Y", component?.setCenterY, component?.centerFixed?.y, component?.toggleCenterYFixed)}
+                            </FormGroup>
+                            <FormGroup label="Amplitude" inline={true} labelInfo={<span title={unitString}>{unitString}</span>}>
+                                {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude, component?.amplitudeFixed, component?.toggleAmplitudeFixed)}
+                            </FormGroup>
+                            <FormGroup label="FWHM" inline={true} labelInfo="(px)">
+                                {this.renderParamInput(component?.fwhm?.x, "Major Axis", component?.setFwhmX, component?.fwhmFixed?.x, component?.toggleFwhmXFixed)}
+                                {this.renderParamInput(component?.fwhm?.y, "Minor Axis", component?.setFwhmY, component?.fwhmFixed?.y, component?.toggleFwhmYFixed)}
+                            </FormGroup>
+                            <FormGroup label="P.A." inline={true} labelInfo="(deg)">
+                                {this.renderParamInput(component?.pa, "Position Angle", component?.setPa, component?.paFixed, component?.togglePaFixed)}
+                            </FormGroup>
+                            <ClearableNumericInputComponent
+                                label="Background"
+                                inline={true}
+                                labelInfo={<span title={unitString}>{unitString}</span>}
+                                value={fittingStore.backgroundOffset}
+                                placeholder="Offset"
+                                onValueChanged={fittingStore.setBackgroundOffset}
+                                onValueCleared={fittingStore.resetBackgroundOffset}
+                                tooltipContent=""
+                            />
+                            <FormGroup label="Solver" inline={true}>
+                                <HTMLSelect value={fittingStore.solverType} options={fittingStore.solverOptions} onChange={ev => fittingStore.setSolverType(parseInt(ev.target.value))} />
+                            </FormGroup>
+                        </div>
+                        <div className={Classes.DIALOG_FOOTER}>
+                            <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                                <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
+                                <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
+                                <Tooltip2 content="Clear fitting parameters." position={Position.BOTTOM}>
+                                    <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
                                 </Tooltip2>
-                            </>
-                        )}
-                    </FormGroup>
-                    <FormGroup label="Center" inline={true} labelInfo="(px)">
-                        {this.renderParamInput(component?.center?.x, "Center X", component?.setCenterX, component?.centerFixed?.x, component?.toggleCenterXFixed)}
-                        {this.renderParamInput(component?.center?.y, "Center Y", component?.setCenterY, component?.centerFixed?.y, component?.toggleCenterYFixed)}
-                    </FormGroup>
-                    <FormGroup label="Amplitude" inline={true} labelInfo={<span title={unitString}>{unitString}</span>}>
-                        {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude, component?.amplitudeFixed, component?.toggleAmplitudeFixed)}
-                    </FormGroup>
-                    <FormGroup label="FWHM" inline={true} labelInfo="(px)">
-                        {this.renderParamInput(component?.fwhm?.x, "Major Axis", component?.setFwhmX, component?.fwhmFixed?.x, component?.toggleFwhmXFixed)}
-                        {this.renderParamInput(component?.fwhm?.y, "Minor Axis", component?.setFwhmY, component?.fwhmFixed?.y, component?.toggleFwhmYFixed)}
-                    </FormGroup>
-                    <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                        {this.renderParamInput(component?.pa, "Position Angle", component?.setPa, component?.paFixed, component?.togglePaFixed)}
-                    </FormGroup>
-                    <ClearableNumericInputComponent
-                        label="Background"
-                        inline={true}
-                        labelInfo={<span title={unitString}>{unitString}</span>}
-                        value={fittingStore.backgroundOffset}
-                        placeholder="Offset"
-                        onValueChanged={fittingStore.setBackgroundOffset}
-                        onValueCleared={fittingStore.resetBackgroundOffset}
-                        tooltipContent=""
-                    />
-                    <FormGroup label="Solver" inline={true}>
-                        <HTMLSelect value={fittingStore.solverType} options={fittingStore.solverOptions} onChange={ev => fittingStore.setSolverType(parseInt(ev.target.value))} />
-                    </FormGroup>
-                </div>
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
-                        <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
-                        <Tooltip2 content="Clear fitting parameters." position={Position.BOTTOM}>
-                            <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
-                        </Tooltip2>
-                        <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
-                            <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} />
-                        </Tooltip2>
+                                <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
+                                    <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} />
+                                </Tooltip2>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div className={classNames(Classes.DIALOG_BODY, "fitting-result-panel")} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    <Tabs id="fittingResultTabs" vertical={true} selectedTabId={this.fittingResultTabId} onChange={this.setFittingResultTabId}>
-                        <Tab id={FittingResultTabs.RESULT} title="Fitting Result" panel={fittingResultPanel} />
-                        <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
-                    </Tabs>
-                </div>
+                    <div className={classNames(Classes.DIALOG_BODY, "lower-pane", "fitting-result-panel")} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+                        <Tabs id="fittingResultTabs" vertical={true} selectedTabId={this.fittingResultTabId} onChange={this.setFittingResultTabId}>
+                            <Tab id={FittingResultTabs.RESULT} title="Fitting Result" panel={fittingResultPanel} />
+                            <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
+                        </Tabs>
+                    </div>
+                </SplitPane>
                 <TaskProgressDialogComponent
                     isOpen={fittingStore.isFitting}
                     progress={fittingStore?.progress ?? 0}

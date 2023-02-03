@@ -1,19 +1,68 @@
 .fitting-dialog {
-    .pinned-input-panel {   
+    .pinned-input-panel {
         height: 45px;
         overflow: visible;
         margin-top: 20px;
         margin-bottom: 0px;
     }
 
-    .unpinned-input-panel {
-        margin-top: 0;
-        margin-bottom: 5px;
-    }
+    .SplitPane {
+        position: inherit !important;
+        height: calc(100% - 40px - 65px) !important; // dialog h - heading h - pinned inputs h
+        min-height: calc(100% - 40px - 65px) !important; // dialog h - heading h - pinned inputs h
 
-    .fitting-result-panel {
-        height: 70%;
-        margin-bottom: 0;
+        .Resizer {
+            background: rgba(0, 0, 0, 0);
+            opacity: 0;
+            z-index: 1;
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            -moz-background-clip: padding;
+            -webkit-background-clip: padding;
+            background-clip: padding-box;
+        }
+        .Resizer.horizontal {
+            height: 15px;
+            border-top: 5px solid rgba(255, 255, 255, 0);
+            border-bottom: 5px solid rgba(255, 255, 255, 0);
+            cursor: row-resize;
+            width: 100%;
+        }
+        .Resizer.disabled {
+            cursor: not-allowed;
+        }
+        .Resizer.disabled:hover {
+            border-color: transparent;
+        }
+
+        .Pane1 {
+            min-height: 65px; // at least show one input column
+            max-height: calc(100% - 15px - 65px); // split pane h - resizer h - pane 2 min h
+            width: 100%;
+            overflow: auto;
+
+            .upper-pane {
+                height: 100%;
+                width: 100%;
+            }
+
+            .unpinned-input-panel {
+                height: calc(100% - 30px - 5px); // pane 1 h - footer h - unpinned inputs bottom margin
+                margin-top: 0;
+                margin-bottom: 5px;
+            }
+        }
+
+        .Pane2 {
+            min-height: 65px; // at least show the two tabs
+            overflow: auto;
+
+            .lower-pane {
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+        }
     }
 
     .bp3-label {
@@ -62,9 +111,13 @@
         margin-right: 5px;
     }
 
+    .bp3-switch {
+        margin: 7px 10px 0 10px;
+    }
+
     .output-button {
         position: absolute;
-        bottom: 25px;
+        bottom: 5px;
         right: 25px;
         margin: 0 0 0 0;
         transition: opacity 400ms;
@@ -73,10 +126,6 @@
             transition: opacity 400ms;
             user-select: none;
         }
-    }
-
-    .bp3-switch {
-        margin: 7px 10px 0 10px;
     }
 
     .fitting-result-panel {
