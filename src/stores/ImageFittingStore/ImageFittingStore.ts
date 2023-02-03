@@ -507,6 +507,9 @@ export class ImageFittingIndividualStore {
     }
 
     @computed get centerWcs(): WCSPoint2D {
+        // re-calculate with different wcs system
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
         if (!this.frame?.wcsInfoForTransformation || !isFinite(this.center?.x) || !isFinite(this.center?.y)) {
             return null;
         }
