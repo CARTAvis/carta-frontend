@@ -87,7 +87,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             },
             (reference, prevReferece) => {
                 const frame = this.props.frame;
-                if (reference && (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) && frame) {
+                if (!frame.isPVImage && reference && (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) && frame) {
                     this.syncStage(reference.centerMovement, reference.zoom);
                 }
             }
@@ -495,13 +495,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const frame = this.props.frame;
         if (frame) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
-            const cursorInfo = this.props.frame.getCursorInfo(cursorPosImageSpace);
             const delta = -mouseEvent.deltaY * (mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? 1 : LINE_HEIGHT);
             const zoomSpeed = 1 + Math.abs(delta / 750.0);
 
             // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
             const newZoom = (frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel) * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-            frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
+            frame.zoomToPoint(cursorPosImageSpace.x, cursorPosImageSpace.y, newZoom, true);
 
             // Zoom stage
             const zoomCenter = PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR ? {x: mouseEvent.offsetX, y: mouseEvent.offsetY} : {x: this.props.width / 2, y: this.props.height / 2};

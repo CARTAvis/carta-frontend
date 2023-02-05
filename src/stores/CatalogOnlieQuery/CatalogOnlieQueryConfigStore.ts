@@ -56,8 +56,10 @@ export class CatalogOnlineQueryConfigStore {
 
         reaction(
             () => AppStore.Instance.activeFrame,
-            () => {
-                this.resetSearchRadius();
+            (frame) => {
+                if (!frame.isPVImage) {
+                    this.resetSearchRadius();
+                }
             }
         );
 
