@@ -60,7 +60,7 @@
         "react-konva": "^17.0.2-4",
         "react-plotly.js": "^2.5.1",
         "react-resize-detector": "^8.0.3",
-        "react-rnd": "^9.2.0",
+        "react-rnd": "^10.4.1",
         "react-scripts": "^4.0.2",
         "react-scroll-to-bottom": "^4.2.0",
         "react-simple-code-editor": "^0.13.1",
