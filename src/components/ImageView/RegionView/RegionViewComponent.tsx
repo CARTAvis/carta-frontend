@@ -87,7 +87,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             },
             (reference, prevReferece) => {
                 const frame = this.props.frame;
-                if (!frame.isPVImage && reference && (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) && frame) {
+                if (reference && (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) && frame) {
                     this.syncStage(reference.centerMovement, reference.zoom);
                 }
             }
@@ -463,8 +463,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const stage = this.stageRef.current;
         if (stage && refCenterMovement && isFinite(refCenterMovement.x) && isFinite(refCenterMovement.y) && isFinite(refFrameZoom)) {
             stage.scale({x: refFrameZoom / AppStore.Instance.imageRatio, y: refFrameZoom / AppStore.Instance.imageRatio});
-            const origin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - refFrameZoom);
-            const centerMovementCanvas = scale2D({x: refCenterMovement.x, y: -refCenterMovement.y}, refFrameZoom / devicePixelRatio);
+            const origin = {x: (this.props.width * (1 - refFrameZoom * this.props.frame.aspectRatio)) / 2, y: (this.props.height * (1 - refFrameZoom)) / 2};
+            const centerMovementCanvas = {x: refCenterMovement.x * ((refFrameZoom * this.props.frame.aspectRatio) / devicePixelRatio), y: -refCenterMovement.y * (refFrameZoom / devicePixelRatio)};
             const newOrigin = add2D(origin, centerMovementCanvas);
             // Correct the origin if region view is ever resized
             const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, refFrameZoom));
