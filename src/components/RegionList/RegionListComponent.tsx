@@ -329,7 +329,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 if (region.size) {
                     if (frame.validWcs) {
                         sizeContent =
-                            region.regionType === CARTA.RegionType.LINE ? (
+                            region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
                                 formattedArcsec(region.wcsSize ? length2D(region.wcsSize) : undefined, WCS_PRECISION)
                             ) : (
                                 <React.Fragment>
