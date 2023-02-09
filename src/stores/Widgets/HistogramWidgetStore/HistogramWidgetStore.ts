@@ -132,7 +132,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
                 let histogramConfig = regionRequirements.histograms.find(config => config.coordinate === coordinate);
                 if (!histogramConfig) {
-                    regionRequirements.histograms.push({coordinate: coordinate, channel: -1, numBins: -1});
+                    regionRequirements.histograms.push({coordinate: coordinate, channel: -1, numBins: -1, fixedBounds: false, bounds: {min: 0, max: 0}});
                 }
             }
         });
