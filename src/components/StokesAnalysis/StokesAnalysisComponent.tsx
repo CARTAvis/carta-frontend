@@ -1214,7 +1214,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.markers.push(cursor);
                 piLinePlotProps.markers.push(cursor);
                 quLinePlotProps.markers.push(cursor);
-                if (cursor && cursor.value && typeof cursor.value !== undefined) {
+                if (cursor && cursor.value && typeof cursor.value !== "undefined") {
                     channel.channelHovered = cursor.value;
                 }
             }
@@ -1238,7 +1238,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 piLinePlotProps.markers.push(channelCurrent, channelRequired);
                 quLinePlotProps.markers.push(channelCurrent, channelRequired);
 
-                if (channelCurrent && channelCurrent.value && typeof channelCurrent.value !== undefined) {
+                if (channelCurrent && channelCurrent.value && typeof channelCurrent.value !== "undefined") {
                     channel.channelCurrent = channelCurrent.value;
                 }
             }
