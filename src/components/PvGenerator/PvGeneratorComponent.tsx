@@ -2,6 +2,7 @@ import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, FormGroup, HTMLSelect, Position, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
+import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
@@ -10,6 +11,7 @@ import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
+import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
 
@@ -35,7 +37,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             minWidth: 350,
             minHeight: 500,
             defaultWidth: 500,
-            defaultHeight: 500,
+            defaultHeight: 620,
             title: "PV Generator",
             isCloseable: true,
             helpType: HelpType.PV_GENERATOR
@@ -99,6 +101,35 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         return false;
     }
 
+    @computed get estimatedCubeSize(): {value: number; unit: string} {
+        const bitPix = Math.abs(this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.match("BITPIX")).numericValue);
+        const region = this.widgetStore.effectiveFrame?.getRegion(this.widgetStore.effectivePreviewRegionId);
+        const imageDepth = this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.depth;
+        const estimatedSize = (region?.size.x * region?.size.y * bitPix * imageDepth) / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
+        if (region?.regionType !== CARTA.RegionType.RECTANGLE || !estimatedSize) {
+            return undefined;
+        }
+        let value: number;
+        let unit: string;
+        if (estimatedSize >= 1e12) {
+            value = parseInt(toFixed(estimatedSize / 1e12, 2));
+            unit = "TB";
+        } else if (estimatedSize >= 1e9) {
+            value = parseInt(toFixed(estimatedSize / 1e9, 1));
+            unit = "GB";
+        } else if (estimatedSize >= 1e6) {
+            value = parseInt(toFixed(estimatedSize / 1e6, 1));
+            unit = "MB";
+        } else if (estimatedSize >= 1e3) {
+            value = parseInt(toFixed(estimatedSize / 1e3, 1));
+            unit = "kB";
+        } else {
+            value = estimatedSize;
+            unit = "B";
+        }
+        return {value, unit};
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
@@ -142,12 +173,22 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private handlePreviewRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
+        if (this.widgetStore.effectiveFrame) {
+            this.widgetStore.setPreviewRegionId(parseInt(changeEvent.target.value));
+        }
+    };
+
     private handleAxesOrderChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.axesOrder["reverse"] === changeEvent.target.value) {
             this.widgetStore.setReverse(true);
         } else {
             this.widgetStore.setReverse(false);
         }
+    };
+
+    private onPreviewButtonClicked = () => {
+        this.widgetStore.requestPV(true);
     };
 
     private onGenerateButtonClicked = () => {
@@ -209,6 +250,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
 
         const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
+        const isAbleToGeneratePreview = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
         const hint = (
             <span>
                 <i>
@@ -222,6 +264,20 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         3. Line region has intersection with image.
                         <br />
                         4. Line region is not in one pixel.
+                    </small>
+                </i>
+            </span>
+        );
+
+        const previewHint = (
+            <span>
+                <i>
+                    <small>
+                        Please ensure:
+                        <br />
+                        1. Reactangle region is selected.
+                        <br />
+                        2. Preview cube size is less than the threshold.
                     </small>
                 </i>
             </span>
@@ -291,10 +347,49 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         }}
                     />
                 </FormGroup>
-                <div className="generate-button">
-                    <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
-                        <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
-                    </Tooltip2>
+
+                <FormGroup className="label-info-group" inline={true} label="Preview Region">
+                    <HTMLSelect options={this.widgetStore.previewRegionOptions} onChange={this.handlePreviewRegionChanged} />
+                </FormGroup>
+
+                <FormGroup className="label-info-group" inline={true} label="Preview Rebin" labelInfo={`(px)`}>
+                    <div className="rebin-select">
+                        <FormGroup inline={true} label={"XY"}>
+                            <SafeNumericInput
+                                min={1}
+                                max={Math.max(this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.height, this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.width) / 2 || 1}
+                                stepSize={1}
+                                value={this.widgetStore.xyRebin}
+                                onValueChange={value => this.widgetStore.setXYRebin(value)}
+                            />
+                        </FormGroup>
+                        <FormGroup inline={true} label={"Z"}>
+                            <SafeNumericInput
+                                min={1}
+                                max={this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.depth / 2 || 1}
+                                stepSize={1}
+                                value={this.widgetStore.zRebin}
+                                onValueChange={value => this.widgetStore.setZRebin(value)}
+                            />
+                        </FormGroup>
+                    </div>
+                </FormGroup>
+                <div className="cube-size-button-group">
+                    <FormGroup className="cube-size-group" inline label="Preview Cube Size" labelInfo={this.estimatedCubeSize ? `(${this.estimatedCubeSize.unit})` : ""} disabled={!this.estimatedCubeSize}>
+                        <label className="cube-size">{`${this.estimatedCubeSize?.value || ""}`}</label>
+                    </FormGroup>
+                    <div className="generate-button">
+                        <div>
+                            <Tooltip2 disabled={isAbleToGenerate} content={previewHint} position={Position.BOTTOM}>
+                                <AnchorButton intent="success" disabled={!isAbleToGeneratePreview} text="Start Preview" onClick={this.onPreviewButtonClicked} />
+                            </Tooltip2>
+                        </div>
+                        <div>
+                            <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
+                                <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
+                            </Tooltip2>
+                        </div>
+                    </div>
                 </div>
             </div>
         );

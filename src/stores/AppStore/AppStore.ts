@@ -1102,6 +1102,24 @@ export class AppStore {
         }
     }
 
+    @flow.bound *requestPreviewPV(message: CARTA.IPvRequest, frame: FrameStore) {
+        try {
+            const ack = yield this.backendService.requestPV(message);
+            this.restartTaskProgress();
+            if (!ack.cancel && ack.openFileAck) {
+                // Show preview pop-up window
+                console.log(message, ack);
+                frame.resetPvRequestState();
+                frame.setIsRequestPVCancelling(false);
+            } else {
+                AppToaster.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
+            }
+        } catch (err) {
+            console.error(err);
+            AppToaster.show(ErrorToast(err));
+        }
+    }
+
     @action cancelRequestingPV = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.requestingPVProgress < 1.0) {

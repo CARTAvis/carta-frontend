@@ -46,6 +46,23 @@
             }
         }
 
+        .cube-size-button-group {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            .cube-size-group {
+                display: flex;
+                align-items: center;
+                width: 42%;
+
+                .cube-size {
+                    color: red;
+                    vertical-align: middle;
+                }
+            }
+        }
+
         .range-select {
             display: flex;
             flex-direction: row;
@@ -65,8 +82,30 @@
             }
         }
 
+        .rebin-select {
+            display: flex;
+            flex-direction: row;
+
+            .bp3-input-group {
+                width: 65px;
+            }
+
+            .bp3-form-group {
+                margin-right: 5px;
+                margin-bottom: 0px;
+                .bp3-label {
+                    margin: 0px;
+                    width: 2em;
+                }
+            }
+        }
+
         .generate-button {
             float: right;
+            display: flex;
+            div {
+                margin: 1em;
+            }
         }
     }
 }

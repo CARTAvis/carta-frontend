@@ -1,4 +1,4 @@
-import {IOptionProps} from "@blueprintjs/core";
+import {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
@@ -17,10 +17,13 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable reverse: boolean;
     @observable keep: boolean;
     @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
+    @observable xyRebin: number;
+    @observable zRebin: number;
+    @observable previewRegionId: number;
 
-    @computed get regionOptions(): IOptionProps[] {
+    @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
-        let regionOptions: IOptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
+        let regionOptions: OptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
         if (appStore.frames) {
             const selectedFrame = appStore.getFrame(this.fileId);
             if (selectedFrame?.regionSet) {
@@ -37,7 +40,42 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         return regionOptions;
     }
 
-    @action requestPV = () => {
+    //Can be refractored later
+    @computed get previewRegionOptions(): OptionProps[] {
+        const appStore = AppStore.Instance;
+        let previewRegionOptions: OptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
+        if (appStore.frames) {
+            const selectedFrame = appStore.getFrame(this.fileId);
+            if (selectedFrame?.regionSet) {
+                const validRegionOptions = selectedFrame.regionSet.regions
+                    ?.filter(r => !r.isTemporary && r.regionType === CARTA.RegionType.RECTANGLE)
+                    ?.map(region => {
+                        return {value: region?.regionId, label: region?.nameString};
+                    });
+                if (validRegionOptions) {
+                    previewRegionOptions = previewRegionOptions.concat(validRegionOptions);
+                }
+            }
+        }
+        return previewRegionOptions;
+    }
+
+    @computed get effectivePreviewRegionId(): number {
+        if (this.effectiveFrame) {
+            const regionId = this.previewRegionId;
+            if (regionId !== RegionId.ACTIVE && regionId !== undefined) {
+                return regionId;
+            } else {
+                const selectedRegion = this.effectiveFrame.regionSet.selectedRegion;
+                if (selectedRegion) {
+                    return selectedRegion.isClosedRegion ? selectedRegion.regionId : RegionId.IMAGE;
+                }
+            }
+        }
+        return RegionId.IMAGE;
+    }
+
+    @action requestPV = (preview: boolean = false) => {
         const frame = this.effectiveFrame;
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
@@ -60,11 +98,16 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 width: this.width,
                 spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
                 reverse: this.reverse,
-                keep: this.keep
+                keep: this.keep,
+                previewSettings: preview ? {regionId: this.effectivePreviewRegionId, rebinXy: this.xyRebin, rebinZ: this.zRebin} : undefined
             };
+            if (preview) {
+                AppStore.Instance.requestPreviewPV(requestMessage, frame);
+            } else {
+                AppStore.Instance.requestPV(requestMessage, frame, this.keep);
+            }
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
-            AppStore.Instance.requestPV(requestMessage, frame, this.keep);
         }
     };
 
@@ -104,6 +147,18 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         if (isFinite(range.min) && isFinite(range.max)) {
             this.range = range;
         }
+    };
+
+    @action setXYRebin = (val: number) => {
+        this.xyRebin = val;
+    };
+
+    @action setZRebin = (val: number) => {
+        this.zRebin = val;
+    };
+
+    @action setPreviewRegionId = (regionId: number) => {
+        this.previewRegionId = regionId;
     };
 
     constructor() {
