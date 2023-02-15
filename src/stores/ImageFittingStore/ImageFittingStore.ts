@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {AppToaster, SuccessToast} from "components/Shared";
 import {AngularSize, AngularSizeUnit, Point2D, WCSPoint2D} from "models";
@@ -119,7 +119,7 @@ export class ImageFittingStore {
 
     @computed get regionOptions() {
         const closedRegions = this.effectiveFrame?.regionSet?.regions.filter(r => !r.isTemporary && r.isClosedRegion);
-        const options = closedRegions.map(r => {
+        const options = closedRegions?.map(r => {
             return {value: r.regionId, label: r.nameString};
         });
         return [{value: FOV_REGION_ID, label: "Field of View"}, {value: IMAGE_REGION_ID, label: "Image"}, ...(options ?? [])];
@@ -153,6 +153,15 @@ export class ImageFittingStore {
     constructor() {
         makeObservable(this);
         this.clearComponents();
+
+        reaction(
+            () => this.regionOptions,
+            options => {
+                if (options && !options.map(x => x.value)?.includes(this.selectedRegionId)) {
+                    this.setSelectedRegionId(FOV_REGION_ID);
+                }
+            }
+        );
     }
 
     fitImage = () => {
