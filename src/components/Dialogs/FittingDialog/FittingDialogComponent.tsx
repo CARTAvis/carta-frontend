@@ -169,7 +169,7 @@ export class FittingDialogComponent extends React.Component {
                             <FormGroup label="P.A." inline={true} labelInfo="(deg)">
                                 {this.renderParamInput(component?.pa, "Position Angle", component?.setPa, component?.paFixed, component?.togglePaFixed)}
                             </FormGroup>
-                            <Divider/>
+                            <Divider />
                             <ClearableNumericInputComponent
                                 label="Background"
                                 inline={true}
