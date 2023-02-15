@@ -1,6 +1,6 @@
 import * as React from "react";
 import SplitPane from "react-split-pane";
-import {AnchorButton, ButtonGroup, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, Divider, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {action, makeObservable, observable} from "mobx";
@@ -169,6 +169,7 @@ export class FittingDialogComponent extends React.Component {
                             <FormGroup label="P.A." inline={true} labelInfo="(deg)">
                                 {this.renderParamInput(component?.pa, "Position Angle", component?.setPa, component?.paFixed, component?.togglePaFixed)}
                             </FormGroup>
+                            <Divider/>
                             <ClearableNumericInputComponent
                                 label="Background"
                                 inline={true}
