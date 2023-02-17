@@ -62,7 +62,6 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     render() {
         const {intOnly, ...otherProps} = this.props;
 
-        // return <NumericInput {...otherProps} asyncControl={true} minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : intOnly ? 1 : SafeNumericInput.minorStepSize} onValueChange={this.safeHandleValueChanged} onBlur={this.handleOnBlur} />;
         return (
             <NumericInput
                 {...otherProps}
