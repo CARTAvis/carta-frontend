@@ -199,7 +199,16 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session URL to clipboard"
                 onClick={async () => {
                     try {
-                        await navigator.clipboard?.writeText(window.location.href);
+                        const url = new URL(window.location.href);
+                        if (!url.searchParams.has("socketUrl")) {
+                            await navigator.clipboard?.writeText(window.location.href);
+                        } else {
+                            const socketUrl = url.searchParams.get("socketUrl");
+                            const token = url.searchParams.get("token");
+                            const httpUrl = socketUrl.replace("ws", "http");
+                            const finalUrl = `${httpUrl}?token=${token}`;
+                            await navigator.clipboard?.writeText(finalUrl);
+                        }
                         AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
                         console.log(err);
