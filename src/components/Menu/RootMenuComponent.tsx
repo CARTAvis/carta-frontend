@@ -200,7 +200,7 @@ export class RootMenuComponent extends React.Component {
                 onClick={async () => {
                     try {
                         const url = new URL(window.location.href);
-                        if (!url.searchParams.has("socketUrl")) {
+                        if (url.protocol.startsWith("file")) {
                             await navigator.clipboard?.writeText(window.location.href);
                         } else {
                             const socketUrl = url.searchParams.get("socketUrl");
