@@ -1,14 +1,14 @@
 import * as React from "react";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
-import {Chart, ChartArea, ChartDataset, ChartOptions, LinearScale, LineElement, LogarithmicScale, Plugin, PointElement, Scale, Tick} from "chart.js";
+import {Chart, ChartArea, ChartDataset, ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, Plugin, PointElement, Scale, Tick} from "chart.js";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 
 import {PlotType} from "components/Shared";
 import {clamp, toExponential, toFixed} from "utilities";
 
-Chart.register(LinearScale, LineElement, LogarithmicScale, PointElement);
+Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement);
 
 export enum TickType {
     Automatic,
