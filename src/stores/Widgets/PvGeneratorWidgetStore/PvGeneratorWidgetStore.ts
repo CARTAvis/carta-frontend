@@ -4,6 +4,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {SpectralSystem} from "models";
 import {AppStore} from "stores";
+import { FrameStore } from "stores/Frame";
 
 import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
@@ -20,6 +21,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable xyRebin: number;
     @observable zRebin: number;
     @observable previewRegionId: number;
+    @observable previewFrame: FrameStore;
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -75,7 +77,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         return RegionId.IMAGE;
     }
 
-    @action requestPV = (preview: boolean = false) => {
+    @action requestPV = (preview: boolean = false, pvGeneratorId?: string) => {
         const frame = this.effectiveFrame;
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
@@ -99,10 +101,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
                 reverse: this.reverse,
                 keep: this.keep,
-                previewSettings: preview ? {regionId: this.effectivePreviewRegionId, rebinXy: this.xyRebin, rebinZ: this.zRebin} : undefined
+                // previewSettings: preview ? {regionId: this.effectivePreviewRegionId, rebinXy: this.xyRebin, rebinZ: this.zRebin} : undefined
             };
             if (preview) {
-                AppStore.Instance.requestPreviewPV(requestMessage, frame);
+                AppStore.Instance.requestPreviewPV(requestMessage, frame, pvGeneratorId);
             } else {
                 AppStore.Instance.requestPV(requestMessage, frame, this.keep);
             }
@@ -159,6 +161,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action setPreviewRegionId = (regionId: number) => {
         this.previewRegionId = regionId;
+    };
+
+    @action setPreviewFrame = (frame: FrameStore) => {
+        this.previewFrame = frame;
     };
 
     constructor() {

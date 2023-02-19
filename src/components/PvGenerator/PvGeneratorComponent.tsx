@@ -188,7 +188,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     };
 
     private onPreviewButtonClicked = () => {
-        this.widgetStore.requestPV(true);
+        this.widgetStore.requestPV(true, this.props.id);
     };
 
     private onGenerateButtonClicked = () => {
@@ -357,7 +357,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         <FormGroup inline={true} label={"XY"}>
                             <SafeNumericInput
                                 min={1}
-                                max={Math.max(this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.height, this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.width) / 2 || 1}
+                                max={Math.ceil(Math.max(this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.height, this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.width) / 2) || 1}
                                 stepSize={1}
                                 value={this.widgetStore.xyRebin}
                                 onValueChange={value => this.widgetStore.setXYRebin(value)}
@@ -366,7 +366,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         <FormGroup inline={true} label={"Z"}>
                             <SafeNumericInput
                                 min={1}
-                                max={this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.depth / 2 || 1}
+                                max={Math.ceil(this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.depth / 2) || 1}
                                 stepSize={1}
                                 value={this.widgetStore.zRebin}
                                 onValueChange={value => this.widgetStore.setZRebin(value)}

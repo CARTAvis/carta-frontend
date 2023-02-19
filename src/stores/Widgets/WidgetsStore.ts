@@ -17,6 +17,7 @@ import {
     LogComponent,
     PlaceholderComponent,
     PvGeneratorComponent,
+    PvPreviewComponent,
     RegionListComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
@@ -448,6 +449,8 @@ export class WidgetsStore {
                 return CatalogOverlayPlotSettingsPanelComponent.WIDGET_CONFIG;
             case LayerListComponent.WIDGET_CONFIG.type:
                 return LayerListSettingsPanelComponent.WIDGET_CONFIG;
+            case PvGeneratorComponent.WIDGET_CONFIG.type:
+                return PvPreviewComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -1248,7 +1251,7 @@ export class WidgetsStore {
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
         const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
         const config = new WidgetConfig(this.addFloatingSettingsWidget(null, parentId, defaultConfig.type), defaultConfig);
-        config.title = title + " Settings";
+        config.title = parentType === PvGeneratorComponent.WIDGET_CONFIG.type ? title : title + " Settings";
         config.parentId = parentId;
         config.parentType = parentType;
         if (config.id) {
@@ -1423,6 +1426,19 @@ export class WidgetsStore {
         }
         return id;
     }
+
+    // createFloatingPvPreviewWidget = (pvGeneratorId: string) => {
+    //     this.addFloatingWidget(new WidgetConfig(this.addPvPreviewWidget(pvGeneratorId), PvPreviewComponent.WIDGET_CONFIG));
+    // };
+
+    // @action addPvPreviewWidget(pvGeneratorId: string) {
+
+    //     const numericId = pvGeneratorId.split('-')[-1];
+    //     console.log(numericId)
+    //     //id is the corresponding pv generator id
+    //     this.pvGeneratorWidgets.set(this.getNextId(PvGeneratorComponent), this.pvGeneratorWidgets.get(pvGeneratorId));
+    //     return pvGeneratorId;
+    // }
 
     // endregion
 

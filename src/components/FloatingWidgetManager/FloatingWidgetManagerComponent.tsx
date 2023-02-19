@@ -17,6 +17,7 @@ import {
     LogComponent,
     PlaceholderComponent,
     PvGeneratorComponent,
+    PvPreviewComponent,
     RegionListComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
@@ -96,6 +97,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 return <CatalogPlotComponent id={widgetConfig.id} docked={false} />;
             case PvGeneratorComponent.WIDGET_CONFIG.type:
                 return <PvGeneratorComponent id={widgetConfig.id} docked={false} />;
+            case PvPreviewComponent.WIDGET_CONFIG.type:
+                return <PvPreviewComponent id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id} />;
             default:
                 return <PlaceholderComponent id={widgetConfig.id} docked={false} label={widgetConfig.title} />;
         }

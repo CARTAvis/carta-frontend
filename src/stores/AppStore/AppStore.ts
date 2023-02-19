@@ -9,7 +9,7 @@ import * as Long from "long";
 import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, ImageViewLayer} from "components";
+import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {CatalogInfo, CatalogType, COMPUTED_POLARIZATIONS, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, SpectralType, Theme, TileCoordinate, ToFileListFilterMode, WCSMatchingType} from "models";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
@@ -98,6 +98,7 @@ export class AppStore {
     @observable cartaComputeReady: boolean;
     // Frames
     @observable frames: FrameStore[];
+    @observable previewFrames: FrameStore[];
     @observable activeFrame: FrameStore;
     @observable hoveredFrame: FrameStore;
     @observable contourDataSource: FrameStore;
@@ -519,6 +520,30 @@ export class AppStore {
         this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
 
         return true;
+    };
+
+    @action addPreviewFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string) => {
+        if (!ack) {
+            return undefined;
+        };
+
+        const frameInfo: FrameInfo = {
+            fileId: ack.fileId,
+            directory,
+            hdu,
+            fileInfo: new CARTA.FileInfo(ack.fileInfo),
+            fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
+            fileFeatureFlags: ack.fileFeatureFlags,
+            renderMode: CARTA.RenderMode.RASTER,
+            beamTable: ack.beamTable
+        };
+
+        const newFrame = new FrameStore(frameInfo);
+        this.previewFrames.push(newFrame);
+        newFrame.setIsPreview(true);
+        this.setActiveFrame(newFrame);
+
+        return newFrame;
     };
 
     @flow.bound *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean) {
@@ -1102,18 +1127,25 @@ export class AppStore {
         }
     }
 
-    @flow.bound *requestPreviewPV(message: CARTA.IPvRequest, frame: FrameStore) {
+    @flow.bound *requestPreviewPV(message: CARTA.IPvRequest, frame: FrameStore, id: string) {
+        if (!message || !frame) {
+            return;
+        }
         try {
+            this.startFileLoading();
             const ack = yield this.backendService.requestPV(message);
             this.restartTaskProgress();
             if (!ack.cancel && ack.openFileAck) {
                 // Show preview pop-up window
-                console.log(message, ack);
+                const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
+                pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, ""));
+                WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
                 frame.resetPvRequestState();
                 frame.setIsRequestPVCancelling(false);
             } else {
                 AppToaster.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
             }
+            this.endFileLoading();
         } catch (err) {
             console.error(err);
             AppToaster.show(ErrorToast(err));
@@ -1302,8 +1334,7 @@ export class AppStore {
 
             frame.channel = update.channel;
             frame.stokes = update.stokes;
-
-            if (this.visibleFrames.includes(frame)) {
+            if (this.visibleFrames.includes(frame) || frame.isPreview) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = frame.requiredFrameView;
 
@@ -1426,6 +1457,7 @@ export class AppStore {
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
 
         this.frames = [];
+        this.previewFrames = [];
         this.activeFrame = null;
         this.hoveredFrame = null;
         this.contourDataSource = null;
@@ -1520,7 +1552,7 @@ export class AppStore {
             if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.streamContoursWhileZooming)) {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
-                for (const frame of this.visibleFrames) {
+                for (const frame of this.visibleFrames.concat(this.previewFrames)) {
                     const reqView = frame.requiredFrameView;
                     let croppedReq: FrameView = {
                         xMin: Math.max(0, reqView.xMin),

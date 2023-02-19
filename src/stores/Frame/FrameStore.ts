@@ -175,6 +175,8 @@ export class FrameStore {
 
     @observable stokesFiles: CARTA.StokesFile[];
 
+    @observable isPreview: boolean;
+
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
         const extName =
@@ -1020,6 +1022,8 @@ export class FrameStore {
         this.cursorMovementHandle = null;
 
         this.stokesFiles = [];
+
+        this.isPreview = false;
 
         this.distanceMeasuring = new DistanceMeasuringStore();
 
@@ -2465,5 +2469,9 @@ export class FrameStore {
         this.fittingResidualImage = null;
         this.fittingResult = "";
         this.fittingLog = "";
+    };
+
+    @action setIsPreview = (isPreview: boolean) => {
+        this.isPreview = isPreview;
     };
 }
