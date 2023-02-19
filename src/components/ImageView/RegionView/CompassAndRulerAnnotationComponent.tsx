@@ -12,7 +12,7 @@ import {add2D, pointDistance, subtract2D, transformPoint} from "utilities";
 import {Anchor} from "./InvariantShapes";
 import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 
-interface CompassAnnotationProps {
+interface CompassRulerAnnotationProps {
     key: number;
     frame: FrameStore;
     region: RegionStore;
@@ -26,7 +26,7 @@ interface CompassAnnotationProps {
 
 const NEW_ANCHOR_MAX_DISTANCE = 16;
 
-export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
+export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) => {
     const shapeRef = React.useRef();
     const northLabelRef = React.useRef<Konva.Text>();
     const eastLabelRef = React.useRef<Konva.Text>();
@@ -250,8 +250,6 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
                     fontFamily={region.font}
                     fontStyle={region.fontStyle}
                 />
-                {/* This is an invisible shape in the empty area of the region to facilite clicking and dragging. */}
-                {/* <Line closed points={[...northPointArray, eastPointArray[eastPointArray.length - 2], eastPointArray[eastPointArray.length - 1], ...eastPointArray]} opacity={0} /> */}
             </Group>
             <Group>
                 {props.selected && (
@@ -299,7 +297,7 @@ export const CompassAnnotation = observer((props: CompassAnnotationProps) => {
     );
 });
 
-export const RulerAnnotation = observer((props: CompassAnnotationProps) => {
+export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => {
     const shapeRef = React.useRef();
     const mousePoint = React.useRef({x: 0, y: 0});
     const distanceTextRef = React.useRef<Konva.Text>();

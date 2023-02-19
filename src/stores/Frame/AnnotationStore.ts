@@ -10,18 +10,6 @@ import {transformPoint} from "utilities";
 
 import {RegionStore} from "./Region/RegionStore";
 
-// export enum CARTA.TextAnnotationPosition {
-//     CENTER = "Center",
-//     UPPER_LEFT = "Upper Left",
-//     UPPER_RIGHT = "Upper Right",
-//     LOWER_LEFT = "Lower Left",
-//     LOWER_RIGHT = "Lower Right",
-//     TOP = "Top",
-//     BOTTOM = "Bottom",
-//     LEFT = "Left",
-//     RIGHT = "Right"
-// }
-
 export enum FontStyle {
     NORMAL = "Normal",
     BOLD = "Bold",
@@ -242,8 +230,6 @@ export class CompassAnnotationStore extends RegionStore {
     @observable eastTextOffset: Point2D = {x: 0, y: 0};
     @observable northArrowhead: boolean = true;
     @observable eastArrowhead: boolean = true;
-    // @observable northTextOffset: Point2D = {x: 5, y: 15};
-    // @observable eastTextOffset: Point2D = {x: 15, y: 5};
 
     constructor(
         backendService: BackendService,
@@ -262,7 +248,6 @@ export class CompassAnnotationStore extends RegionStore {
         makeObservable(this);
         this.modifiedTimestamp = performance.now();
         this.setLength(controlPoints[1].x);
-        // this.setLength(Math.max(this.activeFrame.frameInfo.fileInfoExtended.width, this.activeFrame.frameInfo.fileInfoExtended.height) * 0.1);
     }
 
     @action setLabel = (label: string, isNorth: boolean) => {
@@ -367,8 +352,6 @@ export class CompassAnnotationStore extends RegionStore {
 
         const northApproximatePoints = AST.getAxisPointArray(astTransform, NUMBER_OF_POINT_TRANSFORMED, 2, transformed.x, transformed.y, delta1 ? angularWidth : 6.18);
         const eastApproximatePoints = AST.getAxisPointArray(astTransform, NUMBER_OF_POINT_TRANSFORMED, 1, transformed.x, transformed.y, delta2 ? angularHeight : 6.18);
-        // const northApproximatePoints = AST.transformAxPointList(astTransform, 2, transformed.x, transformed.y, delta1 ? Math.abs((delta1?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.width) / 180) : 6.18);
-        // const eastApproximatePoints = AST.transformAxPointList(astTransform, 1, transformed.x, transformed.y, delta2 ? Math.abs((delta2?.numericValue * Math.PI * this.activeFrame.frameInfo.fileInfoExtended.height) / 180) : 6.18);
 
         return {northApproximatePoints, eastApproximatePoints};
     }
@@ -529,20 +512,6 @@ export class RulerAnnotationStore extends RegionStore {
         const startY = transformed.y[0];
         const finishY = transformed.y[1];
         const cornerY = transformed.y[0];
-
-        // const finishToCornerX = new Float64Array(2);
-        // finishToCornerX[0] = finishX;
-        // finishToCornerX[1] = cornerX;
-        // const finishToCornerY = new Float64Array(2);
-        // finishToCornerY[0] = finishY;
-        // finishToCornerY[1] = cornerY;
-
-        // const cornerToStartX = new Float64Array(2);
-        // cornerToStartX[0] = cornerX;
-        // cornerToStartX[1] = startX;
-        // const cornerToStartY = new Float64Array(2);
-        // cornerToStartY[0] = cornerY;
-        // cornerToStartY[1] = startY;
 
         const corner = {x: cornerX, y: cornerY};
         const start = {x: startX, y: startY};

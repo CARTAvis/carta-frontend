@@ -570,51 +570,6 @@ export class PreferenceDialogComponent extends React.Component {
             );
         });
 
-        // const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
-        //     let fillColor = color;
-        //     if (!fill) {
-        //         fillColor = "none";
-        //     }
-        //     return (
-        //         <span className="bp3-icon">
-        //             <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
-        //                 {path}
-        //             </svg>
-        //         </span>
-        //     );
-        // };
-
-        // const renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: IItemRendererProps) => {
-        //     const shapeItem = getPointShape(shape);
-        //     return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
-        // };
-
-        // const getPointShape = (shape: CARTA.PointAnnotationShape) => {
-        //     const square = <path d="M 2 2 L 14 2 L 14 14 L 2 14 Z" />;
-        //     const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
-        //     const color = preference.annotationColor;
-        //     switch (shape) {
-        //         case CARTA.PointAnnotationShape.SQUARE:
-        //             return IconWrapper(square, color, true);
-        //         case CARTA.PointAnnotationShape.BOX:
-        //             return <Icon icon="square" color={color} />;
-        //         case CARTA.PointAnnotationShape.CIRCLE:
-        //             return <Icon icon="full-circle" color={color} />;
-        //         case CARTA.PointAnnotationShape.CIRCLE_LINED:
-        //             return <Icon icon="circle" color={color} />;
-        //         case CARTA.PointAnnotationShape.DIAMOND:
-        //             return IconWrapper(rhomb, color, true);
-        //         case CARTA.PointAnnotationShape.DIAMOND_LINED:
-        //             return IconWrapper(rhomb, color, false);
-        //         case CARTA.PointAnnotationShape.CROSS:
-        //             return <Icon icon="plus" color={color} />;
-        //         case CARTA.PointAnnotationShape.X:
-        //             return <Icon icon="cross" color={color} />;
-        //         default:
-        //             return <Icon icon="square" color={color} />;
-        //     }
-        // };
-
         const annotationSettingsPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Color">
@@ -636,16 +591,6 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
                     />
                 </FormGroup>
-                {/* <FormGroup inline={true} label="Text Annotation Line Width" labelInfo="(px)">
-                    <SafeNumericInput
-                        placeholder="Text Annotation Line Width"
-                        min={RegionStore.MIN_LINE_WIDTH}
-                        max={RegionStore.MAX_LINE_WIDTH}
-                        value={preference.textAnnotationLineWidth}
-                        stepSize={0.5}
-                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
-                    />
-                </FormGroup> */}
                 <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
                     <SafeNumericInput
                         placeholder="Dash Length"
@@ -660,17 +605,6 @@ export class PreferenceDialogComponent extends React.Component {
                     <SafeNumericInput placeholder="Annotation size" min={1} value={preference.annotationSize} stepSize={1} onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_SIZE, Math.max(1, value))} />
                 </FormGroup>
                 <FormGroup inline={true} label="Point Shape">
-                    {/* <Select
-                        className="bp3-fill"
-                        filterable={false}
-                        items={Object.values(CARTA.PointAnnotationShape)}
-                        activeItem={preference.pointAnnotationShape}
-                        onItemSelect={item => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)}
-                        itemRenderer={renderShapePopOver}
-                        popoverProps={{popoverClassName: "catalog-select", minimal: true, position: PopoverPosition.AUTO_END}}
-                    >
-                        <Button icon={getPointShape(preference.pointAnnotationShape)} rightIcon="double-caret-vertical" />
-                    </Select> */}
                     <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.pointAnnotationShape} />
                 </FormGroup>
                 <FormGroup inline={true} label="Point Size" labelInfo="(px)">

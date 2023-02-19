@@ -345,10 +345,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 let tooltipContent = "";
                 switch (region.regionType) {
                     case CARTA.RegionType.ELLIPSE:
+                    case CARTA.RegionType.ANNELLIPSE:
                         tooltipContent = "Semi-major and semi-minor axes";
                         break;
                     case CARTA.RegionType.LINE:
+                    case CARTA.RegionType.ANNLINE:
+                    case CARTA.RegionType.ANNVECTOR:
+                    case CARTA.RegionType.ANNRULER:
                         tooltipContent = "Length";
+                        break;
+                    case CARTA.RegionType.ANNCOMPASS:
+                        tooltipContent = "Axes Length";
                         break;
                     default:
                         tooltipContent = "Width and height";

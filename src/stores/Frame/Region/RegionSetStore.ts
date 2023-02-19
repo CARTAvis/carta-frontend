@@ -164,46 +164,18 @@ export class RegionSetStore {
                     break;
                 case CARTA.RegionType.ANNTEXT:
                     const textAnnotation = region as TextAnnotationStore;
-                    // textAnnotation.setText(annotationStyles.textAnnotationText ?? textAnnotation.text);
-                    // textAnnotation.setFontSize(annotationStyles.fontSize ?? textAnnotation.fontSize);
-                    // textAnnotation.setFontStyle(annotationStyles.fontStyle ?? textAnnotation.fontStyle);
-                    // textAnnotation.setFont(annotationStyles.font ?? textAnnotation.font);
-                    // textAnnotation.setPosition(annotationStyles.textPosition ?? textAnnotation.position);
                     textAnnotation.initializeStyles(annotationStyles);
                     break;
                 case CARTA.RegionType.ANNVECTOR:
                     const vectorAnnotation = region as VectorAnnotationStore;
-                    // vectorAnnotation.setPointerWidth(annotationStyles.vectorPointerWidth ?? vectorAnnotation.pointerWidth);
-                    // vectorAnnotation.setPointerLength(annotationStyles.vectorPointerLength ?? vectorAnnotation.pointerLength);
                     vectorAnnotation.initializeStyles(annotationStyles);
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
                     const compassAnnotation = region as CompassAnnotationStore;
-                    // compassAnnotation.setLabel(annotationStyles.compassNorthLabel ?? compassAnnotation.northLabel, true);
-                    // compassAnnotation.setLabel(annotationStyles.compassEastLabel ?? compassAnnotation.eastLabel, false);
-                    // compassAnnotation.setFontSize(annotationStyles.fontSize ?? compassAnnotation.fontSize);
-                    // compassAnnotation.setFontStyle(annotationStyles.fontStyle ?? compassAnnotation.fontStyle);
-                    // compassAnnotation.setFont(annotationStyles.font ?? compassAnnotation.font);
-                    // compassAnnotation.setPointerWidth(annotationStyles.compassPointerWidth ?? compassAnnotation.pointerWidth);
-                    // compassAnnotation.setPointerLength(annotationStyles.compassPointerLength ?? compassAnnotation.pointerLength);
-                    // compassAnnotation.setLength(annotationStyles.compassLength ?? compassAnnotation.length);
-                    // compassAnnotation.setNorthTextOffset(annotationStyles.compassNorthTextOffset?.x ?? compassAnnotation.northTextOffset.x, true);
-                    // compassAnnotation.setNorthTextOffset(annotationStyles.compassNorthTextOffset?.y ?? compassAnnotation.northTextOffset.y, false);
-                    // compassAnnotation.setEastTextOffset(annotationStyles.compassEastTextOffset?.x ?? compassAnnotation.eastTextOffset.x, true);
-                    // compassAnnotation.setEastTextOffset(annotationStyles.compassEastTextOffset?.y ?? compassAnnotation.eastTextOffset.y, false);
-                    // compassAnnotation.setNorthArrowhead(annotationStyles.compassNorthArrowhead ?? compassAnnotation.northArrowhead);
-                    // compassAnnotation.setEastArrowhead(annotationStyles.compassEastArrowhead ?? compassAnnotation.eastArrowhead);
                     compassAnnotation.initializeStyles(annotationStyles);
                     break;
                 case CARTA.RegionType.ANNRULER:
                     const rulerAnnotation = region as RulerAnnotationStore;
-                    // rulerAnnotation.setFontSize(annotationStyles.fontSize ?? rulerAnnotation.fontSize);
-                    // rulerAnnotation.setFontStyle(annotationStyles.fontStyle ?? rulerAnnotation.fontStyle);
-                    // rulerAnnotation.setFont(annotationStyles.font ?? rulerAnnotation.font);
-                    // rulerAnnotation.setAuxiliaryLineVisible(annotationStyles.rulerAuxiliaryLineVisible ?? rulerAnnotation.auxiliaryLineVisible);
-                    // rulerAnnotation.setAuxiliaryLineDashLength(annotationStyles.rulerAuxiliaryLineDashLength ?? rulerAnnotation.auxiliaryLineDashLength);
-                    // rulerAnnotation.setTextOffset(annotationStyles.rulerTextOffset?.x ?? rulerAnnotation.textOffset.x, true);
-                    // rulerAnnotation.setTextOffset(annotationStyles.rulerTextOffset?.y ?? rulerAnnotation.textOffset.y, false);
                     rulerAnnotation.initializeStyles(annotationStyles);
                     break;
                 default:

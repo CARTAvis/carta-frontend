@@ -227,20 +227,12 @@ Module.getGeodesicPointArray = function (wcsInfo: number, npoint: number, start:
 };
 
 Module.getAxisPointArray = function (wcsInfo: number, npoint: number, axis: number, x: number, y: number, dist: number) {
-    // Return empty array if arguments are invalid
-    // if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
-    //     return {x: new Float64Array(1), y: new Float64Array(1)};
-    // }
 
     // Allocate and assign WASM memory
     const N = npoint;
-    // const xInPtr = Module._malloc(N * 8);
-    // const yInPtr = Module._malloc(N * 8);
     const outPtr = Module._malloc(201 * 2 * 8);
-    // Module.HEAPF64.set(xIn, xInPtr / 8);
-    // Module.HEAPF64.set(yIn, yInPtr / 8);
+
     // Perform the AST transform
-    //axis is the index of the axis to be 
     Module.axPointList(wcsInfo, N, axis, x, y, dist, outPtr);
 
     // Copy result out to an object
@@ -248,8 +240,6 @@ Module.getAxisPointArray = function (wcsInfo: number, npoint: number, axis: numb
     const result = out.slice(0);
     
     // Free WASM memory
-    // Module._free(xInPtr);
-    // Module._free(yInPtr);
     Module._free(outPtr);
     return result;
 };

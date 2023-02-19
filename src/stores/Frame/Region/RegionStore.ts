@@ -337,13 +337,8 @@ export class RegionStore {
 
         switch (regionType) {
             case CARTA.RegionType.POINT:
-                // case CARTA.RegionType.ANNPOINT:
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.LINE:
-                // case CARTA.RegionType.ANNLINE:
-                // case CARTA.RegionType.ANNVECTOR:
-                // case CARTA.RegionType.ANNCOMPASS:
-                // case CARTA.RegionType.ANNRULER:
                 let lineProperties = "Line (pixel) [";
                 controlPoints.forEach((point, index) => {
                     lineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
@@ -351,14 +346,10 @@ export class RegionStore {
                 });
                 return lineProperties;
             case CARTA.RegionType.RECTANGLE:
-                // case CARTA.RegionType.ANNRECTANGLE:
-                // case CARTA.RegionType.ANNTEXT:
                 return `rotbox[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.ELLIPSE:
-                // case CARTA.RegionType.ANNELLIPSE:
                 return `ellipse[[${center}], [${toFixed(controlPoints[SIZE_POINT_INDEX].x, 6)}pix, ${toFixed(controlPoints[SIZE_POINT_INDEX].y, 6)}pix], ${toFixed(rotation, 6)}deg]`;
             case CARTA.RegionType.POLYGON:
-                // case CARTA.RegionType.ANNPOLYGON:
                 let polygonProperties = "poly[";
                 controlPoints.forEach((point, index) => {
                     polygonProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";
@@ -366,7 +357,6 @@ export class RegionStore {
                 });
                 return polygonProperties;
             case CARTA.RegionType.POLYLINE:
-                // case CARTA.RegionType.ANNPOLYLINE:
                 let polylineProperties = "Polyline (pixel) [";
                 controlPoints.forEach((point, index) => {
                     polylineProperties += isFinite(point.x) && isFinite(point.y) ? `[${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix]` : "[Invalid]";

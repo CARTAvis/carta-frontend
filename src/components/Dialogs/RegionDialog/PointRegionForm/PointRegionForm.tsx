@@ -103,51 +103,6 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         ev.currentTarget.value = centerWCSPoint.y;
     };
 
-    // private IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
-    //     let fillColor = color;
-    //     if (!fill) {
-    //         fillColor = "none";
-    //     }
-    //     return (
-    //         <span className="bp3-icon">
-    //             <svg data-icon="triangle-up-open" width="16" height="16" viewBox={`0 0 ${viewboxDefault} ${viewboxDefault}`} style={{stroke: color, fill: fillColor, strokeWidth: strokeWidth}}>
-    //                 {path}
-    //             </svg>
-    //         </span>
-    //     );
-    // };
-
-    // private renderShapePopOver = (shape: CARTA.PointAnnotationShape, itemProps: IItemRendererProps) => {
-    //     const shapeItem = this.getPointShape(shape);
-    //     return <MenuItem icon={shapeItem} key={shape} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
-    // };
-
-    // private getPointShape = (shape: CARTA.PointAnnotationShape) => {
-    //     const square = <path d="M 2 2 L 14 2 L 14 14 L 2 14 Z" />;
-    //     const rhomb = <path d="M 8 14 L 14 8 L 8 2 L 2 8 Z" />;
-    //     const color = this.props.region.color;
-    //     switch (shape) {
-    //         case CARTA.PointAnnotationShape.SQUARE:
-    //             return this.IconWrapper(square, color, true);
-    //         case CARTA.PointAnnotationShape.BOX:
-    //             return <Icon icon="square" color={color} />;
-    //         case CARTA.PointAnnotationShape.CIRCLE:
-    //             return <Icon icon="full-circle" color={color} />;
-    //         case CARTA.PointAnnotationShape.CIRCLE_LINED:
-    //             return <Icon icon="circle" color={color} />;
-    //         case CARTA.PointAnnotationShape.DIAMOND:
-    //             return this.IconWrapper(rhomb, color, true);
-    //         case CARTA.PointAnnotationShape.DIAMOND_LINED:
-    //             return this.IconWrapper(rhomb, color, false);
-    //         case CARTA.PointAnnotationShape.CROSS:
-    //             return <Icon icon="plus" color={color} />;
-    //         case CARTA.PointAnnotationShape.X:
-    //             return <Icon icon="cross" color={color} />;
-    //         default:
-    //             return <Icon icon="square" color={color} />;
-    //     }
-    // };
-
     public render() {
         // dummy variables related to wcs to trigger re-render
         // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
