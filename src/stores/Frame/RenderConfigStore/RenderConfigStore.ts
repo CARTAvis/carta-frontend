@@ -1,11 +1,10 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
+import {WorkspaceRenderConfig} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
-
-import {WorkspaceRenderConfig} from "../../models";
 
 export enum FrameScaling {
     LINEAR = 0,
