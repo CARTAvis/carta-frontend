@@ -1,6 +1,7 @@
+import {RGBColor} from "react-color";
 import {CARTA} from "carta-protobuf";
 
-import {FrameScaling} from "stores/Frame";
+import {ContourDashMode, FrameScaling, VectorOverlaySource} from "stores/Frame";
 
 import {Point2D} from "./Point2D/Point2D";
 
@@ -18,6 +19,46 @@ export interface WorkspaceRenderConfig {
     scaleMin?: number[];
     scaleMax?: number[];
     visible?: boolean;
+}
+
+export interface WorkspaceContourConfig {
+    levels: number[];
+    smoothingMode: CARTA.SmoothingMode;
+    smoothingFactor: number;
+    color?: RGBColor;
+    colormapEnabled: boolean;
+    colormap?: string;
+    colormapContrast: number;
+    colormapBias: number;
+    dashMode: ContourDashMode;
+    thickness: number;
+    visible: boolean;
+}
+
+export interface WorkspaceVectorOverlayConfig {
+    angularSource: VectorOverlaySource;
+    intensitySource: VectorOverlaySource;
+    fractionalIntensity: boolean;
+    pixelAveragingEnabled: boolean;
+    pixelAveraging: number;
+    thresholdEnabled: boolean;
+    threshold: number;
+    debiasing: boolean;
+    qError: number;
+    uError: number;
+
+    visible: boolean;
+    thickness: number;
+    colormapEnabled: boolean;
+    color?: RGBColor;
+    colormap?: string;
+    colormapContrast: number;
+    colormapBias: number;
+    lengthMin: number;
+    lengthMax: number;
+    intensityMin: number;
+    intensityMax: number;
+    rotationOffset: number;
 }
 
 export interface WorkspaceRegion {
@@ -41,7 +82,14 @@ export interface WorkspaceFile {
         spectral?: number;
         raster?: number;
     };
+    center?: Point2D;
+    zoomLevel?: number;
+    channel?: number;
+    stokes?: number;
+
     renderConfig?: WorkspaceRenderConfig;
+    contourConfig?: WorkspaceContourConfig;
+    vectorOverlayConfig?: WorkspaceVectorOverlayConfig;
     regionsSet?: {
         selectedRegion?: number;
         regions?: WorkspaceRegion[];

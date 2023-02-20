@@ -2029,6 +2029,10 @@ export class AppStore {
                     const frame: FrameStore = yield this.appendFile(fileInfo.directory, fileInfo.filename, fileInfo.hdu, false, false);
                     if (frame) {
                         frameIdMap.set(fileInfo.id, frame.frameInfo.fileId);
+
+                        // Channel/Stokes
+                        frame.setChannels(fileInfo.channel ?? 0, fileInfo.stokes ?? 0, false);
+
                         // References
                         if (workspace.references?.spatial === fileInfo.id) {
                             this.setSpatialReference(frame);
@@ -2070,6 +2074,23 @@ export class AppStore {
                         if (this.rasterScalingReference && fileInfo.references.raster === workspace.references.raster) {
                             this.setRasterScalingMatchingEnabled(frame, true);
                         }
+                    }
+
+                    if (fileInfo.contourConfig) {
+                        frame.contourConfig.updateFromWorkspace(fileInfo.contourConfig);
+                        frame.applyContours();
+                    }
+                    if (fileInfo.vectorOverlayConfig) {
+                        frame.vectorOverlayConfig.updateFromWorkspace(fileInfo.vectorOverlayConfig);
+                        frame.applyVectorOverlay();
+                    }
+
+                    // Set pan/zoom parameters
+                    if (fileInfo.center) {
+                        frame.center = fileInfo.center;
+                    }
+                    if (fileInfo.zoomLevel) {
+                        frame.zoomLevel = fileInfo.zoomLevel;
                     }
 
                     // Apply regions if spatial matching isn't enabled
@@ -2159,6 +2180,11 @@ export class AppStore {
                 }
             }
 
+            workspaceFile.center = frame.center;
+            workspaceFile.zoomLevel = frame.zoomLevel;
+            workspaceFile.channel = frame.channel;
+            workspaceFile.stokes = frame.stokes;
+
             if (frame.spectralReference) {
                 workspaceFile.references.spectral = frame.spectralReference.frameInfo.fileId;
             }
@@ -2183,6 +2209,16 @@ export class AppStore {
                 scaleMax,
                 visible
             };
+
+            // Contours and vector overlays
+            const {enabled: contoursEnabled, ...contourConfig} = frame.contourConfig;
+            if (contoursEnabled) {
+                workspaceFile.contourConfig = contourConfig;
+            }
+            const {enabled: vectorOverlayEnabled, ...vectorOverlayConfig} = frame.vectorOverlayConfig;
+            if (vectorOverlayEnabled) {
+                workspaceFile.vectorOverlayConfig = vectorOverlayConfig;
+            }
 
             workspace.files.push(workspaceFile);
         }
