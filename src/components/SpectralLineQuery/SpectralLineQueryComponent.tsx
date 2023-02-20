@@ -10,7 +10,7 @@ import {observer} from "mobx-react";
 
 import {FilterableTableComponent, FilterableTableComponentProps, SafeNumericInput} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, SpectralLineQueryWidgetStore, SplataloguePingStatus} from "stores/widgets";
+import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, SpectralLineQueryWidgetStore, SplataloguePingStatus} from "stores/Widgets";
 
 import {SpectralLineQuerySplashScreenComponent} from "./SpectralLineQuerySplashScreenComponent";
 

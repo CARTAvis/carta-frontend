@@ -9,7 +9,7 @@ import {RegionSelectorComponent} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {StokesAnalysisWidgetStore} from "stores/widgets";
+import {StokesAnalysisWidgetStore} from "stores/Widgets";
 
 import "./StokesAnalysisToolbarComponent.scss";
 

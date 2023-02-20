@@ -9,7 +9,7 @@ import {SpectralProfilerComponent, SpectralProfilerSettingsTabs} from "component
 import {CustomIcon} from "icons/CustomIcons";
 import {LineOption} from "models";
 import {AppStore} from "stores";
-import {MultiProfileCategory, SpectralProfileSelectionStore, SpectralProfileWidgetStore} from "stores/widgets";
+import {MultiProfileCategory, SpectralProfileSelectionStore, SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./SpectralProfilerToolbarComponent.scss";
 

@@ -10,7 +10,7 @@ import {RegionSelectorComponent} from "components/Shared";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {FULL_POLARIZATIONS, POLARIZATIONS} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {StatsWidgetStore} from "stores/widgets";
+import {StatsWidgetStore} from "stores/Widgets";
 import {exportTsvFile, toExponential} from "utilities";
 
 import "./StatsComponent.scss";

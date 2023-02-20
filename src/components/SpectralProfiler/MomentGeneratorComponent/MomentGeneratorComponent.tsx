@@ -9,7 +9,7 @@ import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {MOMENT_TEXT} from "models";
 import {AppStore} from "stores";
-import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
+import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/Widgets";
 
 import "./MomentGeneratorComponent.scss";
 

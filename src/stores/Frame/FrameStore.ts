@@ -48,7 +48,7 @@ import {
     VectorOverlayConfigStore,
     VectorOverlayStore
 } from "stores/Frame";
-import {RegionId} from "stores/widgets";
+import {RegionId} from "stores/Widgets";
 import {
     clamp,
     formattedArcsec,

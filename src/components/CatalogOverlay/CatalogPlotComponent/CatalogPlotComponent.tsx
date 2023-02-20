@@ -14,7 +14,7 @@ import * as Plotly from "plotly.js";
 
 import {ClearableNumericInputComponent, ProfilerInfoComponent} from "components/Shared";
 import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {Border, CatalogPlotType, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps, CatalogWidgetStore, DragMode, XBorder} from "stores/widgets";
+import {Border, CatalogPlotType, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps, CatalogWidgetStore, DragMode, XBorder} from "stores/Widgets";
 import {minMaxArray, toFixed, TypedArray} from "utilities";
 
 import "./CatalogPlotComponent.scss";
