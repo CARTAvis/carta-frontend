@@ -26,6 +26,7 @@ export class ImageFittingStore {
     @observable components: ImageFittingIndividualStore[];
     @observable selectedComponentIndex: number;
     @observable backgroundOffset: number = 0;
+    @observable backgroundOffsetFixed: boolean = true;
     @observable solverType: CARTA.FittingSolverType = CARTA.FittingSolverType.Cholesky;
     @observable createModelImage: boolean = true;
     @observable createResidualImage: boolean = true;
@@ -81,6 +82,10 @@ export class ImageFittingStore {
 
     @action resetBackgroundOffset = () => {
         this.backgroundOffset = 0;
+    };
+
+    @action toggleBackgroundOffsetFixed = () => {
+        this.backgroundOffsetFixed = !this.backgroundOffsetFixed;
     };
 
     @action setSolverType = (type: CARTA.FittingSolverType) => {
@@ -170,8 +175,8 @@ export class ImageFittingStore {
         }
         this.setIsFitting(true);
         this.setIsCancelling(false);
-        const initialValues = [];
-        const fixedParams = [];
+        const initialValues: CARTA.IGaussianComponent[] = [];
+        const fixedParams: boolean[] = [];
         for (const c of this.components) {
             initialValues.push({
                 center: c.center,
@@ -181,7 +186,9 @@ export class ImageFittingStore {
             });
             fixedParams.push(...c.fixedParams);
         }
-        let fovInfo = null;
+        fixedParams.push(this.backgroundOffsetFixed);
+
+        let fovInfo: CARTA.IRegionInfo | null = null;
         let regionId = this.selectedRegionId;
         if (regionId === FOV_REGION_ID) {
             fovInfo = this.getFovInfo();
@@ -209,7 +216,7 @@ export class ImageFittingStore {
         }
     };
 
-    setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, fixedParams: boolean[], values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], fittingLog: string) => {
+    setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, fixedParams: boolean[], values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], offset_value: number, offset_error: number, fittingLog: string) => {
         const frame = this.effectiveFrame;
         if (!frame || !values || !errors) {
             return;
@@ -301,11 +308,12 @@ export class ImageFittingStore {
                 log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
                 log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
             }
-            if (i !== values.length - 1) {
-                results += "\n";
-                log += "\n";
-            }
+            results += "\n";
+            log += "\n";
         }
+
+        results += toFixFormat("Background     ", offset_value, offset_error, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
+        log += toExpFormat("Background     ", offset_value, offset_error, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
 
         frame.setFittingResult(results);
         frame.setFittingLog(log);
@@ -333,7 +341,7 @@ export class ImageFittingStore {
         }
     };
 
-    private getFovInfo = () => {
+    private getFovInfo = (): CARTA.IRegionInfo | null => {
         const frame = this.effectiveFrame;
         if (!frame) {
             return null;

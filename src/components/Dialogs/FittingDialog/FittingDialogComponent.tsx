@@ -178,7 +178,8 @@ export class FittingDialogComponent extends React.Component {
                                 placeholder="Offset"
                                 onValueChanged={fittingStore.setBackgroundOffset}
                                 onValueCleared={fittingStore.resetBackgroundOffset}
-                                tooltipContent=""
+                                showTooltip={false}
+                                additionalFormContent={<AnchorButton className="lock-button" onClick={fittingStore.toggleBackgroundOffsetFixed} icon={fittingStore.backgroundOffsetFixed ? "lock" : "unlock"} />}
                             />
                             <FormGroup label="Solver" inline={true}>
                                 <HTMLSelect value={fittingStore.solverType} options={fittingStore.solverOptions} onChange={ev => fittingStore.setSolverType(parseInt(ev.target.value))} />

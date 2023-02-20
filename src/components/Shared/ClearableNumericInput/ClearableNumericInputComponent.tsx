@@ -19,10 +19,12 @@ export interface ClearableNumericInputProps extends NumericInputProps {
     onValueCleared: () => void;
     displayExponential?: boolean;
     resetDisabled?: boolean;
+    showTooltip?: boolean;
     tooltipContent?: string;
     tooltipPlacement?: Placement;
     inline?: boolean; // default true
     focused?: boolean;
+    additionalFormContent?: React.ReactNode;
 }
 
 @observer
@@ -117,12 +119,13 @@ export class ClearableNumericInputComponent extends React.Component<ClearableNum
                     buttonPosition="none"
                     disabled={this.props.disabled}
                     rightElement={
-                        <Tooltip2 content={this.props.tooltipContent ?? "Reset value to default"} disabled={this.props.disabled || this.props.resetDisabled} placement={this.props.tooltipPlacement ?? "auto"}>
+                        <Tooltip2 content={this.props.tooltipContent ?? "Reset value to default"} disabled={!this.props.showTooltip || this.props.disabled || this.props.resetDisabled} placement={this.props.tooltipPlacement ?? "auto"}>
                             <AnchorButton icon="refresh" minimal={true} onClick={this.props.onValueCleared} disabled={this.props.disabled || this.props.resetDisabled} />
                         </Tooltip2>
                     }
                     placeholder={this.props.placeholder}
                 />
+                {this.props.additionalFormContent}
             </FormGroup>
         );
     }
