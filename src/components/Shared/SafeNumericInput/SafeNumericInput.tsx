@@ -13,7 +13,7 @@ export interface SafeNumericInputProps extends INumericInputProps {
 export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     private static minorStepSize = 0.001;
 
-    handleChange = ev => {
+    handleOnKeyDown = ev => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
@@ -22,7 +22,7 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     };
 
     handleOnBlur = (ev: React.FocusEvent<HTMLInputElement>) => {
-        this.handleChange(ev);
+        this.handleOnKeyDown(ev);
     };
 
     private validation = (value: string): string => {
@@ -68,8 +68,8 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
                 asyncControl={true}
                 minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : intOnly ? 1 : SafeNumericInput.minorStepSize}
                 onValueChange={this.safeHandleValueChanged}
-                onKeyDown={this.handleChange}
-                onBlur={this.handleOnBlur}
+                onKeyDown={this.props.onKeyDown ?? this.handleOnKeyDown}
+                onBlur={this.props.onBlur ?? this.handleOnBlur}
             />
         );
     }
