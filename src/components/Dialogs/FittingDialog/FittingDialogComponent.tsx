@@ -7,9 +7,10 @@ import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
+import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, HelpType} from "stores";
+import {CoordinateMode} from "stores/Frame";
 import {exportTxtFile, getTimestamp} from "utilities";
 
 import "./FittingDialogComponent.scss";
@@ -21,34 +22,52 @@ enum FittingResultTabs {
 
 @observer
 export class FittingDialogComponent extends React.Component {
-    @observable private fittingResultTabId: FittingResultTabs;
-    @observable isMouseEntered: boolean = false;
+    @observable private coord: CoordinateMode = CoordinateMode.Image;
+    @observable private fittingResultTabId: FittingResultTabs = FittingResultTabs.RESULT;
+    @observable private isMouseEntered: boolean = false;
+
+    @action private setCoord = (coord: CoordinateMode) => {
+        this.coord = coord;
+    };
 
     @action private setFittingResultTabId = (tabId: FittingResultTabs) => {
         this.fittingResultTabId = tabId;
     };
 
-    @action onMouseEnter = () => {
+    @action private onMouseEnter = () => {
         this.isMouseEntered = true;
     };
 
-    @action onMouseLeave = () => {
+    @action private onMouseLeave = () => {
         this.isMouseEntered = false;
     };
 
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        this.fittingResultTabId = FittingResultTabs.RESULT;
     }
 
-    private renderParamInput = (value: number, placeholder: string, onValueChange, fixed: boolean, toggleFixed) => {
+    private renderParamCoordInput = (inputType: InputType, value: number, customPlaceholder: string, onValueChange, valueWcs: string, onValueChangeWcs) => {
         return (
-            <>
-                <SafeNumericInput value={isFinite(value) ? value : ""} placeholder={placeholder} onValueChange={onValueChange} buttonPosition="none" />
-                <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} />
-            </>
+            <CoordNumericInput
+                coord={this.coord}
+                inputType={inputType}
+                value={value}
+                onChange={onValueChange}
+                valueWcs={valueWcs}
+                onChangeWcs={onValueChangeWcs}
+                wcsDisabled={!AppStore.Instance.imageFittingStore?.effectiveFrame?.hasSquarePixels}
+                customPlaceholder={customPlaceholder}
+            />
         );
+    };
+
+    private renderParamInput = (value: number, placeholder: string, onValueChange) => {
+        return <ImageCoordNumericInput value={value} customPlaceholder={placeholder} onChange={onValueChange} />;
+    };
+
+    private renderLockButton = (fixed: boolean, toggleFixed) => {
+        return <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} />;
     };
 
     private exportResult = () => {
@@ -137,7 +156,7 @@ export class FittingDialogComponent extends React.Component {
                                 <HTMLSelect value={fittingStore.selectedRegionId} options={fittingStore.regionOptions} onChange={ev => fittingStore.setSelectedRegionId(parseInt(ev.target.value))} />
                             </FormGroup>
                             <FormGroup label="Components" inline={true}>
-                                <SafeNumericInput className="components-input" value={fittingStore.components.length} min={1} max={20} stepSize={1} onValueChange={val => fittingStore.setComponents(Math.round(val))} />
+                                <SafeNumericInput className="components-input" selectAllOnFocus={true} value={fittingStore.components.length} min={1} max={20} stepSize={1} onValueChange={val => fittingStore.setComponents(Math.round(val))} />
                                 {fittingStore.components.length > 1 && (
                                     <>
                                         <Slider
@@ -155,19 +174,28 @@ export class FittingDialogComponent extends React.Component {
                                     </>
                                 )}
                             </FormGroup>
+                            <FormGroup label="Coordinate" inline={true}>
+                                <CoordinateComponent selectedValue={this.coord} onChange={this.setCoord} disableCoordinate={!fittingStore.effectiveFrame.hasSquarePixels} />
+                            </FormGroup>
                             <FormGroup label="Center" inline={true} labelInfo="(px)">
-                                {this.renderParamInput(component?.center?.x, "Center X", component?.setCenterX, component?.centerFixed?.x, component?.toggleCenterXFixed)}
-                                {this.renderParamInput(component?.center?.y, "Center Y", component?.setCenterY, component?.centerFixed?.y, component?.toggleCenterYFixed)}
+                                {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x, component?.setCenterXWcs)}
+                                {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed)}
+                                {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y, component?.setCenterYWcs)}
+                                {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed)}
                             </FormGroup>
                             <FormGroup label="Amplitude" inline={true} labelInfo={<span title={unitString}>{unitString}</span>}>
-                                {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude, component?.amplitudeFixed, component?.toggleAmplitudeFixed)}
+                                {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
+                                {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed)}
                             </FormGroup>
                             <FormGroup label="FWHM" inline={true} labelInfo="(px)">
-                                {this.renderParamInput(component?.fwhm?.x, "Major Axis", component?.setFwhmX, component?.fwhmFixed?.x, component?.toggleFwhmXFixed)}
-                                {this.renderParamInput(component?.fwhm?.y, "Minor Axis", component?.setFwhmY, component?.fwhmFixed?.y, component?.toggleFwhmYFixed)}
+                                {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major Axis", component?.setFwhmX, component?.fwhmWcs?.x, component?.setFwhmXWcs)}
+                                {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed)}
+                                {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor Axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
+                                {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed)}
                             </FormGroup>
                             <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                                {this.renderParamInput(component?.pa, "Position Angle", component?.setPa, component?.paFixed, component?.togglePaFixed)}
+                                {this.renderParamInput(component?.pa, "Position Angle", component?.setPa)}
+                                {this.renderLockButton(component?.paFixed, component?.togglePaFixed)}
                             </FormGroup>
                             <Divider />
                             <ClearableNumericInputComponent
