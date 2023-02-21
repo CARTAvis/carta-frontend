@@ -227,10 +227,10 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <div className="parameter-container">
                     <div className="parameter-line parameter-length">
                         <FormGroup inline={true} label="Min">
-                            <SafeNumericInput min={0} max={config.lengthMax} disabled={angleOnly} value={config.lengthMin} onValueChanged={val => config.setLengthRange(val, config.lengthMax)} />
+                            <SafeNumericInput min={0} max={config.lengthMax} disabled={angleOnly} value={config.lengthMin} onValueChange={val => config.setLengthRange(val, config.lengthMax)} />
                         </FormGroup>
                         <FormGroup inline={true} label="Max">
-                            <SafeNumericInput min={config.lengthMin} value={config.lengthMax} onValueChanged={val => config.setLengthRange(config.lengthMin, val)} />
+                            <SafeNumericInput min={config.lengthMin} value={config.lengthMax} onValueChange={val => config.setLengthRange(config.lengthMin, val)} />
                         </FormGroup>
                     </div>
                 </div>
@@ -303,16 +303,16 @@ export class VectorOverlayDialogComponent extends React.Component {
                     <Switch checked={this.thresholdEnabled} onChange={this.handleThresholdEnabledChanged} />
                 </FormGroup>
                 <FormGroup disabled={!this.thresholdEnabled} inline={true} label="Threshold" labelInfo={dataSource.headerUnit ? `(${dataSource.headerUnit})` : ""}>
-                    <SafeNumericInput disabled={!this.thresholdEnabled} placeholder="Threshold" buttonPosition="none" value={this.threshold} onValueChanged={this.handleThresholdChanged} />
+                    <SafeNumericInput disabled={!this.thresholdEnabled} placeholder="Threshold" buttonPosition="none" value={this.threshold} onValueChange={this.handleThresholdChanged} />
                 </FormGroup>
                 <FormGroup inline={true} label="Debiasing">
                     <Switch checked={this.debiasing} onChange={this.handleDebiasingChanged} />
                 </FormGroup>
                 <FormGroup disabled={!this.debiasing} inline={true} label="Stokes Q Error">
-                    <SafeNumericInput disabled={!this.debiasing} buttonPosition="none" placeholder="Value" value={this.qError} onValueChanged={this.handleQErrorChanged} />
+                    <SafeNumericInput disabled={!this.debiasing} buttonPosition="none" placeholder="Value" value={this.qError} onValueChange={this.handleQErrorChanged} />
                 </FormGroup>
                 <FormGroup disabled={!this.debiasing} inline={true} label="Stokes U Error">
-                    <SafeNumericInput disabled={!this.debiasing} buttonPosition="none" placeholder="Value" value={this.uError} onValueChanged={this.handleUErrorChanged} />
+                    <SafeNumericInput disabled={!this.debiasing} buttonPosition="none" placeholder="Value" value={this.uError} onValueChange={this.handleUErrorChanged} />
                 </FormGroup>
             </div>
         );
@@ -356,7 +356,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                             <ColormapComponent inverted={false} selectedItem={dataSource.vectorOverlayConfig.colormap} onItemSelect={dataSource.vectorOverlayConfig.setColormap} />
                         </FormGroup>
                         <FormGroup inline={true} label="Bias">
-                            <SafeNumericInput placeholder="Bias" min={-1.0} max={1.0} value={dataSource.vectorOverlayConfig.colormapBias} majorStepSize={0.1} stepSize={0.1} onValueChanged={dataSource.vectorOverlayConfig.setColormapBias} />
+                            <SafeNumericInput placeholder="Bias" min={-1.0} max={1.0} value={dataSource.vectorOverlayConfig.colormapBias} majorStepSize={0.1} stepSize={0.1} onValueChange={dataSource.vectorOverlayConfig.setColormapBias} />
                         </FormGroup>
                         <FormGroup inline={true} label="Contrast">
                             <SafeNumericInput
@@ -366,7 +366,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                                 value={dataSource.vectorOverlayConfig.colormapContrast}
                                 majorStepSize={0.1}
                                 stepSize={0.1}
-                                onValueChanged={dataSource.vectorOverlayConfig.setColormapContrast}
+                                onValueChange={dataSource.vectorOverlayConfig.setColormapContrast}
                             />
                         </FormGroup>
                     </React.Fragment>
