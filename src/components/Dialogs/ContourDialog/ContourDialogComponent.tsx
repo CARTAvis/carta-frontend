@@ -223,6 +223,7 @@ export class ContourDialogComponent extends React.Component {
 
     private handleGraphClicked = (x: number) => {
         this.levels.push(x);
+        this.levels = this.levels.sort();
     };
 
     private handleGraphRightClicked = (x: number) => {
