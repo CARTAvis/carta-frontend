@@ -156,7 +156,15 @@ export class FittingDialogComponent extends React.Component {
                                 <HTMLSelect value={fittingStore.selectedRegionId} options={fittingStore.regionOptions} onChange={ev => fittingStore.setSelectedRegionId(parseInt(ev.target.value))} />
                             </FormGroup>
                             <FormGroup label="Components" inline={true}>
-                                <SafeNumericInput className="components-input" selectAllOnFocus={true} value={fittingStore.components.length} min={1} max={20} stepSize={1} onValueChange={val => fittingStore.setComponents(Math.round(val))} />
+                                <SafeNumericInput
+                                    className="components-input"
+                                    selectAllOnFocus={true}
+                                    value={fittingStore.components.length}
+                                    min={1}
+                                    max={20}
+                                    stepSize={1}
+                                    onValueChange={val => fittingStore.setComponents(Math.round(val))}
+                                />
                                 {fittingStore.components.length > 1 && (
                                     <>
                                         <Slider
