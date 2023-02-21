@@ -11,7 +11,7 @@ import {ColorPickerComponent, CoordinateComponent, SafeNumericInput} from "compo
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore, DialogStore, HelpType} from "stores";
-import {DistanceMeasuringStore, RegionCoordinate} from "stores/Frame";
+import {CoordinateMode, DistanceMeasuringStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
 
 import "./DistanceMeasuringDialog.scss";
@@ -31,8 +31,8 @@ export class DistanceMeasuringDialog extends React.Component {
         this.WCSMode = value === undefined ? !this.WCSMode : value;
     };
 
-    private handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
-        const WCSMode = formEvent.currentTarget.value === RegionCoordinate.Image ? false : true;
+    private handleChangeWCSMode = (coord: CoordinateMode) => {
+        const WCSMode = coord === CoordinateMode.Image ? false : true;
         this.setWCSMode(WCSMode);
     };
 
@@ -228,11 +228,7 @@ export class DistanceMeasuringDialog extends React.Component {
                                     <tr className="distance-measuring-settings-table-coordinate">
                                         <td>Coordinate</td>
                                         <td colSpan={2}>
-                                            <CoordinateComponent
-                                                onChange={(ev: React.FormEvent<HTMLInputElement>) => this.handleChangeWCSMode(ev)}
-                                                selectedValue={this.WCSMode && wcsInfo ? RegionCoordinate.World : RegionCoordinate.Image}
-                                                disableCoordinate={!wcsInfo}
-                                            />
+                                            <CoordinateComponent onChange={this.handleChangeWCSMode} selectedValue={this.WCSMode && wcsInfo ? CoordinateMode.World : CoordinateMode.Image} disableCoordinate={!wcsInfo} />
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">
