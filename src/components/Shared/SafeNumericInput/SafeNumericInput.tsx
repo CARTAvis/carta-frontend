@@ -5,7 +5,7 @@ const KEYCODE_ENTER = 13;
 
 export interface SafeNumericInputProps extends INumericInputProps {
     intOnly?: boolean;
-    onValueChange?: (val: number) => void;
+    onValueChange?: (val: number) => void; // Instead of the default usage, onValueChange is now used to call onBlur & onKeyDown
     onBlur?(ev: React.FocusEvent<HTMLInputElement>): void;
     onKeyDown?(ev: React.KeyboardEvent<HTMLInputElement>): void;
 }
@@ -17,28 +17,24 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
-        const val = parseFloat(this.validation(ev.currentTarget.value));
-        this.props.onValueChange(val);
+        this.safeHandleValueChanged(ev.currentTarget.value);
     };
 
-    handleOnBlur = (ev: React.FocusEvent<HTMLInputElement>) => {
-        this.handleOnKeyDown(ev);
+    handleOnBlur = ev => {
+        this.safeHandleValueChanged(ev.currentTarget.value);
     };
 
-    private validation = (value: string): string => {
-        const valueAsNumber = parseFloat(value);
-        let valueAsString = value;
+    private safeHandleValueChanged = (value: number) => {
+        let valueAsNumber = value;
         if (this.props.intOnly) {
             const roundValue = Math.ceil(valueAsNumber);
             if (isFinite(roundValue)) {
-                valueAsString = roundValue.toString();
+                valueAsNumber = roundValue;
             }
         }
-
         if (this.props.onValueChange && isFinite(valueAsNumber) && (!isFinite(this.props.min) || this.props.min <= valueAsNumber) && (!isFinite(this.props.max) || this.props.max >= valueAsNumber)) {
-            valueAsString = valueAsNumber.toString();
+            this.props.onValueChange(valueAsNumber);
         }
-        return valueAsString;
     };
 
     render() {
