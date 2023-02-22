@@ -523,7 +523,7 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             fontSize: (region.fontSize * AppStore.Instance.imageRatio) / zoomLevel,
             fontFamily: region.font,
             fontStyle: region.fontStyle,
-            hitStrokeWidth: 32
+            hitStrokeWidth: 5
         };
     };
 

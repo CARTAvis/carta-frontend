@@ -165,7 +165,7 @@ export class TextAnnotationStore extends RegionStore {
 
     public initializeStyles = (annotationStyles: {textLabel0: string; fontSize: number; fontStyle: FontStyle; font: Font; textPosition: CARTA.TextAnnotationPosition}) => {
         this.setText(annotationStyles.textLabel0 ?? this.text);
-        this.setFontSize(annotationStyles.fontSize ?? this.fontSize);
+        this.setFontSize(annotationStyles.fontSize || this.fontSize);
         this.setFontStyle(annotationStyles.fontStyle ?? this.fontStyle);
         this.setFont(annotationStyles.font ?? this.font);
         this.setPosition(annotationStyles.textPosition ?? this.position);
