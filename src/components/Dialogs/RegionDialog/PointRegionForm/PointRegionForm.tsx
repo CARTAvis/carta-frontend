@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {CoordinateComponent, SafeNumericInput} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {PointAnnotationStore, CoordinateMode, RegionStore} from "stores/Frame";
+import {CoordinateMode, PointAnnotationStore, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./PointRegionForm.scss";

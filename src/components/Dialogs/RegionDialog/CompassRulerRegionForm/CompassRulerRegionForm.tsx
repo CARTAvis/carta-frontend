@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 import {CoordinateComponent, SafeNumericInput} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
-import {CompassAnnotationStore, RegionCoordinate, RegionStore} from "stores/Frame";
+import {CompassAnnotationStore, CoordinateMode, RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./CompassRulerRegionForm.scss";
@@ -224,7 +224,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                 <tr>
                                     <td>Coordinate</td>
                                     <td colSpan={2}>
-                                        <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
+                                        <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                                     </td>
                                 </tr>
                                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
@@ -247,13 +247,13 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                         {region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Start"}
                                         {wcsInfo ? "" : " (px)"}
                                     </td>
-                                    {region.coordinate === RegionCoordinate.World && wcsInfo
+                                    {region.coordinate === CoordinateMode.World && wcsInfo
                                         ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, false)
                                         : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, true)}
                                     <td colSpan={1}>
                                         {wcsInfo ? (
                                             <span className="info-string">
-                                                {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}
+                                                {region.coordinate === CoordinateMode.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}
                                             </span>
                                         ) : (
                                             ""
@@ -266,13 +266,13 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                             Finish
                                             {wcsInfo ? "" : " (px)"}
                                         </td>
-                                        {region.coordinate === RegionCoordinate.World && wcsInfo
+                                        {region.coordinate === CoordinateMode.World && wcsInfo
                                             ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, false)
                                             : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, true)}
                                         <td>
                                             {wcsInfo ? (
                                                 <span className="info-string">
-                                                    {region.coordinate === RegionCoordinate.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}
+                                                    {region.coordinate === CoordinateMode.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}
                                                 </span>
                                             ) : (
                                                 ""
