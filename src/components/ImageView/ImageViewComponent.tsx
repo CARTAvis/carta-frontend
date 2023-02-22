@@ -33,8 +33,10 @@ export function getImageViewCanvas(padding: Padding, colorbarPosition: string, b
         const column = index % appStore.numImageColumns;
         const row = Math.floor(index / appStore.numImageColumns);
         const panelCanvas = getPanelCanvas(column, row, padding, colorbarPosition, backgroundColor);
+        const viewHeight = frame.previewViewHeight || appStore.overlayStore.viewHeight;
+        const viewWidth = frame.previewViewWidth || appStore.overlayStore.viewWidth;
         if (panelCanvas) {
-            ctx.drawImage(panelCanvas, appStore.overlayStore.viewWidth * column * pixelRatio, appStore.overlayStore.viewHeight * row * pixelRatio);
+            ctx.drawImage(panelCanvas, viewWidth * column * pixelRatio, viewHeight * row * pixelRatio);
         }
     });
 

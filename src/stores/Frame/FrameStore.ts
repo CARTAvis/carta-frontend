@@ -3,6 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
+import {PvPreviewComponent} from "components";
 import {
     CatalogControlMap,
     ChannelInfo,
@@ -213,7 +214,7 @@ export class FrameStore {
             return this.framePixelRatio;
         }
 
-        return this.overlayStore.renderWidth / this.frameInfo.fileInfoExtended.width / (this.overlayStore.renderHeight / this.frameInfo.fileInfoExtended.height);
+        return this.renderWidth / this.frameInfo.fileInfoExtended.width / (this.renderHeight / this.frameInfo.fileInfoExtended.height);
     }
 
     get hasSquarePixels(): boolean {
@@ -344,11 +345,19 @@ export class FrameStore {
     }
 
     @computed get renderWidth() {
-        return this.overlayStore.renderWidth;
+        return this.overlayStore.previewRenderWidth(this.previewViewWidth) || this.overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        return this.overlayStore.renderHeight;
+        return this.overlayStore.previewRenderHeight(this.previewViewHeight) || this.overlayStore.renderHeight;
+    }
+
+    @computed get previewViewWidth() {
+        return this.isPreview ? PvPreviewComponent.WIDGET_CONFIG.minWidth : undefined;
+    }
+
+    @computed get previewViewHeight() {
+        return this.isPreview ? PvPreviewComponent.WIDGET_CONFIG.minHeight : undefined;
     }
 
     @computed get isRenderable() {

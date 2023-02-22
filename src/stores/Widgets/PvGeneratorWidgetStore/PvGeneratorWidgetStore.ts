@@ -4,7 +4,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {SpectralSystem} from "models";
 import {AppStore} from "stores";
-import { FrameStore } from "stores/Frame";
+import {FrameStore} from "stores/Frame";
 
 import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
@@ -100,7 +100,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 width: this.width,
                 spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
                 reverse: this.reverse,
-                keep: this.keep,
+                keep: this.keep
                 // previewSettings: preview ? {regionId: this.effectivePreviewRegionId, rebinXy: this.xyRebin, rebinZ: this.zRebin} : undefined
             };
             if (preview) {

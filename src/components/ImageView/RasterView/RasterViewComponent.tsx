@@ -3,6 +3,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
+// import { PvPreviewComponent } from "components/PvGenerator/PvPreviewComponent";
 import {FrameView, Point2D, TileCoordinate} from "models";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
@@ -47,7 +48,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
             const histStokesIndex = frame.renderConfig.stokesIndex;
             const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
-            if (((frame.renderConfig.useCubeHistogram || frame.channel === histChannel) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) || frame.isPreview) {
+            if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
                 this.updateCanvasSize();
                 this.updateUniforms();
                 this.renderCanvas();

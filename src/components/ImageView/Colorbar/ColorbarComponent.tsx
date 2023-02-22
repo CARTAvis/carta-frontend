@@ -102,6 +102,9 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const appStore = AppStore.Instance;
         const frame = this.props.frame;
         const colorbarSettings = appStore.overlayStore.colorbar;
+        const viewHeight = frame.previewViewHeight || appStore.overlayStore.viewHeight;
+        const viewWidth = frame.previewViewWidth || appStore.overlayStore.viewWidth;
+        const colorbarSettingsHeight = frame.isPreview ? frame.renderHeight : colorbarSettings.height;
 
         appStore.updateLayerPixelRatio(this.layerRef);
 
@@ -116,24 +119,24 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         };
 
         let stageWidth = colorbarSettings.stageWidth;
-        let stageHeight = appStore.overlayStore.viewHeight;
+        let stageHeight = viewHeight;
         let stageTop = 0;
         let stageLeft = 0;
         let rectX = colorbarSettings.offset + (isOnePixBorder ? 0.5 / devicePixelRatio : 0);
         let rectY = colorbarSettings.yOffset - (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset) ? 0.5 / devicePixelRatio : 0));
         let rectWidth = colorbarSettings.width;
-        let rectHeight = colorbarSettings.height + (isOnePixBorder && (!isIntPosition(colorbarSettings.height) ? (isIntPosition(colorbarSettings.yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
+        let rectHeight = colorbarSettingsHeight + (isOnePixBorder && (!isIntPosition(colorbarSettingsHeight) ? (isIntPosition(colorbarSettings.yOffset) ? 0.5 : -0.5) / devicePixelRatio : 0));
         let rectGradientStart = {x: 0, y: 0};
-        let rectGradientEnd = {x: 0, y: colorbarSettings.height};
+        let rectGradientEnd = {x: 0, y: colorbarSettingsHeight};
         let labelXPos = colorbarSettings.rightBorderPos + colorbarSettings.numberWidth + colorbarSettings.textGap;
         let labelYPos = colorbarSettings.yOffset;
         let hoverBarPosition = [colorbarSettings.offset, this.cursorY, colorbarSettings.rightBorderPos, this.cursorY];
 
         // adjust stage position
         if (colorbarSettings.position === "right") {
-            stageLeft = appStore.overlayStore.padding.left + appStore.overlayStore.renderWidth;
+            stageLeft = appStore.overlayStore.padding.left + frame.renderWidth;
         } else if (colorbarSettings.position === "bottom") {
-            stageTop = appStore.overlayStore.viewHeight - appStore.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
+            stageTop = viewHeight - appStore.overlayStore.colorbarHoverInfoHeight - colorbarSettings.stageWidth;
         } else if (colorbarSettings.position === "top" && appStore.overlayStore.title.show) {
             stageTop = appStore.overlayStore.padding.top - colorbarSettings.stageWidth;
         }
@@ -141,7 +144,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         // rotate to horizontal by swapping
         if (colorbarSettings.position !== "right") {
             stageHeight = stageWidth;
-            stageWidth = appStore.overlayStore.viewWidth;
+            stageWidth = viewWidth;
             rectY = rectX;
             rectX = colorbarSettings.yOffset + (isOnePixBorder && (isIntPosition(colorbarSettings.yOffset) ? 0.5 / devicePixelRatio : 0));
             [rectWidth, rectHeight] = [rectHeight, rectWidth];
@@ -194,7 +197,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 }
                 if (colorbarSettings.numberVisible) {
                     let numberXPos = colorbarSettings.rightBorderPos + colorbarSettings.textGap;
-                    let numberYPos = positions[i] - colorbarSettings.height / 2;
+                    let numberYPos = positions[i] - colorbarSettingsHeight / 2;
                     if (colorbarSettings.position !== "right") {
                         // rotate to horizontal by swapping
                         [numberXPos, numberYPos] = [numberYPos, numberXPos];
@@ -211,7 +214,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                                 numberYPos = positions[i] - colorbarSettings.numberFontSize / 2;
                                 break;
                             case -90:
-                                numberYPos = positions[i] + colorbarSettings.height / 2;
+                                numberYPos = positions[i] + colorbarSettingsHeight / 2;
                                 break;
                             default:
                                 break;
@@ -222,7 +225,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                             text={texts[i]}
                             x={numberXPos}
                             y={numberYPos}
-                            width={colorbarSettings.numberRotation !== 0 || colorbarSettings.position !== "right" ? colorbarSettings.height : null}
+                            width={colorbarSettings.numberRotation !== 0 || colorbarSettings.position !== "right" ? colorbarSettingsHeight : null}
                             align={"center"}
                             fill={getColor(colorbarSettings.numberCustomColor, colorbarSettings.numberColor)}
                             fontFamily={this.astFonts[colorbarSettings.numberFont].family}
@@ -244,7 +247,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                     labelXPos += colorbarSettings.labelFontSize;
                     break;
                 case -90:
-                    labelYPos += colorbarSettings.height;
+                    labelYPos += colorbarSettingsHeight;
                     break;
                 default:
                     break;
@@ -255,7 +258,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
                 text={colorbarSettings.labelCustomText ? frame.colorbarLabelCustomText : frameUnit}
                 x={labelXPos}
                 y={labelYPos}
-                width={colorbarSettings.height}
+                width={colorbarSettingsHeight}
                 align={"center"}
                 fill={getColor(colorbarSettings.labelCustomColor, colorbarSettings.labelColor)}
                 fontFamily={this.astFonts[colorbarSettings.labelFont].family}

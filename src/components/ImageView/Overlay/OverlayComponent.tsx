@@ -2,6 +2,7 @@ import * as React from "react";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
 import * as _ from "lodash";
+// import { observable } from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
@@ -43,8 +44,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImageDimensions() {
         if (this.canvas) {
-            this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.width = (this.props.frame?.previewViewWidth || this.props.overlaySettings.viewWidth) * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = (this.props.frame?.previewViewHeight || this.props.overlaySettings.viewHeight) * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
@@ -80,8 +81,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    settings.viewWidth * pixelRatio,
-                    settings.viewHeight * pixelRatio,
+                    (this.props.frame?.previewViewWidth || this.props.overlaySettings.viewWidth) * pixelRatio,
+                    (this.props.frame?.previewViewHeight || this.props.overlaySettings.viewHeight) * pixelRatio,
                     settings.padding.left * pixelRatio,
                     settings.padding.right * pixelRatio,
                     settings.padding.top * pixelRatio,
@@ -136,8 +137,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
-        const w = this.props.overlaySettings.viewWidth;
-        const h = this.props.overlaySettings.viewHeight;
+        const w = this.props.frame?.previewViewWidth || this.props.overlaySettings.viewWidth;
+        const h = this.props.frame?.previewViewHeight || this.props.overlaySettings.viewHeight;
 
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */

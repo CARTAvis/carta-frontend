@@ -1207,4 +1207,20 @@ export class OverlayStore {
         const renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
         return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
     }
+
+    @action previewRenderWidth(viewWidth: number) {
+        if (!viewWidth) {
+            return undefined;
+        }
+        const renderWidth = viewWidth - this.paddingLeft - this.paddingRight;
+        return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
+    }
+
+    @action previewRenderHeight(viewHeight: number) {
+        if (!viewHeight) {
+            return undefined;
+        }
+        const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
+        return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
+    }
 }

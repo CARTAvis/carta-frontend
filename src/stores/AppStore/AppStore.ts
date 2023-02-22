@@ -525,7 +525,7 @@ export class AppStore {
     @action addPreviewFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string) => {
         if (!ack) {
             return undefined;
-        };
+        }
 
         const frameInfo: FrameInfo = {
             fileId: ack.fileId,
@@ -2095,7 +2095,7 @@ export class AppStore {
         if (fileId === -1) {
             return this.activeFrame;
         }
-        return this.frames.find(f => f.frameInfo.fileId === fileId);
+        return this.frames.find(f => f.frameInfo.fileId === fileId) || this.previewFrames.find(f => f.frameInfo.fileId === fileId);
     }
 
     getFrameName(fileId: number) {
