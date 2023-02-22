@@ -588,20 +588,49 @@ export class FrameStore {
         return false;
     }
 
+    // dir X axis number from the header
+    get dirXNumber(): number {
+        return this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+    }
+
+    // dir Y axis number from the header
+    get dirYNumber(): number {
+        return this.frameInfo.fileInfoExtended.axesNumbers.dirY;
+    }
+
+    // Spectral axis number from the header
+    get spectralNumber(): number {
+        return this.frameInfo.fileInfoExtended.axesNumbers.spectral;
+    }
+
+    // Stokes axis number from the header
+    get stokesNumber(): number {
+        return this.frameInfo.fileInfoExtended.axesNumbers.stokes;
+    }
+
+    // Image dimension without stokes axis
+    get dimension(): string {
+        return this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
+    }
+
+    get dirX(): number {
+        return this.stokesNumber > 0 && this.stokesNumber < this.dirXNumber ? this.dirXNumber - 1 : this.dirXNumber;
+    }
+
+    get dirY(): number {
+        return this.stokesNumber > 0 && this.stokesNumber < this.dirYNumber ? this.dirYNumber - 1 : this.dirYNumber;
+    }
+
+    get spectral(): number {
+        return this.stokesNumber > 0 && this.stokesNumber < this.spectralNumber ? this.spectralNumber - 1 : this.spectralNumber;
+    }
+
     get isSwappedZ(): boolean {
         return (this.spectral === 1 && (this.dirX === 2 || this.dirY === 2)) || (this.spectral === 2 && (this.dirX === 1 || this.dirY === 1));
     }
 
-    get dirX(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.dirX;
-    }
-
-    get dirY(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.dirY;
-    }
-
-    get spectral(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.spectral;
+    get isSpectralChannel(): boolean {
+        return this.spectral === 3;
     }
 
     get channelType(): string {
@@ -725,8 +754,8 @@ export class FrameStore {
 
             // Locate spectral dimension from axis 1~4
             let dimension = undefined;
-            if (this.spectral > 0) {
-                dimension = this.spectral;
+            if (this.spectralNumber > 0) {
+                dimension = this.spectralNumber;
             }
 
             // Fill up spectral dimension & type/unit/system
@@ -804,11 +833,11 @@ export class FrameStore {
     }
 
     @computed get isCoordChannel(): boolean {
-        return this.spectralType === SpectralType.CHANNEL;
+        return this.isSpectralChannel && this.spectralType === SpectralType.CHANNEL;
     }
 
     @computed get isCoordChannelSecondary(): boolean {
-        return this.spectralTypeSecondary === SpectralType.CHANNEL;
+        return this.isSpectralChannel && this.spectralTypeSecondary === SpectralType.CHANNEL;
     }
 
     @computed get isCoordVelocity(): boolean {
@@ -1455,13 +1484,33 @@ export class FrameStore {
     };
 
     private initFrame2D = (): AST.FrameSet => {
+        // Define regular expressions
+        let regOtherAxes;
+        if (this.dimension === "2") {
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]`);
+        } else {
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]`);
+        }
+        const regDirXNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirXNumber}`);
+        const regDirYNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirYNumber}`);
+        const regSpectralNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.spectralNumber}`);
+        const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
+
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
+            let name = entry.name;
+
+            if (name.match(regOtherAxes) || name.match(regStokesNumber) || name.match(regSpectralNumber) || name === "HISTORY") {
                 continue;
             }
 
-            let name = entry.name;
+            // Remove the stokes axis (if any), and reset axis numbers for x or y
+            if (name.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                name = entry.name.replace(`${this.dirXNumber}`, `${this.dirX}`);
+            } else if (name.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                name = entry.name.replace(`${this.dirYNumber}`, `${this.dirY}`);
+            }
+
             let value = trimFitsComment(entry.value);
             if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
                 value = "2";
@@ -1483,28 +1532,34 @@ export class FrameStore {
     };
 
     private initFrame = (checkSkyDomain: boolean = true): AST.FrameSet => {
-        const dimension = this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
         const fitsChan = AST.emptyFitsChan();
+
+        // Define regular expressions
+        let regOtherAxes;
+        if (this.dimension === "2") {
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]`);
+        } else {
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]`);
+        }
+        const regDirXNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirXNumber}`);
+        const regDirYNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirYNumber}`);
+        const regSpectralNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.spectralNumber}`);
+        const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
+
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
-            // Skip higher dimensions
-            if (dimension === "2") {
-                if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
-                    continue;
-                }
-            } else {
-                // check whether spectral axis is axis 3 or 4
-                if (
-                    entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]/) ||
-                    (this.spectralAxis?.dimension === 3 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) ||
-                    (this.spectralAxis?.dimension === 4 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)3/))
-                ) {
-                    continue;
-                }
-                if (this.spectralAxis?.dimension === 4 && entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)4/)) {
-                    name = entry.name.replace("4", "3");
-                }
+            if (name.match(regOtherAxes) || name.match(regStokesNumber) || name === "HISTORY") {
+                continue;
+            }
+
+            // Remove the stokes axis (if any), and reset axis numbers for x, y, or spectral
+            if (name.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                name = entry.name.replace(`${this.dirXNumber}`, `${this.dirX}`);
+            } else if (name.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                name = entry.name.replace(`${this.dirYNumber}`, `${this.dirY}`);
+            } else if (name.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
+                name = entry.name.replace(`${this.spectralNumber}`, `${this.spectral}`);
             }
 
             // Skip empty header entries
@@ -1514,7 +1569,7 @@ export class FrameStore {
 
             let value = trimFitsComment(entry.value);
             if (entry.name.toUpperCase() === "NAXIS" || entry.name.toUpperCase() === "WCSAXES") {
-                value = dimension;
+                value = this.dimension;
             }
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
@@ -1534,21 +1589,26 @@ export class FrameStore {
 
     private initSpectralVsDirectionFrame = (): AST.FrameSet => {
         const fitsChan = AST.emptyFitsChan();
-        const stokesAxis = this.frameInfo.fileInfoExtended.axesNumbers.stokes;
-        const depthAxis = this.frameInfo.fileInfoExtended.axesNumbers.depth;
-        const regStokesAxis = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${stokesAxis}`);
-        const regDepthAxis = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${depthAxis}`);
+        const regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]`);
+        const regDirXNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirXNumber}`);
+        const regDirYNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirYNumber}`);
+        const regSpectralNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.spectralNumber}`);
+        const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
 
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
             let name = entry.name;
 
-            if (name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]/) || (stokesAxis > 0 && name.match(regStokesAxis)) || name === "HISTORY") {
+            if (name.match(regOtherAxes) || name.match(regStokesNumber) || name === "HISTORY") {
                 continue;
             }
 
-            // Depth axis is the third axis that is not stokes axis (if any)
-            if (name.match(regDepthAxis) && depthAxis !== 3) {
-                name = entry.name.replace(`${depthAxis}`, "3");
+            // Remove the stokes axis (if any), and reset axis numbers for x, y, and spectral.
+            if (name.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                name = entry.name.replace(`${this.dirXNumber}`, `${this.dirX}`);
+            } else if (name.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                name = entry.name.replace(`${this.dirYNumber}`, `${this.dirY}`);
+            } else if (name.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
+                name = entry.name.replace(`${this.spectralNumber}`, `${this.spectral}`);
             }
 
             if (!entry.value.length) {
