@@ -224,11 +224,11 @@ export class AnimatorStore {
         if (this.animationMode === AnimationMode.CHANNEL) {
             firstFrame = {
                 channel: frame.animationChannelRange[0],
-                stokes: frame.stokes
+                stokes: frame.requiredPolarizationIndex
             };
             lastFrame = {
                 channel: frame.animationChannelRange[1],
-                stokes: frame.stokes
+                stokes: frame.requiredPolarizationIndex
             };
             deltaFrame = {
                 channel: this.step,
