@@ -251,6 +251,7 @@ export class ContourDialogComponent extends React.Component {
                 const val = parseFloat(valueString);
                 if (isFinite(val)) {
                     this.levels.push(val);
+                    this.levels.sort()
                 }
             }
         } catch (e) {
