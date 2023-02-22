@@ -247,9 +247,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                                         {region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Start"}
                                         {wcsInfo ? "" : " (px)"}
                                     </td>
-                                    {region.coordinate === CoordinateMode.World && wcsInfo
-                                        ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, false)
-                                        : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, true)}
+                                    {region.coordinate === CoordinateMode.World && wcsInfo ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, false) : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, true)}
                                     <td colSpan={1}>
                                         {wcsInfo ? (
                                             <span className="info-string">
