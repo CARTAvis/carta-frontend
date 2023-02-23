@@ -48,6 +48,7 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
                 minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : intOnly ? 1 : SafeNumericInput.minorStepSize}
                 onKeyDown={onKeyDown ?? this.handleOnKeyDown}
                 onBlur={onBlur ?? this.handleOnBlur}
+                onButtonClick={this.safeHandleValueChanged}
             />
         );
     }
