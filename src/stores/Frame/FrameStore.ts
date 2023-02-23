@@ -1665,8 +1665,7 @@ export class FrameStore {
 
     public updateSpectralVsDirectionWcs = () => {
         if (this.wcsInfo3D) {
-            const nsample = this.dirAxisSize > 500 ? 500 : this.dirAxisSize; // Set the maximum number of samples
-            this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3D, this.dirAxis, this.spectral, this.requiredChannel, nsample);
+            this.wcsInfo = AST.makeSwappedFrameSet(this.wcsInfo3D, this.dirAxis, this.spectral, this.requiredChannel, this.dirAxisSize);
             AST.set(this.wcsInfo, `Format(${this.dirAxis})=${this.dirAxisFormat}, Unit(${this.dirAxis})=""`);
         }
     };
