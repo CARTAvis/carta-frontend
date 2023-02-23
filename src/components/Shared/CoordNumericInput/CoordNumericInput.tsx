@@ -27,11 +27,8 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
-        if (!valueWcs) {
-            return;
-        }
         const wcsString = ev.currentTarget.value;
-        if (wcsString === valueWcs) {
+        if (valueWcs && wcsString === valueWcs) {
             return;
         }
 
