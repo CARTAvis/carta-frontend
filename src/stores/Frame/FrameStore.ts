@@ -631,6 +631,11 @@ export class FrameStore {
         return this.frameInfo.fileInfoExtended.axesNumbers.stokes;
     }
 
+    // Depth axis number from the header
+    get depthNumber(): number {
+        return this.frameInfo.fileInfoExtended.axesNumbers.depth;
+    }
+
     // Image dimension without stokes axis
     get dimension(): string {
         return this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
@@ -659,16 +664,8 @@ export class FrameStore {
     get channelType(): string {
         if (this.isSwappedZ) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const axis3 = entries.find(entry => entry.name.includes("CTYPE3"));
-            const axis4 = entries.find(entry => entry.name.includes("CTYPE4"));
-            let dirName;
-            if (this.dirX === 3 || this.dirY === 3) {
-                dirName = axis3?.value ?? "Unknown";
-            } else if (this.dirX === 4 || this.dirY === 4) {
-                dirName = axis4?.value ?? "Unknown";
-            } else {
-                dirName = "Unknown";
-            }
+            const depthAxis = entries.find(entry => entry.name.includes(`CTYPE${this.depthNumber}`));
+            let dirName = depthAxis?.value ?? "Unknown";
 
             if (dirName.match(/^RA/)) {
                 dirName = "RA";
