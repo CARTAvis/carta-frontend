@@ -103,7 +103,9 @@
     },
     "eslintConfig": {
         "extends": "react-app",
-        "plugins": ["simple-import-sort"],
+        "plugins": [
+            "simple-import-sort"
+        ],
         "rules": {
             "no-unused-expressions": "off",
             "@typescript-eslint/no-unused-expressions": "error",
@@ -124,18 +126,40 @@
         },
         "overrides": [
             {
-                "files": ["*.js", "*.jsx", "*.ts", "*.tsx"],
+                "files": [
+                    "*.js",
+                    "*.jsx",
+                    "*.ts",
+                    "*.tsx"
+                ],
                 "rules": {
                     "simple-import-sort/imports": [
                         "error",
                         {
                             "groups": [
-                                ["^react", "^@?\\w"],
-                                ["^(components|icons|models|services|stores|utilities)(/.*|$)"],
-                                ["^\\u0000"],
-                                ["^\\.\\.(?!/?$)", "^\\.\\./?$"],
-                                ["^\\./(?=.*/)(?!/?$)", "^\\.(?!/?$)", "^\\./?$"],
-                                ["^.+\\.?(css)$"] ]
+                                [
+                                    "^react",
+                                    "^@?\\w"
+                                ],
+                                [
+                                    "^(components|icons|models|services|stores|utilities)(/.*|$)"
+                                ],
+                                [
+                                    "^\\u0000"
+                                ],
+                                [
+                                    "^\\.\\.(?!/?$)",
+                                    "^\\.\\./?$"
+                                ],
+                                [
+                                    "^\\./(?=.*/)(?!/?$)",
+                                    "^\\.(?!/?$)",
+                                    "^\\./?$"
+                                ],
+                                [
+                                    "^.+\\.?(css)$"
+                                ]
+                            ]
                         }
                     ]
                 }
@@ -162,6 +186,9 @@
             "canvas": "jest-canvas-mock",
             "zfp_wrapper": "<rootDir>/src/__mocks__/ZFPWorkerMock.js",
             "^!raw-loader!(.*)$": "<rootDir>/src/services/GLSL/$1"
-        }            
-    }    
+        }
+    },
+    "dependencies": {
+        "usehooks-ts": "^2.9.1"
+    }
 }

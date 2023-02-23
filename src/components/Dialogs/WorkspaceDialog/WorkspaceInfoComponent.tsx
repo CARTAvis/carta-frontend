@@ -1,8 +1,10 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
 import {Callout, NonIdealState, Spinner} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import {useMap} from "usehooks-ts";
 
-import {Workspace, WorkspaceListItem} from "models";
+import {Workspace, WorkspaceFile, WorkspaceListItem} from "models";
 import {AppStore} from "stores";
 
 import "./WorkspaceInfoComponent.scss";
@@ -13,27 +15,53 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
     const [isFetchingWorkspace, setIsFetchingWorkspace] = useState(false);
     const [workspace, setWorkspace] = useState<Workspace>();
     const [errorMessage, setErrorMessage] = useState("");
+    const [workspaceFileInfoMap, workspaceFileInfoMapActions] = useMap<WorkspaceFile, CARTA.IFileInfoResponse>();
 
-    const fetchWorkspace = useCallback(async (name: string) => {
-        setIsFetchingWorkspace(true);
-        setWorkspace(undefined);
-        try {
-            const res = await AppStore.Instance.apiService.getWorkspace(name);
-            if (res) {
-                setWorkspace(res);
+    const fetchFileInfo = useCallback(
+        async (workspace: Workspace) => {
+            if (!workspace?.files?.length) {
+                return;
             }
-        } catch (err) {
-            console.log(err);
-            setErrorMessage(err);
-        }
-        setIsFetchingWorkspace(false);
-    }, []);
+
+            const appStore = AppStore.Instance;
+            for (const file of workspace.files) {
+                try {
+                    const info = await appStore.backendService.getFileInfo(file.directory, file.filename, file.hdu);
+                    workspaceFileInfoMapActions.set(file, info);
+                } catch (err) {
+                    workspaceFileInfoMapActions.set(file, {success: false, message: err});
+                }
+            }
+        },
+        [workspaceFileInfoMapActions]
+    );
+
+    const fetchWorkspace = useCallback(
+        async (name: string) => {
+            setIsFetchingWorkspace(true);
+            setWorkspace(undefined);
+            workspaceFileInfoMapActions.reset();
+            try {
+                const res = await AppStore.Instance.apiService.getWorkspace(name);
+                if (res) {
+                    setWorkspace(res);
+                    fetchFileInfo(res);
+                }
+            } catch (err) {
+                console.log(err);
+                setErrorMessage(err);
+            }
+            setIsFetchingWorkspace(false);
+        },
+        [fetchFileInfo, workspaceFileInfoMapActions]
+    );
 
     useEffect(() => {
         if (workspaceListItem) {
             fetchWorkspace(workspaceListItem.name);
         }
-    }, [workspaceListItem, fetchWorkspace]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [workspaceListItem]);
 
     if (!workspaceListItem) {
         return <NonIdealState className="workspace-info" icon="folder-open" title="No workspace selected" />;
@@ -94,7 +122,9 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
                             <td className="entry-value">
                                 <ul>
                                     {workspace.files.map(f => (
-                                        <li key={f.id}>{f.filename}</li>
+                                        <li key={f.id}>
+                                            {f.filename} ({workspaceFileInfoMap.get(f)?.success ? "valid" : "failed"})
+                                        </li>
                                     ))}
                                 </ul>
                             </td>

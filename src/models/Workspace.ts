@@ -97,6 +97,7 @@ export interface WorkspaceFile {
 }
 
 export interface Workspace {
+    id?: string;
     workspaceVersion: number;
     frontendVersion: number;
     description?: string;
@@ -112,5 +113,6 @@ export interface Workspace {
 
 export interface WorkspaceListItem {
     name: string;
+    id?: string;
     date: number;
 }

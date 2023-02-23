@@ -226,6 +226,16 @@ export class AppStore {
     *loadDefaultFiles() {
         const url = new URL(window.location.href);
         const folderSearchParam = url.searchParams.get("folder");
+        const workspaceSearchParam = url.searchParams.get("workspace");
+
+        // Load workspace first if it exists
+        if (workspaceSearchParam) {
+            try {
+                yield this.loadWorkspace(workspaceSearchParam);
+            } catch (err) {
+                console.error(err);
+            }
+        }
 
         let fileList: string[];
         if (url.searchParams.has("files")) {
@@ -246,7 +256,7 @@ export class AppStore {
                     yield this.loadFile(folderSearchParam, file, "", false);
                 }
                 this.setLoadingMultipleFiles(false);
-            } else if (this.preferenceStore.autoLaunch) {
+            } else if (this.preferenceStore.autoLaunch && !workspaceSearchParam) {
                 if (folderSearchParam) {
                     this.fileBrowserStore.setStartingDirectory(folderSearchParam);
                 }
@@ -2117,6 +2127,7 @@ export class AppStore {
             return true;
         } catch (err) {
             console.error(err);
+            AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
             this.loadingWorkspace = false;
             return false;
         }

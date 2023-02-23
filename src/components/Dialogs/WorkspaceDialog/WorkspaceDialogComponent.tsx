@@ -101,7 +101,6 @@ export const WorkspaceDialogComponent = observer(() => {
             } catch (err) {
                 console.log(err);
             }
-            AppToaster.show(ErrorToast("Error loading workspace"));
             setIsFetching(false);
         },
         [appStore, handleCloseClicked]
