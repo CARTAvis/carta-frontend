@@ -196,7 +196,7 @@ export class RootMenuComponent extends React.Component {
                             copyText.select();
                             document.execCommand("copy");
                             document.body.removeChild(copyText);
-                        }   
+                        }
                         AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
                     } catch (err) {
                         console.log(err);
@@ -227,8 +227,8 @@ export class RootMenuComponent extends React.Component {
                                 copyText.select();
                                 document.execCommand("copy");
                                 document.body.removeChild(copyText);
-                             } 
-                        } 
+                            }
+                        }
                         AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
                         console.log(err);
