@@ -209,7 +209,7 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session URL to clipboard"
                 onClick={async () => {
                     try {
-                        const url = new URL(window.location.href);
+                        const url = new URL(document.URL);
                         if (url.protocol.startsWith("file")) {
                             const socketUrl = url.searchParams.get("socketUrl");
                             const token = url.searchParams.get("token");
@@ -228,10 +228,10 @@ export class RootMenuComponent extends React.Component {
                             }
                         } else {
                             if (navigator.clipboard) {
-                                await navigator.clipboard.writeText(window.location.href);
+                                await navigator.clipboard.writeText(document.URL);
                             } else {
                                 const copyText = document.createElement("textarea");
-                                copyText.value = window.location.href;
+                                copyText.value = document.URL;
                                 document.body.appendChild(copyText);
                                 copyText.focus();
                                 copyText.select();
