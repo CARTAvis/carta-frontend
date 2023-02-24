@@ -173,7 +173,7 @@ export class FittingDialogComponent extends React.Component {
                                     min={1}
                                     max={20}
                                     stepSize={1}
-                                    onValueChange={val => fittingStore.setComponents(Math.round(val))}
+                                    onValueChange={val => setTimeout(() => fittingStore.setComponents(Math.round(val)), 0)} // wait for onBlur events of the inputs
                                 />
                                 {fittingStore.components.length > 1 && (
                                     <>
@@ -183,7 +183,7 @@ export class FittingDialogComponent extends React.Component {
                                             stepSize={1}
                                             max={fittingStore.components.length}
                                             showTrackFill={false}
-                                            onChange={val => fittingStore.setSelectedComponentIndex(val - 1)}
+                                            onChange={val => setTimeout(() => fittingStore.setSelectedComponentIndex(val - 1), 0)} // wait for onBlur events of the inputs
                                             disabled={fittingStore.components.length <= 1}
                                         />
                                         <Tooltip2 content="Delete current component.">
