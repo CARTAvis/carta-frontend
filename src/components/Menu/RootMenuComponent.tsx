@@ -186,7 +186,17 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session ID to clipboard"
                 onClick={async () => {
                     try {
-                        await navigator.clipboard?.writeText(appStore.backendService.sessionId.toString());
+                        if (navigator.clipboard) {
+                            await navigator.clipboard?.writeText(appStore.backendService.sessionId.toString());
+                        } else {
+                            const copyText = document.createElement("textarea");
+                            copyText.value = appStore.backendService.sessionId.toString();
+                            document.body.appendChild(copyText);
+                            copyText.focus();
+                            copyText.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(copyText);
+                        }   
                         AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
                     } catch (err) {
                         console.log(err);
@@ -207,8 +217,18 @@ export class RootMenuComponent extends React.Component {
                             const token = url.searchParams.get("token");
                             const httpUrl = socketUrl.replace("ws", "http");
                             const finalUrl = `${httpUrl}?token=${token}`;
-                            await navigator.clipboard?.writeText(finalUrl);
-                        }
+                            if (navigator.clipboard) {
+                                await navigator.clipboard.writeText(finalUrl);
+                            } else {
+                                const copyText = document.createElement("textarea");
+                                copyText.value = finalUrl;
+                                document.body.appendChild(copyText);
+                                copyText.focus();
+                                copyText.select();
+                                document.execCommand("copy");
+                                document.body.removeChild(copyText);
+                             } 
+                        } 
                         AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
                         console.log(err);
@@ -216,7 +236,6 @@ export class RootMenuComponent extends React.Component {
                 }}
             />
         );
-
         let serverSubMenu: React.ReactNode;
         if (serverMenu.length) {
             serverSubMenu = (
