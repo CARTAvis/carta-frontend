@@ -79,6 +79,7 @@
 
     .bp3-form-content {
         display: flex;
+        flex-wrap: wrap;
         width: 100%;
         user-select: none;
     }
@@ -106,9 +107,21 @@
         }
     }
 
+    .coordinate-panel {
+        height: 30px;
+    }
+
     .lock-button {
         margin-left: 5px;
         margin-right: 5px;
+    }
+
+    .info-string {
+        width: 100%;
+        margin-left: 10px;
+        font-size: x-small;
+        font-family: monospace;
+        user-select: text;
     }
 
     .bp3-divider {

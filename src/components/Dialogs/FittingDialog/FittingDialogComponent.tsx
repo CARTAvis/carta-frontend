@@ -9,6 +9,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
+import {Point2D, WCSPoint2D} from "models";
 import {AppStore, HelpType} from "stores";
 import {CoordinateMode} from "stores/Frame";
 import {exportTxtFile, getTimestamp} from "utilities";
@@ -68,6 +69,14 @@ export class FittingDialogComponent extends React.Component {
 
     private renderLockButton = (fixed: boolean, toggleFixed) => {
         return <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} />;
+    };
+
+    private renderInfoString = (point: Point2D, pointWcs: WCSPoint2D, wcsString: string = "WCS") => {
+        return (
+            <span className="info-string">
+                {this.coord === CoordinateMode.Image ? `${wcsString}: ${pointWcs?.x && pointWcs?.x ? WCSPoint2D.ToString(pointWcs) : "-"}` : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.ToString(point, "px", 3) : "-"}`}
+            </span>
+        );
     };
 
     private exportResult = () => {
@@ -140,7 +149,8 @@ export class FittingDialogComponent extends React.Component {
             </Pre>
         );
 
-        const unitString = fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : "";
+        const pixUnitString = this.coord === CoordinateMode.Image ? "(px)" : "";
+        const imageUnitString = fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : "";
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={265} defaultWidth={600} defaultHeight={660} enableResizing={true}>
@@ -185,21 +195,23 @@ export class FittingDialogComponent extends React.Component {
                             <FormGroup label="Coordinate" inline={true}>
                                 <CoordinateComponent selectedValue={this.coord} onChange={this.setCoord} disableCoordinate={!fittingStore.effectiveFrame.hasSquarePixels} />
                             </FormGroup>
-                            <FormGroup label="Center" inline={true} labelInfo="(px)">
+                            <FormGroup label="Center" inline={true} labelInfo={pixUnitString}>
                                 {this.renderParamCoordInput(InputType.XCoord, component?.center?.x, "Center X", component?.setCenterX, component?.centerWcs?.x, component?.setCenterXWcs)}
                                 {this.renderLockButton(component?.centerFixed?.x, component?.toggleCenterXFixed)}
                                 {this.renderParamCoordInput(InputType.YCoord, component?.center?.y, "Center Y", component?.setCenterY, component?.centerWcs?.y, component?.setCenterYWcs)}
                                 {this.renderLockButton(component?.centerFixed?.y, component?.toggleCenterYFixed)}
+                                {this.renderInfoString(component?.center, component?.centerWcs)}
                             </FormGroup>
-                            <FormGroup label="Amplitude" inline={true} labelInfo={<span title={unitString}>{unitString}</span>}>
+                            <FormGroup label="Amplitude" inline={true} labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}>
                                 {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
                                 {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed)}
                             </FormGroup>
-                            <FormGroup label="FWHM" inline={true} labelInfo="(px)">
+                            <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
                                 {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major Axis", component?.setFwhmX, component?.fwhmWcs?.x, component?.setFwhmXWcs)}
                                 {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed)}
                                 {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor Axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
                                 {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed)}
+                                {this.renderInfoString(component?.fwhm, component?.fwhmWcs, "(Major-axis, Minor-axis)")}
                             </FormGroup>
                             <FormGroup label="P.A." inline={true} labelInfo="(deg)">
                                 {this.renderParamInput(component?.pa, "Position Angle", component?.setPa)}
@@ -209,7 +221,7 @@ export class FittingDialogComponent extends React.Component {
                             <ClearableNumericInputComponent
                                 label="Background"
                                 inline={true}
-                                labelInfo={<span title={unitString}>{unitString}</span>}
+                                labelInfo={<span title={imageUnitString}>{imageUnitString}</span>}
                                 value={fittingStore.backgroundOffset}
                                 placeholder="Offset"
                                 onValueChanged={fittingStore.setBackgroundOffset}
