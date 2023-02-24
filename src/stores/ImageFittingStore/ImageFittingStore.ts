@@ -561,8 +561,9 @@ export class ImageFittingIndividualStore {
         if (!wcsInfo) {
             return false;
         }
-        // initialize center Y with the wcs coordinate of the origin (0, 0) if it's not set yet
-        const centerYWcs = this.centerWcs?.y ?? getFormattedWCSPoint(wcsInfo, {x: 0, y: 0})?.y;
+        // initialize center Y with the wcs coordinate of the origin (0, 0) if both center X and Y are not set yet
+        // update center Y with the wcs coordinate of (0, center Y) if center Y is set and center X is not
+        const centerYWcs = this.centerWcs?.y ?? getFormattedWCSPoint(wcsInfo, {x: 0, y: isFinite(this.center?.y) ? this.center?.y : 0})?.y;
         const center = getPixelValueFromWCS(wcsInfo, {x: val, y: centerYWcs});
         if (!center) {
             return false;
@@ -578,8 +579,9 @@ export class ImageFittingIndividualStore {
         if (!wcsInfo) {
             return false;
         }
-        // initialize center X with the wcs coordinate of the origin (0, 0) if it's not set yet
-        const centerXWcs = this.centerWcs?.x ?? getFormattedWCSPoint(wcsInfo, {x: 0, y: 0})?.x;
+        // initialize center X with the wcs coordinate of origin (0, 0) if both center X and Y are not set yet
+        // update center X with the wcs coordinate of (center X, 0) if center X is set and center Y is not
+        const centerXWcs = this.centerWcs?.x ?? getFormattedWCSPoint(wcsInfo, {x: isFinite(this.center?.x) ? this.center?.x : 0, y: 0})?.x;
         const center = getPixelValueFromWCS(wcsInfo, {x: centerXWcs, y: val});
         if (!center) {
             return false;

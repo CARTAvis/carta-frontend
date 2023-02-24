@@ -71,10 +71,10 @@ export class FittingDialogComponent extends React.Component {
         return <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} />;
     };
 
-    private renderInfoString = (point: Point2D, pointWcs: WCSPoint2D, wcsString: string = "WCS") => {
+    private renderInfoString = (point: Point2D, pointWcs: WCSPoint2D) => {
         return (
             <span className="info-string">
-                {this.coord === CoordinateMode.Image ? `${wcsString}: ${pointWcs?.x && pointWcs?.x ? WCSPoint2D.ToString(pointWcs) : "-"}` : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.ToString(point, "px", 3) : "-"}`}
+                {this.coord === CoordinateMode.Image ? `WCS: ${pointWcs?.x || pointWcs?.y ? WCSPoint2D.ToString(pointWcs) : "-"}` : `Image: ${isFinite(point?.x) || isFinite(point?.y) ? Point2D.ToString(point, "px", 3) : "-"}`}
             </span>
         );
     };
@@ -211,7 +211,7 @@ export class FittingDialogComponent extends React.Component {
                                 {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed)}
                                 {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor Axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
                                 {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed)}
-                                {this.renderInfoString(component?.fwhm, component?.fwhmWcs, "(Major-axis, Minor-axis)")}
+                                {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
                             </FormGroup>
                             <FormGroup label="P.A." inline={true} labelInfo="(deg)">
                                 {this.renderParamInput(component?.pa, "Position Angle", component?.setPa)}
