@@ -210,9 +210,7 @@ export class RootMenuComponent extends React.Component {
                 onClick={async () => {
                     try {
                         const url = new URL(window.location.href);
-                        if (!url.protocol.startsWith("file")) {
-                            await navigator.clipboard?.writeText(window.location.href);
-                        } else {
+                        if (url.protocol.startsWith("file")) {
                             const socketUrl = url.searchParams.get("socketUrl");
                             const token = url.searchParams.get("token");
                             const httpUrl = socketUrl.replace("ws", "http");
@@ -222,6 +220,18 @@ export class RootMenuComponent extends React.Component {
                             } else {
                                 const copyText = document.createElement("textarea");
                                 copyText.value = finalUrl;
+                                document.body.appendChild(copyText);
+                                copyText.focus();
+                                copyText.select();
+                                document.execCommand("copy");
+                                document.body.removeChild(copyText);
+                            }
+                        } else {
+                            if (navigator.clipboard) {
+                                await navigator.clipboard.writeText(window.location.href);
+                            } else {
+                                const copyText = document.createElement("textarea");
+                                copyText.value = window.location.href;
                                 document.body.appendChild(copyText);
                                 copyText.focus();
                                 copyText.select();
