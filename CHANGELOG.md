@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the region position offset mismatch problem after zooming to fit for spatially matched images. ([#2028](https://github.com/CARTAvis/carta-frontend/issues/2028)).
 * Improved the performance of loading regions in batches ([#2040](https://github.com/CARTAvis/carta-frontend/issues/2040)).
 * Fixed offset between cusorInfo and upper wcs axis in the spatial profilers ([#1319](https://github.com/CARTAvis/carta-frontend/issues/1319)).
+* Fixed mismatch between cursor and image during PV image panning ([#1790](https://github.com/CARTAvis/carta-frontend/issues/1790)).
 * Fixed the hanging problem for computed stokes animation ([#1238](https://github.com/CARTAvis/carta-backend/issues/1238)).
 ### Changed
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
