@@ -695,7 +695,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         );
 
         const renderHistogramLog = (
-            <FormGroup label={"Log Scale"} inline={true} disabled={disabled}>
+            <FormGroup label={"Log scale"} inline={true} disabled={disabled}>
                 <Switch checked={widgetStore.logScaleY} onChange={this.handleLogScaleYChanged} disabled={disabled} />
             </FormGroup>
         );
@@ -720,7 +720,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         );
 
         const renderStatisticSelect = (
-            <FormGroup inline={true} label="Statistic Source">
+            <FormGroup inline={true} label="Statistic source">
                 <Select
                     className="bp3-fill"
                     items={xyOptions}
