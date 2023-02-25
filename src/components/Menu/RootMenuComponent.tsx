@@ -439,7 +439,7 @@ export class RootMenuComponent extends React.Component {
                 </div>
                 <div className={Classes.ALERT_FOOTER}>
                     <Button intent={Intent.PRIMARY} text="OK" onClick={this.newReleaseButtonOnClick} />
-                    <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again." />
+                    <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again" />
                 </div>
             </div>
         );

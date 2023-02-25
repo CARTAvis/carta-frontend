@@ -425,8 +425,8 @@ export class FileBrowserDialogComponent extends React.Component {
                 minimal={true}
                 content={
                     <Menu>
-                        <MenuItem text="World Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.WORLD)} />
-                        <MenuItem text="Pixel Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.PIXEL)} />
+                        <MenuItem text="World coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.WORLD)} />
+                        <MenuItem text="Pixel coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.PIXEL)} />
                     </Menu>
                 }
                 position={Position.BOTTOM_RIGHT}
@@ -442,8 +442,8 @@ export class FileBrowserDialogComponent extends React.Component {
                 minimal={true}
                 content={
                     <Menu>
-                        <MenuItem text="CRTF Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)} />
-                        <MenuItem text="DS9 Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.DS9_REG)} />
+                        <MenuItem text="CRTF region file" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)} />
+                        <MenuItem text="ds9 region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.DS9_REG)} />
                     </Menu>
                 }
                 position={Position.BOTTOM_RIGHT}
