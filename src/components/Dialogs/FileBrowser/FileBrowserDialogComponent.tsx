@@ -385,7 +385,7 @@ export class FileBrowserDialogComponent extends React.Component {
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
                             onClick={this.loadSelectedFiles}
-                            text="Load Region"
+                            text="Load region"
                         />
                     </Tooltip2>
                 );
@@ -396,7 +396,7 @@ export class FileBrowserDialogComponent extends React.Component {
                             intent={Intent.PRIMARY}
                             disabled={appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !appStore.activeFrame}
                             onClick={this.loadSelectedFiles}
-                            text="Load Catalog"
+                            text="Load catalog"
                         />
                     </Tooltip2>
                 );
@@ -408,7 +408,7 @@ export class FileBrowserDialogComponent extends React.Component {
                             intent={Intent.PRIMARY}
                             disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1 || fileBrowserStore.exportRegionNum < 1}
                             onClick={this.handleExportRegionsClicked}
-                            text="Export Regions"
+                            text="Export regions"
                         />
                     </Tooltip2>
                 );
