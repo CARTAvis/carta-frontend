@@ -410,7 +410,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="X WCS Coordinate"
+                        placeholder="X WCS coordinate"
                         disabled={!this.props.wcsInfo || !startWCSPoint}
                         value={startWCSPoint ? startWCSPoint.x : ""}
                         onBlur={this.handleStartXWCSChange}
@@ -423,7 +423,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
+                        placeholder="Y WCS coordinate"
                         disabled={!this.props.wcsInfo || !startWCSPoint}
                         value={startWCSPoint ? startWCSPoint.y : ""}
                         onBlur={this.handleStartYWCSChange}
@@ -483,7 +483,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="X WCS Coordinate"
+                        placeholder="X WCS coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.x : ""}
                         onBlur={this.handleCenterWCSXChange}
@@ -496,7 +496,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
+                        placeholder="Y WCS coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.y : ""}
                         onBlur={this.handleCenterWCSYChange}

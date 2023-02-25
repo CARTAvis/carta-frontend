@@ -458,7 +458,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="X WCS Coordinate"
+                        placeholder="X WCS coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.x : ""}
                         onBlur={this.handleCenterWCSXChange}
@@ -471,7 +471,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
+                        placeholder="Y WCS coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.y : ""}
                         onBlur={this.handleCenterWCSYChange}
@@ -499,7 +499,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="X WCS Coordinate"
+                        placeholder="X WCS coordinate"
                         disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
                         value={bottomLeftWCSPoint ? bottomLeftWCSPoint.x : ""}
                         onBlur={this.handleLeftWCSChange}
@@ -512,7 +512,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
+                        placeholder="Y WCS coordinate"
                         disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
                         value={bottomLeftWCSPoint ? bottomLeftWCSPoint.y : ""}
                         onBlur={this.handleBottomWCSChange}
@@ -535,7 +535,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="X WCS Coordinate"
+                        placeholder="X WCS coordinate"
                         disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
                         value={topRightWCSPoint ? topRightWCSPoint.x : ""}
                         onBlur={this.handleRightWCSChange}
@@ -548,7 +548,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
+                        placeholder="Y WCS coordinate"
                         disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
                         value={topRightWCSPoint ? topRightWCSPoint.y : ""}
                         onBlur={this.handleTopWCSChange}
@@ -631,7 +631,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                                 </td>
                             </tr>
                             <tr>
-                                <td>Bottom Left {pxUnitSpan}</td>
+                                <td>Bottom-left {pxUnitSpan}</td>
                                 <td>{bottomLeftInputX}</td>
                                 <td>{bottomLeftInputY}</td>
                                 <td>
@@ -639,7 +639,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                                 </td>
                             </tr>
                             <tr>
-                                <td>Top Right {pxUnitSpan}</td>
+                                <td>Top-right {pxUnitSpan}</td>
                                 <td>{topRightInputX}</td>
                                 <td>{topRightInputY}</td>
                                 <td>
