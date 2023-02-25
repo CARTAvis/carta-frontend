@@ -229,7 +229,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             position={tooltipPosition}
                             content={
                                 <span>
-                                    Distance Measurement
+                                    Distance measurement
                                     <br />
                                     <i>
                                         <small>Click to create geodesic curves.</small>
@@ -338,7 +338,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 position={tooltipPosition}
                                 content={
                                     <span>
-                                        WCS Matching <br />
+                                        WCS matching <br />
                                         <small>
                                             <i>Current: {wcsButtonTooltip}</i>
                                         </small>
@@ -355,7 +355,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 position={tooltipPosition}
                                 content={
                                     <span>
-                                        Overlay Coordinate <br />
+                                        Overlay coordinate <br />
                                         <small>
                                             <i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i>
                                         </small>

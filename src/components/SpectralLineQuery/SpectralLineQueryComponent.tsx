@@ -284,7 +284,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <Switch checked={widgetStore.intensityLimitEnabled} onChange={() => widgetStore.toggleIntensityLimit()} />
                         </FormGroup>
                         {widgetStore.intensityLimitEnabled && (
-                            <Tooltip2 content="CDMS/JPL Intensity (Log)" position={Position.BOTTOM}>
+                            <Tooltip2 content="CDMS/JPL intensity (log)" position={Position.BOTTOM}>
                                 <SafeNumericInput value={widgetStore.intensityLimitValue} buttonPosition="none" onValueChange={val => widgetStore.setIntensityLimitValue(val)} />
                             </Tooltip2>
                         )}

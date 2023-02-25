@@ -222,7 +222,7 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 <Menu.Item text="Open Image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
                 <Menu.Item text="Append Image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
-                <Tooltip2 content={"not allowed in read-only mode"} disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY} position={Position.LEFT}>
+                <Tooltip2 content={"Not allowed in read-only mode"} disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY} position={Position.LEFT}>
                     <Menu.Item
                         text="Save Image"
                         label={`${modString}S`}
@@ -234,7 +234,7 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Divider />
                 <Menu.Item text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip2
-                    content={"not allowed in read-only mode"}
+                    content={"Not allowed in read-only mode"}
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
                     position={Position.LEFT}
                 >
@@ -501,7 +501,7 @@ export class RootMenuComponent extends React.Component {
                     </Tooltip2>
                 )}
                 {appStore.snippetStore.isExecuting && (
-                    <Tooltip2 content="CARTA is currently executing a code snippet.">
+                    <Tooltip2 content="CARTA is currently executing a code snippet">
                         <Icon icon={"console"} intent={"warning"} />
                     </Tooltip2>
                 )}

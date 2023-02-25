@@ -256,7 +256,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <div className={className} style={props.style}>
                         <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
                             <Icon icon={"blank"} style={{width: 16}} />
-                            <Tooltip2 disabled={regionsVisibility === RegionsOpacity.Invisible} content="Lock All Regions" position={Position.BOTTOM}>
+                            <Tooltip2 disabled={regionsVisibility === RegionsOpacity.Invisible} content="Lock all regions" position={Position.BOTTOM}>
                                 <Icon
                                     icon={regionsLock ? "lock" : regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
                                     onClick={regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleAllRegionsLockClicked(ev)}
@@ -264,7 +264,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 />
                             </Tooltip2>
                             <Icon icon={"blank"} style={{width: 5}} />
-                            <Tooltip2 content={regionsVisibility === RegionsOpacity.Invisible ? "Show Regions" : "Hide Regions"} position={Position.BOTTOM}>
+                            <Tooltip2 content={regionsVisibility === RegionsOpacity.Invisible ? "Show regions" : "Hide regions"} position={Position.BOTTOM}>
                                 <Icon
                                     icon={regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
                                     onClick={this.handleToggleHideClicked()}

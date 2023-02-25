@@ -339,7 +339,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 }
                 position={Position.TOP}
             >
-                <Tooltip2 content="Playback Mode" position={Position.TOP}>
+                <Tooltip2 content="Playback mode" position={Position.TOP}>
                     <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive}>
                         {!iconOnly && "Mode"}
                     </AnchorButton>
