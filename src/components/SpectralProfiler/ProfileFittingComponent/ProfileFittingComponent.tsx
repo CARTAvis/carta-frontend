@@ -250,7 +250,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         <AnchorButton onClick={this.autoDetect} icon="series-search" disabled={disabled} />
                                     </Tooltip2>
                                     <Switch label="w/ cont." checked={fittingStore.isAutoDetectWithCont} onChange={ev => fittingStore.setIsAutoDetectWithCont(!fittingStore.isAutoDetectWithCont)} disabled={disabled} />
-                                    <Switch label="auto fit" checked={fittingStore.isAutoDetectWithFitting} onChange={ev => fittingStore.setIsAutoDetectWithFitting(!fittingStore.isAutoDetectWithFitting)} disabled={disabled} />
+                                    <Switch label="Auto fit" checked={fittingStore.isAutoDetectWithFitting} onChange={ev => fittingStore.setIsAutoDetectWithFitting(!fittingStore.isAutoDetectWithFitting)} disabled={disabled} />
                                 </div>
                             </FormGroup>
                             {fittingStore.hasAutoDetectResult && (
@@ -422,7 +422,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 <AnchorButton text="View log" onClick={this.showLog} intent={Intent.PRIMARY} disabled={!fittingStore.hasResult || disabled} />
                             </Popover2>
                             <div className="switch-wrapper">
-                                <Switch label="residual" checked={fittingStore.enableResidual} onChange={ev => fittingStore.setEnableResidual(ev.currentTarget.checked)} disabled={disabled} />
+                                <Switch label="Residual" checked={fittingStore.enableResidual} onChange={ev => fittingStore.setEnableResidual(ev.currentTarget.checked)} disabled={disabled} />
                             </div>
                         </div>
                     </FormGroup>
