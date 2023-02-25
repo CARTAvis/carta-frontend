@@ -105,7 +105,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     <SafeNumericInput
                         selectAllOnFocus={true}
                         buttonPosition="none"
-                        placeholder="X Coordinate"
+                        placeholder="X coordinate"
                         value={point.x}
                         onBlur={evt => this.handlePointChange(index, true, evt)}
                         onKeyDown={evt => this.handlePointChange(index, true, evt)}
@@ -115,7 +115,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     <SafeNumericInput
                         selectAllOnFocus={true}
                         buttonPosition="none"
-                        placeholder="Y Coordinate"
+                        placeholder="Y coordinate"
                         value={point.y}
                         onBlur={evt => this.handlePointChange(index, false, evt)}
                         onKeyDown={evt => this.handlePointChange(index, false, evt)}

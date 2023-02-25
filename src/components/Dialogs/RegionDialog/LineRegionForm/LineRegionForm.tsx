@@ -402,8 +402,8 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const startWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.startPoint);
         let startInputX, startInputY;
         if (region.coordinate === CoordinateMode.Image) {
-            startInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.startPoint.x} onBlur={this.handleStartXChange} onKeyDown={this.handleStartXChange} />;
-            startInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.startPoint.y} onBlur={this.handleStartYChange} onKeyDown={this.handleStartYChange} />;
+            startInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X coordinate" value={this.startPoint.x} onBlur={this.handleStartXChange} onKeyDown={this.handleStartXChange} />;
+            startInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y coordinate" value={this.startPoint.y} onBlur={this.handleStartYChange} onKeyDown={this.handleStartYChange} />;
         } else {
             startInputX = (
                 <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -438,8 +438,8 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const endWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.endPoint);
         let endInputX, endInputY;
         if (region.coordinate === CoordinateMode.Image) {
-            endInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.endPoint.x} onBlur={this.handleEndXChange} onKeyDown={this.handleEndXChange} />;
-            endInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.endPoint.y} onBlur={this.handleEndYChange} onKeyDown={this.handleEndYChange} />;
+            endInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X coordinate" value={this.endPoint.x} onBlur={this.handleEndXChange} onKeyDown={this.handleEndXChange} />;
+            endInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y coordinate" value={this.endPoint.y} onBlur={this.handleEndYChange} onKeyDown={this.handleEndYChange} />;
         } else {
             endInputX = (
                 <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
@@ -475,8 +475,8 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let centerInputX, centerInputY;
         if (region.coordinate === CoordinateMode.Image) {
-            centerInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange} />;
-            centerInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
+            centerInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange} />;
+            centerInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
         } else {
             centerInputX = (
                 <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>

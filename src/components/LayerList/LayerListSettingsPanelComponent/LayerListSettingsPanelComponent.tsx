@@ -62,7 +62,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     label="Rest frequency"
                     value={restFreqStore.customRestFreq.value}
                     disabled={frameOption.disable}
-                    placeholder="rest frequency"
+                    placeholder="Rest frequency"
                     selectAllOnFocus={true}
                     onValueChanged={val => {
                         restFreqStore.setCustomVal(val);

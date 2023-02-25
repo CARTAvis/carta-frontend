@@ -715,7 +715,7 @@ export class PreferenceDialogComponent extends React.Component {
             <div className="panel-container">
                 <FormGroup inline={true} label="Displayed columns">
                     <SafeNumericInput
-                        placeholder="Default Displayed Columns"
+                        placeholder="Default displayed columns"
                         min={1}
                         value={preference.catalogDisplayedColumnSize}
                         stepSize={1}

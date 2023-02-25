@@ -471,10 +471,10 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={labels.customText} disabled={!labels.visible} onChange={ev => labels.setCustomText(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={labels.customText}>
-                    <FormGroup inline={true} label="Label Text (X)" disabled={!labels.visible}>
+                    <FormGroup inline={true} label="Label text (X)" disabled={!labels.visible}>
                         <InputGroup disabled={!labels.visible} value={labels.customLabelX} placeholder="Enter label text" onChange={ev => labels.setCustomLabelX(ev.currentTarget.value)} />
                     </FormGroup>
-                    <FormGroup inline={true} label="Label Text (Y)" disabled={!labels.visible}>
+                    <FormGroup inline={true} label="Label text (Y)" disabled={!labels.visible}>
                         <InputGroup disabled={!labels.visible} value={labels.customLabelY} placeholder="Enter label text" onChange={ev => labels.setCustomLabelY(ev.currentTarget.value)} />
                     </FormGroup>
                 </Collapse>
