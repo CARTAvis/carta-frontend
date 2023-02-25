@@ -9,9 +9,9 @@ import {FrameScaling} from "stores/Frame";
 import {clamp, minMaxArray} from "utilities";
 
 export enum CatalogPlotType {
-    ImageOverlay = "Image Overlay",
+    ImageOverlay = "Image overlay",
     Histogram = "Histogram",
-    D2Scatter = "2D Scatter"
+    D2Scatter = "2D scatter"
 }
 
 export enum CatalogOverlayShape {
