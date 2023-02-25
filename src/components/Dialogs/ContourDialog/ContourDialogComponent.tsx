@@ -437,7 +437,7 @@ export class ContourDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Smoothing mode">
                     <HTMLSelect value={this.smoothingMode} onChange={ev => (this.smoothingMode = Number(ev.currentTarget.value))}>
                         <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>
-                            No Smoothing
+                            No smoothing
                         </option>
                         <option key={CARTA.SmoothingMode.BlockAverage} value={CARTA.SmoothingMode.BlockAverage}>
                             Block
