@@ -303,7 +303,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             <div className="pv-generator-widget">
                 <div className="pv-generator-panel">
                     <Tabs id="pvGeneratorTabs" selectedTabId={this.selectedTabId} onChange={this.setSelectedTab} animate={false}>
-                        <Tab id={PvGeneratorComponentTabs.PV_IMAGE} title="Generate PV image" panel={pvImagePanel} />
+                        <Tab id={PvGeneratorComponentTabs.PV_IMAGE} title="Generate PV Image" panel={pvImagePanel} />
                     </Tabs>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>

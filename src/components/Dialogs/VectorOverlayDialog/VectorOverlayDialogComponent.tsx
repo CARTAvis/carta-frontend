@@ -343,7 +343,7 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <FormGroup inline={true} label="Color mode">
                     <HTMLSelect value={dataSource.vectorOverlayConfig.colormapEnabled ? 1 : 0} onChange={ev => dataSource.vectorOverlayConfig.setColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>
-                            Constant Color
+                            Constant color
                         </option>
                         <option key={1} value={1}>
                             Color-mapped

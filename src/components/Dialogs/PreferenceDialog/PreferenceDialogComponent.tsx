@@ -193,7 +193,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <option value={WCSMatchingType.NONE}>None</option>
                         <option value={WCSMatchingType.SPATIAL}>Spatial only</option>
                         <option value={WCSMatchingType.SPECTRAL}>Spectral only</option>
-                        <option value={WCSMatchingType.SPATIAL | WCSMatchingType.SPECTRAL}>Spatial and Spectral</option>
+                        <option value={WCSMatchingType.SPATIAL | WCSMatchingType.SPECTRAL}>Spatial and spectral</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Spectral matching">

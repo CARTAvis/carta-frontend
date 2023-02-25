@@ -326,7 +326,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <Tab id={CatalogSettingsTabs.SIZE_MAJOR} title="Major" panel={sizeMajor} />
                     <Tab id={CatalogSettingsTabs.SIZE_MINOR} title="Minor" panel={sizeMinor} disabled={!widgetStore.enableSizeMinorTab} />
                 </Tabs>
-                <FormGroup inline={true} label="Size Min" labelInfo="(px)" disabled={disableSizeMap}>
+                <FormGroup inline={true} label="Size min" labelInfo="(px)" disabled={disableSizeMap}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={true}
                         asyncControl={true}
@@ -338,7 +338,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         onKeyDown={ev => this.handleChange(ev, "size-min")}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Size Max" labelInfo="(px)" disabled={disableSizeMap}>
+                <FormGroup inline={true} label="Size max" labelInfo="(px)" disabled={disableSizeMap}>
                     <Tooltip2 content={`Maximum size ${widgetStore.maxPointSizebyType}`}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={true}
@@ -401,7 +401,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <FormGroup inline={true} label="Colormap" disabled={disableColorMap}>
                     <ColormapComponent inverted={false} selectedItem={widgetStore.colorMap} onItemSelect={selected => widgetStore.setColorMap(selected)} disabled={disableColorMap} />
                 </FormGroup>
-                <FormGroup label={"Invert Colormap"} inline={true} disabled={disableColorMap}>
+                <FormGroup label={"Invert colormap"} inline={true} disabled={disableColorMap}>
                     <Switch checked={widgetStore.invertedColorMap} onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)} disabled={disableColorMap} />
                 </FormGroup>
                 <ClearableNumericInputComponent
