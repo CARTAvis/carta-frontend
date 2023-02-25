@@ -121,7 +121,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         position={"bottom"}
                         content={
                             <span>
-                                Raster layer
+                                Raster Layer
                                 <br />
                                 <i>
                                     <small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small>
@@ -138,7 +138,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             position={"bottom"}
                             content={
                                 <span>
-                                    Contour layer
+                                    Contour Layer
                                     <br />
                                     <i>
                                         <small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small>
@@ -156,7 +156,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                             position={"bottom"}
                             content={
                                 <span>
-                                    Vector overlay layer
+                                    Vector Overlay Layer
                                     <br />
                                     <i>
                                         <small>Click to {frame.vectorOverlayConfig.visible ? "hide" : "show"}</small>
@@ -195,7 +195,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     position={"bottom"}
                     content={
                         <span>
-                            Spatial matching
+                            Spatial Matching
                             <br />
                             <i>
                                 <small>{tooltipSubtitle}</small>
@@ -230,7 +230,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     position={"bottom"}
                     content={
                         <span>
-                            Spectral matching
+                            Spectral Matching
                             <br />
                             <i>
                                 <small>{tooltipSubtitle}</small>
@@ -265,7 +265,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     position={"bottom"}
                     content={
                         <span>
-                            Raster scaling matching
+                            Raster Scaling Matching
                             <br />
                             <i>
                                 <small>{tooltipSubtitle}</small>
