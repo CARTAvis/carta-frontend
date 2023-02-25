@@ -37,17 +37,17 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         <Button text={ContourDashMode[frame.contourConfig.dashMode]} rightIcon="double-caret-vertical" alignText={"right"} />
                     </DashModeSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Color Mode">
+                <FormGroup inline={true} label="Color mode">
                     <HTMLSelect value={frame.contourConfig.colormapEnabled ? 1 : 0} onChange={ev => frame.contourConfig.setColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>
-                            Constant Color
+                            Constant color
                         </option>
                         <option key={1} value={1}>
                             Color-mapped
                         </option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Color Map" disabled={!frame.contourConfig.colormapEnabled}>
+                <FormGroup inline={true} label="Colormap" disabled={!frame.contourConfig.colormapEnabled}>
                     <ColormapComponent inverted={false} disabled={!frame.contourConfig.colormapEnabled} selectedItem={frame.contourConfig.colormap} onItemSelect={frame.contourConfig.setColormap} />
                 </FormGroup>
                 <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.colormapEnabled}>
