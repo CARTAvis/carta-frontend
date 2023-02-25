@@ -253,7 +253,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 >
                     <HTMLSelect value={selectedValue} options={this.widgetStore.regionOptions} onChange={this.handleRegionChanged} />
                 </FormGroup>
-                <FormGroup inline={true} label="Average Width">
+                <FormGroup inline={true} label="Average width">
                     <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.width} onValueChange={value => this.widgetStore.setWidth(value)} />
                 </FormGroup>
                 <SpectralSettingsComponent
@@ -280,10 +280,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         </div>
                     </FormGroup>
                 )}
-                <FormGroup className="label-info-group" inline={true} label="Axes Order">
+                <FormGroup className="label-info-group" inline={true} label="Axes order">
                     <HTMLSelect options={Object.values(this.axesOrder)} onChange={this.handleAxesOrderChanged} />
                 </FormGroup>
-                <FormGroup inline={true} label={"Keep previous PV Image"}>
+                <FormGroup inline={true} label={"Keep previous PV image(s)"}>
                     <Switch
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
