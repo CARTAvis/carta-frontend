@@ -446,7 +446,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="X WCS Coordinate"
+                        placeholder="X WCS coordinate"
                         disabled={!this.props.wcsInfo || !endWCSPoint}
                         value={endWCSPoint ? endWCSPoint.x : ""}
                         onBlur={this.handleEndXWCSChange}
@@ -459,7 +459,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
+                        placeholder="Y WCS coordinate"
                         disabled={!this.props.wcsInfo || !endWCSPoint}
                         value={endWCSPoint ? endWCSPoint.y : ""}
                         onBlur={this.handleEndYWCSChange}
@@ -537,7 +537,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                     <table>
                         <tbody>
                             <tr>
-                                <td>Region Name</td>
+                                <td>Region name</td>
                                 <td colSpan={2}>
                                     <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
                                 </td>

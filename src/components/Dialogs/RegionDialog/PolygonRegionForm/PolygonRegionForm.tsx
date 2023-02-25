@@ -127,7 +127,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
-                            placeholder="X WCS Coordinate"
+                            placeholder="X WCS coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
                             value={pointWCS ? pointWCS.x : ""}
                             onBlur={evt => this.handleWCSPointChange(index, true, evt)}
@@ -140,7 +140,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
-                            placeholder="Y WCS Coordinate"
+                            placeholder="Y WCS coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
                             value={pointWCS ? pointWCS.y : ""}
                             onBlur={evt => this.handleWCSPointChange(index, false, evt)}
@@ -170,7 +170,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     <table>
                         <tbody>
                             <tr>
-                                <td>Region Name</td>
+                                <td>Region name</td>
                                 <td colSpan={2}>
                                     <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
                                 </td>

@@ -603,7 +603,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <table>
                         <tbody>
                             <tr>
-                                <td>Region Name</td>
+                                <td>Region name</td>
                                 <td colSpan={2}>
                                     <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
                                 </td>

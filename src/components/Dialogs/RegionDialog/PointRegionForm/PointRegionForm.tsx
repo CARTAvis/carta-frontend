@@ -126,7 +126,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="X WCS Coordinate"
+                        placeholder="X WCS coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.x : ""}
                         onBlur={this.handleCenterWCSXChange}
@@ -139,7 +139,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
+                        placeholder="Y WCS coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.y : ""}
                         onBlur={this.handleCenterWCSYChange}
@@ -157,7 +157,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                     <table>
                         <tbody>
                             <tr>
-                                <td>Region Name</td>
+                                <td>Region name</td>
                                 <td colSpan={2}>
                                     <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
                                 </td>
