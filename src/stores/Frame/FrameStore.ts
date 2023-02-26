@@ -591,11 +591,11 @@ export class FrameStore {
     @computed get isPVImage(): boolean {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
-            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
+            const axis1 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[0]}`));
+            const axis2 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[1]}`));
             const axis1SpectralAxis2Spatial = axis1?.value?.match(/offset|position|offset position/i) && axis2?.value?.match(/freq/i);
             const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position/i) && axis1?.value?.match(/freq/i);
-            return axis1SpatialAxis2Spectral || axis1SpectralAxis2Spatial ? true : false;
+            return !!(axis1SpatialAxis2Spectral || axis1SpectralAxis2Spatial);
         }
         return false;
     }
@@ -603,10 +603,10 @@ export class FrameStore {
     @computed get isReversedPVImage(): boolean {
         if (this.isPVImage) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
-            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
+            const axis1 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[0]}`));
+            const axis2 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[1]}`));
             const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position/i) && axis1?.value?.match(/freq/i);
-            return axis1SpatialAxis2Spectral ? true : false;
+            return !!axis1SpatialAxis2Spectral;
         }
         return false;
     }
@@ -643,7 +643,8 @@ export class FrameStore {
 
     // Get rendered axes numbers from the header
     get renderedAxesNumbers(): [number, number] {
-        const axes = [this.dirXNumber, this.dirYNumber, this.spectralNumber];
+        let axes = [this.dirXNumber, this.dirYNumber, this.spectralNumber];
+        axes = axes.filter(num => num > 0);
         axes.sort();
         return [axes[0], axes[1]];
     }
@@ -767,8 +768,8 @@ export class FrameStore {
     @computed get uvAxis(): number {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const axis1 = entries.find(entry => entry.name.includes("CTYPE1"));
-            const axis2 = entries.find(entry => entry.name.includes("CTYPE2"));
+            const axis1 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[0]}`));
+            const axis2 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[1]}`));
             if (axis1?.value?.match(/uu/i)) {
                 return 1;
             } else if (axis2?.value?.match(/uu/i)) {
@@ -1475,8 +1476,7 @@ export class FrameStore {
     };
 
     private initPVFrame = (): AST.FrameSet => {
-        const spectralDimension = this.spectralAxis?.dimension;
-        if (!this.isPVImage || !(spectralDimension === 2 || spectralDimension === 3)) {
+        if (!this.isPVImage || !(this.spectralNumber === 2 || this.spectralNumber === 3)) {
             return undefined;
         }
 
@@ -1487,12 +1487,12 @@ export class FrameStore {
             }
 
             let name = entry.name;
-            if (spectralDimension === 2) {
+            if (this.spectralNumber === 2) {
                 if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3]/)) {
                     continue;
                 }
             } else {
-                // spectralDimension === 3
+                // this.spectralNumber === 3
                 if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[2]/)) {
                     continue;
                 } else if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3]/)) {
@@ -1524,7 +1524,7 @@ export class FrameStore {
         // Define regular expressions
         let regOtherAxes;
         if (this.dimension === "2") {
-            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]`);
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]`);
         } else {
             regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]`);
         }
@@ -1574,7 +1574,7 @@ export class FrameStore {
         // Define regular expressions
         let regOtherAxes;
         if (this.dimension === "2") {
-            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]`);
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]`);
         } else {
             regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]`);
         }
