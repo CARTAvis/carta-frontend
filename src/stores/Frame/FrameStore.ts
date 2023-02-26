@@ -409,10 +409,10 @@ export class FrameStore {
     }
 
     @computed get beamProperties(): {x: number; y: number; majorAxis: number; minorAxis: number; angle: number; overlayBeamSettings: OverlayBeamStore} {
-        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
-        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
+        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CUNIT${this.renderedAxesNumbers[0]}`) !== -1);
+        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${this.renderedAxesNumbers[0]}`) !== -1);
 
-        if (unitHeader && deltaHeader) {
+        if (!this.isSwappedZ && unitHeader && deltaHeader) {
             const unit = unitHeader.value.trim();
             const delta = getHeaderNumericValue(deltaHeader);
             if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
@@ -641,14 +641,24 @@ export class FrameStore {
         return this.frameInfo.fileInfoExtended.depth > 1 ? "3" : "2";
     }
 
+    // Get rendered axes numbers from the header
+    get renderedAxesNumbers(): [number, number] {
+        const axes = [this.dirXNumber, this.dirYNumber, this.spectralNumber];
+        axes.sort();
+        return [axes[0], axes[1]];
+    }
+
+    // X direction axis number in the AST frame set
     get dirX(): number {
         return this.stokesNumber > 0 && this.stokesNumber < this.dirXNumber ? this.dirXNumber - 1 : this.dirXNumber;
     }
 
+    // Y direction axis number in the AST frame set
     get dirY(): number {
         return this.stokesNumber > 0 && this.stokesNumber < this.dirYNumber ? this.dirYNumber - 1 : this.dirYNumber;
     }
 
+    // Spectral axis number in the AST frame set
     get spectral(): number {
         return this.stokesNumber > 0 && this.stokesNumber < this.spectralNumber ? this.spectralNumber - 1 : this.spectralNumber;
     }
@@ -790,7 +800,7 @@ export class FrameStore {
                 if (spectralType) {
                     return {
                         valid: true,
-                        dimension: dimension,
+                        dimension: this.spectral,
                         type: {name: spectralType.name, code: spectralType.code, unit: unitHeader?.value?.trim() ?? spectralType.unit},
                         specsys: specsys,
                         value: getHeaderNumericValue(valueHeader)
@@ -798,7 +808,7 @@ export class FrameStore {
                 } else {
                     return {
                         valid: false,
-                        dimension: dimension,
+                        dimension: this.spectral,
                         type: {name: spectralValue, code: spectralValue, unit: unitHeader?.value?.trim() ?? undefined},
                         specsys: specsys,
                         value: getHeaderNumericValue(valueHeader)
@@ -1295,8 +1305,8 @@ export class FrameStore {
             this.wcsInfo = AST.initDummyFrame();
         }
 
-        const cUnit1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CUNIT1");
-        const cUnit2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === "CUNIT2");
+        const cUnit1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === `CUNIT${this.renderedAxesNumbers[0]}`);
+        const cUnit2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name === `CUNIT${this.renderedAxesNumbers[1]}`);
         const hasUnits = cUnit1 && cUnit2;
         const sameUnits = hasUnits && trimFitsComment(cUnit1.value) === trimFitsComment(cUnit2.value);
 
@@ -1305,8 +1315,8 @@ export class FrameStore {
             this.framePixelRatio = NaN;
         } else {
             // Assumes non-rotated pixels
-            const cDelt1 = getPixelSize(this, 1);
-            const cDelt2 = getPixelSize(this, 2);
+            const cDelt1 = getPixelSize(this, this.renderedAxesNumbers[0]);
+            const cDelt2 = getPixelSize(this, this.renderedAxesNumbers[1]);
             this.framePixelRatio = Math.abs(cDelt1 / cDelt2);
             // Correct for numerical errors in CDELT values if they're within 0.1% of each other
             if (Math.abs(this.framePixelRatio - 1.0) < 0.001) {
@@ -1709,11 +1719,11 @@ export class FrameStore {
     };
 
     private getPixelUnitSize = () => {
-        if (this.isPVImage || this.isUVImage) {
+        if (this.isPVImage || this.isUVImage || this.isSwappedZ) {
             return null;
         }
-        const crpix1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CRPIX1") !== -1);
-        const crpix2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CRPIX2") !== -1);
+        const crpix1 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.renderedAxesNumbers[0]}`) !== -1);
+        const crpix2 = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.renderedAxesNumbers[1]}`) !== -1);
         if (crpix1 && crpix2) {
             const crpix1Val = getHeaderNumericValue(crpix1);
             const crpix2Val = getHeaderNumericValue(crpix2);
