@@ -2225,10 +2225,12 @@ export class AppStore {
             const {enabled: contoursEnabled, ...contourConfig} = frame.contourConfig;
             if (contoursEnabled) {
                 workspaceFile.contourConfig = contourConfig;
+                delete workspaceFile.contourConfig["preferenceStore"];
             }
             const {enabled: vectorOverlayEnabled, ...vectorOverlayConfig} = frame.vectorOverlayConfig;
             if (vectorOverlayEnabled) {
                 workspaceFile.vectorOverlayConfig = vectorOverlayConfig;
+                delete workspaceFile.vectorOverlayConfig["preferenceStore"];
             }
 
             workspace.files.push(workspaceFile);
