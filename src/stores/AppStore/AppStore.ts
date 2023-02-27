@@ -2139,7 +2139,7 @@ export class AppStore {
         const workspace: Workspace = {
             workspaceVersion: 0,
             frontendVersion: CARTA_INFO.version,
-            description: "Example workspace",
+            description: "Workspace exported from CARTA",
             files: [],
             references: {}
         };
