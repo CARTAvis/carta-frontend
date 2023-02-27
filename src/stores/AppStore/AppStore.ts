@@ -12,6 +12,7 @@ import * as Semver from "semver";
 import {getImageViewCanvas, ImageViewLayer} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
+    CARTA_INFO,
     CatalogInfo,
     CatalogType,
     COMPUTED_POLARIZATIONS,
@@ -2137,7 +2138,7 @@ export class AppStore {
     public *saveWorkspace(name: string) {
         const workspace: Workspace = {
             workspaceVersion: 0,
-            frontendVersion: 4,
+            frontendVersion: CARTA_INFO.version,
             description: "Example workspace",
             files: [],
             references: {}
