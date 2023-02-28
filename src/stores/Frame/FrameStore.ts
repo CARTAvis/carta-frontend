@@ -692,6 +692,20 @@ export class FrameStore {
         return "Channel";
     }
 
+    get dirXLabel(): string {
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        const dirXAxis = entries.find(entry => entry.name.includes(`CTYPE${this.dirXNumber}`));
+        const name = dirXAxis?.value ?? "";
+        return FrameStore.getDirAxisLabel(name);
+    }
+
+    get dirYLabel(): string {
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        const dirYAxis = entries.find(entry => entry.name.includes(`CTYPE${this.dirYNumber}`));
+        const name = dirYAxis?.value ?? "";
+        return FrameStore.getDirAxisLabel(name);
+    }
+
     @computed
     private get isProjDistort(): boolean {
         let checkPoints = [1, 2, Math.floor(this.dirAxisSize / 2), this.dirAxisSize];
@@ -1446,6 +1460,20 @@ export class FrameStore {
             }
         }
         return currentValue;
+    };
+
+    private static getDirAxisLabel = (name: string) => {
+        let label = "";
+        if (name.match(/^RA/)) {
+            label = "Right Ascension";
+        } else if (name.match(/^GLON/)) {
+            label = "Galactic Longitude";
+        } else if (name.match(/^DEC/)) {
+            label = "Declination";
+        } else if (name.match(/^GLAT/)) {
+            label = "Galactic Latitude";
+        }
+        return label;
     };
 
     private convertSpectral = (values: Array<number>): Array<number> => {

@@ -189,15 +189,21 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     `${frame.spectralUnit ? `Unit(${spectralAxis})=${frame.spectralUnit},` : ""}` +
                     `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
                     `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
-                    `${frame.spectralType && frame.spectralSystem ? `Label(${spectralAxis})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
+                    `${frame.spectralType && frame.spectralSystem ? `Label(${spectralAxis})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}` +
+                    `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`}` +
+                    `${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel}`}`
             );
         } else {
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
             if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
-                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}`);
-                AST.set(frame.wcsInfo, `System=${explicitSystem}`);
+                AST.set(
+                    frame.wcsInfo,
+                    `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` +
+                        `${frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`}` +
+                        `${frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel}`}`
+                );
             }
         }
 
