@@ -17,8 +17,8 @@ export const PvPreviewComponent = Object.assign(PvPreview, {
     WIDGET_CONFIG: {
         id: "pv-preview",
         type: "pv-preview",
-        minWidth: 350,
-        minHeight: 500,
+        minWidth: 500,
+        minHeight: 350,
         defaultWidth: 500,
         defaultHeight: 620,
         title: "PV Preview Viewer",

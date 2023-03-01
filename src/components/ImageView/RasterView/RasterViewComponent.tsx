@@ -5,7 +5,7 @@ import tinycolor from "tinycolor2";
 
 // import { PvPreviewComponent } from "components/PvGenerator/PvPreviewComponent";
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {RasterTile, TEXTURE_SIZE,TILE_SIZE, TileService, TileWebGLService} from "services";
+import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
@@ -271,7 +271,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             tileService.uploadTileToGPU(rasterTile);
             delete rasterTile.data;
         }
-        
+
         if (frame.isPreview) {
             const texture = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
             copyToFP32Texture(this.gl, texture, frame.rasterData, GL2.TEXTURE0, frame.frameInfo.fileInfoExtended.width, frame.frameInfo.fileInfoExtended.height, 0, 0);
@@ -285,7 +285,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 this.gl.bindTexture(GL2.TEXTURE_2D, textureParameters.texture);
                 this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
                 this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
-                console.log(textureParameters)
                 this.gl.uniform2f(shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
             }
         }

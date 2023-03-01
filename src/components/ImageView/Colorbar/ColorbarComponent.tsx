@@ -79,12 +79,12 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         let point = colorbarSettings.position === "right" ? stage.getPointerPosition().y : stage.getPointerPosition().x;
         let scaledPos = point - colorbarSettings.yOffset;
         if (colorbarSettings.position === "right") {
-            scaledPos = colorbarSettings.height - scaledPos;
+            scaledPos = colorbarSettings.height(this.props.frame) - scaledPos;
         }
-        scaledPos /= colorbarSettings.height;
+        scaledPos /= colorbarSettings.height(this.props.frame);
         scaledPos = clamp(scaledPos, 0.0, 1.0);
         // Recalculate clamped point position
-        point = clamp(point, colorbarSettings.yOffset, colorbarSettings.yOffset + colorbarSettings.height);
+        point = clamp(point, colorbarSettings.yOffset, colorbarSettings.yOffset + colorbarSettings.height(this.props.frame));
         // Lock to mid-pixel for sharp lines
         point = Math.floor(point) + 0.5;
 
@@ -104,7 +104,7 @@ export class ColorbarComponent extends React.Component<ColorbarComponentProps> {
         const colorbarSettings = appStore.overlayStore.colorbar;
         const viewHeight = frame.previewViewHeight || appStore.overlayStore.viewHeight;
         const viewWidth = frame.previewViewWidth || appStore.overlayStore.viewWidth;
-        const colorbarSettingsHeight = frame.isPreview ? frame.renderHeight : colorbarSettings.height;
+        const colorbarSettingsHeight = colorbarSettings.height(frame);
 
         appStore.updateLayerPixelRatio(this.layerRef);
 

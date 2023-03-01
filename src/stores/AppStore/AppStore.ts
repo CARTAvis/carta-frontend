@@ -542,7 +542,7 @@ export class AppStore {
         const newFrame = new FrameStore(frameInfo);
         this.previewFrames.push(newFrame);
         newFrame.setIsPreview(true);
-        newFrame.rasterData = new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength));;
+        newFrame.rasterData = new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength));
 
         return newFrame;
     };

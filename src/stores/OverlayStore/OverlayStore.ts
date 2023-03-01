@@ -893,13 +893,13 @@ export class OverlayColorbarSettings {
         return this.position === "right" ? padding?.top : padding?.left;
     }
 
-    @computed get height(): number {
+    @action height(frame?: FrameStore): number {
         const overlayStore = AppStore.Instance?.overlayStore;
-        return this.position === "right" ? overlayStore?.renderHeight : overlayStore?.renderWidth;
+        return this.position === "right" ? frame?.renderHeight || overlayStore?.renderHeight : frame?.renderWidth || overlayStore?.renderWidth;
     }
 
     @computed get tickNum(): number {
-        const tickNum = Math.round((this.height / 100.0) * this.tickDensity);
+        const tickNum = Math.round((this.height() / 100.0) * this.tickDensity);
         return this.height && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
     }
 
@@ -1114,21 +1114,20 @@ export class OverlayStore {
         astString.addSection(this.numbers.styleString);
         astString.addSection(this.labels.styleString);
 
-        astString.add("LabelUp", 0);
-        astString.add("TitleGap", this.titleGap / this.minSize);
-        astString.add("NumLabGap", this.defaultGap / this.minSize);
-        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize);
-        astString.add("TextGapType", "plot");
-
         return (frame?: FrameStore) => {
+            astString.add("LabelUp", 0);
+            astString.add("TitleGap", this.titleGap / this.minSize(frame));
+            astString.add("NumLabGap", this.defaultGap / this.minSize(frame));
+            astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize(frame));
+            astString.add("TextGapType", "plot");
             frame ? astString.addSection(frame.distanceMeasuring?.styleString) : astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
 
             return astString.toString();
         };
     }
 
-    @computed get minSize() {
-        return Math.min(this.renderWidth, this.renderHeight);
+    @action minSize(frame?: FrameStore) {
+        return Math.min(frame.renderWidth || this.renderWidth, frame.renderHeight || this.renderHeight);
     }
 
     @computed get showNumbers() {
