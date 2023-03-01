@@ -6,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
+import {ImageViewComponent, ImageViewLayer} from "components";
 import {ExportImageMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {AppStore} from "stores";
@@ -86,6 +86,19 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         } else {
             this.props.frame.regionSet.setMode(RegionMode.MOVING);
         }
+    };
+
+    private handlePanZoomShortCutClicked = () => {
+        const widgetsStore = AppStore.Instance.widgetsStore;
+        const parentType = ImageViewComponent.WIDGET_CONFIG.type;
+        const settingsWidget = widgetsStore.floatingWidgets?.find(w => w.parentType === parentType);
+        if (settingsWidget) {
+            widgetsStore.removeFloatingWidget(settingsWidget.id);
+        }
+        // delay to wait for the settings widget tab status to reset
+        setTimeout(() => {
+            widgetsStore.createFloatingSettingsWidget("Image View", parentType, parentType);
+        }, 0);
     };
 
     exportImageTooltip = () => {
@@ -285,10 +298,24 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
                             </Tooltip2>
                         )}
-                        <Tooltip2 position={tooltipPosition} content="Select and pan mode">
+                        <Tooltip2
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Select and pan mode
+                                    <span>
+                                        <br />
+                                        <i>
+                                            <small>Double Click to open the settings.</small>
+                                        </i>
+                                    </span>
+                                </span>
+                            }
+                        >
                             <AnchorButton
                                 icon={"hand"}
                                 onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
+                                onDoubleClick={this.handlePanZoomShortCutClicked}
                                 active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
                             />
                         </Tooltip2>

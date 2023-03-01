@@ -7,7 +7,7 @@ import {CustomIconName} from "icons/CustomIcons";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {AppStore} from "stores";
-import {FrameStore} from "stores/Frame";
+import {CoordinateMode, FrameStore} from "stores/Frame";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 
 export const CURSOR_REGION_ID = 0;
@@ -15,11 +15,6 @@ export const FOCUS_REGION_RATIO = 0.4;
 
 export const CENTER_POINT_INDEX = 0;
 export const SIZE_POINT_INDEX = 1;
-
-export enum RegionCoordinate {
-    Image = "Image",
-    World = "World"
-}
 
 export class RegionStore {
     readonly fileId: number;
@@ -29,7 +24,7 @@ export class RegionStore {
     @observable lineWidth: number;
     @observable dashLength: number;
     @observable regionType: CARTA.RegionType;
-    @observable coordinate: RegionCoordinate;
+    @observable coordinate: CoordinateMode;
     // Shallow observable, since control point updates are atomic
     @observable.shallow controlPoints: Point2D[];
     @observable rotation: number;
@@ -338,9 +333,9 @@ export class RegionStore {
         this.rotation = rotation;
         this.backendService = backendService;
         if (activeFrame.validWcs) {
-            this.coordinate = RegionCoordinate.World;
+            this.coordinate = CoordinateMode.World;
         } else {
-            this.coordinate = RegionCoordinate.Image;
+            this.coordinate = CoordinateMode.Image;
         }
         this.isSimplePolygon = true;
 
@@ -545,7 +540,7 @@ export class RegionStore {
         }
     };
 
-    @action setCoordinate = (coordinate: RegionCoordinate) => {
+    @action setCoordinate = (coordinate: CoordinateMode) => {
         if (coordinate) {
             this.coordinate = coordinate;
         }
