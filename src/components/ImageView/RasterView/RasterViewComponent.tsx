@@ -5,10 +5,10 @@ import tinycolor from "tinycolor2";
 
 // import { PvPreviewComponent } from "components/PvGenerator/PvPreviewComponent";
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
+import {RasterTile, TEXTURE_SIZE,TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {add2D, copyToFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
+import {add2D, copyToFP32Texture, createFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
 
 import "./RasterViewComponent.scss";
 
@@ -48,7 +48,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
             const histStokesIndex = frame.renderConfig.stokesIndex;
             const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
-            console.log(frame.frameInfo.fileId, histStokesIndex, histChannel)
             if (((frame.renderConfig.useCubeHistogram || frame.channel === histChannel) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) || frame.isPreview) {
                 this.updateCanvasSize();
                 this.updateUniforms();
@@ -274,8 +273,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         
         if (frame.isPreview) {
-            copyToFP32Texture(this.gl, tileService.textureArray[1], frame.rasterData, GL2.TEXTURE0, frame.frameInfo.fileInfoExtended.width, frame.frameInfo.fileInfoExtended.height, 0, 0);
-            this.gl.bindTexture(GL2.TEXTURE_2D, tileService.textureArray[1]);
+            const texture = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
+            copyToFP32Texture(this.gl, texture, frame.rasterData, GL2.TEXTURE0, frame.frameInfo.fileInfoExtended.width, frame.frameInfo.fileInfoExtended.height, 0, 0);
+            this.gl.bindTexture(GL2.TEXTURE_2D, texture);
             this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
             this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
             this.gl.uniform2f(shaderUniforms.TileTextureOffset, 0, 0);
