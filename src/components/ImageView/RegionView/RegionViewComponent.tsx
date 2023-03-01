@@ -531,8 +531,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const stage = this.stageRef.current;
         if (stage && refCenterMovement && isFinite(refCenterMovement.x) && isFinite(refCenterMovement.y) && isFinite(refFrameZoom)) {
             stage.scale({x: refFrameZoom / AppStore.Instance.imageRatio, y: refFrameZoom / AppStore.Instance.imageRatio});
-            const origin = scale2D({x: this.props.width / 2, y: this.props.height / 2}, 1 - refFrameZoom);
-            const centerMovementCanvas = scale2D({x: refCenterMovement.x, y: -refCenterMovement.y}, refFrameZoom / devicePixelRatio);
+            const origin = {x: (this.props.width * (1 - refFrameZoom * this.props.frame.aspectRatio)) / 2, y: (this.props.height * (1 - refFrameZoom)) / 2};
+            const centerMovementCanvas = {x: refCenterMovement.x * ((refFrameZoom * this.props.frame.aspectRatio) / devicePixelRatio), y: -refCenterMovement.y * (refFrameZoom / devicePixelRatio)};
             const newOrigin = add2D(origin, centerMovementCanvas);
             // Correct the origin if region view is ever resized
             const correctedOrigin = subtract2D(newOrigin, scale2D(this.stageResizeOffset, refFrameZoom));
@@ -563,13 +563,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const frame = this.props.frame;
         if (frame) {
             const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
-            const cursorInfo = this.props.frame.getCursorInfo(cursorPosImageSpace);
             const delta = -mouseEvent.deltaY * (mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? 1 : LINE_HEIGHT);
             const zoomSpeed = 1 + Math.abs(delta / 750.0);
 
             // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
             const newZoom = (frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel) * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-            frame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom, true);
+            frame.zoomToPoint(cursorPosImageSpace.x, cursorPosImageSpace.y, newZoom, true);
 
             // Zoom stage
             const zoomCenter = PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR ? {x: mouseEvent.offsetX, y: mouseEvent.offsetY} : {x: this.props.width / 2, y: this.props.height / 2};
