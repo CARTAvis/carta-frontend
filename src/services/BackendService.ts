@@ -91,6 +91,7 @@ export class BackendService {
     readonly pvProgressStream: Subject<CARTA.PvProgress>;
     readonly fittingProgressStream: Subject<CARTA.FittingProgress>;
     readonly vectorTileStream: Subject<CARTA.VectorOverlayTileData>;
+    // readonly pvPreviewStream: Subject<CARTA.PvPreviewImage>;
     private readonly decoderMap: Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>;
 
     private constructor() {
@@ -118,6 +119,7 @@ export class BackendService {
         this.pvProgressStream = new Subject<CARTA.PvProgress>();
         this.fittingProgressStream = new Subject<CARTA.FittingProgress>();
         this.vectorTileStream = new Subject<CARTA.VectorOverlayTileData>();
+        // this.pvPreviewStream = new Subject<CARTA.PvPreviewImage>();
 
         // Construct handler and decoder maps
         this.decoderMap = new Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>([

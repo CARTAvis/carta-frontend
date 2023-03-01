@@ -8,7 +8,7 @@ import {FrameView, Point2D, TileCoordinate} from "models";
 import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {add2D, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
+import {add2D, copyToFP32Texture, getColorForTheme, GetRequiredTiles, GL2, LayerToMip, scale2D, smoothStep} from "utilities";
 
 import "./RasterViewComponent.scss";
 
@@ -48,7 +48,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
             const histStokesIndex = frame.renderConfig.stokesIndex;
             const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
-            if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
+            console.log(frame.frameInfo.fileId, histStokesIndex, histChannel)
+            if (((frame.renderConfig.useCubeHistogram || frame.channel === histChannel) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) || frame.isPreview) {
                 this.updateCanvasSize();
                 this.updateUniforms();
                 this.renderCanvas();
@@ -159,12 +160,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private renderTiledCanvas() {
         const frame = this.props.frame;
-        const tileRenderService = TileWebGLService.Instance;
-
-        this.gl.bindBuffer(GL2.ARRAY_BUFFER, tileRenderService.vertexUVBuffer);
-        this.gl.vertexAttribPointer(tileRenderService.vertexUVAttribute, 2, GL2.FLOAT, false, 0, 0);
-        this.gl.bindBuffer(GL2.ARRAY_BUFFER, tileRenderService.vertexPositionBuffer);
-        this.gl.vertexAttribPointer(tileRenderService.vertexPositionAttribute, 3, GL2.FLOAT, false, 0, 0);
 
         const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
         const boundedView: FrameView = {
@@ -200,8 +195,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         for (const tile of tiles) {
             const encodedCoordinate = TileCoordinate.EncodeCoordinate(tile);
             const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, frame.channel, frame.stokes, peek);
-            if (rasterTile) {
-                this.renderTile(tile, rasterTile, mip);
+            if (rasterTile || frame.isPreview) {
+                this.renderTile(tile, frame.isPreview ? {data: frame.rasterData, width: frame.frameInfo.fileInfoExtended.width, height: frame.frameInfo.fileInfoExtended.height, textureCoordinate: 0} : rasterTile, mip);
             } else {
                 // Add high-res placeholders
                 if (numPlaceholderLayersHighRes > 0 && mip >= 2) {
@@ -273,17 +268,26 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             return;
         }
 
-        if (rasterTile.data) {
+        if (rasterTile.data && !frame.isPreview) {
             tileService.uploadTileToGPU(rasterTile);
             delete rasterTile.data;
         }
-
-        const textureParameters = tileService.getTileTextureParameters(rasterTile);
-        if (textureParameters) {
-            this.gl.bindTexture(GL2.TEXTURE_2D, textureParameters.texture);
+        
+        if (frame.isPreview) {
+            copyToFP32Texture(this.gl, tileService.textureArray[1], frame.rasterData, GL2.TEXTURE0, frame.frameInfo.fileInfoExtended.width, frame.frameInfo.fileInfoExtended.height, 0, 0);
+            this.gl.bindTexture(GL2.TEXTURE_2D, tileService.textureArray[1]);
             this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
             this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
-            this.gl.uniform2f(shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
+            this.gl.uniform2f(shaderUniforms.TileTextureOffset, 0, 0);
+        } else {
+            const textureParameters = tileService.getTileTextureParameters(rasterTile);
+            if (textureParameters) {
+                this.gl.bindTexture(GL2.TEXTURE_2D, textureParameters.texture);
+                this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
+                this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
+                console.log(textureParameters)
+                this.gl.uniform2f(shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
+            }
         }
 
         const spatialRef = frame.spatialReference || frame;

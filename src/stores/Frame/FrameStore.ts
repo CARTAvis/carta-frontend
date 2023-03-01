@@ -177,6 +177,7 @@ export class FrameStore {
     @observable stokesFiles: CARTA.StokesFile[];
 
     @observable isPreview: boolean;
+    @observable rasterData: Float32Array;
 
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries

@@ -66,7 +66,7 @@ export class TileService {
     readonly tileStream: Subject<TileStreamDetails>;
     private cachedTiles: LRUCache<number, RasterTile>;
     private lruCapacitySystem: number;
-    private textureArray: Array<WebGLTexture>;
+    public textureArray: Array<WebGLTexture>;
     private textureCoordinateQueue: Array<number>;
     private readonly workers: Worker[];
     private compressionRequestCounter: number;

@@ -149,11 +149,13 @@ export class TileWebGLService {
         }
         this.vertexPositionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexPositionBuffer);
+        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, GL2.FLOAT, false, 0, 0);
         const vertices = new Float32Array([0.0, 0.0, 0, 1.0, 0.0, 0, 0.0, 1.0, 0, 1.0, 1.0, 0]);
         this.gl.bufferData(GL2.ARRAY_BUFFER, vertices, GL2.STATIC_DRAW);
-
+        
         this.vertexUVBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexUVBuffer);
+        this.gl.vertexAttribPointer(this.vertexUVAttribute, 2, GL2.FLOAT, false, 0, 0);
         const uvs = new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
         this.gl.bufferData(GL2.ARRAY_BUFFER, uvs, GL2.STATIC_DRAW);
     }

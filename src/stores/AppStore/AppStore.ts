@@ -522,17 +522,18 @@ export class AppStore {
         return true;
     };
 
-    @action addPreviewFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string) => {
+    @action addPreviewFrame = (ack: any, directory: string, hdu: string) => {
         if (!ack) {
             return undefined;
         }
 
+        // The frameInfo now contains a lot of placeholder right now. Need to be updated.
         const frameInfo: FrameInfo = {
-            fileId: ack.fileId,
+            fileId: 123,
             directory,
             hdu,
-            fileInfo: new CARTA.FileInfo(ack.fileInfo),
-            fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
+            fileInfo: new CARTA.FileInfo(ack.imageInfo),
+            fileInfoExtended: new CARTA.FileInfoExtended(ack.imageInfo),
             fileFeatureFlags: ack.fileFeatureFlags,
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable
@@ -541,7 +542,7 @@ export class AppStore {
         const newFrame = new FrameStore(frameInfo);
         this.previewFrames.push(newFrame);
         newFrame.setIsPreview(true);
-        this.setActiveFrame(newFrame);
+        newFrame.rasterData = new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength));;
 
         return newFrame;
     };
@@ -1135,10 +1136,10 @@ export class AppStore {
             this.startFileLoading();
             const ack = yield this.backendService.requestPV(message);
             this.restartTaskProgress();
-            if (!ack.cancel && ack.openFileAck) {
+            if (!ack.cancel && ack.previewData) {
                 // Show preview pop-up window
                 const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
-                pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, ""));
+                pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
                 WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
                 frame.resetPvRequestState();
                 frame.setIsRequestPVCancelling(false);
@@ -1552,7 +1553,7 @@ export class AppStore {
             if (this.activeFrame && (!this.activeFrame.zooming || this.preferenceStore.streamContoursWhileZooming)) {
                 // Group all view updates for visible images into one throttled call
                 const viewUpdates: ViewUpdate[] = [];
-                for (const frame of this.visibleFrames.concat(this.previewFrames)) {
+                for (const frame of this.visibleFrames) {
                     const reqView = frame.requiredFrameView;
                     let croppedReq: FrameView = {
                         xMin: Math.max(0, reqView.xMin),
@@ -1647,6 +1648,7 @@ export class AppStore {
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
         this.backendService.fittingProgressStream.subscribe(this.handleFittingProgressStream);
         this.backendService.vectorTileStream.subscribe(this.handleVectorTileStream);
+        // this.backendService.pvPreviewStream.subscribe(this.handlePvPreviewStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
