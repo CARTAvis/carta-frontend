@@ -693,17 +693,11 @@ export class FrameStore {
     }
 
     get dirXLabel(): string {
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const dirXAxis = entries.find(entry => entry.name.includes(`CTYPE${this.dirXNumber}`));
-        const name = dirXAxis?.value ?? "";
-        return FrameStore.getDirAxisLabel(name);
+        return this.getDirAxisLabel(this.dirXNumber);
     }
 
     get dirYLabel(): string {
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const dirYAxis = entries.find(entry => entry.name.includes(`CTYPE${this.dirYNumber}`));
-        const name = dirYAxis?.value ?? "";
-        return FrameStore.getDirAxisLabel(name);
+        return this.getDirAxisLabel(this.dirYNumber);
     }
 
     @computed
@@ -1462,18 +1456,16 @@ export class FrameStore {
         return currentValue;
     };
 
-    private static getDirAxisLabel = (name: string) => {
-        let label = "";
+    private getDirAxisLabel = (axisNumber: number) => {
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        const dirXAxis = entries.find(entry => entry.name.includes(`CTYPE${axisNumber}`));
+        let name = dirXAxis?.value ?? "";
         if (name.match(/^RA/)) {
-            label = "Right Ascension";
-        } else if (name.match(/^GLON/)) {
-            label = "Galactic Longitude";
-        } else if (name.match(/^DEC/)) {
-            label = "Declination";
-        } else if (name.match(/^GLAT/)) {
-            label = "Galactic Latitude";
+            name = "Right Ascension"; // customize the axis label
+        } else {
+            name = ""; // use the default axis label in AST
         }
-        return label;
+        return name;
     };
 
     private convertSpectral = (values: Array<number>): Array<number> => {
@@ -1504,28 +1496,29 @@ export class FrameStore {
     };
 
     private initPVFrame = (): AST.FrameSet => {
-        if (!this.isPVImage || !(this.spectralNumber === 2 || this.spectralNumber === 3)) {
+        if (!(this.isPVImage || this.isReversedPVImage)) {
             return undefined;
         }
 
+        const regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]`);
+        const regDirXNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirXNumber}`);
+        const regDirYNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.dirYNumber}`);
+        const regSpectralNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.spectralNumber}`);
+        const regStokesNumber = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)${this.stokesNumber}`);
+
         const fitsChan = AST.emptyFitsChan();
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]/)) {
+            let name = entry.name;
+            if (name.match(regOtherAxes) || name.match(regStokesNumber) || name === "HISTORY") {
                 continue;
             }
 
-            let name = entry.name;
-            if (this.spectralNumber === 2) {
-                if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3]/)) {
-                    continue;
-                }
-            } else {
-                // this.spectralNumber === 3
-                if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[2]/)) {
-                    continue;
-                } else if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3]/)) {
-                    name = entry.name.replace("3", "2");
-                }
+            if (name.match(regSpectralNumber) && this.spectralNumber !== this.spectral) {
+                name = entry.name.replace(`${this.spectralNumber}`, `${this.spectral}`);
+            } else if (name.match(regDirXNumber) && this.dirXNumber !== this.dirX) {
+                name = entry.name.replace(`${this.dirXNumber}`, `${this.dirX}`);
+            } else if (name.match(regDirYNumber) && this.dirYNumber !== this.dirY) {
+                name = entry.name.replace(`${this.dirYNumber}`, `${this.dirY}`);
             }
 
             let value = trimFitsComment(entry.value);
