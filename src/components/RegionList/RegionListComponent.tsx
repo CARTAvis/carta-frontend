@@ -28,6 +28,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 80;
     private static readonly ROW_HEIGHT = 35;
     private static readonly HEADER_ROW_HEIGHT = 25;
+    private matchedIterLocation: {line: number; num: number} = {line: -1, num: -1};
     private listRef = React.createRef<any>();
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
@@ -61,7 +62,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private scrollToSelected = (selected: any) => {
         const listRefCurrent = this.listRef.current;
-        if (!listRefCurrent) {
+        const height = listRefCurrent.props.height;
+        if (!listRefCurrent || height < 0) {
             return;
         } else {
             this.listRef.current.scrollToItem(selected, "smart");
