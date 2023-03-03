@@ -477,9 +477,9 @@ export class FrameStore {
 
         // By default, we try to use the WCS information to determine channel info.
         if (this.spectralAxis) {
-            const refPixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.spectralAxis.dimension}`) !== -1);
-            const refValHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${this.spectralAxis.dimension}`) !== -1);
-            const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${this.spectralAxis.dimension}`) !== -1);
+            const refPixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.spectralNumber}`) !== -1);
+            const refValHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${this.spectralNumber}`) !== -1);
+            const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${this.spectralNumber}`) !== -1);
 
             if (refPixHeader && refValHeader && deltaHeader) {
                 // Shift pixel coordinates by -1 to start at zero instead of 1
@@ -540,9 +540,14 @@ export class FrameStore {
 
     @computed get spectralInfo(): SpectralInfo {
         const spectralInfo: SpectralInfo = {
-            channel: this.channel,
+            channel: this.channel, // default spectral channel index is along z-axis
             spectralString: ""
         };
+
+        if (this.isSwappedZ) {
+            // re-assign spectral channel index along x- or y-axis
+            spectralInfo.channel = this.spectral === 1 ? this.cursorValue.position.x : this.cursorValue.position.y;
+        }
 
         if (this.frameInfo.fileInfoExtended.depth > 1) {
             const channelInfo = this.channelInfo;
@@ -554,7 +559,7 @@ export class FrameStore {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const restFreq = this.restFreqStore.restFreqInHz;
 
-                    const freqVal = channelInfo.rawValues[this.channel];
+                    const freqVal = channelInfo.rawValues[spectralInfo.channel];
                     // convert frequency value to unit in GHz
                     if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
                         const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
@@ -568,7 +573,7 @@ export class FrameStore {
                         spectralInfo.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
                     }
                 } else if (spectralType.code === "VRAD") {
-                    const velocityVal = channelInfo.rawValues[this.channel];
+                    const velocityVal = channelInfo.rawValues[spectralInfo.channel];
                     // convert velocity value to unit in km/s
                     if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
                         const volecityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
