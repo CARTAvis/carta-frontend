@@ -20,7 +20,9 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     }
 
     @action setValueString = (valueString: string) => {
-        this.valueString = valueString;
+        if (!this.props.onBlur || !this.props.onKeyDown) {
+            this.valueString = valueString;
+        }
     };
 
     safeHandleValueChanged = (valueAsNumber: number, valueAsString: string, inputElement: HTMLInputElement) => {
