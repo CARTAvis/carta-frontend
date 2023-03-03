@@ -34,7 +34,9 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
 
         if (pixel) {
             const value = parseFloat(target.value);
-            if (!isFinite(value)) return;
+            if (!isFinite(value)) {
+                return;
+            }
             if (isX && finish) {
                 region?.setControlPoint(1, {x: value, y: region?.controlPoints[1].y});
             } else if (finish) {
@@ -49,18 +51,18 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
             if (isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
                 if (finish) {
                     const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
-                    region?.setControlPoint(1, {x: finishPixelFromWCS.x, y: finishPixelFromWCS.y});
+                    region?.setControlPoint(1, finishPixelFromWCS);
                 } else {
                     const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value});
-                    region?.setControlPoint(0, {x: startPixelFromWCS.x, y: startPixelFromWCS.y});
+                    region?.setControlPoint(0, startPixelFromWCS);
                 }
             } else if (!isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
                 if (finish) {
                     const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
-                    region?.setControlPoint(1, {x: finishPixelFromWCS.x, y: finishPixelFromWCS.y});
+                    region?.setControlPoint(1, finishPixelFromWCS);
                 } else {
                     const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value});
-                    region?.setControlPoint(0, {x: startPixelFromWCS.x, y: startPixelFromWCS.y});
+                    region?.setControlPoint(0, startPixelFromWCS);
                 }
             } else {
                 event.currentTarget.value = finish ? (isX ? WCSFinish.x : WCSFinish.y) : isX ? WCSStart.x : WCSStart.y;
@@ -106,68 +108,68 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
     };
 
     private compassTextOffsetForm = (isNorth: boolean) => {
+        if (this.props.region.regionType !== CARTA.RegionType.ANNCOMPASS) {
+            return null;
+        }
+
         return (
             <>
-                {this.props.region.regionType === CARTA.RegionType.ANNCOMPASS && (
+                {isNorth ? (
                     <>
-                        {isNorth && (
-                            <>
-                                <td>
-                                    <FormGroup inline={true} label="X Offset" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="North X Offset"
-                                            min={-50}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(this.props.region as CompassAnnotationStore).northTextOffset.x}
-                                            stepSize={0.5}
-                                            onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, true)}
-                                        />
-                                    </FormGroup>
-                                </td>
-                                <td>
-                                    <FormGroup inline={true} label="Y Offset" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="North Y Offset"
-                                            min={-50}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(this.props.region as CompassAnnotationStore).northTextOffset.y}
-                                            stepSize={0.5}
-                                            onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, false)}
-                                        />
-                                    </FormGroup>
-                                </td>
-                            </>
-                        )}
-                        {!isNorth && (
-                            <>
-                                <td>
-                                    <FormGroup inline={true} label="X Offset" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="East X Offset"
-                                            min={-50}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(this.props.region as CompassAnnotationStore).eastTextOffset.x}
-                                            stepSize={0.5}
-                                            onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, true)}
-                                        />
-                                    </FormGroup>
-                                </td>
-                                <td>
-                                    <FormGroup inline={true} label="Y Offset" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="East Y Offset"
-                                            min={-50}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(this.props.region as CompassAnnotationStore).eastTextOffset.y}
-                                            stepSize={0.5}
-                                            onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, false)}
-                                        />
-                                    </FormGroup>
-                                </td>
-                            </>
-                        )}
+                        <td>
+                            <FormGroup inline={true} label="X Offset" labelInfo="(px)">
+                                <SafeNumericInput
+                                    placeholder="North X Offset"
+                                    min={-50}
+                                    max={RegionStore.MAX_DASH_LENGTH}
+                                    value={(this.props.region as CompassAnnotationStore).northTextOffset.x}
+                                    stepSize={0.5}
+                                    onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, true)}
+                                />
+                            </FormGroup>
+                        </td>
+                        <td>
+                            <FormGroup inline={true} label="Y Offset" labelInfo="(px)">
+                                <SafeNumericInput
+                                    placeholder="North Y Offset"
+                                    min={-50}
+                                    max={RegionStore.MAX_DASH_LENGTH}
+                                    value={(this.props.region as CompassAnnotationStore).northTextOffset.y}
+                                    stepSize={0.5}
+                                    onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, false)}
+                                />
+                            </FormGroup>
+                        </td>
+                    </>
+                ) : (
+                    <>
+                        <td>
+                            <FormGroup inline={true} label="X Offset" labelInfo="(px)">
+                                <SafeNumericInput
+                                    placeholder="East X Offset"
+                                    min={-50}
+                                    max={RegionStore.MAX_DASH_LENGTH}
+                                    value={(this.props.region as CompassAnnotationStore).eastTextOffset.x}
+                                    stepSize={0.5}
+                                    onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, true)}
+                                />
+                            </FormGroup>
+                        </td>
+                        <td>
+                            <FormGroup inline={true} label="Y Offset" labelInfo="(px)">
+                                <SafeNumericInput
+                                    placeholder="East Y Offset"
+                                    min={-50}
+                                    max={RegionStore.MAX_DASH_LENGTH}
+                                    value={(this.props.region as CompassAnnotationStore).eastTextOffset.y}
+                                    stepSize={0.5}
+                                    onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, false)}
+                                />
+                            </FormGroup>
+                        </td>
                     </>
                 )}
+                ;
             </>
         );
     };

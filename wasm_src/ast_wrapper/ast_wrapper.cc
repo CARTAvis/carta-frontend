@@ -447,7 +447,7 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
         yout[i] = output[1];
     }
 
-    astTran2(wcsinfo, 201, xout, yout, 0, xOut, yOut);
+    astTran2(wcsinfo, npoint, xout, yout, 0, xOut, yOut);
 
     for(int i = 0; i < npoint; i++) {
          out[i * 2] = xOut[i];

@@ -202,21 +202,21 @@ Module.getGeodesicPointArray = function (wcsInfo: number, npoint: number, start:
     const xIn = new Float64Array([start.x, finish.x]);
 
     if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
-        return {x: new Float64Array(1), y: new Float64Array(1)};
+        return new Float64Array(1);
     }
 
     // Allocate and assign WASM memory
     const N = xIn.length;
     const xInPtr = Module._malloc(N * 8);
     const yInPtr = Module._malloc(N * 8);
-    const outPtr = Module._malloc(201 * 2 * 8);
+    const outPtr = Module._malloc(npoint * 2 * 8);
     Module.HEAPF64.set(xIn, xInPtr / 8);
     Module.HEAPF64.set(yIn, yInPtr / 8);
     // Perform the AST transform
     Module.pointList(wcsInfo, npoint, xInPtr, yInPtr, outPtr);
 
     // Copy result out to an object
-    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, 201 * 2);
+    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, npoint * 2);
     const result = out.slice(0);
     
     // Free WASM memory
@@ -230,13 +230,13 @@ Module.getAxisPointArray = function (wcsInfo: number, npoint: number, axis: numb
 
     // Allocate and assign WASM memory
     const N = npoint;
-    const outPtr = Module._malloc(201 * 2 * 8);
+    const outPtr = Module._malloc(npoint * 2 * 8);
 
     // Perform the AST transform
     Module.axPointList(wcsInfo, N, axis, x, y, dist, outPtr);
 
     // Copy result out to an object
-    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, 201 * 2);
+    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, npoint * 2);
     const result = out.slice(0);
     
     // Free WASM memory

@@ -4,9 +4,6 @@ import Konva from "konva";
 
 import {AppStore} from "stores";
 
-// const POINT_WIDTH = 6;
-// const POINT_DRAG_WIDTH = 13;
-
 const SQUARE_ANCHOR_WIDTH = 7;
 const CIRCLE_ANCHOR_RADIUS = SQUARE_ANCHOR_WIDTH / Math.sqrt(2);
 export const ROTATOR_ANCHOR_HEIGHT = 15;
@@ -14,6 +11,8 @@ export const ROTATOR_ANCHOR_HEIGHT = 15;
 const CURSOR_CROSS_LENGTH = 10;
 const CURSOR_CROSS_THICKNESS_WIDE = 3;
 const CURSOR_CROSS_CENTER_SQUARE = 6;
+const DEFAULT_POINT_WIDTH = 6;
+const POINT_HOVER_DIST = 7;
 
 const HandlePointShapeDraw = (ctx: Konva.Context, shape: Konva.Shape, width: number, pointShape?: CARTA.PointAnnotationShape) => {
     const inverseScale = 1 / shape.getStage().scaleX();
@@ -73,13 +72,13 @@ interface PointProps {
 }
 
 export const Point = (props: PointProps) => {
-    const pointWidth = props.pointWidth && props.pointWidth !== 0 ? props.pointWidth : 6;
+    const pointWidth = props.pointWidth && props.pointWidth !== 0 ? props.pointWidth : DEFAULT_POINT_WIDTH;
     const handlePointDraw = (ctx: Konva.Context, shape: Konva.Shape) => {
         HandlePointShapeDraw(ctx, shape, pointWidth, props.pointShape);
     };
 
     const handlePointBoundDraw = (ctx: Konva.Context, shape: Konva.Shape) => {
-        HandlePointShapeDraw(ctx, shape, 7 + pointWidth);
+        HandlePointShapeDraw(ctx, shape, POINT_HOVER_DIST + pointWidth);
     };
 
     const fill = props.pointShape === CARTA.PointAnnotationShape.BOX || props.pointShape === CARTA.PointAnnotationShape.CIRCLE_LINED || props.pointShape === CARTA.PointAnnotationShape.DIAMOND_LINED ? null : props.color;

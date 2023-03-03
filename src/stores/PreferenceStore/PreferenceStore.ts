@@ -79,8 +79,6 @@ export enum PreferenceKeys {
     ANNOTATION_COLOR = "annotationColor",
     ANNOTATION_LINE_WIDTH = "annotationLineWidth",
     ANNOTATION_DASH_LENGTH = "annotationDashLength",
-    ANNOTATION_CREATION_MODE = "annotationCreationMode",
-    ANNOTATION_SIZE = "annotationSize",
     POINT_ANNOTATION_SHAPE = "pointAnnotationShape",
     POINT_ANNOTATION_WIDTH = "pointAnnotationWidth",
     TEXT_ANNOTATION_LINE_WIDTH = "textAnnotationLineWidth",
@@ -209,8 +207,6 @@ const DEFAULTS = {
         annotationLineWidth: 2,
         annotationDashLength: 0,
         annotationType: CARTA.RegionType.ANNRECTANGLE,
-        annotationCreationMode: RegionCreationMode.CENTER,
-        annotationSize: 30,
         pointAnnotationShape: CARTA.PointAnnotationShape.SQUARE,
         pointAnnotationWidth: 6,
         textAnnotationLineWidth: 1
@@ -527,14 +523,6 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.ANNOTATION_DASH_LENGTH) ?? DEFAULTS.ANNOTATION.annotationDashLength;
     }
 
-    @computed get annotationCreationMode(): string {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_CREATION_MODE) ?? DEFAULTS.ANNOTATION.annotationCreationMode;
-    }
-
-    @computed get annotationSize(): number {
-        return this.preferences.get(PreferenceKeys.ANNOTATION_SIZE) ?? DEFAULTS.ANNOTATION.annotationSize;
-    }
-
     @computed get pointAnnotationShape(): CARTA.PointAnnotationShape {
         return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_SHAPE) ?? DEFAULTS.ANNOTATION.pointAnnotationShape;
     }
@@ -817,10 +805,8 @@ export class PreferenceStore {
     @action resetAnnotationSettings = () => {
         this.clearPreferences([
             PreferenceKeys.ANNOTATION_COLOR,
-            PreferenceKeys.ANNOTATION_CREATION_MODE,
             PreferenceKeys.ANNOTATION_DASH_LENGTH,
             PreferenceKeys.ANNOTATION_LINE_WIDTH,
-            PreferenceKeys.ANNOTATION_SIZE,
             PreferenceKeys.POINT_ANNOTATION_SHAPE,
             PreferenceKeys.POINT_ANNOTATION_WIDTH,
             PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH

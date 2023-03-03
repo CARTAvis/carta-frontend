@@ -363,7 +363,9 @@ export class RegionStore {
         }
     };
 
-    public getRegionApproximation(astTransform: AST.FrameSet): Point2D[] {
+    public getRegionApproximation(
+        astTransform: AST.FrameSet
+    ): Point2D[] | {northApproximatePoints: number[]; eastApproximatePoints: number[]} | {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]} {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
             if (this.regionType === CARTA.RegionType.POINT) {

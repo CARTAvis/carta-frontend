@@ -334,7 +334,7 @@ export class CompassAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.FrameSet): any {
+    public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.FrameSet): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
         const originPoint = spatiallyMatched ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
         const transformed = AST.transformPoint(astTransform, originPoint.x, originPoint.y);
 
@@ -400,7 +400,6 @@ export class CompassAnnotationStore extends RegionStore {
         isNorthArrow: boolean;
         isEastArrow: boolean;
     }) => {
-        console.log(annotationStyles);
         this.setLabel(annotationStyles.textLabel0 ?? this.northLabel, true);
         this.setLabel(annotationStyles.textLabel1 ?? this.eastLabel, false);
         this.setFontSize(annotationStyles.fontSize ?? this.fontSize);
@@ -490,7 +489,7 @@ export class RulerAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): any {
+    public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean): {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]} {
         let xApproximatePoints;
         let yApproximatePoints;
         let hypotenuseApproximatePoints;

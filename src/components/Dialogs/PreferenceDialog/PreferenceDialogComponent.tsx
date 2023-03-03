@@ -601,9 +601,6 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Annotation size" labelInfo="(px)">
-                    <SafeNumericInput placeholder="Annotation size" min={1} value={preference.annotationSize} stepSize={1} onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_SIZE, Math.max(1, value))} />
-                </FormGroup>
                 <FormGroup inline={true} label="Point Shape">
                     <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.pointAnnotationShape} />
                 </FormGroup>
@@ -615,12 +612,6 @@ export class PreferenceDialogComponent extends React.Component {
                         stepSize={1}
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_WIDTH, Math.max(1, value))}
                     />
-                </FormGroup>
-                <FormGroup inline={true} label="Creation Mode">
-                    <RadioGroup selectedValue={preference.annotationCreationMode} onChange={ev => preference.setPreference(PreferenceKeys.ANNOTATION_CREATION_MODE, ev.currentTarget.value)}>
-                        <Radio label="Center to corner" value={RegionCreationMode.CENTER} />
-                        <Radio label="Corner to corner" value={RegionCreationMode.CORNER} />
-                    </RadioGroup>
                 </FormGroup>
             </React.Fragment>
         );

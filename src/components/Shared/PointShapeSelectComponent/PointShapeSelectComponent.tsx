@@ -10,7 +10,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
     const appStore = AppStore.Instance;
     const preference = appStore.preferenceStore;
 
-    const IconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
+    const iconWrapper = (path: React.SVGProps<SVGPathElement>, color: string, fill: boolean, strokeWidth = 2, viewboxDefault = 16) => {
         let fillColor = color;
         if (!fill) {
             fillColor = "none";
@@ -35,7 +35,7 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
         const color = preference.annotationColor;
         switch (shape) {
             case CARTA.PointAnnotationShape.SQUARE:
-                return IconWrapper(square, color, true);
+                return iconWrapper(square, color, true);
             case CARTA.PointAnnotationShape.BOX:
                 return <Icon icon="square" color={color} />;
             case CARTA.PointAnnotationShape.CIRCLE:
@@ -43,9 +43,9 @@ export const PointShapeSelectComponent = observer((props: {handleChange: (pointS
             case CARTA.PointAnnotationShape.CIRCLE_LINED:
                 return <Icon icon="circle" color={color} />;
             case CARTA.PointAnnotationShape.DIAMOND:
-                return IconWrapper(rhomb, color, true);
+                return iconWrapper(rhomb, color, true);
             case CARTA.PointAnnotationShape.DIAMOND_LINED:
-                return IconWrapper(rhomb, color, false);
+                return iconWrapper(rhomb, color, false);
             case CARTA.PointAnnotationShape.CROSS:
                 return <Icon icon="plus" color={color} />;
             case CARTA.PointAnnotationShape.X:

@@ -159,24 +159,19 @@ export class RegionSetStore {
         if (annotationStyles) {
             switch (regionType) {
                 case CARTA.RegionType.ANNPOINT:
-                    const pointAnnotation = region as PointAnnotationStore;
-                    pointAnnotation.initializeStyles(annotationStyles);
+                    (region as PointAnnotationStore).initializeStyles(annotationStyles);
                     break;
                 case CARTA.RegionType.ANNTEXT:
-                    const textAnnotation = region as TextAnnotationStore;
-                    textAnnotation.initializeStyles(annotationStyles);
+                    (region as TextAnnotationStore).initializeStyles(annotationStyles);
                     break;
                 case CARTA.RegionType.ANNVECTOR:
-                    const vectorAnnotation = region as VectorAnnotationStore;
-                    vectorAnnotation.initializeStyles(annotationStyles);
+                    (region as VectorAnnotationStore).initializeStyles(annotationStyles);
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
-                    const compassAnnotation = region as CompassAnnotationStore;
-                    compassAnnotation.initializeStyles(annotationStyles);
+                    (region as CompassAnnotationStore).initializeStyles(annotationStyles);
                     break;
                 case CARTA.RegionType.ANNRULER:
-                    const rulerAnnotation = region as RulerAnnotationStore;
-                    rulerAnnotation.initializeStyles(annotationStyles);
+                    (region as RulerAnnotationStore).initializeStyles(annotationStyles);
                     break;
                 default:
                     break;
@@ -189,60 +184,46 @@ export class RegionSetStore {
     private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, isAnnotation: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
         let region: RegionStore;
 
+        const commonInputParameters = [this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId];
+
         switch (regionType) {
             case CARTA.RegionType.ANNCOMPASS:
-                region = new CompassAnnotationStore(
-                    this.backendService,
-                    this.frame.frameInfo.fileId,
-                    this.frame,
-                    points,
-                    regionType,
-                    regionId,
+                region = new (CompassAnnotationStore.bind.apply(CompassAnnotationStore, [
+                    null,
+                    ...commonInputParameters,
                     this.preference.annotationColor,
                     this.preference.annotationLineWidth,
                     this.preference.annotationDashLength,
                     rotation,
                     regionName
-                );
+                ]))();
                 break;
             case CARTA.RegionType.ANNRULER:
-                region = new RulerAnnotationStore(
-                    this.backendService,
-                    this.frame.frameInfo.fileId,
-                    this.frame,
-                    points,
-                    regionType,
-                    regionId,
+                region = new (RulerAnnotationStore.bind.apply(RulerAnnotationStore, [
+                    null,
+                    ...commonInputParameters,
                     this.preference.annotationColor,
                     this.preference.annotationLineWidth,
                     this.preference.annotationDashLength,
                     rotation,
                     regionName
-                );
+                ]))();
                 break;
             case CARTA.RegionType.ANNTEXT:
-                region = new TextAnnotationStore(
-                    this.backendService,
-                    this.frame.frameInfo.fileId,
-                    this.frame,
-                    points,
-                    regionType,
-                    regionId,
+                region = new (TextAnnotationStore.bind.apply(TextAnnotationStore, [
+                    null,
+                    ...commonInputParameters,
                     this.preference.annotationColor,
                     this.preference.textAnnotationLineWidth,
                     this.preference.annotationDashLength,
                     rotation,
                     regionName
-                );
+                ]))();
                 break;
             case CARTA.RegionType.ANNPOINT:
-                region = new PointAnnotationStore(
-                    this.backendService,
-                    this.frame.frameInfo.fileId,
-                    this.frame,
-                    points,
-                    regionType,
-                    regionId,
+                region = new (PointAnnotationStore.bind.apply(PointAnnotationStore, [
+                    null,
+                    ...commonInputParameters,
                     this.preference.annotationColor,
                     this.preference.annotationLineWidth,
                     this.preference.annotationDashLength,
@@ -250,61 +231,33 @@ export class RegionSetStore {
                     this.preference.pointAnnotationWidth,
                     rotation,
                     regionName
-                );
+                ]))();
                 break;
             case CARTA.RegionType.ANNVECTOR:
-                region = new VectorAnnotationStore(
-                    this.backendService,
-                    this.frame.frameInfo.fileId,
-                    this.frame,
-                    points,
-                    regionType,
-                    regionId,
+                region = new (VectorAnnotationStore.bind.apply(VectorAnnotationStore, [
+                    null,
+                    ...commonInputParameters,
                     this.preference.annotationColor,
                     this.preference.annotationLineWidth,
                     this.preference.annotationDashLength,
                     rotation,
                     regionName
-                );
+                ]))();
                 break;
             case CARTA.RegionType.ANNELLIPSE:
             case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.ANNPOLYLINE:
             case CARTA.RegionType.ANNLINE:
-                region = new RegionStore(
-                    this.backendService,
-                    this.frame.frameInfo.fileId,
-                    this.frame,
-                    points,
-                    regionType,
-                    regionId,
-                    this.preference.annotationColor,
-                    this.preference.annotationLineWidth,
-                    this.preference.annotationDashLength,
-                    rotation,
-                    regionName
-                );
+                region = new (RegionStore.bind.apply(RegionStore, [null, ...commonInputParameters, this.preference.annotationColor, this.preference.annotationLineWidth, this.preference.annotationDashLength, rotation, regionName]))();
                 break;
             default:
-                region = new RegionStore(
-                    this.backendService,
-                    this.frame.frameInfo.fileId,
-                    this.frame,
-                    points,
-                    regionType,
-                    regionId,
-                    this.preference.regionColor,
-                    this.preference.regionLineWidth,
-                    this.preference.regionDashLength,
-                    rotation,
-                    regionName
-                );
+                region = new (RegionStore.bind.apply(RegionStore, [null, ...commonInputParameters, this.preference.regionColor, this.preference.regionLineWidth, this.preference.regionDashLength, rotation, regionName]))();
                 break;
         }
 
         this.regions.push(region);
-        //Need to be removed
+
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).then(
                 ack => {

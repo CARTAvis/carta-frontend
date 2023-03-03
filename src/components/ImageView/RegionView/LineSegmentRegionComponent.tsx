@@ -286,7 +286,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             const centerSecondaryImage = transformPoint(frame.spatialTransformAST, centerReferenceImage, false);
             centerPointCanvasSpace = transformedImageToCanvasPos(centerSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
             const pointsSecondaryImage = region.getRegionApproximation(frame.spatialTransformAST);
-            const N = pointsSecondaryImage.length;
+            const N = (pointsSecondaryImage as Point2D[]).length;
             pointArray = new Array<number>(N * 2);
             for (let i = 0; i < N; i++) {
                 const approxPointPixelSpace = transformedImageToCanvasPos(pointsSecondaryImage[i], frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);

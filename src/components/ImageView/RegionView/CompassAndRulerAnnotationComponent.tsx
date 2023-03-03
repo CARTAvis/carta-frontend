@@ -35,11 +35,10 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const mousePoint = React.useRef({x: 0, y: 0});
 
     const handleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        console.log("selecting");
         props.onSelect(region);
     };
+
     const handleDoubleClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
-        console.log("double clicking");
         props.onDoubleClick(region);
     };
 
@@ -156,7 +155,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     const title = frame.titleCustomText;
     /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
-    const getOffset = () => {
+    const updateOffset = () => {
         const northDiffX = northPointArray[northPointArray.length - 4] - northPointArray[northPointArray.length - 2];
         const northDiffY = northPointArray[northPointArray.length - 3] - northPointArray[northPointArray.length - 1];
         const eastDiffX = eastPointArray[eastPointArray.length - 4] - eastPointArray[eastPointArray.length - 2];
@@ -192,8 +191,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
     };
 
     React.useEffect(() => {
-        getOffset();
-        // eslint-disable-next-line
+        updateOffset();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const generateProps = (north: boolean) => {
@@ -213,6 +212,27 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
         };
     };
 
+    const textCommonProps = {
+        stroke: region.color,
+        fill: region.color,
+        strokeWidth: (region.lineWidth * imageRatio) / zoomLevel,
+        strokeScaleEnabled: false,
+        opacity: region.isTemporary ? 0.5 : region.locked ? 0.7 : 1,
+        fontSize: (region.fontSize * imageRatio) / zoomLevel,
+        fontFamily: region.font,
+        fontStyle: region.fontStyle
+    };
+
+    const anchorCommonProps = {
+        rotation: 0,
+        isRotator: false,
+        onMouseEnter: handleAnchorMouseEnter,
+        onMouseOut: handleAnchorMouseOut,
+        onDragStart: handleAnchorDragStart,
+        onDragEnd: handleAnchorDragEnd,
+        onDragMove: handleAnchorDrag
+    };
+
     return (
         <>
             <Group ref={shapeRef} listening={!region.locked} onClick={handleClick} onDblClick={handleDoubleClick} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragMove={handleDrag}>
@@ -225,14 +245,7 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
                     offsetX={(region.northTextOffset.x * imageRatio) / zoomLevel}
                     offsetY={(region.northTextOffset.y * imageRatio) / zoomLevel}
                     text={region.northLabel}
-                    stroke={region.color}
-                    fill={region.color}
-                    strokeWidth={(region.lineWidth * imageRatio) / zoomLevel}
-                    strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    fontSize={(region.fontSize * imageRatio) / zoomLevel}
-                    fontFamily={region.font}
-                    fontStyle={region.fontStyle}
+                    {...textCommonProps}
                 />
                 <Text
                     ref={eastLabelRef}
@@ -241,55 +254,15 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
                     offsetX={(region.eastTextOffset.x * imageRatio) / zoomLevel}
                     offsetY={(region.eastTextOffset.y * imageRatio) / zoomLevel}
                     text={region.eastLabel}
-                    stroke={region.color}
-                    fill={region.color}
-                    strokeWidth={(region.lineWidth * imageRatio) / zoomLevel}
-                    strokeScaleEnabled={false}
-                    opacity={region.isTemporary ? 0.5 : region.locked ? 0.7 : 1}
-                    fontSize={(region.fontSize * imageRatio) / zoomLevel}
-                    fontFamily={region.font}
-                    fontStyle={region.fontStyle}
+                    {...textCommonProps}
                 />
             </Group>
             <Group>
                 {props.selected && (
                     <>
-                        <Anchor
-                            anchor={"origin"}
-                            x={originPoints.x}
-                            y={originPoints.y}
-                            rotation={0}
-                            isRotator={false}
-                            onMouseEnter={handleAnchorMouseEnter}
-                            onMouseOut={handleAnchorMouseOut}
-                            onDragStart={handleAnchorDragStart}
-                            onDragEnd={handleAnchorDragEnd}
-                            onDragMove={handleAnchorDrag}
-                        />
-                        <Anchor
-                            anchor={"northTip"}
-                            x={northPointArray[northPointArray.length - 2] + mousePoint.current.x}
-                            y={northPointArray[northPointArray.length - 1] + mousePoint.current.y}
-                            rotation={0}
-                            isRotator={false}
-                            onMouseEnter={handleAnchorMouseEnter}
-                            onMouseOut={handleAnchorMouseOut}
-                            onDragStart={handleAnchorDragStart}
-                            onDragEnd={handleAnchorDragEnd}
-                            onDragMove={handleAnchorDrag}
-                        />
-                        <Anchor
-                            anchor={"eastTip"}
-                            x={eastPointArray[eastPointArray.length - 2] + mousePoint.current.x}
-                            y={eastPointArray[eastPointArray.length - 1] + mousePoint.current.y}
-                            rotation={0}
-                            isRotator={false}
-                            onMouseEnter={handleAnchorMouseEnter}
-                            onMouseOut={handleAnchorMouseOut}
-                            onDragStart={handleAnchorDragStart}
-                            onDragEnd={handleAnchorDragEnd}
-                            onDragMove={handleAnchorDrag}
-                        />
+                        <Anchor anchor={"origin"} x={originPoints.x} y={originPoints.y} {...anchorCommonProps} />
+                        <Anchor anchor={"northTip"} x={northPointArray[northPointArray.length - 2] + mousePoint.current.x} y={northPointArray[northPointArray.length - 1] + mousePoint.current.y} {...anchorCommonProps} />
+                        <Anchor anchor={"eastTip"} x={eastPointArray[eastPointArray.length - 2] + mousePoint.current.x} y={eastPointArray[eastPointArray.length - 1] + mousePoint.current.y} {...anchorCommonProps} />
                     </>
                 )}
             </Group>

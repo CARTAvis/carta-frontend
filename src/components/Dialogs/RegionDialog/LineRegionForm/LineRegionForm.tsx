@@ -531,73 +531,71 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
         const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
-            <>
-                <div className="form-section line-region-form">
-                    <H5>Properties</H5>
-                    <div className="form-contents">
-                        <table>
-                            <tbody>
-                                <tr>
-                                    <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
-                                    <td colSpan={2}>
-                                        <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Coordinate</td>
-                                    <td colSpan={2}>
-                                        <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Start {pxUnitSpan}</td>
-                                    <td>{startInputX}</td>
-                                    <td>{startInputY}</td>
-                                    <td>
-                                        <span className="info-string">{startInfoString}</span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>End {pxUnitSpan}</td>
-                                    <td>{endInputX}</td>
-                                    <td>{endInputY}</td>
-                                    <td>
-                                        <span className="info-string">{endInfoString}</span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Center {pxUnitSpan}</td>
-                                    <td>{centerInputX}</td>
-                                    <td>{centerInputY}</td>
-                                    <td>
-                                        <span className="info-string">{centerInfoString}</span>
-                                    </td>
-                                </tr>
-                                {this.props.frame?.hasSquarePixels ? (
-                                    <React.Fragment>
-                                        <tr>
-                                            <td>Length {pxUnitSpan}</td>
-                                            <td>{lengthInput}</td>
-                                            <td></td>
-                                            <td>
-                                                <span className="info-string">{lengthInfoString}</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
-                                            </td>
-                                            <td>
-                                                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange} />
-                                            </td>
-                                        </tr>
-                                    </React.Fragment>
-                                ) : null}
-                            </tbody>
-                        </table>
-                    </div>
+            <div className="form-section line-region-form">
+                <H5>Properties</H5>
+                <div className="form-contents">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
+                                <td colSpan={2}>
+                                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Coordinate</td>
+                                <td colSpan={2}>
+                                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Start {pxUnitSpan}</td>
+                                <td>{startInputX}</td>
+                                <td>{startInputY}</td>
+                                <td>
+                                    <span className="info-string">{startInfoString}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>End {pxUnitSpan}</td>
+                                <td>{endInputX}</td>
+                                <td>{endInputY}</td>
+                                <td>
+                                    <span className="info-string">{endInfoString}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Center {pxUnitSpan}</td>
+                                <td>{centerInputX}</td>
+                                <td>{centerInputY}</td>
+                                <td>
+                                    <span className="info-string">{centerInfoString}</span>
+                                </td>
+                            </tr>
+                            {this.props.frame?.hasSquarePixels ? (
+                                <React.Fragment>
+                                    <tr>
+                                        <td>Length {pxUnitSpan}</td>
+                                        <td>{lengthInput}</td>
+                                        <td></td>
+                                        <td>
+                                            <span className="info-string">{lengthInfoString}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
+                                        </td>
+                                        <td>
+                                            <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange} />
+                                        </td>
+                                    </tr>
+                                </React.Fragment>
+                            ) : null}
+                        </tbody>
+                    </table>
                 </div>
-            </>
+            </div>
         );
     }
 }
