@@ -98,7 +98,7 @@ export class AppStore {
     @observable cartaComputeReady: boolean;
     // Frames
     @observable frames: FrameStore[];
-    @observable previewFrames: FrameStore[];
+    // @observable previewFrames: FrameStore[];
     @observable activeFrame: FrameStore;
     @observable hoveredFrame: FrameStore;
     @observable contourDataSource: FrameStore;
@@ -540,9 +540,14 @@ export class AppStore {
         };
 
         const newFrame = new FrameStore(frameInfo);
-        this.previewFrames.push(newFrame);
-        newFrame.setIsPreview(true);
-        newFrame.rasterData = new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength));
+
+        if (newFrame) {
+            // this.previewFrames.push(newFrame); //when user clicks 'start preview' multiple times, do not all to previewFrames
+            newFrame.setIsPreview(true);
+            newFrame.rasterData = new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength));
+            newFrame.renderConfig.setPreviewHistogramMax(ack.histogramBounds?.max);
+            newFrame.renderConfig.setPreviewHistogramMin(ack.histogramBounds?.min);
+        }
 
         return newFrame;
     };
@@ -828,6 +833,15 @@ export class AppStore {
             this.widgetsStore.removeFrameFromRegionWidgets();
         }
     };
+
+    // @action removePreviewFrame = (frame: FrameStore) => {
+    //     if(!frame) {
+    //         return;
+    //     }
+
+    //     const frameIndex = this.previewFrames.indexOf(frame);
+    //     frameIndex > -1 && this.previewFrames.splice(frameIndex, 1);
+    // };
 
     @action shiftFrame = (delta: number) => {
         if (this.activeFrame && this.frames.length > 1) {
@@ -1137,7 +1151,6 @@ export class AppStore {
             const ack = yield this.backendService.requestPV(message);
             this.restartTaskProgress();
             if (!ack.cancel && ack.previewData) {
-                // Show preview pop-up window
                 const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
                 pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
                 WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
@@ -1458,7 +1471,7 @@ export class AppStore {
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
 
         this.frames = [];
-        this.previewFrames = [];
+        // this.previewFrames = [];
         this.activeFrame = null;
         this.hoveredFrame = null;
         this.contourDataSource = null;
@@ -2097,7 +2110,7 @@ export class AppStore {
         if (fileId === -1) {
             return this.activeFrame;
         }
-        return this.frames.find(f => f.frameInfo.fileId === fileId) || this.previewFrames.find(f => f.frameInfo.fileId === fileId);
+        return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
 
     getFrameName(fileId: number) {

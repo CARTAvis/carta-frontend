@@ -57,6 +57,14 @@ export class FloatingWidgetManagerComponent extends React.Component {
                 widgetsStore.layerListWidgets.get(widget.parentId)?.resetSelectedFrameIndex();
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;
+            // case PvPreviewComponent.WIDGET_CONFIG.type:
+            //     widgetsStore.pvGeneratorWidgets.get(widget.parentId)?.removePreviewFrame();
+            //     widgetsStore.removeFloatingWidget(widget.id);
+            //     break;
+            // case PvGeneratorComponent.WIDGET_CONFIG.type:
+            //     widgetsStore.pvGeneratorWidgets.get(widget.id)?.removePreviewFrame();
+            //     widgetsStore.removeFloatingWidget(widget.id);
+            //     break;
             default:
                 widgetsStore.removeFloatingWidget(widget.id);
                 break;

@@ -426,6 +426,8 @@ export class WidgetsStore {
                 return CursorInfoComponent.WIDGET_CONFIG;
             case PvGeneratorComponent.WIDGET_CONFIG.type:
                 return PvGeneratorComponent.WIDGET_CONFIG;
+            case PvPreviewComponent.WIDGET_CONFIG.type:
+                return PvPreviewComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -684,6 +686,7 @@ export class WidgetsStore {
         layout.registerComponent("layer-list", LayerListComponent);
         layout.registerComponent("cursor-info", CursorInfoComponent);
         layout.registerComponent("pv-generator", PvGeneratorComponent);
+        layout.registerComponent("pv-preview", PvPreviewComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
@@ -822,6 +825,11 @@ export class WidgetsStore {
 
         if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
             widgetConfig.componentId = id;
+        }
+
+        if (type === PvPreviewComponent.WIDGET_CONFIG.type) {
+            widgetConfig.parentId = itemConfig.props.id;
+            widgetConfig.parentType = PvPreviewComponent.WIDGET_CONFIG.parentType;
         }
 
         const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
@@ -1426,20 +1434,6 @@ export class WidgetsStore {
         }
         return id;
     }
-
-    // createFloatingPvPreviewWidget = (pvGeneratorId: string) => {
-    //     this.addFloatingWidget(new WidgetConfig(this.addPvPreviewWidget(pvGeneratorId), PvPreviewComponent.WIDGET_CONFIG));
-    // };
-
-    // @action addPvPreviewWidget(pvGeneratorId: string) {
-
-    //     const numericId = pvGeneratorId.split('-')[-1];
-    //     console.log(numericId)
-    //     //id is the corresponding pv generator id
-    //     this.pvGeneratorWidgets.set(this.getNextId(PvGeneratorComponent), this.pvGeneratorWidgets.get(pvGeneratorId));
-    //     return pvGeneratorId;
-    // }
-
     // endregion
 
     // region Floating Widgets

@@ -167,6 +167,10 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.previewFrame = frame;
     };
 
+    // @action removePreviewFrame = () => {
+    //     AppStore.Instance.removePreviewFrame(this.previewFrame);
+    // };
+
     constructor() {
         super(RegionsType.LINE);
         makeObservable(this);
