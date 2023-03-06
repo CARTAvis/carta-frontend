@@ -373,7 +373,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 }
             },
             scales: {
-                "x": {
+                x: {
                     position: "bottom",
                     min: this.props.xMin,
                     max: this.props.xMax,
@@ -414,7 +414,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         callback: this.props.topAxisTickFormatter ? this.props.topAxisTickFormatter : PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
                     }
                 },
-                "y": {
+                y: {
                     min: this.props.yMin,
                     max: this.props.yMax,
                     title: {
