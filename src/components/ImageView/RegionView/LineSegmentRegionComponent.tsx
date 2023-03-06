@@ -256,11 +256,9 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
-
-        // const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-        // let rotation = -region.rotation + 90.0 + ((Math.atan(pixelRatio) * 180.0 / Math.PI) - 45.0);
-
-        let rotation = -region.rotation + 90.0;
+        // let rotation = -region.rotation + 90.0
+        let rotation = -region.rotation + 90.0 + ((Math.atan(1/frame.aspectRatio) * 180.0 / Math.PI) - 45.0);
+        console.log(((Math.atan(1/frame.aspectRatio) * 180.0 / Math.PI) - 45.0))
 
         let controlPoints = region.controlPoints;
         let centerPointCanvasSpace: Point2D;
