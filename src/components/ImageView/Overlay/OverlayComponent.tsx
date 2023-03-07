@@ -172,38 +172,25 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         /* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
 
         // Trigger switching AST overlay axis for PV image
+        const spectralAxisSetting =
+            `${frame.spectralType ? `System(${frame.spectral})=${frame.spectralType},` : ""}` +
+            `${frame.spectralUnit ? `Unit(${frame.spectral})=${frame.spectralUnit},` : ""}` +
+            `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
+            `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
+            `${frame.spectralType && frame.spectralSystem ? `Label(${frame.spectral})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`;
+
+        const dirAxesSetting = `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`} ${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel},`}`;
+
         if (frame.isPVImage && frame.spectralAxis?.valid) {
-            AST.set(
-                frame.wcsInfo,
-                `${frame.spectralType ? `System(${frame.isReversedPVImage ? 1 : 2})=${frame.spectralType},` : ""}` +
-                    `${frame.spectralUnit ? `Unit(${frame.isReversedPVImage ? 1 : 2})=${frame.spectralUnit},` : ""}` +
-                    `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
-                    `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
-                    `${frame.spectralType && frame.spectralSystem ? `Label(${frame.isReversedPVImage ? 1 : 2})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}`
-            );
+            AST.set(frame.wcsInfo, spectralAxisSetting);
         } else if (frame.isSwappedZ && frame.spectralAxis?.valid) {
-            const spectralAxis = frame.spectralAxis?.dimension;
-            AST.set(
-                frame.wcsInfo,
-                `${frame.spectralType ? `System(${spectralAxis})=${frame.spectralType},` : ""}` +
-                    `${frame.spectralUnit ? `Unit(${spectralAxis})=${frame.spectralUnit},` : ""}` +
-                    `${frame.spectralSystem ? `StdOfRest=${frame.spectralSystem},` : ""}` +
-                    `${frame.restFreqStore.restFreqInHz ? `RestFreq=${frame.restFreqStore.restFreqInHz} Hz,` : ""}` +
-                    `${frame.spectralType && frame.spectralSystem ? `Label(${spectralAxis})=[${frame.spectralSystem}] ${SPECTRAL_TYPE_STRING.get(frame.spectralType)},` : ""}` +
-                    `${frame.dirX > 2 || frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`}` +
-                    `${frame.dirY > 2 || frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel}`}`
-            );
+            AST.set(frame.wcsInfo, spectralAxisSetting + dirAxesSetting);
         } else {
             const formatStringX = this.props.overlaySettings.numbers.formatStringX;
             const formatStyingY = this.props.overlaySettings.numbers.formatStringY;
             const explicitSystem = this.props.overlaySettings.global.explicitSystem;
             if (formatStringX !== undefined && formatStyingY !== undefined && explicitSystem !== undefined) {
-                AST.set(
-                    frame.wcsInfo,
-                    `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` +
-                        `${frame.dirXLabel === "" ? "" : `Label(${frame.dirX})=${frame.dirXLabel},`}` +
-                        `${frame.dirYLabel === "" ? "" : `Label(${frame.dirY})=${frame.dirYLabel}`}`
-                );
+                AST.set(frame.wcsInfo, `Format(${frame.dirX})=${formatStringX}, Format(${frame.dirY})=${formatStyingY}, System=${explicitSystem},` + dirAxesSetting);
             }
         }
 

@@ -605,17 +605,6 @@ export class FrameStore {
         return false;
     }
 
-    @computed get isReversedPVImage(): boolean {
-        if (this.isPVImage) {
-            const entries = this.frameInfo.fileInfoExtended.headerEntries;
-            const axis1 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[0]}`));
-            const axis2 = entries.find(entry => entry.name.includes(`CTYPE${this.renderedAxesNumbers[1]}`));
-            const axis1SpatialAxis2Spectral = axis2?.value?.match(/offset|position|offset position/i) && axis1?.value?.match(/freq/i);
-            return !!axis1SpatialAxis2Spectral;
-        }
-        return false;
-    }
-
     // dir X axis number from the header
     get dirXNumber(): number {
         return this.frameInfo.fileInfoExtended.axesNumbers.dirX;
@@ -796,19 +785,13 @@ export class FrameStore {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
 
-            // Locate spectral dimension from axis 1~4
-            let dimension = undefined;
-            if (this.spectralNumber > 0) {
-                dimension = this.spectralNumber;
-            }
-
             // Fill up spectral dimension & type/unit/system
-            if (dimension) {
-                const spectralHeader = entries.find(entry => entry.name.includes(`CTYPE${this.isReversedPVImage ? 1 : dimension}`));
+            if (this.spectralNumber > 0) {
+                const spectralHeader = entries.find(entry => entry.name.includes(`CTYPE${this.spectralNumber}`));
                 const spectralValue = spectralHeader?.value.trim().toUpperCase();
                 const spectralType = STANDARD_SPECTRAL_TYPE_SETS.find(type => spectralValue === type.code);
-                const valueHeader = entries.find(entry => entry.name.includes(`CRVAL${this.isReversedPVImage ? 1 : dimension}`));
-                const unitHeader = entries.find(entry => entry.name.includes(`CUNIT${this.isReversedPVImage ? 1 : dimension}`));
+                const valueHeader = entries.find(entry => entry.name.includes(`CRVAL${this.spectralNumber}`));
+                const unitHeader = entries.find(entry => entry.name.includes(`CUNIT${this.spectralNumber}`));
                 const specSysHeader = entries.find(entry => entry.name.includes("SPECSYS"));
                 const specsys = specSysHeader?.value ? trimFitsComment(specSysHeader.value)?.toUpperCase() : undefined;
                 if (spectralType) {
@@ -1501,7 +1484,7 @@ export class FrameStore {
     };
 
     private initPVFrame = (): AST.FrameSet => {
-        if (!(this.isPVImage || this.isReversedPVImage)) {
+        if (!this.isPVImage) {
             return undefined;
         }
 
