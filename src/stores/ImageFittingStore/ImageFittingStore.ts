@@ -401,11 +401,26 @@ export class ImageFittingStore {
     };
 
     private getRegionInfoLog = (regionId: number, fovInfo: CARTA.IRegionInfo): string => {
-        let log = `Region: ${regionId === FOV_REGION_ID ? "field of view" : "entire image"}\n`;
-
-        if (regionId === FOV_REGION_ID) {
-            log += RegionStore.GetRegionProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
-            log += this.effectiveFrame.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+        let log = "";
+        switch (regionId) {
+            case IMAGE_REGION_ID:
+                log += "Region: entire image\n";
+                break;
+            case FOV_REGION_ID:
+                log += "Region: field of view\n";
+                if (fovInfo) {
+                    log += RegionStore.GetRegionProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+                    log += this.effectiveFrame?.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+                }
+                break;
+            default:
+                const region = this.effectiveFrame?.getRegion(regionId);
+                if (region) {
+                    log += `Region: ${region.nameString}\n`;
+                    log += region.regionProperties + "\n";
+                    log += this.effectiveFrame.getRegionWcsProperties(region) + "\n";
+                }
+                break;
         }
         return log;
     };
