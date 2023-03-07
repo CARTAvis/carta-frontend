@@ -1778,7 +1778,7 @@ export class FrameStore {
         let cursorPosWCS, cursorPosFormatted;
         let precisionX = 0;
         let precisionY = 0;
-        if (this.validWcs || this.isPVImage || this.isUVImage) {
+        if (this.validWcs || this.isSwappedXY || this.isPVImage || this.isUVImage || this.isSwappedZ) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [
@@ -1799,9 +1799,9 @@ export class FrameStore {
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
-                astString.add(`Format(${this.dirX})`, this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringX(precisionX));
-                astString.add(`Format(${this.dirY})`, this.isPVImage || this.isUVImage ? undefined : this.overlayStore.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", this.isPVImage || this.isUVImage ? "cartesian" : this.overlayStore.global.explicitSystem);
+                astString.add(`Format(${this.dirX})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : this.overlayStore.numbers.cursorFormatStringX(precisionX));
+                astString.add(`Format(${this.dirY})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : this.overlayStore.numbers.cursorFormatStringY(precisionY));
+                astString.add("System", this.isPVImage || this.isUVImage || this.isSwappedZ ? "cartesian" : this.overlayStore.global.explicitSystem);
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map(pos => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString(), true));
                 let [p, n1, n2] = formattedNeighbourhood;
