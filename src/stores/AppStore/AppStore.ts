@@ -98,7 +98,7 @@ export class AppStore {
     @observable cartaComputeReady: boolean;
     // Frames
     @observable frames: FrameStore[];
-    // @observable previewFrames: FrameStore[];
+    @observable previewFrames: ObservableMap<number, FrameStore>;
     @observable activeFrame: FrameStore;
     @observable hoveredFrame: FrameStore;
     @observable contourDataSource: FrameStore;
@@ -542,9 +542,9 @@ export class AppStore {
         const newFrame = new FrameStore(frameInfo);
 
         if (newFrame) {
-            // this.previewFrames.push(newFrame); //when user clicks 'start preview' multiple times, do not all to previewFrames
+            this.previewFrames.set(ack.previewId, newFrame); //when user clicks 'start preview' multiple times, do not all to previewFrames
             newFrame.setIsPreview(true);
-            newFrame.rasterData = new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength));
+            newFrame.setRasterData(new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength)));
             newFrame.renderConfig.setPreviewHistogramMax(ack.histogramBounds?.max);
             newFrame.renderConfig.setPreviewHistogramMin(ack.histogramBounds?.min);
         }
@@ -834,14 +834,9 @@ export class AppStore {
         }
     };
 
-    // @action removePreviewFrame = (frame: FrameStore) => {
-    //     if(!frame) {
-    //         return;
-    //     }
-
-    //     const frameIndex = this.previewFrames.indexOf(frame);
-    //     frameIndex > -1 && this.previewFrames.splice(frameIndex, 1);
-    // };
+    @action removePreviewFrame = (previewId: number) => {
+        this.previewFrames.delete(previewId);
+    };
 
     @action shiftFrame = (delta: number) => {
         if (this.activeFrame && this.frames.length > 1) {
@@ -1471,7 +1466,7 @@ export class AppStore {
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
 
         this.frames = [];
-        // this.previewFrames = [];
+        this.previewFrames = new ObservableMap<number, FrameStore>();
         this.activeFrame = null;
         this.hoveredFrame = null;
         this.contourDataSource = null;
@@ -1661,7 +1656,7 @@ export class AppStore {
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
         this.backendService.fittingProgressStream.subscribe(this.handleFittingProgressStream);
         this.backendService.vectorTileStream.subscribe(this.handleVectorTileStream);
-        // this.backendService.pvPreviewStream.subscribe(this.handlePvPreviewStream);
+        this.backendService.pvPreviewStream.subscribe(this.handlePvPreviewStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1887,6 +1882,10 @@ export class AppStore {
         this.fileBrowserStore.updateLoadingState(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
         this.fileBrowserStore.showLoadingDialog();
         this.updateTaskProgress(fileProgress.percentage);
+    };
+
+    handlePvPreviewStream = (pvPreviewData: CARTA.PvPreviewData) => {
+        this.previewFrames.get(pvPreviewData.previewId).updatePreviewData(pvPreviewData);
     };
 
     handlePvProgressStream = (pvProgress: CARTA.PvProgress) => {

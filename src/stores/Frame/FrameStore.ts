@@ -2561,4 +2561,16 @@ export class FrameStore {
     @action setIsPreview = (isPreview: boolean) => {
         this.isPreview = isPreview;
     };
+
+    @action setRasterData = (rasterData: Float32Array) => {
+        this.rasterData = rasterData;
+    };
+
+    @action updatePreviewData = (previewData: CARTA.PvPreviewData) => {
+        this.setRasterData(new Float32Array(previewData.imageData.buffer.slice(previewData.imageData.byteOffset, previewData.imageData.byteOffset + previewData.imageData.byteLength)));
+        this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds.max);
+        this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds.min);
+        this.frameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
+    };
 }
+ 
