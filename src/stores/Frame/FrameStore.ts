@@ -2573,4 +2573,3 @@ export class FrameStore {
         this.frameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
     };
 }
- 

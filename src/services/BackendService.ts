@@ -855,13 +855,13 @@ export class BackendService {
             if (decoderEntry) {
                 const parsedMessage = decoderEntry.messageClass.decode(eventData);
                 if (parsedMessage) {
-                    this.logEvent(eventType, eventId, parsedMessage); 
+                    this.logEvent(eventType, eventId, parsedMessage);
                     decoderEntry.handler.call(this, eventId, parsedMessage);
                 } else {
                     console.log(`Unsupported event response ${eventType}`);
                 }
             } else {
-                throw Error('no decoder');
+                throw Error("no decoder");
             }
         } catch (e) {
             console.log(e);
