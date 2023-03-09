@@ -23,7 +23,7 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
             () => this.props.value,
             value => {
                 if (!this.isFocused) {
-                    this.setValueString(value.toString()) 
+                    this.setValueString(value.toString());
                 }
             }
         );
