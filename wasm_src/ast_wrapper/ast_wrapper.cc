@@ -631,26 +631,26 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* makeSwappedFrameSet(AstFrameSet* originFrameSe
     {
         for (int j = 0; j < axisCount; j++)
         {
-            int work_index = j * nsample + i;
+            int workIndex = j * nsample + i;
             if (j == dirAxis - 1)
             {
                 // For rendered direction axis
-                posData[work_index] = i + 1;
+                posData[workIndex] = i + 1;
             }
             else if (j == spectralAxis - 1)
             {
                 // For rendered spectral axis
-                posData[work_index] = 1;
+                posData[workIndex] = 1;
             }
             else
             {
                 // For hidden direction axis (not rendered axis)
                 if (pixelZ > 0) {
-                    posData[work_index] = pixelZ;
+                    posData[workIndex] = pixelZ;
                 }
                 else
                 {
-                    posData[work_index] = 0;
+                    posData[workIndex] = 0;
                 }
             }
         }
@@ -669,26 +669,26 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* makeSwappedFrameSet(AstFrameSet* originFrameSe
     astTranN(originFrameSet, nsample, axisCount, nsample, posData, 1, axisCount, nsample, worldData);
 
     // "Smooth" the delta rad that its max difference between two adjacent elements should not be greater than PI
-    bool smooth_delta_rad(false);
+    bool smoothDeltaRad(false);
     for (int i = 0; i < nsample - 1; ++i)
     {
-        double rad_i = *(worldData + (dirAxis - 1) * nsample + i);
-        double rad_j = *(worldData + (dirAxis - 1) * nsample + i + 1);
-        if ((std::signbit(rad_i) != std::signbit(rad_j)) && (fabs(rad_i - rad_j) >= M_PI))
+        double rad1 = *(worldData + (dirAxis - 1) * nsample + i);
+        double rad2 = *(worldData + (dirAxis - 1) * nsample + i + 1);
+        if ((std::signbit(rad1) != std::signbit(rad2)) && (fabs(rad1 - rad2) >= M_PI))
         {
-            smooth_delta_rad = true;
+            smoothDeltaRad = true;
             break;
         }
     }
 
-    if (smooth_delta_rad)
+    if (smoothDeltaRad)
     {
         for (int i = 0; i < nsample; ++i)
         {
-            double tmp_rad = *(worldData + (dirAxis - 1) * nsample + i);
-            if (tmp_rad < 0)
+            double tmpRad = *(worldData + (dirAxis - 1) * nsample + i);
+            if (tmpRad < 0)
             {
-                *(worldData + (dirAxis - 1) * nsample + i) = M_PI * 2 + tmp_rad;
+                *(worldData + (dirAxis - 1) * nsample + i) = M_PI * 2 + tmpRad;
             }
         }
     }
