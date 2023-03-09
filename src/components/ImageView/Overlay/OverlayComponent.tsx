@@ -5,7 +5,7 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
-import {AppStore, OverlayStore, PreferenceStore, SystemType} from "stores";
+import {AppStore, OverlayStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import "./OverlayComponent.scss";
@@ -111,10 +111,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
             if (settings.title.customText && frame.titleCustomText?.length) {
                 currentStyleString += `, Title=${frame.titleCustomText}`;
-            }
-
-            if (settings.global.system === SystemType.FK4) {
-                currentStyleString += `, Equinox=1950`;
             }
 
             plot(currentStyleString);

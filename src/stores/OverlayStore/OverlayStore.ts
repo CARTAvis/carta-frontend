@@ -100,6 +100,9 @@ export class OverlayGlobalSettings {
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
         astString.add("System", this.explicitSystem);
+        if (this.explicitSystem === SystemType.FK4) {
+            astString.add("Equinox", "1950");
+        }
         return astString.toString();
     }
 
