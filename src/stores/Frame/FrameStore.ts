@@ -605,12 +605,12 @@ export class FrameStore {
         return false;
     }
 
-    // dir X axis number from the header
+    // Dir X axis number from the header
     get dirXNumber(): number {
         return this.frameInfo.fileInfoExtended.axesNumbers.dirX;
     }
 
-    // dir Y axis number from the header
+    // Dir Y axis number from the header
     get dirYNumber(): number {
         return this.frameInfo.fileInfoExtended.axesNumbers.dirY;
     }
@@ -640,7 +640,11 @@ export class FrameStore {
         let axes = [this.dirXNumber, this.dirYNumber, this.spectralNumber];
         axes = axes.filter(num => num > 0);
         axes.sort();
-        return [axes[0], axes[1]];
+        if (axes.length > 1) {
+            return [axes[0], axes[1]];
+        }
+        console.log("Undefined rendered axes!");
+        return [undefined, undefined];
     }
 
     // X direction axis number in the AST frame set
@@ -739,7 +743,7 @@ export class FrameStore {
         // Lambda function for WCS transformation
         let wcs = (channel: number): string => {
             const wcs = AST.transform3DPoint(this.wcsInfo3D, 0, 0, channel, true);
-            // The range of depth axis is 0~360 for RA/longitude, or -90~+90 for DEC/latitude
+            // The range of depth axis is 0 ~ 360 for RA/longitude, or -90 ~ +90 for DEC/latitude
             const wcsVal = this.dirX > this.dirY && wcs.z < 0 ? wcs.z + 2 * Math.PI : wcs.z;
             return AST.format(this.wcsInfo3D, 3, wcsVal);
         };
@@ -1449,9 +1453,9 @@ export class FrameStore {
         const dirXAxis = entries.find(entry => entry.name.includes(`CTYPE${axisNumber}`));
         let name = dirXAxis?.value ?? "";
         if (name.match(/^RA/)) {
-            name = "Right Ascension"; // customize the axis label
+            name = "Right Ascension"; // Customize the axis label
         } else {
-            name = ""; // use the default axis label in AST
+            name = ""; // Use the default axis label in AST
         }
         return name;
     };
