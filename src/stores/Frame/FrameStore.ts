@@ -643,7 +643,7 @@ export class FrameStore {
         if (axes.length > 1) {
             return [axes[0], axes[1]];
         }
-        console.log("Undefined rendered axes!");
+        console.log(`Undefined rendered axes!`);
         return [undefined, undefined];
     }
 
@@ -660,6 +660,14 @@ export class FrameStore {
     // Spectral axis number in the AST frame set
     get spectral(): number {
         return this.stokesNumber > 0 && this.stokesNumber < this.spectralNumber ? this.spectralNumber - 1 : this.spectralNumber;
+    }
+
+    get isXY(): boolean {
+        return this.dirX === 1 && this.dirY === 2;
+    }
+
+    get isYX(): boolean {
+        return this.dirX === 2 && this.dirY === 1;
     }
 
     get isSwappedZ(): boolean {
@@ -763,10 +771,6 @@ export class FrameStore {
         return `WCS:\n${wcs1.substring(0, endPos)}`;
     }
 
-    get isSwappedXY(): boolean {
-        return this.dirX === 2 && this.dirY === 1;
-    }
-
     @computed get isUVImage(): boolean {
         return this.uvAxis !== undefined;
     }
@@ -785,7 +789,7 @@ export class FrameStore {
         return undefined;
     }
 
-    @computed get spectralAxis(): {valid: boolean; dimension: number; type: SpectralTypeSet; specsys: string; value: number} {
+    @computed get spectralAxis(): {valid: boolean; type: SpectralTypeSet; specsys: string; value: number} {
         if (this.frameInfo?.fileInfoExtended?.headerEntries) {
             const entries = this.frameInfo.fileInfoExtended.headerEntries;
 
@@ -801,7 +805,6 @@ export class FrameStore {
                 if (spectralType) {
                     return {
                         valid: true,
-                        dimension: this.spectral,
                         type: {name: spectralType.name, code: spectralType.code, unit: unitHeader?.value?.trim() ?? spectralType.unit},
                         specsys: specsys,
                         value: getHeaderNumericValue(valueHeader)
@@ -809,7 +812,6 @@ export class FrameStore {
                 } else {
                     return {
                         valid: false,
-                        dimension: this.spectral,
                         type: {name: spectralValue, code: spectralValue, unit: unitHeader?.value?.trim() ?? undefined},
                         specsys: specsys,
                         value: getHeaderNumericValue(valueHeader)
@@ -1279,7 +1281,7 @@ export class FrameStore {
                 if (frameInfo.fileInfoExtended.depth > 1) {
                     // 3D frame
                     this.wcsInfo3D = AST.copy(astFrameSet);
-                    if (this.isSwappedXY) {
+                    if (this.isYX) {
                         this.wcsInfo = this.initFrame2D();
                     } else {
                         this.wcsInfo = AST.getSkyFrameSet(this.wcsInfo3D);
@@ -1782,7 +1784,7 @@ export class FrameStore {
         let cursorPosWCS, cursorPosFormatted;
         let precisionX = 0;
         let precisionY = 0;
-        if (this.validWcs || this.isSwappedXY || this.isPVImage || this.isUVImage || this.isSwappedZ) {
+        if (this.validWcs || this.isYX || this.isPVImage || this.isUVImage || this.isSwappedZ) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
             const offsetBlock = [
@@ -2639,14 +2641,8 @@ export class FrameStore {
         }
         console.log(`Setting spectral reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
-        if (!this.wcsInfo3D || !frame.wcsInfo3D) {
-            console.log(`Error creating spectral transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. One of the files is missing spectral information`);
-            this.spectralReference = null;
-            return false;
-        }
-
-        if (this.dirX !== frame.dirX || this.dirY !== frame.dirY || this.spectral !== frame.spectral) {
-            console.log(`Error creating spectral transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. At least one of axis numbers is not matched`);
+        if (!this.wcsInfo3D || !frame.wcsInfo3D || this.dirX !== frame.dirX || this.dirY !== frame.dirY || this.spectral !== frame.spectral) {
+            console.log(`Error creating spectral transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. One of the files is missing spectral information, or at least one of axis numbers is not matched.`);
             this.spectralReference = null;
             return false;
         }

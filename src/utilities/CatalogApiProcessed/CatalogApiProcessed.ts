@@ -79,10 +79,10 @@ export class CatalogApiProcessing {
         const raformat = `${NumberFormatType.HMS}.${6}`;
         const deformat = `${NumberFormatType.DMS}.${6}`;
         const wcsCopy = AST.copy(frame.wcsInfo);
-        if ((frame.dirX === 1 && frame.dirY === 2) || (frame.dirX === 2 && frame.dirY === 1)) {
+        if (frame.isXY || frame.isYX) {
             AST.set(wcsCopy, `System=${SystemType.ICRS}`);
-            AST.set(wcsCopy, `Format(${frame.dirX})=${raformat}`);
-            AST.set(wcsCopy, `Format(${frame.dirY})=${deformat}`);
+            AST.set(wcsCopy, `Format(${frame.dirX})=${frame.isXY ? `${raformat}` : `${deformat}`}`);
+            AST.set(wcsCopy, `Format(${frame.dirY})=${frame.isXY ? `${deformat}` : `${raformat}`}`);
         }
         const fraction = Math.PI / 180.0;
 

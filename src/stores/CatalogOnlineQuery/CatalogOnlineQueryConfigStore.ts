@@ -318,7 +318,7 @@ export class CatalogOnlineQueryConfigStore {
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
-            if ((frame.dirX === 1 && frame.dirY === 2) || (frame.dirX === 2 && frame.dirY === 1)) {
+            if (frame.isXY || frame.isYX) {
                 AST.set(wcsCopy, `System=${sys}`);
                 astString.add(`Format(${frame.dirX})`, format);
                 astString.add(`Format(${frame.dirY})`, format);
@@ -339,7 +339,7 @@ export class CatalogOnlineQueryConfigStore {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
             const format = `${NumberFormatType.Degrees}.${precision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
-            if ((frame.dirX === 1 && frame.dirY === 2) || (frame.dirX === 2 && frame.dirY === 1)) {
+            if (frame.isXY || frame.isYX) {
                 AST.set(wcsCopy, `System=${SystemType.ICRS}`);
                 AST.set(wcsCopy, `Format(${frame.dirX})=${format}`);
                 AST.set(wcsCopy, `Format(${frame.dirY})=${format}`);
