@@ -15,7 +15,7 @@ const DashModeSelect = Select.ofType<ContourDashMode>();
 @observer
 export class ContourStylePanelComponent extends React.Component<{frame: FrameStore; darkTheme: boolean}> {
     private renderDashModeSelectItem = (mode: ContourDashMode, {handleClick, modifiers, query}) => {
-        return <MenuItem text={ContourDashMode[mode]} onClick={handleClick} key={mode} />;
+        return <MenuItem text={mode} onClick={handleClick} key={mode} />;
     };
 
     render() {
@@ -34,7 +34,7 @@ export class ContourStylePanelComponent extends React.Component<{frame: FrameSto
                         items={[ContourDashMode.None, ContourDashMode.Dashed, ContourDashMode.NegativeOnly]}
                         itemRenderer={this.renderDashModeSelectItem}
                     >
-                        <Button text={ContourDashMode[frame.contourConfig.dashMode]} rightIcon="double-caret-vertical" alignText={"right"} />
+                        <Button text={frame.contourConfig.dashMode} rightIcon="double-caret-vertical" alignText={"right"} />
                     </DashModeSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Color mode">

@@ -13,9 +13,9 @@ export enum ContourGeneratorType {
 }
 
 export enum ContourDashMode {
-    None,
-    Dashed,
-    NegativeOnly
+    None = "None",
+    Dashed = "Dashed",
+    NegativeOnly = "Negative only"
 }
 
 export class ContourConfigStore {
