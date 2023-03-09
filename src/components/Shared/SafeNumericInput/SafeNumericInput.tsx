@@ -1,6 +1,6 @@
 import * as React from "react";
 import {INumericInputProps, NumericInput} from "@blueprintjs/core";
-import {action, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 export interface SafeNumericInputProps extends INumericInputProps {
@@ -13,16 +13,36 @@ export interface SafeNumericInputProps extends INumericInputProps {
 export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     private static minorStepSize = 0.001;
     @observable valueString: string = this.props.value?.toString();
+    @observable private isFocused: boolean = false;
 
     constructor(props) {
         super(props);
         makeObservable(this);
+
+        reaction(
+            () => this.props.value,
+            value => {
+                if (!this.isFocused) {
+                    this.setValueString(value.toString()) 
+                }
+            }
+        );
     }
 
+    @action setFocused(value: boolean) {
+        this.isFocused = value;
+    }
+
+    handleOnFocus = () => {
+        this.setFocused(true);
+    };
+
+    handleOnBlur = () => {
+        this.setFocused(false);
+    };
+
     @action setValueString = (valueString: string) => {
-        if (!this.props.onBlur || !this.props.onKeyDown) {
-            this.valueString = valueString;
-        }
+        this.valueString = valueString;
     };
 
     safeHandleValueChanged = (valueAsNumber: number, valueAsString: string, inputElement: HTMLInputElement) => {
@@ -41,7 +61,7 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
     };
 
     render() {
-        const {intOnly, ...otherProps} = this.props;
+        const {onBlur, intOnly, ...otherProps} = this.props;
 
         return (
             <NumericInput
@@ -49,7 +69,9 @@ export class SafeNumericInput extends React.Component<SafeNumericInputProps> {
                 asyncControl={true}
                 minorStepSize={this.props.minorStepSize ? this.props.minorStepSize : intOnly ? 1 : SafeNumericInput.minorStepSize}
                 onValueChange={this.safeHandleValueChanged}
-                value={this.valueString}
+                value={onBlur || this.props.onKeyDown ? this.props.value : this.valueString}
+                onBlur={onBlur ?? this.handleOnBlur}
+                onFocus={this.handleOnFocus}
             />
         );
     }
