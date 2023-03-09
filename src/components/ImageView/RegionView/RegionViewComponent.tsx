@@ -645,8 +645,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     className={className}
                     width={this.props.width}
                     height={this.props.height}
-                    // width={frame.isPreview ? 300 : this.props.width}
-                    // height={frame.isPreview ? 300 : this.props.height}
                     style={{left: this.props.left, top: this.props.top, cursor}}
                     onClick={this.handleClick}
                     onWheel={this.handleWheel}

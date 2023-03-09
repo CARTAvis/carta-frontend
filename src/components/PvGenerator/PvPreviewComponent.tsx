@@ -1,4 +1,5 @@
 import React from "react";
+import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
 
 import {ImagePanelComponent} from "components/ImageView/ImagePanel/ImagePanelComponent";
@@ -47,7 +48,14 @@ export class PvPreviewComponent extends React.Component<PVPreviewDialogProps> {
     }
 
     public render() {
-        return <ImagePanelComponent key={this.props.id} docked={false} frame={WidgetsStore?.Instance.pvGeneratorWidgets?.get(this.props.id)?.previewFrame} row={0} column={0} />;
+        const frame = WidgetsStore?.Instance.pvGeneratorWidgets?.get(this.props.id)?.previewFrame;
+
+        return (
+            <>
+                <ImagePanelComponent key={this.props.id} docked={false} frame={frame} row={0} column={0} />;
+                <ReactResizeDetector handleWidth handleHeight onResize={frame.onResizePreviewWidget} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
+            </>
+        );
         // return (
         //     <>
         //         <RasterViewComponent frame={WidgetsStore?.Instance.pvGeneratorWidgets?.get(this.props.id)?.previewFrame} docked={false} pixelHighlightValue={NaN} row={0} column={0} />

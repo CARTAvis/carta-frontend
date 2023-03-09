@@ -542,7 +542,7 @@ export class AppStore {
         const newFrame = new FrameStore(frameInfo);
 
         if (newFrame) {
-            this.previewFrames.set(ack.previewId, newFrame); //when user clicks 'start preview' multiple times, do not all to previewFrames
+            this.previewFrames.set(ack.previewId, newFrame);
             newFrame.setIsPreview(true);
             newFrame.setRasterData(new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength)));
             newFrame.renderConfig.setPreviewHistogramMax(ack.histogramBounds?.max);
@@ -835,7 +835,9 @@ export class AppStore {
     };
 
     @action removePreviewFrame = (previewId: number) => {
-        this.previewFrames.delete(previewId);
+        if (this.previewFrames.delete(previewId)) {
+            this.backendService.closePvPreview(previewId);
+        }
     };
 
     @action shiftFrame = (delta: number) => {
@@ -1161,10 +1163,11 @@ export class AppStore {
         }
     }
 
-    @action cancelRequestingPV = (fileId: number = -1) => {
+    @action cancelRequestingPV = (fileId: number = -1, previewId?: number) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.requestingPVProgress < 1.0) {
             this.backendService.cancelRequestingPV(fileId);
+            this.backendService.stopPvPreview(previewId);
         }
     };
 
@@ -1885,7 +1888,15 @@ export class AppStore {
     };
 
     handlePvPreviewStream = (pvPreviewData: CARTA.PvPreviewData) => {
-        this.previewFrames.get(pvPreviewData.previewId).updatePreviewData(pvPreviewData);
+        if (!pvPreviewData.width && !pvPreviewData.height && !pvPreviewData.imageData) {
+            return;
+        }
+        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + pvPreviewData.previewId)?.previewFrame;
+        // const frame = this.previewFrames.get(pvPreviewData.previewId);
+        // if not needed, we may delete the previewFrames map in AppStore
+        if (previewFrame) {
+            previewFrame.updatePreviewData(pvPreviewData);
+        }
     };
 
     handlePvProgressStream = (pvProgress: CARTA.PvProgress) => {

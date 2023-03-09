@@ -3,7 +3,6 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
 
-import {PvPreviewComponent} from "components";
 import {
     CatalogControlMap,
     ChannelInfo,
@@ -186,6 +185,8 @@ export class FrameStore {
     @observable stokesFiles: CARTA.StokesFile[];
 
     @observable isPreview: boolean;
+    @observable previewViewWidth: number;
+    @observable previewViewHeight: number;
     @observable rasterData: Float32Array;
 
     @computed get filename(): string {
@@ -374,14 +375,6 @@ export class FrameStore {
 
     @computed get renderHeight() {
         return this.overlayStore.previewRenderHeight(this.previewViewHeight) || this.overlayStore.renderHeight;
-    }
-
-    @computed get previewViewWidth() {
-        return this.isPreview ? PvPreviewComponent.WIDGET_CONFIG.minWidth : undefined;
-    }
-
-    @computed get previewViewHeight() {
-        return this.isPreview ? PvPreviewComponent.WIDGET_CONFIG.minHeight : undefined;
     }
 
     @computed get isRenderable() {
@@ -2571,5 +2564,10 @@ export class FrameStore {
         this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds.max);
         this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds.min);
         this.frameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
+    };
+
+    @action onResizePreviewWidget = (width: number, height: number) => {
+        this.previewViewWidth = width;
+        this.previewViewHeight = height;
     };
 }

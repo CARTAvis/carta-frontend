@@ -3,7 +3,6 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
-// import { PvPreviewComponent } from "components/PvGenerator/PvPreviewComponent";
 import {FrameView, Point2D, TileCoordinate} from "models";
 import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService, TileWebGLService} from "services";
 import {AppStore} from "stores";

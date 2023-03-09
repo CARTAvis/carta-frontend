@@ -101,7 +101,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         return false;
     }
 
-    @computed get estimatedCubeSize(): {value: number; unit: string} {
+    @computed get estimatedCubeSize(): {value: number; unit: string; bitValue: number} {
         const bitPix = Math.abs(this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.match("BITPIX")).numericValue);
         const region = this.widgetStore.effectiveFrame?.getRegion(this.widgetStore.effectivePreviewRegionId);
         const imageDepth = this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.depth;
@@ -127,7 +127,11 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             value = estimatedSize;
             unit = "B";
         }
-        return {value, unit};
+        return {value, unit, bitValue: estimatedSize};
+    }
+
+    @computed get isCubeSizeBelowLimit(): boolean {
+        return this.estimatedCubeSize?.bitValue < 10 * 1e9;
     }
 
     constructor(props: WidgetProps) {
@@ -250,7 +254,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
 
         const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
-        const isAbleToGeneratePreview = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
+        const isAbleToGeneratePreview = isAbleToGenerate && this.isCubeSizeBelowLimit;
         const hint = (
             <span>
                 <i>
@@ -407,7 +411,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     progress={frame ? frame.requestingPVProgress : 0}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}
-                    onCancel={this.widgetStore.requestingPVCancelled}
+                    onCancel={this.widgetStore.requestingPVCancelled(this.props.id)}
                     text={"Generating PV"}
                     isCancelling={frame?.isRequestPVCancelling}
                 />

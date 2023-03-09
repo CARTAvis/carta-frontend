@@ -2,7 +2,6 @@ import * as React from "react";
 import * as AST from "ast_wrapper";
 import classNames from "classnames";
 import * as _ from "lodash";
-// import { observable } from "mobx";
 import {observer} from "mobx-react";
 
 import {CursorInfo, SPECTRAL_TYPE_STRING} from "models";
@@ -44,8 +43,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     updateImageDimensions() {
         if (this.canvas) {
-            this.canvas.width = (this.props.frame?.previewViewWidth || this.props.overlaySettings.viewWidth) * devicePixelRatio * AppStore.Instance.imageRatio;
-            this.canvas.height = (this.props.frame?.previewViewHeight || this.props.overlaySettings.viewHeight) * devicePixelRatio * AppStore.Instance.imageRatio;
+            const frame = this.props.frame;
+            this.canvas.width = (frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * devicePixelRatio * AppStore.Instance.imageRatio;
+            this.canvas.height = (frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * devicePixelRatio * AppStore.Instance.imageRatio;
         }
     }
 
@@ -81,8 +81,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     frameView.xMax,
                     frameView.yMin / frame.aspectRatio,
                     frameView.yMax / frame.aspectRatio,
-                    (this.props.frame?.previewViewWidth || this.props.overlaySettings.viewWidth) * pixelRatio,
-                    (this.props.frame?.previewViewHeight || this.props.overlaySettings.viewHeight) * pixelRatio,
+                    (this.props.frame.isPreview ? this.props.frame?.previewViewWidth : this.props.overlaySettings.viewWidth) * pixelRatio,
+                    (this.props.frame.isPreview ? this.props.frame?.previewViewHeight : this.props.overlaySettings.viewHeight) * pixelRatio,
                     settings.padding.left * pixelRatio,
                     settings.padding.right * pixelRatio,
                     settings.padding.top * pixelRatio,
@@ -137,8 +137,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const refFrame = frame.spatialReference ?? frame;
         // changing the frame view, padding or width/height triggers a re-render
 
-        const w = this.props.frame?.previewViewWidth || this.props.overlaySettings.viewWidth;
-        const h = this.props.frame?.previewViewHeight || this.props.overlaySettings.viewHeight;
+        const w = frame?.isPreview ? frame?.previewViewWidth : this.props.overlaySettings.viewWidth;
+        const h = frame?.isPreview ? frame?.previewViewHeight : this.props.overlaySettings.viewHeight;
 
         // Dummy variables for triggering re-render
         /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */

@@ -1,6 +1,7 @@
 import {Colors, IconName} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import {throttle} from "lodash";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {CustomIconName} from "icons/CustomIcons";
@@ -392,7 +393,10 @@ export class RegionStore {
             this.controlPoints[index] = p;
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
+            } else if (this.regionType === CARTA.RegionType.LINE) {
+                this.throttledUpdateRegion(true);
             }
+
             if (this.regionType === CARTA.RegionType.POLYGON) {
                 this.simplePolygonTest(index);
             }
@@ -428,6 +432,8 @@ export class RegionStore {
 
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
+        } else if (this.regionType === CARTA.RegionType.LINE) {
+            this.throttledUpdateRegion(true);
         }
     };
 
@@ -548,7 +554,7 @@ export class RegionStore {
 
     // Update the region with the backend
     // TODO: Determine whether we should await when calling this function from above
-    private updateRegion = async () => {
+    private updateRegion = async (isRequestingPreview?: boolean) => {
         if (this.isValid) {
             if (this.regionId === CURSOR_REGION_ID) {
                 AppStore.Instance.resetCursorRegionSpectralProfileProgress(this.fileId);
@@ -556,7 +562,7 @@ export class RegionStore {
             } else {
                 try {
                     AppStore.Instance.resetRegionSpectralProfileProgress(this.regionId);
-                    await this.backendService.setRegion(this.fileId, this.regionId, this);
+                    await this.backendService.setRegion(this.fileId, this.regionId, this, isRequestingPreview);
                     console.log("Region updated");
                 } catch (err) {
                     console.log(err);
@@ -564,4 +570,6 @@ export class RegionStore {
             }
         }
     };
+
+    private throttledUpdateRegion = throttle(this.updateRegion, 100);
 }

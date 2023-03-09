@@ -514,7 +514,7 @@ export class BackendService {
         return false;
     }
 
-    async setRegion(fileId: number, regionId: number, region: RegionStore): Promise<CARTA.ISetRegionAck> {
+    async setRegion(fileId: number, regionId: number, region: RegionStore, isRequestingPreview?: boolean): Promise<CARTA.ISetRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -525,7 +525,8 @@ export class BackendService {
                     regionType: region.regionType,
                     rotation: region.rotation,
                     controlPoints: region.controlPoints.slice()
-                }
+                },
+                previewRegion: isRequestingPreview
             });
 
             const requestId = this.eventCounter;
@@ -782,6 +783,34 @@ export class BackendService {
                 return true;
             }
             return throwError(new Error("Could not send event"));
+        }
+    }
+
+    stopPvPreview(previewId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const message = CARTA.StopPvPreview.create({previewId});
+            this.logEvent(CARTA.EventType.STOP_PV_PREVIEW, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.STOP_PV_PREVIEW, CARTA.StopPvPreview.encode(message).finish())) {
+                console.log("stop Pv preview sent");
+                return true;
+            }
+            throw new Error("Could not send event");
+        }
+    }
+
+    closePvPreview(previewId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const message = CARTA.ClosePvPreview.create({previewId});
+            this.logEvent(CARTA.EventType.CLOSE_PV_PREVIEW, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.CLOSE_PV_PREVIEW, CARTA.ClosePvPreview.encode(message).finish())) {
+                console.log("close pv preview sent");
+                return true;
+            }
+            throw new Error("Could not send event");
         }
     }
 

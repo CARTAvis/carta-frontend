@@ -113,12 +113,14 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action requestingPVCancelled = () => {
-        const frame = this.effectiveFrame;
-        if (frame) {
-            AppStore.Instance.cancelRequestingPV(frame.frameInfo.fileId);
-            frame.setIsRequestPVCancelling(true);
-        }
+    @action requestingPVCancelled = (pvGeneratorId: string) => {
+        return () => {
+            const frame = this.effectiveFrame;
+            if (frame) {
+                AppStore.Instance.cancelRequestingPV(frame.frameInfo.fileId, parseInt(pvGeneratorId.split("-")[2]));
+                frame.setIsRequestPVCancelling(true);
+            }
+        };
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
