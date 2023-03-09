@@ -314,12 +314,18 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
+        let lineSelectionIndex: number;
         table.columnHeaders?.forEach(header => {
             const columnIndex = header.columnIndex;
             let dataArray = tableData.get(columnIndex)?.data;
             const column = header.name === SpectralLineHeaders.LineSelection && this.props.flipRowSelection ? this.renderCheckboxColumn(header, dataArray) : this.renderDataColumnWithFilter(header, dataArray);
             tableColumns.push(column);
+            if (header.name === SpectralLineHeaders.LineSelection) {
+                lineSelectionIndex = columnIndex;
+            }
         });
+
+        const tableCheckData = this.props.dataset.get(lineSelectionIndex)?.data.map(data => data);
 
         const className = classNames("column-filter-table", {"bp4-dark": AppStore.Instance.darkTheme});
 
@@ -339,6 +345,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 enableRowResizing={false}
                 columnWidths={table.columnWidths}
                 onCompleteRender={table.onCompleteRender}
+                cellRendererDependencies={[tableCheckData]} // trigger re-render on line selection change
             >
                 {tableColumns}
             </Table2>

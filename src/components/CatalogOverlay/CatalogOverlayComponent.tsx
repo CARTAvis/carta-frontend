@@ -360,6 +360,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const columnDescription = this.renderDataColumn(HeaderTableColumnName.Description, headerDescriptions);
         tableColumns.push(columnDescription);
 
+        const headerDisplays = [];
+        this.profileStore.catalogControlHeader.forEach(header => headerDisplays.push(header.display));
+
         return (
             <Table2
                 ref={ref => this.onControlHeaderTableRef(ref)}
@@ -375,6 +378,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 columnWidths={this.widgetStore.headerTableColumnWidts}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
+                cellRendererDependencies={[headerDisplays, this.profileStore.loadingData]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
             </Table2>

@@ -1,7 +1,17 @@
-.bp4-dark .equation-div {
-    filter: invert(1);
+.bp4-dark {
+    .equation-div {
+        filter: invert(1);
+    }
+
+    .bp4-active .equation-div {
+        filter: invert(1) brightness(2);
+    }
+}
+
+.equation-div {
+    filter: brightness(2);
 }
 
 .bp4-active .equation-div {
-    filter: invert(1) brightness(2);
+    filter: brightness(0.5);
 }

@@ -22,6 +22,17 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     private rnd: Rnd;
 
     componentDidUpdate() {
+        // workaround for blueprintjs(@4.8.0) bug, which the blue focus box suppressed to the top due to tabindex="0" replaced in DOM.
+        const wrongTab = this.dd.getElementsByClassName("bp4-overlay-start-focus-trap")?.[0] as HTMLDivElement;
+        if (wrongTab && wrongTab.getAttribute("tabindex") === "0") {
+            wrongTab.removeAttribute("tabindex");
+        }
+        const container = this.dd.getElementsByClassName("bp4-dialog-container")?.[0] as HTMLDivElement;
+        if (container) {
+            container.setAttribute("tabindex", "0");
+            container.focus();
+        }
+
         const header = this.dd.getElementsByClassName("bp4-dialog-header");
         if (this.props.helpType && header.length > 0 && this.dd.getElementsByClassName("help-button").length === 0) {
             const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton} />;

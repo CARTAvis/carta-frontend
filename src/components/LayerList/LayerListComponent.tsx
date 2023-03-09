@@ -376,7 +376,6 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         // This is a necessary hack in order to trigger a re-rendering when values change, because the cell renderer is in its own function
         // There is probably a neater way to do this, though
-        /* eslint-disable @typescript-eslint/no-unused-vars */
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
         const activeFrameIndex = appStore.activeFrameIndex;
@@ -389,8 +388,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const currentSpectralReference = appStore.spectralReference;
         const currentSpatialReference = appStore.spatialReference;
         const currentRasterScalingReference = appStore.rasterScalingReference;
+        const cellRendererDependencies = [frameChannels, frameStokes, activeFrameIndex, visibilityRaster, visibilityContour, visibilityOverlay, f1, f2, f3, currentSpectralReference, currentSpatialReference, currentRasterScalingReference];
 
-        /* eslint-enable @typescript-eslint/no-unused-vars */
         return (
             <div className="layer-list-widget">
                 {this.width > 0 && (
@@ -407,6 +406,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         enableColumnResizing={true}
                         onColumnWidthChanged={this.onColumnWidthsChange}
                         bodyContextMenuRenderer={this.contextMenuRenderer}
+                        cellRendererDependencies={cellRendererDependencies}
                     >
                         <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer} />
                         <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer} />

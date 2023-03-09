@@ -179,6 +179,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                 columnWidths={this.headerTableColumnWidths}
                 onColumnWidthChanged={this.updateHeaderTableColumnSize}
                 enableRowResizing={false}
+                cellRendererDependencies={[this.widgetStore.displayedColumnHeaders]} // trigger re-render on controlHeader change
             >
                 {tableColumns}
             </Table2>

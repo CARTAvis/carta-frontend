@@ -433,10 +433,6 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
 
     render() {
         const fileResponse = this.props.listResponse;
-        // Dummy variable to trigger re-render on sorting change
-        // TODO: is this needed?
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const sortingConfig = this.props.sortingString;
 
         const classes = ["browser-table"];
         if (this.props.darkTheme) {
@@ -490,6 +486,7 @@ export class FileListTableComponent extends React.Component<FileListTableCompone
                 enableRowHeader={false}
                 numRows={this.tableEntries.length}
                 loadingOptions={this.props.loading ? [TableLoadingOption.CELLS] : []}
+                cellRendererDependencies={[this.props.sortingString]} // trigger re-render on sorting change
             >
                 <Column name="Filename" columnHeaderCellRenderer={() => this.renderColumnHeader("Filename")} cellRenderer={this.renderFilenames} />
                 <Column name="Type" columnHeaderCellRenderer={() => this.renderColumnHeader("Type")} cellRenderer={this.renderTypes} />
