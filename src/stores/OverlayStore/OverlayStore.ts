@@ -102,8 +102,7 @@ export class OverlayGlobalSettings {
         astString.add("System", this.explicitSystem);
         if (this.explicitSystem === SystemType.FK5) {
             astString.add("Equinox", "2000");
-        }
-        else if (this.explicitSystem === SystemType.FK4) {
+        } else if (this.explicitSystem === SystemType.FK4) {
             astString.add("Equinox", "1950");
         }
         return astString.toString();
