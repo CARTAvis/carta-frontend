@@ -188,7 +188,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const wcsMatchingMenu = (
             <Menu>
                 <MenuItem
-                    text={`Spectral (${preferenceStore.spectralMatchingType}) and Spatial`}
+                    text={`Spectral (${preferenceStore.spectralMatchingType}) and spatial`}
                     disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
                     active={spectralMatchingEnabled && spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(true, true)}
