@@ -1252,7 +1252,7 @@ export class FrameStore {
             if (astFrameSet) {
                 this.spectralFrame = AST.getSpectralFrame(astFrameSet);
                 this.wcsInfo3D = AST.copy(astFrameSet);
-                this.getDirAxisInfo();
+                this.updateDirAxisInfo();
                 this.updateSpectralVsDirectionWcs();
                 AST.deleteObject(astFrameSet);
             }
@@ -1695,7 +1695,7 @@ export class FrameStore {
         }
     };
 
-    private getDirAxisInfo() {
+    private updateDirAxisInfo = () => {
         // For direction vs. spectral image, get rendered direction axis index and size
         this.dirAxis = this.dirX < this.dirY ? this.dirX : this.dirY;
         this.dirAxisSize = this.dirAxis === 1 ? this.frameInfo.fileInfoExtended.width : this.frameInfo.fileInfoExtended.height;
@@ -1711,7 +1711,7 @@ export class FrameStore {
             this.dirAxisFormat = this.dirX < this.dirY ? "hms.*" : "dms.*";
             this.depthAxisFormat = this.dirX < this.dirY ? `dms.${WCS_PRECISION}` : `hms.${WCS_PRECISION}`;
         }
-    }
+    };
 
     private sanitizeChannelNumber(channel: number) {
         if (!isFinite(channel)) {
