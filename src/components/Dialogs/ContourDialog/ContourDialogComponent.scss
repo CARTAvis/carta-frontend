@@ -5,6 +5,9 @@
         .bp4-form-group {
             &:first-of-type {
                 margin-left: 0px;
+                .bp4-form-content {
+                    display: flex;
+                }
             }
         }
 

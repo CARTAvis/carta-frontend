@@ -15,6 +15,7 @@ export class SimpleTableComponentProps {
     isIndexZero?: boolean;
     boldIndex?: number[];
     updateTableRef?: (ref: Table2) => void;
+    cellRendererDependencies?: React.DependencyList;
 }
 
 @observer
@@ -67,6 +68,7 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
                 enableRowResizing={false}
                 columnWidths={this.props.columnWidths}
                 onColumnWidthChanged={this.props.onColumnWidthChanged}
+                cellRendererDependencies={this.props.cellRendererDependencies}
             >
                 {tableColumns}
             </Table2>

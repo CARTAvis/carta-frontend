@@ -155,6 +155,9 @@ export class StokesDialogComponent extends React.Component {
             title: "Merging polarization hypercube"
         };
 
+        const rerenderCheck = [];
+        this.stokes.forEach(stoke => rerenderCheck.push(stoke.polarizationType));
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.STOKES} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
                 <div className="bp4-dialog-body">
@@ -169,6 +172,7 @@ export class StokesDialogComponent extends React.Component {
                         minColumnWidth={30}
                         columnWidths={[440, 120]}
                         enableRowResizing={false}
+                        cellRendererDependencies={[rerenderCheck]}
                     >
                         {[fileName, stokesDropDown]}
                     </Table2>
