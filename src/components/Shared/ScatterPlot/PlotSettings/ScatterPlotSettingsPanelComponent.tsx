@@ -35,7 +35,7 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
         return (
             <div className="scatter-settings-panel">
                 <React.Fragment>
-                    <FormGroup inline={true} label="Color Map">
+                    <FormGroup inline={true} label="Colormap">
                         <ColormapComponent
                             inverted={props.invertedColorMap}
                             selectedItem={props.colorMap}
@@ -44,12 +44,12 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                             }}
                         />
                     </FormGroup>
-                    <FormGroup label={"Invert Color Map"} inline={true}>
+                    <FormGroup label={"Invert colormap"} inline={true}>
                         <Switch checked={props.invertedColorMap} onChange={props.handleInvertedColorMapChanged} />
                     </FormGroup>
-                    <FormGroup inline={true} label="Symbol Size" labelInfo="(px)">
+                    <FormGroup inline={true} label="Symbol size" labelInfo="(px)">
                         <SafeNumericInput
-                            placeholder="Symbol Size"
+                            placeholder="Symbol size"
                             min={ScatterSettings.MIN_POINT_SIZE}
                             max={ScatterSettings.MAX_POINT_SIZE}
                             value={props.scatterPlotPointSize}
@@ -59,7 +59,7 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                     </FormGroup>
                     <FormGroup inline={true} label="Transparency">
                         <SafeNumericInput
-                            placeholder="transparency"
+                            placeholder="Transparency"
                             min={ScatterSettings.MIN_TRANSPARENCY}
                             max={ScatterSettings.MAX_TRANSPARENCY}
                             value={props.pointTransparency}
@@ -67,7 +67,7 @@ export class ScatterPlotSettingsPanelComponent extends React.Component<ScatterPl
                             onValueChange={(value: number) => props.setPointTransparency(value)}
                         />
                     </FormGroup>
-                    <FormGroup inline={true} label={"Equal Axes"}>
+                    <FormGroup inline={true} label={"Equal axes"}>
                         <Switch checked={props.equalAxes} onChange={props.handleEqualAxesValuesChanged} />
                     </FormGroup>
                 </React.Fragment>
