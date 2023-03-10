@@ -280,7 +280,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         <HTMLSelect options={Object.values(SpectralLineQueryUnit)} value={widgetStore.queryUnit} onChange={ev => widgetStore.setQueryUnit(ev.currentTarget.value as SpectralLineQueryUnit)} />
                     </FormGroup>
                     <ControlGroup className="intensity-limit">
-                        <FormGroup label={"Intensity Limit"} inline={true}>
+                        <FormGroup label={"Intensity limit"} inline={true}>
                             <Switch checked={widgetStore.intensityLimitEnabled} onChange={() => widgetStore.toggleIntensityLimit()} />
                         </FormGroup>
                         {widgetStore.intensityLimitEnabled && (
@@ -392,7 +392,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                                 <pre>{widgetStore.resultTableInfo}</pre>
                             </div>
                             <div className="bp3-dialog-footer-actions">
-                                <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral Profiler"}>
+                                <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral profiler"}>
                                     {widgetMenu}
                                 </FormGroup>
                                 <Tooltip2 content="Apply filter" position={Position.BOTTOM}>
