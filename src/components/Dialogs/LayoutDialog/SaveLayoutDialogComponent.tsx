@@ -67,7 +67,7 @@ export class SaveLayoutDialogComponent extends React.Component {
     }
 
     @computed get validName(): boolean {
-        return this.layoutName.match(/^[^~`!*()-+=[.'?<>/|\\:;&]+$/)?.length > 0;
+        return this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
     }
 
     render() {

@@ -228,18 +228,11 @@ export class LayoutStore {
             try {
                 const success = yield appStore.apiService.setLayout(newName, configToSave);
                 if (success) {
-                    yield appStore.apiService.clearLayout(oldName).then(
-                        success => {
-                            if (success) {
-                                delete this.layouts[oldName];
-                            }
-                            this.handleRenameResult(oldName, newName, success);
-                        },
-                        err => {
-                            console.log(err);
-                            this.handleRenameResult(oldName, newName, false);
-                        }
-                    );
+                    const success = yield appStore.apiService.clearLayout(oldName);
+                    if (success) {
+                        delete this.layouts[oldName];
+                    }
+                    this.handleRenameResult(oldName, newName, success);
                 }
             } catch (err) {
                 console.log(err);
@@ -266,21 +259,16 @@ export class LayoutStore {
             return;
         }
 
-        yield appStore.apiService.clearLayout(layoutName).then(
-            success => {
-                if (success) {
-                    delete this.layouts[layoutName];
-                    if (layoutName === this.currentLayoutName) {
-                        this.currentLayoutName = "";
-                    }
-                }
-                this.handleDeleteResult(layoutName, success);
-            },
-            err => {
-                console.log(err);
-                this.handleDeleteResult(layoutName, false);
+        try {
+            const success = yield appStore.apiService.clearLayout(layoutName);
+            if (success) {
+                delete this.layouts[layoutName];
             }
-        );
+            this.handleDeleteResult(layoutName, success);
+        } catch (err) {
+            console.log(err);
+            this.handleDeleteResult(layoutName, false);
+        }
     }
 
     private handleDeleteResult = (layoutName: string, success: boolean) => {
