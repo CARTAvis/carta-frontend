@@ -1800,9 +1800,6 @@ export class FrameStore {
 
             const normalizedNeighbourhood = cursorNeighbourhood.map(pos => AST.normalizeCoordinates(this.wcsInfo, pos.x, pos.y));
 
-            let precisionX = 0;
-            let precisionY = 0;
-
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
                 astString.add(`Format(${this.dirX})`, this.isPVImage || this.isUVImage || this.isSwappedZ ? undefined : this.overlayStore.numbers.cursorFormatStringX(precisionX));
