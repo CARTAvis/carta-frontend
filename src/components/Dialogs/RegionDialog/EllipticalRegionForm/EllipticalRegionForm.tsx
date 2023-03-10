@@ -1,18 +1,17 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {computed} from "mobx";
-import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {CARTA} from "carta-protobuf";
+import {Classes, H5, InputGroup} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
-import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {FrameStore, RegionCoordinate, RegionStore, WCS_PRECISION} from "stores/Frame";
-import {Point2D, WCSPoint2D} from "models";
-import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
-import {SafeNumericInput, CoordinateComponent} from "components/Shared";
-import "./EllipticalRegionForm.scss";
+import {CARTA} from "carta-protobuf";
+import {computed} from "mobx";
+import {observer} from "mobx-react";
 
-const KEYCODE_ENTER = 13;
+import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType} from "components/Shared";
+import {Point2D, WCSPoint2D} from "models";
+import {AppStore} from "stores";
+import {CoordinateMode, FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
+
+import "./EllipticalRegionForm.scss";
 
 @observer
 export class EllipticalRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
@@ -32,263 +31,174 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         return null;
     }
 
+    @computed get centerWCS(): WCSPoint2D {
+        const region = this.props.region;
+        if (!region || !this.props.wcsInfo) {
+            return null;
+        }
+        return getFormattedWCSPoint(this.props.wcsInfo, region.center);
+    }
+
     private handleNameChange = ev => {
         this.props.region.setName(ev.currentTarget.value);
     };
 
-    private handleCenterXChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+    private handleCenterXChange = (value: number): boolean => {
         const existingValue = this.props.region.center.x;
-
         if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setCenter({x: value, y: this.props.region.center.y});
-            return;
+            return true;
         }
-
-        ev.currentTarget.value = existingValue;
+        return false;
     };
 
-    private handleCenterYChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+    private handleCenterYChange = (value: number): boolean => {
         const existingValue = this.props.region.center.y;
-
         if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setCenter({x: this.props.region.center.x, y: value});
-            return;
+            return true;
         }
-
-        ev.currentTarget.value = existingValue;
+        return false;
     };
 
-    private handleCenterWCSXChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.center);
-        if (!centerWCSPoint) {
-            return;
-        }
-        const wcsString = ev.currentTarget.value;
-        if (wcsString === centerWCSPoint.x) {
-            return;
-        }
+    private handleCenterWCSXChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCSPoint.y});
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
             const existingValue = this.props.region.center.x;
-            if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
+            if (isFinite(newPoint?.x) && !closeTo(newPoint.x, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
                 this.props.region.setCenter(newPoint);
-                return;
+                return true;
             }
         }
-
-        ev.currentTarget.value = centerWCSPoint.x;
+        return false;
     };
 
-    private handleCenterWCSYChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.center);
-        if (!centerWCSPoint) {
-            return;
-        }
-        const wcsString = ev.currentTarget.value;
-        if (wcsString === centerWCSPoint.y) {
-            return;
-        }
+    private handleCenterWCSYChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCSPoint.x, y: wcsString});
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
             const existingValue = this.props.region.center.y;
-            if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
+            if (isFinite(newPoint?.y) && !closeTo(newPoint.y, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
                 this.props.region.setCenter(newPoint);
-                return;
+                return true;
             }
         }
-
-        ev.currentTarget.value = centerWCSPoint.y;
+        return false;
     };
 
-    private handleMajorAxisChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+    private handleMajorAxisChange = (value: number): boolean => {
         const existingValue = this.props.region.size.x;
-
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setSize({x: value, y: this.props.region.size.y});
-            return;
+            return true;
         }
-
-        ev.currentTarget.value = existingValue;
+        return false;
     };
 
-    private handleMajorAxisWCSChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        if (!this.sizeWCS) {
-            return;
-        }
-        const wcsString = ev.currentTarget.value;
-        if (wcsString === this.sizeWCS.x) {
-            return;
-        }
+    private handleMajorAxisWCSChange = (wcsString: string): boolean => {
         const value = this.props.frame.getImageXValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = this.props.region.size.x;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setSize({x: value, y: this.props.region.size.y});
-            return;
+            return true;
         }
-
-        ev.currentTarget.value = this.sizeWCS.x;
+        return false;
     };
 
-    private handleMinorAxisChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+    private handleMinorAxisChange = (value: number): boolean => {
         const existingValue = this.props.region.size.y;
-
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setSize({x: this.props.region.size.x, y: value});
-            return;
+            return true;
         }
-
-        ev.currentTarget.value = existingValue;
+        return false;
     };
 
-    private handleMinorAxisWCSChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        if (!this.sizeWCS) {
-            return;
-        }
-        const wcsString = ev.currentTarget.value;
-        if (wcsString === this.sizeWCS.y) {
-            return;
-        }
+    private handleMinorAxisWCSChange = (wcsString: string): boolean => {
         const value = this.props.frame.getImageYValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = this.props.region.size.y;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setSize({x: this.props.region.size.x, y: value});
-            return;
+            return true;
         }
-
-        ev.currentTarget.value = this.sizeWCS.y;
+        return false;
     };
 
-    private handleRotationChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+    private handleRotationChange = (value: number): boolean => {
         const existingValue = this.props.region.rotation;
-
         if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setRotation(value);
-            return;
+            return true;
         }
-
-        ev.currentTarget.value = existingValue;
+        return false;
     };
 
     public render() {
         // dummy variables related to wcs to trigger re-render
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || region.regionType !== CARTA.RegionType.ELLIPSE) {
             return null;
         }
 
         const centerPoint = region.center;
-        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
-        let xInput, yInput;
-        if (region.coordinate === RegionCoordinate.Image) {
-            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange} />;
-            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
-        } else {
-            xInput = (
-                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={false}
-                        buttonPosition="none"
-                        placeholder="X WCS Coordinate"
-                        disabled={!this.props.wcsInfo || !centerWCSPoint}
-                        value={centerWCSPoint ? centerWCSPoint.x : ""}
-                        onBlur={this.handleCenterWCSXChange}
-                        onKeyDown={this.handleCenterWCSXChange}
-                    />
-                </Tooltip2>
-            );
-            yInput = (
-                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={false}
-                        buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
-                        disabled={!this.props.wcsInfo || !centerWCSPoint}
-                        value={centerWCSPoint ? centerWCSPoint.y : ""}
-                        onBlur={this.handleCenterWCSYChange}
-                        onKeyDown={this.handleCenterWCSYChange}
-                    />
-                </Tooltip2>
-            );
-        }
-        const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const centerWCSPoint = this.centerWCS;
+        const xInput = (
+            <CoordNumericInput
+                coord={region.coordinate}
+                inputType={InputType.XCoord}
+                value={centerPoint?.x}
+                onChange={this.handleCenterXChange}
+                valueWcs={centerWCSPoint?.x}
+                onChangeWcs={this.handleCenterWCSXChange}
+                wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
+            />
+        );
+        const yInput = (
+            <CoordNumericInput
+                coord={region.coordinate}
+                inputType={InputType.YCoord}
+                value={centerPoint?.y}
+                onChange={this.handleCenterYChange}
+                valueWcs={centerWCSPoint?.y}
+                onChangeWcs={this.handleCenterWCSYChange}
+                wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
+            />
+        );
+        const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
-        // size
         const size = region.size;
-        let sizeWidthInput, sizeHeightInput;
-        if (region.coordinate === RegionCoordinate.Image) {
-            sizeWidthInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-major" value={size.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange} />;
-            sizeHeightInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Semi-minor" value={size.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange} />;
-        } else {
-            sizeWidthInput = (
-                <Tooltip2 content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={false}
-                        buttonPosition="none"
-                        placeholder="Semi-major"
-                        disabled={!this.props.wcsInfo}
-                        value={this.sizeWCS ? this.sizeWCS.x : ""}
-                        onBlur={this.handleMajorAxisWCSChange}
-                        onKeyDown={this.handleMajorAxisWCSChange}
-                    />
-                </Tooltip2>
-            );
-            sizeHeightInput = (
-                <Tooltip2 content={"Format: arcsec(\"), arcmin('), or degrees(deg)"} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={false}
-                        buttonPosition="none"
-                        placeholder="Semi-minor"
-                        disabled={!this.props.wcsInfo}
-                        value={this.sizeWCS ? this.sizeWCS.y : ""}
-                        onBlur={this.handleMinorAxisWCSChange}
-                        onKeyDown={this.handleMinorAxisWCSChange}
-                    />
-                </Tooltip2>
-            );
-        }
-        const sizeInfoString = region.coordinate === RegionCoordinate.Image ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
-        const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
+        const sizeWCS = this.sizeWCS;
+        const sizeWidthInput = (
+            <CoordNumericInput
+                coord={region.coordinate}
+                inputType={InputType.Size}
+                value={size.x}
+                onChange={this.handleMajorAxisChange}
+                valueWcs={sizeWCS?.x}
+                onChangeWcs={this.handleMajorAxisWCSChange}
+                wcsDisabled={!this.props.wcsInfo}
+                customPlaceholder="Semi-major"
+            />
+        );
+        const sizeHeightInput = (
+            <CoordNumericInput
+                coord={region.coordinate}
+                inputType={InputType.Size}
+                value={size.y}
+                onChange={this.handleMinorAxisChange}
+                valueWcs={sizeWCS?.y}
+                onChangeWcs={this.handleMinorAxisWCSChange}
+                wcsDisabled={!this.props.wcsInfo}
+                customPlaceholder="Semi-minor"
+            />
+        );
+        const sizeInfoString = region.coordinate === CoordinateMode.Image ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
+        const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
             <div className="form-section elliptical-region-form">
                 <H5>Properties</H5>
@@ -304,7 +214,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>
-                                    <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
+                                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                                 </td>
                             </tr>
                             <tr>
@@ -328,15 +238,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                                     P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
                                 </td>
                                 <td>
-                                    <SafeNumericInput
-                                        disabled={!this.props.frame?.hasSquarePixels}
-                                        selectAllOnFocus={true}
-                                        buttonPosition="none"
-                                        placeholder="P.A."
-                                        value={region.rotation}
-                                        onBlur={this.handleRotationChange}
-                                        onKeyDown={this.handleRotationChange}
-                                    />
+                                    <ImageCoordNumericInput value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
                                 </td>
                             </tr>
                         </tbody>

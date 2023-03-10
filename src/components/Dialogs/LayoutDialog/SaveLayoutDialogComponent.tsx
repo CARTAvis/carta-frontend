@@ -1,12 +1,14 @@
 import * as React from "react";
-import classNames from "classnames";
-import {observable, computed, makeObservable} from "mobx";
-import {observer} from "mobx-react";
-import {AnchorButton, FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Position} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, FormGroup, IDialogProps, InputGroup, Intent, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
+import classNames from "classnames";
+import {computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, HelpType} from "stores";
 import {PresetLayout} from "models";
+import {AppStore, HelpType} from "stores";
+
 import "./SaveLayoutDialogComponent.scss";
 
 const KEYCODE_ENTER = 13;

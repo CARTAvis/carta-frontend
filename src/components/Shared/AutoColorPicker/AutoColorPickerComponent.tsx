@@ -1,15 +1,16 @@
 import * as React from "react";
-import * as _ from "lodash";
-import classNames from "classnames";
-import {computed} from "mobx";
-import {observer} from "mobx-react";
-import {makeObservable, observable} from "mobx";
-import {SketchPicker, ColorResult} from "react-color";
-import {Button, PopoverPosition, MenuItem} from "@blueprintjs/core";
+import {ColorResult, SketchPicker} from "react-color";
+import {Button, MenuItem, PopoverPosition} from "@blueprintjs/core";
 import {Popover2} from "@blueprintjs/popover2";
 import {Select} from "@blueprintjs/select";
-import {AUTO_COLOR_OPTIONS, getColorForTheme} from "utilities";
+import classNames from "classnames";
+import * as _ from "lodash";
+import {computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {AppStore} from "stores";
+import {AUTO_COLOR_OPTIONS, getColorForTheme} from "utilities";
+
 import "./AutoColorPickerComponent.scss";
 
 interface AutoColorPickerComponentProps {
@@ -79,7 +80,7 @@ export class AutoColorPickerComponent extends React.Component<AutoColorPickerCom
             <ColorSelect
                 activeItem={color}
                 onItemSelect={color => this.props.setColor(color)}
-                popoverProps={{minimal: true, position: PopoverPosition.BOTTOM_LEFT, popoverClassName: "colorselect"}}
+                popoverProps={{minimal: true, popoverClassName: "colorselect"}}
                 filterable={false}
                 items={[...AUTO_COLOR_OPTIONS, CUSTOM_COLOR_OPTION]}
                 itemRenderer={this.renderColorSelectItem}

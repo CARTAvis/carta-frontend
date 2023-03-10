@@ -1,17 +1,19 @@
 import * as React from "react";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
-import {observer} from "mobx-react";
+import {CSSProperties} from "react";
+import ReactResizeDetector from "react-resize-detector";
+import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
 import {AnchorButton, ButtonGroup, Icon, NonIdealState, Position, Spinner} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {FixedSizeList, ListOnItemsRenderedProps} from "react-window";
-import ReactResizeDetector from "react-resize-detector";
-import {CSSProperties} from "react";
-import classNames from "classnames";
 import {CARTA} from "carta-protobuf";
-import {DefaultWidgetConfig, WidgetProps, HelpType, DialogStore, AppStore, FileBrowserStore, BrowserMode} from "stores";
-import {FrameStore, RegionStore, RegionsOpacity, WCS_PRECISION} from "stores/Frame";
-import {toFixed, getFormattedWCSPoint, formattedArcsec, length2D, clamp} from "utilities";
+import classNames from "classnames";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {observer} from "mobx-react";
+
 import {CustomIcon} from "icons/CustomIcons";
+import {AppStore, BrowserMode, DefaultWidgetConfig, DialogStore, FileBrowserStore, HelpType, WidgetProps} from "stores";
+import {FrameStore, RegionsOpacity, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {clamp, formattedArcsec, getFormattedWCSPoint, length2D, toFixed} from "utilities";
+
 import "./RegionListComponent.scss";
 
 @observer
@@ -59,7 +61,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private scrollToSelected = (selected: any) => {
         const listRefCurrent = this.listRef.current;
-        if (!listRefCurrent) {
+        const height = listRefCurrent.props.height;
+        if (!listRefCurrent || height < 0) {
             return;
         } else {
             this.listRef.current.scrollToItem(selected, "smart");

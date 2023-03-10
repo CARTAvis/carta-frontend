@@ -1,17 +1,20 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {action, computed, makeObservable, observable} from "mobx";
-import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
-import {Colors} from "@blueprintjs/core";
-import {Chart, ChartArea, Tick} from "chart.js";
-import ReactResizeDetector from "react-resize-detector";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
-import {PlotContainerComponent, TickType, MultiPlotProps} from "./PlotContainer/PlotContainerComponent";
-import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
-import {Point2D} from "models";
-import {clamp, toExponential, getTimestamp, exportTsvFile} from "utilities";
+import ReactResizeDetector from "react-resize-detector";
+import {Colors} from "@blueprintjs/core";
+import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
+import {Chart, ChartArea, Tick} from "chart.js";
+import {action, computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {PlotType} from "components/Shared";
+import {Point2D} from "models";
 import {AppStore} from "stores";
+import {clamp, exportTsvFile, getTimestamp, toExponential} from "utilities";
+
+import {MultiPlotProps, PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerComponent";
+import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
+
 import "./LinePlotComponent.scss";
 
 export enum ZoomMode {
@@ -661,7 +664,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             // data part
             rows.push("# x\ty");
             const useScientificForm = plotName === "histogram" || this.props.tickTypeX === TickType.Scientific;
-            const data = this.props.fullResolutionData?.length > 0 ? this.props.fullResolutionData : this.props.data;
+            const data = this.props.fullResolutionData?.some(data => data !== undefined) ? this.props.fullResolutionData : this.props.data;
             rows = rows.concat(data.map(o => (useScientificForm ? `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}` : `${o.x}\t${toExponential(o.y, 10)}`)));
 
             exportTsvFile(imageName, plotName, `${comment}\n${rows.join("\n")}\n`);

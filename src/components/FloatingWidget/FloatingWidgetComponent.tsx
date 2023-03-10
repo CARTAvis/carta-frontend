@@ -1,12 +1,14 @@
 import * as React from "react";
-import * as GoldenLayout from "golden-layout";
-import classNames from "classnames";
-import {observer} from "mobx-react";
 import {Rnd} from "react-rnd";
 import {Icon, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
+import classNames from "classnames";
+import * as GoldenLayout from "golden-layout";
+import {observer} from "mobx-react";
+
 import {PlaceholderComponent} from "components";
-import {AppStore, HelpStore, LayoutStore, WidgetConfig, CatalogStore} from "stores";
+import {AppStore, CatalogStore, HelpStore, LayoutStore, WidgetConfig} from "stores";
+
 import "./FloatingWidgetComponent.scss";
 
 class FloatingWidgetComponentProps {

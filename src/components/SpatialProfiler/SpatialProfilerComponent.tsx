@@ -1,19 +1,22 @@
 import * as React from "react";
-import * as _ from "lodash";
+import ReactResizeDetector from "react-resize-detector";
+import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import {Tick} from "chart.js";
+import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
-import {Tick} from "chart.js";
-import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
-import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
-import {Point2D, POLARIZATIONS} from "models";
-import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme} from "utilities";
+import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
+import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";
+
+import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+
 import "./SpatialProfilerComponent.scss";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -288,6 +291,30 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    @computed get nearestCursorPoint(): Point2D {
+        if (this.widgetStore.isMouseMoveIntoLinePlots) {
+            return binarySearchByX(this.plotData.values, this.widgetStore.cursorX)?.point ?? null;
+        }
+        return null;
+    }
+
+    @computed get pointInfo(): {
+        posImageSpace: Point2D;
+        posWCS: any;
+        infoWCS: any;
+        precision: Point2D;
+    } {
+        if (this.plotData) {
+            if (this.nearestCursorPoint) {
+                const pixelPoint = this.widgetStore.isXProfile ? {x: this.nearestCursorPoint.x, y: this.profileStore.y} : {x: this.profileStore.x, y: this.nearestCursorPoint.x};
+                return this.frame.getCursorInfo(pixelPoint);
+            } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
+                return this.frame.getCursorInfo(this.widgetStore.effectiveRegion.center);
+            }
+        }
+        return null;
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
@@ -390,7 +417,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         if (decimalIndex === -1) {
             return;
         }
-        const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex;
+        const pointInfoPrecision = this.widgetStore.isXProfile ? this.pointInfo?.precision.x : this.pointInfo?.precision.y;
+        // Skip lists with no more decimals than pointInfo
+        if (this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
+            return;
+        }
+        // Start trimming from the next digit of pointInfo to avoid offset between pointInfo and upper wcs axis value
+        const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex - 1 - (pointInfoPrecision + 1);
         for (let trim = initialTrimLength; trim > 0; trim--) {
             let trimmedArray = this.cachedFormattedCoordinates.slice();
             for (let i = 0; i < trimmedArray.length; i++) {
@@ -399,10 +432,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (!SpatialProfilerComponent.hasRepeats(trimmedArray)) {
                 this.cachedFormattedCoordinates = trimmedArray;
                 return;
-            }
-            // Skip an extra character after the first check, because of the decimal indicator
-            if (trim === initialTrimLength) {
-                trim--;
             }
         }
     }
@@ -437,16 +466,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
         if (this.plotData) {
-            const isXCoordinate = this.widgetStore.coordinate.indexOf("x") >= 0;
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 // handle the value when cursor is in profiler
-                const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
-                if (nearest?.point) {
-                    const pixelPoint = isXCoordinate ? {x: nearest.point.x, y: this.profileStore.y} : {x: this.profileStore.x, y: nearest.point.x};
-                    const cursorInfo = this.frame.getCursorInfo(pixelPoint);
-                    const wcsLabel = cursorInfo?.infoWCS && !this.lineAxis ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
-                    const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(nearest.point.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${nearest.point.x} px, `;
-                    const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
+                if (this.pointInfo && this.nearestCursorPoint) {
+                    const wcsLabel = this.pointInfo?.infoWCS && !this.lineAxis ? `WCS: ${this.widgetStore.isXProfile ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
+                    const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(this.nearestCursorPoint.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${this.nearestCursorPoint.x} px, `;
+                    const valueLabel = `${this.nearestCursorPoint.y !== undefined ? formattedExponential(this.nearestCursorPoint.y, 5) : ""}`;
 
                     const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues);
 
@@ -460,10 +485,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
             } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
                 // get value directly from point region
-                const pointRegionInfo = this.frame.getCursorInfo(this.widgetStore.effectiveRegion.center);
-                if (pointRegionInfo?.posImageSpace) {
-                    const wcsLabel = pointRegionInfo?.infoWCS ? `WCS: ${isXCoordinate ? pointRegionInfo.infoWCS.x : pointRegionInfo.infoWCS.y}, ` : "";
-                    const imageLabel = `Image: ${toFixed(isXCoordinate ? pointRegionInfo.posImageSpace.x : pointRegionInfo.posImageSpace.y)} px, `;
+                if (this.pointInfo?.posImageSpace) {
+                    const wcsLabel = this.pointInfo?.infoWCS ? `WCS: ${this.widgetStore.isXProfile ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
+                    const imageLabel = `Image: ${toFixed(this.widgetStore.isXProfile ? this.pointInfo.posImageSpace.x : this.pointInfo.posImageSpace.y)} px, `;
                     const valueLabel = `${this.profileStore?.value !== undefined ? formattedExponential(this.profileStore.value, 5) : ""}`;
 
                     const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues, this.profileStore.x);
@@ -558,11 +582,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 if (!this.widgetStore.isLineOrPolyline) {
+                    linePlotProps.showTopAxis = true;
                     if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
-                        linePlotProps.showTopAxis = true;
                         linePlotProps.topAxisTickFormatter = this.formatProfileAst;
-                    } else {
-                        linePlotProps.showTopAxis = false;
                     }
                 }
 

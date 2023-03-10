@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import widgetButtonHistogram from "static/help/widgetButton_histogram.png";
 import widgetButtonHistogram_d from "static/help/widgetButton_histogram_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const HISTOGRAM_HELP_CONTENT = (
     <div>

@@ -1,16 +1,19 @@
 import * as React from "react";
-import classNames from "classnames";
 import {CSSProperties} from "react";
-import {observer} from "mobx-react";
 import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
-import {AppStore, OverlayStore, SystemType} from "stores";
-import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
-import {ImageViewLayer} from "components";
+import classNames from "classnames";
+import {observer} from "mobx-react";
+
+import {ImageViewComponent, ImageViewLayer} from "components";
 import {ExportImageMenuComponent} from "components/Shared";
-import {toFixed} from "utilities";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
+import {AppStore} from "stores";
+import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
+import {OverlayStore, SystemType} from "stores/OverlayStore/OverlayStore";
+import {toFixed} from "utilities";
+
 import "./ToolbarComponent.scss";
 
 export class ToolbarComponentProps {
@@ -19,7 +22,7 @@ export class ToolbarComponentProps {
     frame: FrameStore;
     activeLayer: ImageViewLayer;
     onActiveLayerChange: (layer: ImageViewLayer) => void;
-    onRegionViewZoom: (zoom: number, isZoomToFit?: boolean) => void;
+    onRegionViewZoom: (zoom: number) => void;
     onZoomToFit: () => void;
 }
 
@@ -83,6 +86,19 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         } else {
             this.props.frame.regionSet.setMode(RegionMode.MOVING);
         }
+    };
+
+    private handlePanZoomShortCutClicked = () => {
+        const widgetsStore = AppStore.Instance.widgetsStore;
+        const parentType = ImageViewComponent.WIDGET_CONFIG.type;
+        const settingsWidget = widgetsStore.floatingWidgets?.find(w => w.parentType === parentType);
+        if (settingsWidget) {
+            widgetsStore.removeFloatingWidget(settingsWidget.id);
+        }
+        // delay to wait for the settings widget tab status to reset
+        setTimeout(() => {
+            widgetsStore.createFloatingSettingsWidget("Image View", parentType, parentType);
+        }, 0);
     };
 
     exportImageTooltip = () => {
@@ -282,10 +298,24 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
                             </Tooltip2>
                         )}
-                        <Tooltip2 position={tooltipPosition} content="Select and pan mode">
+                        <Tooltip2
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Select and pan mode
+                                    <span>
+                                        <br />
+                                        <i>
+                                            <small>Double Click to open the settings.</small>
+                                        </i>
+                                    </span>
+                                </span>
+                            }
+                        >
                             <AnchorButton
                                 icon={"hand"}
                                 onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
+                                onDoubleClick={this.handlePanZoomShortCutClicked}
                                 active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
                             />
                         </Tooltip2>

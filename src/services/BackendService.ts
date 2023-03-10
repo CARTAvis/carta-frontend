@@ -1,11 +1,11 @@
-import {action, makeObservable, observable, runInAction} from "mobx";
 import {CARTA} from "carta-protobuf";
+import {action, makeObservable, observable, runInAction} from "mobx";
 import {Subject, throwError} from "rxjs";
+
+import {ApiService, TelemetryAction, TelemetryService} from "services";
 import {AppStore, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
 import {mapToObject} from "utilities";
-import {ApiService} from "./ApiService";
-import {TelemetryAction, TelemetryService} from "./TelemetryService";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -89,6 +89,7 @@ export class BackendService {
     readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     readonly listProgressStream: Subject<CARTA.ListProgress>;
     readonly pvProgressStream: Subject<CARTA.PvProgress>;
+    readonly fittingProgressStream: Subject<CARTA.FittingProgress>;
     readonly vectorTileStream: Subject<CARTA.VectorOverlayTileData>;
     private readonly decoderMap: Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>;
 
@@ -115,6 +116,7 @@ export class BackendService {
         this.momentProgressStream = new Subject<CARTA.MomentProgress>();
         this.listProgressStream = new Subject<CARTA.ListProgress>();
         this.pvProgressStream = new Subject<CARTA.PvProgress>();
+        this.fittingProgressStream = new Subject<CARTA.FittingProgress>();
         this.vectorTileStream = new Subject<CARTA.VectorOverlayTileData>();
 
         // Construct handler and decoder maps
@@ -150,6 +152,7 @@ export class BackendService {
             [CARTA.EventType.CONCAT_STOKES_FILES_ACK, {messageClass: CARTA.ConcatStokesFilesAck, handler: this.onDeferredResponse}],
             [CARTA.EventType.PV_PROGRESS, {messageClass: CARTA.PvProgress, handler: this.onStreamedPvProgress}],
             [CARTA.EventType.PV_RESPONSE, {messageClass: CARTA.PvResponse, handler: this.onDeferredResponse}],
+            [CARTA.EventType.FITTING_PROGRESS, {messageClass: CARTA.FittingProgress, handler: this.onStreamedFittingProgress}],
             [CARTA.EventType.FITTING_RESPONSE, {messageClass: CARTA.FittingResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.VECTOR_OVERLAY_TILE_DATA, {messageClass: CARTA.VectorOverlayTileData, handler: this.onStreamedVectorOverlayData}]
         ]);
@@ -795,6 +798,19 @@ export class BackendService {
         }
     }
 
+    cancelRequestingFitting(fileId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.StopFitting.create({fileId});
+            this.logEvent(CARTA.EventType.STOP_FITTING, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.STOP_FITTING, CARTA.StopFitting.encode(message).finish())) {
+                return true;
+            }
+            return throwError(new Error("Could not send event"));
+        }
+    }
+
     @action("send scripting response")
     sendScriptingResponse = (message: CARTA.IScriptingResponse) => {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
@@ -927,6 +943,10 @@ export class BackendService {
 
     private onStreamedPvProgress(_eventId: number, pvProgress: CARTA.PvProgress) {
         this.pvProgressStream.next(pvProgress);
+    }
+
+    private onStreamedFittingProgress(_eventId: number, fittingProgress: CARTA.FittingProgress) {
+        this.fittingProgressStream.next(fittingProgress);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {

@@ -1,6 +1,7 @@
-import {ImageComponent} from "../ImageComponent";
 import demoImageOverlayColorMapping from "static/help/demo_image_overlay_color_mapping.png";
 import demoImageOverlayColorMapping_d from "static/help/demo_image_overlay_color_mapping_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const CATALOG_SETTINGS_COLOR_HELP_CONTENT = (
     <div>

@@ -1,17 +1,19 @@
 import * as React from "react";
-import {observable, action, makeObservable} from "mobx";
-import {observer} from "mobx-react";
 import {ColorResult} from "react-color";
-import {FormGroup, IDialogProps, NonIdealState, H5} from "@blueprintjs/core";
+import {FormGroup, H5, IDialogProps, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
-import {AppStore, DialogStore, HelpType} from "stores";
-import {DistanceMeasuringStore, RegionCoordinate} from "stores/Frame";
-import {CustomIcon} from "icons/CustomIcons";
-import {SafeNumericInput, ColorPickerComponent, CoordinateComponent} from "components/Shared";
-import {DraggableDialogComponent} from "components/Dialogs";
-import {WCSPoint2D, Point2D} from "models";
-import {getPixelValueFromWCS, getFormattedWCSPoint, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
 import {ImageViewLayer} from "components";
+import {DraggableDialogComponent} from "components/Dialogs";
+import {ColorPickerComponent, CoordinateComponent, SafeNumericInput} from "components/Shared";
+import {CustomIcon} from "icons/CustomIcons";
+import {Point2D, WCSPoint2D} from "models";
+import {AppStore, DialogStore, HelpType} from "stores";
+import {CoordinateMode, DistanceMeasuringStore} from "stores/Frame";
+import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
+
 import "./DistanceMeasuringDialog.scss";
 
 const KEYCODE_ENTER = "Enter";
@@ -29,8 +31,8 @@ export class DistanceMeasuringDialog extends React.Component {
         this.WCSMode = value === undefined ? !this.WCSMode : value;
     };
 
-    private handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
-        const WCSMode = formEvent.currentTarget.value === RegionCoordinate.Image ? false : true;
+    private handleChangeWCSMode = (coord: CoordinateMode) => {
+        const WCSMode = coord === CoordinateMode.Image ? false : true;
         this.setWCSMode(WCSMode);
     };
 
@@ -226,11 +228,7 @@ export class DistanceMeasuringDialog extends React.Component {
                                     <tr className="distance-measuring-settings-table-coordinate">
                                         <td>Coordinate</td>
                                         <td colSpan={2}>
-                                            <CoordinateComponent
-                                                onChange={(ev: React.FormEvent<HTMLInputElement>) => this.handleChangeWCSMode(ev)}
-                                                selectedValue={this.WCSMode && wcsInfo ? RegionCoordinate.World : RegionCoordinate.Image}
-                                                disableCoordinate={!wcsInfo}
-                                            />
+                                            <CoordinateComponent onChange={this.handleChangeWCSMode} selectedValue={this.WCSMode && wcsInfo ? CoordinateMode.World : CoordinateMode.Image} disableCoordinate={!wcsInfo} />
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">

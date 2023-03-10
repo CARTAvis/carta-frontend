@@ -1,34 +1,23 @@
-import {action, autorun, computed, observable, makeObservable, reaction} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
-import {
-    CENTER_POINT_INDEX,
-    SIZE_POINT_INDEX,
-    ColorbarStore,
-    ContourConfigStore,
-    ContourStore,
-    DistanceMeasuringStore,
-    OverlayBeamStore,
-    RegionSetStore,
-    RegionStore,
-    RenderConfigStore,
-    RestFreqStore,
-    VectorOverlayConfigStore,
-    VectorOverlayStore
-} from "stores/Frame";
+import {CARTA} from "carta-protobuf";
+import {action, autorun, computed, makeObservable, observable, reaction} from "mobx";
+
 import {
     CatalogControlMap,
     ChannelInfo,
+    COMPUTED_POLARIZATIONS,
     ControlMap,
     CursorInfo,
     FrameView,
+    FULL_POLARIZATIONS,
     GenCoordinateLabel,
     IsSpectralSystemSupported,
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
     Point2D,
+    POLARIZATION_LABELS,
+    POLARIZATIONS,
     SPECTRAL_COORDS_SUPPORTED,
     SPECTRAL_DEFAULT_UNIT,
     SPECTRAL_TYPE_STRING,
@@ -38,14 +27,29 @@ import {
     SpectralTypeSet,
     SpectralUnit,
     STANDARD_POLARIZATIONS,
-    COMPUTED_POLARIZATIONS,
-    FULL_POLARIZATIONS,
     STANDARD_SPECTRAL_TYPE_SETS,
-    POLARIZATION_LABELS,
-    POLARIZATIONS,
     Transform2D,
+    WCSPoint2D,
     ZoomPoint
 } from "models";
+import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
+import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
+import {
+    CENTER_POINT_INDEX,
+    ColorbarStore,
+    ContourConfigStore,
+    ContourStore,
+    DistanceMeasuringStore,
+    OverlayBeamStore,
+    RegionSetStore,
+    RegionStore,
+    RenderConfigStore,
+    RestFreqStore,
+    SIZE_POINT_INDEX,
+    VectorOverlayConfigStore,
+    VectorOverlayStore
+} from "stores/Frame";
+import {RegionId} from "stores/Widgets";
 import {
     clamp,
     formattedArcsec,
@@ -53,8 +57,11 @@ import {
     getFormattedWCSPoint,
     getHeaderNumericValue,
     getPixelSize,
+    getPixelValueFromWCS,
     getTransformedChannel,
+    getValueFromArcsecString,
     isAstBadPoint,
+    isWCSStringFormatValid,
     minMax2D,
     multiply2D,
     ProtobufProcessing,
@@ -65,8 +72,6 @@ import {
     transformPoint,
     trimFitsComment
 } from "utilities";
-import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
-import {RegionId} from "stores/widgets";
 
 export interface FrameInfo {
     fileId: number;
@@ -77,6 +82,11 @@ export interface FrameInfo {
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
     beamTable: CARTA.IBeam[];
+}
+
+export enum CoordinateMode {
+    Image = "Image",
+    World = "World"
 }
 
 export const WCS_PRECISION = 10;
@@ -163,6 +173,8 @@ export class FrameStore {
     @observable generatedPVRegionId: number;
     @observable fittingResult: string;
     @observable fittingLog: string;
+    @observable fittingModelImage: FrameStore;
+    @observable fittingResidualImage: FrameStore;
 
     @observable isRequestingMoments: boolean;
     @observable requestingMomentsProgress: number;
@@ -203,6 +215,10 @@ export class FrameStore {
         }
     }
 
+    @computed get pixelRatio(): number {
+        return this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
+    }
+
     @computed get aspectRatio(): number {
         if (isFinite(this.framePixelRatio)) {
             return this.framePixelRatio;
@@ -220,10 +236,9 @@ export class FrameStore {
 
     // Frame view of center = initial center && zoom = 1
     @computed get unitFrameView(): FrameView {
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
         // Required image dimensions
-        const imageWidth = (pixelRatio * this.renderWidth) / this.aspectRatio;
-        const imageHeight = pixelRatio * this.renderHeight;
+        const imageWidth = (this.pixelRatio * this.renderWidth) / this.aspectRatio;
+        const imageHeight = this.pixelRatio * this.renderHeight;
 
         const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
         const mipExact = Math.max(1.0, mipAdjustment);
@@ -278,10 +293,9 @@ export class FrameStore {
                 };
             }
 
-            const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
             // Required image dimensions
-            const imageWidth = (pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
-            const imageHeight = (pixelRatio * this.renderHeight) / this.zoomLevel;
+            const imageWidth = (this.pixelRatio * this.renderWidth) / this.zoomLevel / this.aspectRatio;
+            const imageHeight = (this.pixelRatio * this.renderHeight) / this.zoomLevel;
 
             const mipAdjustment = PreferenceStore.Instance.lowBandwidthMode ? 2.0 : 1.0;
             const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
@@ -296,6 +310,18 @@ export class FrameStore {
                 mip: mipRoundedPow2
             };
         }
+    }
+
+    @computed get fovSize(): Point2D {
+        return {x: this.requiredFrameView?.xMax - this.requiredFrameView?.xMin, y: this.requiredFrameView?.yMax - this.requiredFrameView?.yMin};
+    }
+
+    @computed get fovSizeWCS(): WCSPoint2D {
+        const wcsSize = this.getWcsSizeInArcsec(this.fovSize);
+        if (wcsSize) {
+            return {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)};
+        }
+        return null;
     }
 
     @computed get spatialTransform() {
@@ -814,22 +840,19 @@ export class FrameStore {
     @computed
     private get calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
-        const pixelRatio = (this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0) / this.aspectRatio;
-
         if (imageWidth <= 0) {
             return 1.0;
         }
-        return (this.renderWidth * pixelRatio) / imageWidth;
+        return (this.renderWidth * this.pixelRatio) / this.aspectRatio / imageWidth;
     }
 
     @computed
     private get calculateZoomY() {
         const imageHeight = this.frameInfo.fileInfoExtended.height;
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
         if (imageHeight <= 0) {
             return 1.0;
         }
-        return (this.renderHeight * pixelRatio) / imageHeight;
+        return (this.renderHeight * this.pixelRatio) / imageHeight;
     }
 
     @computed get contourProgress(): number {
@@ -956,6 +979,16 @@ export class FrameStore {
 
     get headerRestFreq(): number {
         return this.frameInfo?.fileInfoExtended?.headerEntries?.find(entry => entry.name === "RESTFRQ")?.numericValue;
+    }
+
+    @computed get centerWCS(): WCSPoint2D {
+        // re-calculate with different wcs system
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        if (!this.wcsInfoForTransformation) {
+            return null;
+        }
+        return getFormattedWCSPoint(this.wcsInfoForTransformation, this.center);
     }
 
     constructor(frameInfo: FrameInfo) {
@@ -1485,6 +1518,8 @@ export class FrameStore {
 
     public getCursorInfo(cursorPosImageSpace: Point2D) {
         let cursorPosWCS, cursorPosFormatted;
+        let precisionX = 0;
+        let precisionY = 0;
         if (this.validWcs || this.isPVImage || this.isUVImage) {
             // We need to compare X and Y coordinates in both directions
             // to avoid a confusing drop in precision at rounding threshold
@@ -1500,9 +1535,6 @@ export class FrameStore {
             cursorPosWCS = cursorNeighbourhood[0];
 
             const normalizedNeighbourhood = cursorNeighbourhood.map(pos => AST.normalizeCoordinates(this.wcsInfo, pos.x, pos.y));
-
-            let precisionX = 0;
-            let precisionY = 0;
 
             while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
@@ -1540,7 +1572,8 @@ export class FrameStore {
             posImageSpace: cursorPosImageSpace,
             isInsideImage: isInsideImage,
             posWCS: cursorPosWCS,
-            infoWCS: cursorPosFormatted
+            infoWCS: cursorPosFormatted,
+            precision: {x: precisionX, y: precisionY}
         };
     }
 
@@ -1940,7 +1973,7 @@ export class FrameStore {
         this.setChannels(newChannel, isComputedPolarization ? this.polarizations[newStokes] : newStokes, true);
     }
 
-    @action setZoom(zoom: number, absolute: boolean = false) {
+    @action setZoom = (zoom: number, absolute: boolean = false) => {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
@@ -1950,9 +1983,37 @@ export class FrameStore {
             this.replaceZoomTimeoutHandler();
             this.zooming = true;
         }
-    }
+    };
 
-    @action setCenter(x: number, y: number, enableSpatialTransform: boolean = true) {
+    @action zoomToSizeX = (x: number): boolean => {
+        if (x > 0 && isFinite(x)) {
+            this.setZoom((this.renderWidth * this.pixelRatio) / this.aspectRatio / x);
+            return true;
+        }
+        return false;
+    };
+
+    @action zoomToSizeXWcs = (wcsX: string): boolean => {
+        return this.zoomToSizeX(this.getImageXValueFromArcsec(getValueFromArcsecString(wcsX)));
+    };
+
+    @action zoomToSizeY = (y: number): boolean => {
+        if (y > 0 && isFinite(y)) {
+            this.setZoom((this.renderHeight * this.pixelRatio) / y);
+            return true;
+        }
+        return false;
+    };
+
+    @action zoomToSizeYWcs = (wcsY: string): boolean => {
+        return this.zoomToSizeY(this.getImageYValueFromArcsec(getValueFromArcsecString(wcsY)));
+    };
+
+    @action setCenter = (x: number, y: number, enableSpatialTransform: boolean = true): boolean => {
+        if (!isFinite(x) || !isFinite(y)) {
+            return false;
+        }
+
         if (this.spatialReference) {
             let centerPointRefImage = {x, y};
             if (enableSpatialTransform) {
@@ -1961,10 +2022,26 @@ export class FrameStore {
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
             this.center = {x, y};
+            for (const frame of this.secondarySpatialImages) {
+                const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.center, false);
+                frame.center = centerPointSecondaryImage;
+            }
         }
-    }
+        return true;
+    };
 
-    @action setCursorPosition(posImageSpace: Point2D) {
+    @action setCenterWcs = (wcsX: string, wcsY: string): boolean => {
+        if (!isWCSStringFormatValid(wcsX, AppStore.Instance.overlayStore.numbers.formatTypeX) || !isWCSStringFormatValid(wcsY, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+            return false;
+        }
+        const center = getPixelValueFromWCS(this.wcsInfoForTransformation, {x: wcsX, y: wcsY});
+        if (isFinite(center?.x) && isFinite(center?.y)) {
+            return this.setCenter(center.x, center.y);
+        }
+        return false;
+    };
+
+    @action setCursorPosition = (posImageSpace: Point2D) => {
         if (this.spatialReference) {
             this.spatialReference.setCursorPosition(transformPoint(this.spatialTransformAST, posImageSpace, true));
         } else {
@@ -1977,15 +2054,15 @@ export class FrameStore {
         this.cursorMoving = true;
         clearTimeout(this.cursorMovementHandle);
         this.cursorMovementHandle = setTimeout(this.endCursorMove, FrameStore.CursorMovementDuration);
-    }
+    };
 
     @action private endCursorMove = () => {
         this.cursorMoving = false;
     };
 
-    @action setCursorValue(position: Point2D, channel: number, value: number) {
+    @action setCursorValue = (position: Point2D, channel: number, value: number) => {
         this.cursorValue = {position, channel, value};
-    }
+    };
 
     @action updateCursorRegion = (pos: Point2D) => {
         const isHoverImage = pos.x + 0.5 >= 0 && pos.x + 0.5 <= this.frameInfo.fileInfoExtended.width && pos.y + 0.5 >= 0 && pos.y + 0.5 <= this.frameInfo.fileInfoExtended.height;
@@ -2007,7 +2084,7 @@ export class FrameStore {
     };
 
     // Sets a new zoom level and pans to keep the given point fixed
-    @action zoomToPoint(x: number, y: number, zoom: number, absolute: boolean = false) {
+    @action zoomToPoint = (x: number, y: number, zoom: number, absolute: boolean = false) => {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
@@ -2015,14 +2092,11 @@ export class FrameStore {
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             if (PreferenceStore.Instance.zoomPoint === ZoomPoint.CURSOR) {
-                this.center = {
-                    x: x + (this.zoomLevel / zoom) * (this.center.x - x),
-                    y: y + (this.zoomLevel / zoom) * (this.center.y - y)
-                };
+                this.setCenter(x + (this.zoomLevel / zoom) * (this.center.x - x), y + (this.zoomLevel / zoom) * (this.center.y - y));
             }
             this.setZoom(zoom);
         }
-    }
+    };
 
     @action fitZoom = (): number => {
         if (this.spatialReference) {
@@ -2040,15 +2114,18 @@ export class FrameStore {
             const {minPoint, maxPoint} = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
             const rangeY = maxPoint.y - minPoint.y;
-            const pixelRatio = this.renderHiDPI ? devicePixelRatio * AppStore.Instance.imageRatio : 1.0;
-            const zoomX = (this.spatialReference.renderWidth * pixelRatio) / rangeX;
-            const zoomY = (this.spatialReference.renderHeight * pixelRatio) / rangeY;
+            const zoomX = (this.spatialReference.renderWidth * this.pixelRatio) / rangeX;
+            const zoomY = (this.spatialReference.renderHeight * this.pixelRatio) / rangeY;
             const zoom = Math.min(zoomX, zoomY);
             this.spatialReference.setZoom(zoom, true);
             return zoom;
         } else {
             this.zoomLevel = this.zoomLevelForFit;
             this.initCenter();
+            for (const frame of this.secondarySpatialImages) {
+                const centerPointSecondaryImage = frame.spatialTransform.transformCoordinate(this.center, false);
+                frame.center = centerPointSecondaryImage;
+            }
             return this.zoomLevel;
         }
     };
@@ -2214,6 +2291,9 @@ export class FrameStore {
             const cursorPosImage = transformPoint(this.spatialTransformAST, spatialRefCursorPos, false);
             this.cursorInfo = this.getCursorInfo(cursorPosImage);
         }
+
+        // udpate center position for setting inputs
+        this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
 
         this.spatialReference.frameRegionSet.migrateRegionsFromExistingSet(this.frameRegionSet, this.spatialTransformAST, true);
         // Remove old regions after migration
@@ -2443,5 +2523,24 @@ export class FrameStore {
 
     @action setFittingLog = (log: string) => {
         this.fittingLog = log;
+    };
+
+    @action addFittingModelImage = (frame: FrameStore) => {
+        if (frame && !this.fittingModelImage) {
+            this.fittingModelImage = frame;
+        }
+    };
+
+    @action addFittingResidualImage = (frame: FrameStore) => {
+        if (frame && !this.fittingResidualImage) {
+            this.fittingResidualImage = frame;
+        }
+    };
+
+    @action resetFitting = () => {
+        this.fittingModelImage = null;
+        this.fittingResidualImage = null;
+        this.fittingResult = "";
+        this.fittingLog = "";
     };
 }
