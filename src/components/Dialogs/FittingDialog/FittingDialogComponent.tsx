@@ -207,14 +207,14 @@ export class FittingDialogComponent extends React.Component {
                                 {this.renderLockButton(component?.amplitudeFixed, component?.toggleAmplitudeFixed)}
                             </FormGroup>
                             <FormGroup label="FWHM" inline={true} labelInfo={pixUnitString}>
-                                {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major Axis", component?.setFwhmX, component?.fwhmWcs?.x, component?.setFwhmXWcs)}
+                                {this.renderParamCoordInput(InputType.Size, component?.fwhm?.x, "Major axis", component?.setFwhmX, component?.fwhmWcs?.x, component?.setFwhmXWcs)}
                                 {this.renderLockButton(component?.fwhmFixed?.x, component?.toggleFwhmXFixed)}
-                                {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor Axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
+                                {this.renderParamCoordInput(InputType.Size, component?.fwhm?.y, "Minor axis", component?.setFwhmY, component?.fwhmWcs?.y, component?.setFwhmYWcs)}
                                 {this.renderLockButton(component?.fwhmFixed?.y, component?.toggleFwhmYFixed)}
                                 {this.renderInfoString(component?.fwhm, component?.fwhmWcs)}
                             </FormGroup>
                             <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                                {this.renderParamInput(component?.pa, "Position Angle", component?.setPa)}
+                                {this.renderParamInput(component?.pa, "Position angle", component?.setPa)}
                                 {this.renderLockButton(component?.paFixed, component?.togglePaFixed)}
                             </FormGroup>
                             <Divider />

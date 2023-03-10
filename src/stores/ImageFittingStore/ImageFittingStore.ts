@@ -127,7 +127,7 @@ export class ImageFittingStore {
         const options = closedRegions?.map(r => {
             return {value: r.regionId, label: r.nameString};
         });
-        return [{value: FOV_REGION_ID, label: "Field of View"}, {value: IMAGE_REGION_ID, label: "Image"}, ...(options ?? [])];
+        return [{value: FOV_REGION_ID, label: "Field of view"}, {value: IMAGE_REGION_ID, label: "Image"}, ...(options ?? [])];
     }
 
     // Mcholesky is not supported because it's not available in all gsl versions
