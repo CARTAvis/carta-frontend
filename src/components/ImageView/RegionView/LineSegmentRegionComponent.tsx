@@ -1,16 +1,18 @@
 import * as React from "react";
+import {Group, Line} from "react-konva";
+import {Colors} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import Konva from "konva";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Group, Line} from "react-konva";
-import Konva from "konva";
-import {CARTA} from "carta-protobuf";
-import {Colors} from "@blueprintjs/core";
+
+import {Point2D} from "models";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
-import {Point2D} from "models";
-import {add2D, average2D, closestPointOnLine, transformPoint, rotate2D, subtract2D, angle2D} from "utilities";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
+import {add2D, angle2D, average2D, closestPointOnLine, rotate2D, subtract2D, transformPoint} from "utilities";
+
 import {Anchor, NonEditableAnchor, ROTATOR_ANCHOR_HEIGHT} from "./InvariantShapes";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 
 interface LineSegmentRegionComponentProps {
     region: RegionStore;
@@ -261,7 +263,6 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         let anchors = null;
         let newAnchor = null;
         let pointArray: Array<number>;
-
         // trigger re-render when exporting images
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const imageRatio = AppStore.Instance.imageRatio;
@@ -280,7 +281,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             }
 
             // Construct anchors if region is selected
-            if (this.props.selected && this.props.listening && !region.locked) {
+            if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 anchors = controlPoints.map((p, i) => {
                     const pSecondaryImage = transformPoint(frame.spatialTransformAST, p, false);
                     const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
@@ -298,7 +299,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 }
             }
 
-            if (this.hoverIntersection && !region.locked) {
+            if (this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 const pSecondaryImage = transformPoint(frame.spatialTransformAST, this.hoverIntersection, false);
                 const pCanvasPos = transformedImageToCanvasPos(pSecondaryImage, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={pCanvasPos.x} y={pCanvasPos.y} rotation={rotation} />;
@@ -309,7 +310,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
             });
             centerPointCanvasSpace = average2D(controlPoints);
             // Construct anchors if region is selected
-            if (this.props.selected && this.props.listening && !region.locked) {
+            if (this.props.selected && this.props.listening && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 anchors = new Array<React.ReactNode>(controlPoints.length);
                 for (let i = 0; i < controlPoints.length; i++) {
                     anchors[i] = this.anchorNode(controlPoints[i].x, controlPoints[i].y, rotation, i);
@@ -326,7 +327,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
                 }
             }
 
-            if (this.hoverIntersection && !region.locked) {
+            if (this.hoverIntersection && !region.locked && !AppStore.Instance.activeFrame?.regionSet.locked) {
                 const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection, frame, this.props.layerWidth, this.props.layerHeight, this.props.stageRef.current);
                 newAnchor = <NonEditableAnchor x={anchorPositionPixelSpace.x} y={anchorPositionPixelSpace.y} rotation={rotation} />;
             }

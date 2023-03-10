@@ -1,16 +1,18 @@
 import * as React from "react";
-import classNames from "classnames";
-import {observer} from "mobx-react";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {AnchorButton, Button, DialogProps, Intent, PopoverPosition} from "@blueprintjs/core";
-import {Cell, Column, SelectionModes, Table2} from "@blueprintjs/table";
 import {MenuItem2} from "@blueprintjs/popover2";
-import {Select2, IItemRendererProps} from "@blueprintjs/select";
-import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, BrowserMode, HelpType} from "stores";
-import {POLARIZATION_LABELS, STANDARD_POLARIZATIONS} from "models/PolarizationDefinition";
-import {getHeaderNumericValue} from "utilities/wcs";
+import {IItemRendererProps, Select2} from "@blueprintjs/select";
+import {Cell, Column, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
+import classNames from "classnames";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {observer} from "mobx-react";
+
+import {DraggableDialogComponent} from "components/Dialogs";
+import {POLARIZATION_LABELS, STANDARD_POLARIZATIONS} from "models";
+import {AppStore, BrowserMode, HelpType} from "stores";
+import {getHeaderNumericValue} from "utilities";
+
 import "./StokesDialogComponent.scss";
 
 @observer

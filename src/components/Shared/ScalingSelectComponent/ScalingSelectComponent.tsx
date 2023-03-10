@@ -1,17 +1,18 @@
 import * as React from "react";
 import {Button} from "@blueprintjs/core";
-import {Select2} from "@blueprintjs/select";
 import {MenuItem2, Popover2Props} from "@blueprintjs/popover2";
-import {FrameScaling, RenderConfigStore} from "stores/Frame";
-import "./ScalingSelectComponent.scss";
-
+import {Select2} from "@blueprintjs/select";
+import gammaPng from "static/equations/gamma.png";
 // Equation PNG images
 import linearPng from "static/equations/linear.png";
 import logPng from "static/equations/log.png";
+import powerPng from "static/equations/power.png";
 import sqrtPng from "static/equations/sqrt.png";
 import squaredPng from "static/equations/squared.png";
-import gammaPng from "static/equations/gamma.png";
-import powerPng from "static/equations/power.png";
+
+import {FrameScaling, RenderConfigStore} from "stores/Frame";
+
+import "./ScalingSelectComponent.scss";
 
 interface ScalingComponentProps {
     selectedItem: FrameScaling;

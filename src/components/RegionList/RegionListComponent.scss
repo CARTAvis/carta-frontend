@@ -5,6 +5,28 @@
     height: 100%;
     user-select: none;
 
+    .bp3-popover2-target {
+        flex: none !important;
+    }
+
+    .float {
+        position: absolute;
+        right: 5px;
+        bottom: 2%;
+        opacity: 0;
+        transition: opacity ease-in-out 400ms;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+
+    &:hover {
+        .float {
+            opacity: 1;
+            transition: opacity ease-in-out 400ms;
+        }
+    }
+
     .region-editing {
     }
 

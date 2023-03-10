@@ -1,22 +1,22 @@
 import * as React from "react";
-import * as _ from "lodash";
-import * as Plotly from "plotly.js";
-import * as GSL from "gsl_wrapper";
 import Plot from "react-plotly.js";
-import {action, autorun, computed, runInAction, observable, makeObservable, reaction} from "mobx";
-import {observer} from "mobx-react";
-import {FormGroup, AnchorButton, Intent, Switch, Button, PopoverPosition, NonIdealState} from "@blueprintjs/core";
-import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
-import {Select2, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
-import FuzzySearch from "fuzzy-search";
+import {AnchorButton, Button, Colors, FormGroup, Intent, NonIdealState, PopoverPosition, Switch} from "@blueprintjs/core";
+import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
+import {IItemRendererProps, ItemPredicate, Select2} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
-import {CatalogUpdateMode, WidgetProps, AppStore, WidgetsStore, CatalogStore, CatalogProfileStore, DefaultWidgetConfig, CatalogOnlineQueryProfileStore} from "stores";
-import {CatalogPlotWidgetStore, Border, DragMode, XBorder, CatalogPlotWidgetStoreProps, CatalogWidgetStore, CatalogPlotType} from "stores/widgets";
-import {ProfilerInfoComponent, ClearableNumericInputComponent} from "components/Shared";
-import {Colors} from "@blueprintjs/core";
-import {toFixed, minMaxArray} from "utilities";
-import {TypedArray} from "utilities";
+import FuzzySearch from "fuzzy-search";
+import * as GSL from "gsl_wrapper";
+import * as _ from "lodash";
+import {action, autorun, computed, makeObservable, observable, reaction, runInAction} from "mobx";
+import {observer} from "mobx-react";
+import * as Plotly from "plotly.js";
+
+import {ClearableNumericInputComponent, ProfilerInfoComponent} from "components/Shared";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
+import {Border, CatalogPlotType, CatalogPlotWidgetStore, CatalogPlotWidgetStoreProps, CatalogWidgetStore, DragMode, XBorder} from "stores/Widgets";
+import {minMaxArray, toFixed, TypedArray} from "utilities";
+
 import "./CatalogPlotComponent.scss";
 
 @observer

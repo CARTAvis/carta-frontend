@@ -1,20 +1,24 @@
 import * as React from "react";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
-import {observer} from "mobx-react";
-import {AnchorButton, ButtonGroup, FormGroup, Intent, NonIdealState, Switch, PopoverPosition, Button} from "@blueprintjs/core";
-import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
-import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
-import {Select2, IItemRendererProps, ItemPredicate} from "@blueprintjs/select";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
-import FuzzySearch from "fuzzy-search";
+import {AnchorButton, Button, ButtonGroup, FormGroup, Intent, NonIdealState, PopoverPosition, Switch} from "@blueprintjs/core";
+import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
+import {IItemRendererProps, ItemPredicate, Select2} from "@blueprintjs/select";
+import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import * as ScrollUtils from "@blueprintjs/table/lib/esm/common/internal/scrollUtils";
 import {CARTA} from "carta-protobuf";
-import {FilterableTableComponent, FilterableTableComponentProps, ClearableNumericInputComponent} from "components/Shared";
-import {AppStore, CatalogStore, CatalogProfileStore, CatalogOnlineQueryProfileStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore, PreferenceStore, PreferenceKeys} from "stores";
-import {CatalogWidgetStore, CatalogPlotWidgetStoreProps, CatalogPlotType, CatalogSettingsTabs} from "stores/widgets";
-import {toFixed, ProcessedColumnData} from "utilities";
+import FuzzySearch from "fuzzy-search";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {ImageViewLayer} from "components";
+import {ClearableNumericInputComponent, FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
 import {AbstractCatalogProfileStore, CatalogOverlay, CatalogSystemType} from "models";
+import {AppStore, CatalogOnlineQueryProfileStore, CatalogProfileStore, CatalogStore, CatalogUpdateMode, DefaultWidgetConfig, HelpType, PreferenceKeys, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
+import {RegionMode} from "stores/Frame";
+import {CatalogPlotType, CatalogPlotWidgetStoreProps, CatalogSettingsTabs, CatalogWidgetStore} from "stores/Widgets";
+import {ProcessedColumnData, toFixed} from "utilities";
+
 import "./CatalogOverlayComponent.scss";
 
 enum HeaderTableColumnName {
@@ -457,6 +461,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const profileStore = this.profileStore;
         const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
+        const catalogStore = CatalogStore.Instance;
+        const frame = appStore.getFrame(catalogStore.getFrameIdByCatalogId(this.catalogFileId));
+
+        appStore.updateActiveLayer(ImageViewLayer.RegionMoving);
+        frame.regionSet.setMode(RegionMode.MOVING);
+
         if (profileStore && catalogWidgetStore) {
             profileStore.resetCatalogFilterRequest();
             this.resetSelectedPointIndices();

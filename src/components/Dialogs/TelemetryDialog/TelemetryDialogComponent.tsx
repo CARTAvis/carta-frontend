@@ -1,10 +1,12 @@
 import * as React from "react";
+import {Button, Classes, Dialog, Intent} from "@blueprintjs/core";
 import classNames from "classnames";
 import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, Classes, Dialog, Intent} from "@blueprintjs/core";
-import {AppStore} from "stores";
+
 import {TelemetryMode, TelemetryService} from "services";
+import {AppStore} from "stores";
+
 import "./TelemetryDialogComponent.scss";
 
 @observer

@@ -33,7 +33,7 @@
 
         .label-info-group {
             .bp4-html-select {
-                width: 150px;
+                width: 250px;
             }
 
             .label-info {
@@ -43,6 +43,25 @@
                 white-space: nowrap;
                 display: inline-block;
                 vertical-align: bottom;
+            }
+        }
+
+        .range-select {
+            display: flex;
+            flex-direction: row;
+
+            .bp3-form-group {
+                margin-right: 10px;
+                margin-bottom: 0px;
+                .bp3-label {
+                    margin: 0px;
+                    width: 3em;
+                }
+            }
+
+            .cursor-select {
+                display: flex;
+                margin-left: 5px;
             }
         }
 

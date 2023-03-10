@@ -1,13 +1,16 @@
 import * as React from "react";
-import {computed, autorun} from "mobx";
+import {FormGroup, HTMLSelect, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, Tab, Tabs} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent, SmoothingSettingsComponent} from "components/Shared";
-import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
-import {SpectralProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, DefaultWidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
+
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
+
+import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {ProfileFittingComponent} from "../ProfileFittingComponent/ProfileFittingComponent";
+
 import "./SpectralProfilerSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
@@ -29,7 +32,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             minWidth: 280,
             minHeight: 225,
             defaultWidth: 550,
-            defaultHeight: 600,
+            defaultHeight: 650,
             title: "spectral-profiler-settings",
             isCloseable: true,
             parentId: "spectal-profiler",
@@ -184,11 +187,16 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                 <SpectralSettingsComponent
                                     frame={widgetStore.effectiveFrame}
                                     onSpectralCoordinateChange={widgetStore.setSpectralCoordinate}
+                                    onSpectralCoordinateChangeSecondary={widgetStore.setSpectralCoordinateSecondary}
                                     onSpectralSystemChange={widgetStore.setSpectralSystem}
+                                    secondaryAxisCursorInfoVisible={widgetStore.secondaryAxisCursorInfoVisible}
                                     disable={widgetStore.effectiveFrame?.isPVImage}
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
                                     <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
+                                </FormGroup>
+                                <FormGroup inline={true} label={"Secondary Info"}>
+                                    <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
                                 </FormGroup>
                             </React.Fragment>
                         }

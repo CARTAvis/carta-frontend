@@ -2,8 +2,10 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {ResizeEnable, Rnd} from "react-rnd";
-import {Dialog, DialogProps, Button} from "@blueprintjs/core";
+import {Button, Dialog, DialogProps} from "@blueprintjs/core";
+
 import {HelpStore, HelpType} from "stores";
+
 import "./DraggableDialogComponent.scss";
 
 export class ResizableDialogComponentProps {

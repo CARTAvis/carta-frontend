@@ -1,8 +1,8 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {observer} from "mobx-react";
-import {Cell, Column, Table2, SelectionModes, RenderMode, RowHeaderCell2} from "@blueprintjs/table";
+import {Cell, Column, RenderMode, RowHeaderCell2, SelectionModes, Table2} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
+import {observer} from "mobx-react";
 
 export class SimpleTableComponentProps {
     dataset: Map<number, any>;
@@ -15,6 +15,7 @@ export class SimpleTableComponentProps {
     isIndexZero?: boolean;
     boldIndex?: number[];
     updateTableRef?: (ref: Table2) => void;
+    tooltipIndex?: number;
     cellRendererDependencies?: React.DependencyList;
 }
 
@@ -29,13 +30,18 @@ export class SimpleTableComponent extends React.Component<SimpleTableComponentPr
         return <RowHeaderCell2 name={index.toString()} style={this.getFontStyle(rowIndex)} />;
     };
 
+    private getTooltip = (columnData: any, columnIndex: number, rowIndex: number) => {
+        const tooltip = rowIndex < columnData?.length ? columnData[rowIndex] : undefined;
+        return typeof this.props.tooltipIndex !== "undefined" && columnIndex === this.props.tooltipIndex ? tooltip : undefined;
+    };
+
     private renderDataColumn = (columnName: string, columnData: any) => {
         return (
             <Column
                 key={columnName}
                 name={columnName}
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)}>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true} style={this.getFontStyle(rowIndex)} tooltip={this.getTooltip(columnData, columnIndex, rowIndex)}>
                         {rowIndex < columnData?.length ? columnData[rowIndex] : undefined}
                     </Cell>
                 )}

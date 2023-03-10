@@ -1,10 +1,12 @@
 import * as React from "react";
+import {DialogProps} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {DialogProps} from "@blueprintjs/core";
+
 import {DraggableDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {AppStore, HelpType} from "stores";
+
 import "./FileInfoDialogComponent.scss";
 
 @observer

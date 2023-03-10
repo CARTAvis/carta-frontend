@@ -1,10 +1,12 @@
 import * as React from "react";
+import {Classes, Intent, Overlay, Spinner} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {Classes, Intent, Overlay, Spinner} from "@blueprintjs/core";
-import {AppStore} from "stores";
+
 import {CARTA_INFO} from "models";
 import {ApiService} from "services";
+import {AppStore} from "stores";
+
 import "./SplashScreenComponent.scss";
 
 @observer
@@ -31,7 +33,7 @@ export class SplashScreenComponent extends React.Component {
                     </div>
                     {ApiService.RuntimeConfig?.dashboardAddress ? (
                         <div className="dashboard-info-div">
-                            <a href={ApiService.RuntimeConfig.apiAddress}>Connection problems? Open the CARTA dashboard</a>
+                            <a href={ApiService.RuntimeConfig.dashboardAddress}>Connection problems? Open the CARTA dashboard</a>
                         </div>
                     ) : null}
                 </div>

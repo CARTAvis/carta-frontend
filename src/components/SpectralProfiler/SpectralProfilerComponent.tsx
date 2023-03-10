@@ -1,20 +1,23 @@
 import * as React from "react";
-import * as _ from "lodash";
-import classNames from "classnames";
-import {action, autorun, computed, makeObservable, observable} from "mobx";
-import {observer} from "mobx-react";
-import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import SplitPane, {Pane} from "react-split-pane";
-import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, SmoothingType, PlotType} from "components/Shared";
+import {Colors, NonIdealState} from "@blueprintjs/core";
+import classNames from "classnames";
+import * as _ from "lodash";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
+import {Point2D, SpectralType} from "models";
+import {AnimatorStore, AppStore, DefaultWidgetConfig, FittingContinuum, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
+import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
+
 import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
+
 import {ProfileInfo, SpectralProfilerInfoComponent} from "./SpectralProfilerInfoComponent/SpectralProfilerInfoComponent";
-import {WidgetProps, HelpType, AnimatorStore, WidgetsStore, AppStore, DefaultWidgetConfig} from "stores";
-import {MultiPlotData, SpectralProfileWidgetStore} from "stores/widgets";
-import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedExponential, formattedNotation, toExponential, toFixed, getColorForTheme} from "utilities";
-import {FittingContinuum} from "./ProfileFittingComponent/ProfileFittingComponent";
+import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
+
 import "./SpectralProfilerComponent.scss";
 
 const INFO_HEIGHT_MIN = 28;
@@ -152,21 +155,51 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 33);
 
-    private genCursoInfoString = (data: Point2D[], cursorXValue: number, cursorXUnit: string, label: string): string => {
-        let cursorInfoString = undefined;
+    private precisionFormatting = (data: number, diff: number, spectralType: SpectralType): string => {
+        return spectralType === SpectralType.CHANNEL ? toFixed(data) : toFormattedNotationByDiff(data, diff);
+    };
+
+    private genCursorInfoString = (data: Point2D[], smoothedData: Point2D[], secondaryXData: number[], cursorXValue: number, cursorXUnit: string, label: string): string => {
+        const frame = this.widgetStore.effectiveFrame;
+
+        let diffLeft: number = undefined;
+        let secondaryXUnit = "";
+        let secondaryChannelString = "";
+        let cursorInfoString: string = "";
+
         const nearest = binarySearchByX(data, cursorXValue);
+        const nearestSmooth = smoothedData.length ? binarySearchByX(smoothedData, cursorXValue) : null;
         if (nearest?.point && nearest?.index >= 0 && nearest?.index < data?.length) {
-            let floatXStr = "";
-            const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
-            if (diffLeft > 0 && diffLeft < 1e-6) {
-                floatXStr = formattedNotation(nearest.point.x);
-            } else if (diffLeft >= 1e-6 && diffLeft < 1e-3) {
-                floatXStr = toFixed(nearest.point.x, 6);
-            } else {
-                floatXStr = toFixed(nearest.point.x, 3);
+            let primaryXStr: string = "";
+            let smoothedFloatXStr = "";
+            const currentIndex = nearest.index;
+            const neighborIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex + 1;
+            diffLeft = data.length === 1 ? 1e-9 : Math.abs(data[currentIndex].x - data[neighborIndex].x);
+            primaryXStr = this.precisionFormatting(data[currentIndex].x, diffLeft, frame.spectralType);
+            smoothedFloatXStr = this.precisionFormatting(nearestSmooth?.point.x, diffLeft, frame.spectralType);
+
+            let xLabel = cursorXUnit === "Channel" ? `Channel ${primaryXStr}` : `${primaryXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
+
+            if (this.widgetStore.secondaryAxisCursorInfoVisible) {
+                diffLeft = data.length === 1 ? 1e-9 : Math.abs(secondaryXData[currentIndex] - secondaryXData[neighborIndex]);
+                const secondaryXStr = this.precisionFormatting(secondaryXData[currentIndex], diffLeft, frame.spectralTypeSecondary);
+
+                if (frame.spectralTypeSecondary !== SpectralType.CHANNEL) {
+                    secondaryXUnit = frame.spectralUnitSecondary;
+                } else {
+                    secondaryChannelString = "Channel";
+                }
+
+                xLabel += secondaryChannelString === "Channel" ? `, Channel ${secondaryXStr}` : `, ${secondaryXStr}${secondaryXUnit ? ` ${secondaryXUnit}` : ""}`;
             }
-            const xLabel = cursorXUnit === "Channel" ? `Channel ${toFixed(nearest.point.x)}` : `${floatXStr}${cursorXUnit ? ` ${cursorXUnit}` : ""}`;
-            cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+            const smoothedXLabel = cursorXUnit === "Channel" ? `${cursorXUnit} ${toFixed(nearestSmooth?.point.x, 0)}` : `${smoothedFloatXStr} ${cursorXUnit}`;
+            if (nearestSmooth && this.widgetStore.smoothingStore.isOverlayOn) {
+                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)}), Smoothed: (${smoothedXLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
+            } else if (nearestSmooth) {
+                cursorInfoString = `(${smoothedXLabel}, ${toExponential(nearestSmooth.point.y, 2)})`;
+            } else {
+                cursorInfoString = `(${xLabel}, ${toExponential(nearest.point.y, 2)})`;
+            }
         }
         return `${label}: ${cursorInfoString ?? "---"}`;
     };
@@ -180,17 +213,21 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const cursorXValue = isCursorInsideLinePlots ? this.widgetStore.cursorX : this.currentChannelValue;
             const cursorXUnit = frame.spectralUnitStr;
 
-            if (this.plotData.numProfiles === 1) {
+            if (this.plotData.numProfiles === 1 && !(this.widgetStore.smoothingStore.type !== SmoothingType.NONE && this.widgetStore.smoothingStore.isOverlayOn)) {
                 // Single profile, Mean/RMS is available
                 const data = this.plotData.data[0];
-                const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
+                const smoothedData = this.plotData.smoothedData[0];
+                const secondary = this.plotData.secondaryXData[0];
+                const cursorInfoString = this.genCursorInfoString(data, smoothedData, secondary, cursorXValue, cursorXUnit, label);
                 profilerInfo.push({
                     infoString: this.isMeanRmsVisible ? `${cursorInfoString}, Mean/RMS: ${formattedExponential(this.plotData.yMean, 2)}/${formattedExponential(this.plotData.yRms, 2)}` : cursorInfoString
                 });
             } else {
                 for (let i = 0; i < this.plotData.numProfiles; i++) {
                     const data = this.plotData.data[i];
-                    const cursorInfoString = this.genCursoInfoString(data, cursorXValue, cursorXUnit, label);
+                    const smoothedData = this.plotData.smoothedData[i];
+                    const secondary = this.plotData.secondaryXData[i];
+                    const cursorInfoString = this.genCursorInfoString(data, smoothedData, secondary, cursorXValue, cursorXUnit, label);
                     profilerInfo.push({
                         color: this.plotData.colors?.[i],
                         infoString: `${cursorInfoString}, ${this.plotData.labels?.[i]?.image}, ${this.plotData.labels?.[i]?.plot}`

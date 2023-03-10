@@ -1,16 +1,17 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {makeObservable, observable} from "mobx";
 import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
-import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {RegionCoordinate, RegionStore} from "stores/Frame";
+import {CARTA} from "carta-protobuf";
+import {makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {CoordinateComponent, SafeNumericInput} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
+import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
+import {CoordinateMode, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
-import {CoordinateComponent} from "../CoordinateComponent/CoordinateComponent";
-import {SafeNumericInput} from "components/Shared";
+
 import "./PolygonRegionForm.scss";
 
 const KEYCODE_ENTER = 13;
@@ -95,11 +96,11 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
             return null;
         }
 
-        const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
+        const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         const pointRows = region.controlPoints.map((point, index) => {
             const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, point);
             let xInput, yInput;
-            if (region.coordinate === RegionCoordinate.Image) {
+            if (region.coordinate === CoordinateMode.Image) {
                 xInput = (
                     <SafeNumericInput
                         selectAllOnFocus={true}
@@ -148,7 +149,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     </Tooltip2>
                 );
             }
-            const infoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
+            const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
             return (
                 <tr key={index}>
                     <td>
@@ -177,7 +178,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>
-                                    <CoordinateComponent region={region} disableCooridnate={!this.props.wcsInfo} />
+                                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                                 </td>
                             </tr>
                             {pointRows}

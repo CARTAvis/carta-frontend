@@ -1,9 +1,11 @@
 import * as React from "react";
-import {observer} from "mobx-react";
 import {AnchorButton, Classes, DialogProps, Intent} from "@blueprintjs/core";
+import {observer} from "mobx-react";
+
 import {DraggableDialogComponent} from "components/Dialogs";
-import {DialogStore} from "stores";
 import {CARTA_INFO} from "models";
+import {DialogStore} from "stores";
+
 import "./AboutDialogComponent.scss";
 
 @observer

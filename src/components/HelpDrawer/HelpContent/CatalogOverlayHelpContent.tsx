@@ -1,10 +1,11 @@
-import {ImageComponent} from "../ImageComponent";
-import widgetButtonCatalog from "static/help/widgetButton_catalog.png";
-import widgetButtonCatalog_d from "static/help/widgetButton_catalog_d.png";
-import dialogButtonCatalogQuery from "static/help/dialogButton_catalogQuery.png";
-import dialogButtonCatalogQuery_d from "static/help/dialogButton_catalogQuery_d.png";
 import demoCatalogMarkerMapping from "static/help/demo_catalog_marker_mapping.png";
 import demoCatalogMarkerMapping_d from "static/help/demo_catalog_marker_mapping_d.png";
+import dialogButtonCatalogQuery from "static/help/dialogButton_catalogQuery.png";
+import dialogButtonCatalogQuery_d from "static/help/dialogButton_catalogQuery_d.png";
+import widgetButtonCatalog from "static/help/widgetButton_catalog.png";
+import widgetButtonCatalog_d from "static/help/widgetButton_catalog_d.png";
+
+import {ImageComponent} from "../ImageComponent";
 
 export const CATALOG_OVERLAY_HELP_CONTENT = (
     <div>

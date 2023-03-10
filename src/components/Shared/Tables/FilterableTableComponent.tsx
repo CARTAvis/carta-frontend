@@ -1,17 +1,19 @@
 import * as React from "react";
+import {Checkbox, Icon, InputGroup, Label, Position} from "@blueprintjs/core";
+import {IconName} from "@blueprintjs/icons";
+import {Tooltip2} from "@blueprintjs/popover2";
+import {Cell, Column, ColumnHeaderCell2, Region, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
+import {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
+import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {Cell, Column, Table2, SelectionModes, RenderMode, Region, ColumnHeaderCell2} from "@blueprintjs/table";
-import {RowIndices} from "@blueprintjs/table/lib/esm/common/grid";
-import {Checkbox, InputGroup, Icon, Label, Position} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
-import {IconName} from "@blueprintjs/icons";
-import {CARTA} from "carta-protobuf";
-import {AppStore, ControlHeader} from "stores";
-import {CatalogApiService} from "services";
-import {SpectralLineHeaders} from "stores/widgets";
+
 import {CatalogType} from "models";
+import {CatalogApiService} from "services";
+import {AppStore, ControlHeader} from "stores";
+import {SpectralLineHeaders} from "stores/Widgets";
 import {ProcessedColumnData} from "utilities";
+
 import "./FilterableTableComponent.scss";
 
 export type ColumnFilter = {index: number; columnFilter: string};

@@ -1,13 +1,15 @@
 import * as React from "react";
-import {computed, autorun} from "mobx";
-import {observer} from "mobx-react";
-import {Tabs, Tab, FormGroup} from "@blueprintjs/core";
+import {FormGroup, Tab, Tabs} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SmoothingSettingsComponent, SafeNumericInput} from "components/Shared";
-import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, DefaultWidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
-import {parseNumber} from "utilities";
+import {autorun, computed} from "mobx";
+import {observer} from "mobx-react";
+
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SafeNumericInput, SmoothingSettingsComponent} from "components/Shared";
 import {LineKey} from "models";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
+import {parseNumber} from "utilities";
+
 import "./SpatialProfilerSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
@@ -199,7 +201,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                         title="Computation"
                         panel={
                             <FormGroup label={"Width"} inline={true}>
-                                <SafeNumericInput min={1} max={10} stepSize={1} value={this.widgetStore.lineRegionSampleWidth} onValueChange={value => this.widgetStore.setLineRegionSampleWidth(value)} />
+                                <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.lineRegionSampleWidth} onValueChange={value => this.widgetStore.setLineRegionSampleWidth(value)} />
                             </FormGroup>
                         }
                     />

@@ -1,12 +1,14 @@
 import * as React from "react";
-import {observer} from "mobx-react";
 import Konva from "konva";
+import {observer} from "mobx-react";
+
+import {Point2D} from "models";
 import {AppStore} from "stores";
 import {FrameStore, RegionStore} from "stores/Frame";
-import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
-import {Point2D} from "models";
 import {transformPoint} from "utilities";
+
 import {Point} from "./InvariantShapes";
+import {adjustPosToUnityStage, canvasToTransformedImagePos, transformedImageToCanvasPos} from "./shared";
 
 interface PointRegionComponentProps {
     region: RegionStore;
@@ -60,7 +62,6 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     public render() {
         const region = this.props.region;
         const frame = this.props.frame;
-
         let centerPixelSpace: Point2D;
         let rotation: number;
 
@@ -84,7 +85,8 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                 y={centerPixelSpace.y}
                 rotation={rotation}
                 color={region.color}
-                opacity={this.props.selected ? 1 : 0}
+                opacity={region.locked ? 0.7 : 1}
+                selectionOpacity={region.locked ? 0 : this.props.selected ? 1 : 0}
                 listening={!region.locked}
                 onDragStart={this.handleDragStart}
                 onDragEnd={this.handleDragEnd}

@@ -1,7 +1,8 @@
 import * as React from "react";
-import {observer} from "mobx-react";
 import {MenuDivider} from "@blueprintjs/core";
 import {MenuItem2} from "@blueprintjs/popover2";
+import {observer} from "mobx-react";
+
 import {AppStore} from "stores";
 
 @observer

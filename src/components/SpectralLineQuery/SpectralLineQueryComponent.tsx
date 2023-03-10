@@ -1,16 +1,19 @@
 import * as React from "react";
-import classNames from "classnames";
-import {action, computed, makeObservable, observable} from "mobx";
-import {observer} from "mobx-react";
+import ReactResizeDetector from "react-resize-detector";
+import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, Overlay, Position, Spinner, Switch} from "@blueprintjs/core";
 import {MenuItem2, Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table2} from "@blueprintjs/table";
-import SplitPane, {Pane} from "react-split-pane";
-import ReactResizeDetector from "react-resize-detector";
-import {SafeNumericInput, FilterableTableComponent, FilterableTableComponentProps} from "components/Shared";
+import classNames from "classnames";
+import {action, computed, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {FilterableTableComponent, FilterableTableComponentProps, SafeNumericInput} from "components/Shared";
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {RedshiftType, SpectralLineHeaders, SpectralLineQueryRangeType, SpectralLineQueryUnit, SpectralLineQueryWidgetStore, SplataloguePingStatus} from "stores/Widgets";
+
 import {SpectralLineQuerySplashScreenComponent} from "./SpectralLineQuerySplashScreenComponent";
-import {AppStore, HelpType, DefaultWidgetConfig, WidgetProps, WidgetsStore} from "stores";
-import {RedshiftType, SpectralLineHeaders, SpectralLineQueryWidgetStore, SpectralLineQueryRangeType, SpectralLineQueryUnit, SplataloguePingStatus} from "stores/widgets";
+
 import "./SpectralLineQueryComponent.scss";
 
 enum HeaderTableColumnName {

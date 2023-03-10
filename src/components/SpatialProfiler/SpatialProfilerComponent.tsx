@@ -1,19 +1,22 @@
 import * as React from "react";
-import * as _ from "lodash";
+import ReactResizeDetector from "react-resize-detector";
+import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import {Tick} from "chart.js";
+import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, FormGroup, HTMLSelect, NonIdealState} from "@blueprintjs/core";
-import {Tick} from "chart.js";
-import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, VERTICAL_RANGE_PADDING, SmoothingType} from "components/Shared";
-import {TickType, MultiPlotProps} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, RegionSelectorComponent, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, ASTSettingsString, DefaultWidgetConfig, HelpType, OverlayStore, SpatialProfileStore, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {RegionId, SpatialProfileWidgetStore} from "stores/widgets";
-import {Point2D, POLARIZATIONS} from "models";
-import {binarySearchByX, clamp, formattedExponential, transformPoint, toFixed, getColorForTheme} from "utilities";
+import {RegionId, SpatialProfileWidgetStore} from "stores/Widgets";
+import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toFixed, transformPoint} from "utilities";
+
+import {MultiPlotProps, TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+
 import "./SpatialProfilerComponent.scss";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -73,7 +76,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
     }
 
-    @computed get plotData(): {values: Array<Point2D>; fullResolutionValues: Array<Point2D>; smoothingValues: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number; yMean: number; yRms: number} {
+    @computed get plotData(): {
+        values: Array<Point2D>;
+        fullResolutionValues: Array<Point2D>;
+        smoothingValues: Array<Point2D>;
+        xMin: number;
+        xMax: number;
+        yMin: number;
+        yMax: number;
+        yMean: number;
+        yRms: number;
+        ySmoothedMean: number;
+        ySmoothedRms: number;
+    } {
         if (!this.frame || !this.width || !this.profileStore) {
             return null;
         }
@@ -109,6 +124,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let yMax = -Number.MAX_VALUE;
             let yMean;
             let yRms;
+            let ySmoothedMean = undefined;
+            let ySmoothedRms = undefined;
 
             // Variables for mean and RMS calculations
             let ySum = 0;
@@ -230,7 +247,27 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
 
-            return {values: values, fullResolutionValues, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms};
+            // Variables for smoothed mean and RMS calculations
+            if (smoothingValues && this.widgetStore.smoothingStore.type !== SmoothingType.NONE) {
+                let ySmoothedSum = 0;
+                let ySmoothedSum2 = 0;
+                let ySmoothedCount = 0;
+                for (let i = 0; i < smoothingValues.length; i++) {
+                    const ySmoothed = smoothingValues[i].y;
+                    if (isFinite(ySmoothed)) {
+                        ySmoothedCount++;
+                        ySmoothedSum += ySmoothed;
+                        ySmoothedSum2 += ySmoothed * ySmoothed;
+                    }
+                }
+
+                if (ySmoothedCount > 0) {
+                    ySmoothedMean = ySmoothedSum / ySmoothedCount;
+                    ySmoothedRms = Math.sqrt(ySmoothedSum2 / ySmoothedCount - ySmoothedMean * ySmoothedMean);
+                }
+            }
+
+            return {values: values, fullResolutionValues, smoothingValues, xMin, xMax, yMin, yMax, yMean, yRms, ySmoothedMean, ySmoothedRms};
         }
     }
 
@@ -250,6 +287,30 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             const min = lineAxis.axisType === CARTA.ProfileAxisType.Offset ? (0 - lineAxis.crpix) * lineAxis.cdelt : 0;
             const max = lineAxis.axisType === CARTA.ProfileAxisType.Offset ? (coordinateData.end - lineAxis.crpix) * lineAxis.cdelt : coordinateData.end * lineAxis.cdelt;
             return {label: lineAxis.axisType === CARTA.ProfileAxisType.Offset ? "Offset" : "Distance", min, max, unit: lineAxis.unit};
+        }
+        return null;
+    }
+
+    @computed get nearestCursorPoint(): Point2D {
+        if (this.widgetStore.isMouseMoveIntoLinePlots) {
+            return binarySearchByX(this.plotData.values, this.widgetStore.cursorX)?.point ?? null;
+        }
+        return null;
+    }
+
+    @computed get pointInfo(): {
+        posImageSpace: Point2D;
+        posWCS: any;
+        infoWCS: any;
+        precision: Point2D;
+    } {
+        if (this.plotData) {
+            if (this.nearestCursorPoint) {
+                const pixelPoint = this.widgetStore.isXProfile ? {x: this.nearestCursorPoint.x, y: this.profileStore.y} : {x: this.profileStore.x, y: this.nearestCursorPoint.x};
+                return this.frame.getCursorInfo(pixelPoint);
+            } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
+                return this.frame.getCursorInfo(this.widgetStore.effectiveRegion.center);
+            }
         }
         return null;
     }
@@ -356,7 +417,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         if (decimalIndex === -1) {
             return;
         }
-        const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex;
+        const pointInfoPrecision = this.widgetStore.isXProfile ? this.pointInfo?.precision.x : this.pointInfo?.precision.y;
+        // Skip lists with no more decimals than pointInfo
+        if (this.cachedFormattedCoordinates[0].length - decimalIndex - 1 <= pointInfoPrecision) {
+            return;
+        }
+        // Start trimming from the next digit of pointInfo to avoid offset between pointInfo and upper wcs axis value
+        const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex - 1 - (pointInfoPrecision + 1);
         for (let trim = initialTrimLength; trim > 0; trim--) {
             let trimmedArray = this.cachedFormattedCoordinates.slice();
             for (let i = 0; i < trimmedArray.length; i++) {
@@ -365,10 +432,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (!SpatialProfilerComponent.hasRepeats(trimmedArray)) {
                 this.cachedFormattedCoordinates = trimmedArray;
                 return;
-            }
-            // Skip an extra character after the first check, because of the decimal indicator
-            if (trim === initialTrimLength) {
-                trim--;
             }
         }
     }
@@ -403,33 +466,68 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
         if (this.plotData) {
-            const isXCoordinate = this.widgetStore.coordinate.indexOf("x") >= 0;
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
                 // handle the value when cursor is in profiler
-                const nearest = binarySearchByX(this.plotData.values, this.widgetStore.cursorX);
-                if (nearest?.point) {
-                    const pixelPoint = isXCoordinate ? {x: nearest.point.x, y: this.profileStore.y} : {x: this.profileStore.x, y: nearest.point.x};
-                    const cursorInfo = this.frame.getCursorInfo(pixelPoint);
-                    const wcsLabel = cursorInfo?.infoWCS && !this.lineAxis ? `WCS: ${isXCoordinate ? cursorInfo.infoWCS.x : cursorInfo.infoWCS.y}, ` : "";
-                    const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(nearest.point.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${nearest.point.x} px, `;
-                    const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
-                    profilerInfo.push("Cursor: (" + wcsLabel + xLabel + valueLabel + ")");
+                if (this.pointInfo && this.nearestCursorPoint) {
+                    const wcsLabel = this.pointInfo?.infoWCS && !this.lineAxis ? `WCS: ${this.widgetStore.isXProfile ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
+                    const xLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(this.nearestCursorPoint.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${this.nearestCursorPoint.x} px, `;
+                    const valueLabel = `${this.nearestCursorPoint.y !== undefined ? formattedExponential(this.nearestCursorPoint.y, 5) : ""}`;
+
+                    const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues);
+
+                    if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
+                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
+                    } else if (smoothedProfilerInfo) {
+                        profilerInfo.push(`Cursor: (${smoothedProfilerInfo})`);
+                    } else {
+                        profilerInfo.push(`Cursor: (${wcsLabel}${xLabel}${valueLabel})`);
+                    }
                 }
             } else if (this.widgetStore.effectiveRegion?.regionType === CARTA.RegionType.POINT) {
                 // get value directly from point region
-                const pointRegionInfo = this.frame.getCursorInfo(this.widgetStore.effectiveRegion.center);
-                if (pointRegionInfo?.posImageSpace) {
-                    const wcsLabel = pointRegionInfo?.infoWCS ? `WCS: ${isXCoordinate ? pointRegionInfo.infoWCS.x : pointRegionInfo.infoWCS.y}, ` : "";
-                    const imageLabel = `Image: ${toFixed(isXCoordinate ? pointRegionInfo.posImageSpace.x : pointRegionInfo.posImageSpace.y)} px, `;
+                if (this.pointInfo?.posImageSpace) {
+                    const wcsLabel = this.pointInfo?.infoWCS ? `WCS: ${this.widgetStore.isXProfile ? this.pointInfo.infoWCS.x : this.pointInfo.infoWCS.y}, ` : "";
+                    const imageLabel = `Image: ${toFixed(this.widgetStore.isXProfile ? this.pointInfo.posImageSpace.x : this.pointInfo.posImageSpace.y)} px, `;
                     const valueLabel = `${this.profileStore?.value !== undefined ? formattedExponential(this.profileStore.value, 5) : ""}`;
-                    profilerInfo.push("Data: (" + wcsLabel + imageLabel + valueLabel + ")");
+
+                    const smoothedProfilerInfo = this.genSmoothedProfilerInfo(this.plotData?.smoothingValues, this.profileStore.x);
+
+                    if (smoothedProfilerInfo && this.widgetStore.smoothingStore.isOverlayOn) {
+                        profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel}, Smoothed: ${smoothedProfilerInfo})`);
+                    } else if (smoothedProfilerInfo) {
+                        profilerInfo.push(`Data: (${smoothedProfilerInfo})`);
+                    } else {
+                        profilerInfo.push(`Data: (${wcsLabel}${imageLabel}${valueLabel})`);
+                    }
                 }
             }
             if (this.widgetStore.meanRmsVisible) {
-                profilerInfo.push(`Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
+                if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
+                    profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.yMean, 2) + " / " + formattedExponential(this.plotData.yRms, 2)}`);
+                } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
+                    profilerInfo.push(` Mean/RMS: ${formattedExponential(this.plotData.ySmoothedMean, 2) + " / " + formattedExponential(this.plotData.ySmoothedRms, 2)}`);
+                }
             }
         }
         return profilerInfo;
+    };
+
+    private genSmoothedProfilerInfo = (smoothedData: Point2D[], pointXValue?: number): string => {
+        let profilerInfo = "";
+        const nearest = binarySearchByX(smoothedData, pointXValue ?? this.widgetStore.cursorX);
+        const smoothedXLabel = this.lineAxis ? `${this.lineAxis.label}: ${formattedExponential(nearest?.point?.x, 5)} ${this.lineAxis.unit ?? ""}, ` : `Image: ${nearest?.point?.x} px, `;
+
+        if (pointXValue) {
+            profilerInfo += formattedExponential(nearest?.point?.y, 5);
+        } else {
+            // handle the value when cursor is in profiler
+            if (nearest?.point) {
+                const valueLabel = `${nearest.point.y !== undefined ? formattedExponential(nearest.point.y, 5) : ""}`;
+                profilerInfo += valueLabel;
+            }
+        }
+
+        return nearest && `${smoothedXLabel}${profilerInfo}`;
     };
 
     onGraphCursorMoved = _.throttle(x => {
@@ -484,11 +582,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 if (!this.widgetStore.isLineOrPolyline) {
+                    linePlotProps.showTopAxis = true;
                     if (this.frame.validWcs && widgetStore.wcsAxisVisible) {
-                        linePlotProps.showTopAxis = true;
                         linePlotProps.topAxisTickFormatter = this.formatProfileAst;
-                    } else {
-                        linePlotProps.showTopAxis = false;
                     }
                 }
 
@@ -568,24 +664,45 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 });
 
                 if (widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
-                    linePlotProps.markers.push({
-                        value: currentPlotData.yMean,
-                        id: "marker-mean",
-                        draggable: false,
-                        horizontal: true,
-                        color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
-                        dash: [5]
-                    });
+                    if (this.widgetStore.smoothingStore.type === SmoothingType.NONE) {
+                        linePlotProps.markers.push({
+                            value: currentPlotData.yMean,
+                            id: "marker-mean",
+                            draggable: false,
+                            horizontal: true,
+                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                            dash: [5]
+                        });
 
-                    linePlotProps.markers.push({
-                        value: currentPlotData.yMean,
-                        id: "marker-rms",
-                        draggable: false,
-                        horizontal: true,
-                        width: currentPlotData.yRms,
-                        opacity: 0.2,
-                        color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
-                    });
+                        linePlotProps.markers.push({
+                            value: currentPlotData.yMean,
+                            id: "marker-rms",
+                            draggable: false,
+                            horizontal: true,
+                            width: currentPlotData.yRms,
+                            opacity: 0.2,
+                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                        });
+                    } else if (!this.widgetStore.smoothingStore.isOverlayOn) {
+                        linePlotProps.markers.push({
+                            value: currentPlotData.ySmoothedMean,
+                            id: "marker-smoothed-mean",
+                            draggable: false,
+                            horizontal: true,
+                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                            dash: [5]
+                        });
+
+                        linePlotProps.markers.push({
+                            value: currentPlotData.ySmoothedMean,
+                            id: "marker-smoothed-rms",
+                            draggable: false,
+                            horizontal: true,
+                            width: currentPlotData.ySmoothedRms,
+                            opacity: 0.2,
+                            color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                        });
+                    }
                 }
 
                 // TODO: Get comments from region info, rather than directly from cursor position

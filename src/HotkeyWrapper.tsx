@@ -1,10 +1,11 @@
 import * as React from "react";
+import {Classes, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import classNames from "classnames";
 import {observer} from "mobx-react";
-import {Classes, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
-import {AppStore, BrowserMode} from "./stores";
-import {RegionMode} from "stores/Frame";
+
 import {ImageViewLayer} from "components";
+import {AppStore, BrowserMode} from "stores";
+import {RegionMode} from "stores/Frame";
 
 // There are some issues with the Blueprint hotkey target decorator, so this rather hacky workaround is needed for now
 // Once the issues are fixed, the decorator can be used and the functions can be made non-static
@@ -149,7 +150,8 @@ export class HotkeyContainer extends React.Component {
 
         const otherHotKeys = [
             <Hotkey key={0} group={otherGroupTitle} global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={HotkeyContainer.ToggleDarkTheme} />,
-            <Hotkey key={1} group={otherGroupTitle} global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen} />
+            <Hotkey key={1} group={otherGroupTitle} global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen} />,
+            <Hotkey key={2} group={otherGroupTitle} global={true} combo="G" label="Mirror cursor on multipanel view" onKeyDown={appStore.toggleCursorMirror} />
         ];
 
         return (

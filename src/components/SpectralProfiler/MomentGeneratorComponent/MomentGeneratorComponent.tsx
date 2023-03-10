@@ -1,14 +1,16 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {CARTA} from "carta-protobuf";
-import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, Position} from "@blueprintjs/core";
+import {AnchorButton, Button, Divider, FormGroup, HTMLSelect, Position, Switch} from "@blueprintjs/core";
 import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
 import {ItemPredicate, ItemRenderer, MultiSelect2} from "@blueprintjs/select";
+import {CARTA} from "carta-protobuf";
+import {observer} from "mobx-react";
+
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
-import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/widgets";
-import {AppStore} from "stores";
 import {MOMENT_TEXT} from "models";
+import {AppStore} from "stores";
+import {MomentSelectingMode, SpectralProfileWidgetStore} from "stores/Widgets";
+
 import "./MomentGeneratorComponent.scss";
 
 const MomentMultiSelect = MultiSelect2.ofType<CARTA.Moment>();
@@ -236,6 +238,15 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                                 minimal: true
                             },
                             rightElement: <Button icon="cross" minimal={true} onClick={this.handleMomentsClear} />
+                        }}
+                    />
+                </FormGroup>
+                <Divider />
+                <FormGroup inline={true} label={"Keep previous Moment Image"}>
+                    <Switch
+                        onChange={event => {
+                            const e = event.target as HTMLInputElement;
+                            widgetStore.setKeep(e.checked);
                         }}
                     />
                 </FormGroup>

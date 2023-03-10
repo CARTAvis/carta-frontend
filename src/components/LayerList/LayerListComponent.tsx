@@ -1,15 +1,17 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {action, makeObservable, observable} from "mobx";
-import {observer} from "mobx-react";
+import ReactResizeDetector from "react-resize-detector";
 import {AnchorButton, Menu, MenuDivider, NonIdealState} from "@blueprintjs/core";
 import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
-import {Cell, Column, RowHeaderCell2, SelectionModes, Table2, IMenuContext, ColumnHeaderCell2} from "@blueprintjs/table";
+import {Cell, Column, ColumnHeaderCell2, IMenuContext, RowHeaderCell2, SelectionModes, Table2} from "@blueprintjs/table";
 import classNames from "classnames";
-import ReactResizeDetector from "react-resize-detector";
-import {DefaultWidgetConfig, WidgetProps, HelpType, AppStore} from "stores";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps} from "stores";
 import {FrameStore} from "stores/Frame";
-import {LayerListSettingsTabs} from "stores/widgets";
+import {LayerListSettingsTabs} from "stores/Widgets";
+
 import "./LayerListComponent.scss";
 
 @observer
@@ -76,7 +78,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const className = classNames("row-cell", {active: rowIndex === appStore.activeFrameIndex});
 
         return (
-            <Cell className={className}>
+            <Cell className={className} tooltip={frame.filename}>
                 <React.Fragment>
                     <div className="name-cell" onClick={() => this.onFileSelected(frame)}>
                         {frame.filename}

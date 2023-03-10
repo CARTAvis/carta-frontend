@@ -1,16 +1,17 @@
 import * as React from "react";
+import {AnchorButton, Button, DialogProps, FormGroup, Icon, InputGroup, Intent, NonIdealState, Overlay, PopoverPosition, Position, Spinner} from "@blueprintjs/core";
+import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
+import {IItemRendererProps, MultiSelect2, Select2} from "@blueprintjs/select";
+import FuzzySearch from "fuzzy-search";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, FormGroup, DialogProps, Intent, InputGroup, NonIdealState, Overlay, Spinner, Icon, Position, PopoverPosition} from "@blueprintjs/core";
-import {MultiSelect2} from "@blueprintjs/select";
-import {MenuItem2, Tooltip2} from "@blueprintjs/popover2";
-import {IItemRendererProps, Select2} from "@blueprintjs/select";
-import FuzzySearch from "fuzzy-search";
-import {AppStore, CatalogOnlineQueryConfigStore, HelpType, RadiusUnits, SystemType, NUMBER_FORMAT_LABEL, VizierItem} from "stores";
+
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
+import {AppStore, CatalogOnlineQueryConfigStore, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+
 import "./CatalogOnlineQueryDialogComponent.scss";
 
 const KEYCODE_ENTER = 13;

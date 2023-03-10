@@ -1,6 +1,7 @@
-import axios, {AxiosInstance} from "axios";
 import Ajv from "ajv";
+import axios, {AxiosInstance} from "axios";
 import {action, computed, makeObservable, observable} from "mobx";
+
 import {AppToaster} from "components/Shared";
 import {LayoutConfig, Snippet} from "models";
 
@@ -25,7 +26,7 @@ export class ApiService {
         return ApiService.staticInstance;
     }
 
-    public static RuntimeConfig: RuntimeConfig;
+    public static RuntimeConfig: RuntimeConfig = {};
 
     public static SetRuntimeConfig(data: any) {
         console.log("Setting runtime config");
@@ -184,10 +185,18 @@ export class ApiService {
         if (ApiService.RuntimeConfig.googleClientId) {
             this.authInstance?.signOut();
         } else if (ApiService.RuntimeConfig.logoutAddress) {
+            // The controller will assume an existing login session exists if this exists
+            localStorage.removeItem("authenticationType");
             try {
                 await this.axiosInstance.post(ApiService.RuntimeConfig.logoutAddress);
             } catch (err) {
-                console.log(err);
+                if (err.response.status === 404) {
+                    // OIDC logout requires GET for logout vs POST for other mechanisms
+                    window.open(ApiService.RuntimeConfig.logoutAddress, "_self");
+                    return; // avoid later potential dashboard redirect
+                } else {
+                    console.log(err);
+                }
             }
         }
         // Redirect to dashboard URL if it exists

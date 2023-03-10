@@ -1,13 +1,16 @@
 import * as React from "react";
-import {observer} from "mobx-react";
-import {action, makeObservable, observable} from "mobx";
-import {AnchorButton, Classes, Dialog, FormGroup, HTMLSelect, Icon, DialogProps, Intent, NonIdealState, Position, Pre, Slider, Tab, Tabs, Text} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Classes, DialogProps, FormGroup, HTMLSelect, Intent, NonIdealState, Position, Pre, Slider, Switch, Tab, Tabs, Text} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
-import {AppStore, HelpType} from "stores";
-import {DraggableDialogComponent} from "components/Dialogs";
+import {action, makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
+import {AppStore, HelpType} from "stores";
+import {exportTxtFile, getTimestamp} from "utilities";
+
 import "./FittingDialogComponent.scss";
 
 enum FittingResultTabs {
@@ -18,9 +21,18 @@ enum FittingResultTabs {
 @observer
 export class FittingDialogComponent extends React.Component {
     @observable private fittingResultTabId: FittingResultTabs;
+    @observable isMouseEntered: boolean = false;
 
     @action private setFittingResultTabId = (tabId: FittingResultTabs) => {
         this.fittingResultTabId = tabId;
+    };
+
+    @action onMouseEnter = () => {
+        this.isMouseEntered = true;
+    };
+
+    @action onMouseLeave = () => {
+        this.isMouseEntered = false;
     };
 
     constructor(props: any) {
@@ -29,8 +41,25 @@ export class FittingDialogComponent extends React.Component {
         this.fittingResultTabId = FittingResultTabs.RESULT;
     }
 
-    private renderParamInput = (value: number, placeholder: string, onValueChange) => {
-        return <SafeNumericInput value={isFinite(value) ? value : ""} placeholder={placeholder} onValueChange={onValueChange} buttonPosition="none" />;
+    private renderParamInput = (value: number, placeholder: string, onValueChange, fixed: boolean, toggleFixed) => {
+        return (
+            <>
+                <SafeNumericInput value={isFinite(value) ? value : ""} placeholder={placeholder} onValueChange={onValueChange} buttonPosition="none" />
+                <AnchorButton className="lock-button" onClick={toggleFixed} icon={fixed ? "lock" : "unlock"} />
+            </>
+        );
+    };
+
+    private exportResult = () => {
+        const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingResult;
+        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Result`;
+        exportTxtFile(fileName, content);
+    };
+
+    private exportFullLog = () => {
+        const content = AppStore.Instance.imageFittingStore.effectiveFrame?.fittingLog;
+        const fileName = `${AppStore.Instance.imageFittingStore.effectiveFrame?.filename}-${getTimestamp()}-2D_Fitting_Full_Log`;
+        exportTxtFile(fileName, content);
     };
 
     render() {
@@ -51,7 +80,7 @@ export class FittingDialogComponent extends React.Component {
 
         if (!appStore || appStore.frameNum <= 0 || !fittingStore.effectiveFrame) {
             return (
-                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={200} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
             );
@@ -60,17 +89,31 @@ export class FittingDialogComponent extends React.Component {
         const fittingResultPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="fitting-result-text">{fittingStore.effectiveFrame?.fittingResult ?? ""}</Text>
+                {fittingStore.effectiveFrame?.fittingResult !== "" && (
+                    <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingResult !== "" ? 1 : 0}}>
+                        <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
+                            <AnchorButton icon="th" onClick={this.exportResult}></AnchorButton>
+                        </Tooltip2>
+                    </ButtonGroup>
+                )}
             </Pre>
         );
 
         const fullLogPanel = (
             <Pre className="fitting-result-pre">
                 <Text className="log-text">{fittingStore.effectiveFrame?.fittingLog ?? ""}</Text>
+                {fittingStore.effectiveFrame?.fittingLog !== "" && (
+                    <ButtonGroup className="output-button" style={{opacity: this.isMouseEntered && fittingStore.effectiveFrame.fittingLog !== "" ? 1 : 0}}>
+                        <Tooltip2 content={"Export as txt"} position={Position.LEFT}>
+                            <AnchorButton icon="th" onClick={this.exportFullLog}></AnchorButton>
+                        </Tooltip2>
+                    </ButtonGroup>
+                )}
             </Pre>
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={200} minHeight={140} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={200} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup label="Data Source" inline={true}>
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
@@ -98,45 +141,47 @@ export class FittingDialogComponent extends React.Component {
                         )}
                     </FormGroup>
                     <FormGroup label="Center" inline={true} labelInfo="(px)">
-                        {this.renderParamInput(component?.center?.x, "Center X", component?.setCenterX)}
-                        {this.renderParamInput(component?.center?.y, "Center Y", component?.setCenterY)}
+                        {this.renderParamInput(component?.center?.x, "Center X", component?.setCenterX, component?.centerFixed?.x, component?.toggleCenterXFixed)}
+                        {this.renderParamInput(component?.center?.y, "Center Y", component?.setCenterY, component?.centerFixed?.y, component?.toggleCenterYFixed)}
                     </FormGroup>
                     <FormGroup label="Amplitude" inline={true} labelInfo={fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : ""}>
-                        {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude)}
+                        {this.renderParamInput(component?.amplitude, "Amplitude", component?.setAmplitude, component?.amplitudeFixed, component?.toggleAmplitudeFixed)}
                     </FormGroup>
                     <FormGroup label="FWHM" inline={true} labelInfo="(px)">
-                        {this.renderParamInput(component?.fwhm?.x, "Major Axis", component?.setFwhmX)}
-                        {this.renderParamInput(component?.fwhm?.y, "Minor Axis", component?.setFwhmY)}
+                        {this.renderParamInput(component?.fwhm?.x, "Major Axis", component?.setFwhmX, component?.fwhmFixed?.x, component?.toggleFwhmXFixed)}
+                        {this.renderParamInput(component?.fwhm?.y, "Minor Axis", component?.setFwhmY, component?.fwhmFixed?.y, component?.toggleFwhmYFixed)}
                     </FormGroup>
                     <FormGroup label="P.A." inline={true} labelInfo="(deg)">
-                        {this.renderParamInput(component?.pa, "Position Angle", component?.setPa)}
+                        {this.renderParamInput(component?.pa, "Position Angle", component?.setPa, component?.paFixed, component?.togglePaFixed)}
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
+                        <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
                         <Tooltip2 content="Clear fitting parameters." position={Position.BOTTOM}>
                             <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
                         </Tooltip2>
-                        <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM}>
+                        <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} />
                         </Tooltip2>
                     </div>
                 </div>
-                <div className={classNames(Classes.DIALOG_BODY, "fitting-result")}>
+                <div className={classNames(Classes.DIALOG_BODY, "fitting-result")} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                     <Tabs id="fittingResultTabs" vertical={true} selectedTabId={this.fittingResultTabId} onChange={this.setFittingResultTabId}>
                         <Tab id={FittingResultTabs.RESULT} title="Fitting Result" panel={fittingResultPanel} />
                         <Tab id={FittingResultTabs.LOG} title="Full Log" panel={fullLogPanel} />
                     </Tabs>
                 </div>
-                <Dialog className={classNames(Classes.ALERT, {"bp4-dark": appStore.darkTheme})} isOpen={fittingStore.isFitting}>
-                    <div className={Classes.ALERT_BODY}>
-                        <Icon icon="time" iconSize={40} />
-                        <div className={Classes.ALERT_CONTENTS}>
-                            <p>Image fitting processing ...</p>
-                            <p>Calculation may take a long time, depending on the size of the file and the number of Gaussian components.</p>
-                        </div>
-                    </div>
-                </Dialog>
+                <TaskProgressDialogComponent
+                    isOpen={fittingStore.isFitting}
+                    progress={fittingStore?.progress ?? 0}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={true}
+                    onCancel={fittingStore.cancelFitting}
+                    text={"Image fitting processing"}
+                    isCancelling={fittingStore.isCancelling}
+                />
             </DraggableDialogComponent>
         );
     }

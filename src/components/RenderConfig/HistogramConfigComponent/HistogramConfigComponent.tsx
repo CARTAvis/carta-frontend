@@ -1,12 +1,13 @@
 import * as React from "react";
-import {makeObservable, observable} from "mobx";
-import {observer} from "mobx-react";
 import {Alert, Button, FormGroup} from "@blueprintjs/core";
 import {MenuItem2} from "@blueprintjs/popover2";
 import {Select2} from "@blueprintjs/select";
+import {makeObservable, observable} from "mobx";
+import {observer} from "mobx-react";
+
+import {SCALING_POPOVER_PROPS} from "components/Shared";
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/Frame";
-import {SCALING_POPOVER_PROPS} from "components/Shared";
 
 const HistogramSelect = Select2.ofType<boolean>();
 

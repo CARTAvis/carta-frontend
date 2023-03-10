@@ -1,16 +1,19 @@
 import * as React from "react";
-import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, OptionProps} from "@blueprintjs/core";
-import {FrameStore} from "stores/Frame";
+import {observer} from "mobx-react";
+
 import {SpectralSystem} from "models";
+import {FrameStore} from "stores/Frame";
 
 @observer
 export class SpectralSettingsComponent extends React.Component<{
     frame: FrameStore;
     onSpectralCoordinateChange: (cooridnate: string) => void;
+    onSpectralCoordinateChangeSecondary?: (cooridnate: string) => void;
     onSpectralSystemChange: (system: string) => void;
     disable: boolean;
     disableChannelOption?: boolean;
+    secondaryAxisCursorInfoVisible?: boolean;
 }> {
     render() {
         const frame = this.props.frame;
@@ -36,15 +39,26 @@ export class SpectralSettingsComponent extends React.Component<{
                         disabled={disableCoordinateSetting}
                         value={frame && frame.spectralCoordinate ? frame.spectralCoordinate : ""}
                         options={spectralCoordinateOptions}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralCoordinateChange(event.currentTarget.value as string)}
+                        onChange={event => this.props.onSpectralCoordinateChange(event.currentTarget.value as string)}
                     />
                 </FormGroup>
+                {this.props.secondaryAxisCursorInfoVisible && (
+                    <FormGroup label={"Secondary Coordinate"} inline={true} disabled={disableCoordinateSetting}>
+                        <HTMLSelect
+                            disabled={disableCoordinateSetting}
+                            value={frame && frame.spectralCoordinateSecondary ? frame.spectralCoordinateSecondary : ""}
+                            options={spectralCoordinateOptions}
+                            onChange={event => this.props.onSpectralCoordinateChangeSecondary(event.currentTarget.value as string)}
+                        />
+                    </FormGroup>
+                )}
+
                 <FormGroup label={"System"} inline={true} disabled={disableSystemSetting}>
                     <HTMLSelect
                         disabled={disableSystemSetting}
                         value={frame && frame.spectralSystem ? frame.spectralSystem : ""}
                         options={spectralSystemOptions}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => this.props.onSpectralSystemChange(event.currentTarget.value as SpectralSystem)}
+                        onChange={event => this.props.onSpectralSystemChange(event.currentTarget.value as SpectralSystem)}
                     />
                 </FormGroup>
             </React.Fragment>
