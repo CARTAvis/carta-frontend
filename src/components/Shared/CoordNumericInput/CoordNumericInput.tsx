@@ -61,10 +61,10 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
     let placeholder = "";
     switch (inputType) {
         case InputType.XCoord:
-            placeholder = "X WCS Coordinate";
+            placeholder = "X WCS coordinate";
             break;
         case InputType.YCoord:
-            placeholder = "Y WCS Coordinate";
+            placeholder = "Y WCS coordinate";
             break;
         default:
             break;

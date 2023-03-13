@@ -220,7 +220,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
 
         return (
             <div className="profile-fitting-panel">
-                <Tooltip2 disabled={!disabled} content={"Profile fitting is not available when there are multiple profiles in the plot."}>
+                <Tooltip2 disabled={!disabled} content={"Profile fitting is not available when there are multiple profiles in the plot"}>
                     <FormGroup disabled={disabled}>
                         <div className="profile-fitting-form">
                             <FormGroup label="Data source" inline={true}>
@@ -250,7 +250,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                         <AnchorButton onClick={this.autoDetect} icon="series-search" disabled={disabled} />
                                     </Tooltip2>
                                     <Switch label="w/ cont." checked={fittingStore.isAutoDetectWithCont} onChange={ev => fittingStore.setIsAutoDetectWithCont(!fittingStore.isAutoDetectWithCont)} disabled={disabled} />
-                                    <Switch label="auto fit" checked={fittingStore.isAutoDetectWithFitting} onChange={ev => fittingStore.setIsAutoDetectWithFitting(!fittingStore.isAutoDetectWithFitting)} disabled={disabled} />
+                                    <Switch label="Auto fit" checked={fittingStore.isAutoDetectWithFitting} onChange={ev => fittingStore.setIsAutoDetectWithFitting(!fittingStore.isAutoDetectWithFitting)} disabled={disabled} />
                                 </div>
                             </FormGroup>
                             {fittingStore.hasAutoDetectResult && (
@@ -275,7 +275,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                             <Tooltip2
                                                 content={
                                                     <span>
-                                                        <i>Delete Current Component</i>
+                                                        <i>Delete current component</i>
                                                     </span>
                                                 }
                                             >
@@ -422,7 +422,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                                 <AnchorButton text="View log" onClick={this.showLog} intent={Intent.PRIMARY} disabled={!fittingStore.hasResult || disabled} />
                             </Popover2>
                             <div className="switch-wrapper">
-                                <Switch label="residual" checked={fittingStore.enableResidual} onChange={ev => fittingStore.setEnableResidual(ev.currentTarget.checked)} disabled={disabled} />
+                                <Switch label="Residual" checked={fittingStore.enableResidual} onChange={ev => fittingStore.setEnableResidual(ev.currentTarget.checked)} disabled={disabled} />
                             </div>
                         </div>
                     </FormGroup>
