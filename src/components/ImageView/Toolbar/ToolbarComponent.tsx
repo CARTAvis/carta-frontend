@@ -6,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
+import {ImageViewComponent, ImageViewLayer} from "components";
 import {ExportImageMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {AppStore} from "stores";
@@ -86,6 +86,19 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         } else {
             this.props.frame.regionSet.setMode(RegionMode.MOVING);
         }
+    };
+
+    private handlePanZoomShortCutClicked = () => {
+        const widgetsStore = AppStore.Instance.widgetsStore;
+        const parentType = ImageViewComponent.WIDGET_CONFIG.type;
+        const settingsWidget = widgetsStore.floatingWidgets?.find(w => w.parentType === parentType);
+        if (settingsWidget) {
+            widgetsStore.removeFloatingWidget(settingsWidget.id);
+        }
+        // delay to wait for the settings widget tab status to reset
+        setTimeout(() => {
+            widgetsStore.createFloatingSettingsWidget("Image View", parentType, parentType);
+        }, 0);
     };
 
     exportImageTooltip = () => {
@@ -175,7 +188,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const wcsMatchingMenu = (
             <Menu>
                 <MenuItem
-                    text={`Spectral (${preferenceStore.spectralMatchingType}) and Spatial`}
+                    text={`Spectral (${preferenceStore.spectralMatchingType}) and spatial`}
                     disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
                     active={spectralMatchingEnabled && spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(true, true)}
@@ -216,7 +229,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             position={tooltipPosition}
                             content={
                                 <span>
-                                    Distance Measurement
+                                    Distance measurement
                                     <br />
                                     <i>
                                         <small>Click to create geodesic curves.</small>
@@ -285,17 +298,31 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
                             </Tooltip2>
                         )}
-                        <Tooltip2 position={tooltipPosition} content="Select and pan mode">
+                        <Tooltip2
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Select and pan mode
+                                    <span>
+                                        <br />
+                                        <i>
+                                            <small>Double Click to open the settings.</small>
+                                        </i>
+                                    </span>
+                                </span>
+                            }
+                        >
                             <AnchorButton
                                 icon={"hand"}
                                 onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
+                                onDoubleClick={this.handlePanZoomShortCutClicked}
                                 active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
                             />
                         </Tooltip2>
-                        <Tooltip2 position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
+                        <Tooltip2 position={tooltipPosition} content={<span>Zoom in (scroll wheel up){currentZoomSpan}</span>}>
                             <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} />
                         </Tooltip2>
-                        <Tooltip2 position={tooltipPosition} content={<span>Zoom out (Scroll wheel down){currentZoomSpan}</span>}>
+                        <Tooltip2 position={tooltipPosition} content={<span>Zoom out (scroll wheel down){currentZoomSpan}</span>}>
                             <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked} />
                         </Tooltip2>
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom to 1.0x{currentZoomSpan}</span>}>
@@ -311,7 +338,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 position={tooltipPosition}
                                 content={
                                     <span>
-                                        WCS Matching <br />
+                                        WCS matching <br />
                                         <small>
                                             <i>Current: {wcsButtonTooltip}</i>
                                         </small>
@@ -328,7 +355,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 position={tooltipPosition}
                                 content={
                                     <span>
-                                        Overlay Coordinate <br />
+                                        Overlay coordinate <br />
                                         <small>
                                             <i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i>
                                         </small>

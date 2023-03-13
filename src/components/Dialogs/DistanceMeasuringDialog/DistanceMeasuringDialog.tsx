@@ -11,7 +11,7 @@ import {ColorPickerComponent, CoordinateComponent, SafeNumericInput} from "compo
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore, DialogStore, HelpType} from "stores";
-import {DistanceMeasuringStore, RegionCoordinate} from "stores/Frame";
+import {CoordinateMode, DistanceMeasuringStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
 
 import "./DistanceMeasuringDialog.scss";
@@ -31,8 +31,8 @@ export class DistanceMeasuringDialog extends React.Component {
         this.WCSMode = value === undefined ? !this.WCSMode : value;
     };
 
-    private handleChangeWCSMode = (formEvent: React.FormEvent<HTMLInputElement>) => {
-        const WCSMode = formEvent.currentTarget.value === RegionCoordinate.Image ? false : true;
+    private handleChangeWCSMode = (coord: CoordinateMode) => {
+        const WCSMode = coord === CoordinateMode.Image ? false : true;
         this.setWCSMode(WCSMode);
     };
 
@@ -210,13 +210,13 @@ export class DistanceMeasuringDialog extends React.Component {
                                             </FormGroup>
                                         </td>
                                         <td colSpan={2} className="distance-measuring-settings-table-line-style-numeric-input">
-                                            <FormGroup inline={true} label="Line Width" labelInfo="(px)">
-                                                <SafeNumericInput placeholder="Line Width" min={0.5} max={20} value={distanceMeasuringStore?.lineWidth} stepSize={0.5} onValueChange={value => distanceMeasuringStore?.setLineWidth(value)} />
+                                            <FormGroup inline={true} label="Line width" labelInfo="(px)">
+                                                <SafeNumericInput placeholder="Line width" min={0.5} max={20} value={distanceMeasuringStore?.lineWidth} stepSize={0.5} onValueChange={value => distanceMeasuringStore?.setLineWidth(value)} />
                                             </FormGroup>
                                         </td>
                                         <td width="300px" className="distance-measuring-settings-table-line-style-numeric-input">
-                                            <FormGroup inline={true} label="Font Size" labelInfo="(px)">
-                                                <SafeNumericInput placeholder="Font Size" min={0.5} max={50} value={distanceMeasuringStore?.fontSize} stepSize={1} onValueChange={value => distanceMeasuringStore?.setFontSize(value)} />
+                                            <FormGroup inline={true} label="Font size" labelInfo="(px)">
+                                                <SafeNumericInput placeholder="Font size" min={0.5} max={50} value={distanceMeasuringStore?.fontSize} stepSize={1} onValueChange={value => distanceMeasuringStore?.setFontSize(value)} />
                                             </FormGroup>
                                         </td>
                                     </tr>
@@ -228,11 +228,7 @@ export class DistanceMeasuringDialog extends React.Component {
                                     <tr className="distance-measuring-settings-table-coordinate">
                                         <td>Coordinate</td>
                                         <td colSpan={2}>
-                                            <CoordinateComponent
-                                                onChange={(ev: React.FormEvent<HTMLInputElement>) => this.handleChangeWCSMode(ev)}
-                                                selectedValue={this.WCSMode && wcsInfo ? RegionCoordinate.World : RegionCoordinate.Image}
-                                                disableCoordinate={!wcsInfo}
-                                            />
+                                            <CoordinateComponent onChange={this.handleChangeWCSMode} selectedValue={this.WCSMode && wcsInfo ? CoordinateMode.World : CoordinateMode.Image} disableCoordinate={!wcsInfo} />
                                         </td>
                                     </tr>
                                     <tr className="distance-measuring-settings-table-input">

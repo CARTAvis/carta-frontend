@@ -4,6 +4,8 @@ export * from "./ClearableNumericInput/ClearableNumericInputComponent";
 export * from "./ColormapComponent/ColormapComponent";
 export * from "./ColorPicker/ColorPickerComponent";
 export * from "./CoordinateComponent/CoordinateComponent";
+export * from "./CoordinateComponent/CoordinateComponent";
+export * from "./CoordNumericInput/CoordNumericInput";
 export * from "./ExportImageMenu/ExportImageMenuComponent";
 export * from "./LinePlot/LinePlotComponent";
 export * from "./LinePlot/PlotSettings/LinePlotSettingsPanelComponent";

@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {CoordinateComponent, SafeNumericInput} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {FrameStore, RegionCoordinate, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {CoordinateMode, FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 
 import "./RectangularRegionForm.scss";
@@ -449,16 +449,16 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const centerPoint = region.center;
         const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
         let centerInputX, centerInputY;
-        if (region.coordinate === RegionCoordinate.Image) {
-            centerInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange} />;
-            centerInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
+        if (region.coordinate === CoordinateMode.Image) {
+            centerInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange} />;
+            centerInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
         } else {
             centerInputX = (
                 <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="X WCS Coordinate"
+                        placeholder="X WCS coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.x : ""}
                         onBlur={this.handleCenterWCSXChange}
@@ -471,7 +471,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
+                        placeholder="Y WCS coordinate"
                         disabled={!this.props.wcsInfo || !centerWCSPoint}
                         value={centerWCSPoint ? centerWCSPoint.y : ""}
                         onBlur={this.handleCenterWCSYChange}
@@ -480,18 +480,18 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 </Tooltip2>
             );
         }
-        const centerInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
+        const centerInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
 
         const isRotated = Math.abs(region.rotation) > 1e-3;
         // bottom left
         const bottomLeftWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.bottomLeftPoint);
         let bottomLeftInputX, bottomLeftInputY;
-        if (region.coordinate === RegionCoordinate.Image) {
+        if (region.coordinate === CoordinateMode.Image) {
             bottomLeftInputX = (
-                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange} disabled={isRotated} />
+                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X coordinate" value={this.bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange} disabled={isRotated} />
             );
             bottomLeftInputY = (
-                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange} disabled={isRotated} />
+                <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y coordinate" value={this.bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange} disabled={isRotated} />
             );
         } else {
             bottomLeftInputX = (
@@ -499,7 +499,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="X WCS Coordinate"
+                        placeholder="X WCS coordinate"
                         disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
                         value={bottomLeftWCSPoint ? bottomLeftWCSPoint.x : ""}
                         onBlur={this.handleLeftWCSChange}
@@ -512,7 +512,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
+                        placeholder="Y WCS coordinate"
                         disabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
                         value={bottomLeftWCSPoint ? bottomLeftWCSPoint.y : ""}
                         onBlur={this.handleBottomWCSChange}
@@ -521,21 +521,21 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 </Tooltip2>
             );
         }
-        const bottomLeftInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(bottomLeftWCSPoint)}` : `Image: ${Point2D.ToString(this.bottomLeftPoint, "px", 3)}`;
+        const bottomLeftInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(bottomLeftWCSPoint)}` : `Image: ${Point2D.ToString(this.bottomLeftPoint, "px", 3)}`;
 
         // top right
         const topRightWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.topRightPoint);
         let topRightInputX, topRightInputY;
-        if (region.coordinate === RegionCoordinate.Image) {
-            topRightInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X Coordinate" value={this.topRightPoint.x} onBlur={this.handleRightChange} onKeyDown={this.handleRightChange} disabled={isRotated} />;
-            topRightInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y Coordinate" value={this.topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated} />;
+        if (region.coordinate === CoordinateMode.Image) {
+            topRightInputX = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X coordinate" value={this.topRightPoint.x} onBlur={this.handleRightChange} onKeyDown={this.handleRightChange} disabled={isRotated} />;
+            topRightInputY = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y coordinate" value={this.topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange} disabled={isRotated} />;
         } else {
             topRightInputX = (
                 <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="X WCS Coordinate"
+                        placeholder="X WCS coordinate"
                         disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
                         value={topRightWCSPoint ? topRightWCSPoint.x : ""}
                         onBlur={this.handleRightWCSChange}
@@ -548,7 +548,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <SafeNumericInput
                         allowNumericCharactersOnly={false}
                         buttonPosition="none"
-                        placeholder="Y WCS Coordinate"
+                        placeholder="Y WCS coordinate"
                         disabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
                         value={topRightWCSPoint ? topRightWCSPoint.y : ""}
                         onBlur={this.handleTopWCSChange}
@@ -557,12 +557,12 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 </Tooltip2>
             );
         }
-        const topRightInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(topRightWCSPoint)}` : `Image: ${Point2D.ToString(this.topRightPoint, "px", 3)}`;
+        const topRightInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(topRightWCSPoint)}` : `Image: ${Point2D.ToString(this.topRightPoint, "px", 3)}`;
 
         // size
         const size = region.size;
         let sizeWidthInput, sizeHeightInput;
-        if (region.coordinate === RegionCoordinate.Image) {
+        if (region.coordinate === CoordinateMode.Image) {
             sizeWidthInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Width" value={size.x} onBlur={this.handleWidthChange} onKeyDown={this.handleWidthChange} />;
             sizeHeightInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Height" value={size.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange} />;
         } else {
@@ -593,9 +593,9 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 </Tooltip2>
             );
         }
-        const sizeInfoString = region.coordinate === RegionCoordinate.Image ? `WCS: ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
+        const sizeInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
 
-        const pxUnitSpan = region.coordinate === RegionCoordinate.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
+        const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
             <div className="form-section rectangular-region-form">
                 <H5>Properties</H5>
@@ -603,7 +603,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <table>
                         <tbody>
                             <tr>
-                                <td>Region Name</td>
+                                <td>Region name</td>
                                 <td colSpan={2}>
                                     <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
                                 </td>
@@ -611,7 +611,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>
-                                    <CoordinateComponent region={region} disableCoordinate={!this.props.wcsInfo} />
+                                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                                 </td>
                             </tr>
                             <tr>
@@ -631,7 +631,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                                 </td>
                             </tr>
                             <tr>
-                                <td>Bottom Left {pxUnitSpan}</td>
+                                <td>Bottom-left {pxUnitSpan}</td>
                                 <td>{bottomLeftInputX}</td>
                                 <td>{bottomLeftInputY}</td>
                                 <td>
@@ -639,7 +639,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                                 </td>
                             </tr>
                             <tr>
-                                <td>Top Right {pxUnitSpan}</td>
+                                <td>Top-right {pxUnitSpan}</td>
                                 <td>{topRightInputX}</td>
                                 <td>{topRightInputY}</td>
                                 <td>

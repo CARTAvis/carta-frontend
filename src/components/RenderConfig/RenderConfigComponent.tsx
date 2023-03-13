@@ -450,10 +450,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         disableHistogramSelect={appStore.animatorStore.animationActive}
                         warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                     />
-                    <FormGroup label={"Clip Min"} inline={true}>
+                    <FormGroup label={"Clip min"} inline={true}>
                         <SafeNumericInput value={frame.renderConfig.scaleMinVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMinChange} onKeyDown={this.handleScaleMinChange} />
                     </FormGroup>
-                    <FormGroup label={"Clip Max"} inline={true}>
+                    <FormGroup label={"Clip max"} inline={true}>
                         <SafeNumericInput value={frame.renderConfig.scaleMaxVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMaxChange} onKeyDown={this.handleScaleMaxChange} />
                     </FormGroup>
                     <ColormapConfigComponent renderConfig={frame.renderConfig} />
