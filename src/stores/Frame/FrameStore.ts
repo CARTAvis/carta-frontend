@@ -1539,7 +1539,7 @@ export class FrameStore {
         // Define regular expressions
         let regOtherAxes;
         if (this.dimension === "2") {
-            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]`);
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]`);
         } else {
             regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]`);
         }
@@ -1589,7 +1589,7 @@ export class FrameStore {
         // Define regular expressions
         let regOtherAxes;
         if (this.dimension === "2") {
-            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]`);
+            regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]`);
         } else {
             regOtherAxes = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[5-9]`);
         }
