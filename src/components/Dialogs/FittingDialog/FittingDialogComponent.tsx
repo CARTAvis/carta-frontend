@@ -115,11 +115,11 @@ export class FittingDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={200} defaultWidth={600} defaultHeight={660} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
-                    <FormGroup label="Data Source" inline={true}>
+                    <FormGroup label="Data source" inline={true}>
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />
                     </FormGroup>
                     <FormGroup label="Region" inline={true}>
-                        <HTMLSelect value={0} options={[{value: 0, label: "Field of View"}]} disabled={true} />
+                        <HTMLSelect value={0} options={[{value: 0, label: "Field of view"}]} disabled={true} />
                     </FormGroup>
                     <FormGroup label="Components" inline={true}>
                         <SafeNumericInput className="components-input" value={fittingStore.components.length} min={1} max={20} stepSize={1} onValueChange={val => fittingStore.setComponents(Math.round(val))} />
@@ -134,7 +134,7 @@ export class FittingDialogComponent extends React.Component {
                                     onChange={val => fittingStore.setSelectedComponentIndex(val - 1)}
                                     disabled={fittingStore.components.length <= 1}
                                 />
-                                <Tooltip2 content="Delete current component.">
+                                <Tooltip2 content="Delete current component">
                                     <AnchorButton icon={"trash"} onClick={fittingStore.deleteSelectedComponent} />
                                 </Tooltip2>
                             </>
@@ -159,10 +159,10 @@ export class FittingDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Switch checked={fittingStore.createModelImage} onChange={fittingStore.toggleCreateModelImage} label="Model" />
                         <Switch checked={fittingStore.createResidualImage} onChange={fittingStore.toggleCreateResidualImage} label="Residual" />
-                        <Tooltip2 content="Clear fitting parameters." position={Position.BOTTOM}>
+                        <Tooltip2 content="Clear fitting parameters" position={Position.BOTTOM}>
                             <AnchorButton intent={Intent.WARNING} onClick={fittingStore.clearComponents} text="Clear" />
                         </Tooltip2>
-                        <Tooltip2 content="Clear existing fitting results and fit the current channel of the image." position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
+                        <Tooltip2 content="Clear existing fitting results and fit the current channel of the image" position={Position.BOTTOM} disabled={fittingStore.fitDisabled}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={fittingStore.fitImage} text="Fit" disabled={fittingStore.fitDisabled} />
                         </Tooltip2>
                     </div>
