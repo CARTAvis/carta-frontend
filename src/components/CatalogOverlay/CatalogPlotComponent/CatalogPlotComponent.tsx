@@ -695,7 +695,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         );
 
         const renderHistogramLog = (
-            <FormGroup label={"Log Scale"} inline={true} disabled={disabled}>
+            <FormGroup label={"Log scale"} inline={true} disabled={disabled}>
                 <Switch checked={widgetStore.logScaleY} onChange={this.handleLogScaleYChanged} disabled={disabled} />
             </FormGroup>
         );
@@ -720,7 +720,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
         );
 
         const renderStatisticSelect = (
-            <FormGroup inline={true} label="Statistic Source">
+            <FormGroup inline={true} label="Statistic source">
                 <Select2
                     className="bp4-fill"
                     items={xyOptions}
@@ -938,7 +938,7 @@ export class CatalogPlotComponent extends React.Component<WidgetProps> {
             />
         );
 
-        const renderLinearRegressionButton = <AnchorButton intent={Intent.PRIMARY} text="Linear Fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} />;
+        const renderLinearRegressionButton = <AnchorButton intent={Intent.PRIMARY} text="Linear fit" onClick={() => this.handleFittingClick(selectedPointIndices)} disabled={disabled || selectedPointIndices?.length === 1} />;
         const infoStrings = [this.genProfilerInfo];
         if (widgetStore.showStatisticResult && widgetStore.enableStatistic) {
             infoStrings.push(widgetStore.statisticString);

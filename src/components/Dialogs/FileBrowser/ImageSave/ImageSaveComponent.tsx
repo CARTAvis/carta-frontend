@@ -231,7 +231,7 @@ export class ImageSaveComponent extends React.Component {
                                 <ClearableNumericInputComponent
                                     label="Rest frequency"
                                     value={fileBrowser.saveRestFreq.value}
-                                    placeholder="rest frequency"
+                                    placeholder="Rest frequency"
                                     selectAllOnFocus={true}
                                     onValueChanged={fileBrowser.setSaveRestFreqVal}
                                     onValueCleared={fileBrowser.resetSaveRestFreq}

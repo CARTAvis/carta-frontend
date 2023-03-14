@@ -220,33 +220,33 @@ export class RootMenuComponent extends React.Component {
 
         const fileMenu = (
             <Menu>
-                <MenuItem2 text="Open image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
-                <MenuItem2 text="Append image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
-                <Tooltip2 content={"not allowed in read-only mode"} disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY} position={Position.LEFT}>
+                <MenuItem2 text="Open Image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
+                <MenuItem2 text="Append Image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
+                <Tooltip2 content={"Not allowed in read-only mode"} disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY} position={Position.LEFT}>
                     <MenuItem2
-                        text="Save image"
+                        text="Save Image"
                         label={`${modString}S`}
                         disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip2>
-                <MenuItem2 text="Close image" label={`${modString}W`} disabled={appStore.appendFileDisabled} onClick={() => appStore.closeCurrentFile(true)} />
+                <MenuItem2 text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled} onClick={() => appStore.closeCurrentFile(true)} />
                 <MenuDivider />
-                <MenuItem2 text="Import regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
+                <MenuItem2 text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip2
-                    content={"not allowed in read-only mode"}
+                    content={"Not allowed in read-only mode"}
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
                     position={Position.LEFT}
                 >
                     <MenuItem2
-                        text="Export regions"
+                        text="Export Regions"
                         disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
                         onClick={() => appStore.fileBrowserStore.showExportRegions()}
                     />
                 </Tooltip2>
                 <MenuDivider />
-                <MenuItem2 text="Import catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
-                <MenuItem2 text="Export image" disabled={!appStore.activeFrame || appStore.isExportingImage}>
+                <MenuItem2 text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
+                <MenuItem2 text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage}>
                     <ExportImageMenuComponent />
                 </MenuItem2>
                 <MenuDivider />
@@ -307,16 +307,16 @@ export class RootMenuComponent extends React.Component {
                     <MenuItem2 text="Images" icon={"multi-select"}>
                         {layerItems}
                         <MenuDivider />
-                        <MenuItem2 text="Previous image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame} />
-                        <MenuItem2 text="Next image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame} />
+                        <MenuItem2 text="Previous Image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame} />
+                        <MenuItem2 text="Next Image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame} />
                     </MenuItem2>
                 )}
-                <MenuItem2 text="File header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
+                <MenuItem2 text="File Header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
                 <MenuItem2 text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showContourDialog} />
-                <MenuItem2 text="Vector overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showVectorOverlayDialog} />
-                <MenuItem2 text="Image fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFittingDialog} />
+                <MenuItem2 text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showVectorOverlayDialog} />
+                <MenuItem2 text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFittingDialog} />
                 <MenuItem2 text="Online Catalog Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showCatalogQueryDialog} />
-                {appStore.preferenceStore.codeSnippetsEnabled && <MenuItem2 text="Code snippets" icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} />}
+                {appStore.preferenceStore.codeSnippetsEnabled && <MenuItem2 text="Code Snippets" icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} />}
             </Menu>
         );
 
@@ -439,7 +439,7 @@ export class RootMenuComponent extends React.Component {
                 </div>
                 <div className={Classes.ALERT_FOOTER}>
                     <Button intent={Intent.PRIMARY} text="OK" onClick={this.newReleaseButtonOnClick} />
-                    <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again." />
+                    <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again" />
                 </div>
             </div>
         );
@@ -501,7 +501,7 @@ export class RootMenuComponent extends React.Component {
                     </Tooltip2>
                 )}
                 {appStore.snippetStore.isExecuting && (
-                    <Tooltip2 content="CARTA is currently executing a code snippet.">
+                    <Tooltip2 content="CARTA is currently executing a code snippet">
                         <Icon icon={"console"} intent={"warning"} />
                     </Tooltip2>
                 )}

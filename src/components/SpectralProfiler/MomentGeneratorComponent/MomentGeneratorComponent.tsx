@@ -242,7 +242,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                     />
                 </FormGroup>
                 <Divider />
-                <FormGroup inline={true} label={"Keep previous Moment Image"}>
+                <FormGroup inline={true} label={"Keep previous moment image(s)"}>
                     <Switch
                         onChange={event => {
                             const e = event.target as HTMLInputElement;

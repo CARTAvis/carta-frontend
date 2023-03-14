@@ -266,7 +266,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{
                     <ClearableNumericInputComponent label="Sigma" value={this.sigmaValue} onValueChanged={val => (this.enteredSigmaValue = val)} onValueCleared={() => (this.enteredSigmaValue = undefined)} displayExponential={true} />
                 </div>
                 <div className="parameter-line">
-                    <FormGroup label={"Sigma List"} inline={true}>
+                    <FormGroup label={"Sigma list"} inline={true}>
                         <TagInput
                             addOnBlur={true}
                             fill={true}

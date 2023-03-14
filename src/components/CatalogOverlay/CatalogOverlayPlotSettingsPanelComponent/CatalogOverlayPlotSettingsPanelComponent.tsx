@@ -173,7 +173,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.sizeScalingType} onItemSelect={type => widgetStore.setSizeScalingType(type)} disabled={disableSizeMap} />
                 </FormGroup>
-                <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMap}>
+                <FormGroup inline={true} label={"Size mode"} disabled={disableSizeMap}>
                     <ButtonGroup>
                         <AnchorButton disabled={disableSizeMap} text={"Diameter"} active={!widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(false)} />
                         <AnchorButton disabled={disableSizeMap} text={"Area"} active={widgetStore.sizeArea} onClick={() => widgetStore.setSizeArea(true)} />
@@ -181,7 +181,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <div className="numeric-input-lock">
                     <ClearableNumericInputComponent
-                        label="Clip Min"
+                        label="Clip min"
                         max={widgetStore.sizeColumnMax.clipd}
                         integerOnly={false}
                         value={widgetStore.sizeColumnMin.clipd}
@@ -201,7 +201,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </div>
                 <div className="numeric-input-lock">
                     <ClearableNumericInputComponent
-                        label="Clip Max"
+                        label="Clip max"
                         min={widgetStore.sizeColumnMin.clipd}
                         integerOnly={false}
                         value={widgetStore.sizeColumnMax.clipd}
@@ -243,7 +243,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <FormGroup label={"Scaling"} inline={true} disabled={disableSizeMinorMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.sizeMinorScalingType} onItemSelect={type => widgetStore.setSizeMinorScalingType(type)} disabled={disableSizeMinorMap} />
                 </FormGroup>
-                <FormGroup inline={true} label={"Size Mode"} disabled={disableSizeMinorMap}>
+                <FormGroup inline={true} label={"Size mode"} disabled={disableSizeMinorMap}>
                     <ButtonGroup>
                         <AnchorButton disabled={disableSizeMinorMap} text={"Diameter"} active={!widgetStore.sizeMinorArea} onClick={() => widgetStore.setSizeMinorArea(false)} />
                         <AnchorButton disabled={disableSizeMinorMap} text={"Area"} active={widgetStore.sizeMinorArea} onClick={() => widgetStore.setSizeMinorArea(true)} />
@@ -251,7 +251,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </FormGroup>
                 <div className="numeric-input-lock">
                     <ClearableNumericInputComponent
-                        label="Clip Min"
+                        label="Clip min"
                         max={widgetStore.sizeMinorColumnMax.clipd}
                         integerOnly={false}
                         value={widgetStore.sizeMinorColumnMin.clipd}
@@ -271,7 +271,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 </div>
                 <div className="numeric-input-lock">
                     <ClearableNumericInputComponent
-                        label="Clip Max"
+                        label="Clip max"
                         min={widgetStore.sizeMinorColumnMin.clipd}
                         integerOnly={false}
                         value={widgetStore.sizeMinorColumnMax.clipd}
@@ -326,7 +326,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     <Tab id={CatalogSettingsTabs.SIZE_MAJOR} title="Major" panel={sizeMajor} />
                     <Tab id={CatalogSettingsTabs.SIZE_MINOR} title="Minor" panel={sizeMinor} disabled={!widgetStore.enableSizeMinorTab} />
                 </Tabs>
-                <FormGroup inline={true} label="Size Min" labelInfo="(px)" disabled={disableSizeMap}>
+                <FormGroup inline={true} label="Size min" labelInfo="(px)" disabled={disableSizeMap}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={true}
                         asyncControl={true}
@@ -338,7 +338,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         onKeyDown={ev => this.handleChange(ev, "size-min")}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Size Max" labelInfo="(px)" disabled={disableSizeMap}>
+                <FormGroup inline={true} label="Size max" labelInfo="(px)" disabled={disableSizeMap}>
                     <Tooltip2 content={`Maximum size ${widgetStore.maxPointSizebyType}`}>
                         <SafeNumericInput
                             allowNumericCharactersOnly={true}
@@ -368,7 +368,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         disabled={disabledOverlayPanel || !widgetStore.disableColorMap}
                     />
                 </FormGroup>
-                <FormGroup label={"Overlay Highlight"} inline={true} disabled={disabledOverlayPanel}>
+                <FormGroup label={"Overlay highlight"} inline={true} disabled={disabledOverlayPanel}>
                     <AutoColorPickerComponent
                         color={widgetStore.highlightColor}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
@@ -398,14 +398,14 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <FormGroup label={"Scaling"} inline={true} disabled={disableColorMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.colorScalingType} onItemSelect={type => widgetStore.setColorScalingType(type)} disabled={disableColorMap} />
                 </FormGroup>
-                <FormGroup inline={true} label="Color Map" disabled={disableColorMap}>
+                <FormGroup inline={true} label="Colormap" disabled={disableColorMap}>
                     <ColormapComponent inverted={false} selectedItem={widgetStore.colorMap} onItemSelect={selected => widgetStore.setColorMap(selected)} disabled={disableColorMap} />
                 </FormGroup>
-                <FormGroup label={"Invert Color Map"} inline={true} disabled={disableColorMap}>
+                <FormGroup label={"Invert colormap"} inline={true} disabled={disableColorMap}>
                     <Switch checked={widgetStore.invertedColorMap} onChange={ev => widgetStore.setColorMapDirection(ev.currentTarget.checked)} disabled={disableColorMap} />
                 </FormGroup>
                 <ClearableNumericInputComponent
-                    label="Clip Min"
+                    label="Clip min"
                     max={widgetStore.colorColumnMax.clipd}
                     integerOnly={false}
                     value={widgetStore.colorColumnMin.clipd}
@@ -415,7 +415,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     disabled={disableColorMap}
                 />
                 <ClearableNumericInputComponent
-                    label="Clip Max"
+                    label="Clip max"
                     min={widgetStore.colorColumnMin.clipd}
                     integerOnly={false}
                     value={widgetStore.colorColumnMax.clipd}
@@ -448,7 +448,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                 <FormGroup label={"Scaling"} inline={true} disabled={disableOrientationMap}>
                     <ScalingSelectComponent selectedItem={widgetStore.orientationScalingType} onItemSelect={type => widgetStore.setOrientationScalingType(type)} disabled={disableOrientationMap} />
                 </FormGroup>
-                <FormGroup inline={true} label="Orientation Min" labelInfo="(degree)" disabled={disableOrientationMap}>
+                <FormGroup inline={true} label="Orientation min" labelInfo="(degree)" disabled={disableOrientationMap}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={true}
                         asyncControl={true}
@@ -460,7 +460,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                         onKeyDown={ev => this.handleChange(ev, "angle-min")}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Orientation Max" labelInfo="(degree)" disabled={disableOrientationMap}>
+                <FormGroup inline={true} label="Orientation max" labelInfo="(degree)" disabled={disableOrientationMap}>
                     <SafeNumericInput
                         allowNumericCharactersOnly={true}
                         asyncControl={true}
@@ -473,7 +473,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     />
                 </FormGroup>
                 <ClearableNumericInputComponent
-                    label="Clip Min"
+                    label="Clip min"
                     max={widgetStore.orientationMax.clipd}
                     integerOnly={false}
                     value={widgetStore.orientationMin.clipd}
@@ -483,7 +483,7 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                     disabled={disableOrientationMap}
                 />
                 <ClearableNumericInputComponent
-                    label="Clip Max"
+                    label="Clip max"
                     min={widgetStore.orientationMin.clipd}
                     integerOnly={false}
                     value={widgetStore.orientationMax.clipd}

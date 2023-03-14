@@ -12,7 +12,7 @@ import {AnimationMode, AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, P
 import "./AnimatorComponent.scss";
 
 enum NumericInputType {
-    FrameRate = "Frame Rate",
+    FrameRate = "Frame rate",
     Step = "Step"
 }
 
@@ -331,15 +331,15 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 className={playbackModeClass}
                 content={
                     <Menu>
-                        <MenuItem2 icon="arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.FORWARD)} />
-                        <MenuItem2 icon="arrow-left" text="Play Backwards" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.BACKWARD)} />
+                        <MenuItem2 icon="arrow-right" text="Play forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.FORWARD)} />
+                        <MenuItem2 icon="arrow-left" text="Play backwards" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.BACKWARD)} />
                         <MenuItem2 icon="swap-horizontal" text="Bouncing" active={appStore.animatorStore.playMode === PlayMode.BOUNCING} onClick={() => (appStore.animatorStore.playMode = PlayMode.BOUNCING)} />
                         <MenuItem2 icon="exchange" text="Blink" active={appStore.animatorStore.playMode === PlayMode.BLINK} onClick={() => (appStore.animatorStore.playMode = PlayMode.BLINK)} />
                     </Menu>
                 }
                 position={Position.TOP}
             >
-                <Tooltip2 content="Playback Mode" position={Position.TOP}>
+                <Tooltip2 content="Playback mode" position={Position.TOP}>
                     <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive}>
                         {!iconOnly && "Mode"}
                     </AnchorButton>

@@ -131,7 +131,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </Select2>
                 </FormGroup>
                 {isVizier ? (
-                    <FormGroup inline={false} label="Key Words (Catalog Title)" disabled={disable} className={isVizier ? "vizier-key-words" : ""}>
+                    <FormGroup inline={false} label="Keywords (catalog title)" disabled={disable} className={isVizier ? "vizier-key-words" : ""}>
                         <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} />
                     </FormGroup>
                 ) : null}
@@ -141,7 +141,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                         <Button disabled={disable || configStore.disableObjectSearch} text={"Resolve"} intent={Intent.NONE} onClick={this.handleObjectUpdate} />
                     </Tooltip2>
                 </FormGroup>
-                <FormGroup inline={false} label="Search Radius" disabled={disable}>
+                <FormGroup inline={false} label="Search radius" disabled={disable}>
                     <Tooltip2 content={`0 - ${configStore.maxRadius} ${configStore.radiusUnits}`} disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <SafeNumericInput
                             asyncControl={true}
@@ -165,13 +165,13 @@ export class CatalogQueryDialogComponent extends React.Component {
                     >
                         <Button text={configStore.radiusUnits} disabled={disable} rightIcon="double-caret-vertical" />
                     </Select2>
-                    <Tooltip2 content="Reset Center Coordinates and Search Radius according current image viewer" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
+                    <Tooltip2 content="Reset center coordinates and search radius according current image viewer" disabled={disable} position={Position.BOTTOM} hoverOpenDelay={300}>
                         <Button disabled={disable} onClick={() => configStore.resetSearchRadius()}>
                             Set to viewer
                         </Button>
                     </Tooltip2>
                 </FormGroup>
-                <FormGroup inline={false} label="Center Coordinates" disabled={disable}>
+                <FormGroup inline={false} label="Center coordinates" disabled={disable}>
                     <Select2
                         items={Object.keys(SystemType).map(key => SystemType[key])}
                         activeItem={null}
@@ -188,7 +188,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
-                            placeholder="X WCS Coordinate"
+                            placeholder="X WCS coordinate"
                             disabled={!wcsInfo || !centerWcsPoint || disable}
                             value={centerWcsPoint ? centerWcsPoint.x : ""}
                             onBlur={this.handleCenterWcsXChange}
@@ -199,7 +199,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
-                            placeholder="Y WCS Coordinate"
+                            placeholder="Y WCS coordinate"
                             disabled={!wcsInfo || !centerWcsPoint || disable}
                             value={centerWcsPoint ? centerWcsPoint.y : ""}
                             onBlur={this.handleCenterWcsYChange}
@@ -211,7 +211,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     </Tooltip2>
                 </FormGroup>
                 <ClearableNumericInputComponent
-                    label={isVizier ? "Max Number of Objects Per Catalog" : "Max Number of Objects"}
+                    label={isVizier ? "Max number of objects per catalog" : "Max number of objects"}
                     min={CatalogOnlineQueryConfigStore.MIN_OBJECTS}
                     max={CatalogOnlineQueryConfigStore.MAX_OBJECTS}
                     integerOnly={true}
@@ -223,7 +223,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                     inline={false}
                 />
                 {configStore.showVizierResult ? (
-                    <FormGroup inline={false} label="VizieR Catalog" disabled={disable}>
+                    <FormGroup inline={false} label="VizieR catalog" disabled={disable}>
                         <MultiSelect2
                             placeholder={"Please select catalog tables"}
                             fill={true}

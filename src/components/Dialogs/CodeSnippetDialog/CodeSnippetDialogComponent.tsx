@@ -119,7 +119,7 @@ export class CodeSnippetDialogComponent extends React.Component {
             isOpen: appStore.dialogStore.codeSnippetDialogVisible,
             onClose: appStore.dialogStore.hideCodeSnippetDialog,
             isCloseButtonShown: true,
-            title: "Edit code snippet"
+            title: "Edit Code Snippet"
         };
 
         const editor = (

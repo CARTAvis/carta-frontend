@@ -41,13 +41,13 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         <ColorPickerComponent color={region.color} presetColors={SWATCH_COLORS} setColor={(color: ColorResult) => region.setColor(color.hex)} disableAlpha={true} darkTheme={this.props.darkTheme} />
                     </FormGroup>
                     {region.regionType !== CARTA.RegionType.POINT && (
-                        <FormGroup inline={true} label="Line Width" labelInfo="(px)">
-                            <SafeNumericInput placeholder="Line Width" min={RegionStore.MIN_LINE_WIDTH} max={RegionStore.MAX_LINE_WIDTH} value={region.lineWidth} stepSize={0.5} onValueChange={this.handleLineWidthChange} />
+                        <FormGroup inline={true} label="Line width" labelInfo="(px)">
+                            <SafeNumericInput placeholder="Line width" min={RegionStore.MIN_LINE_WIDTH} max={RegionStore.MAX_LINE_WIDTH} value={region.lineWidth} stepSize={0.5} onValueChange={this.handleLineWidthChange} />
                         </FormGroup>
                     )}
                     {region.regionType !== CARTA.RegionType.POINT && (
-                        <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
-                            <SafeNumericInput placeholder="Dash Length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.dashLength} stepSize={1} onValueChange={this.handleDashLengthChange} />
+                        <FormGroup inline={true} label="Dash length" labelInfo="(px)">
+                            <SafeNumericInput placeholder="Dash length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.dashLength} stepSize={1} onValueChange={this.handleDashLengthChange} />
                         </FormGroup>
                     )}
                 </div>

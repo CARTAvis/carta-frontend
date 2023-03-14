@@ -158,7 +158,7 @@ export class ContourDialogComponent extends React.Component {
     };
 
     private renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
-        return <MenuItem2 text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
+        return <MenuItem2 text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
     private handleHistogramChange = (value: boolean) => {
@@ -407,7 +407,7 @@ export class ContourDialogComponent extends React.Component {
                             onItemSelect={this.handleHistogramChange}
                             itemRenderer={this.renderHistogramSelectItem}
                         >
-                            <Button text={dataSource.renderConfig.useCubeHistogramContours ? "Per-Cube" : "Per-Channel"} rightIcon="double-caret-vertical" alignText={"right"} />
+                            <Button text={dataSource.renderConfig.useCubeHistogramContours ? "Per-cube" : "Per-channel"} rightIcon="double-caret-vertical" alignText={"right"} />
                         </HistogramSelect>
                     </FormGroup>
                 )}
@@ -434,10 +434,10 @@ export class ContourDialogComponent extends React.Component {
 
         const configPanel = (
             <div className="contour-config-panel">
-                <FormGroup inline={true} label="Smoothing Mode">
+                <FormGroup inline={true} label="Smoothing mode">
                     <HTMLSelect value={this.smoothingMode} onChange={ev => (this.smoothingMode = Number(ev.currentTarget.value))}>
                         <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>
-                            No Smoothing
+                            No smoothing
                         </option>
                         <option key={CARTA.SmoothingMode.BlockAverage} value={CARTA.SmoothingMode.BlockAverage}>
                             Block
@@ -447,9 +447,9 @@ export class ContourDialogComponent extends React.Component {
                         </option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Smoothing Factor">
+                <FormGroup inline={true} label="Smoothing factor">
                     <SafeNumericInput
-                        placeholder="Smoothing Factor"
+                        placeholder="Smoothing factor"
                         min={1}
                         max={33}
                         value={this.smoothingFactor}
@@ -468,7 +468,7 @@ export class ContourDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.CONTOUR} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
-                    <FormGroup inline={true} label="Data Source">
+                    <FormGroup inline={true} label="Data source">
                         <DataSourceSelect
                             activeItem={dataSource}
                             onItemSelect={appStore.setContourDataSource}

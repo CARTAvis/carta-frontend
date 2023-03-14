@@ -31,7 +31,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
     }
 
     renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
-        return <MenuItem2 text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
+        return <MenuItem2 text={isCube ? "Per-cube" : "Per-channel"} onClick={handleClick} key={isCube ? "cube" : "channel"} />;
     };
 
     handleHistogramChange = (value: boolean) => {
@@ -65,7 +65,7 @@ export class HistogramConfigComponent extends React.Component<HistogramConfigPro
                             itemRenderer={this.renderHistogramSelectItem}
                             disabled={this.props.disableHistogramSelect}
                         >
-                            <Button text={renderConfig.useCubeHistogram ? "Per-Cube" : "Per-Channel"} rightIcon="double-caret-vertical" alignText={"right"} disabled={this.props.disableHistogramSelect} />
+                            <Button text={renderConfig.useCubeHistogram ? "Per-cube" : "Per-channel"} rightIcon="double-caret-vertical" alignText={"right"} disabled={this.props.disableHistogramSelect} />
                         </HistogramSelect>
                     </FormGroup>
                 )}
