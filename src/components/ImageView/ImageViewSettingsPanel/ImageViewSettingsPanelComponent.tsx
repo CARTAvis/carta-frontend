@@ -471,10 +471,10 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={labels.customText} disabled={!labels.visible} onChange={ev => labels.setCustomText(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={labels.customText}>
-                    <FormGroup inline={true} label="Label Text (X)" disabled={!labels.visible}>
+                    <FormGroup inline={true} label="Label text (X)" disabled={!labels.visible}>
                         <InputGroup disabled={!labels.visible} value={labels.customLabelX} placeholder="Enter label text" onChange={ev => labels.setCustomLabelX(ev.currentTarget.value)} />
                     </FormGroup>
-                    <FormGroup inline={true} label="Label Text (Y)" disabled={!labels.visible}>
+                    <FormGroup inline={true} label="Label text (Y)" disabled={!labels.visible}>
                         <InputGroup disabled={!labels.visible} value={labels.customLabelY} placeholder="Enter label text" onChange={ev => labels.setCustomLabelY(ev.currentTarget.value)} />
                     </FormGroup>
                 </Collapse>
@@ -499,9 +499,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <FormGroup inline={true} label="Position" disabled={!colorbar.visible}>
                     <HTMLSelect value={colorbar.position} disabled={!colorbar.visible} onChange={ev => colorbar.setPosition(ev.currentTarget.value)}>
-                        <option value={"right"}>right</option>
-                        <option value={"top"}>top</option>
-                        <option value={"bottom"}>bottom</option>
+                        <option value={"right"}>Right</option>
+                        <option value={"top"}>Top</option>
+                        <option value={"bottom"}>Bottom</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!colorbar.visible}>
