@@ -88,6 +88,8 @@ export enum PreferenceKeys {
     PERFORMANCE_LOW_BAND_WIDTH_MODE = "lowBandwidthMode",
     PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES = "stopAnimationPlaybackMinutes",
     PERFORMANCE_LIMIT_OVERLAY_REDRAW = "limitOverlayRedraw",
+    PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT = "pvPreviewCubeSizeLimit",
+    PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT = "pvPreviewCubeSizeLimitUnit",
 
     LOG_EVENT = "logEventList",
 
@@ -207,7 +209,9 @@ const DEFAULTS = {
         streamContoursWhileZooming: false,
         lowBandwidthMode: false,
         stopAnimationPlaybackMinutes: 5,
-        limitOverlayRedraw: true
+        limitOverlayRedraw: true,
+        pvPreviewCubeSizeLimit: 1,
+        pvPreviewCubeSizeLimitUnit: "GB"
     },
     LOG_EVENT: {
         eventLoggingEnabled: []
@@ -527,6 +531,14 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
     }
 
+    @computed get pvPreivewCubeSizeLimit(): number {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimit;
+    }
+
+    @computed get pvPreivewCubeSizeLimitUnit(): string {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimitUnit;
+    }
+
     @computed get isSelectingAllLogEvents(): boolean {
         return this.preferences.get(PreferenceKeys.LOG_EVENT)?.length === Event.EVENT_NUMBER;
     }
@@ -774,7 +786,9 @@ export class PreferenceStore {
             PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
             PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
             PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE,
-            PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW
+            PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW,
+            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT,
+            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT
         ]);
     };
 
@@ -836,7 +850,8 @@ export class PreferenceStore {
                 PreferenceKeys.REGION_CREATION_MODE,
                 PreferenceKeys.WCS_OVERLAY_AST_COLOR,
                 PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION,
-                PreferenceKeys.PIXEL_GRID_COLOR
+                PreferenceKeys.PIXEL_GRID_COLOR,
+                PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT
             ];
 
             const intKeys = [
@@ -868,7 +883,8 @@ export class PreferenceStore {
                 PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH,
                 PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY,
                 PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
-                PreferenceKeys.REGION_LINE_WIDTH
+                PreferenceKeys.REGION_LINE_WIDTH,
+                PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT
             ];
 
             const booleanKeys = [

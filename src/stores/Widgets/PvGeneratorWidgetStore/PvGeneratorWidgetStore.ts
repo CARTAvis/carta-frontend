@@ -18,8 +18,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable reverse: boolean;
     @observable keep: boolean;
     @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
-    @observable xyRebin: number;
-    @observable zRebin: number;
+    @observable xyRebin: number = 1;
+    @observable zRebin: number = 1;
     @observable previewRegionId: number;
     @observable previewFrame: FrameStore;
 
@@ -45,7 +45,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     //Can be refractored later
     @computed get previewRegionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
-        let previewRegionOptions: OptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
+        let previewRegionOptions: OptionProps[] = [{value: RegionId.IMAGE, label: "Image"}];
         if (appStore.frames) {
             const selectedFrame = appStore.getFrame(this.fileId);
             if (selectedFrame?.regionSet) {

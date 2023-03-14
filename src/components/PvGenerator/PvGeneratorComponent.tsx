@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
 import {toFixed} from "utilities";
 
@@ -43,6 +43,42 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             helpType: HelpType.PV_GENERATOR
         };
     }
+
+    public static formatBitValue = (bitValue: number): {value: number; unit: string; bitValue: number} => {
+        let value: number;
+        let unit: string;
+        if (bitValue >= 1e12) {
+            value = parseInt(toFixed(bitValue / 1e12, 2));
+            unit = "TB";
+        } else if (bitValue >= 1e9) {
+            value = parseInt(toFixed(bitValue / 1e9, 1));
+            unit = "GB";
+        } else if (bitValue >= 1e6) {
+            value = parseInt(toFixed(bitValue / 1e6, 1));
+            unit = "MB";
+        } else if (bitValue >= 1e3) {
+            value = parseInt(toFixed(bitValue / 1e3, 1));
+            unit = "kB";
+        } else {
+            value = bitValue;
+            unit = "B";
+        }
+        return {value, unit, bitValue: bitValue};
+    };
+
+    public static getBitValueFromFormatted = (value: number, unit: string): number => {
+        let bitValue = value;
+        if (unit === "TB") {
+            bitValue = value * 1e12;
+        } else if (unit === "GB") {
+            bitValue = value * 1e9;
+        } else if (unit === "MB") {
+            bitValue = value * 1e6;
+        } else if (unit === "kB") {
+            bitValue = value * 1e3;
+        }
+        return bitValue;
+    };
 
     @observable width: number;
     @observable height: number;
@@ -105,33 +141,19 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const bitPix = Math.abs(this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.match("BITPIX")).numericValue);
         const region = this.widgetStore.effectiveFrame?.getRegion(this.widgetStore.effectivePreviewRegionId);
         const imageDepth = this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.depth;
-        const estimatedSize = (region?.size.x * region?.size.y * bitPix * imageDepth) / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
-        if (region?.regionType !== CARTA.RegionType.RECTANGLE || !estimatedSize) {
+        const imageSize = this.widgetStore?.effectiveFrame?.frameInfo.fileInfo.size as number;
+        const regionBoundSize = region?.size.x * region?.size.y * bitPix * imageDepth;
+        const estimatedSize = (regionBoundSize || imageSize) / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
+        if (region?.regionType !== CARTA.RegionType.RECTANGLE && !estimatedSize) {
             return undefined;
         }
-        let value: number;
-        let unit: string;
-        if (estimatedSize >= 1e12) {
-            value = parseInt(toFixed(estimatedSize / 1e12, 2));
-            unit = "TB";
-        } else if (estimatedSize >= 1e9) {
-            value = parseInt(toFixed(estimatedSize / 1e9, 1));
-            unit = "GB";
-        } else if (estimatedSize >= 1e6) {
-            value = parseInt(toFixed(estimatedSize / 1e6, 1));
-            unit = "MB";
-        } else if (estimatedSize >= 1e3) {
-            value = parseInt(toFixed(estimatedSize / 1e3, 1));
-            unit = "kB";
-        } else {
-            value = estimatedSize;
-            unit = "B";
-        }
-        return {value, unit, bitValue: estimatedSize};
+
+        return PvGeneratorComponent.formatBitValue(estimatedSize);
     }
 
     @computed get isCubeSizeBelowLimit(): boolean {
-        return this.estimatedCubeSize?.bitValue < 10 * 1e9;
+        console.log(this.estimatedCubeSize?.bitValue);
+        return this.estimatedCubeSize?.bitValue <= PvGeneratorComponent.getBitValueFromFormatted(PreferenceStore.Instance.pvPreivewCubeSizeLimit, PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit);
     }
 
     constructor(props: WidgetProps) {
@@ -279,9 +301,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     <small>
                         Please ensure:
                         <br />
-                        1. Reactangle region is selected.
-                        <br />
-                        2. Preview cube size is less than the threshold.
+                        1. Preview cube size is less than the threshold.
                     </small>
                 </i>
             </span>
@@ -384,7 +404,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     <div className="generate-button">
                         <div>
-                            <Tooltip2 disabled={isAbleToGenerate} content={previewHint} position={Position.BOTTOM}>
+                            <Tooltip2 disabled={isAbleToGeneratePreview} content={previewHint} position={Position.BOTTOM}>
                                 <AnchorButton intent="success" disabled={!isAbleToGeneratePreview} text="Start Preview" onClick={this.onPreviewButtonClicked} />
                             </Tooltip2>
                         </div>

@@ -6,11 +6,12 @@ import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent} from "components/Dialogs";
+import {PvGeneratorComponent} from "components/PvGenerator/PvGeneratorComponent";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
 import {
     CompressionQuality,
@@ -51,13 +52,30 @@ enum PreferenceDialogTabs {
 
 const PercentileSelect = Select.ofType<string>();
 
+const PV_PREVIEW_CUBE_SIZE_LIMIT = 1000000000; //need to be removed and replaced by backend limit
+
 @observer
 export class PreferenceDialogComponent extends React.Component {
     @observable selectedTab: PreferenceDialogTabs = PreferenceDialogTabs.GLOBAL;
+    @observable pvPreviewCubeSizeLimitUnit: string;
 
     @action private setSelectedTab = (tab: PreferenceDialogTabs) => {
         this.selectedTab = tab;
     };
+
+    @computed get pvPreviewCubeSizeMaxValue(): number {
+        if (this.pvPreviewCubeSizeLimitUnit === "TB") {
+            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e12;
+        } else if (this.pvPreviewCubeSizeLimitUnit === "GB") {
+            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e9;
+        } else if (this.pvPreviewCubeSizeLimitUnit === "MB") {
+            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e6;
+        } else if (this.pvPreviewCubeSizeLimitUnit === "kB") {
+            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e3;
+        } else {
+            return PV_PREVIEW_CUBE_SIZE_LIMIT;
+        }
+    }
 
     constructor(props: any) {
         super(props);
@@ -82,6 +100,11 @@ export class PreferenceDialogComponent extends React.Component {
 
     private handleSystemTileCacheChange = _.throttle((value: number) => {
         PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, value);
+    }, 100);
+
+    @action private handlePvPreviewCubeSizeUnitChange = _.throttle(unit => {
+        this.pvPreviewCubeSizeLimitUnit = unit;
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT, unit);
     }, 100);
 
     private reset = () => {
@@ -688,6 +711,28 @@ export class PreferenceDialogComponent extends React.Component {
                             30 minutes
                         </option>
                     </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="PV Preview Cube Size Limit">
+                    <div className="pv-preview-cube-size-limit">
+                        <SafeNumericInput
+                            placeholder="PV Preview Cube Size Limit"
+                            min={1e-12}
+                            max={this.pvPreviewCubeSizeMaxValue}
+                            value={preference.pvPreivewCubeSizeLimit}
+                            majorStepSize={1}
+                            stepSize={1}
+                            onValueChange={value => PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, value)}
+                        />
+                        <HTMLSelect value={preference.pvPreivewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
+                            {["B", "kB", "MB", "GB", "TB"].map((unit, index, self) =>
+                                self.indexOf(PvGeneratorComponent.formatBitValue(PV_PREVIEW_CUBE_SIZE_LIMIT).unit) >= index ? (
+                                    <option key={index} value={unit}>
+                                        {unit}
+                                    </option>
+                                ) : undefined
+                            )}
+                        </HTMLSelect>
+                    </div>
                 </FormGroup>
             </React.Fragment>
         );
