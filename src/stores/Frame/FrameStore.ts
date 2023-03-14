@@ -607,12 +607,12 @@ export class FrameStore {
 
     // Dir X axis number from the header
     get dirXNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.dirX;
+        return this.frameInfo.fileInfoExtended.axesNumbers.spatialX;
     }
 
     // Dir Y axis number from the header
     get dirYNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.dirY;
+        return this.frameInfo.fileInfoExtended.axesNumbers.spatialY;
     }
 
     // Spectral axis number from the header
