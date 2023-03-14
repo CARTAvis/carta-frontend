@@ -210,13 +210,13 @@ export class DistanceMeasuringDialog extends React.Component {
                                             </FormGroup>
                                         </td>
                                         <td colSpan={2} className="distance-measuring-settings-table-line-style-numeric-input">
-                                            <FormGroup inline={true} label="Line Width" labelInfo="(px)">
-                                                <SafeNumericInput placeholder="Line Width" min={0.5} max={20} value={distanceMeasuringStore?.lineWidth} stepSize={0.5} onValueChange={value => distanceMeasuringStore?.setLineWidth(value)} />
+                                            <FormGroup inline={true} label="Line width" labelInfo="(px)">
+                                                <SafeNumericInput placeholder="Line width" min={0.5} max={20} value={distanceMeasuringStore?.lineWidth} stepSize={0.5} onValueChange={value => distanceMeasuringStore?.setLineWidth(value)} />
                                             </FormGroup>
                                         </td>
                                         <td width="300px" className="distance-measuring-settings-table-line-style-numeric-input">
-                                            <FormGroup inline={true} label="Font Size" labelInfo="(px)">
-                                                <SafeNumericInput placeholder="Font Size" min={0.5} max={50} value={distanceMeasuringStore?.fontSize} stepSize={1} onValueChange={value => distanceMeasuringStore?.setFontSize(value)} />
+                                            <FormGroup inline={true} label="Font size" labelInfo="(px)">
+                                                <SafeNumericInput placeholder="Font size" min={0.5} max={50} value={distanceMeasuringStore?.fontSize} stepSize={1} onValueChange={value => distanceMeasuringStore?.setFontSize(value)} />
                                             </FormGroup>
                                         </td>
                                     </tr>

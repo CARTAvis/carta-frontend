@@ -70,7 +70,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             <FormGroup
                                 key={index}
                                 inline={true}
-                                label="Line Color"
+                                label="Line color"
                                 labelInfo={
                                     lineLabel ? (
                                         <React.Fragment>
@@ -113,9 +113,9 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         </FormGroup>
                     )}
                     {this.getLineColorSelectors()}
-                    <FormGroup inline={true} label="Line Width" labelInfo="(px)">
+                    <FormGroup inline={true} label="Line width" labelInfo="(px)">
                         <SafeNumericInput
-                            placeholder="Line Width"
+                            placeholder="Line width"
                             min={LineSettings.MIN_WIDTH}
                             max={LineSettings.MAX_WIDTH}
                             value={props.lineWidth}
@@ -124,9 +124,9 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             onValueChange={(value: number) => props.setLineWidth(value)}
                         />
                     </FormGroup>
-                    <FormGroup inline={true} label="Point Size" labelInfo="(px)">
+                    <FormGroup inline={true} label="Point size" labelInfo="(px)">
                         <SafeNumericInput
-                            placeholder="Point Size"
+                            placeholder="Point size"
                             min={LineSettings.MIN_POINT_SIZE}
                             max={LineSettings.MAX_POINT_SIZE}
                             value={props.linePlotPointSize}
@@ -136,35 +136,35 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         />
                     </FormGroup>
                     {typeof props.logScaleY !== "undefined" && props.handleLogScaleChanged && (
-                        <FormGroup inline={true} label={"Log Scale"}>
+                        <FormGroup inline={true} label={"Log scale"}>
                             <Switch checked={props.logScaleY} onChange={props.handleLogScaleChanged} />
                         </FormGroup>
                     )}
                     {typeof props.markerTextVisible !== "undefined" && props.handleMarkerTextChanged && (
-                        <FormGroup inline={true} label={"Show Labels"}>
+                        <FormGroup inline={true} label={"Show labels"}>
                             <Switch checked={props.markerTextVisible} onChange={props.handleMarkerTextChanged} />
                         </FormGroup>
                     )}
                     {typeof props.useWcsValues !== "undefined" && props.handleWcsValuesChanged && (
-                        <FormGroup inline={true} label={"Use WCS Values"}>
+                        <FormGroup inline={true} label={"Use WCS values"}>
                             <Switch checked={props.useWcsValues} onChange={props.handleWcsValuesChanged} />
                         </FormGroup>
                     )}
                     {typeof props.showWCSAxis !== "undefined" && props.handleWcsAxisChanged && (
-                        <FormGroup disabled={props.disableShowWCSAxis} inline={true} label={"Show WCS Axis"}>
+                        <FormGroup disabled={props.disableShowWCSAxis} inline={true} label={"Show WCS axis"}>
                             <Switch disabled={props.disableShowWCSAxis} checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged} />
                         </FormGroup>
                     )}
                     {typeof props.meanRmsVisible !== "undefined" && props.handleMeanRmsChanged && (
-                        <FormGroup inline={true} label={"Show Mean/RMS"} helperText={"Only visible in single profile"}>
+                        <FormGroup inline={true} label={"Show mean/RMS"} helperText={"Only visible in single profile"}>
                             <Switch checked={props.meanRmsVisible} onChange={props.handleMeanRmsChanged} />
                         </FormGroup>
                     )}
-                    <FormGroup inline={true} label={"Line Style"}>
+                    <FormGroup inline={true} label={"Line style"}>
                         <PlotTypeSelectorComponent value={props.plotType} onValueChanged={props.setPlotType} />
                     </FormGroup>
                     {typeof props.xMinVal !== "undefined" && props.handleXMinChange && (
-                        <FormGroup label={"X Min"} inline={true}>
+                        <FormGroup label={"X min"} inline={true}>
                             <SafeNumericInput
                                 className="line-boundary"
                                 value={props.xMinVal}
@@ -177,7 +177,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         </FormGroup>
                     )}
                     {typeof props.xMaxVal !== "undefined" && props.handleXMaxChange && (
-                        <FormGroup label={"X Max"} inline={true}>
+                        <FormGroup label={"X max"} inline={true}>
                             <SafeNumericInput
                                 className="line-boundary"
                                 value={props.xMaxVal}
@@ -190,7 +190,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         </FormGroup>
                     )}
                     {typeof props.yMinVal !== "undefined" && props.handleYMinChange && (
-                        <FormGroup label={"Y Min"} inline={true}>
+                        <FormGroup label={"Y min"} inline={true}>
                             <SafeNumericInput
                                 className="line-boundary"
                                 asyncControl={true}
@@ -204,7 +204,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         </FormGroup>
                     )}
                     {typeof props.yMaxVal !== "undefined" && props.handleYMaxChange && (
-                        <FormGroup label={"Y Max"} inline={true}>
+                        <FormGroup label={"Y max"} inline={true}>
                             <SafeNumericInput
                                 className="line-boundary"
                                 asyncControl={true}
@@ -218,9 +218,9 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         </FormGroup>
                     )}
                     {typeof props.isAutoScaledX !== "undefined" && typeof props.isAutoScaledY !== "undefined" && props.clearXYBounds && (
-                        <FormGroup label={"Reset Range"} inline={true} className="reset-range-content">
+                        <FormGroup label={"Reset range"} inline={true} className="reset-range-content">
                             <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>
-                                Reset Range
+                                Reset range
                             </Button>
                         </FormGroup>
                     )}

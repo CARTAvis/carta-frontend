@@ -45,10 +45,10 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 <FormGroup label={"Scaling"} inline={true}>
                     <ScalingSelectComponent selectedItem={renderConfig.scaling} onItemSelect={renderConfig.setScaling} />
                 </FormGroup>
-                <FormGroup label={"Color map"} inline={true}>
+                <FormGroup label={"Colormap"} inline={true}>
                     <ColormapComponent inverted={renderConfig.inverted} selectedItem={renderConfig.colorMap} onItemSelect={renderConfig.setColorMap} />
                 </FormGroup>
-                <FormGroup label={"Invert color map"} inline={true}>
+                <FormGroup label={"Invert colormap"} inline={true}>
                     <Switch checked={renderConfig.inverted} onChange={this.handleInvertedChanged} />
                 </FormGroup>
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) && (
@@ -91,7 +91,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         contrastMax={RenderConfigStore.CONTRAST_MAX}
                     />
                 </Collapse>
-                <FormGroup inline={true} label="NaN Color" className="nan-color-button">
+                <FormGroup inline={true} label="NaN color" className="nan-color-button">
                     <ColorPickerComponent
                         color={tinycolor(preference.nanColorHex).setAlpha(preference.nanAlpha).toRgb()}
                         presetColors={[...SWATCH_COLORS, "transparent"]}
