@@ -79,13 +79,13 @@ export class SmoothingSettingsComponent extends React.Component<{
                                 />
                             </FormGroup>
                         )}
-                        <FormGroup inline={true} label={"Line Style"}>
+                        <FormGroup inline={true} label={"Line style"}>
                             <PlotTypeSelectorComponent value={smoothingStore.lineType} onValueChanged={smoothingStore.setLineType} />
                         </FormGroup>
                         {!this.props.disableColorAndLineWidth && (
-                            <FormGroup inline={true} label="Line Width" labelInfo="(px)">
+                            <FormGroup inline={true} label="Line width" labelInfo="(px)">
                                 <SafeNumericInput
-                                    placeholder="Line Width"
+                                    placeholder="Line width"
                                     min={LineSettings.MIN_WIDTH}
                                     max={LineSettings.MAX_WIDTH}
                                     value={smoothingStore.lineWidth}
@@ -95,9 +95,9 @@ export class SmoothingSettingsComponent extends React.Component<{
                                 />
                             </FormGroup>
                         )}
-                        <FormGroup inline={true} label="Point Size" labelInfo="(px)">
+                        <FormGroup inline={true} label="Point size" labelInfo="(px)">
                             <SafeNumericInput
-                                placeholder="Point Size"
+                                placeholder="Point size"
                                 min={LineSettings.MIN_POINT_SIZE}
                                 max={LineSettings.MAX_POINT_SIZE}
                                 value={smoothingStore.pointRadius}
@@ -129,12 +129,12 @@ export class SmoothingSettingsComponent extends React.Component<{
                     </FormGroup>
                 )}
                 {smoothingStore.type === SmoothingType.DECIMATION && (
-                    <FormGroup label={"Decimation Width"} inline={true}>
+                    <FormGroup label={"Decimation width"} inline={true}>
                         <SafeNumericInput value={smoothingStore.decimationWidth} min={2} stepSize={1} className="narrow" onValueChange={val => smoothingStore.setDecimationWidth(Math.round(val))} />
                     </FormGroup>
                 )}
                 {smoothingStore.type === SmoothingType.BINNING && (
-                    <FormGroup label={"Binning Width"} inline={true}>
+                    <FormGroup label={"Binning width"} inline={true}>
                         <SafeNumericInput value={smoothingStore.binWidth} min={2} stepSize={1} className="narrow" onValueChange={val => smoothingStore.setBinWidth(Math.round(val))} />
                     </FormGroup>
                 )}
@@ -143,7 +143,7 @@ export class SmoothingSettingsComponent extends React.Component<{
                         <FormGroup label={"Kernel"} inline={true}>
                             <SafeNumericInput value={smoothingStore.savitzkyGolaySize} min={5} stepSize={2} className="narrow" onValueChange={val => smoothingStore.setSavitzkyGolaySize(Math.round(val))} />
                         </FormGroup>
-                        <FormGroup label="Degree of Fitting" inline={true}>
+                        <FormGroup label="Order of fitting" inline={true}>
                             <SafeNumericInput value={smoothingStore.savitzkyGolayOrder} min={0} max={4} stepSize={2} className="narrow" onValueChange={val => smoothingStore.setSavitzkyGolayOrder(Math.round(val))} />
                         </FormGroup>
                     </React.Fragment>
