@@ -226,44 +226,61 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 {appStore.toolbarExpanded && (
                     <React.Fragment>
                         {!frame.isPreview && (
-                        <>
-                            <Tooltip2
-                                position={tooltipPosition}
-                                content={
-                                    <span>
-                                        Distance measurement
-                                        <br />
-                                        <i>
-                                            <small>Click to create geodesic curves.</small>
-                                            <br></br>
-                                            <small>Double Click to open the settings.</small>
-                                        </i>
-                                    </span>
-                                }
-                            >
-                                <AnchorButton
-                                    icon={<CustomIcon icon="distanceMeasuring" />}
-                                    active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring}
-                                    onClick={handleDistanceMeasuringClicked}
-                                    onDoubleClick={dialogStore.showDistanceMeasuringDialog}
-                                />
-                            </Tooltip2>
-                            <Tooltip2
-                                position={tooltipPosition}
-                                content={
-                                    <span>
-                                        Catalog selection
-                                        <br />
-                                        <i>
-                                            <small>Click to select single catalog source</small>
-                                        </i>
-                                    </span>
-                                }
-                            >
-                                <AnchorButton icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled} />
-                            </Tooltip2>
-                            {frame.regionSet.mode === RegionMode.CREATING && (
-                                <Popover2 popoverClassName="region-menu" content={regionMenu} position={Position.TOP} minimal={true}>
+                            <>
+                                <Tooltip2
+                                    position={tooltipPosition}
+                                    content={
+                                        <span>
+                                            Distance measurement
+                                            <br />
+                                            <i>
+                                                <small>Click to create geodesic curves.</small>
+                                                <br></br>
+                                                <small>Double Click to open the settings.</small>
+                                            </i>
+                                        </span>
+                                    }
+                                >
+                                    <AnchorButton
+                                        icon={<CustomIcon icon="distanceMeasuring" />}
+                                        active={appStore.activeLayer === ImageViewLayer.DistanceMeasuring}
+                                        onClick={handleDistanceMeasuringClicked}
+                                        onDoubleClick={dialogStore.showDistanceMeasuringDialog}
+                                    />
+                                </Tooltip2>
+                                <Tooltip2
+                                    position={tooltipPosition}
+                                    content={
+                                        <span>
+                                            Catalog selection
+                                            <br />
+                                            <i>
+                                                <small>Click to select single catalog source</small>
+                                            </i>
+                                        </span>
+                                    }
+                                >
+                                    <AnchorButton icon={"locate"} active={catalogOverlayEnabled} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.Catalog)} disabled={catalogSelectionDisabled} />
+                                </Tooltip2>
+                                {frame.regionSet.mode === RegionMode.CREATING && (
+                                    <Popover2 popoverClassName="region-menu" content={regionMenu} position={Position.TOP} minimal={true}>
+                                        <Tooltip2
+                                            position={tooltipPosition}
+                                            content={
+                                                <span>
+                                                    Create region
+                                                    <br />
+                                                    <i>
+                                                        <small>Click to select region type</small>
+                                                    </i>
+                                                </span>
+                                            }
+                                        >
+                                            <AnchorButton icon={regionIcon} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                                        </Tooltip2>
+                                    </Popover2>
+                                )}
+                                {frame.regionSet.mode === RegionMode.MOVING && (
                                     <Tooltip2
                                         position={tooltipPosition}
                                         content={
@@ -271,78 +288,41 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                                 Create region
                                                 <br />
                                                 <i>
-                                                    <small>Click to select region type</small>
+                                                    <small>
+                                                        Double-click to select region type.
+                                                        <br />
+                                                        Press C to enter creation mode.
+                                                    </small>
                                                 </i>
                                             </span>
                                         }
                                     >
-                                        <AnchorButton icon={regionIcon} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                                        <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
                                     </Tooltip2>
-                                </Popover2>
-                            )}
-                            {frame.regionSet.mode === RegionMode.MOVING && (
+                                )}
                                 <Tooltip2
                                     position={tooltipPosition}
                                     content={
                                         <span>
-                                            Create region
-                                            <br />
-                                            <i>
-                                                <small>
-                                                    Double-click to select region type.
-                                                    <br />
-                                                    Press C to enter creation mode.
-                                                </small>
-                                            </i>
+                                            Select and pan mode
+                                            <span>
+                                                <br />
+                                                <i>
+                                                    <small>Double Click to open the settings.</small>
+                                                </i>
+                                            </span>
                                         </span>
                                     }
                                 >
-                                    <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                                    <AnchorButton
+                                        icon={"hand"}
+                                        onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
+                                        onDoubleClick={this.handlePanZoomShortCutClicked}
+                                        active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
+                                    />
                                 </Tooltip2>
-                            )}
-                            <Tooltip2
-                                position={tooltipPosition}
-                                content={
-                                    <span>
-                                        Select and pan mode
-                                        <span>
-                                            <br />
-                                            <i>
-                                                <small>Double Click to open the settings.</small>
-                                            </i>
-                                        </span>
-                                    </span>
-                                }
-                            >
-                                <AnchorButton
-                                    icon={"hand"}
-                                    onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
-                                    onDoubleClick={this.handlePanZoomShortCutClicked}
-                                    active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
-                                />
-                            </Tooltip2>
-                            <Tooltip2
-                                position={tooltipPosition}
-                                content={
-                                    <span>
-                                        Select and pan mode
-                                        <span>
-                                            <br />
-                                            <i>
-                                                <small>Double Click to open the settings.</small>
-                                            </i>
-                                        </span>
-                                    </span>
-                                }
-                            >
-                                <AnchorButton
-                                    icon={"hand"}
-                                    onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
-                                    onDoubleClick={this.handlePanZoomShortCutClicked}
-                                    active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
-                                />
-                            </Tooltip2>
-                        </>)}
+                            </>
+                        )}
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom in (scroll wheel up){currentZoomSpan}</span>}>
                             <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} />
                         </Tooltip2>
