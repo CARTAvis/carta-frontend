@@ -821,7 +821,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
                             <ClearableNumericInputComponent
                                 className={"catalog-max-rows"}
-                                label="Max Rows"
+                                label="Max rows"
                                 value={profileStore.maxRows}
                                 onValueChanged={val => profileStore.setMaxRows(val)}
                                 onValueCleared={() => profileStore.setMaxRows(profileStore.catalogInfo.dataSize)}

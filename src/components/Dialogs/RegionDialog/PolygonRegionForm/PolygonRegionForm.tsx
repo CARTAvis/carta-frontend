@@ -109,7 +109,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     <SafeNumericInput
                         selectAllOnFocus={true}
                         buttonPosition="none"
-                        placeholder="X Coordinate"
+                        placeholder="X coordinate"
                         value={point.x}
                         onBlur={evt => this.handlePointChange(index, true, evt)}
                         onKeyDown={evt => this.handlePointChange(index, true, evt)}
@@ -119,7 +119,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                     <SafeNumericInput
                         selectAllOnFocus={true}
                         buttonPosition="none"
-                        placeholder="Y Coordinate"
+                        placeholder="Y coordinate"
                         value={point.y}
                         onBlur={evt => this.handlePointChange(index, false, evt)}
                         onKeyDown={evt => this.handlePointChange(index, false, evt)}
@@ -131,7 +131,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
-                            placeholder="X WCS Coordinate"
+                            placeholder="X WCS coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
                             value={pointWCS ? pointWCS.x : ""}
                             onBlur={evt => this.handleWCSPointChange(index, true, evt)}
@@ -144,7 +144,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                         <SafeNumericInput
                             allowNumericCharactersOnly={false}
                             buttonPosition="none"
-                            placeholder="Y WCS Coordinate"
+                            placeholder="Y WCS coordinate"
                             disabled={!this.props.wcsInfo || !pointWCS}
                             value={pointWCS ? pointWCS.y : ""}
                             onBlur={evt => this.handleWCSPointChange(index, false, evt)}
