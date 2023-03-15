@@ -36,7 +36,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             type: "pv-generator",
             minWidth: 350,
             minHeight: 500,
-            defaultWidth: 500,
+            defaultWidth: 520,
             defaultHeight: 620,
             title: "PV Generator",
             isCloseable: true,
