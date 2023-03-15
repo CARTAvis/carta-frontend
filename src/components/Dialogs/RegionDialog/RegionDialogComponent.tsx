@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, FormGroup, IDialogProps, Intent, NonIdealState, Switch} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
@@ -41,6 +41,24 @@ export class RegionDialogComponent extends React.Component {
         const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
         (region as PointAnnotationStore).setPointShape(item);
         frame.pointShapeCache = item;
+    };
+
+    private handleCompassAnnotationArrowhead = (selection: string) => {
+        const region = AppStore.Instance.activeFrame.regionSet.selectedRegion as CompassAnnotationStore;
+        switch (selection) {
+            case "north":
+                region.setNorthArrowhead(true);
+                region.setEastArrowhead(false);
+                break;
+            case "east":
+                region.setNorthArrowhead(false);
+                region.setEastArrowhead(true);
+                break;
+            case "both":
+                region.setNorthArrowhead(true);
+                region.setEastArrowhead(true);
+                break;
+        }
     };
 
     public render() {
@@ -174,14 +192,15 @@ export class RegionDialogComponent extends React.Component {
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}>
                                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                                     <div className="form-contents">
-                                        <FormGroup inline={true} label="Show North Arrowhead">
-                                            <Switch
-                                                checked={(region as CompassAnnotationStore).northArrowhead}
-                                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as CompassAnnotationStore).setNorthArrowhead(ev.target.checked)}
-                                            />
-                                        </FormGroup>
-                                        <FormGroup inline={true} label="Show East Arrowhead">
-                                            <Switch checked={(region as CompassAnnotationStore).eastArrowhead} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as CompassAnnotationStore).setEastArrowhead(ev.target.checked)} />
+                                        <FormGroup inline={true} label="Show Arrowhead">
+                                            <HTMLSelect
+                                                value={(region as CompassAnnotationStore).eastArrowhead ? ((region as CompassAnnotationStore).northArrowhead ? "both" : "east") : "north"}
+                                                onChange={ev => this.handleCompassAnnotationArrowhead(ev.target.value)}
+                                            >
+                                                <option value={"north"}>North</option>
+                                                <option value={"east"}>East</option>
+                                                <option value={"both"}>Both</option>
+                                            </HTMLSelect>
                                         </FormGroup>
                                         <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
                                             <SafeNumericInput

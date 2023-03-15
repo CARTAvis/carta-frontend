@@ -169,7 +169,6 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                         </td>
                     </>
                 )}
-                ;
             </>
         );
     };
