@@ -465,7 +465,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 datasetConfig.pointRadius = this.props.pointRadius ? this.props.pointRadius : 1;
                 datasetConfig.pointBackgroundColor = lineColor;
 
-                // chartjs bug workaround: plot 0 width lines to avoid previous lines remaining in the graph 
+                // chartjs bug workaround: plot 0 width lines to avoid previous lines remaining in the graph
                 datasetConfig.showLine = true;
                 datasetConfig.borderWidth = 0;
                 datasetConfig.borderColor = "rgba(0, 0, 0, 0)";
