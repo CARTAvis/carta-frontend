@@ -8,7 +8,7 @@ export interface SpectralLineResponse {
 }
 
 export class SplatalogueService {
-    private static BaseUrl = "https://splatalogue.online";
+    private static BaseUrl = "https://almahd-staging.cv.nrao.edu/splata-slap/advanceded/false/";
     private readonly axiosInstance: AxiosInstance;
 
     private static SplatalogueHeaders: string[] = [
@@ -67,22 +67,28 @@ export class SplatalogueService {
         this.axiosInstance = axios.create({baseURL: SplatalogueService.BaseUrl});
     }
 
-    async aliveCheck(): Promise<boolean> {
-        try {
-            const {status} = await this.axiosInstance.head("");
-            return status === 200;
-        } catch (err) {
-            return false;
-        }
-    }
+    aliveCheck = async (): Promise<boolean> => {
+        // TODO: remove alive check
+        return true;
+        // try {
+        //     const { status } = await this.axiosInstance.head("");
+        //     return status === 200;
+        // } catch (err) {
+        //     console.log(err)
+        //     return false;
+        // }
+    };
 
-    async query(freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> {
-        const url = SplatalogueService.ConstructUrl(freqMin, freqMax, intensityLimit);
-        const response = await this.axiosInstance.get(url);
-        return SplatalogueService.ConvertTable(response.data);
-    }
+    query = async (freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> => {
+        const params = SplatalogueService.GetParamString(freqMin, freqMax, intensityLimit);
+        const response = await this.axiosInstance.post("", { body: params });
+        console.log(response?.data);
+        // TODO: convert object to SpectralLineResponse
+        return null;
+        // return SplatalogueService.ConvertTable(response?.data);
+    };
 
-    private static ConvertTable(tableString: string) {
+    private static ConvertTable = (tableString: string) => {
         if (!tableString || typeof tableString !== "string") {
             throw new Error("invalid data received from Splatalogue");
         }
@@ -181,25 +187,78 @@ export class SplatalogueService {
         responseData.spectralLineData = shiftedData;
 
         return responseData;
-    }
+    };
 
-    // This function is adapted quite strictly from the backend version, and should probably be
-    // cleaned up at a later stage to make it flexible and more readable.
-    private static ConstructUrl(freqMin: number, freqMax: number, intensityLimit?: number) {
-        const base = "/c_export.php?&sid%5B%5D=&data_version=v3.0&lill=on";
-        const intensityLimitString = isFinite(intensityLimit) ? `&lill_cdms_jpl=${intensityLimit === 0 ? 0.000001 : intensityLimit}` : "";
-        const lineListParameters =
-            "&displayJPL=displayJPL&displayCDMS=displayCDMS&displayLovas=displayLovas" +
-            "&displaySLAIM=displaySLAIM&displayToyaMA=displayToyaMA&displayOSU=displayOSU" +
-            "&displayRecomb=displayRecomb&displayLisa=displayLisa&displayRFI=displayRFI";
-        const lineStrengthParameters = "&ls1=ls1&ls2=ls2&ls3=ls3&ls4=ls4&ls5=ls5";
-        const energyLevelParameters = "&el1=el1&el2=el2&el3=el3&el4=el4";
-        const miscellaneousParameters = "&show_unres_qn=show_unres_qn&submit=Export&export_type=current&export_delimiter=colon&offset=0&limit=100000&range=on";
+    private static GetParamString = (freqMin: number, freqMax: number, intensityLimit?: number): string => {
+        let freqFrom = new Array(20).fill("");
+        freqFrom[0] = freqMin.toString();
+        let freqTo = new Array(20).fill("");
+        freqTo[0] = freqMax.toString();
+        const unit = "MHz";
 
-        // workaround to fix splatalogue frequency range parameter bug
-        const freqMinString = freqMin === Math.floor(freqMin) ? freqMin.toFixed(1) : freqMin.toString();
-        const freqMaxString = freqMax === Math.floor(freqMax) ? freqMax.toFixed(1) : freqMax.toString();
-        const frequencyRangeString = `&frequency_units=MHz&from=${freqMinString}&to=${freqMaxString}`;
-        return base + intensityLimitString + lineListParameters + lineStrengthParameters + energyLevelParameters + miscellaneousParameters + frequencyRangeString;
-    }
+        const intensityLimitEnabled = intensityLimit !== undefined;
+        // use 0.000001 instead of 0 to avoid issues from the catalog itself
+        const limit = intensityLimitEnabled ? 0 : (intensityLimit === 0 ? 0.000001 : intensityLimit);
+        
+        const params = {
+            searchSpecies: "",
+            speciesSelectBox: [""],
+            dataVersion: "v3.0",
+            userInputFrequenciesFrom: freqFrom,
+            userInputFrequenciesTo: freqTo,
+            userInputFrequenciesUnit: unit,
+            frequencyRedshift: 0,
+            energyFrom: 0,
+            energyTo: 0,
+            energyRangeType: "el_cm-1",
+            lineIntensity: intensityLimitEnabled ? "CDMS/JPL (log)" : "None",
+            lineIntensityLowerLimit: limit,
+            excludeAtmosSpecies: false,
+            excludePotentialInterstellarSpecies: false,
+            excludeProbableInterstellarSpecies: false,
+            excludeKnownASTSpecies: false,
+            showOnlyAstronomicallyObservedTransitions: false,
+            showOnlyNRAORecommendedFrequencies: false,
+            lineListDisplayJPL: true,
+            lineListDisplayCDMS: true,
+            lineListDisplayLovasNIST: !intensityLimitEnabled,
+            lineListDisplaySLAIM: !intensityLimitEnabled,
+            lineListDisplayToyaMA: !intensityLimitEnabled,
+            lineListDisplayOSU: !intensityLimitEnabled,
+            lineListDisplayRecombination: !intensityLimitEnabled,
+            lineListDisplayTopModel: !intensityLimitEnabled,
+            lineListDisplayRFI: !intensityLimitEnabled,
+            lineStrengthDisplayCDMSJPL: true,
+            lineStrengthDisplaySijMu2: true,
+            lineStrengthDisplaySij: true,
+            lineStrengthDisplayAij: true,
+            lineStrengthDisplayLovasAST: true,
+            energyLevelOne: true,
+            energyLevelTwo: false,
+            energyLevelThree: false,
+            energyLevelFour: false,
+            displayObservedTransitions: false,
+            displayG358MaserTransitions: false,
+            displayObservationReference: false,
+            displayObservationSource: false,
+            displayTelescopeLovasNIST: false,
+            frequencyErrorLimit: false,
+            displayHFSIntensity: false,
+            displayUnresolvedQuantumNumbers: true,
+            displayUpperStateDegeneracy: false,
+            displayMoleculeTag: false,
+            displayQuantumNumberCode: false,
+            displayLabRef: false,
+            displayOrderedFrequencyOnly: false,
+            displayNRAORecommendedFrequencies: false,
+            displayUniqueSpeciesTag: false,
+            displayUniqueLineIDNumber: false,
+            exportType: "current",
+            exportDelimiter: "tab",
+            exportLimit: "allRecords",
+            exportStart: 1,
+            exportStop: 250
+        };
+        return JSON.stringify(params);
+    };
 }
