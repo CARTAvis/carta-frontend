@@ -183,6 +183,7 @@ export class RootMenuComponent extends React.Component {
         }
         serverMenu.push(
             <MenuItem2
+                key="copy-id"
                 text="Copy session ID to clipboard"
                 onClick={async () => {
                     try {
@@ -196,6 +197,7 @@ export class RootMenuComponent extends React.Component {
         );
         serverMenu.push(
             <MenuItem2
+                key="copy-url"
                 text="Copy session URL to clipboard"
                 onClick={async () => {
                     try {
