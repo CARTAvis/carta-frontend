@@ -462,11 +462,13 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 order: this.props.order ? this.props.order : 0
             };
             if (this.props.plotType === PlotType.POINTS) {
-                datasetConfig.showLine = false;
-                datasetConfig.borderWidth = 0;
-                datasetConfig.borderColor = "rgba(0, 0, 0, 0)";
                 datasetConfig.pointRadius = this.props.pointRadius ? this.props.pointRadius : 1;
                 datasetConfig.pointBackgroundColor = lineColor;
+
+                // chartjs bug workaround: plot 0 width lines to avoid previous lines remaining in the graph 
+                datasetConfig.showLine = true;
+                datasetConfig.borderWidth = 0;
+                datasetConfig.borderColor = "rgba(0, 0, 0, 0)";
             } else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
@@ -539,10 +541,13 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 let currentLineWidth = props.borderWidth ? props.borderWidth : this.props.borderWidth;
 
                 if (props.type === PlotType.POINTS) {
-                    multiPlotDatasetConfig.showLine = false;
                     multiPlotDatasetConfig.pointStyle = "circle";
                     multiPlotDatasetConfig.pointRadius = currentPointRadius ? currentPointRadius : 1;
+
+                    // chartjs bug workaround: plot 0 width lines to avoid previous lines remaining in the graph
+                    multiPlotDatasetConfig.showLine = true;
                     multiPlotDatasetConfig.borderWidth = 0;
+                    multiPlotDatasetConfig.borderColor = "rgba(0, 0, 0, 0)";
                 } else if (props.type === PlotType.LINES || props.type === PlotType.STEPS) {
                     multiPlotDatasetConfig.showLine = true;
                     multiPlotDatasetConfig.pointRadius = 0.5;
