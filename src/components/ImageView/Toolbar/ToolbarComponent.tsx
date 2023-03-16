@@ -42,7 +42,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.FK5, "FK5 coordinates, J2000.0 equinox"],
         [SystemType.FK4, "FK4 coordinates, B1950.0 equinox"],
         [SystemType.Galactic, "Galactic coordinates"],
-        [SystemType.Ecliptic, "Ecliptic coordinates"],
+        [SystemType.Ecliptic, "Ecliptic coordinates, J2000.0 equinox"],
         [SystemType.ICRS, "International Celestial Reference System"]
     ]);
 
@@ -188,7 +188,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const wcsMatchingMenu = (
             <Menu>
                 <MenuItem
-                    text={`Spectral (${preferenceStore.spectralMatchingType}) and Spatial`}
+                    text={`Spectral (${preferenceStore.spectralMatchingType}) and spatial`}
                     disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
                     active={spectralMatchingEnabled && spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(true, true)}
@@ -229,7 +229,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             position={tooltipPosition}
                             content={
                                 <span>
-                                    Distance Measurement
+                                    Distance measurement
                                     <br />
                                     <i>
                                         <small>Click to create geodesic curves.</small>
@@ -319,10 +319,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
                             />
                         </Tooltip2>
-                        <Tooltip2 position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
+                        <Tooltip2 position={tooltipPosition} content={<span>Zoom in (scroll wheel up){currentZoomSpan}</span>}>
                             <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} />
                         </Tooltip2>
-                        <Tooltip2 position={tooltipPosition} content={<span>Zoom out (Scroll wheel down){currentZoomSpan}</span>}>
+                        <Tooltip2 position={tooltipPosition} content={<span>Zoom out (scroll wheel down){currentZoomSpan}</span>}>
                             <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked} />
                         </Tooltip2>
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom to 1.0x{currentZoomSpan}</span>}>
@@ -338,7 +338,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 position={tooltipPosition}
                                 content={
                                     <span>
-                                        WCS Matching <br />
+                                        WCS matching <br />
                                         <small>
                                             <i>Current: {wcsButtonTooltip}</i>
                                         </small>
@@ -355,7 +355,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 position={tooltipPosition}
                                 content={
                                     <span>
-                                        Overlay Coordinate <br />
+                                        Overlay coordinate <br />
                                         <small>
                                             <i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i>
                                         </small>

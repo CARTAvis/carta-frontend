@@ -62,7 +62,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
                     label="Rest frequency"
                     value={restFreqStore.customRestFreq.value}
                     disabled={frameOption.disable}
-                    placeholder="rest frequency"
+                    placeholder="Rest frequency"
                     selectAllOnFocus={true}
                     onValueChanged={val => {
                         restFreqStore.setCustomVal(val);
@@ -86,7 +86,7 @@ export class LayerListSettingsPanelComponent extends React.Component<WidgetProps
 
         const matchingPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Spectral Matching Type">
+                <FormGroup inline={true} label="Spectral matching type">
                     <HTMLSelect value={appStore.preferenceStore.spectralMatchingType} onChange={ev => appStore.setSpectralMatchingType(ev.currentTarget.value as SpectralType)}>
                         {SPECTRAL_MATCHING_TYPES.map(type => (
                             <option key={type} value={type}>
