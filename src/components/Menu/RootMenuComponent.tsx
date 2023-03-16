@@ -284,7 +284,12 @@ export class RootMenuComponent extends React.Component {
                             </React.Fragment>
                         )}
                     </Menu.Item>
-                    <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog} />
+                    <Menu.Item text="Save Layout" onClick={() => appStore.dialogStore.showSaveLayoutDialog()} />
+                    <Menu.Item text="Rename Layout" disabled={!userLayouts || userLayouts.length <= 0}>
+                        {userLayouts &&
+                            userLayouts.length > 0 &&
+                            userLayouts.map(value => <Menu.Item key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.dialogStore.showSaveLayoutDialog(value)} />)}
+                    </Menu.Item>
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
                             userLayouts.length > 0 &&
