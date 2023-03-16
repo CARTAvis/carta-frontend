@@ -101,10 +101,13 @@ export class OverlayGlobalSettings {
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
         astString.add("System", this.explicitSystem);
 
-        if (this.system === SystemType.FK4) {
-            astString.add("Equinox", "1950");
-        } else {
-            astString.add("Equinox", "2000");
+        const frame = AppStore.Instance.activeFrame;
+        if (frame.isXY || frame.isYX) {
+            if (this.system === SystemType.FK4) {
+                astString.add("Equinox", "1950");
+            } else {
+                astString.add("Equinox", "2000");
+            }
         }
 
         return astString.toString();
