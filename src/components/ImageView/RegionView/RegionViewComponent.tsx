@@ -85,9 +85,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 }
                 return undefined;
             },
-            (reference, prevReferece) => {
+            (reference, prevReference) => {
                 const frame = this.props.frame;
-                if (reference && (reference.centerMovement.x !== prevReferece?.centerMovement?.x || reference.centerMovement.y !== prevReferece?.centerMovement?.y || reference.zoom !== prevReferece?.zoom) && frame) {
+                if (reference && (reference.centerMovement.x !== prevReference?.centerMovement?.x || reference.centerMovement.y !== prevReference?.centerMovement?.y || reference.zoom !== prevReference?.zoom) && frame) {
                     this.syncStage(reference.centerMovement, reference.zoom);
                 }
             }

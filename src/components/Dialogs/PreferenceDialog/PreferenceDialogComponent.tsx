@@ -11,7 +11,6 @@ import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {PvGeneratorComponent} from "components/PvGenerator/PvGeneratorComponent";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
 import {
     CompressionQuality,
@@ -724,13 +723,19 @@ export class PreferenceDialogComponent extends React.Component {
                             onValueChange={value => PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, value)}
                         />
                         <HTMLSelect value={preference.pvPreivewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
-                            {["B", "kB", "MB", "GB", "TB"].map((unit, index, self) =>
+                            {/* {["B", "kB", "MB", "GB", "TB"].map((unit, index, self) =>
                                 self.indexOf(PvGeneratorComponent.formatBitValue(PV_PREVIEW_CUBE_SIZE_LIMIT).unit) >= index ? (
                                     <option key={index} value={unit}>
                                         {unit}
                                     </option>
                                 ) : undefined
-                            )}
+                            )} */}
+                            <option key={0} value={"MB"}>
+                                MB
+                            </option>
+                            <option key={1} value={"GB"}>
+                                GB
+                            </option>
                         </HTMLSelect>
                     </div>
                 </FormGroup>

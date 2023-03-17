@@ -138,11 +138,12 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     }
 
     @computed get estimatedCubeSize(): {value: number; unit: string; bitValue: number} {
-        const bitPix = Math.abs(this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.match("BITPIX")).numericValue);
+        const bytePix = Math.abs(this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.match("BITPIX")).numericValue) / 8;
         const region = this.widgetStore.effectiveFrame?.getRegion(this.widgetStore.effectivePreviewRegionId);
         const imageDepth = this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.depth;
-        const imageSize = this.widgetStore?.effectiveFrame?.frameInfo.fileInfo.size as number;
-        const regionBoundSize = region?.size.x * region?.size.y * bitPix * imageDepth;
+        const fileInfoExtended = this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended;
+        const imageSize = fileInfoExtended.width * fileInfoExtended.height * fileInfoExtended.depth * bytePix;
+        const regionBoundSize = region?.regionId === -1 ? null : region?.boundingBoxArea * bytePix * imageDepth;
         const estimatedSize = (regionBoundSize || imageSize) / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
         if (region?.regionType !== CARTA.RegionType.RECTANGLE && !estimatedSize) {
             return undefined;
@@ -152,7 +153,6 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     }
 
     @computed get isCubeSizeBelowLimit(): boolean {
-        console.log(this.estimatedCubeSize?.bitValue);
         return this.estimatedCubeSize?.bitValue <= PvGeneratorComponent.getBitValueFromFormatted(PreferenceStore.Instance.pvPreivewCubeSizeLimit, PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit);
     }
 

@@ -96,7 +96,7 @@ export class FrameStore {
     private static readonly ZoomInertiaDuration = 250;
     private static readonly CursorMovementDuration = 250;
 
-    private readonly spectralFrame: AST.SpecFrame;
+    private spectralFrame: AST.SpecFrame;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private readonly catalogControlMaps: Map<FrameStore, CatalogControlMap>;
     private readonly framePixelRatio: number;
@@ -112,11 +112,11 @@ export class FrameStore {
 
     public requiredFrameViewForRegionRender: FrameView;
 
-    public readonly wcsInfo: AST.FrameSet;
+    public wcsInfo: AST.FrameSet;
     public readonly wcsInfoForTransformation: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean;
-    public readonly frameInfo: FrameInfo;
+    @observable public frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
@@ -2560,14 +2560,28 @@ export class FrameStore {
     };
 
     @action updatePreviewData = (previewData: CARTA.PvPreviewData) => {
+        const oldAspectRatio = this.aspectRatio;
         this.setRasterData(new Float32Array(previewData.imageData.buffer.slice(previewData.imageData.byteOffset, previewData.imageData.byteOffset + previewData.imageData.byteLength)));
         this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds.max);
         this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds.min);
-        this.frameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
+        const newFrameInfo = {...this.frameInfo};
+        newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
+        this.setFrameInfo(newFrameInfo);
+        this.setCenter((this.center.x * oldAspectRatio) / this.aspectRatio, this.center.y, false);
+        const astFrameSet = this.initPVFrame();
+        if (astFrameSet) {
+            this.spectralFrame = AST.getSpectralFrame(astFrameSet);
+            this.wcsInfo = AST.copy(astFrameSet);
+            AST.deleteObject(astFrameSet);
+        }
     };
 
     @action onResizePreviewWidget = (width: number, height: number) => {
         this.previewViewWidth = width;
         this.previewViewHeight = height;
+    };
+
+    @action setFrameInfo = (frameInfo: FrameInfo) => {
+        this.frameInfo = frameInfo;
     };
 }

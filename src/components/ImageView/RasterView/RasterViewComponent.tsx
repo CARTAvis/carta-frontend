@@ -171,7 +171,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.activeTexture(GL2.TEXTURE0);
         const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
         // Special case when zoomed out
-        if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
+        if (frame.isPreview) {
+            //Preview frame is always rendered with one tile
+            this.renderTiles([{layer: 0, x: 0, y: 0} as TileCoordinate], boundedView.mip, false, 3, true);
+        } else if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
             const mip = LayerToMip(0, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
             this.renderTiles(requiredTiles, mip, false, 3, true);
         } else {
@@ -278,6 +281,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
             this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
             this.gl.uniform2f(shaderUniforms.TileTextureOffset, 0, 0);
+            this.gl.uniform1f(shaderUniforms.TileTextureSize, frame.frameInfo.fileInfoExtended.width);
         } else {
             const textureParameters = tileService.getTileTextureParameters(rasterTile);
             if (textureParameters) {
@@ -285,6 +289,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
                 this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
                 this.gl.uniform2f(shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
+                this.gl.uniform1f(shaderUniforms.TileTextureSize, TILE_SIZE);
             }
         }
 
@@ -343,7 +348,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(shaderUniforms.PixelGridOpacity, 0);
         }
         this.gl.uniform1f(shaderUniforms.PixelAspectRatio, aspectRatio);
-
         // take zoom level into account to convert from image space to canvas space
         bottomLeft = scale2D(bottomLeft, spatialRef.zoomLevel);
         this.gl.uniform2f(shaderUniforms.TileSize, rasterTile.width, rasterTile.height);
