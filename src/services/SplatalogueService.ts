@@ -59,7 +59,7 @@ export class SplatalogueService {
         ["Species", "name"],
         ["Chemical Name", "chemical_name"],
         ["Shifted Frequency", ""],
-        ["Freq-MHz(rest frame,redshifted)", "orderedfreq"],
+        ["Freq-MHz(rest frame,redshifted)", "orderedFreq"],
         ["Freq Err(rest frame,redshifted)", "orderedFreq"],
         ["Meas Freq-MHz(rest frame,redshifted)", "measFreq"],
         ["Meas Freq Err(rest frame,redshifted)", "measFreq"],
@@ -147,9 +147,9 @@ export class SplatalogueService {
                 const column = responseData.spectralLineData[j];
                 
                 if (header === "Freq Err(rest frame,redshifted)" || header === "Meas Freq Err(rest frame,redshifted)") {
-                    entry = entry.match(/\((.*?)\)/)?.[1] ?? "";
-                } else if (header === "Meas Freq-MHz(rest frame,redshifted)") {
-                    entry = entry.match(/^([\S]+)/)?.[1] ?? "";
+                    entry = entry.match(/\((.*?)\)/)?.[1] ?? ""; // match the string between the first "(" and ")"
+                } else if (header === "Freq-MHz(rest frame,redshifted)" || header === "Meas Freq-MHz(rest frame,redshifted)") {
+                    entry = entry.match(/^([\S]+)/)?.[1] ?? ""; // match the string before the first space
                 }
                 
                 column.stringData[i] = entry;
