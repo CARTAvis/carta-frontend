@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, FormGroup, IDialogProps, InputGroup, Intent} from "@blueprintjs/core";
+import {AnchorButton, Button, Classes, FormGroup, IDialogProps, InputGroup, Intent, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {computed, makeObservable, observable} from "mobx";
@@ -32,7 +32,7 @@ export class SaveLayoutDialogComponent extends React.Component {
 
     private handleKeyDown = ev => {
         if (ev.keyCode === KEYCODE_ENTER && !this.isEmpty) {
-            this.saveLayout();
+            AppStore.Instance.layoutStore.isSave ? this.saveLayout() : this.renameLayout();
         }
     };
 
@@ -40,7 +40,7 @@ export class SaveLayoutDialogComponent extends React.Component {
         const appStore = AppStore.Instance;
 
         appStore.dialogStore.hideSaveLayoutDialog();
-        appStore.layoutStore.setLayoutToBeSaved(this.layoutName);
+        appStore.layoutStore.setLayoutToBeSaved(this.layoutName.trim());
         if (appStore.layoutStore.layoutExists(this.layoutName)) {
             if (PresetLayout.isPreset(this.layoutName)) {
                 appStore.alertStore.showAlert("Layout name cannot be the same as system presets.");
@@ -56,13 +56,24 @@ export class SaveLayoutDialogComponent extends React.Component {
         this.clearInput();
     };
 
+    private renameLayout = async () => {
+        const appStore = AppStore.Instance;
+        await appStore.layoutStore.renameLayout(appStore.layoutStore.oldLayoutName, this.layoutName.trim());
+        this.clearInput();
+    };
+
     @computed get isEmpty(): boolean {
-        return !this.layoutName;
+        return !this.layoutName?.trim();
+    }
+
+    @computed get validName(): boolean {
+        return this.layoutName.match(/^[^~`!*()\-+=[.'?<>/|\\:;&]+$/)?.length > 0;
     }
 
     render() {
         const appStore = AppStore.Instance;
         const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
+        const isSave = appStore.layoutStore.isSave;
 
         const dialogProps: IDialogProps = {
             icon: "layout-grid",
@@ -72,27 +83,28 @@ export class SaveLayoutDialogComponent extends React.Component {
             lazy: true,
             isOpen: appStore.dialogStore.saveLayoutDialogVisible,
             onClose: appStore.dialogStore.hideSaveLayoutDialog,
-            title: "Save Layout"
+            title: isSave ? "Save Layout" : `Rename Layout`
         };
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_LAYOUT} defaultWidth={400} defaultHeight={185} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
-                    <FormGroup inline={true} label="Save current layout as:">
-                        <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
+                    <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>
+                        <Tooltip2 isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>
+                            <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
+                        </Tooltip2>
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Tooltip2 content="Layout name cannot be empty!" disabled={!this.isEmpty}>
-                            <AnchorButton intent={Intent.PRIMARY} onClick={this.saveLayout} text="Save" disabled={this.isEmpty} />
+                            <AnchorButton intent={Intent.PRIMARY} onClick={isSave ? this.saveLayout : this.renameLayout} text={isSave ? "Save" : "Rename"} disabled={this.isEmpty || !this.validName} />
                         </Tooltip2>
                         <Button
                             intent={Intent.NONE}
                             text="Close"
                             onClick={() => {
                                 appStore.dialogStore.hideSaveLayoutDialog();
-                                this.clearInput();
                             }}
                         />
                     </div>

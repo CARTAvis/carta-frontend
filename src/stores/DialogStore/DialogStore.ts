@@ -3,7 +3,7 @@ import {action, makeObservable, observable} from "mobx";
 
 import {FileInfoType} from "components";
 import {Snippet} from "models";
-import {SnippetStore} from "stores";
+import {AppStore, SnippetStore} from "stores";
 
 export class DialogStore {
     private static staticInstance: DialogStore;
@@ -57,18 +57,12 @@ export class DialogStore {
 
     // Layout
     @observable saveLayoutDialogVisible: boolean;
-    @observable deleteLayoutDialogVisible: boolean;
-    @action showSaveLayoutDialog = () => {
+    @action showSaveLayoutDialog = (oldLayoutName?: string) => {
         this.saveLayoutDialogVisible = true;
+        AppStore.Instance.layoutStore.setOldLayoutName(oldLayoutName);
     };
     @action hideSaveLayoutDialog = () => {
         this.saveLayoutDialogVisible = false;
-    };
-    @action showDeleteLayoutDialog = () => {
-        this.deleteLayoutDialogVisible = true;
-    };
-    @action hideDeleteLayoutDialog = () => {
-        this.deleteLayoutDialogVisible = false;
     };
 
     // File Browser
