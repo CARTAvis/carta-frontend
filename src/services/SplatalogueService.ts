@@ -14,6 +14,7 @@ export class SplatalogueService {
     private static SplatalogueHeaders: string[] = [
         "Species",
         "Chemical Name",
+        "Shifted Frequency",
         "Freq-MHz(rest frame,redshifted)",
         "Freq Err(rest frame,redshifted)",
         "Meas Freq-MHz(rest frame,redshifted)",
@@ -82,35 +83,18 @@ export class SplatalogueService {
     query = async (freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> => {
         const params = SplatalogueService.GetParamString(freqMin, freqMax, intensityLimit);
         const response = await this.axiosInstance.post("", {body: params});
-        console.log(response?.data);
-        // TODO: convert object to SpectralLineResponse
+        // TODO: return SpectralLineResponse
+        console.log(SplatalogueService.ConvertTable(response?.data));
         return null;
-        // return SplatalogueService.ConvertTable(response?.data);
     };
 
-    private static ConvertTable = (tableString: string) => {
-        if (!tableString || typeof tableString !== "string") {
+    private static ConvertTable = (data: object[]) => {
+        if (!data) {
             throw new Error("invalid data received from Splatalogue");
         }
 
-        const lines = tableString.split("\n");
-        if (!lines.length) {
-            throw new Error("invalid data received from Splatalogue");
-        }
-
-        const headerLine = lines[0];
-        const headerEntries = headerLine.split(":");
-        // First row is header, last row might be empty
-        let numDataRows = lines.length - 1;
-        if (lines[lines.length - 1] === "") {
-            numDataRows--;
-        }
-
-        const numColumns = headerEntries.length;
-
-        if (numColumns !== SplatalogueService.SplatalogueHeaders.length) {
-            throw new Error("Unexpected header data received from Splatalogue");
-        }
+        const numDataRows = data.length;
+        const numColumns = SplatalogueService.SplatalogueHeaders.length;
 
         const responseData: SpectralLineResponse = {
             headers: new Array<CARTA.ICatalogHeader>(),
@@ -119,72 +103,72 @@ export class SplatalogueService {
         };
 
         for (let i = 0; i < numColumns; i++) {
-            // ensure headers match expected headers
-            if (headerEntries[i] !== SplatalogueService.SplatalogueHeaders[i]) {
-                throw new Error("Unexpected header data received from Splatalogue");
-            } else {
-                const header: CARTA.ICatalogHeader = {
-                    dataType: SplatalogueService.SplatalogueHeaderTypeMap.get(headerEntries[i]),
-                    name: headerEntries[i],
-                    columnIndex: i
-                };
-                responseData.headers.push(header);
-                responseData.spectralLineData[i] = {
-                    dataType: CARTA.ColumnType.String,
-                    stringData: new Array<string>(numDataRows)
-                };
-            }
+            const headerEntries = SplatalogueService.SplatalogueHeaders[i];
+            const header: CARTA.ICatalogHeader = {
+                dataType: SplatalogueService.SplatalogueHeaderTypeMap.get(headerEntries),
+                name: headerEntries,
+                columnIndex: i
+            };
+            responseData.headers.push(header);
+            responseData.spectralLineData[i] = {
+                dataType: CARTA.ColumnType.String,
+                stringData: new Array<string>(numDataRows)
+            };
         }
 
-        for (let i = 1; i <= numDataRows; i++) {
-            const dataEntries = lines[i].split(":");
-            if (dataEntries.length !== numColumns) {
-                console.warn(`Skipping line with ${dataEntries.length} columns`, dataEntries, lines[i]);
-                continue;
-            }
+        // TODO: store data in spectralLineData
 
-            for (let j = 0; j < numColumns; j++) {
-                const entry = dataEntries[j];
-                const column = responseData.spectralLineData[j];
-                column.stringData[i - 1] = entry;
-            }
-        }
+        // for (let i = 1; i <= numDataRows; i++) {
+        //     const dataEntries = lines[i].split(":");
+        //     if (dataEntries.length !== numColumns) {
+        //         console.warn(`Skipping line with ${dataEntries.length} columns`, dataEntries, lines[i]);
+        //         continue;
+        //     }
+
+        //     for (let j = 0; j < numColumns; j++) {
+        //         const entry = dataEntries[j];
+        //         const column = responseData.spectralLineData[j];
+        //         column.stringData[i - 1] = entry;
+        //     }
+        // }
+
+        // TODO: obtain shifted freq
 
         // Copy rest freq row and shift all the others
-        const restFreqColumn = 2;
-        const shiftedHeaders: CARTA.ICatalogHeader[] = [];
-        const shiftedData = {};
-        let counter = 0;
-        for (let i = 0; i < responseData.headers.length; i++) {
-            if (i === restFreqColumn) {
-                shiftedHeaders.push({
-                    dataType: CARTA.ColumnType.Double,
-                    columnIndex: counter,
-                    name: "Shifted Frequency"
-                });
-                counter++;
-            }
-            const header = responseData.headers[i];
-            header.columnIndex = counter;
-            shiftedHeaders.push(header);
-            counter++;
-        }
-        for (let i = 0; i < responseData.headers.length; i++) {
-            if (i < restFreqColumn) {
-                shiftedData[i] = responseData.spectralLineData[i];
-            } else if (i === restFreqColumn) {
-                shiftedData[i] = responseData.spectralLineData[i];
-                shiftedData[i + 1] = {
-                    dataType: CARTA.ColumnType.String,
-                    stringData: responseData.spectralLineData[i].stringData.slice()
-                };
-            } else {
-                shiftedData[i + 1] = responseData.spectralLineData[i];
-            }
-        }
+        // const restFreqColumn = 2;
+        // const shiftedHeaders: CARTA.ICatalogHeader[] = [];
+        // const shiftedData = {};
+        // let counter = 0;
+        // for (let i = 0; i < responseData.headers.length; i++) {
+        //     if (i === restFreqColumn) {
+        //         shiftedHeaders.push({
+        //             dataType: CARTA.ColumnType.Double,
+        //             columnIndex: counter,
+        //             name: "Shifted Frequency"
+        //         });
+        //         counter++;
+        //     }
+        //     const header = responseData.headers[i];
+        //     header.columnIndex = counter;
+        //     shiftedHeaders.push(header);
+        //     counter++;
+        // }
+        // for (let i = 0; i < responseData.headers.length; i++) {
+        //     if (i < restFreqColumn) {
+        //         shiftedData[i] = responseData.spectralLineData[i];
+        //     } else if (i === restFreqColumn) {
+        //         shiftedData[i] = responseData.spectralLineData[i];
+        //         shiftedData[i + 1] = {
+        //             dataType: CARTA.ColumnType.String,
+        //             stringData: responseData.spectralLineData[i].stringData.slice()
+        //         };
+        //     } else {
+        //         shiftedData[i + 1] = responseData.spectralLineData[i];
+        //     }
+        // }
 
-        responseData.headers = shiftedHeaders;
-        responseData.spectralLineData = shiftedData;
+        // responseData.headers = shiftedHeaders;
+        // responseData.spectralLineData = shiftedData;
 
         return responseData;
     };
