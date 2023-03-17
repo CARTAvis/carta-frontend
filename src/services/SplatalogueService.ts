@@ -105,9 +105,7 @@ export class SplatalogueService {
     query = async (freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> => {
         const params = SplatalogueService.GetParamString(freqMin, freqMax, intensityLimit);
         const response = await this.axiosInstance.post("", {body: params});
-        // TODO: return SpectralLineResponse
-        console.log(SplatalogueService.ConvertTable(response?.data));
-        return null;
+        return SplatalogueService.ConvertTable(response?.data);
     };
 
     private static ConvertTable = (data: object[]) => {
@@ -146,7 +144,9 @@ export class SplatalogueService {
                 let entry = line[key]?.toString() ?? "";
                 const column = responseData.spectralLineData[j];
                 
-                if (header === "Freq Err(rest frame,redshifted)" || header === "Meas Freq Err(rest frame,redshifted)") {
+                if (header === "Species") {
+                    entry = entry.replace(/<[^>]+>/g, ''); // remove html tags
+                }  else if (header === "Freq Err(rest frame,redshifted)" || header === "Meas Freq Err(rest frame,redshifted)") {
                     entry = entry.match(/\((.*?)\)/)?.[1] ?? ""; // match the string between the first "(" and ")"
                 } else if (header === "Shifted Frequency" || header === "Freq-MHz(rest frame,redshifted)" || header === "Meas Freq-MHz(rest frame,redshifted)") {
                     entry = entry.match(/^([\S]+)/)?.[1] ?? ""; // match the string before the first space
