@@ -58,7 +58,7 @@ export class SplatalogueService {
     private static HeaderStringMap = new Map<string, string>([
         ["Species", "name"],
         ["Chemical Name", "chemical_name"],
-        ["Shifted Frequency", ""],
+        ["Shifted Frequency", "orderedFreq"],
         ["Freq-MHz(rest frame,redshifted)", "orderedFreq"],
         ["Freq Err(rest frame,redshifted)", "orderedFreq"],
         ["Meas Freq-MHz(rest frame,redshifted)", "measFreq"],
@@ -148,51 +148,13 @@ export class SplatalogueService {
                 
                 if (header === "Freq Err(rest frame,redshifted)" || header === "Meas Freq Err(rest frame,redshifted)") {
                     entry = entry.match(/\((.*?)\)/)?.[1] ?? ""; // match the string between the first "(" and ")"
-                } else if (header === "Freq-MHz(rest frame,redshifted)" || header === "Meas Freq-MHz(rest frame,redshifted)") {
+                } else if (header === "Shifted Frequency" || header === "Freq-MHz(rest frame,redshifted)" || header === "Meas Freq-MHz(rest frame,redshifted)") {
                     entry = entry.match(/^([\S]+)/)?.[1] ?? ""; // match the string before the first space
                 }
                 
                 column.stringData[i] = entry;
             }
         }
-
-        // TODO: obtain shifted freq
-
-        // Copy rest freq row and shift all the others
-        // const restFreqColumn = 2;
-        // const shiftedHeaders: CARTA.ICatalogHeader[] = [];
-        // const shiftedData = {};
-        // let counter = 0;
-        // for (let i = 0; i < responseData.headers.length; i++) {
-        //     if (i === restFreqColumn) {
-        //         shiftedHeaders.push({
-        //             dataType: CARTA.ColumnType.Double,
-        //             columnIndex: counter,
-        //             name: "Shifted Frequency"
-        //         });
-        //         counter++;
-        //     }
-        //     const header = responseData.headers[i];
-        //     header.columnIndex = counter;
-        //     shiftedHeaders.push(header);
-        //     counter++;
-        // }
-        // for (let i = 0; i < responseData.headers.length; i++) {
-        //     if (i < restFreqColumn) {
-        //         shiftedData[i] = responseData.spectralLineData[i];
-        //     } else if (i === restFreqColumn) {
-        //         shiftedData[i] = responseData.spectralLineData[i];
-        //         shiftedData[i + 1] = {
-        //             dataType: CARTA.ColumnType.String,
-        //             stringData: responseData.spectralLineData[i].stringData.slice()
-        //         };
-        //     } else {
-        //         shiftedData[i + 1] = responseData.spectralLineData[i];
-        //     }
-        // }
-
-        // responseData.headers = shiftedHeaders;
-        // responseData.spectralLineData = shiftedData;
 
         return responseData;
     };
