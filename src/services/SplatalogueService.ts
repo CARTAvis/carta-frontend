@@ -55,6 +55,28 @@ export class SplatalogueService {
         ["Linelist", CARTA.ColumnType.String]
     ]);
 
+    private static HeaderStringMap = new Map<string, string>([
+        ["Species", "name"],
+        ["Chemical Name", "chemical_name"],
+        ["Shifted Frequency", ""],
+        ["Freq-MHz(rest frame,redshifted)", "orderedfreq"],
+        ["Freq Err(rest frame,redshifted)", "orderedFreq"],
+        ["Meas Freq-MHz(rest frame,redshifted)", "measFreq"],
+        ["Meas Freq Err(rest frame,redshifted)", "measFreq"],
+        ["Resolved QNs", "resolved_QNs"],
+        ["Unresolved Quantum Numbers", "unres_quantum_numbers"],
+        ["CDMS/JPL Intensity", "intintensity"],
+        ["S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)", "sijmu2"],
+        ["S<sub>ij</sub>", "sij"],
+        ["Log<sub>10</sub> (A<sub>ij</sub>)", "aij"],
+        ["Lovas/AST Intensity", "LovasASTIntensity"],
+        ["E_L (cm^-1)", "lower_state_energy"],
+        ["E_L (K)", "lower_state_energy_K"],
+        ["E_U (cm^-1)", "upper_state_energy"],
+        ["E_U (K)", "upper_state_energy_K"],
+        ["Linelist", "linelist"]
+    ]);
+
     private static staticInstance: SplatalogueService;
 
     static get Instance() {
@@ -115,22 +137,24 @@ export class SplatalogueService {
                 stringData: new Array<string>(numDataRows)
             };
         }
-
-        // TODO: store data in spectralLineData
-
-        // for (let i = 1; i <= numDataRows; i++) {
-        //     const dataEntries = lines[i].split(":");
-        //     if (dataEntries.length !== numColumns) {
-        //         console.warn(`Skipping line with ${dataEntries.length} columns`, dataEntries, lines[i]);
-        //         continue;
-        //     }
-
-        //     for (let j = 0; j < numColumns; j++) {
-        //         const entry = dataEntries[j];
-        //         const column = responseData.spectralLineData[j];
-        //         column.stringData[i - 1] = entry;
-        //     }
-        // }
+        
+        for (let i = 0; i < numDataRows; i++) {
+            const line = data[i];
+            for (let j = 0; j < numColumns; j++) {
+                const header = SplatalogueService.SplatalogueHeaders[j];
+                const key = SplatalogueService.HeaderStringMap.get(header);
+                let entry = line[key]?.toString() ?? "";
+                const column = responseData.spectralLineData[j];
+                
+                if (header === "Freq Err(rest frame,redshifted)" || header === "Meas Freq Err(rest frame,redshifted)") {
+                    entry = entry.match(/\((.*?)\)/)?.[1] ?? "";
+                } else if (header === "Meas Freq-MHz(rest frame,redshifted)") {
+                    entry = entry.match(/^([\S]+)/)?.[1] ?? "";
+                }
+                
+                column.stringData[i] = entry;
+            }
+        }
 
         // TODO: obtain shifted freq
 
