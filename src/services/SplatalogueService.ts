@@ -81,7 +81,7 @@ export class SplatalogueService {
 
     query = async (freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> => {
         const params = SplatalogueService.GetParamString(freqMin, freqMax, intensityLimit);
-        const response = await this.axiosInstance.post("", { body: params });
+        const response = await this.axiosInstance.post("", {body: params});
         console.log(response?.data);
         // TODO: convert object to SpectralLineResponse
         return null;
@@ -198,7 +198,7 @@ export class SplatalogueService {
 
         const intensityLimitEnabled = intensityLimit !== undefined;
         // use 0.000001 instead of 0 to avoid issues from the catalog itself
-        const limit = intensityLimitEnabled ? 0 : (intensityLimit === 0 ? 0.000001 : intensityLimit);
+        const limit = intensityLimitEnabled ? (intensityLimit === 0 ? 0.000001 : intensityLimit) : 0;
         
         const params = {
             searchSpecies: "",
