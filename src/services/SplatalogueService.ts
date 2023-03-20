@@ -72,7 +72,7 @@ export class SplatalogueService {
 
     query = async (freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> => {
         const params = SplatalogueService.GetParamString(freqMin, freqMax, intensityLimit);
-        const response = await this.axiosInstance.post("", { body: params });
+        const response = await this.axiosInstance.post("", {body: JSON.stringify(params)});
         return SplatalogueService.ConvertTable(response?.data);
     };
 
@@ -93,7 +93,7 @@ export class SplatalogueService {
             const header: CARTA.ICatalogHeader = {
                 dataType: value,
                 name: key,
-                columnIndex: columnIndex,
+                columnIndex: columnIndex
             };
             responseData.headers.push(header);
             responseData.spectralLineData[columnIndex] = {
@@ -113,7 +113,7 @@ export class SplatalogueService {
 
                 if (key === "Species") {
                     entry = entry?.replace(/<[^>]+>/g, ""); // remove html tags
-                }  else if (key === SpectralLineHeaders.RestFrequencyErr || key === SpectralLineHeaders.MeasuredFrequencyErr) {
+                } else if (key === SpectralLineHeaders.RestFrequencyErr || key === SpectralLineHeaders.MeasuredFrequencyErr) {
                     entry = entry?.match(/\((.*?)\)/)?.[1] ?? ""; // match the string between the first "(" and ")"
                 } else if (key === SpectralLineHeaders.ShiftedFrequency || key === SpectralLineHeaders.RestFrequency || key === SpectralLineHeaders.MeasuredFrequency) {
                     entry = entry?.match(/^([\S]+)/)?.[1] ?? ""; // match the string before the first space
@@ -127,7 +127,7 @@ export class SplatalogueService {
         return responseData;
     };
 
-    private static GetParamString = (freqMin: number, freqMax: number, intensityLimit?: number): string => {
+    private static GetParamString = (freqMin: number, freqMax: number, intensityLimit?: number): object => {
         let freqFrom = new Array(20).fill("");
         freqFrom[0] = freqMin.toString();
         let freqTo = new Array(20).fill("");
@@ -137,7 +137,7 @@ export class SplatalogueService {
         const intensityLimitEnabled = intensityLimit !== undefined;
         // use 0.000001 instead of 0 to avoid issues from the catalog itself
         const limit = intensityLimitEnabled ? (intensityLimit === 0 ? 0.000001 : intensityLimit) : 0;
-        
+
         const params = {
             searchSpecies: "",
             speciesSelectBox: [""],
@@ -197,6 +197,6 @@ export class SplatalogueService {
             exportStart: 1,
             exportStop: 250
         };
-        return JSON.stringify(params);
+        return params;
     };
 }

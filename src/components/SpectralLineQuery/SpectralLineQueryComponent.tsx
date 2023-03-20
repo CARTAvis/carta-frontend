@@ -397,12 +397,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                             <AnchorButton text="Reset" intent={Intent.PRIMARY} onClick={this.handleResetFilter} />
                         </Tooltip2>
                         <Tooltip2 content={plotTip} position={Position.BOTTOM}>
-                            <AnchorButton
-                                text="Plot"
-                                intent={Intent.PRIMARY}
-                                disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit}
-                                onClick={this.handlePlot}
-                            />
+                            <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit} onClick={this.handlePlot} />
                         </Tooltip2>
                         <Tooltip2 content="Clear plotted lines" position={Position.BOTTOM}>
                             <AnchorButton text="Clear" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || !isSelectedWidgetExisted || widgetStore.filterResult.size <= 0} onClick={this.handleClear} />
