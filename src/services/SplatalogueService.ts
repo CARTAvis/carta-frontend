@@ -70,18 +70,6 @@ export class SplatalogueService {
         this.axiosInstance = axios.create({baseURL: SplatalogueService.BaseUrl});
     }
 
-    aliveCheck = async (): Promise<boolean> => {
-        // TODO: remove alive check
-        return true;
-        // try {
-        //     const { status } = await this.axiosInstance.head("");
-        //     return status === 200;
-        // } catch (err) {
-        //     console.log(err)
-        //     return false;
-        // }
-    };
-
     query = async (freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> => {
         const params = SplatalogueService.GetParamString(freqMin, freqMax, intensityLimit);
         const response = await this.axiosInstance.post("", { body: params });

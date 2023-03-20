@@ -7,12 +7,6 @@ import {SplatalogueService} from "services";
 import {AppStore, ControlHeader} from "stores";
 import {booleanFiltering, numericFiltering, ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
 
-export enum SplataloguePingStatus {
-    Checking,
-    Success,
-    Failure
-}
-
 export enum SpectralLineQueryRangeType {
     Range = "Range",
     Center = "Center"
@@ -114,7 +108,6 @@ const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
 
 export class SpectralLineQueryWidgetStore {
-    @observable splataloguePingStatus: SplataloguePingStatus;
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
@@ -294,7 +287,7 @@ export class SpectralLineQueryWidgetStore {
             }
         } catch (err) {
             this.resetQueryContents();
-            alertStore.showAlert(err);
+            alertStore.showAlert(err?.toString() ?? "Spectral line query failed.");
         }
         this.isQuerying = false;
     }).bind(this);
@@ -534,15 +527,8 @@ export class SpectralLineQueryWidgetStore {
         }
     };
 
-    pingSplatalogue = flow(function* pingSplatalogue(this: SpectralLineQueryWidgetStore) {
-        this.splataloguePingStatus = SplataloguePingStatus.Checking;
-        const isAlive = yield SplatalogueService.Instance.aliveCheck();
-        this.splataloguePingStatus = isAlive ? SplataloguePingStatus.Success : SplataloguePingStatus.Failure;
-    }).bind(this);
-
     constructor() {
         makeObservable(this);
-        this.splataloguePingStatus = SplataloguePingStatus.Checking;
         this.queryRangeType = SpectralLineQueryRangeType.Range;
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];
@@ -555,7 +541,6 @@ export class SpectralLineQueryWidgetStore {
         this.queryResultTableRef = undefined;
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.resetQueryContents();
-        this.pingSplatalogue();
 
         // update selected spectral profiler when currently selected is closed
         autorun(() => {
