@@ -3,13 +3,14 @@ import {SplatalogueService} from "services";
 let mockAxiosPost = jest.fn();
 jest.mock("axios", () => {
     return {
-      create: () => {
-        return {
-            post: mockAxiosPost
-       }}
+        create: () => {
+            return {
+                post: mockAxiosPost
+            };
+        }
     };
 });
-  
+
 describe("SplatalogueService", () => {
     test("query with corrent parameters when intensity limit is disabled", () => {
         mockAxiosPost.mockImplementationOnce(() => {
@@ -43,10 +44,12 @@ describe("SplatalogueService", () => {
     test("returns correct parsed string", async () => {
         mockAxiosPost.mockImplementationOnce(() => {
             return {
-                data: [{
-                    name: "KF <font color=\"red\"><i>v</i> = 0</font>",
-                    orderedFreq: "381543.5091 (0.0109), <span style = 'color: #DC143C'>381543.5091</span>"
-                }]
+                data: [
+                    {
+                        name: 'KF <font color="red"><i>v</i> = 0</font>',
+                        orderedFreq: "381543.5091 (0.0109), <span style = 'color: #DC143C'>381543.5091</span>"
+                    }
+                ]
             };
         });
         const ack = await SplatalogueService.Instance.query(300000, 300100, NaN);
