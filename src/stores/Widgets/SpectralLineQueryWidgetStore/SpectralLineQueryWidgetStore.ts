@@ -30,23 +30,15 @@ export enum SpectralLineHeaders {
     Species = "Species",
     ChemicalName = "Chemical Name",
     ShiftedFrequency = "Shifted Frequency",
-    RestFrequencySPLA = "Freq-MHz(rest frame,redshifted)",
     RestFrequency = "Rest Frequency",
-    RestFrequencyErrSPLA = "Freq Err(rest frame,redshifted)",
     RestFrequencyErr = "Rest Frequency Error",
-    MeasuredFrequencySPLA = "Meas Freq-MHz(rest frame,redshifted)",
     MeasuredFrequency = "Measured Frequency",
-    MeasuredFrequencyErrSPLA = "Meas Freq Err(rest frame,redshifted)",
     MeasuredFrequencyErr = "Measured Frequency Error",
     ResolvedQN = "Resolved QNs",
-    UnresolvedQNSPLA = "Unresolved Quantum Numbers",
     UnresolvedQN = "Unresolved QNs",
     IntensityCDMS = "CDMS/JPL Intensity",
-    IntensitySijm2SPLA = "S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)",
     IntensitySijm2 = "Sij \u03BC^2",
-    IntensitySijSPLA = "S<sub>ij</sub>",
     IntensitySij = "Sij",
-    IntensityAijSPLA = "Log<sub>10</sub> (A<sub>ij</sub>)",
     IntensityAij = "Log10(Aij)",
     IntensityLovas = "Lovas/AST Intensity",
     EnergyLowerCM = "E_L (cm^-1)",
@@ -55,18 +47,6 @@ export enum SpectralLineHeaders {
     EnergyUpperK = "E_U (K)",
     LineList = "Linelist"
 }
-
-// map for replacing original Splatalogue header to comprehensive header
-const SPLA_HEADER_MAP = new Map<SpectralLineHeaders, SpectralLineHeaders>([
-    [SpectralLineHeaders.RestFrequencySPLA, SpectralLineHeaders.RestFrequency],
-    [SpectralLineHeaders.RestFrequencyErrSPLA, SpectralLineHeaders.RestFrequencyErr],
-    [SpectralLineHeaders.MeasuredFrequencySPLA, SpectralLineHeaders.MeasuredFrequency],
-    [SpectralLineHeaders.MeasuredFrequencyErrSPLA, SpectralLineHeaders.MeasuredFrequencyErr],
-    [SpectralLineHeaders.UnresolvedQNSPLA, SpectralLineHeaders.UnresolvedQN],
-    [SpectralLineHeaders.IntensitySijm2SPLA, SpectralLineHeaders.IntensitySijm2],
-    [SpectralLineHeaders.IntensitySijSPLA, SpectralLineHeaders.IntensitySij],
-    [SpectralLineHeaders.IntensityAijSPLA, SpectralLineHeaders.IntensityAij]
-]);
 
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.LineSelection, "Column for line selection"],
@@ -456,15 +436,14 @@ export class SpectralLineQueryWidgetStore {
     private preprocessHeaders = (ackHeaders: CARTA.ICatalogHeader[]): Array<CARTA.ICatalogHeader> => {
         let columnHeaders = [];
 
-        // 1. collect headers & rename to comprehensive headers
+        // 1. collect headers & add description
         ackHeaders?.forEach(header => {
-            const headerName = SPLA_HEADER_MAP.has(header.name as SpectralLineHeaders) ? SPLA_HEADER_MAP.get(header.name as SpectralLineHeaders) : header.name;
             columnHeaders.push(
                 new CARTA.CatalogHeader({
-                    name: headerName,
+                    name: header.name,
                     dataType: header.dataType,
                     columnIndex: header.columnIndex,
-                    description: SPECTRAL_LINE_DESCRIPTION.get(headerName as SpectralLineHeaders)
+                    description: SPECTRAL_LINE_DESCRIPTION.get(header.name as SpectralLineHeaders)
                 })
             );
         });

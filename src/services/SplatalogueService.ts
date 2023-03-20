@@ -1,6 +1,8 @@
 import axios, {AxiosInstance} from "axios";
 import {CARTA} from "carta-protobuf";
 
+import {SpectralLineHeaders} from "stores/Widgets";
+
 export interface SpectralLineResponse {
     headers: CARTA.ICatalogHeader[];
     spectralLineData: {[key: string]: CARTA.IColumnData};
@@ -11,70 +13,48 @@ export class SplatalogueService {
     private static BaseUrl = "https://almahd-staging.cv.nrao.edu/splata-slap/advanceded/false/";
     private readonly axiosInstance: AxiosInstance;
 
-    private static SplatalogueHeaders: string[] = [
-        "Species",
-        "Chemical Name",
-        "Shifted Frequency",
-        "Freq-MHz(rest frame,redshifted)",
-        "Freq Err(rest frame,redshifted)",
-        "Meas Freq-MHz(rest frame,redshifted)",
-        "Meas Freq Err(rest frame,redshifted)",
-        "Resolved QNs",
-        "Unresolved Quantum Numbers",
-        "CDMS/JPL Intensity",
-        "S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)",
-        "S<sub>ij</sub>",
-        "Log<sub>10</sub> (A<sub>ij</sub>)",
-        "Lovas/AST Intensity",
-        "E_L (cm^-1)",
-        "E_L (K)",
-        "E_U (cm^-1)",
-        "E_U (K)",
-        "Linelist"
-    ];
-
-    private static SplatalogueHeaderTypeMap = new Map<string, CARTA.ColumnType>([
-        ["Species", CARTA.ColumnType.String],
-        ["Chemical Name", CARTA.ColumnType.String],
-        ["Shifted Frequency", CARTA.ColumnType.Double],
-        ["Freq-MHz(rest frame,redshifted)", CARTA.ColumnType.Double],
-        ["Freq Err(rest frame,redshifted)", CARTA.ColumnType.Double],
-        ["Meas Freq-MHz(rest frame,redshifted)", CARTA.ColumnType.Double],
-        ["Meas Freq Err(rest frame,redshifted)", CARTA.ColumnType.Double],
-        ["Resolved QNs", CARTA.ColumnType.String],
-        ["Unresolved Quantum Numbers", CARTA.ColumnType.String],
-        ["CDMS/JPL Intensity", CARTA.ColumnType.Double],
-        ["S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)", CARTA.ColumnType.Double],
-        ["S<sub>ij</sub>", CARTA.ColumnType.Double],
-        ["Log<sub>10</sub> (A<sub>ij</sub>)", CARTA.ColumnType.Double],
-        ["Lovas/AST Intensity", CARTA.ColumnType.Double],
-        ["E_L (cm^-1)", CARTA.ColumnType.Double],
-        ["E_L (K)", CARTA.ColumnType.Double],
-        ["E_U (cm^-1)", CARTA.ColumnType.Double],
-        ["E_U (K)", CARTA.ColumnType.Double],
-        ["Linelist", CARTA.ColumnType.String]
+    private static SplatalogueHeaderTypeMap = new Map<SpectralLineHeaders, CARTA.ColumnType>([
+        [SpectralLineHeaders.Species, CARTA.ColumnType.String],
+        [SpectralLineHeaders.ChemicalName, CARTA.ColumnType.String],
+        [SpectralLineHeaders.ShiftedFrequency, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.RestFrequency, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.RestFrequencyErr, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.MeasuredFrequency, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.MeasuredFrequencyErr, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.ResolvedQN, CARTA.ColumnType.String],
+        [SpectralLineHeaders.UnresolvedQN, CARTA.ColumnType.String],
+        [SpectralLineHeaders.IntensityCDMS, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.IntensitySijm2, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.IntensitySij, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.IntensityAij, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.IntensityLovas, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.EnergyLowerCM, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.EnergyLowerK, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.EnergyUpperCM, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.EnergyUpperK, CARTA.ColumnType.Double],
+        [SpectralLineHeaders.LineList, CARTA.ColumnType.String]
     ]);
 
-    private static HeaderStringMap = new Map<string, string>([
-        ["Species", "name"],
-        ["Chemical Name", "chemical_name"],
-        ["Shifted Frequency", "orderedFreq"],
-        ["Freq-MHz(rest frame,redshifted)", "orderedFreq"],
-        ["Freq Err(rest frame,redshifted)", "orderedFreq"],
-        ["Meas Freq-MHz(rest frame,redshifted)", "measFreq"],
-        ["Meas Freq Err(rest frame,redshifted)", "measFreq"],
-        ["Resolved QNs", "resolved_QNs"],
-        ["Unresolved Quantum Numbers", "unres_quantum_numbers"],
-        ["CDMS/JPL Intensity", "intintensity"],
-        ["S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)", "sijmu2"],
-        ["S<sub>ij</sub>", "sij"],
-        ["Log<sub>10</sub> (A<sub>ij</sub>)", "aij"],
-        ["Lovas/AST Intensity", "LovasASTIntensity"],
-        ["E_L (cm^-1)", "lower_state_energy"],
-        ["E_L (K)", "lower_state_energy_K"],
-        ["E_U (cm^-1)", "upper_state_energy"],
-        ["E_U (K)", "upper_state_energy_K"],
-        ["Linelist", "linelist"]
+    private static SplatalogueHeaderStringMap = new Map<SpectralLineHeaders, string>([
+        [SpectralLineHeaders.Species, "name"],
+        [SpectralLineHeaders.ChemicalName, "chemical_name"],
+        [SpectralLineHeaders.ShiftedFrequency, "orderedFreq"],
+        [SpectralLineHeaders.RestFrequency, "orderedFreq"],
+        [SpectralLineHeaders.RestFrequencyErr, "orderedFreq"],
+        [SpectralLineHeaders.MeasuredFrequency, "measFreq"],
+        [SpectralLineHeaders.MeasuredFrequencyErr, "measFreq"],
+        [SpectralLineHeaders.ResolvedQN, "resolved_QNs"],
+        [SpectralLineHeaders.UnresolvedQN, "unres_quantum_numbers"],
+        [SpectralLineHeaders.IntensityCDMS, "intintensity"],
+        [SpectralLineHeaders.IntensitySijm2, "sijmu2"],
+        [SpectralLineHeaders.IntensitySij, "sij"],
+        [SpectralLineHeaders.IntensityAij, "aij"],
+        [SpectralLineHeaders.IntensityLovas, "LovasASTIntensity"],
+        [SpectralLineHeaders.EnergyLowerCM, "lower_state_energy"],
+        [SpectralLineHeaders.EnergyLowerK, "lower_state_energy_K"],
+        [SpectralLineHeaders.EnergyUpperCM, "upper_state_energy"],
+        [SpectralLineHeaders.EnergyUpperK, "upper_state_energy_K"],
+        [SpectralLineHeaders.LineList, "linelist"]
     ]);
 
     private static staticInstance: SplatalogueService;
@@ -104,7 +84,7 @@ export class SplatalogueService {
 
     query = async (freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> => {
         const params = SplatalogueService.GetParamString(freqMin, freqMax, intensityLimit);
-        const response = await this.axiosInstance.post("", {body: params});
+        const response = await this.axiosInstance.post("", { body: params });
         return SplatalogueService.ConvertTable(response?.data);
     };
 
@@ -114,46 +94,46 @@ export class SplatalogueService {
         }
 
         const numDataRows = data.length;
-        const numColumns = SplatalogueService.SplatalogueHeaders.length;
-
         const responseData: SpectralLineResponse = {
             headers: new Array<CARTA.ICatalogHeader>(),
             spectralLineData: {},
             dataSize: numDataRows
         };
 
-        for (let i = 0; i < numColumns; i++) {
-            const headerEntries = SplatalogueService.SplatalogueHeaders[i];
+        let columnIndex = 0;
+        SplatalogueService.SplatalogueHeaderTypeMap.forEach((value, key) => {
             const header: CARTA.ICatalogHeader = {
-                dataType: SplatalogueService.SplatalogueHeaderTypeMap.get(headerEntries),
-                name: headerEntries,
-                columnIndex: i
+                dataType: value,
+                name: key,
+                columnIndex: columnIndex,
             };
             responseData.headers.push(header);
-            responseData.spectralLineData[i] = {
+            responseData.spectralLineData[columnIndex] = {
                 dataType: CARTA.ColumnType.String,
                 stringData: new Array<string>(numDataRows)
             };
-        }
-        
+            columnIndex++;
+        });
+
         for (let i = 0; i < numDataRows; i++) {
             const line = data[i];
-            for (let j = 0; j < numColumns; j++) {
-                const header = SplatalogueService.SplatalogueHeaders[j];
-                const key = SplatalogueService.HeaderStringMap.get(header);
-                let entry = line[key]?.toString() ?? "";
+
+            let j = 0;
+            SplatalogueService.SplatalogueHeaderStringMap.forEach((value, key) => {
+                let entry = line[value]?.toString() ?? "";
                 const column = responseData.spectralLineData[j];
-                
-                if (header === "Species") {
-                    entry = entry.replace(/<[^>]+>/g, ''); // remove html tags
-                }  else if (header === "Freq Err(rest frame,redshifted)" || header === "Meas Freq Err(rest frame,redshifted)") {
-                    entry = entry.match(/\((.*?)\)/)?.[1] ?? ""; // match the string between the first "(" and ")"
-                } else if (header === "Shifted Frequency" || header === "Freq-MHz(rest frame,redshifted)" || header === "Meas Freq-MHz(rest frame,redshifted)") {
-                    entry = entry.match(/^([\S]+)/)?.[1] ?? ""; // match the string before the first space
+
+                if (key === "Species") {
+                    entry = entry?.replace(/<[^>]+>/g, ""); // remove html tags
+                }  else if (key === SpectralLineHeaders.RestFrequencyErr || key === SpectralLineHeaders.MeasuredFrequencyErr) {
+                    entry = entry?.match(/\((.*?)\)/)?.[1] ?? ""; // match the string between the first "(" and ")"
+                } else if (key === SpectralLineHeaders.ShiftedFrequency || key === SpectralLineHeaders.RestFrequency || key === SpectralLineHeaders.MeasuredFrequency) {
+                    entry = entry?.match(/^([\S]+)/)?.[1] ?? ""; // match the string before the first space
                 }
-                
+
                 column.stringData[i] = entry;
-            }
+                j++;
+            });
         }
 
         return responseData;
