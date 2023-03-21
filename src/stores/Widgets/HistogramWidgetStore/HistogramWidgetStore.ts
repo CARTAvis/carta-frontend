@@ -2,6 +2,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
+import {HistogramSettingsTabs} from "components";
 import {LineSettings, PlotType} from "components/Shared";
 import {POLARIZATIONS, VALID_COORDINATES} from "models";
 import {isAutoColor} from "utilities";
@@ -9,6 +10,8 @@ import {isAutoColor} from "utilities";
 import {RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
+    @observable settingsTabId: HistogramSettingsTabs;
+
     @observable coordinate: string;
     @observable minX: number;
     @observable maxX: number;
@@ -25,6 +28,13 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable linePlotPointSize: number;
     @observable meanRmsVisible: boolean;
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
+
+    // config settings
+    @observable autoBounds: boolean;
+    @observable minPix: number;
+    @observable maxPix: number;
+    @observable autoBins: boolean;
+    @observable numBins: number;
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
@@ -85,6 +95,30 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
+    @action setSettingsTabId = (tabId: HistogramSettingsTabs) => {
+        this.settingsTabId = tabId;
+    };
+
+    @action setAutoBounds = (autoBounds: boolean) => {
+        this.autoBounds = autoBounds;
+    };
+
+    @action setMinPix = (minPix: number) => {
+        this.minPix = minPix;
+    };
+
+    @action setMaxPix = (maxPix: number) => {
+        this.maxPix = maxPix;
+    };
+
+    @action setAutoBins = (autoBins: boolean) => {
+        this.autoBins = autoBins;
+    };
+
+    @action setNumBins = (numBins: number) => {
+        this.numBins = numBins;
+    };
+
     @computed get isAutoScaledX() {
         return this.minX === undefined || this.maxX === undefined;
     }
@@ -99,6 +133,21 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         } else {
             return POLARIZATIONS[this.coordinate.substring(0, this.coordinate.length - 1)];
         }
+    }
+
+    @computed get isAutoBounds(): boolean {
+        return this.autoBounds;
+    }
+
+    @computed get isAutoBins(): boolean {
+        return this.autoBins;
+    }
+
+    @computed get isAbleToGenerate(): boolean {
+        if (!this.autoBounds && this.minPix >= this.maxPix) {
+            return false;
+        }
+        return !(!this.autoBins && this.numBins <= 0);
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
@@ -218,6 +267,13 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = {minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0};
         this.coordinate = "z";
+
+        // Initialize config values
+        this.autoBounds = false;
+        this.minPix = 0;
+        this.maxPix = 1;
+        this.autoBins = false;
+        this.numBins = 1000;
     }
 
     // settings

@@ -1,0 +1,53 @@
+.config-generator {
+    display: flex;
+    flex-direction: row;
+
+    .bp3-numeric-input {
+        .bp3-input-group {
+            width: 80px;
+        }
+    }
+
+    .config-panel {
+        .image-region-select {
+            .bp3-html-select {
+                width: 120px;
+            }
+
+            .label-info {
+                max-width: calc(100% - 55px);
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: middle;
+            }
+
+            .region-help {
+                margin-left: 5px;
+            }
+        }
+
+        .range-select {
+            display: flex;
+            flex-direction: row;
+
+            .bp3-form-group {
+                margin-right: 10px;
+                .bp3-label {
+                    margin: 0px;
+                    width: 3em;
+                }
+            }
+
+            .cursor-select {
+                display: flex;
+                margin-left: 5px;
+            }
+        }
+
+        .config-generate {
+            float: left;
+        }
+    }
+}
