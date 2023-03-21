@@ -26,7 +26,8 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     };
 
     private handleRequestHistogram = () => {
-        // todo: handle histogram config settings in the widgetStore
+        const widgetStore = this.props.widgetStore;
+        widgetStore.updateConfigs();
     };
 
     render() {
@@ -64,10 +65,10 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                     <FormGroup label="Range" inline={true} labelInfo={`(${frame && frame.requiredUnit ? frame.requiredUnit : "Unknown"})`}>
                         <div className="range-select">
                             <FormGroup label="From" inline={true}>
-                                <SafeNumericInput value={widgetStore.minPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
+                                <SafeNumericInput value={widgetStore.curMinPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
-                                <SafeNumericInput value={widgetStore.maxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
+                                <SafeNumericInput value={widgetStore.curMaxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
                             </FormGroup>
                         </div>
                     </FormGroup>
@@ -83,7 +84,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                 </FormGroup>
                 {!widgetStore.isAutoBins && (
                     <FormGroup label="Number of bins" inline={true}>
-                        <SafeNumericInput value={widgetStore.numBins} buttonPosition="none" onValueChange={val => this.onNumBinsChanged(val)} />
+                        <SafeNumericInput value={widgetStore.curNumBins} buttonPosition="none" onValueChange={val => this.onNumBinsChanged(val)} />
                     </FormGroup>
                 )}
                 <Divider />
