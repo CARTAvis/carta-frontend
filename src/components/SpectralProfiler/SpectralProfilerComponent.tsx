@@ -10,6 +10,7 @@ import {observer} from "mobx-react";
 import {LineMarker, LinePlotComponent, LinePlotComponentProps, LinePlotSelectingMode, PlotType, SmoothingType} from "components/Shared";
 import {Point2D, SpectralType} from "models";
 import {AnimatorStore, AppStore, DefaultWidgetConfig, FittingContinuum, HelpType, WidgetProps, WidgetsStore} from "stores";
+// import { FrameStore } from "stores/Frame";
 import {MultiPlotData, SpectralProfileWidgetStore} from "stores/Widgets";
 import {binarySearchByX, clamp, formattedExponential, getColorForTheme, toExponential, toFixed, toFormattedNotationByDiff} from "utilities";
 
@@ -103,12 +104,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
+        const appStore = AppStore.Instance;
         if (x === null || x === undefined || !isFinite(x) || AnimatorStore.Instance.animationActive || this.widgetStore.fittingStore.isCursorSelectingComponent) {
             return;
         }
         const nearestIndex = frame.findChannelIndexByValue(x);
         if (frame && isFinite(nearestIndex) && nearestIndex >= 0 && nearestIndex < frame.numChannels) {
             frame.setChannels(nearestIndex, frame.requiredStokes, true);
+            if (!_.isEqual(frame, appStore.activeFrame)) {
+                appStore.setChannelsByFrame(frame);
+            }
         }
     };
 

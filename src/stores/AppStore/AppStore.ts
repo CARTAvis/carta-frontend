@@ -1376,6 +1376,32 @@ export class AppStore {
         }
     };
 
+    private throttledSetChannels = _.throttle(this.updateChannels, AppStore.ImageChannelThrottleTime);
+
+    @action setChannelsByFrame = (frame: FrameStore) => {
+        if (frame) {
+            const updates: ChannelUpdate[] = [];
+            // Calculate if new data is required for the active channel
+            const updateRequiredChannels = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
+            // Don't auto-update when animation is playing
+            if (!this.animatorStore.animationActive && updateRequiredChannels) {
+                updates.push({frame: frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+            }
+
+            // Update any sibling channels
+            frame.spectralSiblings.forEach(frame => {
+                const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
+                if (siblingUpdateRequired) {
+                    updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+                }
+            });
+
+            if (updates.length) {
+                this.throttledSetChannels(updates);
+            }
+        }
+    };
+
     private updateViews = (updates: ViewUpdate[]) => {
         for (const update of updates) {
             this.updateView(update.tiles, update.fileId, update.channel, update.stokes, update.focusPoint);
@@ -2086,10 +2112,12 @@ export class AppStore {
             this.overlayStore.setDefaultsFromAST(frame);
         }
         this.activeFrame = frame;
-        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
-        this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
-        if (this.syncContourToFrame) {
-            this.contourDataSource = frame;
+        if (!frame.isPreview) {
+            this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+            this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
+            if (this.syncContourToFrame) {
+                this.contourDataSource = frame;
+            }
         }
     }
 
