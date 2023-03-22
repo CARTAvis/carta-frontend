@@ -393,7 +393,7 @@ export class RegionStore {
             this.controlPoints[index] = p;
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
-            } else if (this.regionType === CARTA.RegionType.LINE) {
+            } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating) {
                 this.throttledUpdateRegion(true);
             }
 
@@ -432,7 +432,7 @@ export class RegionStore {
 
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
-        } else if (this.regionType === CARTA.RegionType.LINE) {
+        } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating) {
             this.throttledUpdateRegion(true);
         }
     };

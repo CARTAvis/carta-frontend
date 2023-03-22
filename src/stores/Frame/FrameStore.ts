@@ -2562,8 +2562,8 @@ export class FrameStore {
     @action updatePreviewData = (previewData: CARTA.PvPreviewData) => {
         const oldAspectRatio = this.aspectRatio;
         this.setRasterData(new Float32Array(previewData.imageData.buffer.slice(previewData.imageData.byteOffset, previewData.imageData.byteOffset + previewData.imageData.byteLength)));
-        this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds.max);
-        this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds.min);
+        this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds?.max);
+        this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds?.min);
         const newFrameInfo = {...this.frameInfo};
         newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
         this.setFrameInfo(newFrameInfo);

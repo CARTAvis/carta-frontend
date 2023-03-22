@@ -807,7 +807,6 @@ export class BackendService {
             const message = CARTA.ClosePvPreview.create({previewId});
             this.logEvent(CARTA.EventType.CLOSE_PV_PREVIEW, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.CLOSE_PV_PREVIEW, CARTA.ClosePvPreview.encode(message).finish())) {
-                console.log("close pv preview sent");
                 return true;
             }
             throw new Error("Could not send event");
