@@ -587,4 +587,155 @@ EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin,
 
     return out;
 }
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* makeSwappedFrameSet(AstFrameSet* originFrameSet, int dirAxis, int spectralAxis, int pixelZ, int nsample)
+{
+    astBegin;
+    int axisCount = 3;
+
+    if (astGetI(originFrameSet, "Nin") != axisCount || astGetI(originFrameSet, "Nout") != axisCount)
+    {
+        std::cerr << "Bad frame set!\n";
+        return nullptr;
+    }
+
+    if (dirAxis < 1 || dirAxis > axisCount || spectralAxis < 1 || spectralAxis > axisCount)
+    {
+        std::cerr << "Bad axis index!\n";
+        return nullptr;
+    }
+
+    AstMapping* originMap = static_cast<AstMapping*> astGetMapping(originFrameSet, AST__BASE, AST__CURRENT);
+
+    AstMapping* spectralMap = nullptr;
+    int spectralAxisOut;
+    astMapSplit(originMap, 1, &spectralAxis, &spectralAxisOut, &spectralMap);
+
+    if (!spectralMap || astGetI(spectralMap, "Nin") != 1 || astGetI(spectralMap, "Nout") != 1)
+    {
+        std::cerr << "The spectral axis cannot be split from the original axes!\n";
+        return nullptr;
+    }
+
+    // Work space holding 3D pixel positions
+    double* posData = static_cast<double*>(astMalloc(axisCount * nsample * sizeof(double)));
+
+    if (!posData)
+    {
+        std::cerr << "Fail to allocate input position data array!\n";
+        return nullptr;
+    }
+
+    // Fill the above array with pixel positions
+    for (int i = 0; i < nsample; i++)
+    {
+        for (int j = 0; j < axisCount; j++)
+        {
+            int workIndex = j * nsample + i;
+            if (j == dirAxis - 1)
+            {
+                // For rendered direction axis
+                posData[workIndex] = i + 1;
+            }
+            else if (j == spectralAxis - 1)
+            {
+                // For rendered spectral axis
+                posData[workIndex] = 1;
+            }
+            else
+            {
+                // For hidden direction axis (not rendered axis)
+                if (pixelZ > 0) {
+                    posData[workIndex] = pixelZ;
+                }
+                else
+                {
+                    posData[workIndex] = 0;
+                }
+            }
+        }
+    }
+
+    // Work space holding 3D world positions
+    double* worldData = static_cast<double*>(astMalloc(axisCount * nsample * sizeof(double)));
+
+    if (!worldData)
+    {
+        std::cerr << "Fail to allocate output world data array!\n";
+        return nullptr;
+    }
+
+    // Transform the pixel positions into world coordinates
+    astTranN(originFrameSet, nsample, axisCount, nsample, posData, 1, axisCount, nsample, worldData);
+
+    // "Smooth" the delta rad that its max difference between two adjacent elements should not be greater than PI
+    bool smoothDeltaRad(false);
+    for (int i = 0; i < nsample - 1; ++i)
+    {
+        double rad1 = *(worldData + (dirAxis - 1) * nsample + i);
+        double rad2 = *(worldData + (dirAxis - 1) * nsample + i + 1);
+        if ((std::signbit(rad1) != std::signbit(rad2)) && (fabs(rad1 - rad2) >= M_PI))
+        {
+            smoothDeltaRad = true;
+            break;
+        }
+    }
+
+    if (smoothDeltaRad)
+    {
+        for (int i = 0; i < nsample; ++i)
+        {
+            double tmpRad = *(worldData + (dirAxis - 1) * nsample + i);
+            if (tmpRad < 0)
+            {
+                *(worldData + (dirAxis - 1) * nsample + i) = M_PI * 2 + tmpRad;
+            }
+        }
+    }
+
+    // Create a lookup table that transforms 1D pixel axis (on the pixel axis that is being retained) into the
+    // corresponding value on the retained celestial axis
+    AstLutMap* dirLutMap = astLutMap(nsample, worldData + (dirAxis - 1) * nsample, 1.0, 1.0, " ");
+
+    // Create a new 2D frame to represent direction v.s. spectral axis
+    int axes[2]; // 1-based indices of axes to be picked
+    if (spectralAxis == 2)
+    {
+        axes[0] = dirAxis;
+        axes[1] = spectralAxis;
+    }
+    else
+    {
+        // For spectralAxis == 1
+        axes[0] = spectralAxis;
+        axes[1] = dirAxis;
+    }
+
+    // Set returned frame set
+    AstFrameSet* result = astFrameSet(astPickAxes(astGetFrame(originFrameSet, AST__BASE), 2, axes, NULL), " ");
+
+    // 2-d Mapping from pixel to world
+    AstCmpMap* newCmpMap = nullptr;
+
+    if (spectralAxis == 2)
+    {
+        newCmpMap = astCmpMap(dirLutMap, spectralMap, 0, " ");
+    }
+    else
+    {
+        // For spectralAxis == 1
+        newCmpMap = astCmpMap(spectralMap, dirLutMap, 0, " ");
+    }
+
+    astAddFrame(result, AST__BASE, newCmpMap, astPickAxes(originFrameSet, 2, axes, NULL));
+    astExport(result);
+
+    // Free work spaces
+    worldData = static_cast<double*>(astFree(worldData));
+    posData = static_cast<double*>(astFree(posData));
+
+    astEnd;
+
+    return result;
+}
 }
