@@ -1163,6 +1163,7 @@ export class AppStore {
             console.error(err);
             frame.resetPvRequestState();
             frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
             AppToaster.show(ErrorToast(err));
         }
     }
