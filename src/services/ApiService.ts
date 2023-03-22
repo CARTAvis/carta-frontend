@@ -60,7 +60,7 @@ export class ApiService {
             if (tokenLifetime === Number.MAX_VALUE) {
                 document.cookie = `carta-auth-token=${tokenString}`;
             } else {
-                console.log(`Token updated and valid for ${tokenLifetime.toFixed()} seconds`);
+                console.debug(`Token updated and valid for ${tokenLifetime.toFixed()} seconds`);
             }
             this._accessToken = tokenString;
             this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${tokenString}`;
@@ -117,7 +117,7 @@ export class ApiService {
         clearTimeout(this._tokenExpiryHandler);
         const tokenRefreshed = await this.refreshAccessToken();
         if (tokenRefreshed) {
-            console.log("Authenticated");
+            console.debug("Authenticated");
             const dt = this.tokenLifetime;
             // Queue up an access token refresh 10 seconds before the current one expires
             this._tokenExpiryHandler = setTimeout(this.onTokenExpired, (dt - 10) * 1000);
@@ -145,7 +145,7 @@ export class ApiService {
                 if (currentUser?.isSignedIn()) {
                     const authResponse = await currentUser.reloadAuthResponse();
                     if (this.setToken(authResponse.id_token, authResponse.expires_in)) {
-                        console.log("Authenticated with Google");
+                        console.debug("Authenticated with Google");
                         return true;
                     } else {
                         console.log("Error parsing Google access token");

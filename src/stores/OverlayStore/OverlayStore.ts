@@ -100,6 +100,16 @@ export class OverlayGlobalSettings {
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
         astString.add("System", this.explicitSystem);
+
+        const frame = AppStore.Instance.activeFrame;
+        if (frame.isXY || frame.isYX) {
+            if (this.system === SystemType.FK4) {
+                astString.add("Equinox", "1950");
+            } else {
+                astString.add("Equinox", "2000");
+            }
+        }
+
         return astString.toString();
     }
 
@@ -533,10 +543,6 @@ export class OverlayNumberSettings {
         astString.add("Font(NumLab)", this.font);
         astString.add("Size(NumLab)", this.fontSize * AppStore.Instance.imageRatio);
         astString.add("Color(NumLab)", AstColorsIndex.NUMBER, this.customColor);
-
-        // Add settings for individual axes
-        astString.add("Format(1)", this.formatStringX);
-        astString.add("Format(2)", this.formatStringY);
 
         return astString.toString();
     }
@@ -1027,7 +1033,7 @@ export class OverlayStore {
             const _ = this.numbers.formatTypeX;
             const frame = AppStore.Instance.activeFrame;
             if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeX) {
-                AST.set(frame.wcsInfoForTransformation, `Format(1)=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
+                AST.set(frame.wcsInfoForTransformation, `Format(${frame.dirX})=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
             }
         });
 
@@ -1036,7 +1042,7 @@ export class OverlayStore {
             const _ = this.numbers.formatTypeY;
             const frame = AppStore.Instance.activeFrame;
             if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeY) {
-                AST.set(frame.wcsInfoForTransformation, `Format(2)=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
+                AST.set(frame.wcsInfoForTransformation, `Format(${frame.dirY})=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
             }
         });
     }

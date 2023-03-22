@@ -19,7 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added a selection option in the PV generator widget to swap x and y axis, an input for spectral axis limit, and a toggle button to let users decide whether or not to keep the previously generated PV images ([#1950](https://github.com/cartavis/carta-frontend/issues/1950), [#1951](https://github.com/cartavis/carta-frontend/issues/1951), [#1952](https://github.com/cartavis/carta-frontend/issues/1952)).
 * Added a toggle button to let users decide whether or not to keep the previously generated moment images ([#2054](https://github.com/CARTAvis/carta-frontend/issues/2054)).
 * Added settings in the image view settings widget for panning and zooming the images ([#1176](https://github.com/CARTAvis/carta-frontend/issues/1176)).
+* Added layout renaming dialog ([#458](https://github.com/CARTAvis/carta-frontend/issues/458)).
+* Added supports for swapped-axes image cubes ([#1953](https://github.com/CARTAvis/carta-frontend/issues/1953)).
 ### Fixed
+* Fixed the issue of annoying text input fields ([#1906](https://github.com/CARTAvis/carta-frontend/issues/1906)).
+* Fixed the issues of copying the Session URL in the macOS Electron and Linux AppImage versions ([#2102](https://github.com/CARTAvis/carta-frontend/issues/2102), [#2108](https://github.com/CARTAvis/carta-frontend/issues/2108)).
 * Fixed the issue of contour levels not deleted as intended ([#2091](https://github.com/CARTAvis/carta-frontend/issues/2091)).
 * Fixed issue of only enabling catalog selection button when there is a layer of catalog overlay ([#1826](https://github.com/CARTAvis/carta-frontend/issues/1826)).
 * Fixed the issue of the corrupted spatial profile when cursor is moving ([#1602](https://github.com/CARTAvis/carta-frontend/issues/1602)).
@@ -36,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed offset between cusorInfo and upper wcs axis in the spatial profilers ([#1319](https://github.com/CARTAvis/carta-frontend/issues/1319)).
 * Fixed mismatch between cursor and image during PV image panning ([#1790](https://github.com/CARTAvis/carta-frontend/issues/1790)).
 * Fixed the hanging problem for computed stokes animation ([#1238](https://github.com/CARTAvis/carta-backend/issues/1238)).
+* Fixed the AST grid rendering issues in different reference systems due to missing explicit equinox in the setup ([#2106](https://github.com/CARTAvis/carta-frontend/issues/2106))
 ### Changed
 * Re-arranged the order of File menu ([#2092](https://github.com/CARTAvis/carta-frontend/issues/2092))
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).

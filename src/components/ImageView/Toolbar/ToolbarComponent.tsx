@@ -42,7 +42,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.FK5, "FK5 coordinates, J2000.0 equinox"],
         [SystemType.FK4, "FK4 coordinates, B1950.0 equinox"],
         [SystemType.Galactic, "Galactic coordinates"],
-        [SystemType.Ecliptic, "Ecliptic coordinates"],
+        [SystemType.Ecliptic, "Ecliptic coordinates, J2000.0 equinox"],
         [SystemType.ICRS, "International Celestial Reference System"]
     ]);
 
