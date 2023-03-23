@@ -81,7 +81,7 @@ export class SplatalogueService {
             throw new Error("invalid data received from Splatalogue");
         }
 
-        const numDataRows = data.length;
+        const numDataRows = data.length - 1; // ignore the last data, which only stores the query params
         const responseData: SpectralLineResponse = {
             headers: new Array<CARTA.ICatalogHeader>(),
             spectralLineData: {},
