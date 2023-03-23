@@ -48,7 +48,8 @@ describe("SplatalogueService", () => {
                     {
                         name: 'KF <font color="red"><i>v</i> = 0</font>',
                         orderedFreq: "381543.5091 (0.0109), <span style = 'color: #DC143C'>381543.5091</span>"
-                    }
+                    },
+                    {}
                 ]
             };
         });
