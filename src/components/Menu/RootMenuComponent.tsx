@@ -187,7 +187,17 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session ID to clipboard"
                 onClick={async () => {
                     try {
-                        await navigator.clipboard?.writeText(appStore.backendService.sessionId.toString());
+                        if (navigator.clipboard) {
+                            await navigator.clipboard?.writeText(appStore.backendService.sessionId.toString());
+                        } else {
+                            const copyText = document.createElement("textarea");
+                            copyText.value = appStore.backendService.sessionId.toString();
+                            document.body.appendChild(copyText);
+                            copyText.focus();
+                            copyText.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(copyText);
+                        }
                         AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
                     } catch (err) {
                         console.log(err);
@@ -201,7 +211,36 @@ export class RootMenuComponent extends React.Component {
                 text="Copy session URL to clipboard"
                 onClick={async () => {
                     try {
-                        await navigator.clipboard?.writeText(window.location.href);
+                        const url = new URL(document.URL);
+                        if (url.protocol.startsWith("file")) {
+                            const socketUrl = url.searchParams.get("socketUrl");
+                            const token = url.searchParams.get("token");
+                            const httpUrl = socketUrl.replace("ws", "http");
+                            const finalUrl = `${httpUrl}?token=${token}`;
+                            if (navigator.clipboard) {
+                                await navigator.clipboard.writeText(finalUrl);
+                            } else {
+                                const copyText = document.createElement("textarea");
+                                copyText.value = finalUrl;
+                                document.body.appendChild(copyText);
+                                copyText.focus();
+                                copyText.select();
+                                document.execCommand("copy");
+                                document.body.removeChild(copyText);
+                            }
+                        } else {
+                            if (navigator.clipboard) {
+                                await navigator.clipboard.writeText(document.URL);
+                            } else {
+                                const copyText = document.createElement("textarea");
+                                copyText.value = document.URL;
+                                document.body.appendChild(copyText);
+                                copyText.focus();
+                                copyText.select();
+                                document.execCommand("copy");
+                                document.body.removeChild(copyText);
+                            }
+                        }
                         AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
                         console.log(err);
@@ -209,7 +248,6 @@ export class RootMenuComponent extends React.Component {
                 }}
             />
         );
-
         let serverSubMenu: React.ReactNode;
         if (serverMenu.length) {
             serverSubMenu = (
@@ -286,7 +324,12 @@ export class RootMenuComponent extends React.Component {
                             </React.Fragment>
                         )}
                     </MenuItem2>
-                    <MenuItem2 text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog} />
+                    <MenuItem2 text="Save Layout" onClick={() => appStore.dialogStore.showSaveLayoutDialog()} />
+                    <MenuItem2 text="Rename Layout" disabled={!userLayouts || userLayouts.length <= 0}>
+                        {userLayouts &&
+                            userLayouts.length > 0 &&
+                            userLayouts.map(value => <MenuItem2 key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.dialogStore.showSaveLayoutDialog(value)} />)}
+                    </MenuItem2>
                     <MenuItem2 text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
                             userLayouts.length > 0 &&
