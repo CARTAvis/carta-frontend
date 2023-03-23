@@ -137,6 +137,8 @@ export class FrameStore {
     public readonly vectorOverlayConfig: VectorOverlayConfigStore;
     public readonly vectorOverlayStore: VectorOverlayStore;
 
+    public pointShapeCache: CARTA.PointAnnotationShape;
+
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 

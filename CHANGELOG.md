@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added settings in the image view settings widget for panning and zooming the images ([#1176](https://github.com/CARTAvis/carta-frontend/issues/1176)).
 * Added layout renaming dialog ([#458](https://github.com/CARTAvis/carta-frontend/issues/458)).
 * Added supports for swapped-axes image cubes ([#1953](https://github.com/CARTAvis/carta-frontend/issues/1953)).
+* Added supports for image annotations ([#267](https://github.com/CARTAvis/carta-frontend/issues/267)).
 ### Fixed
 * Fixed the issue of annoying text input fields ([#1906](https://github.com/CARTAvis/carta-frontend/issues/1906)).
 * Fixed the issues of copying the Session URL in the macOS Electron and Linux AppImage versions ([#2102](https://github.com/CARTAvis/carta-frontend/issues/2102), [#2108](https://github.com/CARTAvis/carta-frontend/issues/2108)).
@@ -44,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Re-arranged the order of File menu ([#2092](https://github.com/CARTAvis/carta-frontend/issues/2092))
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
-* Set white color or black color, based on the theme, as the background for the image view PNG export ([#2029](https://github.com/CARTAvis/carta-frontend/issues/2029)). 
+* Set white color or black color, based on the theme, as the background for the image view PNG export ([#2029](https://github.com/CARTAvis/carta-frontend/issues/2029)).
 
 ## [3.0.1]
 

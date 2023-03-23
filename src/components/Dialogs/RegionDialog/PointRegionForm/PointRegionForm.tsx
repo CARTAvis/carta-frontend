@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {CoordinateComponent, SafeNumericInput} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {CoordinateMode, RegionStore} from "stores/Frame";
+import {CoordinateMode, PointAnnotationStore, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./PointRegionForm.scss";
@@ -109,8 +109,8 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
-        const region = this.props.region;
-        if (!region || region.regionType !== CARTA.RegionType.POINT) {
+        const region = this.props.region as PointAnnotationStore;
+        if (!region || (region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT)) {
             return null;
         }
 
@@ -157,9 +157,9 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
                     <table>
                         <tbody>
                             <tr>
-                                <td>Region name</td>
+                                <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
                                 <td colSpan={2}>
-                                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
+                                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                                 </td>
                             </tr>
                             <tr>

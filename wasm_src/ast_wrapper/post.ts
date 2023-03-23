@@ -95,7 +95,7 @@ Module.setCanvas = function (canvas) {
     Module.gridContext.font = Module.font;
 };
 
-Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
+Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string", "boolean", "boolean", "number", "number", "number", "number"]);
 Module.emptyFitsChan = Module.cwrap("emptyFitsChan", "number");
 Module.putFits = Module.cwrap("putFits", null, ["number", "string"]);
 Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number", "number"]);
@@ -128,6 +128,8 @@ Module.setI = Module.cwrap("setI", null, ["number", "string", "number"]);
 Module.setD = Module.cwrap("setD", null, ["number", "string", "number"]);
 Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
+Module.pointList = Module.cwrap("pointList", "number", ["number", "number", "number", "number", "number"]);
+Module.axPointList = Module.cwrap("axPointList", "number", ["number", "number", "number", "number", "number", "number", "number"]);
 Module.makeSwappedFrameSet = Module.cwrap("makeSwappedFrameSet", "number", ["number", "number", "number", "number", "number"]);
 
 Module.currentFormatStrings = [];
@@ -192,6 +194,54 @@ Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn:
     Module._free(yInPtr);
     Module._free(xOutPtr);
     Module._free(yOutPtr);
+    return result;
+};
+
+Module.getGeodesicPointArray = function (wcsInfo: number, npoint: number, start: {x: number, y: number}, finish: {x: number, y: number}) {
+    // Return empty array if arguments are invalid
+    const yIn = new Float64Array([start.y, finish.y]);
+    const xIn = new Float64Array([start.x, finish.x]);
+
+    if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
+        return new Float64Array(1);
+    }
+
+    // Allocate and assign WASM memory
+    const N = xIn.length;
+    const xInPtr = Module._malloc(N * 8);
+    const yInPtr = Module._malloc(N * 8);
+    const outPtr = Module._malloc(npoint * 2 * 8);
+    Module.HEAPF64.set(xIn, xInPtr / 8);
+    Module.HEAPF64.set(yIn, yInPtr / 8);
+    // Perform the AST transform
+    Module.pointList(wcsInfo, npoint, xInPtr, yInPtr, outPtr);
+
+    // Copy result out to an object
+    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, npoint * 2);
+    const result = out.slice(0);
+    
+    // Free WASM memory
+    Module._free(xInPtr);
+    Module._free(yInPtr);
+    Module._free(outPtr);
+    return result;
+};
+
+Module.getAxisPointArray = function (wcsInfo: number, npoint: number, axis: number, x: number, y: number, dist: number) {
+
+    // Allocate and assign WASM memory
+    const N = npoint;
+    const outPtr = Module._malloc(npoint * 2 * 8);
+
+    // Perform the AST transform
+    Module.axPointList(wcsInfo, N, axis, x, y, dist, outPtr);
+
+    // Copy result out to an object
+    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, npoint * 2);
+    const result = out.slice(0);
+    
+    // Free WASM memory
+    Module._free(outPtr);
     return result;
 };
 
