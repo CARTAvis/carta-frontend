@@ -27,11 +27,8 @@ const WcsCoordNumericInput = ({inputType, valueWcs, onChangeWcs, disabled = fals
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
-        if (!valueWcs) {
-            return;
-        }
         const wcsString = ev.currentTarget.value;
-        if (wcsString === valueWcs) {
+        if (valueWcs && wcsString === valueWcs) {
             return;
         }
 
@@ -116,7 +113,7 @@ export const ImageCoordNumericInput = ({inputType, value, onChange, disabled = f
         placeholder = customPlaceholder;
     }
 
-    return <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder={placeholder} disabled={disabled} value={value} onBlur={handleChange} onKeyDown={handleChange} />;
+    return <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder={placeholder} disabled={disabled} value={isFinite(value) ? value : ""} onBlur={handleChange} onKeyDown={handleChange} />;
 };
 
 interface CoordNumericInputProps {
