@@ -6,7 +6,7 @@
         margin: 1%;
 
         &-title {
-            .bp3-heading {
+            .bp4-heading {
                 padding-top: 10%;
                 margin-bottom: 5;
             }
@@ -16,27 +16,27 @@
             &-numeric-input {
                 padding-left: 10%;
             }
-            .bp3-form-group {
+            .bp4-form-group {
                 flex-grow: 1;
                 &:last-of-type {
                     padding-right: 0;
                 }
             }
-            .bp3-numeric-input {
-                .bp3-input-group {
+            .bp4-numeric-input {
+                .bp4-input-group {
                     width: 60px;
                 }
             }
         }
 
         &-input {
-            .bp3-form-group {
+            .bp4-form-group {
                 margin-bottom: 0;
             }
-            .bp3-numeric-input {
+            .bp4-numeric-input {
                 width: 125px;
 
-                .bp3-input-group {
+                .bp4-input-group {
                     width: 100%;
                 }
             }
