@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Re-arranged the order of File menu ([#2092](https://github.com/CARTAvis/carta-frontend/issues/2092))
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
 * Set white color or black color, based on the theme, as the background for the image view PNG export ([#2029](https://github.com/CARTAvis/carta-frontend/issues/2029)). 
+* Upgrading blueprintjs from v3 to v4 ([#2029](https://github.com/CARTAvis/carta-frontend/issues/1395)). 
 
 ## [3.0.1]
 
