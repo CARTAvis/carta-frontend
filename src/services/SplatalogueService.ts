@@ -81,7 +81,11 @@ export class SplatalogueService {
             throw new Error("invalid data received from Splatalogue");
         }
 
-        const numDataRows = data.length - 1 >= 0 ? data.length - 1 : 0; // ignore the last data, which only stores the query params
+        // remove data with invalid species id and invalid species name
+        // this will remove data which only stores the query string
+        data = data.filter(line => line?.["species_id"] !== null || line?.["name"]);
+
+        const numDataRows = data.length;
         const responseData: SpectralLineResponse = {
             headers: new Array<CARTA.ICatalogHeader>(),
             spectralLineData: {},

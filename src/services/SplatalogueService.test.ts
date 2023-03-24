@@ -48,8 +48,7 @@ describe("SplatalogueService", () => {
                     {
                         name: 'KF <font color="red"><i>v</i> = 0</font>',
                         orderedFreq: "381543.5091 (0.0109), <span style = 'color: #DC143C'>381543.5091</span>"
-                    },
-                    {}
+                    }
                 ]
             };
         });
@@ -57,5 +56,20 @@ describe("SplatalogueService", () => {
         expect(ack.spectralLineData[0].stringData[0]).toEqual("KF v = 0");
         expect(ack.spectralLineData[3].stringData[0]).toEqual("381543.5091");
         expect(ack.spectralLineData[4].stringData[0]).toEqual("0.0109");
+    });
+
+    test("removes invalid data", async () => {
+        mockAxiosPost.mockImplementationOnce(() => {
+            return {
+                data: [
+                    {
+                        species_id: null,
+                        name: null
+                    }
+                ]
+            };
+        });
+        const ack = await SplatalogueService.Instance.query(300000, 300100, NaN);
+        expect(ack.dataSize).toEqual(0);
     });
 });
