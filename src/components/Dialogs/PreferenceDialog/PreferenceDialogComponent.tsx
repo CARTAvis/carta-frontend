@@ -11,7 +11,7 @@ import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
+import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
 import {
     CompressionQuality,
     CursorInfoVisibility,
@@ -43,6 +43,7 @@ enum PreferenceDialogTabs {
     VECTOR_OVERLAY_CONFIG,
     WCS_OVERLAY_CONFIG,
     REGION,
+    ANNOTATION,
     PERFORMANCE,
     LOG_EVENT,
     CATALOG,
@@ -123,6 +124,9 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case PreferenceDialogTabs.REGION:
                 preference.resetRegionSettings();
+                break;
+            case PreferenceDialogTabs.ANNOTATION:
+                preference.resetAnnotationSettings();
                 break;
             case PreferenceDialogTabs.PERFORMANCE:
                 preference.resetPerformanceSettings();
@@ -579,6 +583,61 @@ export class PreferenceDialogComponent extends React.Component {
             </React.Fragment>
         );
 
+        let annotationTypes = [];
+        RegionStore.AVAILABLE_ANNOTATION_TYPES.forEach((name, annotationType) => {
+            annotationTypes.push(
+                <option key={annotationType} value={annotationType}>
+                    {name}
+                </option>
+            );
+        });
+
+        const annotationSettingsPanel = (
+            <React.Fragment>
+                <FormGroup inline={true} label="Color">
+                    <ColorPickerComponent
+                        color={preference.annotationColor}
+                        presetColors={SWATCH_COLORS}
+                        setColor={(color: ColorResult) => preference.setPreference(PreferenceKeys.ANNOTATION_COLOR, color.hex)}
+                        disableAlpha={true}
+                        darkTheme={appStore.darkTheme}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Line Width" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Line Width"
+                        min={RegionStore.MIN_LINE_WIDTH}
+                        max={RegionStore.MAX_LINE_WIDTH}
+                        value={preference.annotationLineWidth}
+                        stepSize={0.5}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Dash Length"
+                        min={0}
+                        max={RegionStore.MAX_DASH_LENGTH}
+                        value={preference.annotationDashLength}
+                        stepSize={1}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Point Shape">
+                    <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.pointAnnotationShape} />
+                </FormGroup>
+                <FormGroup inline={true} label="Point Size" labelInfo="(px)">
+                    <SafeNumericInput
+                        placeholder="Point Size"
+                        min={1}
+                        value={preference.pointAnnotationWidth}
+                        stepSize={1}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_WIDTH, Math.max(1, value))}
+                    />
+                </FormGroup>
+            </React.Fragment>
+        );
+
         const performancePanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Low bandwidth mode">
@@ -841,6 +900,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.WCS_OVERLAY_CONFIG} title="WCS and Image Overlay" panel={overlayConfigPanel} />
                         <Tab id={PreferenceDialogTabs.CATALOG} title="Catalog" panel={catalogPanel} />
                         <Tab id={PreferenceDialogTabs.REGION} title="Region" panel={regionSettingsPanel} />
+                        <Tab id={PreferenceDialogTabs.ANNOTATION} title="Annotation" panel={annotationSettingsPanel} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={performancePanel} />
                         {process.env.REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={telemetryPanel} />}
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel} />

@@ -1,4 +1,4 @@
-export interface AstObject{}
+export interface AstObject {}
 export interface FrameSet extends AstObject {}
 export interface Frame extends AstObject {}
 export interface Mapping extends AstObject {}
@@ -12,7 +12,26 @@ export function setFontList(newList: string[]): void;
 export function setCanvas(canvas: HTMLCanvasElement);
 
 // cwrap'd functions
-export function plot(frameSet: FrameSet, imageX1: number, imageX2: number, imageY1: number, imageY2: number, width: number, height: number, paddingLeft: number, paddingRight: number, paddingTop: number, paddingBottom: number, options: string, showCurve: boolean, isPVImage: boolean, curveX1: number, curveY1: number, curveX2: number, curveY2: number);
+export function plot(
+    frameSet: FrameSet,
+    imageX1: number,
+    imageX2: number,
+    imageY1: number,
+    imageY2: number,
+    width: number,
+    height: number,
+    paddingLeft: number,
+    paddingRight: number,
+    paddingTop: number,
+    paddingBottom: number,
+    options: string,
+    showCurve: boolean,
+    isPVImage: boolean,
+    curveX1: number,
+    curveY1: number,
+    curveX2: number,
+    curveY2: number
+);
 export function emptyFitsChan(): FitsChan;
 export function putFits(fitsChan: FitsChan, card: string): void;
 export function getFrameFromFitsChan(fitsChan: FitsChan, checkSkyDomain: boolean): FrameSet;
@@ -43,16 +62,19 @@ export function setI(obj: AstObject, attrib: string, value: number): void;
 export function setD(obj: AstObject, attrib: string, value: number): void;
 export function createTransformedFrameset(frameSet: FrameSet, offsetX: number, offsetY: number, angle: number, originX: number, originY: number, scaleX: number, scaleY: number);
 // Not exported fillTransformGrid()
+export function makeSwappedFrameSet(originFrameSet: FrameSet, dirAxis: number, spectralAxis: number, pixelZ: number, nsample: number): FrameSet;
 
 // Helper functions
 export function getFormattedCoordinates(frameSet: FrameSet, x: number, y: number, formatString?: string, tempFormat?: boolean): {x: string, y: string};
 export function getWCSValueFromFormattedString(frameSet: FrameSet, formatString: {x: string, y: string}): {x: number, y: number};
 export function transformPointArrays(frameSet: FrameSet, xIn: Float64Array, yIn: Float64Array, forward?: boolean): {x: Float64Array, y: Float64Array};
 export function transformPoint(frameSet: FrameSet, x: number, y: number, forward?: boolean): {x: number, y: number};
+export function getGeodesicPointArray(frameSet: FrameSet, npoint: number, start: {x: number, y: number}, finish: {x: number, y: number});
+export function getAxisPointArray(frameSet: FrameSet, npoint: number, axis: number, x: number, y: number, dist: number);
 export function transform3DPoint(frameSet: FrameSet, x: number, y: number, z: number, forward?: boolean): {x: number, y: number, z: number};
 export function transformSpectralPoint(specFrame: SpecFrame, specType: string, specUnit: string, specSys: string, z: number, forward?: boolean);
 export function transformSpectralPointArray(specFrame: SpecFrame, specType: string, specUnit: string, specSys: string, zIn: Float64Array | Array<number>, forward?: boolean): Float64Array;
-export function normalizeCoordinates(frameSet: FrameSet, x: number, y: number): {x: number, y: number};
+export function normalizeCoordinates(frameSet: FrameSet, x: number, y: number): {x: number; y: number};
 export function getTransformGrid(transformFrameSet: FrameSet, xMin: number, xMax: number, numX: number, yMin: number, yMax: number, numY: number, forward: boolean);
 
 export const onReady: Promise<void>;

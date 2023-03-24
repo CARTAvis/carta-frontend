@@ -41,23 +41,43 @@ export class RegionStore {
     static readonly TARGET_VERTEX_COUNT = 200;
 
     private readonly backendService: BackendService;
-    private readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
+    protected readonly regionApproximationMap: Map<AST.FrameSet, Point2D[]>;
     public modifiedTimestamp: number;
 
     public static RegionTypeString(regionType: CARTA.RegionType): string {
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 return "Point";
+            case CARTA.RegionType.ANNPOINT:
+                return "Point - Ann";
             case CARTA.RegionType.LINE:
                 return "Line";
+            case CARTA.RegionType.ANNLINE:
+                return "Line - Ann";
             case CARTA.RegionType.RECTANGLE:
                 return "Rectangle";
+            case CARTA.RegionType.ANNRECTANGLE:
+                return "Rectangle - Ann";
             case CARTA.RegionType.ELLIPSE:
                 return "Ellipse";
+            case CARTA.RegionType.ANNELLIPSE:
+                return "Ellipse - Ann";
             case CARTA.RegionType.POLYGON:
                 return "Polygon";
+            case CARTA.RegionType.ANNPOLYGON:
+                return "Polygon - Ann";
             case CARTA.RegionType.POLYLINE:
                 return "Polyline";
+            case CARTA.RegionType.ANNPOLYLINE:
+                return "Polyline - Ann";
+            case CARTA.RegionType.ANNVECTOR:
+                return "Vector - Ann";
+            case CARTA.RegionType.ANNTEXT:
+                return "Text - Ann";
+            case CARTA.RegionType.ANNCOMPASS:
+                return "Compass - Ann";
+            case CARTA.RegionType.ANNRULER:
+                return "Ruler - Ann";
             default:
                 return "Not Implemented";
         }
@@ -66,7 +86,10 @@ export class RegionStore {
     public static IsRegionCustomIcon(regionType: CARTA.RegionType): boolean {
         switch (regionType) {
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
+            case CARTA.RegionType.ANNRULER:
                 return true;
             default:
                 return false;
@@ -76,17 +99,31 @@ export class RegionStore {
     public static RegionIconString(regionType: CARTA.RegionType): IconName | CustomIconName {
         switch (regionType) {
             case CARTA.RegionType.POINT:
+            case CARTA.RegionType.ANNPOINT:
                 return "symbol-square";
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
                 return "line";
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
                 return "square";
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
                 return "circle";
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
                 return "polygon-filter";
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 return "polyline";
+            case CARTA.RegionType.ANNVECTOR:
+                return "arrow-top-right";
+            case CARTA.RegionType.ANNCOMPASS:
+                return "compass";
+            case CARTA.RegionType.ANNTEXT:
+                return "font";
+            case CARTA.RegionType.ANNRULER:
+                return "distanceMeasuring";
             default:
                 return "error";
         }
@@ -99,6 +136,19 @@ export class RegionStore {
         [CARTA.RegionType.ELLIPSE, "Ellipse"],
         [CARTA.RegionType.POLYGON, "Polygon"],
         [CARTA.RegionType.POLYLINE, "Polyline"]
+    ]);
+
+    static readonly AVAILABLE_ANNOTATION_TYPES = new Map<CARTA.RegionType, string>([
+        [CARTA.RegionType.ANNPOINT, "Point"],
+        [CARTA.RegionType.ANNLINE, "Line"],
+        [CARTA.RegionType.ANNRECTANGLE, "Rectangle"],
+        [CARTA.RegionType.ANNELLIPSE, "Ellipse"],
+        [CARTA.RegionType.ANNPOLYGON, "Polygon"],
+        [CARTA.RegionType.ANNPOLYLINE, "Polyline"],
+        [CARTA.RegionType.ANNVECTOR, "Vector"],
+        [CARTA.RegionType.ANNTEXT, "Text"],
+        [CARTA.RegionType.ANNCOMPASS, "Compass"],
+        [CARTA.RegionType.ANNRULER, "Ruler"]
     ]);
 
     public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
@@ -123,14 +173,24 @@ export class RegionStore {
         }
         switch (this.regionType) {
             case CARTA.RegionType.POINT:
+            case CARTA.RegionType.ANNPOINT:
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNTEXT:
+            case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints[CENTER_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR:
+            case CARTA.RegionType.ANNRULER:
                 return midpoint2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: 0, y: 0};
@@ -140,12 +200,21 @@ export class RegionStore {
     @computed get size(): Point2D {
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNTEXT:
+            case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints[SIZE_POINT_INDEX];
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
                 return this.boundingBox;
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR:
+            case CARTA.RegionType.ANNRULER:
                 return subtract2D(this.controlPoints[0], this.controlPoints[1]);
             default:
                 return {x: undefined, y: undefined};
@@ -166,11 +235,18 @@ export class RegionStore {
         }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
+            case CARTA.RegionType.ANNTEXT:
                 return this.size;
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNCOMPASS:
                 return scale2D(this.size, 2);
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
+            case CARTA.RegionType.ANNRULER:
                 const boundingBox = minMax2D(this.controlPoints);
                 return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
             default:
@@ -189,6 +265,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.POLYGON:
             case CARTA.RegionType.ANNULUS:
+            case CARTA.RegionType.ANNTEXT:
                 return true;
             default:
                 return false;
@@ -204,18 +281,33 @@ export class RegionStore {
         // Basic validation, ensuring that the region has the correct number of control points
         switch (this.regionType) {
             case CARTA.RegionType.POINT:
+            case CARTA.RegionType.ANNPOINT:
                 return this.controlPoints.length === 1;
             case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ANNRECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNCOMPASS:
                 return this.controlPoints.length === 2 && this.size.x > 0 && this.size.y > 0;
+            case CARTA.RegionType.ANNTEXT:
+                return this.controlPoints.length === 2;
             case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNPOLYGON:
             case CARTA.RegionType.POLYLINE:
+            case CARTA.RegionType.ANNPOLYLINE:
+            case CARTA.RegionType.ANNRULER:
                 return this.controlPoints.length >= 1;
             case CARTA.RegionType.LINE:
+            case CARTA.RegionType.ANNLINE:
+            case CARTA.RegionType.ANNVECTOR:
                 return this.controlPoints.length === 1 || this.controlPoints.length === 2;
             default:
                 return false;
         }
+    }
+
+    @computed get isAnnotation(): boolean {
+        return RegionStore.AVAILABLE_ANNOTATION_TYPES.has(this.regionType);
     }
 
     @computed get nameString(): string {
@@ -223,6 +315,8 @@ export class RegionStore {
             return "Cursor";
         } else if (this.name && this.name !== "") {
             return this.name;
+        } else if (this.isAnnotation) {
+            return `Annotation ${this.regionId > CURSOR_REGION_ID ? this.regionId : "..."}`;
         } else {
             // temporary region id < 0, use "..." for representation
             return `Region ${this.regionId > CURSOR_REGION_ID ? this.regionId : "..."}`;
@@ -270,15 +364,17 @@ export class RegionStore {
         }
     };
 
-    public getRegionApproximation(astTransform: AST.FrameSet): Point2D[] {
+    public getRegionApproximation(
+        astTransform: AST.FrameSet
+    ): Point2D[] | {northApproximatePoints: number[]; eastApproximatePoints: number[]} | {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]} {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {
             if (this.regionType === CARTA.RegionType.POINT) {
                 approximatePoints = [transformPoint(astTransform, this.center, false)];
             }
-            if (this.regionType === CARTA.RegionType.ELLIPSE) {
+            if (this.regionType === CARTA.RegionType.ELLIPSE || this.regionType === CARTA.RegionType.ANNELLIPSE) {
                 approximatePoints = getApproximateEllipsePoints(astTransform, this.center, this.size.y, this.size.x, this.rotation, RegionStore.TARGET_VERTEX_COUNT);
-            } else if (this.regionType === CARTA.RegionType.RECTANGLE) {
+            } else if (this.regionType === CARTA.RegionType.RECTANGLE || this.regionType === CARTA.RegionType.ANNRECTANGLE || this.regionType === CARTA.RegionType.ANNTEXT) {
                 let halfWidth = this.size.x / 2;
                 let halfHeight = this.size.y / 2;
                 const rotation = (this.rotation * Math.PI) / 180.0;
@@ -346,10 +442,10 @@ export class RegionStore {
         }
 
         this.regionApproximationMap = new Map<number, Point2D[]>();
-        if (this.regionType === CARTA.RegionType.POLYGON) {
+        if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
             this.simplePolygonTest();
         }
-        if (this.regionType === CARTA.RegionType.LINE && controlPoints.length === 2) {
+        if ((this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) && controlPoints.length === 2) {
             this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
         }
         this.modifiedTimestamp = performance.now();
@@ -360,7 +456,7 @@ export class RegionStore {
     };
 
     @action setCenter = (p: Point2D, skipUpdate = false) => {
-        if (this.regionType === CARTA.RegionType.LINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
             const rotation = (this.rotation * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
@@ -376,7 +472,7 @@ export class RegionStore {
     };
 
     @action setSize = (p: Point2D, skipUpdate = false) => {
-        if (this.regionType === CARTA.RegionType.LINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
             const newStart = {x: this.center.x - p.x / 2, y: this.center.y - p.y / 2};
             const newEnd = {x: this.center.x + p.x / 2, y: this.center.y + p.y / 2};
             this.setControlPoints([newStart, newEnd]);
@@ -396,12 +492,11 @@ export class RegionStore {
             } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating) {
                 this.throttledUpdateRegion(true);
             }
-
-            if (this.regionType === CARTA.RegionType.POLYGON) {
+            if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
                 this.simplePolygonTest(index);
             }
 
-            if (this.regionType === CARTA.RegionType.LINE) {
+            if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
                 this.rotation = this.controlPoints.length === 2 ? this.getLineAngle(this.controlPoints[0], this.controlPoints[1]) : 0;
             }
         }
@@ -422,11 +517,11 @@ export class RegionStore {
         this.regionApproximationMap.clear();
         this.modifiedTimestamp = performance.now();
         this.controlPoints = points;
-        if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
+        if (shapeChanged && (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON)) {
             this.simplePolygonTest();
         }
 
-        if (this.regionType === CARTA.RegionType.LINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
             this.rotation = points.length === 2 ? this.getLineAngle(points[0], points[1]) : 0;
         }
 
@@ -452,7 +547,7 @@ export class RegionStore {
         if (!this.activeFrame?.hasSquarePixels) {
             return;
         }
-        if (this.regionType === CARTA.RegionType.LINE) {
+        if (this.regionType === CARTA.RegionType.LINE || this.regionType === CARTA.RegionType.ANNLINE || this.regionType === CARTA.RegionType.ANNVECTOR) {
             const rotation = (((angle + 360) % 360) * Math.PI) / 180.0;
             // the rotation angle is defined to be 0 at North (mostly in +y axis) and increases counter-clockwisely. This is
             // different from the usual definition in math where 0 degree is in the +x axis. The extra 90-degree offset swaps
@@ -479,14 +574,26 @@ export class RegionStore {
     // Appearance properties don't need to be sync'd with the backend
     @action setColor = (color: string) => {
         this.color = color;
+
+        if (this.isAnnotation) {
+            this.modifiedTimestamp = performance.now();
+        }
     };
 
     @action setLineWidth = (lineWidth: number) => {
         this.lineWidth = lineWidth;
+
+        if (this.isAnnotation) {
+            this.modifiedTimestamp = performance.now();
+        }
     };
 
     @action setDashLength = (dashLength: number) => {
         this.dashLength = dashLength;
+
+        if (this.isAnnotation) {
+            this.modifiedTimestamp = performance.now();
+        }
     };
 
     @action beginCreating = () => {

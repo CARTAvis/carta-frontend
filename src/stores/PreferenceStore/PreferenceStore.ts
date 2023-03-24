@@ -76,6 +76,13 @@ export enum PreferenceKeys {
     REGION_CREATION_MODE = "regionCreationMode",
     REGION_SIZE = "regionSize",
 
+    ANNOTATION_COLOR = "annotationColor",
+    ANNOTATION_LINE_WIDTH = "annotationLineWidth",
+    ANNOTATION_DASH_LENGTH = "annotationDashLength",
+    POINT_ANNOTATION_SHAPE = "pointAnnotationShape",
+    POINT_ANNOTATION_WIDTH = "pointAnnotationWidth",
+    TEXT_ANNOTATION_LINE_WIDTH = "textAnnotationLineWidth",
+
     PERFORMANCE_IMAGE_COMPRESSION_QUALITY = "imageCompressionQuality",
     PERFORMANCE_ANIMATION_COMPRESSION_QUALITY = "animationCompressionQuality",
     PERFORMANCE_GPU_TILE_CACHE = "GPUTileCache",
@@ -196,6 +203,15 @@ const DEFAULTS = {
         regionType: CARTA.RegionType.RECTANGLE,
         regionCreationMode: RegionCreationMode.CENTER,
         regionSize: 30
+    },
+    ANNOTATION: {
+        annotationColor: "#FFBA01",
+        annotationLineWidth: 2,
+        annotationDashLength: 0,
+        annotationType: CARTA.RegionType.ANNRECTANGLE,
+        pointAnnotationShape: CARTA.PointAnnotationShape.SQUARE,
+        pointAnnotationWidth: 6,
+        textAnnotationLineWidth: 1
     },
     PERFORMANCE: {
         imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
@@ -498,6 +514,31 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.REGION_SIZE) ?? DEFAULTS.REGION.regionSize;
     }
 
+    // getters for annotation
+    @computed get annotationColor(): string {
+        return this.preferences.get(PreferenceKeys.ANNOTATION_COLOR) ?? DEFAULTS.ANNOTATION.annotationColor;
+    }
+
+    @computed get annotationLineWidth(): number {
+        return this.preferences.get(PreferenceKeys.ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.annotationLineWidth;
+    }
+
+    @computed get annotationDashLength(): number {
+        return this.preferences.get(PreferenceKeys.ANNOTATION_DASH_LENGTH) ?? DEFAULTS.ANNOTATION.annotationDashLength;
+    }
+
+    @computed get pointAnnotationShape(): CARTA.PointAnnotationShape {
+        return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_SHAPE) ?? DEFAULTS.ANNOTATION.pointAnnotationShape;
+    }
+
+    @computed get pointAnnotationWidth(): number {
+        return this.preferences.get(PreferenceKeys.POINT_ANNOTATION_WIDTH) ?? DEFAULTS.ANNOTATION.pointAnnotationWidth;
+    }
+
+    @computed get textAnnotationLineWidth(): number {
+        return this.preferences.get(PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH) ?? DEFAULTS.ANNOTATION.textAnnotationLineWidth;
+    }
+
     // getters for performance
     @computed get imageCompressionQuality(): number {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY) ?? DEFAULTS.PERFORMANCE.imageCompressionQuality;
@@ -771,6 +812,17 @@ export class PreferenceStore {
 
     @action resetRegionSettings = () => {
         this.clearPreferences([PreferenceKeys.REGION_COLOR, PreferenceKeys.REGION_CREATION_MODE, PreferenceKeys.REGION_DASH_LENGTH, PreferenceKeys.REGION_LINE_WIDTH, PreferenceKeys.REGION_TYPE, PreferenceKeys.REGION_SIZE]);
+    };
+
+    @action resetAnnotationSettings = () => {
+        this.clearPreferences([
+            PreferenceKeys.ANNOTATION_COLOR,
+            PreferenceKeys.ANNOTATION_DASH_LENGTH,
+            PreferenceKeys.ANNOTATION_LINE_WIDTH,
+            PreferenceKeys.POINT_ANNOTATION_SHAPE,
+            PreferenceKeys.POINT_ANNOTATION_WIDTH,
+            PreferenceKeys.TEXT_ANNOTATION_LINE_WIDTH
+        ]);
     };
 
     @action resetPerformanceSettings = () => {

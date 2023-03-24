@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 
 import {Point2D} from "models";
 import {AppStore} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {FrameStore, PointAnnotationStore, RegionStore} from "stores/Frame";
 import {transformPoint} from "utilities";
 
 import {Point} from "./InvariantShapes";
@@ -60,7 +60,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     };
 
     public render() {
-        const region = this.props.region;
+        const region = this.props.region as PointAnnotationStore;
         const frame = this.props.frame;
         let centerPixelSpace: Point2D;
         let rotation: number;
@@ -93,6 +93,8 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                 onDragMove={this.handleDrag}
                 onClick={this.handleClick}
                 onDblClick={this.handleDoubleClick}
+                pointShape={region.pointShape}
+                pointWidth={region.pointWidth}
             />
         );
     }
