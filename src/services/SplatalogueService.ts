@@ -120,7 +120,7 @@ export class SplatalogueService {
                 } else if (key === SpectralLineHeaders.RestFrequencyErr || key === SpectralLineHeaders.MeasuredFrequencyErr) {
                     entry = entry?.match(/\((.*?)\)/)?.[1] ?? ""; // match the string between the first "(" and ")"
                 } else if (key === SpectralLineHeaders.ShiftedFrequency || key === SpectralLineHeaders.RestFrequency || key === SpectralLineHeaders.MeasuredFrequency) {
-                    entry = entry?.match(/^(^[\d\.]+)/)?.[1] ?? ""; // match the string before the first char that is not a number or .
+                    entry = entry?.match(/^(^[\d\.]+)/)?.[1] ?? ""; // match the string before the first char that is not a number or "."
                 }
 
                 column.stringData[i] = entry;
