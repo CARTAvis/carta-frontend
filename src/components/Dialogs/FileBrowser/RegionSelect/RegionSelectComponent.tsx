@@ -4,7 +4,7 @@ import {computed, makeObservable} from "mobx";
 import {observer} from "mobx-react";
 
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
-import {FileBrowserStore} from "stores";
+import {FileBrowserStore, SelectionMode} from "stores";
 
 import "./RegionSelectComponent.scss";
 
@@ -12,7 +12,18 @@ import "./RegionSelectComponent.scss";
 export class RegionSelectComponent extends React.Component {
     @computed private get isSelectAll(): boolean {
         const fileBrowserStore = FileBrowserStore.Instance;
-        return fileBrowserStore.exportRegionNum === fileBrowserStore.regionOptionNum;
+        return fileBrowserStore.exportRegionNum === fileBrowserStore.regionOptionNum && fileBrowserStore.regionOptionNum > 0;
+    }
+
+    @computed private get isSelectAllAnnotations(): boolean {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        return fileBrowserStore.exportAnnotationNum === fileBrowserStore.annotationOptionNum && fileBrowserStore.annotationOptionNum > 0;
+    }
+
+    @computed private get isSelectAllRegions(): boolean {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        const regionNum = fileBrowserStore.regionOptionNum - fileBrowserStore.annotationOptionNum;
+        return fileBrowserStore.exportRegionNum - fileBrowserStore.exportAnnotationNum === regionNum && regionNum > 0;
     }
 
     @computed private get isIndeterminateSelectAll(): boolean {
@@ -20,17 +31,46 @@ export class RegionSelectComponent extends React.Component {
         return fileBrowserStore.exportRegionNum > 0 && fileBrowserStore.exportRegionNum < fileBrowserStore.regionOptionNum;
     }
 
+    @computed private get isIndeterminateSelectAllAnnotations(): boolean {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        return fileBrowserStore.exportAnnotationNum > 0 && fileBrowserStore.exportAnnotationNum < fileBrowserStore.annotationOptionNum;
+    }
+
+    @computed private get isIndeterminateSelectAllRegions(): boolean {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        const regionNum = fileBrowserStore.exportRegionNum - fileBrowserStore.exportAnnotationNum;
+        return regionNum > 0 && regionNum < fileBrowserStore.regionOptionNum - fileBrowserStore.annotationOptionNum;
+    }
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
     }
 
-    private handleSelectAllChanged = () => {
+    private handleSelectAllChanged = (mode: SelectionMode) => {
         const fileBrowserStore = FileBrowserStore.Instance;
-        if (this.isSelectAll || this.isIndeterminateSelectAll) {
-            fileBrowserStore.clearExportRegionIndexes();
-        } else {
-            fileBrowserStore.resetExportRegionIndexes();
+        switch (mode) {
+            case SelectionMode.All:
+                if (this.isSelectAll || this.isIndeterminateSelectAll) {
+                    fileBrowserStore.clearExportRegionIndexes(mode);
+                } else {
+                    fileBrowserStore.resetExportRegionIndexes(mode);
+                }
+                break;
+            case SelectionMode.Annotation:
+                if (this.isSelectAllAnnotations || this.isIndeterminateSelectAllAnnotations) {
+                    fileBrowserStore.clearExportRegionIndexes(mode);
+                } else {
+                    fileBrowserStore.resetExportRegionIndexes(mode);
+                }
+                break;
+            case SelectionMode.Region:
+                if (this.isSelectAllRegions || this.isIndeterminateSelectAllRegions) {
+                    fileBrowserStore.clearExportRegionIndexes(mode);
+                } else {
+                    fileBrowserStore.resetExportRegionIndexes(mode);
+                }
+                break;
         }
     };
 
@@ -59,8 +99,18 @@ export class RegionSelectComponent extends React.Component {
         return <pre className="select-status">{status}</pre>;
     };
 
-    private renderSelectAll = () => {
-        return <Checkbox key={0} checked={this.isSelectAll} indeterminate={this.isIndeterminateSelectAll} label="Select all" onChange={this.handleSelectAllChanged} />;
+    private renderSelectAll = (mode: SelectionMode) => {
+        return (
+            <>
+                {mode === SelectionMode.All && <Checkbox key={0} checked={this.isSelectAll} indeterminate={this.isIndeterminateSelectAll} label="Select all" onChange={event => this.handleSelectAllChanged(SelectionMode.All)} />}
+                {mode === SelectionMode.Region && (
+                    <Checkbox key={1} checked={this.isSelectAllRegions} indeterminate={this.isIndeterminateSelectAllRegions} label="Select all regions" onChange={event => this.handleSelectAllChanged(SelectionMode.Region)} />
+                )}
+                {mode === SelectionMode.Annotation && (
+                    <Checkbox key={2} checked={this.isSelectAllAnnotations} indeterminate={this.isIndeterminateSelectAllAnnotations} label="Select all annotations" onChange={event => this.handleSelectAllChanged(SelectionMode.Annotation)} />
+                )}
+            </>
+        );
     };
 
     private renderRegionOptions = () => {
@@ -83,12 +133,19 @@ export class RegionSelectComponent extends React.Component {
 
     render() {
         const optionNum = FileBrowserStore.Instance.regionOptionNum;
+        const includesAnnotation = FileBrowserStore.Instance.includesAnnotation;
+        const includesRegion = FileBrowserStore.Instance.includesRegion;
+        const annotationNum = FileBrowserStore.Instance.annotationOptionNum;
+        const regionNum = optionNum - annotationNum;
+
         return (
             <div className="select-region">
                 {optionNum > 0 ? (
                     <React.Fragment>
                         {this.renderSelectStatus()}
-                        {optionNum > 1 ? this.renderSelectAll() : null}
+                        {optionNum > 1 && this.renderSelectAll(SelectionMode.All)}
+                        {includesRegion && includesAnnotation && regionNum > 1 && this.renderSelectAll(SelectionMode.Region)}
+                        {includesAnnotation && includesRegion && annotationNum > 1 && this.renderSelectAll(SelectionMode.Annotation)}
                         {this.renderRegionOptions()}
                     </React.Fragment>
                 ) : (

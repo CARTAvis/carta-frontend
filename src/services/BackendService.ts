@@ -524,7 +524,6 @@ export class BackendService {
                     controlPoints: region.controlPoints.slice()
                 }
             });
-
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SET_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.SET_REGION, CARTA.SetRegion.encode(message).finish())) {
