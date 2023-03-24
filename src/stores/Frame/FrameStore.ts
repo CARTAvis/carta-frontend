@@ -137,6 +137,8 @@ export class FrameStore {
     public readonly vectorOverlayConfig: VectorOverlayConfigStore;
     public readonly vectorOverlayStore: VectorOverlayStore;
 
+    public pointShapeCache: CARTA.PointAnnotationShape;
+
     // Region set for the current frame. Accessed via regionSet, to take into account region sharing
     @observable private readonly frameRegionSet: RegionSetStore;
 
@@ -177,6 +179,7 @@ export class FrameStore {
     @observable pvImages: FrameStore[];
     @observable generatedPVRegionId: number;
     @observable fittingResult: string;
+    @observable fittingResultRegionParams: {points: Point2D[]; rotation: number}[];
     @observable fittingLog: string;
     @observable fittingModelImage: FrameStore;
     @observable fittingResidualImage: FrameStore;
@@ -1175,6 +1178,7 @@ export class FrameStore {
         this.momentImages = [];
         this.pvImages = [];
         this.fittingResult = "";
+        this.fittingResultRegionParams = [];
         this.fittingLog = "";
 
         this.isRequestingMoments = false;
@@ -2790,6 +2794,10 @@ export class FrameStore {
         this.fittingResult = results;
     };
 
+    @action setFittingResultRegionParams = (params: {points: Point2D[]; rotation: number}[]) => {
+        this.fittingResultRegionParams = params;
+    };
+
     @action setFittingLog = (log: string) => {
         this.fittingLog = log;
     };
@@ -2810,6 +2818,7 @@ export class FrameStore {
         this.fittingModelImage = null;
         this.fittingResidualImage = null;
         this.fittingResult = "";
+        this.fittingResultRegionParams = [];
         this.fittingLog = "";
     };
 }

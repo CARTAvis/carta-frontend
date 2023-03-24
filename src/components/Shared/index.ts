@@ -10,6 +10,7 @@ export * from "./ExportImageMenu/ExportImageMenuComponent";
 export * from "./LinePlot/LinePlotComponent";
 export * from "./LinePlot/PlotSettings/LinePlotSettingsPanelComponent";
 export * from "./PlotTypeSelector/PlotTypeSelectorComponent";
+export * from "./PointShapeSelectComponent/PointShapeSelectComponent";
 export * from "./PopoverSettings/PopoverSettingsComponent";
 export * from "./ProfilerInfo/ProfilerInfoComponent";
 export * from "./RegionSelector/RegionSelectorComponent";
