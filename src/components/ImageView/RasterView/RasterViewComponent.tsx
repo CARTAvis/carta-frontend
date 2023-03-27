@@ -280,13 +280,14 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         if (frame.isPreview) {
-            const texture = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, GL2.TEXTURE0);
+            const texture = createFP32Texture(this.gl, rasterTile.width, rasterTile.height, GL2.TEXTURE0);
             copyToFP32Texture(this.gl, texture, rasterTile.data, GL2.TEXTURE0, rasterTile.width, rasterTile.height, 0, 0);
             this.gl.bindTexture(GL2.TEXTURE_2D, texture);
             this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MIN_FILTER, GL2.NEAREST);
             this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
             this.gl.uniform2f(shaderUniforms.TileTextureOffset, 0, 0);
-            this.gl.uniform1f(shaderUniforms.TileTextureSize, rasterTile.width);
+            this.gl.uniform2f(shaderUniforms.TileTextureSize, rasterTile.width, rasterTile.height);
+            this.gl.uniform2f(shaderUniforms.TextureSize, rasterTile.width, rasterTile.height);
         } else {
             const textureParameters = tileService.getTileTextureParameters(rasterTile);
             if (textureParameters) {
@@ -295,6 +296,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 this.gl.texParameteri(GL2.TEXTURE_2D, GL2.TEXTURE_MAG_FILTER, GL2.NEAREST);
                 this.gl.uniform2f(shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
                 this.gl.uniform1f(shaderUniforms.TileTextureSize, TILE_SIZE);
+                this.gl.uniform2f(shaderUniforms.TextureSize, TEXTURE_SIZE, TEXTURE_SIZE);
             }
         }
 

@@ -134,8 +134,8 @@ export class TileWebGLService {
         this.gl.uniform2f(this.shaderUniforms.TileScaling, 1, 1);
         this.gl.uniform2f(this.shaderUniforms.TileOffset, 0, 0);
         this.gl.uniform2f(this.shaderUniforms.TileTextureOffset, 0, 0);
-        this.gl.uniform1f(this.shaderUniforms.TextureSize, TEXTURE_SIZE);
-        this.gl.uniform1f(this.shaderUniforms.TileTextureSize, TILE_SIZE);
+        this.gl.uniform2f(this.shaderUniforms.TextureSize, TEXTURE_SIZE, TEXTURE_SIZE);
+        this.gl.uniform2f(this.shaderUniforms.TileTextureSize, TILE_SIZE, TILE_SIZE);
         this.gl.uniform4f(this.shaderUniforms.NaNColor, 0, 0, 1, 1);
         this.gl.uniform1f(this.shaderUniforms.PixelGridCutoff, 0);
         this.gl.uniform4f(this.shaderUniforms.PixelGridColor, 1, 1, 1, 1);
