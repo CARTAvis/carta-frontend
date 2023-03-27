@@ -1,5 +1,5 @@
 import * as React from "react";
-import {FormGroup, H5, InputGroup} from "@blueprintjs/core";
+import {FormGroup, InputGroup} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
@@ -186,7 +186,6 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         return (
             <>
                 <div className="form-section compass-ruler-annotation-form">
-                    <H5>Properties</H5>
                     <div className="form-contents">
                         <table>
                             <tbody>

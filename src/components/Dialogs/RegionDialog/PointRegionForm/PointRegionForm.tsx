@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
+import {Classes, InputGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
@@ -152,7 +152,6 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
         return (
             <div className="form-section point-region-form">
-                <H5>Properties</H5>
                 <div className="form-contents">
                     <table>
                         <tbody>

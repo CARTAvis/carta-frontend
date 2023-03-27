@@ -1,5 +1,9 @@
 .region-dialog {
     .bp3-dialog-body {
         user-select: none;
+
+        .bp3-label {
+            width: 10em;
+        }
     }
 }

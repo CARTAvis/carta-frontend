@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {FormGroup, H5, HTMLSelect} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
@@ -35,7 +35,6 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
 
         return (
             <div className="form-section appearance-form">
-                <H5>Appearance</H5>
                 <div className="form-contents">
                     <FormGroup label="Color" inline={true}>
                         <ColorPickerComponent color={region.color} presetColors={SWATCH_COLORS} setColor={(color: ColorResult) => region.setColor(color.hex)} disableAlpha={true} darkTheme={this.props.darkTheme} />

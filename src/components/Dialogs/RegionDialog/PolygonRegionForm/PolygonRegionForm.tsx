@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
+import {Classes, InputGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
@@ -169,7 +169,6 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         });
         return (
             <div className="form-section polygon-region-form">
-                <H5>Properties</H5>
                 <div className="form-contents">
                     <table>
                         <tbody>
