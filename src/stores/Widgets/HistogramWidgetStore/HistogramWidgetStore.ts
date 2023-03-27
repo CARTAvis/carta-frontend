@@ -37,10 +37,12 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable curNumBins: number;
 
     // Config settings in the protobuf message
-    private fixedBounds: boolean;
-    private minPix: number;
-    private maxPix: number;
-    private numBins: number;
+    public fixedNumBins: boolean;
+    public numBins: number;
+    public binWidth: number;
+    public fixedBounds: boolean;
+    public minPix: number;
+    public maxPix: number;
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
@@ -153,10 +155,14 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         }
 
         if (this.curAutoBins) {
+            this.fixedNumBins = false;
             this.numBins = -1;
         } else {
+            this.fixedNumBins = true;
             this.numBins = this.curNumBins;
         }
+
+        this.binWidth = 0;
     };
 
     @computed get isAutoBounds(): boolean {
@@ -203,13 +209,34 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                     regionRequirements.histograms = [];
                 }
 
-                let histogramConfig = regionRequirements.histograms.find(config => config.coordinate === coordinate);
+                const fixedNumBins = widgetStore.fixedNumBins;
+                const numBins = widgetStore.numBins;
+                const binWidth = widgetStore.binWidth;
+                const fixedBounds = widgetStore.fixedBounds;
+                const minPix = widgetStore.minPix;
+                const maxPix = widgetStore.maxPix;
+
+                let histogramConfig = regionRequirements.histograms.find(
+                    config =>
+                        config.coordinate === coordinate &&
+                        config.fixedNumBins === fixedNumBins &&
+                        config.numBins === numBins &&
+                        Number(config.binWidth) === Number(binWidth) &&
+                        config.fixedBounds === fixedBounds &&
+                        Number(config.bounds.min) === Number(minPix) &&
+                        Number(config.bounds.max) === Number(maxPix)
+                );
+
                 if (!histogramConfig) {
-                    const numBins = widgetStore.numBins;
-                    const fixedBounds = widgetStore.fixedBounds;
-                    const minPix = widgetStore.minPix;
-                    const maxPix = widgetStore.maxPix;
-                    regionRequirements.histograms.push({coordinate: coordinate, channel: -1, numBins: numBins, fixedBounds: fixedBounds, bounds: {min: minPix, max: maxPix}});
+                    regionRequirements.histograms.push({
+                        coordinate: coordinate,
+                        channel: -1,
+                        fixedNumBins: fixedNumBins,
+                        numBins: numBins,
+                        binWidth: binWidth,
+                        fixedBounds: fixedBounds,
+                        bounds: {min: minPix, max: maxPix}
+                    });
                 }
             }
         });
