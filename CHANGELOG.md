@@ -13,14 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added the functionality to show/hide and lock all regions ([#1796](https://github.com/cartavis/carta-frontend/issues/1796)).
 * Added a method to auto-scrolling the selected region into the region list view ([#1797](https://github.com/CARTAvis/carta-frontend/issues/1797)).
 * Added the functionality to mirror cursor position on spatially matched frame via hotkey "G" ([#1947](https://github.com/cartavis/carta-frontend/issues/1947)).
-* Added support for fitting images with fixed parameters, generating model and residual images, and exporting fitting result and full log; added support for estimating progress and cancelling tasks ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
+* Added support for fitting images with regions, fixed parameters, a background offset, and different solvers; added support for setting initial values in world coordinates; added support for generating model and residual images, exporting fitting result and full log, and creating regions from the results; added support for estimating progress and cancelling tasks ([#1397](https://github.com/CARTAvis/carta-frontend/issues/1397)).
 * Added tooltip to the Image column for the image list and cursor info widget ([#1948](https://github.com/CARTAvis/carta-frontend/issues/1948)).
 * Added additional cursor info option to spectral profile widget ([#1837](https://github.com/CARTAvis/carta-frontend/issues/1837)).
 * Added a selection option in the PV generator widget to swap x and y axis, an input for spectral axis limit, and a toggle button to let users decide whether or not to keep the previously generated PV images ([#1950](https://github.com/cartavis/carta-frontend/issues/1950), [#1951](https://github.com/cartavis/carta-frontend/issues/1951), [#1952](https://github.com/cartavis/carta-frontend/issues/1952)).
 * Added a toggle button to let users decide whether or not to keep the previously generated moment images ([#2054](https://github.com/CARTAvis/carta-frontend/issues/2054)).
 * Added settings in the image view settings widget for panning and zooming the images ([#1176](https://github.com/CARTAvis/carta-frontend/issues/1176)).
 * Added layout renaming dialog ([#458](https://github.com/CARTAvis/carta-frontend/issues/458)).
+* Added supports for swapped-axes image cubes ([#1953](https://github.com/CARTAvis/carta-frontend/issues/1953)).
+* Added supports for image annotations ([#267](https://github.com/CARTAvis/carta-frontend/issues/267)).
 ### Fixed
+* Fixed the issue of annoying text input fields ([#1906](https://github.com/CARTAvis/carta-frontend/issues/1906)).
 * Fixed the issues of copying the Session URL in the macOS Electron and Linux AppImage versions ([#2102](https://github.com/CARTAvis/carta-frontend/issues/2102), [#2108](https://github.com/CARTAvis/carta-frontend/issues/2108)).
 * Fixed the issue of contour levels not deleted as intended ([#2091](https://github.com/CARTAvis/carta-frontend/issues/2091)).
 * Fixed issue of only enabling catalog selection button when there is a layer of catalog overlay ([#1826](https://github.com/CARTAvis/carta-frontend/issues/1826)).
@@ -42,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Re-arranged the order of File menu ([#2092](https://github.com/CARTAvis/carta-frontend/issues/2092))
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
-* Set white color or black color, based on the theme, as the background for the image view PNG export ([#2029](https://github.com/CARTAvis/carta-frontend/issues/2029)). 
+* Set white color or black color, based on the theme, as the background for the image view PNG export ([#2029](https://github.com/CARTAvis/carta-frontend/issues/2029)).
 
 ## [3.0.1]
 

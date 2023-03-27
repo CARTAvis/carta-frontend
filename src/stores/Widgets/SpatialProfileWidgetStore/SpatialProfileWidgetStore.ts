@@ -223,7 +223,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
             }
 
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region) {
+            if (region && !region.isAnnotation) {
                 let frameRequirements = updatedRequirements.get(fileId);
                 if (!frameRequirements) {
                     frameRequirements = new Map<number, CARTA.SetSpatialRequirements>();
