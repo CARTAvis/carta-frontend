@@ -115,7 +115,7 @@ export class SplatalogueService {
                 let entry = line[value]?.toString() ?? "";
                 const column = responseData.spectralLineData[j];
 
-                if (key === "Species") {
+                if (key === SpectralLineHeaders.Species || key === SpectralLineHeaders.ResolvedQN) {
                     entry = entry?.replace(/<[^>]+>/g, ""); // remove html tags
                 } else if (key === SpectralLineHeaders.RestFrequencyErr || key === SpectralLineHeaders.MeasuredFrequencyErr) {
                     entry = entry?.match(/\((.*?)\)/)?.[1] ?? ""; // match the string between the first "(" and ")"
