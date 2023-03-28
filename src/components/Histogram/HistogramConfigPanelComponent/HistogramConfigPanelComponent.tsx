@@ -55,6 +55,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto pixel bounds"}>
                     <Switch
+                        checked={widgetStore.isAutoBounds}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             widgetStore.setAutoBounds(e.checked);
@@ -76,6 +77,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                 <Divider />
                 <FormGroup inline={true} label={"Auto bins"}>
                     <Switch
+                        checked={widgetStore.isAutoBins}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             widgetStore.setAutoBins(e.checked);

@@ -180,6 +180,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return !(!this.curAutoBins && this.curNumBins <= 0);
     }
 
+    private static areEqual(num1: number, num2: number) {
+        return Math.abs(num1 - num2) < 1e-6;
+    }
+
     public static CalculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetHistogramRequirements>>();
 
@@ -221,10 +225,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                         config.coordinate === coordinate &&
                         config.fixedNumBins === fixedNumBins &&
                         config.numBins === numBins &&
-                        Number(config.binWidth) === Number(binWidth) &&
+                        this.areEqual(config.binWidth, binWidth) &&
                         config.fixedBounds === fixedBounds &&
-                        Number(config.bounds.min) === Number(minPix) &&
-                        Number(config.bounds.max) === Number(maxPix)
+                        this.areEqual(config.bounds.min, minPix) &&
+                        this.areEqual(config.bounds.max, maxPix)
                 );
 
                 if (!histogramConfig) {
@@ -293,8 +297,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                         if (configCount === 0) {
                             return;
                         }
-                        const sortedUpdatedConfigs = updatedRegionRequirements.histograms.sort((a, b) => (a.coordinate > b.coordinate ? 1 : -1));
-                        const sortedConfigs = regionRequirements.histograms.sort((a, b) => (a.coordinate > b.coordinate ? 1 : -1));
+                        const sortedUpdatedConfigs = updatedRegionRequirements.histograms;
+                        const sortedConfigs = regionRequirements.histograms;
 
                         for (let i = 0; i < updatedConfigCount; i++) {
                             const updatedConfig = sortedUpdatedConfigs[i];
@@ -302,10 +306,12 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                             if (
                                 updatedConfig.coordinate !== config.coordinate ||
                                 updatedConfig.channel !== config.channel ||
+                                updatedConfig.fixedNumBins !== config.fixedNumBins ||
+                                updatedConfig.numBins !== config.numBins ||
+                                !this.areEqual(updatedConfig.binWidth, config.binWidth) ||
                                 updatedConfig.fixedBounds !== config.fixedBounds ||
-                                updatedConfig.bounds.min !== config.bounds.min ||
-                                updatedConfig.bounds.max !== config.bounds.max ||
-                                updatedConfig.numBins !== config.numBins
+                                !this.areEqual(updatedConfig.bounds.min, config.bounds.min) ||
+                                !this.areEqual(updatedConfig.bounds.max, config.bounds.max)
                             ) {
                                 diffList.push(updatedRegionRequirements);
                                 return;
@@ -338,10 +344,12 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.curNumBins = 1000;
 
         // Initialize config settings in the protobuf message
+        this.fixedNumBins = false;
+        this.numBins = -1;
+        this.binWidth = 0;
         this.fixedBounds = false;
         this.minPix = 0;
         this.maxPix = 0;
-        this.numBins = -1;
     }
 
     // settings
