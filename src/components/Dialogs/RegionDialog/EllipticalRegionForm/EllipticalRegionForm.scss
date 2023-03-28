@@ -1,16 +1,24 @@
 .elliptical-region-form {
     user-select: none;
 
-    .form-contents {
-        .bp3-numeric-input {
-            width: 125px;
+    .bp3-form-group:first-child .bp3-input {
+        width: 255px;
+    }
 
-            .bp3-input-group {
-                width: 100%;
-            }
+    .bp3-form-content {
+        display: flex;
+        flex-wrap: wrap;
+        flex: 1;
+        gap: 0 5px;
+
+        .bp3-input {
+            width: 125px;
         }
 
         .info-string {
+            display: flex;
+            align-items: center;
+            flex: 1 1 auto;
             margin-left: 5px;
             font-size: x-small;
             font-family: monospace;

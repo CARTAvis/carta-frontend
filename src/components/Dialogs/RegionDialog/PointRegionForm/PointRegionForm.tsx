@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, InputGroup, Position} from "@blueprintjs/core";
+import {FormGroup, InputGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
@@ -149,35 +149,20 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
             );
         }
         const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
-        const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
+        const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
             <div className="form-section point-region-form">
-                <div className="form-contents">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
-                                <td colSpan={2}>
-                                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Coordinate</td>
-                                <td colSpan={2}>
-                                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Center {pxUnitSpan}</td>
-                                <td>{xInput}</td>
-                                <td>{yInput}</td>
-                                <td>
-                                    <span className="info-string">{infoString}</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <FormGroup label={region.isAnnotation ? "Annotation Name" : "Region Name"} inline={true}>
+                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
+                </FormGroup>
+                <FormGroup label="Coordinate" inline={true}>
+                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                </FormGroup>
+                <FormGroup label="Center" labelInfo={pxUnit} inline={true}>
+                    {xInput}
+                    {yInput}
+                    <span className="info-string">{infoString}</span>
+                </FormGroup>
             </div>
         );
     }

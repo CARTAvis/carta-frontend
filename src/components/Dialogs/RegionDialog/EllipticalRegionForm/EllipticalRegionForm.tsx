@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, InputGroup} from "@blueprintjs/core";
+import {FormGroup, InputGroup} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {computed} from "mobx";
@@ -198,51 +198,28 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
             />
         );
         const sizeInfoString = region.coordinate === CoordinateMode.Image ? `(Semi-major, Semi-minor): ${WCSPoint2D.ToString(sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
-        const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
+        const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
             <div className="form-section elliptical-region-form">
-                <div className="form-contents">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
-                                <td colSpan={2}>
-                                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Coordinate</td>
-                                <td colSpan={2}>
-                                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Center {pxUnitSpan}</td>
-                                <td>{xInput}</td>
-                                <td>{yInput}</td>
-                                <td>
-                                    <span className="info-string">{infoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Semi-axes {pxUnitSpan}</td>
-                                <td>{sizeWidthInput}</td>
-                                <td>{sizeHeightInput}</td>
-                                <td>
-                                    <span className="info-string">{sizeInfoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
-                                </td>
-                                <td>
-                                    <ImageCoordNumericInput value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <FormGroup label={region.isAnnotation ? "Annotation Name" : "Region Name"} inline={true}>
+                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
+                </FormGroup>
+                <FormGroup label="Coordinate" inline={true}>
+                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                </FormGroup>
+                <FormGroup label="Center" labelInfo={pxUnit} inline={true}>
+                    {xInput}
+                    {yInput}
+                    <span className="info-string">{infoString}</span>
+                </FormGroup>
+                <FormGroup label="Semi-axes" labelInfo={pxUnit} inline={true}>
+                    {sizeWidthInput}
+                    {sizeHeightInput}
+                    <span className="info-string">{sizeInfoString}</span>
+                </FormGroup>
+                <FormGroup label="P.A." labelInfo="(deg)" inline={true}>
+                    <ImageCoordNumericInput value={region.rotation} onChange={this.handleRotationChange} disabled={!this.props.frame?.hasSquarePixels} customPlaceholder="P.A." />
+                </FormGroup>
             </div>
         );
     }

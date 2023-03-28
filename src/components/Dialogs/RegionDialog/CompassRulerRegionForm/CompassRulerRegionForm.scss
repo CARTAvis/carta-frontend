@@ -1,43 +1,28 @@
 .compass-ruler-annotation-form {
     user-select: none;
 
-    .form-contents {
-        td {
-            white-space: nowrap;
-        }
-        .bp3-numeric-input {
-            width: 125px;
+    .bp3-form-group:first-child .bp3-input {
+        width: 255px;
+    }
 
-            .bp3-input-group {
-                width: 100%;
-            }
+    .bp3-form-content {
+        display: flex;
+        flex-wrap: wrap;
+        flex: 1;
+        gap: 0 5px;
+
+        .bp3-input {
+            width: 125px;
         }
 
         .info-string {
+            display: flex;
+            align-items: center;
+            flex: 1 1 auto;
+            margin-left: 5px;
             font-size: x-small;
             font-family: monospace;
             user-select: text;
-            white-space: nowrap;
-        }
-
-        .compass-ruler-annotation-table-input {
-            .bp3-form-group {
-                margin-bottom: 0;
-            }
-        }
-
-        .compass-label-offset-row {
-            .bp3-input {
-                width: 125px;
-                margin: 0;
-            }
-            .bp3-numeric-input {
-                width: 100px;
-                margin-right: 30px;
-            }
-            .bp3-form-group {
-                margin: 0 0 5px;
-            }
         }
     }
 }

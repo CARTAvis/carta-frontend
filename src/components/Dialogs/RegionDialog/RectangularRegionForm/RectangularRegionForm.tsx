@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, HTMLSelect, InputGroup, Position} from "@blueprintjs/core";
+import {FormGroup, InputGroup, Position, TextArea} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
@@ -434,21 +434,6 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         ev.currentTarget.value = existingValue;
     };
 
-    private textAnnotationPositionSelect = () => {
-        return (
-            <tr>
-                <td>Text Alignment</td>
-                <td colSpan={2}>
-                    <HTMLSelect
-                        options={Object.keys(CARTA.TextAnnotationPosition)}
-                        value={CARTA.TextAnnotationPosition[(this.props.region as TextAnnotationStore).position]}
-                        onChange={ev => (this.props.region as TextAnnotationStore).setPosition(CARTA.TextAnnotationPosition[ev.target.value])}
-                    />
-                </td>
-            </tr>
-        );
-    };
-
     public render() {
         // dummy variables related to wcs to trigger re-render
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -609,87 +594,51 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
             );
         }
         const sizeInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
-
-        const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
+        const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
             <div className="form-section rectangular-region-form">
-                <div className="form-contents">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
-                                <td colSpan={2}>
-                                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
-                                </td>
-                            </tr>
-                            {region.regionType === CARTA.RegionType.ANNTEXT && (
-                                <>
-                                    <tr>
-                                        <td>Text</td>
-                                        <td colSpan={2}>
-                                            <InputGroup placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} />
-                                        </td>
-                                    </tr>
-                                    {this.textAnnotationPositionSelect()}
-                                </>
-                            )}
-                            <tr>
-                                <td>Coordinate</td>
-                                <td colSpan={2}>
-                                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Center {pxUnitSpan}</td>
-                                <td>{centerInputX}</td>
-                                <td>{centerInputY}</td>
-                                <td>
-                                    <span className="info-string">{centerInfoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Size {pxUnitSpan}</td>
-                                <td>{sizeWidthInput}</td>
-                                <td>{sizeHeightInput}</td>
-                                <td>
-                                    <span className="info-string">{sizeInfoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Bottom-left {pxUnitSpan}</td>
-                                <td>{bottomLeftInputX}</td>
-                                <td>{bottomLeftInputY}</td>
-                                <td>
-                                    <span className="info-string">{bottomLeftInfoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Top-right {pxUnitSpan}</td>
-                                <td>{topRightInputX}</td>
-                                <td>{topRightInputY}</td>
-                                <td>
-                                    <span className="info-string">{topRightInfoString}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    P.A. <span className={Classes.TEXT_MUTED}>(deg)</span>
-                                </td>
-                                <td>
-                                    <SafeNumericInput
-                                        disabled={!this.props.frame?.hasSquarePixels}
-                                        selectAllOnFocus={true}
-                                        buttonPosition="none"
-                                        placeholder="P.A."
-                                        value={region.rotation}
-                                        onBlur={this.handleRotationChange}
-                                        onKeyDown={this.handleRotationChange}
-                                    />
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <FormGroup label={region.isAnnotation ? "Annotation Name" : "Region Name"} inline={true}>
+                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
+                </FormGroup>
+                {region.regionType === CARTA.RegionType.ANNTEXT && (
+                    <FormGroup className="ann-text-input" label="Text" inline={true}>
+                        <TextArea placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} />
+                    </FormGroup>
+                )}
+                <FormGroup label="Coordinate" inline={true}>
+                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                </FormGroup>
+                <FormGroup label="Center" labelInfo={pxUnit} inline={true}>
+                    {centerInputX}
+                    {centerInputY}
+                    <span className="info-string">{centerInfoString}</span>
+                </FormGroup>
+                <FormGroup label="Size" labelInfo={pxUnit} inline={true}>
+                    {sizeWidthInput}
+                    {sizeHeightInput}
+                    <span className="info-string">{sizeInfoString}</span>
+                </FormGroup>
+                <FormGroup label="Bottom-left" labelInfo={pxUnit} inline={true}>
+                    {bottomLeftInputX}
+                    {bottomLeftInputY}
+                    <span className="info-string">{bottomLeftInfoString}</span>
+                </FormGroup>
+                <FormGroup label="Top-right" labelInfo={pxUnit} inline={true}>
+                    {topRightInputX}
+                    {topRightInputY}
+                    <span className="info-string">{topRightInfoString}</span>
+                </FormGroup>
+                <FormGroup label="P.A." labelInfo="(deg)" inline={true}>
+                    <SafeNumericInput
+                        disabled={!this.props.frame?.hasSquarePixels}
+                        selectAllOnFocus={true}
+                        buttonPosition="none"
+                        placeholder="P.A."
+                        value={region.rotation}
+                        onBlur={this.handleRotationChange}
+                        onKeyDown={this.handleRotationChange}
+                    />
+                </FormGroup>
             </div>
         );
     }
