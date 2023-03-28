@@ -116,19 +116,11 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <>
-                        <FormGroup className="compass-label-offset-row" label="North Label" inline={true}>
-                            <InputGroup
-                                placeholder="Enter north label"
-                                value={(region as CompassAnnotationStore).northLabel}
-                                onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)}
-                            />
+                        <FormGroup label="North Label" inline={true}>
+                            <InputGroup placeholder="Enter north label" value={(region as CompassAnnotationStore).northLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)} />
                         </FormGroup>
-                        <FormGroup className="compass-label-offset-row" label="East Label" inline={true}>
-                            <InputGroup
-                                placeholder="Enter east label"
-                                value={(region as CompassAnnotationStore).eastLabel}
-                                onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)}
-                            />
+                        <FormGroup label="East Label" inline={true}>
+                            <InputGroup placeholder="Enter east label" value={(region as CompassAnnotationStore).eastLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)} />
                         </FormGroup>
                     </>
                 )}
@@ -137,33 +129,18 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <FormGroup label="Length" labelInfo="(px)" inline={true}>
-                        <SafeNumericInput
-                            selectAllOnFocus
-                            buttonPosition="none"
-                            value={(region as CompassAnnotationStore).length}
-                            onBlur={event => (region as CompassAnnotationStore).setLength(Number(event.target.value))}
-                        />
+                        <SafeNumericInput selectAllOnFocus buttonPosition="none" value={(region as CompassAnnotationStore).length} onBlur={event => (region as CompassAnnotationStore).setLength(Number(event.target.value))} />
                     </FormGroup>
                 )}
                 <FormGroup label={region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Start"} labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
                     {region.coordinate === CoordinateMode.World && wcsInfo ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, false) : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, true)}
-                    {wcsInfo ? (
-                        <span className="info-string">
-                            {region.coordinate === CoordinateMode.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}
-                        </span>
-                    ) : (
-                        ""
-                    )}
+                    {wcsInfo ? <span className="info-string">{region.coordinate === CoordinateMode.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNRULER && (
                     <FormGroup label="Finish" labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
-                        {region.coordinate === CoordinateMode.World && wcsInfo
-                            ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, false)
-                            : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, true)}
+                        {region.coordinate === CoordinateMode.World && wcsInfo ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, false) : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, true)}
                         {wcsInfo ? (
-                            <span className="info-string">
-                                {region.coordinate === CoordinateMode.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}
-                            </span>
+                            <span className="info-string">{region.coordinate === CoordinateMode.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span>
                         ) : (
                             ""
                         )}

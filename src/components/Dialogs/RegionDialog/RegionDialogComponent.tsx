@@ -2,7 +2,7 @@ import * as React from "react";
 import {AnchorButton, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Switch, Tab, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
-import { action, makeObservable, observable } from "mobx";
+import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -38,7 +38,7 @@ export class RegionDialogComponent extends React.Component {
         super(props);
         makeObservable(this);
     }
-    
+
     private static readonly MissingRegionNode = (<NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"} />);
     private static readonly InvalidRegionNode = (<NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"} />);
 
@@ -128,42 +128,28 @@ export class RegionDialogComponent extends React.Component {
                             )}
                         </AppearanceForm>
                     );
-                    configurationPanel = (
-                        <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
-                    );
+                    configurationPanel = <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ANNRECTANGLE:
                 case CARTA.RegionType.ANNTEXT:
-                    stylingPanel = (
-                        <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
-                    );
-                    configurationPanel = (
-                        <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
-                    );
+                    stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
+                    configurationPanel = <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
-                    stylingPanel = (
-                        <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
-                    );
-                    configurationPanel = (
-                        <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
-                    );
+                    stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
+                    configurationPanel = <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.POLYGON:
                 case CARTA.RegionType.POLYLINE:
                 case CARTA.RegionType.ANNPOLYGON:
                 case CARTA.RegionType.ANNPOLYLINE:
-                    stylingPanel = (
-                        <AppearanceForm region={region} darkTheme={appStore.darkTheme} />
-                    );
-                    configurationPanel = (
-                        <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
-                    );
+                    stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
+                    configurationPanel = <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.LINE:
@@ -171,35 +157,33 @@ export class RegionDialogComponent extends React.Component {
                 case CARTA.RegionType.ANNVECTOR:
                     stylingPanel = (
                         <AppearanceForm region={region} darkTheme={appStore.darkTheme}>
-                                {region.regionType === CARTA.RegionType.ANNVECTOR && (
-                                    <div className="form-contents">
-                                        <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
-                                            <SafeNumericInput
-                                                placeholder="Length"
-                                                min={0}
-                                                max={RegionStore.MAX_DASH_LENGTH}
-                                                value={(region as VectorAnnotationStore).pointerLength}
-                                                stepSize={1}
-                                                onValueChange={value => (region as VectorAnnotationStore).setPointerLength(value)}
-                                            />
-                                        </FormGroup>
-                                        <FormGroup inline={true} label="Arrow Tip Width" labelInfo="(px)">
-                                            <SafeNumericInput
-                                                placeholder="Width"
-                                                min={0}
-                                                max={RegionStore.MAX_DASH_LENGTH}
-                                                value={(region as VectorAnnotationStore).pointerWidth}
-                                                stepSize={1}
-                                                onValueChange={value => (region as VectorAnnotationStore).setPointerWidth(value)}
-                                            />
-                                        </FormGroup>
-                                    </div>
-                                )}
-                            </AppearanceForm>
+                            {region.regionType === CARTA.RegionType.ANNVECTOR && (
+                                <div className="form-contents">
+                                    <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
+                                        <SafeNumericInput
+                                            placeholder="Length"
+                                            min={0}
+                                            max={RegionStore.MAX_DASH_LENGTH}
+                                            value={(region as VectorAnnotationStore).pointerLength}
+                                            stepSize={1}
+                                            onValueChange={value => (region as VectorAnnotationStore).setPointerLength(value)}
+                                        />
+                                    </FormGroup>
+                                    <FormGroup inline={true} label="Arrow Tip Width" labelInfo="(px)">
+                                        <SafeNumericInput
+                                            placeholder="Width"
+                                            min={0}
+                                            max={RegionStore.MAX_DASH_LENGTH}
+                                            value={(region as VectorAnnotationStore).pointerWidth}
+                                            stepSize={1}
+                                            onValueChange={value => (region as VectorAnnotationStore).setPointerWidth(value)}
+                                        />
+                                    </FormGroup>
+                                </div>
+                            )}
+                        </AppearanceForm>
                     );
-                    configurationPanel = (
-                        <LineRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
-                    );
+                    configurationPanel = <LineRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
@@ -283,9 +267,7 @@ export class RegionDialogComponent extends React.Component {
                             )}
                         </AppearanceForm>
                     );
-                    configurationPanel = (
-                        <CompassRulerRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />
-                    );
+                    configurationPanel = <CompassRulerRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 default:
