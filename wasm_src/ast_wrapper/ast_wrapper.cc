@@ -203,7 +203,6 @@ void plotDistText(AstFrameSet* wcsinfo, AstPlot* plot, double* start, double* fi
     double middle[2];
     astOffset(plot, start, finish, dist / 2, middle);
     float up[] = {0.0f, 1.0f}; // horizontal text
-
     string distString;
     const char* unit = astGetC(wcsinfo, "Unit(1)");
     if (strstr(unit, "degree") != nullptr || strstr(unit, "hh:mm:s") != nullptr)
@@ -412,6 +411,105 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     }
 
     astTran2(wcsinfo, npoint, xin, yin, forward, xout, yout);
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
+//xin and yin needs to be transformed
+EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[], double yin[], double out[])
+{
+    if (!wcsinfo)
+    {
+        cout << "not wcsinfo" << endl;
+        return 1;
+    }
+
+    double start[] = {xin[0], yin[0]};
+    double finish[] = {xin[1], yin[1]};
+
+    double dist = astDistance(wcsinfo, start, finish);
+    double discreteDist = dist/npoint;
+    double output[2];
+
+    double* xout = new double[npoint];
+    double* yout = new double[npoint];
+    double* xOut = new double[npoint];
+    double* yOut = new double[npoint];
+    
+    for(int i = 0; i < npoint; i++) {
+        double distance = discreteDist * i;
+        astOffset(wcsinfo, start, finish, distance, output);
+        xout[i] = output[0];
+        yout[i] = output[1];
+    }
+
+    astTran2(wcsinfo, npoint, xout, yout, 0, xOut, yOut);
+
+    for(int i = 0; i < npoint; i++) {
+         out[i * 2] = xOut[i];
+         out[i * 2 + 1] = yOut[i];
+    }
+
+    delete[] xout;
+    delete[] yout;
+    delete[] xOut;
+    delete[] yOut;
+
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
+//point list along the direction of axis
+EMSCRIPTEN_KEEPALIVE int axPointList(AstFrameSet* wcsinfo, int npoint, int axis, double x, double y, double dist, double out[])
+{
+    if (!wcsinfo)
+    {
+        cout << "not wcsinfo" << endl;
+        return 1;
+    }
+
+    double discreteDist = dist/npoint;
+
+    double output;
+    double* xout = new double[npoint];
+    double* yout = new double[npoint];
+    double* xOut = new double[npoint];
+    double* yOut = new double[npoint];
+
+    for(int i = 0; i < npoint; i++) {
+        double distance = discreteDist * i;
+
+        if(axis == 1) {
+            output = astAxOffset(wcsinfo, axis, x, distance);
+            xout[i] = output;
+            yout[i] = y;
+        } else if (axis == 2) {
+            output = astAxOffset(wcsinfo, axis, y, distance);
+            xout[i] = x;
+            yout[i] = output;
+        }
+    }
+
+    astTran2(wcsinfo, npoint, xout, yout, 0, xOut, yOut);
+
+    for(int i = 0; i < npoint; i++) {
+         out[i * 2] = xOut[i];
+         out[i * 2 + 1] = yOut[i];
+    }
+
+    delete[] xout;
+    delete[] yout;
+    delete[] xOut;
+    delete[] yOut;
+
     if (!astOK)
     {
         astClearStatus;

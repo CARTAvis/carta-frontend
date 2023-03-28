@@ -394,7 +394,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
-        if (!region || region.controlPoints.length !== 2 || region.regionType !== CARTA.RegionType.LINE) {
+        if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.LINE && region.regionType !== CARTA.RegionType.ANNLINE && region.regionType !== CARTA.RegionType.ANNVECTOR)) {
             return null;
         }
 
@@ -537,9 +537,9 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                     <table>
                         <tbody>
                             <tr>
-                                <td>Region name</td>
+                                <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
                                 <td colSpan={2}>
-                                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
+                                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                                 </td>
                             </tr>
                             <tr>

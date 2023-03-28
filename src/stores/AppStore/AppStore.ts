@@ -37,7 +37,7 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from "stores";
-import {CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, RegionStore} from "stores/Frame";
+import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
 import {clamp, distinct, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
 
@@ -971,7 +971,17 @@ export class AppStore {
         for (let i = startIndex; i < batchEnd; i++) {
             const [regionIdString, regionInfo] = regions[i];
             const styleInfo = regionStyleMap.get(regionIdString);
-            frame.regionSet.addExistingRegion(regionInfo.controlPoints as Point2D[], regionInfo.rotation, regionInfo.regionType, parseInt(regionIdString), styleInfo?.name, styleInfo?.color, styleInfo?.lineWidth, styleInfo?.dashList);
+            frame.regionSet.addExistingRegion(
+                regionInfo.controlPoints as Point2D[],
+                regionInfo.rotation,
+                regionInfo.regionType,
+                parseInt(regionIdString),
+                styleInfo?.name,
+                styleInfo?.color,
+                styleInfo?.lineWidth,
+                styleInfo?.dashList,
+                styleInfo?.annotationStyle
+            );
         }
         this.fileBrowserStore.updateLoadingState(batchEnd / regions.length, batchEnd, regions.length);
     };
@@ -985,11 +995,31 @@ export class AppStore {
 
         const regionStyles = new Map<number, CARTA.IRegionStyle>();
         for (const region of exportRegions.map(value => frame.regionSet.regions[value])) {
+            let annotationStyle: CARTA.IAnnotationStyle = {};
+
+            switch (region.regionType) {
+                case CARTA.RegionType.ANNPOINT:
+                    annotationStyle = (region as PointAnnotationStore).getAnnotationStylesForExport();
+                    break;
+                case CARTA.RegionType.ANNTEXT:
+                    annotationStyle = (region as TextAnnotationStore).getAnnotationStylesForExport();
+                    break;
+                case CARTA.RegionType.ANNCOMPASS:
+                    annotationStyle = (region as CompassAnnotationStore).getAnnotationStylesForExport();
+                    break;
+                case CARTA.RegionType.ANNRULER:
+                    annotationStyle = (region as RulerAnnotationStore).getAnnotationStylesForExport();
+                    break;
+                default:
+                    break;
+            }
+
             regionStyles.set(region.regionId, {
                 name: region.name,
                 color: region.color,
                 lineWidth: region.lineWidth,
-                dashList: region.dashLength ? [region.dashLength] : []
+                dashList: region.dashLength ? [region.dashLength] : [],
+                annotationStyle
             });
         }
 
@@ -1130,7 +1160,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.requestFitting(message);
             if (ack.success) {
-                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, message.fixedParams, ack.resultValues, ack.resultErrors, ack.log);
+                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, message.fixedParams, ack.resultValues, ack.resultErrors, ack.offsetValue, ack.offsetError, ack.log);
                 if (ack.modelImage) {
                     if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, "", true)) {
                         this.fileCounter++;

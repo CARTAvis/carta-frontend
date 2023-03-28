@@ -25,6 +25,12 @@ export enum FileFilteringType {
     Regex = "regex"
 }
 
+export enum SelectionMode {
+    All,
+    Annotation,
+    Region
+}
+
 export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.DS9_REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 export type CatalogFileType = CARTA.CatalogFileType.VOTable | CARTA.CatalogFileType.FITSTable;
@@ -95,7 +101,7 @@ export class FileBrowserStore {
                 this.setSaveFileType(activeFrame.frameInfo?.fileInfo.type === CARTA.FileType.CASA ? CARTA.FileType.CASA : CARTA.FileType.FITS);
 
                 // update regions
-                this.resetExportRegionIndexes();
+                this.resetExportRegionIndexes(SelectionMode.All);
 
                 // update rest freq
                 this.setSaveRestFreq(Object.assign({}, activeFrame.restFreqStore.customRestFreq));
@@ -412,17 +418,39 @@ export class FileBrowserStore {
         this.exportFileType = fileType;
     };
 
-    @action resetExportRegionIndexes = () => {
+    @action resetExportRegionIndexes = (mode: SelectionMode) => {
         if (AppStore.Instance.activeFrame?.regionSet?.regions) {
+            const regions = AppStore.Instance.activeFrame.regionSet.regions;
             // include all region indexes except cursor region
-            this.exportRegionIndexes = Array.from(AppStore.Instance.activeFrame.regionSet.regions.keys()).slice(1);
+            switch (mode) {
+                case SelectionMode.All:
+                    this.exportRegionIndexes = Array.from(regions.keys()).slice(1);
+                    break;
+                case SelectionMode.Annotation:
+                    this.exportRegionIndexes = Array.from(regions.flatMap((region, index) => (region.isAnnotation ? index : [])));
+                    break;
+                case SelectionMode.Region:
+                    this.exportRegionIndexes = Array.from(regions.flatMap((region, index) => (!region.isAnnotation ? index : []))).slice(1);
+                    break;
+            }
         } else {
             this.exportRegionIndexes = [];
         }
     };
 
-    @action clearExportRegionIndexes = () => {
-        this.exportRegionIndexes = [];
+    @action clearExportRegionIndexes = (mode: SelectionMode) => {
+        const regions = AppStore.Instance.activeFrame.regionSet.regions;
+        switch (mode) {
+            case SelectionMode.All:
+                this.exportRegionIndexes = [];
+                break;
+            case SelectionMode.Region:
+                this.exportRegionIndexes = this.exportRegionIndexes?.filter(exportIndex => regions[exportIndex].isAnnotation);
+                break;
+            case SelectionMode.Annotation:
+                this.exportRegionIndexes = this.exportRegionIndexes?.filter(exportIndex => !regions[exportIndex].isAnnotation);
+                break;
+        }
     };
 
     @action addExportRegionIndex = (regionIndex: number) => {
@@ -501,14 +529,14 @@ export class FileBrowserStore {
     @action showExportRegions = (regionId?: number) => {
         this.showFileBrowser(BrowserMode.RegionExport, false);
         if (regionId) {
-            this.clearExportRegionIndexes();
+            this.clearExportRegionIndexes(SelectionMode.All);
             const frame = AppStore.Instance.activeFrame;
             if (frame?.regionSet?.regions) {
                 const regionIndex = frame.regionSet.regions.findIndex(region => region.regionId === regionId);
                 this.addExportRegionIndex(regionIndex);
             }
         } else {
-            this.resetExportRegionIndexes();
+            this.resetExportRegionIndexes(SelectionMode.All);
         }
     };
 
@@ -678,7 +706,8 @@ export class FileBrowserStore {
                         label: region.nameString,
                         active: region.regionId === activeRegionId,
                         icon: RegionStore.RegionIconString(region.regionType),
-                        isCustomIcon: RegionStore.IsRegionCustomIcon(region.regionType)
+                        isCustomIcon: RegionStore.IsRegionCustomIcon(region.regionType),
+                        isAnnotation: region.isAnnotation
                     });
                 }
             });
@@ -690,7 +719,23 @@ export class FileBrowserStore {
         return this.exportRegionOptions?.length;
     }
 
+    @computed get annotationOptionNum(): number {
+        return this.exportRegionOptions?.reduce((a, option) => a + (option.isAnnotation ? 1 : 0), 0);
+    }
+
+    @computed get includesAnnotation(): boolean {
+        return this.exportRegionOptions?.some(option => option.isAnnotation);
+    }
+
+    @computed get includesRegion(): boolean {
+        return this.exportRegionOptions?.some(option => !option.isAnnotation);
+    }
+
     @computed get exportRegionNum(): number {
         return this.exportRegionIndexes?.length;
+    }
+
+    @computed get exportAnnotationNum(): number {
+        return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame.regionSet.regions[exportIndex].isAnnotation ? 1 : 0), 0);
     }
 }

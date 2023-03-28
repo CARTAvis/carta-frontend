@@ -141,7 +141,7 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
         /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const region = this.props.region;
-        if (!region || region.controlPoints.length !== 2 || region.regionType !== CARTA.RegionType.ELLIPSE) {
+        if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.ELLIPSE && region.regionType !== CARTA.RegionType.ANNELLIPSE)) {
             return null;
         }
 
@@ -206,9 +206,9 @@ export class EllipticalRegionForm extends React.Component<{region: RegionStore; 
                     <table>
                         <tbody>
                             <tr>
-                                <td>Region name</td>
+                                <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
                                 <td colSpan={2}>
-                                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
+                                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                                 </td>
                             </tr>
                             <tr>

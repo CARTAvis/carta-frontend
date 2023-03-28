@@ -13,4 +13,5 @@ export interface LineOption extends OptionProps {
     active?: boolean;
     icon?: IconName | CustomIconName;
     isCustomIcon?: boolean;
+    isAnnotation?: boolean;
 }

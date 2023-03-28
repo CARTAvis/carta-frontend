@@ -1,11 +1,12 @@
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable, reaction} from "mobx";
 
-import {AngularSize, AngularSizeUnit, Point2D} from "models";
+import {AppToaster, SuccessToast} from "components/Shared";
+import {AngularSize, AngularSizeUnit, Point2D, WCSPoint2D} from "models";
 import {AppStore, NumberFormatType} from "stores";
-import {FrameStore, RegionStore} from "stores/Frame";
+import {FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {ACTIVE_FILE_ID} from "stores/Widgets";
-import {angle2D, getFormattedWCSPoint, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
+import {angle2D, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, pointDistance, rotate2D, scale2D, subtract2D, toExponential} from "utilities";
 
 const FOV_REGION_ID = 0;
 const IMAGE_REGION_ID = -1;
@@ -21,8 +22,12 @@ export class ImageFittingStore {
     }
 
     @observable selectedFileId: number = ACTIVE_FILE_ID;
+    @observable selectedRegionId: number = FOV_REGION_ID;
     @observable components: ImageFittingIndividualStore[];
     @observable selectedComponentIndex: number;
+    @observable backgroundOffset: number = 0;
+    @observable backgroundOffsetFixed: boolean = true;
+    @observable solverType: CARTA.FittingSolverType = CARTA.FittingSolverType.Cholesky;
     @observable createModelImage: boolean = true;
     @observable createResidualImage: boolean = true;
     @observable isFitting: boolean = false;
@@ -31,6 +36,10 @@ export class ImageFittingStore {
 
     @action setSelectedFileId = (id: number) => {
         this.selectedFileId = id;
+    };
+
+    @action setSelectedRegionId = (id: number) => {
+        this.selectedRegionId = id;
     };
 
     @action setComponents = (num: number) => {
@@ -50,6 +59,8 @@ export class ImageFittingStore {
     @action clearComponents = () => {
         this.components = [new ImageFittingIndividualStore()];
         this.selectedComponentIndex = 0;
+        this.backgroundOffset = 0;
+        this.solverType = CARTA.FittingSolverType.Cholesky;
     };
 
     @action deleteSelectedComponent = () => {
@@ -61,6 +72,24 @@ export class ImageFittingStore {
 
     @action setSelectedComponentIndex = (index: number) => {
         this.selectedComponentIndex = index;
+    };
+
+    @action setBackgroundOffset = (offset: number) => {
+        if (isFinite(offset)) {
+            this.backgroundOffset = offset;
+        }
+    };
+
+    @action resetBackgroundOffset = () => {
+        this.backgroundOffset = 0;
+    };
+
+    @action toggleBackgroundOffsetFixed = () => {
+        this.backgroundOffsetFixed = !this.backgroundOffsetFixed;
+    };
+
+    @action setSolverType = (type: CARTA.FittingSolverType) => {
+        this.solverType = type;
     };
 
     @action toggleCreateModelImage = () => {
@@ -93,6 +122,23 @@ export class ImageFittingStore {
         return [{value: ACTIVE_FILE_ID, label: "Active"}, ...(AppStore.Instance.frameNames ?? [])];
     }
 
+    @computed get regionOptions() {
+        const closedRegions = this.effectiveFrame?.regionSet?.regions.filter(r => !r.isTemporary && r.isClosedRegion);
+        const options = closedRegions?.map(r => {
+            return {value: r.regionId, label: r.nameString};
+        });
+        return [{value: FOV_REGION_ID, label: "Field of view"}, {value: IMAGE_REGION_ID, label: "Image"}, ...(options ?? [])];
+    }
+
+    // Mcholesky is not supported because it's not available in all gsl versions
+    get solverOptions() {
+        return [
+            {value: CARTA.FittingSolverType.Qr, label: "QR"},
+            {value: CARTA.FittingSolverType.Cholesky, label: "Cholesky"},
+            {value: CARTA.FittingSolverType.Svd, label: "SVD"}
+        ];
+    }
+
     @computed get effectiveFrame(): FrameStore {
         const appStore = AppStore.Instance;
         if (appStore.activeFrame && appStore.frames?.length > 0) {
@@ -112,6 +158,15 @@ export class ImageFittingStore {
     constructor() {
         makeObservable(this);
         this.clearComponents();
+
+        reaction(
+            () => this.regionOptions,
+            options => {
+                if (options && !options.map(x => x.value)?.includes(this.selectedRegionId)) {
+                    this.setSelectedRegionId(FOV_REGION_ID);
+                }
+            }
+        );
     }
 
     fitImage = () => {
@@ -120,8 +175,8 @@ export class ImageFittingStore {
         }
         this.setIsFitting(true);
         this.setIsCancelling(false);
-        const initialValues = [];
-        const fixedParams = [];
+        const initialValues: CARTA.IGaussianComponent[] = [];
+        const fixedParams: boolean[] = [];
         for (const c of this.components) {
             initialValues.push({
                 center: c.center,
@@ -131,8 +186,14 @@ export class ImageFittingStore {
             });
             fixedParams.push(...c.fixedParams);
         }
-        const fovInfo = this.getFovInfo();
-        const regionId = fovInfo ? FOV_REGION_ID : IMAGE_REGION_ID;
+        fixedParams.push(this.backgroundOffsetFixed);
+
+        let fovInfo: CARTA.IRegionInfo | null = null;
+        let regionId = this.selectedRegionId;
+        if (regionId === FOV_REGION_ID) {
+            fovInfo = this.getFovInfo();
+            regionId = fovInfo ? FOV_REGION_ID : IMAGE_REGION_ID;
+        }
 
         const message: CARTA.IFittingRequest = {
             fileId: this.effectiveFrame.frameInfo.fileId,
@@ -141,7 +202,9 @@ export class ImageFittingStore {
             regionId,
             fovInfo,
             createModelImage: this.createModelImage,
-            createResidualImage: this.createResidualImage
+            createResidualImage: this.createResidualImage,
+            offset: this.backgroundOffset,
+            solver: this.solverType
         };
         AppStore.Instance.requestFitting(message);
     };
@@ -153,7 +216,7 @@ export class ImageFittingStore {
         }
     };
 
-    setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, fixedParams: boolean[], values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], fittingLog: string) => {
+    setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, fixedParams: boolean[], values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], offset_value: number, offset_error: number, fittingLog: string) => {
         const frame = this.effectiveFrame;
         if (!frame || !values || !errors) {
             return;
@@ -214,19 +277,24 @@ export class ImageFittingStore {
 
                 let fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
                 let fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
-                let fwhmUnit = {x: AngularSizeUnit.ARCSEC, y: AngularSizeUnit.ARCSEC};
+                let fwhmUnit = AngularSizeUnit.ARCSEC;
                 if (fwhmValueWCS && fwhmErrorWCS) {
-                    ({value: fwhmValueWCS.x, unit: fwhmUnit.x} = AngularSize.convertFromArcsec(fwhmValueWCS.x, true));
-                    fwhmErrorWCS.x = AngularSize.convertValueFromArcsec(fwhmErrorWCS.x, fwhmUnit.x);
-                    ({value: fwhmValueWCS.y, unit: fwhmUnit.y} = AngularSize.convertFromArcsec(fwhmValueWCS.y, true));
-                    fwhmErrorWCS.y = AngularSize.convertValueFromArcsec(fwhmErrorWCS.y, fwhmUnit.y);
+                    if (Math.abs(fwhmValueWCS.x) < Math.abs(fwhmValueWCS.y)) {
+                        ({value: fwhmValueWCS.x, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.x, true));
+                        fwhmValueWCS.y = AngularSize.convertValueFromArcsec(fwhmValueWCS.y, fwhmUnit);
+                    } else {
+                        ({value: fwhmValueWCS.y, unit: fwhmUnit} = AngularSize.convertFromArcsec(fwhmValueWCS.y, true));
+                        fwhmValueWCS.x = AngularSize.convertValueFromArcsec(fwhmValueWCS.x, fwhmUnit);
+                    }
+                    fwhmErrorWCS.x = AngularSize.convertValueFromArcsec(fwhmErrorWCS.x, fwhmUnit);
+                    fwhmErrorWCS.y = AngularSize.convertValueFromArcsec(fwhmErrorWCS.y, fwhmUnit);
                 }
 
                 results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerFixedX ? "" : "arcsec", centerFixedX);
                 results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerFixedY ? "" : "arcsec", centerFixedY);
                 results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit.x, fwhmFixedX);
-                results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit.y, fwhmFixedY);
+                results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
+                results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
                 results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
 
                 log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerFixedX ? "" : "arcsec", centerFixedX);
@@ -234,23 +302,46 @@ export class ImageFittingStore {
                 log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerFixedY ? "" : "arcsec", centerFixedY);
                 log += toExpFormat("               ", value.center?.y, error.center?.y, "px", centerFixedY);
                 log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
-                log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit.x, fwhmFixedX);
+                log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
                 log += toExpFormat("               ", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
-                log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit.y, fwhmFixedY);
+                log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
                 log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
                 log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
             }
-            if (i !== values.length - 1) {
-                results += "\n";
-                log += "\n";
-            }
+            results += "\n";
+            log += "\n";
         }
+
+        results += toFixFormat("Background     ", offset_value, offset_error, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
+        log += toExpFormat("Background     ", offset_value, offset_error, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
 
         frame.setFittingResult(results);
         frame.setFittingLog(log);
+        frame.setFittingResultRegionParams(this.getRegionParams(values));
     };
 
-    private getFovInfo = () => {
+    createRegions = async () => {
+        const preferenceStore = AppStore.Instance.preferenceStore;
+        const defaultColor = preferenceStore?.regionColor;
+        const defaultLineWidth = preferenceStore?.regionLineWidth;
+        const defaultDashLength = [2];
+        const params = this.effectiveFrame?.fittingResultRegionParams;
+        try {
+            await Promise.all(
+                params.map((param, index) => {
+                    const temporaryId = -1 - index;
+                    const name = `Fitting result: Component #${index + 1}`;
+                    const newRegion = this.effectiveFrame?.regionSet?.addExistingRegion(param.points.slice(), param.rotation, CARTA.RegionType.ELLIPSE, temporaryId, name, defaultColor, defaultLineWidth, defaultDashLength);
+                    return newRegion.endCreating();
+                })
+            );
+            AppToaster.show(SuccessToast("tick", `Created ${params.length} ellipse regions.`));
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    private getFovInfo = (): CARTA.IRegionInfo | null => {
         const frame = this.effectiveFrame;
         if (!frame) {
             return null;
@@ -310,13 +401,36 @@ export class ImageFittingStore {
     };
 
     private getRegionInfoLog = (regionId: number, fovInfo: CARTA.IRegionInfo): string => {
-        let log = `Region: ${regionId === FOV_REGION_ID ? "field of view" : "entire image"}\n`;
-
-        if (regionId === FOV_REGION_ID) {
-            log += RegionStore.GetRegionProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
-            log += this.effectiveFrame.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+        let log = "";
+        switch (regionId) {
+            case IMAGE_REGION_ID:
+                log += "Region: entire image\n";
+                break;
+            case FOV_REGION_ID:
+                log += "Region: field of view\n";
+                if (fovInfo) {
+                    log += RegionStore.GetRegionProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+                    log += this.effectiveFrame?.genRegionWcsProperties(fovInfo.regionType, fovInfo.controlPoints as Point2D[], fovInfo.rotation) + "\n";
+                }
+                break;
+            default:
+                const region = this.effectiveFrame?.getRegion(regionId);
+                if (region) {
+                    log += `Region: ${region.nameString}\n`;
+                    log += region.regionProperties + "\n";
+                    log += this.effectiveFrame.getRegionWcsProperties(region) + "\n";
+                }
+                break;
         }
         return log;
+    };
+
+    private getRegionParams = (values: CARTA.IGaussianComponent[]): {points: Point2D[]; rotation: number}[] => {
+        return values.map(value => {
+            const center = {x: value?.center?.x, y: value?.center?.y};
+            const size = {x: value?.fwhm?.x, y: value?.fwhm?.y};
+            return {points: [center, size], rotation: value?.pa};
+        });
     };
 }
 
@@ -330,28 +444,60 @@ export class ImageFittingIndividualStore {
     @observable fwhmFixed: {x: boolean; y: boolean};
     @observable paFixed: boolean;
 
-    @action setCenterX = (val: number) => {
-        this.center.x = val;
+    @action setCenterX = (val: number): boolean => {
+        if (isFinite(val)) {
+            this.center.x = val;
+            return true;
+        }
+        return false;
     };
 
-    @action setCenterY = (val: number) => {
-        this.center.y = val;
+    @action setCenterY = (val: number): boolean => {
+        if (isFinite(val)) {
+            this.center.y = val;
+            return true;
+        }
+        return false;
     };
 
-    @action setAmplitude = (val: number) => {
-        this.amplitude = val;
+    @action private setCenter = (center: Point2D): boolean => {
+        if (isFinite(center?.x) && isFinite(center?.y)) {
+            this.center = center;
+            return true;
+        }
+        return false;
     };
 
-    @action setFwhmX = (val: number) => {
-        this.fwhm.x = val;
+    @action setAmplitude = (val: number): boolean => {
+        if (isFinite(val)) {
+            this.amplitude = val;
+            return true;
+        }
+        return false;
     };
 
-    @action setFwhmY = (val: number) => {
-        this.fwhm.y = val;
+    @action setFwhmX = (val: number): boolean => {
+        if (isFinite(val) && val > 0) {
+            this.fwhm.x = val;
+            return true;
+        }
+        return false;
     };
 
-    @action setPa = (val: number) => {
-        this.pa = val;
+    @action setFwhmY = (val: number): boolean => {
+        if (isFinite(val) && val > 0) {
+            this.fwhm.y = val;
+            return true;
+        }
+        return false;
+    };
+
+    @action setPa = (val: number): boolean => {
+        if (isFinite(val)) {
+            this.pa = val;
+            return true;
+        }
+        return false;
     };
 
     @action toggleCenterXFixed = () => {
@@ -390,6 +536,26 @@ export class ImageFittingIndividualStore {
         this.paFixed = false;
     }
 
+    @computed get centerWcs(): WCSPoint2D {
+        // re-calculate with different wcs system
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const wcsInfo = AppStore.Instance.imageFittingStore?.effectiveFrame?.wcsInfoForTransformation;
+        if (!wcsInfo || !isFinite(this.center?.x) || !isFinite(this.center?.y)) {
+            return null;
+        }
+        return getFormattedWCSPoint(wcsInfo, this.center);
+    }
+
+    @computed get fwhmWcs(): WCSPoint2D {
+        const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
+        const wcsSize = frame?.getWcsSizeInArcsec(this.fwhm);
+        if (!wcsSize) {
+            return null;
+        }
+        return {x: formattedArcsec(wcsSize.x, WCS_PRECISION), y: formattedArcsec(wcsSize.y, WCS_PRECISION)};
+    }
+
     @computed get validParams(): boolean {
         return isFinite(this.center?.x) && isFinite(this.center?.y) && isFinite(this.amplitude) && isFinite(this.fwhm?.x) && isFinite(this.fwhm?.y) && isFinite(this.pa);
     }
@@ -401,4 +567,56 @@ export class ImageFittingIndividualStore {
     @computed get allFixed(): boolean {
         return this.fixedParams.every(p => p === true);
     }
+
+    setCenterXWcs = (val: string): boolean => {
+        if (!isWCSStringFormatValid(val, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+            return false;
+        }
+        const wcsInfo = AppStore.Instance.imageFittingStore?.effectiveFrame?.wcsInfoForTransformation;
+        if (!wcsInfo) {
+            return false;
+        }
+        // initialize center Y with the wcs coordinate of the origin (0, 0) if center Y is not set yet
+        // update center Y with the wcs coordinate of (0, center Y) if center Y is set and center X is not
+        const centerYWcs = this.centerWcs?.y ?? getFormattedWCSPoint(wcsInfo, {x: 0, y: isFinite(this.center?.y) ? this.center?.y : 0})?.y;
+        const center = getPixelValueFromWCS(wcsInfo, {x: val, y: centerYWcs});
+        if (!center) {
+            return false;
+        }
+        return this.setCenter(center);
+    };
+
+    setCenterYWcs = (val: string): boolean => {
+        if (!isWCSStringFormatValid(val, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+            return false;
+        }
+        const wcsInfo = AppStore.Instance.imageFittingStore?.effectiveFrame?.wcsInfoForTransformation;
+        if (!wcsInfo) {
+            return false;
+        }
+        // initialize center X with the wcs coordinate of origin (0, 0) if center X is not set yet
+        // update center X with the wcs coordinate of (center X, 0) if center X is set and center Y is not
+        const centerXWcs = this.centerWcs?.x ?? getFormattedWCSPoint(wcsInfo, {x: isFinite(this.center?.x) ? this.center?.x : 0, y: 0})?.x;
+        const center = getPixelValueFromWCS(wcsInfo, {x: centerXWcs, y: val});
+        if (!center) {
+            return false;
+        }
+        return this.setCenter(center);
+    };
+
+    setFwhmXWcs = (val: string): boolean => {
+        const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
+        if (val && frame) {
+            return this.setFwhmX(frame.getImageXValueFromArcsec(getValueFromArcsecString(val)));
+        }
+        return false;
+    };
+
+    setFwhmYWcs = (val: string): boolean => {
+        const frame = AppStore.Instance.imageFittingStore?.effectiveFrame;
+        if (val && frame) {
+            return this.setFwhmY(frame.getImageYValueFromArcsec(getValueFromArcsecString(val)));
+        }
+        return false;
+    };
 }

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
+import {Classes, H5, HTMLSelect, InputGroup, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {CoordinateComponent, SafeNumericInput} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
-import {CoordinateMode, FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
+import {CoordinateMode, FrameStore, RegionStore, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
 
 import "./RectangularRegionForm.scss";
@@ -434,6 +434,21 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         ev.currentTarget.value = existingValue;
     };
 
+    private textAnnotationPositionSelect = () => {
+        return (
+            <tr>
+                <td>Text Alignment</td>
+                <td colSpan={2}>
+                    <HTMLSelect
+                        options={Object.keys(CARTA.TextAnnotationPosition)}
+                        value={CARTA.TextAnnotationPosition[(this.props.region as TextAnnotationStore).position]}
+                        onChange={ev => (this.props.region as TextAnnotationStore).setPosition(CARTA.TextAnnotationPosition[ev.target.value])}
+                    />
+                </td>
+            </tr>
+        );
+    };
+
     public render() {
         // dummy variables related to wcs to trigger re-render
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -441,7 +456,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
         const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
-        if (!region || region.controlPoints.length !== 2 || region.regionType !== CARTA.RegionType.RECTANGLE) {
+        if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.RECTANGLE && region.regionType !== CARTA.RegionType.ANNRECTANGLE && region.regionType !== CARTA.RegionType.ANNTEXT)) {
             return null;
         }
 
@@ -603,11 +618,22 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <table>
                         <tbody>
                             <tr>
-                                <td>Region name</td>
+                                <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
                                 <td colSpan={2}>
-                                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange} />
+                                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                                 </td>
                             </tr>
+                            {region.regionType === CARTA.RegionType.ANNTEXT && (
+                                <>
+                                    <tr>
+                                        <td>Text</td>
+                                        <td colSpan={2}>
+                                            <InputGroup placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} />
+                                        </td>
+                                    </tr>
+                                    {this.textAnnotationPositionSelect()}
+                                </>
+                            )}
                             <tr>
                                 <td>Coordinate</td>
                                 <td colSpan={2}>

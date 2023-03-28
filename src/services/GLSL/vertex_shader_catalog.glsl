@@ -31,6 +31,7 @@ uniform vec2 uRangeOffset;
 uniform vec2 uRangeScale;
 uniform float uScaleAdjustment;
 uniform float uZoomLevel;
+uniform float uPixelRatio;
 
 // Control-map based transformation
 uniform int uControlMapEnabled;
@@ -38,7 +39,6 @@ uniform vec2 uControlMapMin;
 uniform vec2 uControlMapMax;
 uniform vec2 uControlMapSize;
 uniform float uLineThickness;
-uniform float uPixelRatio;
 
 out vec2 v_pointCoord;
 out vec3 v_colour;
@@ -146,7 +146,7 @@ void main() {
 
     vec2 offset = getOffsetFromId(gl_VertexID);
     v_pointCoord = vec2(offset.x, -offset.y) + 0.5;
-    posImageSpace += offset * point_size / (uZoomLevel * uScaleAdjustment);
+    posImageSpace += offset * point_size / (uZoomLevel * uScaleAdjustment) * vec2(1.0 / uPixelRatio, 1.0);
 
     // Scale and rotate
     vec2 pos = rotate2D(posImageSpace, uRotationAngle) * uScaleAdjustment * uRangeScale + uRangeOffset;

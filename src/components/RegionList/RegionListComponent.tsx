@@ -330,7 +330,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 if (region.size) {
                     if (frame.validWcs) {
                         sizeContent =
-                            region.regionType === CARTA.RegionType.LINE ? (
+                            region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
                                 formattedArcsec(region.wcsSize ? length2D(region.wcsSize) : undefined, WCS_PRECISION)
                             ) : (
                                 <React.Fragment>
@@ -346,10 +346,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 let tooltipContent = "";
                 switch (region.regionType) {
                     case CARTA.RegionType.ELLIPSE:
+                    case CARTA.RegionType.ANNELLIPSE:
                         tooltipContent = "Semi-major and semi-minor axes";
                         break;
                     case CARTA.RegionType.LINE:
+                    case CARTA.RegionType.ANNLINE:
+                    case CARTA.RegionType.ANNVECTOR:
+                    case CARTA.RegionType.ANNRULER:
                         tooltipContent = "Length";
+                        break;
+                    case CARTA.RegionType.ANNCOMPASS:
+                        tooltipContent = "Axes Length";
                         break;
                     default:
                         tooltipContent = "Width and height";

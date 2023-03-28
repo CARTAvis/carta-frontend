@@ -1,7 +1,7 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {AnchorButton, ButtonGroup, IconName, Menu, PopoverPosition, Position} from "@blueprintjs/core";
-import {MenuItem2, Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, ButtonGroup, IconName, Menu, MenuDivider, PopoverPosition, Position} from "@blueprintjs/core";
+import {MenuItem2, Popover2, Popover2InteractionKind, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -145,6 +145,21 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         );
         const tooltipPosition: PopoverPosition = "top";
 
+        const annotationMenu = (
+            <Menu style={{padding: 0}}>
+                {Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
+                    const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
+                    const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
+                    return <MenuItem2 icon={annotationIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
+                })}
+            </Menu>
+        );
+
+        const popoverProps = {
+            position: Position.RIGHT_BOTTOM,
+            interactionKind: Popover2InteractionKind.CLICK
+        };
+
         const regionMenu = (
             <Menu>
                 {Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text], index) => {
@@ -152,6 +167,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                     return <MenuItem2 icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
                 })}
+                <MenuDivider></MenuDivider>
+                <MenuItem2 icon={"edit"} text={"Annotations"} popoverProps={popoverProps}>
+                    {annotationMenu}
+                </MenuItem2>
             </Menu>
         );
 
@@ -266,15 +285,22 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     position={tooltipPosition}
                                     content={
                                         <span>
-                                            Create region
+                                            Create{" "}
+                                            {frame.regionSet.isNewRegionAnnotation
+                                                ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} annotation`
+                                                : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} region`}
                                             <br />
                                             <i>
-                                                <small>Click to select region type</small>
+                                                <small>Click to select region or annotation type</small>
                                             </i>
                                         </span>
                                     }
                                 >
-                                    <AnchorButton icon={regionIcon} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                                    <AnchorButton
+                                        icon={frame.regionSet.isNewRegionAnnotation ? "edit" : regionIcon}
+                                        active={appStore.activeLayer === ImageViewLayer.RegionCreating}
+                                        onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)}
+                                    />
                                 </Tooltip2>
                             </Popover2>
                         )}
@@ -283,11 +309,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 position={tooltipPosition}
                                 content={
                                     <span>
-                                        Create region
+                                        Create{" "}
+                                        {frame.regionSet.isNewRegionAnnotation
+                                            ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} annotation`
+                                            : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} region`}
                                         <br />
                                         <i>
                                             <small>
-                                                Double-click to select region type.
+                                                Double-click to select region or annotation type.
                                                 <br />
                                                 Press C to enter creation mode.
                                             </small>
@@ -295,7 +324,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     </span>
                                 }
                             >
-                                <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                                <AnchorButton icon={frame.regionSet.isNewRegionAnnotation ? "edit" : regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
                             </Tooltip2>
                         )}
                         <Tooltip2

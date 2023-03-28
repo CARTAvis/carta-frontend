@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {FormGroup, H5, IDialogProps, NonIdealState} from "@blueprintjs/core";
+import {DialogProps, FormGroup, H5, NonIdealState} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -170,7 +170,7 @@ export class DistanceMeasuringDialog extends React.Component {
         const WCSFinish = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.finish);
         const dialogStore = DialogStore.Instance;
 
-        const dialogProps: IDialogProps = {
+        const dialogProps: DialogProps = {
             icon: <CustomIcon icon="distanceMeasuring" />,
             backdropClassName: "minimal-dialog-backdrop",
             className: "distance-measurement-dialog",

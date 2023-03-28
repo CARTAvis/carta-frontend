@@ -1,0 +1,43 @@
+.compass-ruler-annotation-form {
+    user-select: none;
+
+    .form-contents {
+        td {
+            white-space: nowrap;
+        }
+        .bp4-numeric-input {
+            width: 125px;
+
+            .bp4-input-group {
+                width: 100%;
+            }
+        }
+
+        .info-string {
+            font-size: x-small;
+            font-family: monospace;
+            user-select: text;
+            white-space: nowrap;
+        }
+
+        .compass-ruler-annotation-table-input {
+            .bp4-form-group {
+                margin-bottom: 0;
+            }
+        }
+
+        .compass-label-offset-row {
+            .bp4-input {
+                width: 125px;
+                margin: 0;
+            }
+            .bp4-numeric-input {
+                width: 100px;
+                margin-right: 30px;
+            }
+            .bp4-form-group {
+                margin: 0 0 5px;
+            }
+        }
+    }
+}
