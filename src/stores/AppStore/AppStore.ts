@@ -1711,7 +1711,7 @@ export class AppStore {
         // TODO: update histograms directly if the image is not active!
 
         // Add histogram to pending histogram list
-        if (regionHistogramData.regionId === -1) {
+        if (regionHistogramData.regionId === -1 && !regionHistogramData.config.fixedNumBins && !regionHistogramData.config.fixedBounds) {
             const key = `${regionHistogramData.fileId}_${regionHistogramData.stokes}_${regionHistogramData.channel}`;
             this.pendingChannelHistograms.set(key, regionHistogramData);
         } else if (regionHistogramData.regionId === -2) {
