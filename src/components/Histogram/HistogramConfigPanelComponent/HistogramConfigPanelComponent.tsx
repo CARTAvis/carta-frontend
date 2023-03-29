@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, Divider, FormGroup, Position, Switch} from "@blueprintjs/core";
+import {Button, Divider, FormGroup, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {observer} from "mobx-react";
 
@@ -10,29 +10,47 @@ import "./HistogramConfigPanelComponent.scss";
 
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
+    private onSetAutoBounds = (autoBounds: boolean) => {
+        const widgetStore = this.props.widgetStore;
+        widgetStore.setAutoBounds(autoBounds);
+        this.updateConfigs();
+    };
+
     private onMinPixChanged = (minPix: number) => {
         const widgetStore = this.props.widgetStore;
         widgetStore.setMinPix(minPix);
+        this.updateConfigs();
     };
 
     private onMaxPixChanged = (maxPix: number) => {
         const widgetStore = this.props.widgetStore;
         widgetStore.setMaxPix(maxPix);
+        this.updateConfigs();
+    };
+
+    private onSetAutoBins = (autoBin: boolean) => {
+        const widgetStore = this.props.widgetStore;
+        widgetStore.setAutoBins(autoBin);
+        this.updateConfigs();
     };
 
     private onNumBinsChanged = (numBins: number) => {
         const widgetStore = this.props.widgetStore;
         widgetStore.setNumBins(numBins);
-    };
-
-    private handleRequestHistogram = () => {
-        const widgetStore = this.props.widgetStore;
-        widgetStore.updateConfigs();
+        this.updateConfigs();
     };
 
     private onResetConfig = () => {
         const widgetStore = this.props.widgetStore;
         widgetStore.onResetConfig();
+        this.updateConfigs();
+    };
+
+    private updateConfigs = () => {
+        const widgetStore = this.props.widgetStore;
+        if (widgetStore.isAbleToGenerate) {
+            widgetStore.updateConfigs();
+        }
     };
 
     render() {
@@ -65,7 +83,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                         checked={widgetStore.isAutoBounds}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
-                            widgetStore.setAutoBounds(e.checked);
+                            this.onSetAutoBounds(e.checked);
                         }}
                     />
                 </FormGroup>
@@ -87,7 +105,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                         checked={widgetStore.isAutoBins}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
-                            widgetStore.setAutoBins(e.checked);
+                            this.onSetAutoBins(e.checked);
                         }}
                     />
                 </FormGroup>
@@ -106,11 +124,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                         </Tooltip2>
                     </FormGroup>
                     <br />
-                    <Tooltip2 disabled={widgetStore.isAbleToGenerate} content={msg} position={Position.BOTTOM}>
-                        <AnchorButton intent="success" onClick={this.handleRequestHistogram} disabled={!widgetStore.isAbleToGenerate}>
-                            Generate
-                        </AnchorButton>
-                    </Tooltip2>
+                    {!widgetStore.isAbleToGenerate && <div className="config-generate">{msg}</div>}
                 </div>
             </React.Fragment>
         );
