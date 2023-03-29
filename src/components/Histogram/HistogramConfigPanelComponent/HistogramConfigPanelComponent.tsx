@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Divider, FormGroup, Position, Switch} from "@blueprintjs/core";
+import {AnchorButton, Button, Divider, FormGroup, Position, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {observer} from "mobx-react";
 
@@ -30,6 +30,11 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         widgetStore.updateConfigs();
     };
 
+    private onResetConfig = () => {
+        const widgetStore = this.props.widgetStore;
+        widgetStore.onResetConfig();
+    };
+
     render() {
         const widgetStore = this.props.widgetStore;
         const frame = widgetStore.effectiveFrame;
@@ -49,7 +54,9 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             </span>
         );
 
-        const msg = <span>Unable to generate moment images{hint}</span>;
+        const msg = <span>Unable to generate histogram{hint}</span>;
+
+        const buttonToolTip = <span>Reset histogram config to the same with that for current channel image.</span>;
 
         const configPanel = (
             <React.Fragment>
@@ -91,6 +98,14 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                 )}
                 <Divider />
                 <div className="config-generate">
+                    <FormGroup inline={true} className="config-generate">
+                        <Tooltip2 content={buttonToolTip}>
+                            <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} onClick={this.onResetConfig}>
+                                Reset config
+                            </Button>
+                        </Tooltip2>
+                    </FormGroup>
+                    <br />
                     <Tooltip2 disabled={widgetStore.isAbleToGenerate} content={msg} position={Position.BOTTOM}>
                         <AnchorButton intent="success" onClick={this.handleRequestHistogram} disabled={!widgetStore.isAbleToGenerate}>
                             Generate

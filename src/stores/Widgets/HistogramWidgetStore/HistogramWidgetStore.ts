@@ -143,6 +143,18 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         }
     }
 
+    @action onResetConfig = () => {
+        this.resetConfig();
+    };
+
+    resetConfig = () => {
+        this.curAutoBounds = false;
+        this.curMinPix = this.effectiveFrame.renderConfig.histogramMin;
+        this.curMaxPix = this.effectiveFrame.renderConfig.histogramMax;
+        this.curAutoBins = false;
+        this.curNumBins = this.effectiveFrame.renderConfig.histogram.numBins;
+    };
+
     updateConfigs = () => {
         if (this.curAutoBounds) {
             this.fixedBounds = false;
@@ -337,11 +349,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.coordinate = "z";
 
         // Initialize current config values
-        this.curAutoBounds = false;
-        this.curMinPix = 0;
-        this.curMaxPix = 1;
-        this.curAutoBins = false;
-        this.curNumBins = 1000;
+        this.resetConfig();
 
         // Initialize config settings in the protobuf message
         this.fixedNumBins = false;
