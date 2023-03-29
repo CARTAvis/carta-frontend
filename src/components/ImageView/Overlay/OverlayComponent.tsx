@@ -167,6 +167,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringLineWidth = frame.distanceMeasuring.lineWidth;
         const title = frame.titleCustomText;
         const ratio = AppStore.Instance.imageRatio;
+        const titleStyleString = this.props.overlaySettings.title.styleString;
+        const gridStyleString = this.props.overlaySettings.grid.styleString;
+        const borderStyleString = this.props.overlaySettings.border.styleString;
+        const ticksStyleString = this.props.overlaySettings.ticks.styleString;
+        const axesStyleString = this.props.overlaySettings.axes.styleString;
+        const numbersStyleString = this.props.overlaySettings.numbers.styleString;
+        const labelsStyleString = this.props.overlaySettings.labels.styleString;
+
         if (frame.isSwappedZ) {
             const requiredChannel = frame.requiredChannel;
         }

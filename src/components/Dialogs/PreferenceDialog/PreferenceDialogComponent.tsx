@@ -603,9 +603,9 @@ export class PreferenceDialogComponent extends React.Component {
                         darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Line Width" labelInfo="(px)">
+                <FormGroup inline={true} label="Line width" labelInfo="(px)">
                     <SafeNumericInput
-                        placeholder="Line Width"
+                        placeholder="Line width"
                         min={RegionStore.MIN_LINE_WIDTH}
                         max={RegionStore.MAX_LINE_WIDTH}
                         value={preference.annotationLineWidth}
@@ -613,9 +613,9 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
+                <FormGroup inline={true} label="Dash length" labelInfo="(px)">
                     <SafeNumericInput
-                        placeholder="Dash Length"
+                        placeholder="Dash length"
                         min={0}
                         max={RegionStore.MAX_DASH_LENGTH}
                         value={preference.annotationDashLength}
@@ -623,12 +623,12 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Point Shape">
+                <FormGroup inline={true} label="Point shape">
                     <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.pointAnnotationShape} />
                 </FormGroup>
-                <FormGroup inline={true} label="Point Size" labelInfo="(px)">
+                <FormGroup inline={true} label="Point size" labelInfo="(px)">
                     <SafeNumericInput
-                        placeholder="Point Size"
+                        placeholder="Point size"
                         min={1}
                         value={preference.pointAnnotationWidth}
                         stepSize={1}

@@ -9,7 +9,7 @@ import * as Long from "long";
 import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent, PvPreviewComponent} from "components";
+import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {CatalogInfo, CatalogType, COMPUTED_POLARIZATIONS, FileId, FrameView, ImagePanelMode, Point2D, PresetLayout, RegionId, SpectralType, Theme, TileCoordinate, ToFileListFilterMode, WCSMatchingType} from "models";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
@@ -548,7 +548,6 @@ export class AppStore {
             newFrame.renderConfig.setPreviewHistogramMax(ack.histogramBounds?.max);
             newFrame.renderConfig.setPreviewHistogramMin(ack.histogramBounds?.min);
             this.setActiveFrame(newFrame);
-            newFrame.onResizePreviewWidget(PvPreviewComponent.WIDGET_CONFIG.defaultWidth, PvPreviewComponent.WIDGET_CONFIG.defaultHeight - 25); //25 is header height
         }
 
         return newFrame;
@@ -1181,8 +1180,12 @@ export class AppStore {
             this.restartTaskProgress();
             if (!ack.cancel && ack.previewData) {
                 const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
-                pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
-                WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
+                if (pvGeneratorWidgetStore.previewFrame) {
+                    pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
+                } else {
+                    pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
+                    WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
+                }
             } else {
                 AppToaster.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
             }

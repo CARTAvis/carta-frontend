@@ -2838,14 +2838,26 @@ export class FrameStore {
     };
 
     @action updatePreviewData = (previewData: CARTA.PvPreviewData) => {
+        // Old values before updating to the new frameInfo
         const oldAspectRatio = this.aspectRatio;
+        const oldHeight = this.frameInfo.fileInfoExtended.height;
+        const oldWidth = this.frameInfo.fileInfoExtended.width;
+
         this.setRasterData(new Float32Array(previewData.imageData.buffer.slice(previewData.imageData.byteOffset, previewData.imageData.byteOffset + previewData.imageData.byteLength)));
         this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds?.max);
         this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds?.min);
         const newFrameInfo = {...this.frameInfo};
         newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
         this.setFrameInfo(newFrameInfo);
-        this.setCenter((this.center.x * oldAspectRatio) / this.aspectRatio, this.center.y, false);
+        
+        const isHeightUpdated = oldHeight !== this.frameInfo.fileInfoExtended.height;
+        const isWidthUpdated = oldWidth !== this.frameInfo.fileInfoExtended.width;
+
+        // Avoid image moving within the frame caused by changing image width or height as rasterData is updating
+        this.setZoom(this.zoomLevel * oldHeight / this.frameInfo.fileInfoExtended.height);
+        this.setCenter(isWidthUpdated ? (this.center.x * oldAspectRatio) / this.aspectRatio : this.center.x, isHeightUpdated ? this.center.y * this.aspectRatio / oldAspectRatio : this.center.y, false);
+        
+        // Update wcsInfo
         const astFrameSet = this.initPVFrame();
         if (astFrameSet) {
             this.spectralFrame = AST.getSpectralFrame(astFrameSet);

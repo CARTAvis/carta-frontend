@@ -138,13 +138,31 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     }
 
     @computed get estimatedCubeSize(): {value: number; unit: string; bitValue: number} {
-        const bytePix = Math.abs(this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.match("BITPIX")).numericValue) / 8;
-        const region = this.widgetStore.effectiveFrame?.getRegion(this.widgetStore.effectivePreviewRegionId);
-        const imageDepth = this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended.depth;
-        const fileInfoExtended = this.widgetStore?.effectiveFrame?.frameInfo.fileInfoExtended;
+        const frame = this.widgetStore?.effectiveFrame;
+
+        // Find percentage of selected channel range
+        const imageDepth = frame?.frameInfo.fileInfoExtended.depth;
+        const channelIndexMin = frame?.findChannelIndexByValue(this.widgetStore.range?.min);
+        const channelIndexMax = frame?.findChannelIndexByValue(this.widgetStore.range?.max);
+        const channelRangePercentage = (channelIndexMax - channelIndexMin) / imageDepth;
+
+        // Find byte per image pixel
+        const bytePix = Math.abs(frame?.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.match("BITPIX")).numericValue) / 8;
+
+        // Get rectangular region if exists
+        const region = frame?.getRegion(this.widgetStore.effectivePreviewRegionId);
+
+        const fileInfoExtended = frame?.frameInfo.fileInfoExtended;
+
+        // Get size of entire cube
         const imageSize = fileInfoExtended.width * fileInfoExtended.height * fileInfoExtended.depth * bytePix;
+
+        // Get size of pixels bounded by the rectangular region
         const regionBoundSize = region?.regionId === -1 ? null : region?.boundingBoxArea * bytePix * imageDepth;
-        const estimatedSize = (regionBoundSize || imageSize) / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
+
+        // Calculate estimated size using selected range of channels and rebin values
+        const estimatedSize = (regionBoundSize || imageSize) * channelRangePercentage / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
+        
         if (region?.regionType !== CARTA.RegionType.RECTANGLE && !estimatedSize) {
             return undefined;
         }
