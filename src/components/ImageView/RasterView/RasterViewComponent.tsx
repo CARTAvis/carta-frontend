@@ -174,7 +174,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         if (frame.isPreview) {
             //Preview frame is always rendered with one tile
-            this.renderTiles([{layer: 0, x: 0, y: 0} as TileCoordinate], boundedView.mip, false, 3, true);
+            this.renderTiles([{layer: 0, x: 0, y: 0} as TileCoordinate], 1, false, 3, true);
             return;
         }
         const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});

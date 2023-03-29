@@ -166,6 +166,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @action removePreviewFrame = (id: number) => {
         AppStore.Instance.removePreviewFrame(id);
+        this.previewFrame = null;
     };
 
     constructor() {

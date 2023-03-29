@@ -140,6 +140,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     @computed get estimatedCubeSize(): {value: number; unit: string; bitValue: number} {
         const frame = this.widgetStore?.effectiveFrame;
 
+        if (!frame) {
+            return {value: 0, unit: "", bitValue: 0};
+        }
+
         // Find percentage of selected channel range
         const imageDepth = frame?.frameInfo.fileInfoExtended.depth;
         const channelIndexMin = frame?.findChannelIndexByValue(this.widgetStore.range?.min);
@@ -161,8 +165,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const regionBoundSize = region?.regionId === -1 ? null : region?.boundingBoxArea * bytePix * imageDepth;
 
         // Calculate estimated size using selected range of channels and rebin values
-        const estimatedSize = (regionBoundSize || imageSize) * channelRangePercentage / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
-        
+        const estimatedSize = ((regionBoundSize || imageSize) * channelRangePercentage) / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
+
         if (region?.regionType !== CARTA.RegionType.RECTANGLE && !estimatedSize) {
             return undefined;
         }

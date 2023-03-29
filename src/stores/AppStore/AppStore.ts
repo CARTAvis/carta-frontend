@@ -820,6 +820,12 @@ export class AppStore {
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
+            this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
+                this.removePreviewFrame(previewFrameId);
+            });
+            this.widgetsStore.pvGeneratorWidgets.forEach((value, key) => {
+                this.widgetsStore.removeFloatingWidget(key);
+            });
             this.frames.forEach(frame => {
                 frame.clearContours(false);
                 const fileId = frame.frameInfo.fileId;
