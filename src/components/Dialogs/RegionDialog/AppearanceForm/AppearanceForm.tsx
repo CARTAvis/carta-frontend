@@ -123,7 +123,7 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                 )}
                 {region.regionType === CARTA.RegionType.ANNVECTOR && (
                     <>
-                        <FormGroup inline={true} label="Arrow tip length" labelInfo="(px)">
+                        <FormGroup inline={true} label="Arrowhead length" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="Length"
                                 min={0}
@@ -133,7 +133,7 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                                 onValueChange={value => (region as VectorAnnotationStore).setPointerLength(value)}
                             />
                         </FormGroup>
-                        <FormGroup inline={true} label="Arrow tip width" labelInfo="(px)">
+                        <FormGroup inline={true} label="Arrowhead width" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="Width"
                                 min={0}
@@ -199,7 +199,7 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                                 <option value={"both"}>Both</option>
                             </HTMLSelect>
                         </FormGroup>
-                        <FormGroup inline={true} label="Arrow tip length" labelInfo="(px)">
+                        <FormGroup inline={true} label="Arrowhead length" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="Length"
                                 min={0}
@@ -209,7 +209,7 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                                 onValueChange={value => (region as CompassAnnotationStore).setPointerLength(value)}
                             />
                         </FormGroup>
-                        <FormGroup inline={true} label="Arrow tip width" labelInfo="(px)">
+                        <FormGroup inline={true} label="Arrowhead width" labelInfo="(px)">
                             <SafeNumericInput
                                 placeholder="Width"
                                 min={0}
