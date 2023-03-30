@@ -25,7 +25,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
-        let regionOptions: OptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
+        let regionOptions: OptionProps[] = [{value: RegionId.NONE, label: "None"}];
         if (appStore.frames) {
             const selectedFrame = appStore.getFrame(this.fileId);
             if (selectedFrame?.regionSet) {

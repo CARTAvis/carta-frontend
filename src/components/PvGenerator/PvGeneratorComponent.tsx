@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, FormGroup, HTMLSelect, Position, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, HTMLSelect, Position, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
@@ -15,20 +15,10 @@ import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
 
-export enum PvGeneratorComponentTabs {
-    PV_IMAGE,
-    PREVIEW_CUBE
-}
-
 @observer
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
-    @observable selectedTabId: TabId = PvGeneratorComponentTabs.PV_IMAGE;
     axesOrder = {};
     @observable isValidSpectralRange: boolean = true;
-
-    @action private setSelectedTab = (tab: TabId) => {
-        this.selectedTabId = tab;
-    };
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -47,21 +37,18 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
     public static formatBitValue = (bitValue: number): {value: number; unit: string; bitValue: number} => {
         let value: number;
         let unit: string;
-        if (bitValue >= 1e12) {
-            value = parseInt(toFixed(bitValue / 1e12, 2));
-            unit = "TB";
-        } else if (bitValue >= 1e9) {
-            value = parseInt(toFixed(bitValue / 1e9, 1));
+        if (bitValue >= 1e9) {
+            value = parseInt(toFixed(bitValue / 1e9, 0));
             unit = "GB";
         } else if (bitValue >= 1e6) {
-            value = parseInt(toFixed(bitValue / 1e6, 1));
+            value = parseInt(toFixed(bitValue / 1e6, 2));
             unit = "MB";
         } else if (bitValue >= 1e3) {
-            value = parseInt(toFixed(bitValue / 1e3, 1));
-            unit = "kB";
+            value = parseFloat(toFixed(bitValue / 1e6, 3));
+            unit = "MB";
         } else {
-            value = bitValue;
-            unit = "B";
+            value = parseFloat(toFixed(bitValue / 1e6, 4));
+            unit = "MB";
         }
         return {value, unit, bitValue: bitValue};
     };
@@ -148,7 +135,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const imageDepth = frame?.frameInfo.fileInfoExtended.depth;
         const channelIndexMin = frame?.findChannelIndexByValue(this.widgetStore.range?.min);
         const channelIndexMax = frame?.findChannelIndexByValue(this.widgetStore.range?.max);
-        const channelRangePercentage = (channelIndexMax - channelIndexMin) / imageDepth;
+        const channelRangePercentage = Math.abs(channelIndexMax - channelIndexMin + 1) / imageDepth;
 
         // Find byte per image pixel
         const bytePix = Math.abs(frame?.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.match("BITPIX")).numericValue) / 8;
@@ -209,7 +196,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         if (this.widgetStore.effectiveFrame) {
             const selectedFileId = parseInt(changeEvent.target.value);
             this.widgetStore.setFileId(selectedFileId);
-            this.widgetStore.setRegionId(this.widgetStore.effectiveFrame.frameInfo.fileId, RegionId.ACTIVE);
+            this.widgetStore.setRegionId(this.widgetStore.effectiveFrame.frameInfo.fileId, RegionId.NONE);
         }
     };
 
@@ -292,7 +279,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
         const regionInfo = this.widgetStore.effectiveRegionInfo;
 
-        let selectedValue = RegionId.ACTIVE;
+        let selectedValue = RegionId.NONE;
         if (this.widgetStore.effectiveFrame?.regionSet) {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         }
@@ -323,7 +310,9 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     <small>
                         Please ensure:
                         <br />
-                        1. Preview cube size is less than the threshold.
+                        1. Line region is selected.
+                        <br />
+                        2. Preview cube size is less than the threshold.
                     </small>
                 </i>
             </span>
@@ -442,11 +431,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="pv-generator-widget">
-                <div className="pv-generator-panel">
-                    <Tabs id="pvGeneratorTabs" selectedTabId={this.selectedTabId} onChange={this.setSelectedTab} animate={false}>
-                        <Tab id={PvGeneratorComponentTabs.PV_IMAGE} title="Generate PV Image" panel={pvImagePanel} />
-                    </Tabs>
-                </div>
+                <div className="pv-generator-panel">{pvImagePanel}</div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
                 <TaskProgressDialogComponent
                     isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
