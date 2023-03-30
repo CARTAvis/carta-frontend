@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ColorResult} from "react-color";
-import {FormGroup, HTMLSelect, Label} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, Label, OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
@@ -14,6 +14,18 @@ import "./AppearanceForm.scss";
 @observer
 export class AppearanceForm extends React.Component<{region: RegionStore; darkTheme: boolean}> {
     private static readonly APPEARANCE_CHANGE_DELAY = 100;
+
+    private static readonly TextAlignmentOptions: OptionProps[] = [
+        {value: CARTA.TextAnnotationPosition.CENTER, label: "Center"},
+        {value: CARTA.TextAnnotationPosition.UPPER_LEFT, label: "Upper left"},
+        {value: CARTA.TextAnnotationPosition.UPPER_RIGHT, label: "Upper right"},
+        {value: CARTA.TextAnnotationPosition.LOWER_LEFT, label: "Lower left"},
+        {value: CARTA.TextAnnotationPosition.LOWER_RIGHT, label: "Lower right"},
+        {value: CARTA.TextAnnotationPosition.TOP, label: "Top"},
+        {value: CARTA.TextAnnotationPosition.BOTTOM, label: "Bottom"},
+        {value: CARTA.TextAnnotationPosition.LEFT, label: "Left"},
+        {value: CARTA.TextAnnotationPosition.RIGHT, label: "Right"}
+    ];
 
     private handleLineWidthChange = _.throttle((value: number) => {
         if (this.props.region) {
@@ -134,9 +146,9 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                 {region.regionType === CARTA.RegionType.ANNTEXT && (
                     <FormGroup label="Text alignment" inline={true}>
                         <HTMLSelect
-                            options={Object.keys(CARTA.TextAnnotationPosition)}
-                            value={CARTA.TextAnnotationPosition[(this.props.region as TextAnnotationStore).position]}
-                            onChange={ev => (this.props.region as TextAnnotationStore).setPosition(CARTA.TextAnnotationPosition[ev.target.value])}
+                            options={AppearanceForm.TextAlignmentOptions}
+                            value={(region as TextAnnotationStore).position}
+                            onChange={ev => (region as TextAnnotationStore).setPosition(parseInt(ev.target.value))}
                         />
                     </FormGroup>
                 )}
