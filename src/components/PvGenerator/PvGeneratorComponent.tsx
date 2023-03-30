@@ -38,10 +38,10 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         let value: number;
         let unit: string;
         if (bitValue >= 1e9) {
-            value = parseInt(toFixed(bitValue / 1e9, 0));
+            value = parseFloat(toFixed(bitValue / 1e9, 0));
             unit = "GB";
         } else if (bitValue >= 1e6) {
-            value = parseInt(toFixed(bitValue / 1e6, 2));
+            value = parseFloat(toFixed(bitValue / 1e6, 2));
             unit = "MB";
         } else if (bitValue >= 1e3) {
             value = parseFloat(toFixed(bitValue / 1e6, 3));
@@ -411,7 +411,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 </FormGroup>
                 <div className="cube-size-button-group">
                     <FormGroup className="cube-size-group" inline label="Preview Cube Size" labelInfo={this.estimatedCubeSize ? `(${this.estimatedCubeSize.unit})` : ""} disabled={!this.estimatedCubeSize}>
-                        <label className="cube-size">{`${this.estimatedCubeSize?.value || ""}`}</label>
+                        <label className="cube-size">{`${this.estimatedCubeSize?.value ?? ""}`}</label>
                     </FormGroup>
                     <div className="generate-button">
                         <div>
