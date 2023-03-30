@@ -1,15 +1,14 @@
 import * as React from "react";
-import {AnchorButton, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, NonIdealState, Switch, Tab, Tabs} from "@blueprintjs/core";
+import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState, Tab, Tabs} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {PointShapeSelectComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {AppStore, HelpType} from "stores";
-import {CompassAnnotationStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, VectorAnnotationStore} from "stores/Frame";
+import {RegionStore} from "stores/Frame";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
@@ -52,32 +51,6 @@ export class RegionDialogComponent extends React.Component {
 
     private handleFocusClicked = () => AppStore.Instance.activeFrame.regionSet.selectedRegion.focusCenter();
 
-    private handlePointShapeChange = (item: CARTA.PointAnnotationShape) => {
-        const appStore = AppStore.Instance;
-        const region = appStore.activeFrame.regionSet.selectedRegion;
-        const frame = appStore.activeFrame.spatialReference ?? appStore.activeFrame;
-        (region as PointAnnotationStore).setPointShape(item);
-        frame.pointShapeCache = item;
-    };
-
-    private handleCompassAnnotationArrowhead = (selection: string) => {
-        const region = AppStore.Instance.activeFrame.regionSet.selectedRegion as CompassAnnotationStore;
-        switch (selection) {
-            case "north":
-                region.setNorthArrowhead(true);
-                region.setEastArrowhead(false);
-                break;
-            case "east":
-                region.setNorthArrowhead(false);
-                region.setEastArrowhead(true);
-                break;
-            case "both":
-                region.setNorthArrowhead(true);
-                region.setEastArrowhead(true);
-                break;
-        }
-    };
-
     public render() {
         const appStore = AppStore.Instance;
 
@@ -93,7 +66,7 @@ export class RegionDialogComponent extends React.Component {
             title: "No region selected"
         };
 
-        let bodyContent, configurationPanel, stylingPanel;
+        let bodyContent, configurationPanel;
         let region: RegionStore;
         let editableRegion = false;
         if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
@@ -107,40 +80,17 @@ export class RegionDialogComponent extends React.Component {
             switch (region.regionType) {
                 case CARTA.RegionType.POINT:
                 case CARTA.RegionType.ANNPOINT:
-                    stylingPanel = (
-                        <AppearanceForm region={region} darkTheme={appStore.darkTheme}>
-                            {region.regionType === CARTA.RegionType.ANNPOINT && (
-                                <>
-                                    <FormGroup inline={true} label="Shape">
-                                        <PointShapeSelectComponent handleChange={this.handlePointShapeChange} pointShape={(region as PointAnnotationStore).pointShape} />
-                                    </FormGroup>
-                                    <FormGroup inline={true} label="Size" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="Point size"
-                                            min={0.5}
-                                            max={50}
-                                            value={(region as PointAnnotationStore).pointWidth}
-                                            stepSize={0.5}
-                                            onValueChange={width => (region as PointAnnotationStore).setPointWidth(width)}
-                                        />
-                                    </FormGroup>
-                                </>
-                            )}
-                        </AppearanceForm>
-                    );
                     configurationPanel = <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ANNRECTANGLE:
                 case CARTA.RegionType.ANNTEXT:
-                    stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
                     configurationPanel = <RectangularRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
-                    stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
                     configurationPanel = <EllipticalRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
@@ -148,125 +98,17 @@ export class RegionDialogComponent extends React.Component {
                 case CARTA.RegionType.POLYLINE:
                 case CARTA.RegionType.ANNPOLYGON:
                 case CARTA.RegionType.ANNPOLYLINE:
-                    stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
                     configurationPanel = <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.LINE:
                 case CARTA.RegionType.ANNLINE:
                 case CARTA.RegionType.ANNVECTOR:
-                    stylingPanel = (
-                        <AppearanceForm region={region} darkTheme={appStore.darkTheme}>
-                            {region.regionType === CARTA.RegionType.ANNVECTOR && (
-                                <div>
-                                    <FormGroup inline={true} label="Arrow tip length" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="Length"
-                                            min={0}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(region as VectorAnnotationStore).pointerLength}
-                                            stepSize={1}
-                                            onValueChange={value => (region as VectorAnnotationStore).setPointerLength(value)}
-                                        />
-                                    </FormGroup>
-                                    <FormGroup inline={true} label="Arrow tip width" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="Width"
-                                            min={0}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(region as VectorAnnotationStore).pointerWidth}
-                                            stepSize={1}
-                                            onValueChange={value => (region as VectorAnnotationStore).setPointerWidth(value)}
-                                        />
-                                    </FormGroup>
-                                </div>
-                            )}
-                        </AppearanceForm>
-                    );
                     configurationPanel = <LineRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
                 case CARTA.RegionType.ANNRULER:
-                    stylingPanel = (
-                        <AppearanceForm region={region} darkTheme={appStore.darkTheme}>
-                            {region.regionType === CARTA.RegionType.ANNCOMPASS && (
-                                <div>
-                                    <FormGroup inline={true} label="Show arrowhead">
-                                        <HTMLSelect
-                                            value={(region as CompassAnnotationStore).eastArrowhead ? ((region as CompassAnnotationStore).northArrowhead ? "both" : "east") : "north"}
-                                            onChange={ev => this.handleCompassAnnotationArrowhead(ev.target.value)}
-                                        >
-                                            <option value={"north"}>North</option>
-                                            <option value={"east"}>East</option>
-                                            <option value={"both"}>Both</option>
-                                        </HTMLSelect>
-                                    </FormGroup>
-                                    <FormGroup inline={true} label="Arrow tip length" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="Length"
-                                            min={0}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(region as CompassAnnotationStore).pointerLength}
-                                            stepSize={1}
-                                            onValueChange={value => (region as CompassAnnotationStore).setPointerLength(value)}
-                                        />
-                                    </FormGroup>
-                                    <FormGroup inline={true} label="Arrow tip width" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="Width"
-                                            min={0}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(region as CompassAnnotationStore).pointerWidth}
-                                            stepSize={1}
-                                            onValueChange={value => (region as CompassAnnotationStore).setPointerWidth(value)}
-                                        />
-                                    </FormGroup>
-                                </div>
-                            )}
-                            {region.regionType === CARTA.RegionType.ANNRULER && (
-                                <div>
-                                    <FormGroup inline={true} label="Show auxiliary lines">
-                                        <Switch
-                                            checked={(region as RulerAnnotationStore).auxiliaryLineVisible}
-                                            onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryLineVisible(ev.target.checked)}
-                                        />
-                                    </FormGroup>
-                                    <FormGroup inline={true} label="Auxiliary lines dash length" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            disabled={!(region as RulerAnnotationStore).auxiliaryLineVisible}
-                                            placeholder="Dash length"
-                                            min={0}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(region as RulerAnnotationStore).auxiliaryLineDashLength}
-                                            stepSize={1}
-                                            onValueChange={value => (region as RulerAnnotationStore).setAuxiliaryLineDashLength(value)}
-                                        />
-                                    </FormGroup>
-                                    <FormGroup inline={true} label="Text X offset" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="Text X offset"
-                                            min={-50}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(region as RulerAnnotationStore).textOffset.x}
-                                            stepSize={1}
-                                            onValueChange={value => (region as RulerAnnotationStore).setTextOffset(value, true)}
-                                        />
-                                    </FormGroup>
-                                    <FormGroup inline={true} label="Text Y offset" labelInfo="(px)">
-                                        <SafeNumericInput
-                                            placeholder="Text Y offset"
-                                            min={-50}
-                                            max={RegionStore.MAX_DASH_LENGTH}
-                                            value={(region as RulerAnnotationStore).textOffset.y}
-                                            stepSize={1}
-                                            onValueChange={value => (region as RulerAnnotationStore).setTextOffset(value, false)}
-                                        />
-                                    </FormGroup>
-                                </div>
-                            )}
-                        </AppearanceForm>
-                    );
                     configurationPanel = <CompassRulerRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
@@ -274,6 +116,7 @@ export class RegionDialogComponent extends React.Component {
                     bodyContent = RegionDialogComponent.InvalidRegionNode;
             }
             if (editableRegion) {
+                const stylingPanel = <AppearanceForm region={region} darkTheme={appStore.darkTheme} />;
                 bodyContent = (
                     <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
                         <Tab id={RegionDialogTabs.Configuration} title="Configuration" panel={configurationPanel} />
