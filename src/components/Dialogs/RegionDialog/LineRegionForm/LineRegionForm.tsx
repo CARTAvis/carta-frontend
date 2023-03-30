@@ -532,7 +532,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
             <div className="form-section line-region-form">
-                <FormGroup label={region.isAnnotation ? "Annotation Name" : "Region Name"} inline={true}>
+                <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
                     <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 <FormGroup label="Coordinate" inline={true}>

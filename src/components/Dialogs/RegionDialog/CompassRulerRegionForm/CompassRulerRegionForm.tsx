@@ -111,15 +111,15 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
 
         return (
             <div className="form-section compass-ruler-annotation-form">
-                <FormGroup label="Annotation Name" inline={true}>
+                <FormGroup label="Annotation name" inline={true}>
                     <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <>
-                        <FormGroup label="North Label" inline={true}>
+                        <FormGroup label="North label" inline={true}>
                             <InputGroup placeholder="Enter north label" value={(region as CompassAnnotationStore).northLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)} />
                         </FormGroup>
-                        <FormGroup label="East Label" inline={true}>
+                        <FormGroup label="East label" inline={true}>
                             <InputGroup placeholder="Enter east label" value={(region as CompassAnnotationStore).eastLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)} />
                         </FormGroup>
                     </>

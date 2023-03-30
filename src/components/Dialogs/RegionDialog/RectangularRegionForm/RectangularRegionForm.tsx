@@ -597,7 +597,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
             <div className="form-section rectangular-region-form">
-                <FormGroup label={region.isAnnotation ? "Annotation Name" : "Region Name"} inline={true}>
+                <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
                     <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNTEXT && (

@@ -166,7 +166,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
 
         return (
             <div className="form-section polygon-region-form">
-                <FormGroup label={region.isAnnotation ? "Annotation Name" : "Region Name"} inline={true}>
+                <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
                     <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 <FormGroup label="Coordinate" inline={true}>

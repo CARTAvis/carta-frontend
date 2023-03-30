@@ -36,10 +36,10 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
             <>
                 {isNorth ? (
                     <>
-                        <Label>North Label</Label>
-                        <FormGroup inline={true} label="X Offset" labelInfo="(px)">
+                        <Label>North label</Label>
+                        <FormGroup inline={true} label="X offset" labelInfo="(px)">
                             <SafeNumericInput
-                                placeholder="North X Offset"
+                                placeholder="North X offset"
                                 min={-50}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(this.props.region as CompassAnnotationStore).northTextOffset.x}
@@ -47,9 +47,9 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                                 onValueChange={value => (this.props.region as CompassAnnotationStore).setNorthTextOffset(value, true)}
                             />
                         </FormGroup>
-                        <FormGroup inline={true} label="Y Offset" labelInfo="(px)">
+                        <FormGroup inline={true} label="Y offset" labelInfo="(px)">
                             <SafeNumericInput
-                                placeholder="North Y Offset"
+                                placeholder="North Y offset"
                                 min={-50}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(this.props.region as CompassAnnotationStore).northTextOffset.y}
@@ -60,10 +60,10 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                     </>
                 ) : (
                     <>
-                        <Label>East Label</Label>
-                        <FormGroup inline={true} label="X Offset" labelInfo="(px)">
+                        <Label>East label</Label>
+                        <FormGroup inline={true} label="X offset" labelInfo="(px)">
                             <SafeNumericInput
-                                placeholder="East X Offset"
+                                placeholder="East X offset"
                                 min={-50}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(this.props.region as CompassAnnotationStore).eastTextOffset.x}
@@ -71,9 +71,9 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                                 onValueChange={value => (this.props.region as CompassAnnotationStore).setEastTextOffset(value, true)}
                             />
                         </FormGroup>
-                        <FormGroup inline={true} label="Y Offset" labelInfo="(px)">
+                        <FormGroup inline={true} label="Y offset" labelInfo="(px)">
                             <SafeNumericInput
-                                placeholder="East Y Offset"
+                                placeholder="East Y offset"
                                 min={-50}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={(this.props.region as CompassAnnotationStore).eastTextOffset.y}
@@ -94,55 +94,53 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
         }
 
         return (
-            <div className="form-section appearance-form">
-                <div className="form-contents">
-                    <FormGroup label="Color" inline={true}>
-                        <ColorPickerComponent color={region.color} presetColors={SWATCH_COLORS} setColor={(color: ColorResult) => region.setColor(color.hex)} disableAlpha={true} darkTheme={this.props.darkTheme} />
+            <div className="appearance-form">
+                <FormGroup label="Color" inline={true}>
+                    <ColorPickerComponent color={region.color} presetColors={SWATCH_COLORS} setColor={(color: ColorResult) => region.setColor(color.hex)} disableAlpha={true} darkTheme={this.props.darkTheme} />
+                </FormGroup>
+                {region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT && region.regionType !== CARTA.RegionType.ANNTEXT && (
+                    <FormGroup inline={true} label="Line width" labelInfo="(px)">
+                        <SafeNumericInput placeholder="Line width" min={RegionStore.MIN_LINE_WIDTH} max={RegionStore.MAX_LINE_WIDTH} value={region.lineWidth} stepSize={0.5} onValueChange={this.handleLineWidthChange} />
                     </FormGroup>
-                    {region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT && region.regionType !== CARTA.RegionType.ANNTEXT && (
-                        <FormGroup inline={true} label="Line Width" labelInfo="(px)">
-                            <SafeNumericInput placeholder="Line Width" min={RegionStore.MIN_LINE_WIDTH} max={RegionStore.MAX_LINE_WIDTH} value={region.lineWidth} stepSize={0.5} onValueChange={this.handleLineWidthChange} />
+                )}
+                {region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT && region.regionType !== CARTA.RegionType.ANNTEXT && (
+                    <FormGroup inline={true} label="Dash length" labelInfo="(px)">
+                        <SafeNumericInput placeholder="Dash length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.dashLength} stepSize={1} onValueChange={this.handleDashLengthChange} />
+                    </FormGroup>
+                )}
+                {(region.regionType === CARTA.RegionType.ANNCOMPASS || region.regionType === CARTA.RegionType.ANNTEXT || region.regionType === CARTA.RegionType.ANNRULER) && (
+                    <>
+                        <FormGroup inline={true} label="Font size" labelInfo="(px)">
+                            <SafeNumericInput placeholder="Font size" min={0.5} max={100} value={(region as TextAnnotationStore)?.fontSize} stepSize={1} onValueChange={value => (region as TextAnnotationStore)?.setFontSize(value)} />
                         </FormGroup>
-                    )}
-                    {region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT && region.regionType !== CARTA.RegionType.ANNTEXT && (
-                        <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
-                            <SafeNumericInput placeholder="Dash Length" min={0} max={RegionStore.MAX_DASH_LENGTH} value={region.dashLength} stepSize={1} onValueChange={this.handleDashLengthChange} />
+                        <FormGroup inline={true} label="Font">
+                            <HTMLSelect options={Object.values(Font)} value={(this.props.region as TextAnnotationStore).font} onChange={ev => (this.props.region as TextAnnotationStore).setFont(ev.target.value as Font)} />
                         </FormGroup>
-                    )}
-                    {(region.regionType === CARTA.RegionType.ANNCOMPASS || region.regionType === CARTA.RegionType.ANNTEXT || region.regionType === CARTA.RegionType.ANNRULER) && (
-                        <>
-                            <FormGroup inline={true} label="Font Size" labelInfo="(px)">
-                                <SafeNumericInput placeholder="Font Size" min={0.5} max={100} value={(region as TextAnnotationStore)?.fontSize} stepSize={1} onValueChange={value => (region as TextAnnotationStore)?.setFontSize(value)} />
-                            </FormGroup>
-                            <FormGroup inline={true} label="Font">
-                                <HTMLSelect options={Object.values(Font)} value={(this.props.region as TextAnnotationStore).font} onChange={ev => (this.props.region as TextAnnotationStore).setFont(ev.target.value as Font)} />
-                            </FormGroup>
-                            <FormGroup inline={true} label="Font Style">
-                                <HTMLSelect
-                                    options={Object.values(FontStyle)}
-                                    value={(this.props.region as TextAnnotationStore).fontStyle}
-                                    onChange={ev => (this.props.region as TextAnnotationStore).setFontStyle(ev.target.value as FontStyle)}
-                                />
-                            </FormGroup>
-                        </>
-                    )}
-                    {region.regionType === CARTA.RegionType.ANNCOMPASS && (
-                        <>
-                            {this.compassTextOffsetForm(true)}
-                            {this.compassTextOffsetForm(false)}
-                        </>
-                    )}
-                    {region.regionType === CARTA.RegionType.ANNTEXT && (
-                        <FormGroup label="Text Alignment" inline={true}>
+                        <FormGroup inline={true} label="Font style">
                             <HTMLSelect
-                                options={Object.keys(CARTA.TextAnnotationPosition)}
-                                value={CARTA.TextAnnotationPosition[(this.props.region as TextAnnotationStore).position]}
-                                onChange={ev => (this.props.region as TextAnnotationStore).setPosition(CARTA.TextAnnotationPosition[ev.target.value])}
+                                options={Object.values(FontStyle)}
+                                value={(this.props.region as TextAnnotationStore).fontStyle}
+                                onChange={ev => (this.props.region as TextAnnotationStore).setFontStyle(ev.target.value as FontStyle)}
                             />
                         </FormGroup>
-                    )}
-                    {this.props.children}
-                </div>
+                    </>
+                )}
+                {region.regionType === CARTA.RegionType.ANNCOMPASS && (
+                    <>
+                        {this.compassTextOffsetForm(true)}
+                        {this.compassTextOffsetForm(false)}
+                    </>
+                )}
+                {region.regionType === CARTA.RegionType.ANNTEXT && (
+                    <FormGroup label="Text alignment" inline={true}>
+                        <HTMLSelect
+                            options={Object.keys(CARTA.TextAnnotationPosition)}
+                            value={CARTA.TextAnnotationPosition[(this.props.region as TextAnnotationStore).position]}
+                            onChange={ev => (this.props.region as TextAnnotationStore).setPosition(CARTA.TextAnnotationPosition[ev.target.value])}
+                        />
+                    </FormGroup>
+                )}
+                {this.props.children}
             </div>
         );
     }

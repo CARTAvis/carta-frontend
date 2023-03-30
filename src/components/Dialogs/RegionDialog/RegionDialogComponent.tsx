@@ -158,8 +158,8 @@ export class RegionDialogComponent extends React.Component {
                     stylingPanel = (
                         <AppearanceForm region={region} darkTheme={appStore.darkTheme}>
                             {region.regionType === CARTA.RegionType.ANNVECTOR && (
-                                <div className="form-contents">
-                                    <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
+                                <div>
+                                    <FormGroup inline={true} label="Arrow tip length" labelInfo="(px)">
                                         <SafeNumericInput
                                             placeholder="Length"
                                             min={0}
@@ -169,7 +169,7 @@ export class RegionDialogComponent extends React.Component {
                                             onValueChange={value => (region as VectorAnnotationStore).setPointerLength(value)}
                                         />
                                     </FormGroup>
-                                    <FormGroup inline={true} label="Arrow Tip Width" labelInfo="(px)">
+                                    <FormGroup inline={true} label="Arrow tip width" labelInfo="(px)">
                                         <SafeNumericInput
                                             placeholder="Width"
                                             min={0}
@@ -191,8 +191,8 @@ export class RegionDialogComponent extends React.Component {
                     stylingPanel = (
                         <AppearanceForm region={region} darkTheme={appStore.darkTheme}>
                             {region.regionType === CARTA.RegionType.ANNCOMPASS && (
-                                <div className="form-contents">
-                                    <FormGroup inline={true} label="Show Arrowhead">
+                                <div>
+                                    <FormGroup inline={true} label="Show arrowhead">
                                         <HTMLSelect
                                             value={(region as CompassAnnotationStore).eastArrowhead ? ((region as CompassAnnotationStore).northArrowhead ? "both" : "east") : "north"}
                                             onChange={ev => this.handleCompassAnnotationArrowhead(ev.target.value)}
@@ -202,7 +202,7 @@ export class RegionDialogComponent extends React.Component {
                                             <option value={"both"}>Both</option>
                                         </HTMLSelect>
                                     </FormGroup>
-                                    <FormGroup inline={true} label="Arrow Tip Length" labelInfo="(px)">
+                                    <FormGroup inline={true} label="Arrow tip length" labelInfo="(px)">
                                         <SafeNumericInput
                                             placeholder="Length"
                                             min={0}
@@ -212,7 +212,7 @@ export class RegionDialogComponent extends React.Component {
                                             onValueChange={value => (region as CompassAnnotationStore).setPointerLength(value)}
                                         />
                                     </FormGroup>
-                                    <FormGroup inline={true} label="Arrow Tip Width" labelInfo="(px)">
+                                    <FormGroup inline={true} label="Arrow tip width" labelInfo="(px)">
                                         <SafeNumericInput
                                             placeholder="Width"
                                             min={0}
@@ -225,17 +225,17 @@ export class RegionDialogComponent extends React.Component {
                                 </div>
                             )}
                             {region.regionType === CARTA.RegionType.ANNRULER && (
-                                <div className="form-contents">
+                                <div>
                                     <FormGroup inline={true} label="Show auxiliary lines">
                                         <Switch
                                             checked={(region as RulerAnnotationStore).auxiliaryLineVisible}
                                             onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryLineVisible(ev.target.checked)}
                                         />
                                     </FormGroup>
-                                    <FormGroup inline={true} label="Auxiliary Lines Dash Length" labelInfo="(px)">
+                                    <FormGroup inline={true} label="Auxiliary lines dash length" labelInfo="(px)">
                                         <SafeNumericInput
                                             disabled={!(region as RulerAnnotationStore).auxiliaryLineVisible}
-                                            placeholder="Dash Length"
+                                            placeholder="Dash length"
                                             min={0}
                                             max={RegionStore.MAX_DASH_LENGTH}
                                             value={(region as RulerAnnotationStore).auxiliaryLineDashLength}
@@ -243,9 +243,9 @@ export class RegionDialogComponent extends React.Component {
                                             onValueChange={value => (region as RulerAnnotationStore).setAuxiliaryLineDashLength(value)}
                                         />
                                     </FormGroup>
-                                    <FormGroup inline={true} label="Text X Offset" labelInfo="(px)">
+                                    <FormGroup inline={true} label="Text X offset" labelInfo="(px)">
                                         <SafeNumericInput
-                                            placeholder="Text X Offset"
+                                            placeholder="Text X offset"
                                             min={-50}
                                             max={RegionStore.MAX_DASH_LENGTH}
                                             value={(region as RulerAnnotationStore).textOffset.x}
@@ -253,9 +253,9 @@ export class RegionDialogComponent extends React.Component {
                                             onValueChange={value => (region as RulerAnnotationStore).setTextOffset(value, true)}
                                         />
                                     </FormGroup>
-                                    <FormGroup inline={true} label="Text Y Offset" labelInfo="(px)">
+                                    <FormGroup inline={true} label="Text Y offset" labelInfo="(px)">
                                         <SafeNumericInput
-                                            placeholder="Text Y Offset"
+                                            placeholder="Text Y offset"
                                             min={-50}
                                             max={RegionStore.MAX_DASH_LENGTH}
                                             value={(region as RulerAnnotationStore).textOffset.y}
@@ -295,7 +295,7 @@ export class RegionDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.REGION_DIALOG} defaultWidth={525} defaultHeight={475} minHeight={300} minWidth={425} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.REGION_DIALOG} defaultWidth={525} defaultHeight={575} minHeight={300} minWidth={425} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
