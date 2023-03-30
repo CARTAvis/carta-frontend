@@ -6,7 +6,7 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 
 import {ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput} from "components/Shared";
-import { AppStore } from "stores";
+import {AppStore} from "stores";
 import {CompassAnnotationStore, Font, FontStyle, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
@@ -110,14 +110,7 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                             <PointShapeSelectComponent handleChange={this.handlePointShapeChange} pointShape={(region as PointAnnotationStore).pointShape} />
                         </FormGroup>
                         <FormGroup inline={true} label="Size" labelInfo="(px)">
-                            <SafeNumericInput
-                                placeholder="Point size"
-                                min={0.5}
-                                max={50}
-                                value={(region as PointAnnotationStore).pointWidth}
-                                stepSize={0.5}
-                                onValueChange={width => (region as PointAnnotationStore).setPointWidth(width)}
-                            />
+                            <SafeNumericInput placeholder="Point size" min={0.5} max={50} value={(region as PointAnnotationStore).pointWidth} stepSize={0.5} onValueChange={width => (region as PointAnnotationStore).setPointWidth(width)} />
                         </FormGroup>
                     </>
                 )}
@@ -145,7 +138,7 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                         </FormGroup>
                     </>
                 )}
-                {region.regionType === CARTA.RegionType.ANNCOMPASS &&
+                {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <>
                         <Label>North label offset</Label>
                         <FormGroup inline={true} label="X" labelInfo="(px)">
@@ -220,15 +213,11 @@ export class AppearanceForm extends React.Component<{region: RegionStore; darkTh
                             />
                         </FormGroup>
                     </>
-                }
-                
+                )}
                 {region.regionType === CARTA.RegionType.ANNRULER && (
                     <>
                         <FormGroup inline={true} label="Show auxiliary lines">
-                            <Switch
-                                checked={(region as RulerAnnotationStore).auxiliaryLineVisible}
-                                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryLineVisible(ev.target.checked)}
-                            />
+                            <Switch checked={(region as RulerAnnotationStore).auxiliaryLineVisible} onChange={(ev: React.ChangeEvent<HTMLInputElement>) => (region as RulerAnnotationStore).setAuxiliaryLineVisible(ev.target.checked)} />
                         </FormGroup>
                         <FormGroup inline={true} label="Auxiliary lines dash length" labelInfo="(px)">
                             <SafeNumericInput
