@@ -9,26 +9,7 @@
     }
 
     .config-panel {
-        .image-region-select {
-            .bp3-html-select {
-                width: 120px;
-            }
-
-            .label-info {
-                max-width: calc(100% - 55px);
-                text-overflow: ellipsis;
-                overflow: hidden;
-                white-space: nowrap;
-                display: inline-block;
-                vertical-align: middle;
-            }
-
-            .region-help {
-                margin-left: 5px;
-            }
-        }
-
-        .range-select {
+        .pixel-range-select {
             display: flex;
             flex-direction: row;
 
@@ -46,8 +27,13 @@
             }
         }
 
-        .config-generate {
+        .reset-config-button {
+            margin-top: 5px;
             float: left;
+        }
+
+        .crimson-text {
+            color: crimson;
         }
     }
 }

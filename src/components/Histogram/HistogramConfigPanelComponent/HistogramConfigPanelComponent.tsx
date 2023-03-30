@@ -10,52 +10,48 @@ import "./HistogramConfigPanelComponent.scss";
 
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
+    get widgetStore(): HistogramWidgetStore {
+        return this.props.widgetStore;
+    }
+
     private onSetAutoBounds = (autoBounds: boolean) => {
-        const widgetStore = this.props.widgetStore;
-        widgetStore.setAutoBounds(autoBounds);
+        this.widgetStore.setAutoBounds(autoBounds);
         this.updateConfigs();
     };
 
     private onMinPixChanged = (minPix: number) => {
-        const widgetStore = this.props.widgetStore;
-        widgetStore.setMinPix(minPix);
+        this.widgetStore.setMinPix(minPix);
         this.updateConfigs();
     };
 
     private onMaxPixChanged = (maxPix: number) => {
-        const widgetStore = this.props.widgetStore;
-        widgetStore.setMaxPix(maxPix);
+        this.widgetStore.setMaxPix(maxPix);
         this.updateConfigs();
     };
 
     private onSetAutoBins = (autoBin: boolean) => {
-        const widgetStore = this.props.widgetStore;
-        widgetStore.setAutoBins(autoBin);
+        this.widgetStore.setAutoBins(autoBin);
         this.updateConfigs();
     };
 
     private onNumBinsChanged = (numBins: number) => {
-        const widgetStore = this.props.widgetStore;
-        widgetStore.setNumBins(numBins);
+        this.widgetStore.setNumBins(numBins);
         this.updateConfigs();
     };
 
     private onResetConfig = () => {
-        const widgetStore = this.props.widgetStore;
-        widgetStore.onResetConfig();
+        this.widgetStore.onResetConfig();
         this.updateConfigs();
     };
 
     private updateConfigs = () => {
-        const widgetStore = this.props.widgetStore;
-        if (widgetStore.isAbleToGenerate) {
-            widgetStore.updateConfigs();
+        if (this.widgetStore.isAbleToGenerate) {
+            this.widgetStore.updateConfigs();
         }
     };
 
     render() {
-        const widgetStore = this.props.widgetStore;
-        const frame = widgetStore.effectiveFrame;
+        const frame = this.widgetStore.effectiveFrame;
 
         const hint = (
             <span>
@@ -72,66 +68,78 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             </span>
         );
 
-        const msg = <span>Unable to generate histogram{hint}</span>;
+        const errorMsg = <span className="crimson-text">Unable to generate histogram{hint}</span>;
 
-        const buttonToolTip = <span>Reset histogram config to the same with that for current channel image.</span>;
+        const resetButtonToolTip = <span>Reset histogram config with the same one for current channel image.</span>;
 
-        const configPanel = (
+        const setPixelBoundsPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto pixel bounds"}>
                     <Switch
-                        checked={widgetStore.isAutoBounds}
+                        checked={this.widgetStore.isAutoBounds}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.onSetAutoBounds(e.checked);
                         }}
                     />
                 </FormGroup>
-                {!widgetStore.isAutoBounds && (
+                {!this.widgetStore.isAutoBounds && (
                     <FormGroup label="Range" inline={true} labelInfo={`(${frame && frame.requiredUnit ? frame.requiredUnit : "Unknown"})`}>
-                        <div className="range-select">
+                        <div className="pixel-range-select">
                             <FormGroup label="From" inline={true}>
-                                <SafeNumericInput value={widgetStore.curMinPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
+                                <SafeNumericInput value={this.widgetStore.curMinPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
                             </FormGroup>
                             <FormGroup label="To" inline={true}>
-                                <SafeNumericInput value={widgetStore.curMaxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
+                                <SafeNumericInput value={this.widgetStore.curMaxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
                             </FormGroup>
                         </div>
                     </FormGroup>
                 )}
-                <Divider />
+            </React.Fragment>
+        );
+
+        const setNumBinsPanel = (
+            <React.Fragment>
                 <FormGroup inline={true} label={"Auto bins"}>
                     <Switch
-                        checked={widgetStore.isAutoBins}
+                        checked={this.widgetStore.isAutoBins}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.onSetAutoBins(e.checked);
                         }}
                     />
                 </FormGroup>
-                {!widgetStore.isAutoBins && (
+                {!this.widgetStore.isAutoBins && (
                     <FormGroup label="Number of bins" inline={true}>
-                        <SafeNumericInput value={widgetStore.curNumBins} buttonPosition="none" onValueChange={val => this.onNumBinsChanged(val)} />
+                        <div className="range-select">
+                            <SafeNumericInput value={this.widgetStore.curNumBins} buttonPosition="none" onValueChange={val => this.onNumBinsChanged(val)} />
+                        </div>
                     </FormGroup>
                 )}
-                <Divider />
-                <div className="config-generate">
-                    <FormGroup inline={true} className="config-generate">
-                        <Tooltip2 content={buttonToolTip}>
-                            <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} onClick={this.onResetConfig}>
-                                Reset config
-                            </Button>
-                        </Tooltip2>
-                    </FormGroup>
-                    <br />
-                    {!widgetStore.isAbleToGenerate && <div className="config-generate">{msg}</div>}
-                </div>
+            </React.Fragment>
+        );
+
+        const resetConfigPanel = (
+            <React.Fragment>
+                <Tooltip2 content={resetButtonToolTip}>
+                    <Button className="reset-config-button" icon={"zoom-to-fit"} small={true} onClick={this.onResetConfig}>
+                        Reset config
+                    </Button>
+                </Tooltip2>
+                <br />
+                {!this.widgetStore.isAbleToGenerate && <div className="reset-generate">{errorMsg}</div>}
             </React.Fragment>
         );
 
         return (
             <div className="config-generator">
-                <div className="config-panel">{configPanel}</div>
+                <div className="config-panel">
+                    {setPixelBoundsPanel}
+                    <Divider />
+                    {setNumBinsPanel}
+                    <Divider />
+                    {resetConfigPanel}
+                </div>
             </div>
         );
     }
