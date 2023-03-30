@@ -132,6 +132,9 @@ export class SplatalogueService {
     };
 
     private static GetParams = (freqMin: number, freqMax: number, intensityLimit?: number): object => {
+        if (freqMin > freqMax) {
+            [freqMin, freqMax] = [freqMax, freqMin];
+        }
         let freqFrom = new Array(20).fill("");
         freqFrom[0] = freqMin.toString();
         let freqTo = new Array(20).fill("");
