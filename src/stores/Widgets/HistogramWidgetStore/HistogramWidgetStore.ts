@@ -36,6 +36,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable curAutoBins: boolean;
     @observable curNumBins: number;
 
+    // Maximum number of histogram bins on the slider
+    @observable maxNumBins: number;
+
     // Config settings in the protobuf message
     public fixedNumBins: boolean;
     public numBins: number;
@@ -127,6 +130,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.curNumBins = numBins;
     };
 
+    @action setMaxNumBins = (maxNumBins: number) => {
+        this.maxNumBins = maxNumBins;
+    };
+
     @computed get isAutoScaledX() {
         return this.minX === undefined || this.maxX === undefined;
     }
@@ -152,6 +159,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.curMinPix = this.effectiveFrame.renderConfig.histogramMin;
         this.curMaxPix = this.effectiveFrame.renderConfig.histogramMax;
         this.curAutoBins = false;
+        this.resetNumBins();
+    };
+
+    resetNumBins = () => {
         this.curNumBins = this.effectiveFrame.renderConfig.histogram.numBins;
     };
 
@@ -358,6 +369,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.fixedBounds = false;
         this.minPix = 0;
         this.maxPix = 0;
+
+        // Initialize the maximum number of histogram bins on the slider
+        this.maxNumBins = this.effectiveFrame.renderConfig.histogram.numBins;
     }
 
     // settings

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, Divider, FormGroup, Switch} from "@blueprintjs/core";
+import {Button, Divider, FormGroup, Slider, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {observer} from "mobx-react";
 
@@ -10,8 +10,17 @@ import "./HistogramConfigPanelComponent.scss";
 
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
+    private curMaxNumBins: number;
+
     get widgetStore(): HistogramWidgetStore {
         return this.props.widgetStore;
+    }
+
+    get maxNumBins(): number {
+        if (this.curMaxNumBins !== undefined && this.curMaxNumBins > 1) {
+            return this.curMaxNumBins;
+        }
+        return this.widgetStore.effectiveFrame.renderConfig.histogram.numBins;
     }
 
     private onSetAutoBounds = (autoBounds: boolean) => {
@@ -31,10 +40,21 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
     private onSetAutoBins = (autoBin: boolean) => {
         this.widgetStore.setAutoBins(autoBin);
+        this.widgetStore.resetNumBins();
         this.updateConfigs();
     };
 
-    private onNumBinsChanged = (numBins: number) => {
+    private onMaxNumBinsChanged = (curMaxNumBins: number) => {
+        if (curMaxNumBins !== undefined && curMaxNumBins > 1) {
+            this.curMaxNumBins = curMaxNumBins;
+        }
+    };
+
+    private onSetMaxNumBins = () => {
+        this.widgetStore.setMaxNumBins(this.maxNumBins);
+    };
+
+    private changeNumBinsHandler = (numBins: number) => {
         this.widgetStore.setNumBins(numBins);
         this.updateConfigs();
     };
@@ -51,24 +71,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     };
 
     render() {
-        const frame = this.widgetStore.effectiveFrame;
-
-        const hint = (
-            <span>
-                <br />
-                <i>
-                    <small>
-                        Please ensure:
-                        <br />
-                        1. The range of pixel bounds is from small to large.
-                        <br />
-                        2. The number of bins is greater than 0.
-                    </small>
-                </i>
-            </span>
-        );
-
-        const errorMsg = <span className="crimson-text">Unable to generate histogram{hint}</span>;
+        const errorMsg = <span className="crimson-text">The range of pixel bounds must be from small to large.</span>;
 
         const resetButtonToolTip = <span>Reset histogram config with the same one for current channel image.</span>;
 
@@ -84,17 +87,16 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                     />
                 </FormGroup>
                 {!this.widgetStore.isAutoBounds && (
-                    <FormGroup label="Range" inline={true} labelInfo={`(${frame && frame.requiredUnit ? frame.requiredUnit : "Unknown"})`}>
-                        <div className="pixel-range-select">
-                            <FormGroup label="From" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.curMinPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
-                            </FormGroup>
-                            <FormGroup label="To" inline={true}>
-                                <SafeNumericInput value={this.widgetStore.curMaxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
-                            </FormGroup>
-                        </div>
-                    </FormGroup>
+                    <div className="line-boundary">
+                        <FormGroup label="X min" inline={true}>
+                            <SafeNumericInput value={this.widgetStore.curMinPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
+                        </FormGroup>
+                        <FormGroup label="X max" inline={true}>
+                            <SafeNumericInput value={this.widgetStore.curMaxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
+                        </FormGroup>
+                    </div>
                 )}
+                {!this.widgetStore.isAbleToGenerate && <div className="reset-generate">{errorMsg}</div>}
             </React.Fragment>
         );
 
@@ -110,11 +112,24 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                     />
                 </FormGroup>
                 {!this.widgetStore.isAutoBins && (
-                    <FormGroup label="Number of bins" inline={true}>
-                        <div className="range-select">
-                            <SafeNumericInput value={this.widgetStore.curNumBins} buttonPosition="none" onValueChange={val => this.onNumBinsChanged(val)} />
-                        </div>
-                    </FormGroup>
+                    <div className="range-select">
+                        <FormGroup label="Max number of bins" inline={true}>
+                            <div className="range-select">
+                                <SafeNumericInput value={this.maxNumBins} buttonPosition="none" onValueChange={val => this.onMaxNumBinsChanged(val)} onKeyDown={this.onSetMaxNumBins} />
+                            </div>
+                        </FormGroup>
+                        <FormGroup label="Number of bins" inline={true}>
+                            <Slider
+                                min={1}
+                                max={this.widgetStore.maxNumBins}
+                                stepSize={1}
+                                labelStepSize={this.widgetStore.maxNumBins > 1 ? this.widgetStore.maxNumBins - 1 : this.widgetStore.maxNumBins}
+                                onChange={this.changeNumBinsHandler}
+                                value={this.widgetStore.curNumBins <= this.widgetStore.maxNumBins ? this.widgetStore.curNumBins : this.widgetStore.maxNumBins}
+                                vertical={false}
+                            />
+                        </FormGroup>
+                    </div>
                 )}
             </React.Fragment>
         );
@@ -122,17 +137,15 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         const resetConfigPanel = (
             <React.Fragment>
                 <Tooltip2 content={resetButtonToolTip}>
-                    <Button className="reset-config-button" icon={"zoom-to-fit"} small={true} onClick={this.onResetConfig}>
+                    <Button className="reset-range-content" icon={"zoom-to-fit"} small={true} onClick={this.onResetConfig}>
                         Reset config
                     </Button>
                 </Tooltip2>
-                <br />
-                {!this.widgetStore.isAbleToGenerate && <div className="reset-generate">{errorMsg}</div>}
             </React.Fragment>
         );
 
         return (
-            <div className="config-generator">
+            <div className="line-settings-panel">
                 <div className="config-panel">
                     {setPixelBoundsPanel}
                     <Divider />
