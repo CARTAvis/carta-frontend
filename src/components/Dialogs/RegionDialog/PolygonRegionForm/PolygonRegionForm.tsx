@@ -1,94 +1,64 @@
 import * as React from "react";
-import {FormGroup, InputGroup, Position} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {FormGroup, InputGroup} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent, SafeNumericInput} from "components/Shared";
+import {CoordinateComponent, CoordNumericInput, InputType} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
-import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
+import {AppStore} from "stores";
 import {CoordinateMode, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
-
-const KEYCODE_ENTER = 13;
 
 @observer
 export class PolygonRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
-    @observable displayColorPicker: boolean;
-
-    constructor(props: any) {
-        super(props);
-        makeObservable(this);
-    }
-
     private handleNameChange = ev => {
         this.props.region.setName(ev.currentTarget.value);
     };
 
-    private handlePointChange = (index: number, isXCoordinate: boolean, ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-
-        const region = this.props.region;
-
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
-        const existingValue = isXCoordinate ? region.controlPoints[index].x : region.controlPoints[index].y;
-
-        if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.REGION_PIXEL_EPS)) {
-            if (isXCoordinate) {
-                this.props.region.setControlPoint(index, {x: value, y: this.props.region.controlPoints[index].y});
-            } else {
-                this.props.region.setControlPoint(index, {x: this.props.region.controlPoints[index].x, y: value});
+    private handlePointChange = (index: number, isXCoordinate: boolean) => {
+        return (value: number): boolean => {
+            const region = this.props.region;
+            const existingValue = isXCoordinate ? region.controlPoints[index].x : region.controlPoints[index].y;
+            if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.REGION_PIXEL_EPS)) {
+                if (isXCoordinate) {
+                    this.props.region.setControlPoint(index, {x: value, y: this.props.region.controlPoints[index].y});
+                } else {
+                    this.props.region.setControlPoint(index, {x: this.props.region.controlPoints[index].x, y: value});
+                }
+                return true;
             }
-            return;
-        }
-
-        ev.currentTarget.value = existingValue;
+            return false;
+        };
     };
 
-    private handleWCSPointChange = (index: number, isXCoordinate: boolean, ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const region = this.props.region;
-        const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, region.controlPoints[index]);
-        if (!pointWCS) {
-            return;
-        }
-
-        const wcsString = ev.currentTarget.value;
-        if (wcsString === (isXCoordinate ? pointWCS.x : pointWCS.y)) {
-            return;
-        }
-        if (isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlayStore.numbers.formatTypeX : AppStore.Instance.overlayStore.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
-            if (!newPoint) {
-                return;
+    private handleWCSPointChange = (index: number, isXCoordinate: boolean) => {
+        return (wcsString: string): boolean => {
+            const region = this.props.region;
+            const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, region.controlPoints[index]);
+            if (isWCSStringFormatValid(wcsString, isXCoordinate ? AppStore.Instance.overlayStore.numbers.formatTypeX : AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+                const newPoint = getPixelValueFromWCS(this.props.wcsInfo, isXCoordinate ? {x: wcsString, y: pointWCS.y} : {x: pointWCS.x, y: wcsString});
+                if (!newPoint) {
+                    return false;
+                }
+                const value = isXCoordinate ? newPoint.x : newPoint.y;
+                const existingValue = isXCoordinate ? region.controlPoints[index].x : region.controlPoints[index].y;
+                
+                if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.REGION_PIXEL_EPS)) {
+                    this.props.region.setControlPoint(index, newPoint);
+                    return true;
+                }
             }
-            const value = isXCoordinate ? newPoint.x : newPoint.y;
-            const existingValue = isXCoordinate ? region.controlPoints[index].x : region.controlPoints[index].y;
-
-            if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.REGION_PIXEL_EPS)) {
-                this.props.region.setControlPoint(index, newPoint);
-                return;
-            }
-        }
-
-        ev.currentTarget.value = isXCoordinate ? pointWCS.x : pointWCS.y;
+            return false;
+        };
     };
 
     public render() {
         // dummy variables related to wcs to trigger re-render
         // eslint-disable-next-line no-unused-vars,@typescript-eslint/no-unused-vars
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region;
         if (
             !region ||
@@ -102,56 +72,28 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
 
         const pointRows = region.controlPoints.map((point, index) => {
             const pointWCS = getFormattedWCSPoint(this.props.wcsInfo, point);
-            let xInput, yInput;
-            if (region.coordinate === CoordinateMode.Image) {
-                xInput = (
-                    <SafeNumericInput
-                        selectAllOnFocus={true}
-                        buttonPosition="none"
-                        placeholder="X coordinate"
-                        value={point.x}
-                        onBlur={evt => this.handlePointChange(index, true, evt)}
-                        onKeyDown={evt => this.handlePointChange(index, true, evt)}
-                    />
-                );
-                yInput = (
-                    <SafeNumericInput
-                        selectAllOnFocus={true}
-                        buttonPosition="none"
-                        placeholder="Y coordinate"
-                        value={point.y}
-                        onBlur={evt => this.handlePointChange(index, false, evt)}
-                        onKeyDown={evt => this.handlePointChange(index, false, evt)}
-                    />
-                );
-            } else {
-                xInput = (
-                    <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <SafeNumericInput
-                            allowNumericCharactersOnly={false}
-                            buttonPosition="none"
-                            placeholder="X WCS coordinate"
-                            disabled={!this.props.wcsInfo || !pointWCS}
-                            value={pointWCS ? pointWCS.x : ""}
-                            onBlur={evt => this.handleWCSPointChange(index, true, evt)}
-                            onKeyDown={evt => this.handleWCSPointChange(index, true, evt)}
-                        />
-                    </Tooltip2>
-                );
-                yInput = (
-                    <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                        <SafeNumericInput
-                            allowNumericCharactersOnly={false}
-                            buttonPosition="none"
-                            placeholder="Y WCS coordinate"
-                            disabled={!this.props.wcsInfo || !pointWCS}
-                            value={pointWCS ? pointWCS.y : ""}
-                            onBlur={evt => this.handleWCSPointChange(index, false, evt)}
-                            onKeyDown={evt => this.handleWCSPointChange(index, false, evt)}
-                        />
-                    </Tooltip2>
-                );
-            }
+            const xInput = (
+                <CoordNumericInput
+                    coord={region.coordinate}
+                    inputType={InputType.XCoord}
+                    value={point.x}
+                    onChange={this.handlePointChange(index, true)}
+                    valueWcs={pointWCS?.x}
+                    onChangeWcs={this.handleWCSPointChange(index, true)}
+                    wcsDisabled={!this.props.wcsInfo || !pointWCS}
+                />
+            );
+            const yInput = (
+                <CoordNumericInput
+                    coord={region.coordinate}
+                    inputType={InputType.YCoord}
+                    value={point.y}
+                    onChange={this.handlePointChange(index, false)}
+                    valueWcs={pointWCS?.y}
+                    onChangeWcs={this.handleWCSPointChange(index, false)}
+                    wcsDisabled={!this.props.wcsInfo || !pointWCS}
+                />
+            );
             const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(pointWCS)}` : `Image: ${Point2D.ToString(point, "px", 3)}`;
             return (
                 <FormGroup label={`Point ${index}`} labelInfo={pxUnit} inline={true} key={index}>

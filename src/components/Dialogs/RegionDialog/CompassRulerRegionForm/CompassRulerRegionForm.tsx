@@ -4,13 +4,11 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent, SafeNumericInput} from "components/Shared";
+import {CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {CompassAnnotationStore, CoordinateMode, RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
-
-const KEYCODE_ENTER = "Enter";
 
 @observer
 export class CompassRulerRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
@@ -18,80 +16,75 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         this.props.region.setName(formEvent.currentTarget.value);
     };
 
-    private handleValueChange = (
-        event: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>,
-        region: RegionStore,
-        wcsInfo: AST.FrameSet,
-        WCSStart: WCSPoint2D,
-        WCSFinish: WCSPoint2D,
-        isX: boolean,
-        finish?: boolean,
-        pixel?: boolean
-    ) => {
-        const target = event.target as HTMLInputElement;
-
+    private handleValueChange = (WCSStart: WCSPoint2D, WCSFinish: WCSPoint2D, isX: boolean, finish?: boolean, pixel?: boolean) => {
+        const region = this.props.region;
+        const wcsInfo = this.props.wcsInfo;
         if (pixel) {
-            const value = parseFloat(target.value);
-            if (!isFinite(value)) {
-                return;
-            }
-            if (isX && finish) {
-                region?.setControlPoint(1, {x: value, y: region?.controlPoints[1].y});
-            } else if (finish) {
-                region?.setControlPoint(1, {x: region?.controlPoints[1].x, y: value});
-            } else if (isX) {
-                region?.setControlPoint(0, {x: value, y: region?.controlPoints[0].y});
-            } else {
-                region?.setControlPoint(0, {x: region?.controlPoints[0].x, y: value});
-            }
-        } else if (wcsInfo) {
-            const value = target.value as string;
-            if (isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
-                if (finish) {
-                    const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
-                    region?.setControlPoint(1, finishPixelFromWCS);
-                } else {
-                    const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value});
-                    region?.setControlPoint(0, startPixelFromWCS);
+            return (value: number): boolean => {
+                if (!isFinite(value)) {
+                    return false;
                 }
-            } else if (!isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
-                if (finish) {
-                    const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
-                    region?.setControlPoint(1, finishPixelFromWCS);
+                if (isX && finish) {
+                    region?.setControlPoint(1, {x: value, y: region?.controlPoints[1].y});
+                } else if (finish) {
+                    region?.setControlPoint(1, {x: region?.controlPoints[1].x, y: value});
+                } else if (isX) {
+                    region?.setControlPoint(0, {x: value, y: region?.controlPoints[0].y});
                 } else {
-                    const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value});
-                    region?.setControlPoint(0, startPixelFromWCS);
+                    region?.setControlPoint(0, {x: region?.controlPoints[0].x, y: value});
                 }
-            } else {
-                event.currentTarget.value = finish ? (isX ? WCSFinish.x : WCSFinish.y) : isX ? WCSStart.x : WCSStart.y;
-            }
+                return true;
+            };
+        } else {
+            return (value: string): boolean => {
+                if (!wcsInfo) {
+                    return false;
+                }
+                if (isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
+                    if (finish) {
+                        const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, x: value});
+                        region?.setControlPoint(1, finishPixelFromWCS);
+                    } else {
+                        const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, x: value});
+                        region?.setControlPoint(0, startPixelFromWCS);
+                    }
+                    return true;
+                } else if (!isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
+                    if (finish) {
+                        const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
+                        region?.setControlPoint(1, finishPixelFromWCS);
+                    } else {
+                        const startPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSStart, y: value});
+                        region?.setControlPoint(0, startPixelFromWCS);
+                    }
+                    return true;
+                }
+                return false;
+            };
         }
     };
 
-    private coordinateInput = (region, wcsInfo, WCSStart, WCSFinish, finish: boolean, pixel: boolean) => {
-        const handleOnKeyDown = (isX: boolean) => {
-            return (event: React.KeyboardEvent<HTMLInputElement>) => {
-                if (event.type === "keydown" && event.key === KEYCODE_ENTER) {
-                    this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, isX, finish, pixel);
-                }
-            };
-        };
-
+    private coordinateInput = (WCSStart, WCSFinish, finish: boolean) => {
+        const region = this.props.region;
         return (
             <>
-                <SafeNumericInput
-                    selectAllOnFocus
-                    buttonPosition="none"
-                    value={pixel ? (finish ? region?.controlPoints[1].x : region?.controlPoints[0].x) : finish ? WCSFinish?.x : WCSStart?.x}
-                    onBlur={event => this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, true, finish, pixel)}
-                    onKeyDown={handleOnKeyDown(true)}
+                <CoordNumericInput
+                    coord={region.coordinate}
+                    inputType={InputType.XCoord}
+                    value={finish ? region?.controlPoints[1].x : region?.controlPoints[0].x}
+                    onChange={this.handleValueChange(WCSStart, WCSFinish, true, finish, true) as (val: number) => boolean}
+                    valueWcs={finish ? WCSFinish?.x : WCSStart?.x}
+                    onChangeWcs={this.handleValueChange(WCSStart, WCSFinish, true, finish, false) as (val: string) => boolean}
+                    wcsDisabled={!this.props.wcsInfo || !(finish ? WCSFinish : WCSStart)}
                 />
-                <SafeNumericInput
-                    selectAllOnFocus
-                    buttonPosition="none"
-                    value={pixel ? (finish ? region?.controlPoints[1].y : region?.controlPoints[0].y) : finish ? WCSFinish?.y : WCSStart?.y}
-                    onBlur={event => this.handleValueChange(event, region, wcsInfo, WCSStart, WCSFinish, false, finish, pixel)}
-                    onKeyDown={handleOnKeyDown(false)}
+                <CoordNumericInput
+                    coord={region.coordinate}
+                    inputType={InputType.YCoord}
+                    value={finish ? region?.controlPoints[1].y : region?.controlPoints[0].y}
+                    onChange={this.handleValueChange(WCSStart, WCSFinish, false, finish, true) as (val: number) => boolean}
+                    valueWcs={finish ? WCSFinish?.y : WCSStart?.y}
+                    onChangeWcs={this.handleValueChange(WCSStart, WCSFinish, false, finish, false) as (val: string) => boolean}
+                    wcsDisabled={!this.props.wcsInfo || !(finish ? WCSFinish : WCSStart)}
                 />
             </>
         );
@@ -131,12 +124,12 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                     </FormGroup>
                 )}
                 <FormGroup label={region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Start"} labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
-                    {region.coordinate === CoordinateMode.World && wcsInfo ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, false) : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, false, true)}
+                    {this.coordinateInput(WCSStart, WCSFinish, false)}
                     {wcsInfo ? <span className="info-string">{region.coordinate === CoordinateMode.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNRULER && (
                     <FormGroup label="Finish" labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
-                        {region.coordinate === CoordinateMode.World && wcsInfo ? this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, false) : this.coordinateInput(region, wcsInfo, WCSStart, WCSFinish, true, true)}
+                        {this.coordinateInput(WCSStart, WCSFinish, true)}
                         {wcsInfo ? (
                             <span className="info-string">{region.coordinate === CoordinateMode.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span>
                         ) : (
