@@ -45,7 +45,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
                 }
                 const value = isXCoordinate ? newPoint.x : newPoint.y;
                 const existingValue = isXCoordinate ? region.controlPoints[index].x : region.controlPoints[index].y;
-                
+
                 if (isFinite(value) && !closeTo(value, existingValue, PolygonRegionForm.REGION_PIXEL_EPS)) {
                     this.props.region.setControlPoint(index, newPoint);
                     return true;

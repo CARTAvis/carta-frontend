@@ -44,15 +44,7 @@ export class DistanceMeasuringDialog extends React.Component {
         this.setWCSMode(WCSMode);
     };
 
-    private static HandleValueChange = (
-        distanceMeasuringStore: DistanceMeasuringStore,
-        wcsInfo: AST.FrameSet,
-        WCSStart: WCSPoint2D,
-        WCSFinish: WCSPoint2D,
-        isX: boolean,
-        finish?: boolean,
-        pixel?: boolean
-    ) => {
+    private static HandleValueChange = (distanceMeasuringStore: DistanceMeasuringStore, wcsInfo: AST.FrameSet, WCSStart: WCSPoint2D, WCSFinish: WCSPoint2D, isX: boolean, finish?: boolean, pixel?: boolean) => {
         if (pixel) {
             return (value: number): boolean => {
                 if (!isFinite(value)) {
@@ -69,7 +61,7 @@ export class DistanceMeasuringDialog extends React.Component {
                 }
                 distanceMeasuringStore?.updateTransformedPos(AppStore.Instance.activeFrame.spatialTransform);
                 return true;
-            }
+            };
         } else {
             return (value: string): boolean => {
                 if (!wcsInfo) {
@@ -84,7 +76,7 @@ export class DistanceMeasuringDialog extends React.Component {
                         distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
                     }
                     distanceMeasuringStore?.updateTransformedPos(AppStore.Instance.activeFrame.spatialTransform);
-                    return true
+                    return true;
                 } else if (!isX && isWCSStringFormatValid(value, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
                     if (finish) {
                         const finishPixelFromWCS = getPixelValueFromWCS(wcsInfo, {...WCSFinish, y: value});
@@ -94,11 +86,11 @@ export class DistanceMeasuringDialog extends React.Component {
                         distanceMeasuringStore?.setStart(startPixelFromWCS.x, startPixelFromWCS.y);
                     }
                     distanceMeasuringStore?.updateTransformedPos(AppStore.Instance.activeFrame.spatialTransform);
-                    return true
+                    return true;
                 } else {
                     return false;
                 }
-            }
+            };
         }
     };
 
@@ -150,9 +142,7 @@ export class DistanceMeasuringDialog extends React.Component {
             title: `Distance Measurement (${frame?.filename})`
         };
 
-        const missingFrame = (
-            <NonIdealState icon={"error"} title={"Distance measurement tool is not enabled"} description={"Please enable distance measurement tool via the image view toolbar."} />
-        );
+        const missingFrame = <NonIdealState icon={"error"} title={"Distance measurement tool is not enabled"} description={"Please enable distance measurement tool via the image view toolbar."} />;
 
         const configurationPanel = (
             <div className="config-panel">
@@ -169,7 +159,7 @@ export class DistanceMeasuringDialog extends React.Component {
                 </FormGroup>
             </div>
         );
-        
+
         const stylingPanel = (
             <div className="styling-panel">
                 <FormGroup label="Color" inline={true}>
@@ -198,7 +188,9 @@ export class DistanceMeasuringDialog extends React.Component {
                             <Tab id={DistanceMeasuringDialogTabs.Configuration} title="Configuration" panel={configurationPanel} />
                             <Tab id={DistanceMeasuringDialogTabs.Styling} title="Styling" panel={stylingPanel} />
                         </Tabs>
-                    ) : missingFrame}
+                    ) : (
+                        missingFrame
+                    )}
                 </div>
             </DraggableDialogComponent>
         );
