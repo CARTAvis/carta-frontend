@@ -1,10 +1,19 @@
 .region-dialog {
     .bp3-dialog-body {
         .region-form {
-            .ann-text-input .bp3-input {
-                width: 255px;
-                height: 60px;
-                font-family: Arial, Helvetica, sans-serif;
+            .ann-text-input {
+                .bp3-form-content {
+                    max-width: calc(100% - 8em - 10px); 
+                }
+
+                .bp3-input {
+                    width: 255px;
+                    height: 60px;
+                    min-width: 125px;
+                    min-height: 30px;
+                    max-width: 100%;
+                    font-family: Arial, Helvetica, sans-serif;
+                }
             }
         }
     }
