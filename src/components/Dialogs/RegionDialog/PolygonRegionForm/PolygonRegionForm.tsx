@@ -12,8 +12,6 @@ import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {CoordinateMode, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
-import "./PolygonRegionForm.scss";
-
 const KEYCODE_ENTER = 13;
 
 @observer
@@ -165,7 +163,7 @@ export class PolygonRegionForm extends React.Component<{region: RegionStore; wcs
         });
 
         return (
-            <div className="form-section polygon-region-form">
+            <div className="region-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
                     <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>

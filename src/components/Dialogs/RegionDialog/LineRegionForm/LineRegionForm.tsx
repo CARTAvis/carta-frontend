@@ -12,8 +12,6 @@ import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {CoordinateMode, FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, length2D} from "utilities";
 
-import "./LineRegionForm.scss";
-
 const KEYCODE_ENTER = 13;
 
 @observer
@@ -531,7 +529,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
-            <div className="form-section line-region-form">
+            <div className="region-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
                     <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>

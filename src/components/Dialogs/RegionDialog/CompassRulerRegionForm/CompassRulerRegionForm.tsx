@@ -10,8 +10,6 @@ import {AppStore} from "stores";
 import {CompassAnnotationStore, CoordinateMode, RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
-import "./CompassRulerRegionForm.scss";
-
 const KEYCODE_ENTER = "Enter";
 
 @observer
@@ -110,7 +108,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         const WCSFinish = getFormattedWCSPoint(wcsInfo, region?.controlPoints[1]);
 
         return (
-            <div className="form-section compass-ruler-annotation-form">
+            <div className="region-form">
                 <FormGroup label="Annotation name" inline={true}>
                     <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>

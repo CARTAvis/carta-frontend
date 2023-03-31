@@ -2,9 +2,38 @@
     .bp3-dialog-body {
         user-select: none;
 
-        .form-section .bp3-label {
-            width: 8em;
-            text-align: right;
+        .region-form {
+            user-select: none;
+            
+            .bp3-label {
+                width: 8em;
+                text-align: right;
+            }
+
+            .bp3-form-group:first-child .bp3-input {
+                width: 255px;
+            }
+
+            .bp3-input {
+                width: 125px;
+            }
+
+            .bp3-form-content {
+                display: flex;
+                flex-wrap: wrap;
+                flex: 1;
+                gap: 0 5px;
+
+                .info-string {
+                    display: flex;
+                    align-items: center;
+                    flex-basis: 350px;
+                    margin-left: 5px;
+                    font-size: x-small;
+                    font-family: monospace;
+                    user-select: text;
+                }
+            }
         }
     }
 }

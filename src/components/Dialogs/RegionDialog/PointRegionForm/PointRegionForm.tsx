@@ -11,8 +11,6 @@ import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
 import {CoordinateMode, PointAnnotationStore, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
-import "./PointRegionForm.scss";
-
 const KEYCODE_ENTER = 13;
 
 @observer
@@ -151,7 +149,7 @@ export class PointRegionForm extends React.Component<{region: RegionStore; wcsIn
         const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
-            <div className="form-section point-region-form">
+            <div className="region-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
                     <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
