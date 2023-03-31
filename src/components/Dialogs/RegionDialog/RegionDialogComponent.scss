@@ -27,7 +27,8 @@
                 .info-string {
                     display: flex;
                     align-items: center;
-                    flex-basis: 350px;
+                    flex: 1 1 auto;
+                    min-width: 190px;
                     margin-left: 5px;
                     font-size: x-small;
                     font-family: monospace;

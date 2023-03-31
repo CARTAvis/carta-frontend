@@ -11,6 +11,8 @@ import {AppStore} from "stores";
 import {CoordinateMode, FrameStore, RegionStore, WCS_PRECISION} from "stores/Frame";
 import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, length2D} from "utilities";
 
+import "./LineRegionForm.scss";
+
 @observer
 export class LineRegionForm extends React.Component<{region: RegionStore; frame: FrameStore; wcsInfo: AST.FrameSet}> {
     @computed get startPoint(): Point2D {
@@ -398,7 +400,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
                 </FormGroup>
                 {this.props.frame?.hasSquarePixels ? (
                     <>
-                        <FormGroup label="Length" labelInfo={pxUnit} inline={true}>
+                        <FormGroup className="length-form" label="Length" labelInfo={pxUnit} inline={true}>
                             {lengthInput}
                             <span className="info-string">{lengthInfoString}</span>
                         </FormGroup>
