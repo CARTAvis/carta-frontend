@@ -605,7 +605,7 @@ export class RegionStore {
             this.regionApproximationMap.clear();
         }
 
-        if (this.regionType !== CARTA.RegionType.POINT) {
+        if (this.regionType !== CARTA.RegionType.POINT && this.regionType !== CARTA.RegionType.ANNPOINT) {
             try {
                 const ack = yield this.backendService.setRegion(this.fileId, -1, this);
                 console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
