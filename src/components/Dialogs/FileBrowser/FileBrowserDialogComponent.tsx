@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, BreadcrumbProps, Breadcrumbs, Button, ButtonGroup, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Position, TabId} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
@@ -26,6 +26,7 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable defaultHeight: number;
     @observable enableImageArithmetic: boolean = false;
     @observable imageArithmeticString: string = "";
+    @observable inputPathString: string = "";
     private readonly imageArithmeticInputRef: React.RefObject<HTMLInputElement>;
 
     constructor(props: any) {
@@ -666,9 +667,27 @@ export class FileBrowserDialogComponent extends React.Component {
                 <div className="file-path">
                     {this.pathItems && (
                         <React.Fragment>
-                            <Tooltip2 content={"Refresh current directory"}>
-                                <AnchorButton className="refresh-button" icon="repeat" onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)} minimal={true} />
-                            </Tooltip2>
+                            <ButtonGroup>
+                                <Tooltip2 content={"Refresh current directory"}>
+                                    <AnchorButton className="refresh-button" icon="repeat" onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)} minimal={true} />
+                                </Tooltip2>
+                                <Popover2
+                                    position="top"
+                                    content={
+                                        <InputGroup
+                                            className="directory-path-input"
+                                            autoFocus={true}
+                                            placeholder={"Input directory path with respect to the top level folder"}
+                                            onChange={this.handleInputPathChanged}
+                                            onKeyDown={ev => this.submitInputPath(ev)}
+                                        />
+                                    }
+                                >
+                                    <Tooltip2 content={"Input directory path"}>
+                                        <AnchorButton className="edit-path-button" icon="edit" minimal={true} onClick={() => this.resetInputPathString()}/>
+                                    </Tooltip2>
+                                </Popover2>
+                            </ButtonGroup>
                             <Breadcrumbs className="path-breadcrumbs" breadcrumbRenderer={this.renderBreadcrumb} items={this.pathItems} />
                         </React.Fragment>
                     )}
@@ -808,5 +827,27 @@ export class FileBrowserDialogComponent extends React.Component {
             }
         }
         return pathItems;
+    }
+
+    private handleInputPathChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
+        this.setInputPathString(ev.target.value);
+        //if (this.inputPathString !== "") {
+        //    this.handleBreadcrumbClicked(this.inputPathString)
+        //}
+    }
+
+    private submitInputPath = (keyEvent?) => {
+        if (keyEvent && keyEvent?.keyCode === 13 && this.inputPathString !== "") {
+            this.handleBreadcrumbClicked(this.inputPathString)
+        }
+    }
+
+
+    @action setInputPathString = (inputPathString: string) => {
+        this.inputPathString = inputPathString.replace("\b", "");
+    };
+
+    @action resetInputPathString = () => {
+        this.inputPathString = ""
     }
 }
