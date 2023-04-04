@@ -838,16 +838,15 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private submitInputPath = (keyEvent?) => {
         if (keyEvent && keyEvent?.keyCode === 13 && this.inputPathString !== "") {
-            this.handleBreadcrumbClicked(this.inputPathString)
+            this.handleBreadcrumbClicked(this.inputPathString);
         }
     }
-
 
     @action setInputPathString = (inputPathString: string) => {
         this.inputPathString = inputPathString.replace("\b", "");
     };
 
     @action resetInputPathString = () => {
-        this.inputPathString = ""
+        this.inputPathString = "";
     }
 }
