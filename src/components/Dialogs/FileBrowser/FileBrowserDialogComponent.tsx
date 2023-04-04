@@ -684,7 +684,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                     }
                                 >
                                     <Tooltip2 content={"Input directory path"}>
-                                        <AnchorButton className="edit-path-button" icon="edit" minimal={true} onClick={() => this.resetInputPathString()}/>
+                                        <AnchorButton className="edit-path-button" icon="edit" minimal={true} onClick={() => this.resetInputPathString()} />
                                     </Tooltip2>
                                 </Popover2>
                             </ButtonGroup>
@@ -834,13 +834,13 @@ export class FileBrowserDialogComponent extends React.Component {
         //if (this.inputPathString !== "") {
         //    this.handleBreadcrumbClicked(this.inputPathString)
         //}
-    }
+    };
 
     private submitInputPath = (keyEvent?) => {
         if (keyEvent && keyEvent?.keyCode === 13 && this.inputPathString !== "") {
             this.handleBreadcrumbClicked(this.inputPathString);
         }
-    }
+    };
 
     @action setInputPathString = (inputPathString: string) => {
         this.inputPathString = inputPathString.replace("\b", "");
@@ -848,5 +848,5 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @action resetInputPathString = () => {
         this.inputPathString = "";
-    }
+    };
 }
