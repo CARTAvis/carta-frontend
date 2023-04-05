@@ -841,6 +841,9 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @action setInputPathString = (inputPathString: string) => {
         this.inputPathString = inputPathString.replace("\b", "");
+        if (this.inputPathString.length === 1 && this.inputPathString === ".") {
+            this.inputPathString = "";
+        }
     };
 
     @action resetInputPathString = () => {
