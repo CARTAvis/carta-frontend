@@ -831,9 +831,6 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private handleInputPathChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
         this.setInputPathString(ev.target.value);
-        //if (this.inputPathString !== "") {
-        //    this.handleBreadcrumbClicked(this.inputPathString)
-        //}
     };
 
     private submitInputPath = (keyEvent?) => {
