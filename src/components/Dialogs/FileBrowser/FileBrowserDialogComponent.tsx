@@ -844,6 +844,9 @@ export class FileBrowserDialogComponent extends React.Component {
         if (this.inputPathString.length === 1 && this.inputPathString === ".") {
             this.inputPathString = "";
         }
+        if (this.inputPathString.length > 1 && this.inputPathString.slice(-1) === "/") {
+            this.inputPathString = this.inputPathString.slice(0, -1);
+        }
     };
 
     @action switchEditPathMode = () => {
