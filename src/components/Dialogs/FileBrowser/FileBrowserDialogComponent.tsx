@@ -683,6 +683,7 @@ export class FileBrowserDialogComponent extends React.Component {
                                     placeholder={"Input directory path with respect to the top level folder"}
                                     onChange={this.handleInputPathChanged}
                                     onKeyDown={ev => this.submitInputPath(ev)}
+                                    defaultValue={"/" + fileBrowserStore.getfileListByMode.directory}
                                 />
                             ) : (
                                 <Breadcrumbs className="path-breadcrumbs" breadcrumbRenderer={this.renderBreadcrumb} items={this.pathItems} />
