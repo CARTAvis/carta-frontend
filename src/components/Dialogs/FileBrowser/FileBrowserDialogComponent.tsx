@@ -27,6 +27,7 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable enableImageArithmetic: boolean = false;
     @observable imageArithmeticString: string = "";
     @observable inputPathString: string = "";
+    @observable enableEditPath: boolean = false;
     private readonly imageArithmeticInputRef: React.RefObject<HTMLInputElement>;
 
     constructor(props: any) {
@@ -671,24 +672,21 @@ export class FileBrowserDialogComponent extends React.Component {
                                 <Tooltip2 content={"Refresh current directory"}>
                                     <AnchorButton className="refresh-button" icon="repeat" onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)} minimal={true} />
                                 </Tooltip2>
-                                <Popover2
-                                    position="top"
-                                    content={
-                                        <InputGroup
-                                            className="directory-path-input"
-                                            autoFocus={true}
-                                            placeholder={"Input directory path with respect to the top level folder"}
-                                            onChange={this.handleInputPathChanged}
-                                            onKeyDown={ev => this.submitInputPath(ev)}
-                                        />
-                                    }
-                                >
-                                    <Tooltip2 content={"Input directory path"}>
-                                        <AnchorButton className="edit-path-button" icon="edit" minimal={true} onClick={() => this.resetInputPathString()} />
-                                    </Tooltip2>
-                                </Popover2>
+                                <Tooltip2 content={this.enableEditPath ? null : "Input directory path"}>
+                                    <AnchorButton className="edit-path-button" icon="edit" minimal={true} onClick={() => this.switchEditPathMode()} />
+                                </Tooltip2>
                             </ButtonGroup>
-                            <Breadcrumbs className="path-breadcrumbs" breadcrumbRenderer={this.renderBreadcrumb} items={this.pathItems} />
+                            {this.enableEditPath ? (
+                                <InputGroup
+                                    className="directory-path-input"
+                                    autoFocus={true}
+                                    placeholder={"Input directory path with respect to the top level folder"}
+                                    onChange={this.handleInputPathChanged}
+                                    onKeyDown={ev => this.submitInputPath(ev)}
+                                />
+                            ) : (
+                                <Breadcrumbs className="path-breadcrumbs" breadcrumbRenderer={this.renderBreadcrumb} items={this.pathItems} />
+                            )}
                         </React.Fragment>
                     )}
                 </div>
@@ -848,5 +846,9 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @action resetInputPathString = () => {
         this.inputPathString = "";
+    };
+
+    @action switchEditPathMode = () => {
+        this.enableEditPath = !this.enableEditPath;
     };
 }
