@@ -1,12 +1,14 @@
 import * as React from "react";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
-import {Chart, ChartArea, ChartDataset, ChartOptions, Plugin, Scale, Tick} from "chart.js";
+import {Chart, ChartArea, ChartDataset, ChartOptions, Legend, LinearScale, LineElement, LogarithmicScale, Plugin, PointElement, Scale, Tick} from "chart.js";
 import * as _ from "lodash";
 import tinycolor from "tinycolor2";
 
 import {PlotType} from "components/Shared";
 import {clamp, toExponential, toFixed} from "utilities";
+
+Chart.register(Legend, LinearScale, LineElement, LogarithmicScale, PointElement);
 
 export enum TickType {
     Automatic,
@@ -76,8 +78,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
     private afterChartLayout = (chart: Chart) => {
         if (this.props.isGroupSubPlot) {
-            var xScale = chart.scales["x-axis-0"];
-            var yScale = chart.scales["y-axis-0"];
+            var xScale = chart.scales["x"];
+            var yScale = chart.scales["y"];
             const currentWidth = chart.width;
 
             chart.chartArea.left = 85;
@@ -371,7 +373,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 }
             },
             scales: {
-                "x-axis-0": {
+                x: {
                     position: "bottom",
                     min: this.props.xMin,
                     max: this.props.xMax,
@@ -389,13 +391,15 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
                     },
                     grid: {
-                        drawBorder: false,
                         color: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor),
                         lineWidth: grid => (grid.index === 0 && this.props.zeroLineWidth ? this.props.zeroLineWidth : 1),
                         tickLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
+                    },
+                    border: {
+                        display: false
                     }
                 },
-                "x-axis-1": {
+                "x-secondary": {
                     position: "top",
                     min: this.props.xMin,
                     max: this.props.xMax,
@@ -410,7 +414,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         callback: this.props.topAxisTickFormatter ? this.props.topAxisTickFormatter : PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
                     }
                 },
-                "y-axis-0": {
+                y: {
                     min: this.props.yMin,
                     max: this.props.yMax,
                     title: {
@@ -425,9 +429,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY)
                     },
                     grid: {
-                        drawBorder: false,
                         color: grid => (grid.index === 0 && this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor),
                         lineWidth: grid => (grid.index === 0 && this.props.zeroLineWidth ? this.props.zeroLineWidth : 1)
+                    },
+                    border: {
+                        display: false
                     }
                 }
             },
@@ -438,16 +444,16 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         };
 
         if (this.props.logY) {
-            plotOptions.scales["y-axis-0"].afterBuildTicks = this.filterYLogTicks;
-            plotOptions.scales["y-axis-0"].type = "logarithmic";
+            plotOptions.scales["y"].afterBuildTicks = this.filterYLogTicks;
+            plotOptions.scales["y"].type = "logarithmic";
         } else {
-            plotOptions.scales["y-axis-0"].afterBuildTicks = this.filterYLinearTicks;
-            plotOptions.scales["y-axis-0"].type = "linear";
+            plotOptions.scales["y"].afterBuildTicks = this.filterYLinearTicks;
+            plotOptions.scales["y"].type = "linear";
         }
 
         let plotData: ChartDataset<"scatter">[] = [];
         if (this.props.data?.length) {
-            const datasetConfig: ChartDataset = {
+            const datasetConfig: ChartDataset<"scatter"> = {
                 label: "LineGraph",
                 type: "scatter",
                 data: this.props.logY ? PlotContainerComponent.ConvertLogData(this.props.data) : this.props.data,
@@ -456,11 +462,13 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 order: this.props.order ? this.props.order : 0
             };
             if (this.props.plotType === PlotType.POINTS) {
-                datasetConfig.showLine = false;
-                datasetConfig.borderWidth = 0;
-                datasetConfig.borderColor = "rgba(0, 0, 0, 0)";
                 datasetConfig.pointRadius = this.props.pointRadius ? this.props.pointRadius : 1;
                 datasetConfig.pointBackgroundColor = lineColor;
+
+                // chartjs bug workaround: plot 0 width lines to avoid previous lines remaining in the graph
+                datasetConfig.showLine = true;
+                datasetConfig.borderWidth = 0;
+                datasetConfig.borderColor = "rgba(0, 0, 0, 0)";
             } else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
@@ -502,7 +510,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 if (currentOpacity < 1.0) {
                     currentLineColor = tinycolor(currentLineColor).setAlpha(currentOpacity).toRgbString();
                 }
-                const multiPlotDatasetConfig: ChartDataset = {
+                const multiPlotDatasetConfig: ChartDataset<"scatter"> = {
                     type: "scatter",
                     label: key,
                     data: this.props.logY ? PlotContainerComponent.ConvertLogData(props.data) : props.data,
@@ -533,10 +541,13 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 let currentLineWidth = props.borderWidth ? props.borderWidth : this.props.borderWidth;
 
                 if (props.type === PlotType.POINTS) {
-                    multiPlotDatasetConfig.showLine = false;
                     multiPlotDatasetConfig.pointStyle = "circle";
                     multiPlotDatasetConfig.pointRadius = currentPointRadius ? currentPointRadius : 1;
+
+                    // chartjs bug workaround: plot 0 width lines to avoid previous lines remaining in the graph
+                    multiPlotDatasetConfig.showLine = true;
                     multiPlotDatasetConfig.borderWidth = 0;
+                    multiPlotDatasetConfig.borderColor = "rgba(0, 0, 0, 0)";
                 } else if (props.type === PlotType.LINES || props.type === PlotType.STEPS) {
                     multiPlotDatasetConfig.showLine = true;
                     multiPlotDatasetConfig.pointRadius = 0.5;
