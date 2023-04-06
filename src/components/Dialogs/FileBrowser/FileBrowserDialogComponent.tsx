@@ -835,6 +835,7 @@ export class FileBrowserDialogComponent extends React.Component {
     private submitInputPath = (keyEvent?) => {
         if (keyEvent && keyEvent?.keyCode === 13 && this.inputPathString !== "") {
             this.handleBreadcrumbClicked(this.inputPathString);
+            this.switchEditPathMode();
         }
     };
 
@@ -845,11 +846,10 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
-    @action resetInputPathString = () => {
-        this.inputPathString = "";
-    };
-
     @action switchEditPathMode = () => {
+        const appStore = AppStore.Instance;
+        const fileBrowserStore = appStore.fileBrowserStore;
+        this.inputPathString = "/" + fileBrowserStore.getfileListByMode.directory;
         this.enableEditPath = !this.enableEditPath;
     };
 }
