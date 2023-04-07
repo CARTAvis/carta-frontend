@@ -1,0 +1,41 @@
+diff --git a/node_modules/react-scripts/config/webpack.config.js b/node_modules/react-scripts/config/webpack.config.js
+index e465d8e..62552b7 100644
+--- a/node_modules/react-scripts/config/webpack.config.js
++++ b/node_modules/react-scripts/config/webpack.config.js
+@@ -345,6 +345,24 @@ module.exports = function (webpackEnv) {
+           babelRuntimeRegenerator,
+         ]),
+       ],
++      fallback: {
++        // the packages need to be added as carta devDependencies
++        fs: require.resolve('fs-extra'),
++        assert: require.resolve('assert'),
++        buffer: require.resolve('buffer'),
++        constants: require.resolve('constants-browserify'),
++        crypto: require.resolve('crypto-browserify'),
++        path: require.resolve('path-browserify'),
++        stream: require.resolve('stream-browserify'),
++        util: require.resolve('util')
++      }
++    },
++    // optimization in webpack v5 does not allow editting files in node_modules directly
++    // unless we opt-out of this optimization with snapshot.managedPaths
++    snapshot: {
++      managedPaths: [
++        /^(.+?[\\/]node_modules[\\/](?!(carta-protobuf|ast_wrapper|carta_computation|gsl_wrapper|zfp_wrapper))(@.+?[\\/])?.+?)[\\/]/,
++      ],
+     },
+     module: {
+       strictExportPresence: true,
+@@ -361,6 +379,11 @@ module.exports = function (webpackEnv) {
+           // match the requirements. When no loader matches it will fall
+           // back to the "file" loader at the end of the loader list.
+           oneOf: [
++            // load glsl files as strings
++            {
++              test: /\.glsl$/,
++              type: 'asset/source',
++            },
+             // TODO: Merge this config once `image/avif` is in the mime-db
+             // https://github.com/jshttp/mime-db
+             {
