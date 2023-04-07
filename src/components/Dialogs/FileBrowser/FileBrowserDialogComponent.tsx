@@ -560,7 +560,9 @@ export class FileBrowserDialogComponent extends React.Component {
                     />
                 );
             } else {
-                return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftElement={inputTypeMenu} rightElement={filterTypeMenu} spellCheck={false} />;
+                return (
+                    <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftElement={inputTypeMenu} rightElement={filterTypeMenu} spellCheck={false} />
+                );
             }
         } else {
             return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftIcon="search" rightElement={filterTypeMenu} spellCheck={false} />;
