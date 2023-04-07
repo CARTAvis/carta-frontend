@@ -542,20 +542,20 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private exportSubPlotImage(visible: boolean) {
         const scatterChart = this.plotRef;
-        scatterChart.config["_config"].options.scales["x-axis-0"].ticks.display = visible;
+        scatterChart.config["_config"].options.scales["x"].ticks.display = visible;
         let tickMarkLength = 10;
         if (!visible) {
             tickMarkLength = 0;
         }
-        scatterChart.config["_config"].options.scales["x-axis-0"].grid.tickLength = tickMarkLength;
-        scatterChart.config["_config"].options.scales["x-axis-0"].title.display = visible;
+        scatterChart.config["_config"].options.scales["x"].grid.tickLength = tickMarkLength;
+        scatterChart.config["_config"].options.scales["x"].title.display = visible;
         scatterChart.update();
     }
 
     private showPlotxAxes() {
         const scatterChart = this.plotRef;
         if (this.props.isGroupSubPlot === true) {
-            if (scatterChart && scatterChart.config["_config"].options.scales["x-axis-0"].ticks.display === false) {
+            if (scatterChart && scatterChart.config["_config"].options.scales["x"].ticks.display === false) {
                 return true;
             }
         }
