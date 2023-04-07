@@ -10,7 +10,11 @@
     }
 
     .refresh-button {
-        margin-right: 10px;
+        margin-right: 0px;
+    }
+
+    .edit-path-button {
+        margin-right: 7px;
     }
 
     .bp3-dialog-body {
@@ -46,7 +50,6 @@
     li::after {
         margin: 0 2px !important;
     }
-    margin-left: 7px;
 }
 
 .folder-breadcrumb {
