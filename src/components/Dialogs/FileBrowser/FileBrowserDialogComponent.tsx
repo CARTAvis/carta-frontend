@@ -673,7 +673,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         <React.Fragment>
                             <ButtonGroup>
                                 <Tooltip2 content={"Refresh current directory"}>
-                                    <AnchorButton className="refresh-button" icon="repeat" onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)} minimal={true} />
+                                    <AnchorButton icon="repeat" onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)} minimal={true} />
                                 </Tooltip2>
                                 <Tooltip2 content={"Input directory path"} disabled={this.enableEditPath}>
                                     <AnchorButton className="edit-path-button" icon="edit" minimal={true} onClick={this.switchEditPathMode} />
