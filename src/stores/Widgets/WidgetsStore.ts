@@ -1522,6 +1522,16 @@ export class WidgetsStore {
                     associatedFloatingSettingsId = key;
                 }
             });
+
+            const layoutStore = LayoutStore.Instance;
+            if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
+                const matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === associatedFloatingSettingsId);
+                if (matchingComponents.length) {
+                    console.log(matchingComponents[0]);
+                    matchingComponents[0].remove();
+                }
+            }
+
             if (associatedFloatingSettingsId) {
                 this.removeFloatingWidget(associatedFloatingSettingsId, true);
                 this.floatingSettingsWidgets.delete(associatedFloatingSettingsId);

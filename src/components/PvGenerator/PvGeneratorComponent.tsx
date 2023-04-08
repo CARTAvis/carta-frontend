@@ -38,7 +38,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         let value: number;
         let unit: string;
         if (bitValue >= 1e9) {
-            value = parseFloat(toFixed(bitValue / 1e9, 0));
+            value = parseFloat(toFixed(bitValue / 1e9, 2));
             unit = "GB";
         } else if (bitValue >= 1e6) {
             value = parseFloat(toFixed(bitValue / 1e6, 2));
@@ -312,7 +312,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         <br />
                         1. Line region is selected.
                         <br />
-                        2. Preview cube size is less than the threshold.
+                        2. Preview cube size is less than the threshold ({`${PreferenceStore.Instance.pvPreivewCubeSizeLimit} ${PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit}`}).
                     </small>
                 </i>
             </span>
@@ -335,7 +335,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 <FormGroup
                     className="label-info-group"
                     inline={true}
-                    label="Region"
+                    label="PV cut"
                     labelInfo={
                         <span className="label-info" title={regionInfo}>
                             {regionInfo ? `(${regionInfo})` : ""}
@@ -383,11 +383,11 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     />
                 </FormGroup>
 
-                <FormGroup className="label-info-group" inline={true} label="Preview Region">
+                <FormGroup className="label-info-group" inline={true} label="Preview region">
                     <HTMLSelect options={this.widgetStore.previewRegionOptions} onChange={this.handlePreviewRegionChanged} />
                 </FormGroup>
 
-                <FormGroup className="label-info-group" inline={true} label="Preview Rebin" labelInfo={`(px)`}>
+                <FormGroup className="label-info-group" inline={true} label="Preview rebin" labelInfo={`(px)`}>
                     <div className="rebin-select">
                         <FormGroup inline={true} label={"XY"}>
                             <SafeNumericInput
@@ -410,8 +410,8 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     </div>
                 </FormGroup>
                 <div className="cube-size-button-group">
-                    <FormGroup className="cube-size-group" inline label="Preview Cube Size" labelInfo={this.estimatedCubeSize ? `(${this.estimatedCubeSize.unit})` : ""} disabled={!this.estimatedCubeSize}>
-                        <label className="cube-size">{`${this.estimatedCubeSize?.value ?? ""}`}</label>
+                    <FormGroup className="cube-size-group" inline label="Preview cube size" labelInfo={this.estimatedCubeSize ? `(${this.estimatedCubeSize.unit})` : ""} disabled={!this.estimatedCubeSize}>
+                        <label className="cube-size" style={{color: this.isCubeSizeBelowLimit ? "" : "red"}}>{`${this.estimatedCubeSize?.value ?? ""}`}</label>
                     </FormGroup>
                     <div className="generate-button">
                         <div>

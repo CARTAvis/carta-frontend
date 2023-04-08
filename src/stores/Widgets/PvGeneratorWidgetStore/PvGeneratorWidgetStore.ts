@@ -6,7 +6,7 @@ import {SpectralSystem} from "models";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
-import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export enum PVAxis {
     SPATIAL = "Spatial",
@@ -175,6 +175,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.width = 3;
         this.reverse = false;
         this.keep = false;
+        this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
         reaction(
             () => this.effectiveFrame?.channelValueBounds,
             channelValueBounds => {

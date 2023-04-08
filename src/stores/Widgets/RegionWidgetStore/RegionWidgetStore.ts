@@ -1,4 +1,5 @@
 import {IOptionProps} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
 import {AppStore} from "stores";
@@ -64,9 +65,24 @@ export class RegionWidgetStore {
     @computed get effectiveRegionId(): number {
         if (this.effectiveFrame) {
             const regionId = this.regionIdMap.get(this.fileId);
-            if (regionId !== RegionId.NONE && regionId !== undefined) {
+            if (regionId !== RegionId.ACTIVE && regionId !== RegionId.NONE && regionId !== undefined) {
                 return regionId;
+            } else if (regionId === RegionId.NONE) {
+                return null;
             } else {
+                const selectedRegion = this.effectiveFrame.regionSet.selectedRegion;
+                if (selectedRegion) {
+                    switch (this.type) {
+                        case RegionsType.CLOSED:
+                            return selectedRegion.isClosedRegion ? selectedRegion.regionId : this.defaultRegionId();
+                        case RegionsType.CLOSED_AND_POINT:
+                        case RegionsType.POINT_AND_LINES:
+                            return selectedRegion.regionId;
+                        case RegionsType.LINE:
+                        default:
+                            return selectedRegion.regionType === CARTA.RegionType.LINE ? selectedRegion.regionId : this.defaultRegionId();
+                    }
+                }
                 return null;
             }
         }
