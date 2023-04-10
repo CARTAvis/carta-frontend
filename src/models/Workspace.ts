@@ -70,6 +70,7 @@ export interface WorkspaceRegion {
     color?: string;
     lineWidth?: number;
     dashes?: number[];
+    locked?: boolean;
 }
 
 export interface WorkspaceFile {

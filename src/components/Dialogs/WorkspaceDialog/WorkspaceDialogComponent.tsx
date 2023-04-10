@@ -113,6 +113,17 @@ export const WorkspaceDialogComponent = observer(() => {
         saveWorkspace(workspaceName);
     };
 
+    const handleDeleteClicked = async () => {
+        if (!selectedWorkspace) {
+            return;
+        }
+        const confirmed = await appStore.alertStore.showInteractiveAlert("Are you sure you want to delete this workspace?");
+        if (confirmed) {
+            await appStore.deleteWorkspace(selectedWorkspace.name);
+            await fetchWorkspaces();
+        }
+    };
+
     const handleOpenClicked = () => {
         if (!workspaceName || !workspaceList.find(item => item.name === workspaceName)) {
             return;
@@ -261,6 +272,7 @@ export const WorkspaceDialogComponent = observer(() => {
                     ) : (
                         <AnchorButton intent={Intent.PRIMARY} onClick={handleOpenClicked} text="Open" disabled={isFetching || !selectedRegions?.length} />
                     )}
+                    <AnchorButton intent={Intent.WARNING} onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !selectedWorkspace} />
                     <Button intent={Intent.NONE} text="Close" onClick={handleCloseClicked} />
                 </div>
             </div>

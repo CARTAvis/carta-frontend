@@ -2140,6 +2140,7 @@ export class AppStore {
                         for (const regionInfo of fileInfo.regionsSet.regions) {
                             const region = frame.regionSet.addExistingRegion(regionInfo.points, regionInfo.rotation, regionInfo.type, regionInfo.id, regionInfo.name, regionInfo.color, regionInfo.lineWidth, regionInfo.dashes, false);
                             if (region) {
+                                region.setLocked(regionInfo.locked ?? false);
                                 regionIdMap.set(regionInfo.id, region.regionId);
                                 if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
                                     frame.regionSet.selectRegion(region);
@@ -2218,6 +2219,7 @@ export class AppStore {
                         name: region.name,
                         color: region.color,
                         lineWidth: region.lineWidth,
+                        locked: region.locked,
                         dashes: region.dashLength ? [region.dashLength] : []
                     });
                 }
@@ -2273,6 +2275,19 @@ export class AppStore {
         }
 
         return this.apiService.setWorkspace(name, workspace);
+    }
+
+    async deleteWorkspace(name: string) {
+        try {
+            const success = await this.apiService.clearWorkspace(name);
+            if (success) {
+                AppToaster.show(SuccessToast("console", `Workspace ${name} deleted successfully.`, SnippetStore.ToasterTimeout));
+                return;
+            }
+        } catch (err) {
+            console.error(err);
+        }
+        AlertStore.Instance.showAlert(`Deleting workspace ${name} failed!`);
     }
 
     @action closeWorkspace = () => {
