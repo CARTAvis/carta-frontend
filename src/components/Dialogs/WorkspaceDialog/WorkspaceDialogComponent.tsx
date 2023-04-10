@@ -233,7 +233,7 @@ export const WorkspaceDialogComponent = observer(() => {
                 enableGhostCells={false}
                 enableMultipleSelection={false}
                 enableRowResizing={false}
-                columnWidths={[260, 120]}
+                columnWidths={[200, 120]}
                 defaultRowHeight={22}
                 enableRowHeader={false}
                 numRows={workspaceList?.length}
@@ -246,7 +246,7 @@ export const WorkspaceDialogComponent = observer(() => {
     }
 
     return (
-        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_WORKSPACE} defaultWidth={950} defaultHeight={750} minWidth={950} minHeight={750} enableResizing={true}>
+        <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_WORKSPACE} defaultWidth={750} defaultHeight={550} minWidth={750} minHeight={550} enableResizing={true}>
             <div className={Classes.DIALOG_BODY}>
                 <div className="workspace-container">
                     <div className="workspace-table-container">{tableContent}</div>

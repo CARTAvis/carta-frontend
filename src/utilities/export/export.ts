@@ -35,21 +35,15 @@ export function exportTxtFile(fileName: string, content: string) {
     return null;
 }
 
-export async function exportScreenshot(maxWidth = 512, format = "image/jpeg", quality = 0.85) {
+export async function exportScreenshot(imageOnly = true, maxWidth = 512, format = "image/jpeg", quality = 0.85) {
     try {
-        const canvas = await html2canvas(document.body, {
-            allowTaint: true,
-            foreignObjectRendering: true,
-            ignoreElements: el => {
-                // Dont' render out file browser or workspace dialogs
-                const className = el?.className;
-                if (typeof className === "string") {
-                    return className.includes("workspace-dialog") || className.includes("file-browser-dialog");
-                }
-                return false;
-            }
-        });
+        // Screenshot of
+        const element = (imageOnly ? document.getElementsByClassName("image-view-div")?.[0] : document.body) as HTMLElement;
+        if (!element) {
+            return false;
+        }
 
+        const canvas = await html2canvas(element);
         const thumbnailCanvas: HTMLCanvasElement = document.createElement("canvas");
         let width: number;
         let height: number;
