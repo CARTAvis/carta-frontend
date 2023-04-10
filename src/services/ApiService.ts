@@ -440,7 +440,7 @@ export class ApiService {
     };
 
     public getSnippets = async () => {
-        let savedSnippets: {[name: string]: any};
+        let savedSnippets: {[name: string]: Snippet};
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/snippets`;
