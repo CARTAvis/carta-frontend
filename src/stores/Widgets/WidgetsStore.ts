@@ -1527,7 +1527,6 @@ export class WidgetsStore {
             if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
                 const matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === associatedFloatingSettingsId);
                 if (matchingComponents.length) {
-                    console.log(matchingComponents[0]);
                     matchingComponents[0].remove();
                 }
             }
