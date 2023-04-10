@@ -12,7 +12,7 @@ import {AnimationMode, AnimatorStore, AppStore, DefaultWidgetConfig, HelpType, P
 import "./AnimatorComponent.scss";
 
 enum NumericInputType {
-    FrameRate = "Frame Rate",
+    FrameRate = "Frame rate",
     Step = "Step"
 }
 
@@ -244,7 +244,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const channelTick = numChannels > 10 ? channelTickPre : Array.from(Array(numChannels).keys());
             channelSlider = (
                 <div className="animator-slider">
-                    <Radio value={AnimationMode.CHANNEL} disabled={appStore.animatorStore.animationActive} checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL} onChange={this.onAnimationModeChanged} label="Channel" />
+                    <Radio
+                        value={AnimationMode.CHANNEL}
+                        disabled={appStore.animatorStore.animationActive}
+                        checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL}
+                        onChange={this.onAnimationModeChanged}
+                        label={activeFrame.channelType}
+                    />
                     {hideSliders && <SafeNumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} stepSize={1} onValueChange={this.onChannelChanged} fill={true} disabled={appStore.animatorStore.animationActive} />}
                     {!hideSliders && (
                         <React.Fragment>
@@ -260,7 +266,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                                 disabled={appStore.animatorStore.animationActive}
                             />
                             <div className="slider-info">
-                                <pre>{activeFrame.simpleSpectralInfo}</pre>
+                                <pre>{activeFrame.depthAxisInfo}</pre>
                             </div>
                         </React.Fragment>
                     )}
@@ -331,15 +337,15 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 className={playbackModeClass}
                 content={
                     <Menu>
-                        <MenuItem icon="arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.FORWARD)} />
-                        <MenuItem icon="arrow-left" text="Play Backwards" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.BACKWARD)} />
+                        <MenuItem icon="arrow-right" text="Play forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.FORWARD)} />
+                        <MenuItem icon="arrow-left" text="Play backwards" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => (appStore.animatorStore.playMode = PlayMode.BACKWARD)} />
                         <MenuItem icon="swap-horizontal" text="Bouncing" active={appStore.animatorStore.playMode === PlayMode.BOUNCING} onClick={() => (appStore.animatorStore.playMode = PlayMode.BOUNCING)} />
                         <MenuItem icon="exchange" text="Blink" active={appStore.animatorStore.playMode === PlayMode.BLINK} onClick={() => (appStore.animatorStore.playMode = PlayMode.BLINK)} />
                     </Menu>
                 }
                 position={Position.TOP}
             >
-                <Tooltip2 content="Playback Mode" position={Position.TOP}>
+                <Tooltip2 content="Playback mode" position={Position.TOP}>
                     <AnchorButton icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationActive}>
                         {!iconOnly && "Mode"}
                     </AnchorButton>

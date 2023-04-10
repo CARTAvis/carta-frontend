@@ -6,15 +6,16 @@ import classNames from "classnames";
 import {action, autorun, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {AutoColorPickerComponent, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
+import {AutoColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {ImagePanelMode} from "models";
 import {AppStore, BeamType, DefaultWidgetConfig, HelpType, LabelType, NUMBER_FORMAT_LABEL, NumberFormatType, PreferenceKeys, SystemType, WidgetProps} from "stores";
-import {ColorbarStore} from "stores/Frame";
-import {SWATCH_COLORS} from "utilities";
+import {ColorbarStore, CoordinateMode} from "stores/Frame";
+import {SWATCH_COLORS, toFixed} from "utilities";
 
 import "./ImageViewSettingsPanelComponent.scss";
 
 enum ImageViewSettingsPanelTabs {
+    PAN_AND_ZOOM = "Pan and Zoom",
     GLOBAL = "Global",
     TITLE = "Title",
     TICKS = "Ticks",
@@ -69,10 +70,15 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 
 @observer
 export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps> {
-    @observable selectedTab: TabId = ImageViewSettingsPanelTabs.GLOBAL;
+    @observable selectedTab: TabId = ImageViewSettingsPanelTabs.PAN_AND_ZOOM;
+    @observable panAndZoomCoord: CoordinateMode = CoordinateMode.World;
 
     @action private setSelectedTab = (tab: TabId) => {
         this.selectedTab = tab;
+    };
+
+    @action private setPanAndZoomCoord = (coord: CoordinateMode) => {
+        this.panAndZoomCoord = coord;
     };
 
     constructor(props: any) {
@@ -93,15 +99,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         }
 
         return (
-            <FontSelect
-                activeItem={currentFont}
-                itemRenderer={renderFont}
-                items={astFonts}
-                disabled={!visible}
-                filterable={false}
-                popoverProps={{minimal: true, placement: "bottom", popoverClassName: "fontselect"}}
-                onItemSelect={font => fontSetter(font.id)}
-            >
+            <FontSelect activeItem={currentFont} itemRenderer={renderFont} items={astFonts} disabled={!visible} filterable={false} popoverProps={{minimal: true, popoverClassName: "fontselect"}} onItemSelect={font => fontSetter(font.id)}>
                 <Button text={<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>} disabled={!visible} rightIcon="double-caret-vertical" />
             </FontSelect>
         );
@@ -112,8 +110,8 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             id: "image-view-floating-settings",
             type: "floating-settings",
             minWidth: 280,
-            minHeight: 225,
-            defaultWidth: 650,
+            minHeight: 400,
+            defaultWidth: 660,
             defaultHeight: 420,
             title: "image-view-settings",
             isCloseable: true,
@@ -144,6 +142,71 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const disabledIfInterior = interior && "Does not apply to interior labelling.";
         const disabledIfExterior = !interior && "Does not apply to exterior labelling.";
         const disabledIfNoWcs = !global.validWcs && "This image has no valid WCS data.";
+
+        const frame = appStore.activeFrame;
+        const isPVImage = frame?.isPVImage;
+
+        const getFovInfoString = (value: number, valueWcs: string) => {
+            return this.panAndZoomCoord === CoordinateMode.Image ? `WCS: ${valueWcs}` : `Image: ${toFixed(value, 3)} px`;
+        };
+        const fovLabelInfo = this.panAndZoomCoord === CoordinateMode.Image ? "(px)" : "";
+        const panAndZoomPanel = (
+            <div className="panel-pan-and-zoom">
+                <FormGroup inline={true} label="Coordinate">
+                    <CoordinateComponent selectedValue={this.panAndZoomCoord} onChange={this.setPanAndZoomCoord} />
+                </FormGroup>
+                <FormGroup inline={true} label="Center (X)" labelInfo={fovLabelInfo}>
+                    <CoordNumericInput
+                        coord={this.panAndZoomCoord}
+                        inputType={InputType.XCoord}
+                        value={frame?.center?.x}
+                        onChange={val => frame?.setCenter(val, frame?.center?.y)}
+                        valueWcs={frame?.centerWCS?.x}
+                        onChangeWcs={val => frame?.setCenterWcs(val, frame?.centerWCS?.y)}
+                        wcsDisabled={isPVImage}
+                    />
+                    <span className="info-string">{getFovInfoString(frame?.center?.x, frame?.centerWCS?.x)}</span>
+                </FormGroup>
+                <FormGroup inline={true} label="Center (Y)" labelInfo={fovLabelInfo}>
+                    <CoordNumericInput
+                        coord={this.panAndZoomCoord}
+                        inputType={InputType.YCoord}
+                        value={frame?.center?.y}
+                        onChange={val => frame?.setCenter(frame?.center?.x, val)}
+                        valueWcs={frame?.centerWCS?.y}
+                        onChangeWcs={val => frame?.setCenterWcs(frame?.centerWCS?.x, val)}
+                        wcsDisabled={isPVImage}
+                    />
+                    <span className="info-string">{getFovInfoString(frame?.center?.y, frame?.centerWCS?.y)}</span>
+                </FormGroup>
+                <FormGroup inline={true} label="Size (X)" labelInfo={fovLabelInfo}>
+                    <CoordNumericInput
+                        coord={this.panAndZoomCoord}
+                        inputType={InputType.Size}
+                        value={frame?.fovSize?.x}
+                        onChange={frame?.zoomToSizeX}
+                        valueWcs={frame?.fovSizeWCS?.x}
+                        onChangeWcs={frame?.zoomToSizeXWcs}
+                        wcsDisabled={isPVImage}
+                        customPlaceholder="Width"
+                    />
+                    <span className="info-string">{getFovInfoString(frame?.fovSize?.x, frame?.fovSizeWCS?.x)}</span>
+                </FormGroup>
+                <FormGroup inline={true} label="Size (Y)" labelInfo={fovLabelInfo}>
+                    <CoordNumericInput
+                        coord={this.panAndZoomCoord}
+                        inputType={InputType.Size}
+                        value={frame?.fovSize?.y}
+                        onChange={frame?.zoomToSizeY}
+                        valueWcs={frame?.fovSizeWCS?.y}
+                        onChangeWcs={frame?.zoomToSizeYWcs}
+                        wcsDisabled={isPVImage}
+                        customPlaceholder="Height"
+                    />
+                    <span className="info-string">{getFovInfoString(frame?.fovSize?.y, frame?.fovSizeWCS?.y)}</span>
+                </FormGroup>
+            </div>
+        );
 
         const globalPanel = (
             <div className="panel-container">
@@ -408,10 +471,10 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <Switch checked={labels.customText} disabled={!labels.visible} onChange={ev => labels.setCustomText(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={labels.customText}>
-                    <FormGroup inline={true} label="Label Text (X)" disabled={!labels.visible}>
+                    <FormGroup inline={true} label="Label text (X)" disabled={!labels.visible}>
                         <InputGroup disabled={!labels.visible} value={labels.customLabelX} placeholder="Enter label text" onChange={ev => labels.setCustomLabelX(ev.currentTarget.value)} />
                     </FormGroup>
-                    <FormGroup inline={true} label="Label Text (Y)" disabled={!labels.visible}>
+                    <FormGroup inline={true} label="Label text (Y)" disabled={!labels.visible}>
                         <InputGroup disabled={!labels.visible} value={labels.customLabelY} placeholder="Enter label text" onChange={ev => labels.setCustomLabelY(ev.currentTarget.value)} />
                     </FormGroup>
                 </Collapse>
@@ -427,7 +490,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         );
 
         const colorbarPanel = (
-            <div className="panel-container">
+            <div className="panel-colorbar">
                 <FormGroup inline={true} label="Visible">
                     <Switch checked={colorbar.visible} onChange={ev => colorbar.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
@@ -436,9 +499,9 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <FormGroup inline={true} label="Position" disabled={!colorbar.visible}>
                     <HTMLSelect value={colorbar.position} disabled={!colorbar.visible} onChange={ev => colorbar.setPosition(ev.currentTarget.value)}>
-                        <option value={"right"}>right</option>
-                        <option value={"top"}>top</option>
-                        <option value={"bottom"}>bottom</option>
+                        <option value={"right"}>Right</option>
+                        <option value={"top"}>Top</option>
+                        <option value={"bottom"}>Bottom</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!colorbar.visible}>
@@ -687,8 +750,6 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
             </div>
         ) : null;
 
-        const frame = appStore.activeFrame;
-        const isPVImage = frame?.isPVImage;
         const spectralPanel = isPVImage ? (
             <div className="panel-container">
                 <p>For spatial-spectral image</p>
@@ -703,6 +764,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         return (
             <div className={className}>
                 <Tabs id="imageViewSettingsTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
+                    <Tab id={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} title={ImageViewSettingsPanelTabs.PAN_AND_ZOOM} panel={panAndZoomPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.GLOBAL} title={ImageViewSettingsPanelTabs.GLOBAL} panel={globalPanel} />
                     <Tab id={ImageViewSettingsPanelTabs.TITLE} title={ImageViewSettingsPanelTabs.TITLE} panel={titlePanel} />
                     <Tab id={ImageViewSettingsPanelTabs.TICKS} title={ImageViewSettingsPanelTabs.TICKS} panel={ticksPanel} />

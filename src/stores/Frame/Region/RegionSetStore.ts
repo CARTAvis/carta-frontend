@@ -5,7 +5,7 @@ import {action, computed, makeObservable, observable} from "mobx";
 import {Point2D, Transform2D} from "models";
 import {BackendService} from "services";
 import {PreferenceStore} from "stores";
-import {CURSOR_REGION_ID, FrameStore, RegionStore} from "stores/Frame";
+import {CompassAnnotationStore, CURSOR_REGION_ID, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore, VectorAnnotationStore} from "stores/Frame";
 import {isAstBadPoint, scale2D, transformPoint} from "utilities";
 
 export enum RegionMode {
@@ -27,6 +27,7 @@ export class RegionSetStore {
     @observable opacity: number = 1;
     @observable locked: boolean = false;
     @observable isHoverImage: Boolean = false;
+    private pointShapeCache: CARTA.PointAnnotationShape;
 
     private readonly frame: FrameStore;
     private readonly backendService: BackendService;
@@ -70,12 +71,16 @@ export class RegionSetStore {
         return regionId;
     };
 
-    @computed get regionsForRender(): RegionStore[] {
+    @computed get regionsAndAnnotationsForRender(): RegionStore[] {
         return this.regions?.filter(r => r.isValid && r.regionId !== 0)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
     }
 
+    @computed get isNewRegionAnnotation(): boolean {
+        return RegionStore.AVAILABLE_ANNOTATION_TYPES.has(this.newRegionType);
+    }
+
     @action addPointRegion = (center: Point2D, cursorRegion = false) => {
-        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
+        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, false, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
     };
 
     @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
@@ -97,9 +102,49 @@ export class RegionSetStore {
     @action addPolylineRegion = (points: Point2D[], temporary: boolean = false) => {
         return this.addRegion(points, 0, CARTA.RegionType.POLYLINE, temporary);
     };
+    @action addAnnPointRegion = (center: Point2D, shape: CARTA.PointAnnotationShape, cursorRegion = false) => {
+        this.pointShapeCache = shape;
+        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, cursorRegion, true, this.getTempRegionId());
+    };
 
-    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], temporary = true) => {
-        const region = this.addRegion(points, rotation, regionType, temporary, regionId, name);
+    @action addAnnRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
+        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNRECTANGLE, temporary, true);
+    };
+
+    @action addAnnEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
+        return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ANNELLIPSE, temporary, true);
+    };
+
+    @action addAnnPolygonalRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYGON, temporary, true);
+    };
+
+    @action addAnnLineRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNLINE, temporary, true);
+    };
+
+    @action addAnnPolylineRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYLINE, temporary, true);
+    };
+
+    @action addAnnVectorRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNVECTOR, temporary, true);
+    };
+
+    @action addAnnTextRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
+        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNTEXT, temporary, true);
+    };
+
+    @action addAnnCompassRegion = (point: Point2D, length: number, temporary: boolean = false) => {
+        return this.addRegion([point, {x: length, y: length}], 0, CARTA.RegionType.ANNCOMPASS, temporary, true);
+    };
+
+    @action addAnnRulerRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.ANNRULER, temporary, true);
+    };
+
+    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], temporary = true, annotationStyles?: any) => {
+        const region = this.addRegion(points, rotation, regionType, temporary, annotationStyles, regionId, name);
         // additional imported style properties;
         if (color) {
             region.color = color;
@@ -110,31 +155,118 @@ export class RegionSetStore {
         if (dashes?.length) {
             region.dashLength = dashes[0];
         }
+
+        if (annotationStyles) {
+            switch (regionType) {
+                case CARTA.RegionType.ANNPOINT:
+                    (region as PointAnnotationStore).initializeStyles(annotationStyles);
+                    break;
+                case CARTA.RegionType.ANNTEXT:
+                    (region as TextAnnotationStore).initializeStyles(annotationStyles);
+                    break;
+                case CARTA.RegionType.ANNVECTOR:
+                    (region as VectorAnnotationStore).initializeStyles(annotationStyles);
+                    break;
+                case CARTA.RegionType.ANNCOMPASS:
+                    (region as CompassAnnotationStore).initializeStyles(annotationStyles);
+                    break;
+                case CARTA.RegionType.ANNRULER:
+                    (region as RulerAnnotationStore).initializeStyles(annotationStyles);
+                    break;
+                default:
+                    break;
+            }
+        }
+
         return region;
     };
 
-    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
-        const region = new RegionStore(
-            this.backendService,
-            this.frame.frameInfo.fileId,
-            this.frame,
-            points,
-            regionType,
-            regionId,
-            this.preference.regionColor,
-            this.preference.regionLineWidth,
-            this.preference.regionDashLength,
-            rotation,
-            regionName
-        );
+    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, isAnnotation: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
+        let region: RegionStore;
+
+        const commonInputParameters = [this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId];
+
+        switch (regionType) {
+            case CARTA.RegionType.ANNCOMPASS:
+                region = new (CompassAnnotationStore.bind.apply(CompassAnnotationStore, [
+                    null,
+                    ...commonInputParameters,
+                    this.preference.annotationColor,
+                    this.preference.annotationLineWidth,
+                    this.preference.annotationDashLength,
+                    rotation,
+                    regionName
+                ]))();
+                break;
+            case CARTA.RegionType.ANNRULER:
+                region = new (RulerAnnotationStore.bind.apply(RulerAnnotationStore, [
+                    null,
+                    ...commonInputParameters,
+                    this.preference.annotationColor,
+                    this.preference.annotationLineWidth,
+                    this.preference.annotationDashLength,
+                    rotation,
+                    regionName
+                ]))();
+                break;
+            case CARTA.RegionType.ANNTEXT:
+                region = new (TextAnnotationStore.bind.apply(TextAnnotationStore, [
+                    null,
+                    ...commonInputParameters,
+                    this.preference.annotationColor,
+                    this.preference.textAnnotationLineWidth,
+                    this.preference.annotationDashLength,
+                    rotation,
+                    regionName
+                ]))();
+                break;
+            case CARTA.RegionType.ANNPOINT:
+                region = new (PointAnnotationStore.bind.apply(PointAnnotationStore, [
+                    null,
+                    ...commonInputParameters,
+                    this.preference.annotationColor,
+                    this.preference.annotationLineWidth,
+                    this.preference.annotationDashLength,
+                    this.pointShapeCache || this.preference.pointAnnotationShape,
+                    this.preference.pointAnnotationWidth,
+                    rotation,
+                    regionName
+                ]))();
+                break;
+            case CARTA.RegionType.ANNVECTOR:
+                region = new (VectorAnnotationStore.bind.apply(VectorAnnotationStore, [
+                    null,
+                    ...commonInputParameters,
+                    this.preference.annotationColor,
+                    this.preference.annotationLineWidth,
+                    this.preference.annotationDashLength,
+                    rotation,
+                    regionName
+                ]))();
+                break;
+            case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNRECTANGLE:
+            case CARTA.RegionType.ANNPOLYGON:
+            case CARTA.RegionType.ANNPOLYLINE:
+            case CARTA.RegionType.ANNLINE:
+                region = new (RegionStore.bind.apply(RegionStore, [null, ...commonInputParameters, this.preference.annotationColor, this.preference.annotationLineWidth, this.preference.annotationDashLength, rotation, regionName]))();
+                break;
+            default:
+                region = new (RegionStore.bind.apply(RegionStore, [null, ...commonInputParameters, this.preference.regionColor, this.preference.regionLineWidth, this.preference.regionDashLength, rotation, regionName]))();
+                break;
+        }
+
         this.regions.push(region);
+
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).then(
                 ack => {
                     console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
                     region.setRegionId(ack.regionId);
                 },
-                err => console.log(err)
+                err => {
+                    console.log(err);
+                }
             );
         }
 
@@ -205,9 +337,24 @@ export class RegionSetStore {
                 let newControlPoints: Point2D[] = [];
                 let rotation: number = 0;
 
+                let annotationStyles;
+
                 switch (region.regionType) {
+                    case CARTA.RegionType.ANNELLIPSE:
+                    case CARTA.RegionType.ANNTEXT:
+                    case CARTA.RegionType.ANNCOMPASS:
                     case CARTA.RegionType.RECTANGLE:
+                    case CARTA.RegionType.ANNRECTANGLE:
                     case CARTA.RegionType.ELLIPSE:
+                        switch (region.regionType) {
+                            case CARTA.RegionType.ANNTEXT:
+                                annotationStyles = (region as TextAnnotationStore).getAnnotationStyles();
+                                break;
+                            case CARTA.RegionType.ANNCOMPASS:
+                                annotationStyles = (region as CompassAnnotationStore).getAnnotationStyles();
+                                break;
+                        }
+
                         const centerNewFrame = transformPoint(spatialTransformAST, region.center, forward);
                         if (!isAstBadPoint(centerNewFrame)) {
                             const transform = new Transform2D(spatialTransformAST, centerNewFrame);
@@ -218,8 +365,26 @@ export class RegionSetStore {
                         break;
                     case CARTA.RegionType.POINT:
                     case CARTA.RegionType.POLYGON:
+                    case CARTA.RegionType.ANNPOLYGON:
                     case CARTA.RegionType.LINE:
+                    case CARTA.RegionType.ANNLINE:
                     case CARTA.RegionType.POLYLINE:
+                    case CARTA.RegionType.ANNPOLYLINE:
+                    case CARTA.RegionType.ANNPOINT:
+                    case CARTA.RegionType.ANNVECTOR:
+                    case CARTA.RegionType.ANNRULER:
+                        switch (region.regionType) {
+                            case CARTA.RegionType.ANNPOINT:
+                                annotationStyles = (region as PointAnnotationStore).getAnnotationStyles();
+                                break;
+                            case CARTA.RegionType.ANNVECTOR:
+                                annotationStyles = (region as VectorAnnotationStore).getAnnotationStyles();
+                                break;
+                            case CARTA.RegionType.ANNRULER:
+                                annotationStyles = (region as RulerAnnotationStore).getAnnotationStyles();
+                                break;
+                        }
+
                         for (const point of region.controlPoints) {
                             const pointNewFrame = transformPoint(spatialTransformAST, point, forward);
                             if (!isAstBadPoint(pointNewFrame)) {
@@ -237,8 +402,13 @@ export class RegionSetStore {
                         newRegion = this.addRegion(newControlPoints, 0, CARTA.RegionType.POINT);
                         newRegion.setName(region.name);
                         newRegion.setColor(region.color);
+                    } else if (region.regionType === CARTA.RegionType.ANNPOINT) {
+                        newRegion = this.addRegion(newControlPoints, 0, CARTA.RegionType.ANNPOINT);
+                        newRegion.setName(region.name);
+                        newRegion.setColor(region.color);
+                        (newRegion as PointAnnotationStore).initializeStyles(annotationStyles);
                     } else {
-                        newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : []);
+                        newRegion = this.addExistingRegion(newControlPoints, rotation, region.regionType, newId, region.name, region.color, region.lineWidth, region.dashLength ? [region.dashLength] : [], annotationStyles);
                         newRegion.endCreating();
                     }
                     newRegion.setLocked(region.locked);

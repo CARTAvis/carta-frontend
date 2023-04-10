@@ -61,7 +61,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private scrollToSelected = (selected: any) => {
         const listRefCurrent = this.listRef.current;
-        if (!listRefCurrent) {
+        const height = listRefCurrent.props.height;
+        if (!listRefCurrent || height < 0) {
             return;
         } else {
             this.listRef.current.scrollToItem(selected, "smart");
@@ -256,7 +257,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <div className={className} style={props.style}>
                         <div className="cell" style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 3}}>
                             <Icon icon={"blank"} style={{width: 16}} />
-                            <Tooltip2 disabled={regionsVisibility === RegionsOpacity.Invisible} content="Lock All Regions" position={Position.BOTTOM}>
+                            <Tooltip2 disabled={regionsVisibility === RegionsOpacity.Invisible} content="Lock all regions" position={Position.BOTTOM}>
                                 <Icon
                                     icon={regionsLock ? "lock" : regionsVisibility === RegionsOpacity.Invisible ? "lock" : "unlock"}
                                     onClick={regionsVisibility === RegionsOpacity.Invisible ? () => {} : ev => this.handleAllRegionsLockClicked(ev)}
@@ -264,7 +265,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                                 />
                             </Tooltip2>
                             <Icon icon={"blank"} style={{width: 5}} />
-                            <Tooltip2 content={regionsVisibility === RegionsOpacity.Invisible ? "Show Regions" : "Hide Regions"} position={Position.BOTTOM}>
+                            <Tooltip2 content={regionsVisibility === RegionsOpacity.Invisible ? "Show regions" : "Hide regions"} position={Position.BOTTOM}>
                                 <Icon
                                     icon={regionsVisibility === RegionsOpacity.Invisible ? "eye-off" : "eye-open"}
                                     onClick={this.handleToggleHideClicked()}
@@ -329,7 +330,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 if (region.size) {
                     if (frame.validWcs) {
                         sizeContent =
-                            region.regionType === CARTA.RegionType.LINE ? (
+                            region.regionType === CARTA.RegionType.LINE || region.regionType === CARTA.RegionType.ANNLINE || region.regionType === CARTA.RegionType.ANNVECTOR || region.regionType === CARTA.RegionType.ANNRULER ? (
                                 formattedArcsec(region.wcsSize ? length2D(region.wcsSize) : undefined, WCS_PRECISION)
                             ) : (
                                 <React.Fragment>
@@ -345,10 +346,17 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 let tooltipContent = "";
                 switch (region.regionType) {
                     case CARTA.RegionType.ELLIPSE:
+                    case CARTA.RegionType.ANNELLIPSE:
                         tooltipContent = "Semi-major and semi-minor axes";
                         break;
                     case CARTA.RegionType.LINE:
+                    case CARTA.RegionType.ANNLINE:
+                    case CARTA.RegionType.ANNVECTOR:
+                    case CARTA.RegionType.ANNRULER:
                         tooltipContent = "Length";
+                        break;
+                    case CARTA.RegionType.ANNCOMPASS:
+                        tooltipContent = "Axes Length";
                         break;
                     default:
                         tooltipContent = "Width and height";

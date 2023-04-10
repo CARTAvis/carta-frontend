@@ -185,10 +185,21 @@ export class RootMenuComponent extends React.Component {
         }
         serverMenu.push(
             <Menu.Item
+                key="copy-id"
                 text="Copy session ID to clipboard"
                 onClick={async () => {
                     try {
-                        await navigator.clipboard?.writeText(appStore.backendService.sessionId.toString());
+                        if (navigator.clipboard) {
+                            await navigator.clipboard?.writeText(appStore.backendService.sessionId.toString());
+                        } else {
+                            const copyText = document.createElement("textarea");
+                            copyText.value = appStore.backendService.sessionId.toString();
+                            document.body.appendChild(copyText);
+                            copyText.focus();
+                            copyText.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(copyText);
+                        }
                         AppToaster.show(SuccessToast("clipboard", "Session ID copied!"));
                     } catch (err) {
                         console.log(err);
@@ -198,10 +209,40 @@ export class RootMenuComponent extends React.Component {
         );
         serverMenu.push(
             <Menu.Item
+                key="copy-url"
                 text="Copy session URL to clipboard"
                 onClick={async () => {
                     try {
-                        await navigator.clipboard?.writeText(window.location.href);
+                        const url = new URL(document.URL);
+                        if (url.protocol.startsWith("file")) {
+                            const socketUrl = url.searchParams.get("socketUrl");
+                            const token = url.searchParams.get("token");
+                            const httpUrl = socketUrl.replace("ws", "http");
+                            const finalUrl = `${httpUrl}?token=${token}`;
+                            if (navigator.clipboard) {
+                                await navigator.clipboard.writeText(finalUrl);
+                            } else {
+                                const copyText = document.createElement("textarea");
+                                copyText.value = finalUrl;
+                                document.body.appendChild(copyText);
+                                copyText.focus();
+                                copyText.select();
+                                document.execCommand("copy");
+                                document.body.removeChild(copyText);
+                            }
+                        } else {
+                            if (navigator.clipboard) {
+                                await navigator.clipboard.writeText(document.URL);
+                            } else {
+                                const copyText = document.createElement("textarea");
+                                copyText.value = document.URL;
+                                document.body.appendChild(copyText);
+                                copyText.focus();
+                                copyText.select();
+                                document.execCommand("copy");
+                                document.body.removeChild(copyText);
+                            }
+                        }
                         AppToaster.show(SuccessToast("clipboard", "Session URL copied!"));
                     } catch (err) {
                         console.log(err);
@@ -209,12 +250,10 @@ export class RootMenuComponent extends React.Component {
                 }}
             />
         );
-
         let serverSubMenu: React.ReactNode;
         if (serverMenu.length) {
             serverSubMenu = (
                 <React.Fragment>
-                    <Menu.Divider />
                     <Menu.Item text="Server">{serverMenu}</Menu.Item>
                 </React.Fragment>
             );
@@ -222,40 +261,39 @@ export class RootMenuComponent extends React.Component {
 
         const fileMenu = (
             <Menu>
-                <Menu.Item text="Open image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
-                <Menu.Item text="Append image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
-                <Tooltip2 content={"not allowed in read-only mode"} disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY} position={Position.LEFT}>
+                <Menu.Item text="Open Image" label={`${modString}O`} disabled={appStore.openFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)} />
+                <Menu.Item text="Append Image" label={`${modString}L`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)} />
+                <Tooltip2 content={"Not allowed in read-only mode"} disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY} position={Position.LEFT}>
                     <Menu.Item
-                        text="Save image"
+                        text="Save Image"
                         label={`${modString}S`}
                         disabled={appStore.appendFileDisabled || appStore.backendService?.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
                         onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.SaveFile, false)}
                     />
                 </Tooltip2>
-                <Menu.Item text="Close image" label={`${modString}W`} disabled={appStore.appendFileDisabled} onClick={() => appStore.closeCurrentFile(true)} />
+                <Menu.Item text="Close Image" label={`${modString}W`} disabled={appStore.appendFileDisabled} onClick={() => appStore.closeCurrentFile(true)} />
                 <Menu.Divider />
-                <Menu.Item text="Import regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
+                <Menu.Item text="Import Regions" disabled={!appStore.activeFrame} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)} />
                 <Tooltip2
-                    content={"not allowed in read-only mode"}
+                    content={"Not allowed in read-only mode"}
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService?.serverFeatureFlags !== CARTA.ServerFeatureFlags.READ_ONLY}
                     position={Position.LEFT}
                 >
                     <Menu.Item
-                        text="Export regions"
+                        text="Export Regions"
                         disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1 || appStore.backendService.serverFeatureFlags === CARTA.ServerFeatureFlags.READ_ONLY}
                         onClick={() => appStore.fileBrowserStore.showExportRegions()}
                     />
                 </Tooltip2>
-                <Menu.Divider />
-                <Menu.Item text="Import catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
-                <Menu.Divider />
+                <Menu.Item text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
                 <Menu.Item text="Open workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Open)} />
                 <Menu.Item text="Save workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Save)} />
                 <Menu.Item text="Close workspace" disabled={appStore.openFileDisabled} onClick={appStore.closeWorkspace} />
                 <MenuDivider />
-                <Menu.Item text="Export image" disabled={!appStore.activeFrame || appStore.isExportingImage}>
+                <Menu.Item text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage}>
                     <ExportImageMenuComponent />
                 </Menu.Item>
+                <Menu.Divider />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE} />
                 {serverSubMenu}
             </Menu>
@@ -290,7 +328,12 @@ export class RootMenuComponent extends React.Component {
                             </React.Fragment>
                         )}
                     </Menu.Item>
-                    <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog} />
+                    <Menu.Item text="Save Layout" onClick={() => appStore.dialogStore.showSaveLayoutDialog()} />
+                    <Menu.Item text="Rename Layout" disabled={!userLayouts || userLayouts.length <= 0}>
+                        {userLayouts &&
+                            userLayouts.length > 0 &&
+                            userLayouts.map(value => <Menu.Item key={value} text={value} active={value === appStore.layoutStore.currentLayoutName} onClick={() => appStore.dialogStore.showSaveLayoutDialog(value)} />)}
+                    </Menu.Item>
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts &&
                             userLayouts.length > 0 &&
@@ -313,16 +356,16 @@ export class RootMenuComponent extends React.Component {
                     <Menu.Item text="Images" icon={"multi-select"}>
                         {layerItems}
                         <Menu.Divider />
-                        <Menu.Item text="Previous image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame} />
-                        <Menu.Item text="Next image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame} />
+                        <Menu.Item text="Previous Image" icon={"step-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame} />
+                        <Menu.Item text="Next Image" icon={"step-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame} />
                     </Menu.Item>
                 )}
-                <Menu.Item text="File header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
+                <Menu.Item text="File Header" icon={"app-header"} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFileInfoDialog} />
                 <Menu.Item text="Contours" icon={<CustomIcon icon="contour" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showContourDialog} />
-                <Menu.Item text="Vector overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showVectorOverlayDialog} />
-                <Menu.Item text="Image fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFittingDialog} />
+                <Menu.Item text="Vector Overlay" icon={<CustomIcon icon="vectorOverlay" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showVectorOverlayDialog} />
+                <Menu.Item text="Image Fitting" icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showFittingDialog} />
                 <Menu.Item text="Online Catalog Query" icon="geosearch" disabled={!appStore.activeFrame} onClick={appStore.dialogStore.showCatalogQueryDialog} />
-                {appStore.preferenceStore.codeSnippetsEnabled && <Menu.Item text="Code snippets" icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} />}
+                {appStore.preferenceStore.codeSnippetsEnabled && <Menu.Item text="Code Snippets" icon={"console"} onClick={appStore.dialogStore.showCodeSnippetDialog} />}
             </Menu>
         );
 
@@ -445,7 +488,7 @@ export class RootMenuComponent extends React.Component {
                 </div>
                 <div className={Classes.ALERT_FOOTER}>
                     <Button intent={Intent.PRIMARY} text="OK" onClick={this.newReleaseButtonOnClick} />
-                    <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again." />
+                    <Switch checked={this.disableCheckRelease} onChange={this.toggleDisableCheckRelease} label="Don't show new releases again" />
                 </div>
             </div>
         );
@@ -507,7 +550,7 @@ export class RootMenuComponent extends React.Component {
                     </Tooltip2>
                 )}
                 {appStore.snippetStore.isExecuting && (
-                    <Tooltip2 content="CARTA is currently executing a code snippet.">
+                    <Tooltip2 content="CARTA is currently executing a code snippet">
                         <Icon icon={"console"} intent={"warning"} />
                     </Tooltip2>
                 )}

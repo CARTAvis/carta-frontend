@@ -1,12 +1,12 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {AnchorButton, ButtonGroup, IconName, Menu, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
-import {Popover2, Tooltip2} from "@blueprintjs/popover2";
+import {AnchorButton, ButtonGroup, IconName, Menu, MenuDivider, MenuItem, PopoverPosition, Position} from "@blueprintjs/core";
+import {Popover2, Popover2InteractionKind, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
-import {ImageViewLayer} from "components";
+import {ImageViewComponent, ImageViewLayer} from "components";
 import {ExportImageMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {AppStore} from "stores";
@@ -42,7 +42,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.FK5, "FK5 coordinates, J2000.0 equinox"],
         [SystemType.FK4, "FK4 coordinates, B1950.0 equinox"],
         [SystemType.Galactic, "Galactic coordinates"],
-        [SystemType.Ecliptic, "Ecliptic coordinates"],
+        [SystemType.Ecliptic, "Ecliptic coordinates, J2000.0 equinox"],
         [SystemType.ICRS, "International Celestial Reference System"]
     ]);
 
@@ -86,6 +86,19 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         } else {
             this.props.frame.regionSet.setMode(RegionMode.MOVING);
         }
+    };
+
+    private handlePanZoomShortCutClicked = () => {
+        const widgetsStore = AppStore.Instance.widgetsStore;
+        const parentType = ImageViewComponent.WIDGET_CONFIG.type;
+        const settingsWidget = widgetsStore.floatingWidgets?.find(w => w.parentType === parentType);
+        if (settingsWidget) {
+            widgetsStore.removeFloatingWidget(settingsWidget.id);
+        }
+        // delay to wait for the settings widget tab status to reset
+        setTimeout(() => {
+            widgetsStore.createFloatingSettingsWidget("Image View", parentType, parentType);
+        }, 0);
     };
 
     exportImageTooltip = () => {
@@ -132,6 +145,21 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         );
         const tooltipPosition: PopoverPosition = "top";
 
+        const annotationMenu = (
+            <Menu style={{padding: 0}}>
+                {Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
+                    const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
+                    const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
+                    return <MenuItem icon={annotationIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
+                })}
+            </Menu>
+        );
+
+        const popoverProps = {
+            position: Position.RIGHT_BOTTOM,
+            interactionKind: Popover2InteractionKind.CLICK
+        };
+
         const regionMenu = (
             <Menu>
                 {Array.from(RegionStore.AVAILABLE_REGION_TYPES).map(([type, text], index) => {
@@ -139,6 +167,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                     return <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
                 })}
+                <MenuDivider></MenuDivider>
+                <MenuItem icon={"edit"} text={"Annotations"} popoverProps={popoverProps}>
+                    {annotationMenu}
+                </MenuItem>
             </Menu>
         );
 
@@ -175,7 +207,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const wcsMatchingMenu = (
             <Menu>
                 <MenuItem
-                    text={`Spectral (${preferenceStore.spectralMatchingType}) and Spatial`}
+                    text={`Spectral (${preferenceStore.spectralMatchingType}) and spatial`}
                     disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
                     active={spectralMatchingEnabled && spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(true, true)}
@@ -216,7 +248,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                             position={tooltipPosition}
                             content={
                                 <span>
-                                    Distance Measurement
+                                    Distance measurement
                                     <br />
                                     <i>
                                         <small>Click to create geodesic curves.</small>
@@ -253,15 +285,22 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     position={tooltipPosition}
                                     content={
                                         <span>
-                                            Create region
+                                            Create{" "}
+                                            {frame.regionSet.isNewRegionAnnotation
+                                                ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} annotation`
+                                                : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} region`}
                                             <br />
                                             <i>
-                                                <small>Click to select region type</small>
+                                                <small>Click to select region or annotation type</small>
                                             </i>
                                         </span>
                                     }
                                 >
-                                    <AnchorButton icon={regionIcon} active={appStore.activeLayer === ImageViewLayer.RegionCreating} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                                    <AnchorButton
+                                        icon={frame.regionSet.isNewRegionAnnotation ? "edit" : regionIcon}
+                                        active={appStore.activeLayer === ImageViewLayer.RegionCreating}
+                                        onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)}
+                                    />
                                 </Tooltip2>
                             </Popover2>
                         )}
@@ -270,11 +309,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 position={tooltipPosition}
                                 content={
                                     <span>
-                                        Create region
+                                        Create{" "}
+                                        {frame.regionSet.isNewRegionAnnotation
+                                            ? `${RegionStore.AVAILABLE_ANNOTATION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} annotation`
+                                            : `${RegionStore.AVAILABLE_REGION_TYPES.get(frame.regionSet.newRegionType).toLowerCase()} region`}
                                         <br />
                                         <i>
                                             <small>
-                                                Double-click to select region type.
+                                                Double-click to select region or annotation type.
                                                 <br />
                                                 Press C to enter creation mode.
                                             </small>
@@ -282,20 +324,34 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                     </span>
                                 }
                             >
-                                <AnchorButton icon={regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                                <AnchorButton icon={frame.regionSet.isNewRegionAnnotation ? "edit" : regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
                             </Tooltip2>
                         )}
-                        <Tooltip2 position={tooltipPosition} content="Select and pan mode">
+                        <Tooltip2
+                            position={tooltipPosition}
+                            content={
+                                <span>
+                                    Select and pan mode
+                                    <span>
+                                        <br />
+                                        <i>
+                                            <small>Double Click to open the settings.</small>
+                                        </i>
+                                    </span>
+                                </span>
+                            }
+                        >
                             <AnchorButton
                                 icon={"hand"}
                                 onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionMoving)}
+                                onDoubleClick={this.handlePanZoomShortCutClicked}
                                 active={frame.regionSet.mode === RegionMode.MOVING && appStore.activeLayer === ImageViewLayer.RegionMoving}
                             />
                         </Tooltip2>
-                        <Tooltip2 position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
+                        <Tooltip2 position={tooltipPosition} content={<span>Zoom in (scroll wheel up){currentZoomSpan}</span>}>
                             <AnchorButton icon={"zoom-in"} onClick={this.handleZoomInClicked} />
                         </Tooltip2>
-                        <Tooltip2 position={tooltipPosition} content={<span>Zoom out (Scroll wheel down){currentZoomSpan}</span>}>
+                        <Tooltip2 position={tooltipPosition} content={<span>Zoom out (scroll wheel down){currentZoomSpan}</span>}>
                             <AnchorButton icon={"zoom-out"} onClick={this.handleZoomOutClicked} />
                         </Tooltip2>
                         <Tooltip2 position={tooltipPosition} content={<span>Zoom to 1.0x{currentZoomSpan}</span>}>
@@ -311,7 +367,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 position={tooltipPosition}
                                 content={
                                     <span>
-                                        WCS Matching <br />
+                                        WCS matching <br />
                                         <small>
                                             <i>Current: {wcsButtonTooltip}</i>
                                         </small>
@@ -328,7 +384,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                 position={tooltipPosition}
                                 content={
                                     <span>
-                                        Overlay Coordinate <br />
+                                        Overlay coordinate <br />
                                         <small>
                                             <i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i>
                                         </small>

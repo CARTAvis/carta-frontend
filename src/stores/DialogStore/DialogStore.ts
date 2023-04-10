@@ -4,7 +4,7 @@ import {action, makeObservable, observable} from "mobx";
 import {FileInfoType} from "components";
 import {WorkspaceDialogMode} from "components/Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
 import {Snippet} from "models";
-import {SnippetStore} from "stores";
+import {AppStore, SnippetStore} from "stores";
 
 export class DialogStore {
     private static staticInstance: DialogStore;
@@ -58,8 +58,9 @@ export class DialogStore {
 
     // Layout
     @observable saveLayoutDialogVisible: boolean;
-    @action showSaveLayoutDialog = () => {
+    @action showSaveLayoutDialog = (oldLayoutName?: string) => {
         this.saveLayoutDialogVisible = true;
+        AppStore.Instance.layoutStore.setOldLayoutName(oldLayoutName);
     };
     @action hideSaveLayoutDialog = () => {
         this.saveLayoutDialogVisible = false;

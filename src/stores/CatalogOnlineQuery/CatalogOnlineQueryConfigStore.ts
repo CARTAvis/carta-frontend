@@ -318,9 +318,11 @@ export class CatalogOnlineQueryConfigStore {
             const wcsCopy = AST.copy(frame.wcsInfo);
             let astString = new ASTSettingsString();
             const sys = system ? system : overlay.global.explicitSystem ? overlay.global.explicitSystem : SystemType.ICRS;
-            AST.set(wcsCopy, `System=${sys}`);
-            astString.add("Format(1)", format);
-            astString.add("Format(2)", format);
+            if (frame.isXY || frame.isYX) {
+                AST.set(wcsCopy, `System=${sys}`);
+                astString.add(`Format(${frame.dirX})`, format);
+                astString.add(`Format(${frame.dirY})`, format);
+            }
             const pointWCS = transformPoint(wcsCopy, pixelCoords);
             const normVals = AST.normalizeCoordinates(wcsCopy, pointWCS.x, pointWCS.y);
             p = AST.getFormattedCoordinates(wcsCopy, normVals.x, normVals.y, astString.toString(), true);
@@ -337,9 +339,11 @@ export class CatalogOnlineQueryConfigStore {
             const precision = overlay.numbers.customPrecision ? overlay.numbers.precision : "*";
             const format = `${NumberFormatType.Degrees}.${precision}`;
             const wcsCopy = AST.copy(frame.wcsInfo);
-            AST.set(wcsCopy, `System=${SystemType.ICRS}`);
-            AST.set(wcsCopy, `Format(1)=${format}`);
-            AST.set(wcsCopy, `Format(2)=${format}`);
+            if (frame.isXY || frame.isYX) {
+                AST.set(wcsCopy, `System=${SystemType.ICRS}`);
+                AST.set(wcsCopy, `Format(${frame.dirX})=${format}`);
+                AST.set(wcsCopy, `Format(${frame.dirY})=${format}`);
+            }
             p = getPixelValueFromWCS(wcsCopy, {x: coords.x.toString(), y: coords.y.toString()});
             AST.deleteObject(wcsCopy);
         }

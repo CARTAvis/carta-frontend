@@ -1,6 +1,6 @@
-import pixelShader from "!raw-loader!./pixel_shader_catalog.glsl";
-import utilities from "!raw-loader!./utilities.glsl";
-import vertexShader from "!raw-loader!./vertex_shader_catalog.glsl";
+import pixelShader from "./pixel_shader_catalog.glsl";
+import utilities from "./utilities.glsl";
+import vertexShader from "./vertex_shader_catalog.glsl";
 
 const sharedMacros = `
 #define BOX_FILLED 0
