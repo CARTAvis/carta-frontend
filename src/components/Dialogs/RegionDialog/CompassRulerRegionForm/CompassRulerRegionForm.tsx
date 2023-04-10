@@ -103,7 +103,7 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         return (
             <div className="region-form">
                 <FormGroup label="Annotation name" inline={true}>
-                    <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} spellCheck={false}/>
+                    <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} spellCheck={false} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <>
