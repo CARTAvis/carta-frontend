@@ -9,7 +9,7 @@ export enum HelpType {
     FILE_BROWSER = "File Browser",
     FILE_INFO = "File Header",
     SAVE_LAYOUT = "Save Layout",
-    SAVE_WORKSPACE = "Save Layout",
+    SAVE_WORKSPACE = "Save Workspace",
     REGION_DIALOG = "Region Dialog",
     STOKES = "Stokes Hypercube Dialog",
     ONLINE_CATALOG_QUERY = "Online Catalog Query",

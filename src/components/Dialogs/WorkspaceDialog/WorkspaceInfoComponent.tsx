@@ -45,7 +45,7 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
                 const res = await AppStore.Instance.apiService.getWorkspace(name);
                 if (res) {
                     setWorkspace(res);
-                    fetchFileInfo(res);
+                    await fetchFileInfo(res);
                 }
             } catch (err) {
                 console.log(err);
