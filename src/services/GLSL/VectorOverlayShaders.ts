@@ -1,6 +1,6 @@
-import pixelShader from "!raw-loader!./pixel_shader_overlay.glsl";
-import utilities from "!raw-loader!./utilities.glsl";
-import vertexShader from "!raw-loader!./vertex_shader_overlay.glsl";
+import pixelShader from "./pixel_shader_overlay.glsl";
+import utilities from "./utilities.glsl";
+import vertexShader from "./vertex_shader_overlay.glsl";
 
 const sharedMacros = `
 #define PI radians(180.0)
