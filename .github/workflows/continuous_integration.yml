@@ -30,7 +30,9 @@ jobs:
           chown -R $(id -u):$(id -g) $PWD
 
       - name: Copy pre-downloaded .tar.gz file to wasm_libs folder
+        shell: bash
         run: |
+          ls -sort ./wasm_libs/
           if [[ -f /opt/gsl-2.6.tar.gz ]]; then cp /opt/gsl-2.6.tar.gz ./wasm_libs/; fi
           if [[ -f /opt/ast-9.1.1.tar.gz ]]; then cp /opt/ast-9.1.1.tar.gz ./wasm_libs/; fi
           if [[ -f /opt/zfp-0.5.5.tar.gz ]]; then cp /opt/zfp-0.5.5.tar.gz ./wasm_libs/; fi
