@@ -105,7 +105,6 @@ jobs:
         shell: bash
         run: |
           source /emsdk/emsdk_env.sh
-          export NODE_OPTIONS=--openssl-legacy-provider
           n exec 18 npm run build
 
   Notify:
