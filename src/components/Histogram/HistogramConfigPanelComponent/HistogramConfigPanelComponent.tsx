@@ -75,6 +75,8 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
         const resetButtonToolTip = <span>Reset histogram config with the previous automatic pixel bounds and number of bins.</span>;
 
+        const resetMaxNumBinsTip = <span>Reset the maximum number of bins on slider.</span>;
+
         const setPixelBoundsPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto pixel bounds"}>
@@ -112,12 +114,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                     />
                 </FormGroup>
                 {!this.widgetStore.isAutoBins && (
-                    <div className="range-select">
-                        <FormGroup label="Max number of bins" inline={true}>
-                            <div className="range-select">
-                                <SafeNumericInput value={this.maxNumBins} buttonPosition="none" onValueChange={val => this.onMaxNumBinsChanged(val)} onKeyDown={this.onSetMaxNumBins} />
-                            </div>
-                        </FormGroup>
+                    <div className="select-num-bins">
                         <FormGroup label="Number of bins" inline={true}>
                             <Slider
                                 min={1}
@@ -128,6 +125,11 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                                 value={this.widgetStore.curNumBins <= this.widgetStore.maxNumBins ? this.widgetStore.curNumBins : this.widgetStore.maxNumBins}
                                 vertical={false}
                             />
+                        </FormGroup>
+                        <FormGroup label="" inline={true}>
+                            <Tooltip2 content={resetMaxNumBinsTip}>
+                                <SafeNumericInput value={this.maxNumBins} buttonPosition="none" onValueChange={val => this.onMaxNumBinsChanged(val)} onKeyDown={this.onSetMaxNumBins} />
+                            </Tooltip2>
                         </FormGroup>
                     </div>
                 )}

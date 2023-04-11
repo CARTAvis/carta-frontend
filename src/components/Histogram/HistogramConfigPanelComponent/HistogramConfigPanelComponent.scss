@@ -1,3 +1,12 @@
 .crimson-text {
     color: crimson;
 }
+
+.select-num-bins {
+    display: flex;
+    flex-direction: row;
+
+    .bp3-form-group {
+        margin-left: 30px;
+    }
+}
