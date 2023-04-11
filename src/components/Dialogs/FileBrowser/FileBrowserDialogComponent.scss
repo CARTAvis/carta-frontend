@@ -9,8 +9,8 @@
         display: flex;
     }
 
-    .refresh-button {
-        margin-right: 10px;
+    .edit-path-button {
+        margin-right: 7px;
     }
 
     .bp3-dialog-body {
@@ -50,4 +50,9 @@
 
 .folder-breadcrumb {
     font-size: 14px !important;
+}
+
+.directory-path-input {
+    width: 100%;
+    margin-right: 25px;
 }
