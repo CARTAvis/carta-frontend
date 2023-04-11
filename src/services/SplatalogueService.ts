@@ -83,7 +83,7 @@ export class SplatalogueService {
 
         // remove data with invalid species id and invalid species name
         // this will remove data which only stores the query string
-        data = data.filter(line => line?.["species_id"] !== null || line?.["name"]);
+        data = data.filter(line => line && (line["species_id"] !== null || line["name"]));
 
         const numDataRows = data.length;
         const responseData: SpectralLineResponse = {

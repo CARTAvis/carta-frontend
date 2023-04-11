@@ -18,6 +18,8 @@ describe("SplatalogueService", () => {
         });
         SplatalogueService.Instance.query(300000, 300100, NaN);
         const params = JSON.parse(mockAxiosPost.mock.calls[0][1].body);
+        expect(params).toHaveProperty(["userInputFrequenciesFrom", 0], "300000");
+        expect(params).toHaveProperty(["userInputFrequenciesTo", 0], "300100");
         expect(params).toHaveProperty("lineIntensity", "None");
     });
 
@@ -27,6 +29,8 @@ describe("SplatalogueService", () => {
         });
         SplatalogueService.Instance.query(300000, 300100, -5);
         const params = JSON.parse(mockAxiosPost.mock.calls[0][1].body);
+        expect(params).toHaveProperty(["userInputFrequenciesFrom", 0], "300000");
+        expect(params).toHaveProperty(["userInputFrequenciesTo", 0], "300100");
         expect(params).toHaveProperty("lineIntensity", "CDMS/JPL (log)");
         expect(params).toHaveProperty("lineIntensityLowerLimit", -5);
     });
@@ -37,8 +41,20 @@ describe("SplatalogueService", () => {
         });
         SplatalogueService.Instance.query(300000, 300100, 0);
         const params = JSON.parse(mockAxiosPost.mock.calls[0][1].body);
+        expect(params).toHaveProperty(["userInputFrequenciesFrom", 0], "300000");
+        expect(params).toHaveProperty(["userInputFrequenciesTo", 0], "300100");
         expect(params).toHaveProperty("lineIntensity", "CDMS/JPL (log)");
         expect(params).toHaveProperty("lineIntensityLowerLimit", 0.000001);
+    });
+
+    test("query with corrent parameters when freqMin is larger than freqMax", () => {
+        mockAxiosPost.mockImplementationOnce(() => {
+            return {data: []};
+        });
+        SplatalogueService.Instance.query(300100, 300000, NaN);
+        const params = JSON.parse(mockAxiosPost.mock.calls[0][1].body);
+        expect(params).toHaveProperty(["userInputFrequenciesFrom", 0], "300000");
+        expect(params).toHaveProperty(["userInputFrequenciesTo", 0], "300100");
     });
 
     test("returns correct parsed string", async () => {
@@ -58,7 +74,7 @@ describe("SplatalogueService", () => {
         expect(ack.spectralLineData[4].stringData[0]).toEqual("0.0109");
     });
 
-    test("removes invalid data", async () => {
+    test("removes invalid line data", async () => {
         mockAxiosPost.mockImplementationOnce(() => {
             return {
                 data: [
@@ -66,6 +82,18 @@ describe("SplatalogueService", () => {
                         species_id: null,
                         name: null
                     }
+                ]
+            };
+        });
+        const ack = await SplatalogueService.Instance.query(300000, 300100, NaN);
+        expect(ack.dataSize).toEqual(0);
+    });
+
+    test("removes undefined line data", async () => {
+        mockAxiosPost.mockImplementationOnce(() => {
+            return {
+                data: [
+                    undefined
                 ]
             };
         });
