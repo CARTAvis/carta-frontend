@@ -92,9 +92,7 @@ describe("SplatalogueService", () => {
     test("removes undefined line data", async () => {
         mockAxiosPost.mockImplementationOnce(() => {
             return {
-                data: [
-                    undefined
-                ]
+                data: [undefined]
             };
         });
         const ack = await SplatalogueService.Instance.query(300000, 300100, NaN);
