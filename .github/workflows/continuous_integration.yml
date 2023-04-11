@@ -33,6 +33,10 @@ jobs:
         shell: bash        
         run: |
           source /emsdk/emsdk_env.sh
+          if [[ -f /opt/ast-9.1.1.tar.gz ]]; then cp /opt/ast-9.1.1.tar.gz ./wasm_libs/; fi
+          if [[ -f /opt/gsl-2.6.tar.gz ]]; then cp /opt/gsl-2.6.tar.gz ./wasm_libs/; fi
+          if [[ -f /opt/zfp-0.5.5.tar.gz ]]; then cp /opt/zfp-0.5.5.tar.gz ./wasm_libs/; fi
+          if [[ -f /opt/zstd-1.4.4.tar.gz ]]; then cp /opt/zstd-1.4.4.tar.gz ./wasm_libs/; fi
           ./wasm_libs/build_libs.sh
 
       - name: npm install with node 12
@@ -80,6 +84,10 @@ jobs:
         shell: bash
         run: |
           source /emsdk/emsdk_env.sh
+          if [[ -f /opt/ast-9.1.1.tar.gz ]]; then cp /opt/ast-9.1.1.tar.gz ./wasm_libs/; fi
+          if [[ -f /opt/gsl-2.6.tar.gz ]]; then cp /opt/gsl-2.6.tar.gz ./wasm_libs/; fi
+          if [[ -f /opt/zfp-0.5.5.tar.gz ]]; then cp /opt/zfp-0.5.5.tar.gz ./wasm_libs/; fi
+          if [[ -f /opt/zstd-1.4.4.tar.gz ]]; then cp /opt/zstd-1.4.4.tar.gz ./wasm_libs/; fi          
           ./wasm_libs/build_libs.sh
 
       - name: npm install with node 14
@@ -128,6 +136,10 @@ jobs:
         shell: bash        
         run: |
           source /emsdk/emsdk_env.sh
+          if [[ -f /opt/ast-9.1.1.tar.gz ]]; then cp /opt/ast-9.1.1.tar.gz ./wasm_libs/; fi
+          if [[ -f /opt/gsl-2.6.tar.gz ]]; then cp /opt/gsl-2.6.tar.gz ./wasm_libs/; fi
+          if [[ -f /opt/zfp-0.5.5.tar.gz ]]; then cp /opt/zfp-0.5.5.tar.gz ./wasm_libs/; fi
+          if [[ -f /opt/zstd-1.4.4.tar.gz ]]; then cp /opt/zstd-1.4.4.tar.gz ./wasm_libs/; fi          
           ./wasm_libs/build_libs.sh
 
       - name: npm install with node 16

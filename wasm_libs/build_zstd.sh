@@ -4,7 +4,7 @@ cd "${0%/*}"
 if ! [[ $(find zstd-1.4.4.tar.gz -type f 2>/dev/null && md5sum -c zstd.md5 &>/dev/null) ]]; then
     echo "Fetching Zstd 1.4.4"
     retry_count=0
-    max_retries=3
+    max_retries=2
     while (( retry_count < max_retries )); do
         wget https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz && break
         ((retry_count++))
@@ -13,7 +13,7 @@ if ! [[ $(find zstd-1.4.4.tar.gz -type f 2>/dev/null && md5sum -c zstd.md5 &>/de
             exit 1
         fi
         echo "Download failed. Trying again."
-        sleep 30
+        sleep 10
     done
 fi
 
