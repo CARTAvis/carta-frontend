@@ -29,21 +29,6 @@ jobs:
         run: |
           chown -R $(id -u):$(id -g) $PWD
 
-      - name: Copy pre-downloaded .tar.gz file to wasm_libs folder
-        shell: bash
-        run: |
-          ls -sort ./wasm_libs/
-          echo "Check1"
-          uname -a
-          ls -l /opt
-          echo "Check2"
-          if [[ -f /opt/gsl-2.6.tar.gz ]]; then cp /opt/gsl-2.6.tar.gz ./wasm_libs/; fi
-          if [[ -f /opt/ast-9.1.1.tar.gz ]]; then cp /opt/ast-9.1.1.tar.gz ./wasm_libs/; fi
-          if [[ -f /opt/zfp-0.5.5.tar.gz ]]; then cp /opt/zfp-0.5.5.tar.gz ./wasm_libs/; fi
-          if [[ -f /opt/zstd-1.4.4.tar.gz ]]; then cp /opt/zstd-1.4.4.tar.gz ./wasm_libs/; fi
-          echo "Here: $PWD"
-          ls -sort ./wasm_libs/
-
       - name: Build libs
         shell: bash        
         run: |
