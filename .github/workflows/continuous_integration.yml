@@ -33,6 +33,10 @@ jobs:
         shell: bash
         run: |
           ls -sort ./wasm_libs/
+          echo "Check1"
+          uname -a
+          ls -l /opt
+          echo "Check2"
           if [[ -f /opt/gsl-2.6.tar.gz ]]; then cp /opt/gsl-2.6.tar.gz ./wasm_libs/; fi
           if [[ -f /opt/ast-9.1.1.tar.gz ]]; then cp /opt/ast-9.1.1.tar.gz ./wasm_libs/; fi
           if [[ -f /opt/zfp-0.5.5.tar.gz ]]; then cp /opt/zfp-0.5.5.tar.gz ./wasm_libs/; fi
