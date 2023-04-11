@@ -3,7 +3,18 @@ command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not ins
 cd "${0%/*}"
 if ! [[ $(find ast-9.1.1.tar.gz -type f 2>/dev/null && md5sum -c ast.md5 &>/dev/null) ]]; then
     echo "Fetching AST 9.1.1"
-    wget https://github.com/Starlink/ast/releases/download/v9.1.1/ast-9.1.1.tar.gz
+    retry_count=0
+    max_retries=3
+    while (( retry_count < max_retries )); do
+        wget https://github.com/Starlink/ast/releases/download/v9.1.1/ast-9.1.1.tar.gz && break
+        ((retry_count++))
+        if (( retry_count == max_retries )); then
+            echo "Failed to fetch AST 9.1.1."
+            exit 1
+        fi
+        echo "Download failed. Trying again."
+        sleep 30
+    done
 fi
 
 mkdir -p ast; tar -xf ast-9.1.1.tar.gz --directory ./ast --strip-components=1

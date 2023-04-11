@@ -3,7 +3,18 @@ command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not ins
 cd "${0%/*}"
 if ! [[ $(find zfp-0.5.5.tar.gz -type f 2>/dev/null && md5sum -c zfp.md5 &>/dev/null) ]]; then
     echo "Fetching ZFP 0.5.5"
-    wget https://github.com/LLNL/zfp/releases/download/0.5.5/zfp-0.5.5.tar.gz
+    retry_count=0
+    max_retries=3
+    while (( retry_count < max_retries )); do
+        wget https://github.com/LLNL/zfp/releases/download/0.5.5/zfp-0.5.5.tar.gz && break
+        ((retry_count++))
+        if (( retry_count == max_retries )); then
+            echo "Failed to fetch ZFP 0.5.5."
+            exit 1
+        fi
+        echo "Download failed. Trying again."
+        sleep 30
+    done
 fi
 
 mkdir -p zfp; tar -xf zfp-0.5.5.tar.gz --directory ./zfp --strip-components=1
