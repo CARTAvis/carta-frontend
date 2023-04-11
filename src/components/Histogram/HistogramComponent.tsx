@@ -135,6 +135,18 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             let yMin = histogram.bins[minIndex];
             let yMax = yMin;
 
+            // Cache automatic settings for histogram min and max values
+            if (this.widgetStore.isAutoBounds) {
+                this.widgetStore.cacheBounds(xMin, xMax);
+                this.widgetStore.resetBounds();
+            }
+
+            // Cache automatic setting for the number of histogram bins
+            if (this.widgetStore.isAutoBins) {
+                this.widgetStore.cacheNumBins(histogram.bins.length);
+                this.widgetStore.resetNumBins();
+            }
+
             let values: Array<{x: number; y: number}>;
             const N = maxIndex - minIndex;
             if (N > 0 && !isNaN(N)) {

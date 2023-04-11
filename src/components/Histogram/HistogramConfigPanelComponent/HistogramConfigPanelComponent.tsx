@@ -73,7 +73,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     render() {
         const errorMsg = <span className="crimson-text">The range of pixel bounds must be from small to large.</span>;
 
-        const resetButtonToolTip = <span>Reset histogram config with the same one for current channel image.</span>;
+        const resetButtonToolTip = <span>Reset histogram config with the previous automatic pixel bounds and number of bins.</span>;
 
         const setPixelBoundsPanel = (
             <React.Fragment>

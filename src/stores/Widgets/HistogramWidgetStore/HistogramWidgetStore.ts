@@ -47,6 +47,11 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     public minPix: number;
     public maxPix: number;
 
+    // Cached histogram config settings
+    private cachedMinPix: number;
+    private cachedMaxPix: number;
+    private cachedNumBins: number;
+
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
         if (VALID_COORDINATES.indexOf(coordinate) !== -1) {
@@ -151,19 +156,32 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     }
 
     @action onResetConfig = () => {
-        this.resetConfig();
-    };
-
-    resetConfig = () => {
         this.curAutoBounds = false;
-        this.curMinPix = this.effectiveFrame.renderConfig.histogramMin;
-        this.curMaxPix = this.effectiveFrame.renderConfig.histogramMax;
+        this.resetBounds();
         this.curAutoBins = false;
         this.resetNumBins();
     };
 
+    resetBounds = () => {
+        if (this.cachedMinPix === undefined) {
+            this.curMinPix = this.effectiveFrame.renderConfig.histogramMin;
+        } else {
+            this.curMinPix = this.cachedMinPix;
+        }
+
+        if (this.cachedMaxPix === undefined) {
+            this.curMaxPix = this.effectiveFrame.renderConfig.histogramMax;
+        } else {
+            this.curMaxPix = this.cachedMaxPix;
+        }
+    };
+
     resetNumBins = () => {
-        this.curNumBins = this.effectiveFrame.renderConfig.histogram.numBins;
+        if (this.cachedNumBins === undefined) {
+            this.curNumBins = this.effectiveFrame.renderConfig.histogram.numBins;
+        } else {
+            this.curNumBins = this.cachedNumBins;
+        }
     };
 
     updateConfigs = () => {
@@ -360,7 +378,10 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.coordinate = "z";
 
         // Initialize current config values
-        this.resetConfig();
+        this.curAutoBounds = true;
+        this.resetBounds();
+        this.curAutoBins = true;
+        this.resetNumBins();
 
         // Initialize config settings in the protobuf message
         this.fixedNumBins = false;
@@ -398,6 +419,15 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @action initXYBoundaries(minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
         this.linePlotInitXYBoundaries = {minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal};
     }
+
+    public cacheBounds = (minPix: number, maxPix: number): void => {
+        this.cachedMinPix = minPix;
+        this.cachedMaxPix = maxPix;
+    };
+
+    public cacheNumBins = (numBins: number): void => {
+        this.cachedNumBins = numBins;
+    };
 
     public init = (widgetSettings): void => {
         if (!widgetSettings) {
