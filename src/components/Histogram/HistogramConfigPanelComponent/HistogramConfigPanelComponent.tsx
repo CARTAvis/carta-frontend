@@ -75,7 +75,17 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
         const resetButtonToolTip = <span>Reset histogram config with the previous automatic pixel bounds and number of bins.</span>;
 
-        const resetMaxNumBinsTip = <span>Reset the maximum number of bins on slider.</span>;
+        const resetMaxNumBinsTip = (
+            <span>
+                <i>
+                    <small>
+                        Maximum number of bins on slider.
+                        <br />
+                        To change it, please fill the new number and press &lt;Enter&gt;.
+                    </small>
+                </i>
+            </span>
+        );
 
         const setPixelBoundsPanel = (
             <React.Fragment>
