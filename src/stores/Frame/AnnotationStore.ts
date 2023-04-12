@@ -247,7 +247,7 @@ export class CompassAnnotationStore extends RegionStore {
         super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
         makeObservable(this);
         this.modifiedTimestamp = performance.now();
-        this.setLength(controlPoints[1].x);
+        this.setLength(controlPoints[1].x, true);
     }
 
     @action setLabel = (label: string, isNorth: boolean) => {
@@ -296,9 +296,9 @@ export class CompassAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    @action setLength = (length: number) => {
+    @action setLength = (length: number, skipUpdate: boolean = false) => {
         this.length = Math.abs(length);
-        this.setControlPoint(1, {x: length, y: length});
+        this.setControlPoint(1, {x: length, y: length}, skipUpdate);
         this.modifiedTimestamp = performance.now();
     };
 
