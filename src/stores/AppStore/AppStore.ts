@@ -844,6 +844,7 @@ export class AppStore {
     @action removePreviewFrame = (previewId: number) => {
         if (this.previewFrames.delete(previewId)) {
             this.backendService.closePvPreview(previewId);
+            this.activeFrame = this.visibleFrames[0];
         }
     };
 

@@ -969,8 +969,7 @@ export class FrameStore {
         }
 
         const roundedPosInfo = round2D(this.cursorInfo.posImageSpace);
-        const roundedPosValue = round2D(this.cursorValue.position);
-
+        const roundedPosValue = round2D(this.isPreview ? this.previewCursorValue.position : this.cursorValue.position);
         return this.cursorValue.channel === this.channel && roundedPosInfo.x === roundedPosValue.x && roundedPosInfo.y === roundedPosValue.y;
     }
 
@@ -1131,6 +1130,16 @@ export class FrameStore {
             return null;
         }
         return getFormattedWCSPoint(this.wcsInfoForTransformation, this.center);
+    }
+
+    @computed get previewCursorValue(): {position: Point2D; channel: number; value: number} | null {
+        if (!this.isPreview) {
+            return null;
+        }
+
+        const cursorPosImage = this.cursorInfo.posImageSpace;
+        const cursorValue = {position: cursorPosImage, channel: 0, value: this.rasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)]};
+        return cursorValue;
     }
 
     constructor(frameInfo: FrameInfo) {

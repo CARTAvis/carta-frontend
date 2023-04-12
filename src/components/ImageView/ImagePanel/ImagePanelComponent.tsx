@@ -130,7 +130,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
 
         const frame = this.props.frame;
         if (frame?.isRenderable && appStore.astReady) {
-            const isActive = frame === appStore.activeFrame && appStore.numImageRows * appStore.numImageColumns > 1;
+            const isActive = frame === appStore.activeFrame && (appStore.numImageRows * appStore.numImageColumns > 1 || appStore.previewFrames.size > 0);
             const className = classNames("image-panel-div", {active: isActive});
 
             let style: React.CSSProperties = {width: frame.previewViewWidth || overlayStore.viewWidth, height: frame.previewViewHeight || overlayStore.viewHeight};
@@ -163,7 +163,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     {this.cursorInfoRequired && frame.cursorInfo && (
                         <CursorOverlayComponent
                             cursorInfo={frame.cursorInfo}
-                            cursorValue={frame.cursorInfo.isInsideImage ? frame.cursorValue.value : undefined}
+                            cursorValue={frame.cursorInfo.isInsideImage ? (frame.isPreview ? frame.previewCursorValue.value : frame.cursorValue.value) : undefined}
                             isValueCurrent={frame.isCursorValueCurrent}
                             spectralInfo={frame.spectralInfo}
                             width={frame.previewViewWidth || overlayStore.viewWidth}
