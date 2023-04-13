@@ -65,7 +65,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @computed get effectivePreviewRegionId(): number {
         if (this.effectiveFrame) {
             const regionId = this.previewRegionId;
-            if (regionId !== RegionId.IMAGE && regionId !== undefined) {
+            if (regionId !== RegionId.IMAGE && regionId !== undefined && this.effectiveFrame.getRegion(regionId)) {
                 return regionId;
             }
         }

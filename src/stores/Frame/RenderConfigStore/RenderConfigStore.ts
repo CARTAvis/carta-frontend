@@ -272,11 +272,11 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMinVal() {
-        return this.scaleMin[this.stokesIndex];
+        return this.previewHistogramMin || this.scaleMin[this.stokesIndex];
     }
 
     @computed get scaleMaxVal() {
-        return this.scaleMax[this.stokesIndex];
+        return this.previewHistogramMax || this.scaleMax[this.stokesIndex];
     }
 
     @computed get selectedPercentileVal() {
@@ -418,13 +418,13 @@ export class RenderConfigStore {
         this.visible = visible;
     };
 
-    // @action setPreviewHistogramMax = (histogramMax: number) => {
-    //     this.previewHistogramMax = histogramMax;
-    // };
+    @action setPreviewHistogramMax = (histogramMax: number) => {
+        this.previewHistogramMax = histogramMax;
+    };
 
-    // @action setPreviewHistogramMin = (histogramMin: number) => {
-    //     this.previewHistogramMin = histogramMin;
-    // };
+    @action setPreviewHistogramMin = (histogramMin: number) => {
+        this.previewHistogramMin = histogramMin;
+    };
 
     @action toggleVisibility = () => {
         this.visible = !this.visible;
