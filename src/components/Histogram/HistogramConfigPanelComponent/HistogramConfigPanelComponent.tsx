@@ -11,16 +11,17 @@ import "./HistogramConfigPanelComponent.scss";
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
     private curMaxNumBins: number;
+    private binsLowerBound: number;
 
     get widgetStore(): HistogramWidgetStore {
         return this.props.widgetStore;
     }
 
     get maxNumBins(): number {
-        if (this.curMaxNumBins !== undefined && this.curMaxNumBins > 1) {
+        if (this.curMaxNumBins !== undefined && this.curMaxNumBins > this.binsLowerBound) {
             return this.curMaxNumBins;
         }
-        return this.widgetStore.effectiveFrame.renderConfig.histogram.numBins;
+        return this.widgetStore.maxNumBins;
     }
 
     private onSetAutoBounds = (autoBounds: boolean) => {
@@ -87,6 +88,8 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             </span>
         );
 
+        this.binsLowerBound = 2;
+
         const setPixelBoundsPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto pixel bounds"}>
@@ -127,10 +130,10 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                     <div className="select-num-bins">
                         <FormGroup label="Number of bins" inline={true}>
                             <Slider
-                                min={1}
+                                min={this.binsLowerBound}
                                 max={this.widgetStore.maxNumBins}
                                 stepSize={1}
-                                labelStepSize={this.widgetStore.maxNumBins > 1 ? this.widgetStore.maxNumBins - 1 : this.widgetStore.maxNumBins}
+                                labelStepSize={this.widgetStore.maxNumBins > this.binsLowerBound ? this.widgetStore.maxNumBins - this.binsLowerBound : 0}
                                 onChange={this.changeNumBinsHandler}
                                 value={this.widgetStore.curNumBins <= this.widgetStore.maxNumBins ? this.widgetStore.curNumBins : this.widgetStore.maxNumBins}
                                 vertical={false}
