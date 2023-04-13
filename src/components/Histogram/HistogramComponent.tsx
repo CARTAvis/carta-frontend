@@ -270,7 +270,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     };
 
     private areEqual = (num1: number, num2: number): boolean => {
-        return Math.abs(num1 - num2) < 1e-6;
+        return Math.abs((num1 - num2) / (num1 + num2)) < 1e-6;
     };
 
     render() {
