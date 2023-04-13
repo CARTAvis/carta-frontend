@@ -2853,8 +2853,9 @@ export class FrameStore {
         const oldWidth = this.frameInfo.fileInfoExtended.width;
 
         this.setRasterData(new Float32Array(previewData.imageData.buffer.slice(previewData.imageData.byteOffset, previewData.imageData.byteOffset + previewData.imageData.byteLength)));
-        this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds?.max);
-        this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds?.min);
+        // this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds?.max);
+        // this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds?.min);
+        this.renderConfig.updateChannelHistogram(previewData.histogram);
         const newFrameInfo = {...this.frameInfo};
         newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
         this.setFrameInfo(newFrameInfo);
