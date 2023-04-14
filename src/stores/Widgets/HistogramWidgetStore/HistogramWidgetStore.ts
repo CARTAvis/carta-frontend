@@ -42,7 +42,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     // Config settings in the protobuf message
     public fixedNumBins: boolean;
     public numBins: number;
-    public binWidth: number;
     public fixedBounds: boolean;
     public minPix: number;
     public maxPix: number;
@@ -202,8 +201,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
             this.fixedNumBins = true;
             this.numBins = this.curNumBins;
         }
-
-        this.binWidth = 0;
     };
 
     @computed get isAutoBounds(): boolean {
@@ -256,7 +253,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
                 const fixedNumBins = widgetStore.fixedNumBins;
                 const numBins = widgetStore.numBins;
-                const binWidth = widgetStore.binWidth;
                 const fixedBounds = widgetStore.fixedBounds;
                 const minPix = widgetStore.minPix;
                 const maxPix = widgetStore.maxPix;
@@ -266,7 +262,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                         config.coordinate === coordinate &&
                         config.fixedNumBins === fixedNumBins &&
                         config.numBins === numBins &&
-                        this.areEqual(config.binWidth, binWidth) &&
                         config.fixedBounds === fixedBounds &&
                         this.areEqual(config.bounds.min, minPix) &&
                         this.areEqual(config.bounds.max, maxPix)
@@ -278,7 +273,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                         channel: -1,
                         fixedNumBins: fixedNumBins,
                         numBins: numBins,
-                        binWidth: binWidth,
                         fixedBounds: fixedBounds,
                         bounds: {min: minPix, max: maxPix}
                     });
@@ -349,7 +343,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                                 updatedConfig.channel !== config.channel ||
                                 updatedConfig.fixedNumBins !== config.fixedNumBins ||
                                 updatedConfig.numBins !== config.numBins ||
-                                !this.areEqual(updatedConfig.binWidth, config.binWidth) ||
                                 updatedConfig.fixedBounds !== config.fixedBounds ||
                                 !this.areEqual(updatedConfig.bounds.min, config.bounds.min) ||
                                 !this.areEqual(updatedConfig.bounds.max, config.bounds.max)
@@ -386,7 +379,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         // Initialize config settings in the protobuf message
         this.fixedNumBins = false;
         this.numBins = -1;
-        this.binWidth = 0;
         this.fixedBounds = false;
         this.minPix = 0;
         this.maxPix = 0;
