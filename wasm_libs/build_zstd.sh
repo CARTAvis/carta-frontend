@@ -33,4 +33,5 @@ if [[ $(find -L ./standalone_zstd.bc -type f -size +10000c 2>/dev/null) ]]; then
     echo "Found"
 else
     echo "Not found!"
+    exit 1
 fi

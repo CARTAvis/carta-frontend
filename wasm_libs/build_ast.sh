@@ -30,4 +30,5 @@ if [[ $(find ../built/lib/libast.a -type f -size +1000000c 2>/dev/null) ]]; then
     echo "Found"
 else
     echo "Not found!"
+    exit 1
 fi

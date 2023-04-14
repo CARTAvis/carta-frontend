@@ -31,4 +31,5 @@ if [[ $(find -L ../../built/lib/libzfp.a -type f -size +192000c 2>/dev/null) ]];
     echo "Found"
 else
     echo "Not found!"
+    exit 1  
 fi
