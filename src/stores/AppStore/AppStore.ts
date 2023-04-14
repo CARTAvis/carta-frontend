@@ -749,6 +749,20 @@ export class AppStore {
             // adjust requirements for stores
             this.widgetsStore.removeFrameFromRegionWidgets(fileId);
 
+            // clear pv preview frames
+            const previewFrame = this.previewFrames.get(fileId);
+            let pvGeneratorWidgetId;
+
+            for (const [key, value] of this.widgetsStore.pvGeneratorWidgets) {
+                if (_.isEqual(value?.previewFrame, previewFrame)) {
+                    pvGeneratorWidgetId = key;
+                }
+            }
+
+            this.widgetsStore.pvGeneratorWidgets.get(pvGeneratorWidgetId)?.removePreviewFrame(parseInt(pvGeneratorWidgetId.split("-")[2]));
+            this.widgetsStore.removeFloatingWidget(pvGeneratorWidgetId);
+            this.previewFrames.delete(fileId);
+
             // clear existing requirements for the frame
             this.spectralRequirements.delete(fileId);
             this.spatialRequirements.delete(fileId);
