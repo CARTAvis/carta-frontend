@@ -615,27 +615,27 @@ export class FrameStore {
 
     // Dir X axis number from the header
     get dirXNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.spatialX;
+        return this.frameInfo.fileInfoExtended.axesNumbers?.spatialX;
     }
 
     // Dir Y axis number from the header
     get dirYNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.spatialY;
+        return this.frameInfo.fileInfoExtended.axesNumbers?.spatialY;
     }
 
     // Spectral axis number from the header
     get spectralNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.spectral;
+        return this.frameInfo.fileInfoExtended.axesNumbers?.spectral;
     }
 
     // Stokes axis number from the header
     get stokesNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.stokes;
+        return this.frameInfo.fileInfoExtended.axesNumbers?.stokes;
     }
 
     // Depth axis number from the header
     get depthNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.depth;
+        return this.frameInfo.fileInfoExtended.axesNumbers?.depth;
     }
 
     // Image dimension without stokes axis

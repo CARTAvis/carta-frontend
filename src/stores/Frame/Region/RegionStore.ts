@@ -34,6 +34,7 @@ export class RegionStore {
     @observable locked: boolean = false;
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
+    @observable isPreviewCut: boolean = false;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -489,7 +490,7 @@ export class RegionStore {
             this.controlPoints[index] = p;
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
-            } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating) {
+            } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
                 this.throttledUpdateRegion(true);
             }
             if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
@@ -527,7 +528,7 @@ export class RegionStore {
 
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
-        } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating) {
+        } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
             this.throttledUpdateRegion(true);
         }
     };
@@ -657,6 +658,10 @@ export class RegionStore {
         if (coordinate) {
             this.coordinate = coordinate;
         }
+    };
+
+    @action setIsPreviewCut = (isPreviewCut: boolean) => {
+        this.isPreviewCut = this.regionType === CARTA.RegionType.LINE && isPreviewCut;
     };
 
     // Update the region with the backend

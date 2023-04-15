@@ -1206,6 +1206,7 @@ export class AppStore {
                     pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
                 } else {
                     pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
+                    pvGeneratorWidgetStore.lineRegionIdPreviewFrameMap.set(message.regionId, pvGeneratorWidgetStore.previewFrame);
                     WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
                 }
             } else {

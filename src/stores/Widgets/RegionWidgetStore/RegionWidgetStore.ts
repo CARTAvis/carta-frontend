@@ -83,7 +83,6 @@ export class RegionWidgetStore {
                             return selectedRegion.regionType === CARTA.RegionType.LINE ? selectedRegion.regionId : this.defaultRegionId();
                     }
                 }
-                return null;
             }
         }
 

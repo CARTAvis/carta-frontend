@@ -1,6 +1,7 @@
 import {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable, reaction} from "mobx";
+import {isEqual} from "lodash";
+import {action, computed, makeObservable, observable, ObservableMap, reaction} from "mobx";
 
 import {SpectralSystem} from "models";
 import {AppStore} from "stores";
@@ -22,6 +23,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable zRebin: number = 1;
     @observable previewRegionId: number;
     @observable previewFrame: FrameStore;
+    @observable lineRegionIdPreviewFrameMap: ObservableMap<number, FrameStore>;
 
     @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
@@ -100,6 +102,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
             };
             if (preview) {
                 AppStore.Instance.requestPreviewPV(requestMessage, frame, pvGeneratorId);
+                this.effectiveFrame.regionSet.regions.find(r => r.regionId === this.effectiveRegionId).setIsPreviewCut(true);
             } else {
                 AppStore.Instance.requestPV(requestMessage, frame, this.keep);
             }
@@ -165,6 +168,25 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     };
 
     @action removePreviewFrame = (id: number) => {
+        AppStore.Instance.visibleFrames.forEach(f =>
+            f.regionSet.regions
+                .find(r => {
+                    for (const [key] of this.lineRegionIdPreviewFrameMap) {
+                        return key === r.regionId;
+                    }
+                    return false;
+                })
+                ?.setIsPreviewCut(false)
+        );
+        console.log(this.lineRegionIdPreviewFrameMap.size);
+        for (const [key, value] of this.lineRegionIdPreviewFrameMap) {
+            console.log(value, this.previewFrame);
+            if (isEqual(value, this.previewFrame)) {
+                this.lineRegionIdPreviewFrameMap.delete(key);
+                break;
+            }
+        }
+        console.log(this.lineRegionIdPreviewFrameMap.size);
         AppStore.Instance.removePreviewFrame(id);
         this.previewFrame = null;
     };
@@ -176,6 +198,7 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         this.reverse = false;
         this.keep = false;
         this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
+        this.lineRegionIdPreviewFrameMap = new ObservableMap<number, FrameStore>();
         reaction(
             () => this.effectiveFrame?.channelValueBounds,
             channelValueBounds => {
