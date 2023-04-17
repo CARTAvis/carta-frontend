@@ -27,7 +27,7 @@ export class CatalogStore {
     private static readonly ArcsecUnits = ["arcsec", "arcsecond"];
     private static readonly ArcminUnits = ["arcmin", "arcminute"];
 
-    private _catalogGLData: Map<number, CatalogOverlayCoords>;
+    @observable private _catalogGLData: Map<number, CatalogOverlayCoords>;
     @observable catalogCounts: Map<number, number>;
     // image file id : catalog file Id
     @observable imageAssociatedCatalogId: Map<number, Array<number>>;
@@ -51,7 +51,7 @@ export class CatalogStore {
         this.catalogCounts = new Map<number, number>();
     }
 
-    get catalogGLData() {
+    @computed get catalogGLData() {
         return this._catalogGLData;
     }
 
