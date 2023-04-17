@@ -1,20 +1,20 @@
-.rectangular-region-form {
-    user-select: none;
+.region-dialog {
+    .bp3-dialog-body {
+        .region-form {
+            .ann-text-input {
+                .bp3-form-content {
+                    max-width: calc(100% - 8em - 10px);
+                }
 
-    .form-contents {
-        .bp3-numeric-input {
-            width: 125px;
-
-            .bp3-input-group {
-                width: 100%;
+                .bp3-input {
+                    width: 255px;
+                    height: 60px;
+                    min-width: 125px;
+                    min-height: 30px;
+                    max-width: 100%;
+                    font-family: Arial, Helvetica, sans-serif;
+                }
             }
-        }
-
-        .info-string {
-            margin-left: 5px;
-            font-size: x-small;
-            font-family: monospace;
-            user-select: text;
         }
     }
 }

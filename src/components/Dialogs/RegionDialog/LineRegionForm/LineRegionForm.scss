@@ -1,20 +1,5 @@
-.line-region-form {
-    user-select: none;
-
-    .form-contents {
-        .bp3-numeric-input {
-            width: 125px;
-
-            .bp3-input-group {
-                width: 100%;
-            }
-        }
-
-        .info-string {
-            margin-left: 5px;
-            font-size: x-small;
-            font-family: monospace;
-            user-select: text;
-        }
+.length-form {
+    .bp3-input {
+        margin-right: 130px;
     }
 }
