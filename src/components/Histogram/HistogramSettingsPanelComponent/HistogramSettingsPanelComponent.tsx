@@ -184,8 +184,8 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         return (
             <div className="histogram-settings-panel">
                 <Tabs id="histogramSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
-                    <Tab id={HistogramSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
                     <Tab id={HistogramSettingsTabs.CONFIG} panelClassName="config-tab-panel" title="Configuration" panel={<HistogramConfigPanelComponent widgetStore={widgetStore} />} />
+                    <Tab id={HistogramSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
                 </Tabs>
             </div>
         );
