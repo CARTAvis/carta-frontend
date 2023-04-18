@@ -384,7 +384,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.maxPix = 0;
 
         // Initialize the maximum number of histogram bins on the slider
-        this.maxNumBins = this.effectiveFrame.renderConfig.histogram.numBins;
+        this.maxNumBins = this.effectiveFrame.renderConfig.histogram.numBins * 2;
     }
 
     // settings
