@@ -97,9 +97,19 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     };
 
     render() {
-        const errorMsg = (
+        const errorMinPix = (
             <span>
-                <i>The range of pixel bounds must be from small to large!</i>
+                <i>
+                    This value must be smaller then <strong>X max</strong>!
+                </i>
+            </span>
+        );
+
+        const errorMaxPix = (
+            <span>
+                <i>
+                    This value must be greater then <strong>X min</strong>!
+                </i>
             </span>
         );
 
@@ -114,11 +124,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         const resetMaxNumBinsTip = (
             <span>
                 <i>
-                    <small>
-                        Maximum number of bins on slider.
-                        <br />
-                        To change it, please fill the new number and press &lt;Enter&gt;.
-                    </small>
+                    <small>To change it, please fill the new number and press &lt;Enter&gt;.</small>
                 </i>
             </span>
         );
@@ -139,14 +145,17 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                 {!this.widgetStore.isAutoBounds && (
                     <div className="line-boundary">
                         <FormGroup label="X min" inline={true}>
-                            <SafeNumericInput intent={this.minPixIntent} value={this.widgetStore.curMinPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
+                            <Tooltip2 content={errorMinPix} disabled={this.widgetStore.isAbleToGenerate} placement="top">
+                                <SafeNumericInput intent={this.minPixIntent} value={this.widgetStore.curMinPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
+                            </Tooltip2>
                         </FormGroup>
                         <FormGroup label="X max" inline={true}>
-                            <SafeNumericInput intent={this.maxPixIntent} value={this.widgetStore.curMaxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
+                            <Tooltip2 content={errorMaxPix} disabled={this.widgetStore.isAbleToGenerate} placement="bottom">
+                                <SafeNumericInput intent={this.maxPixIntent} value={this.widgetStore.curMaxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
+                            </Tooltip2>
                         </FormGroup>
                     </div>
                 )}
-                {!this.widgetStore.isAbleToGenerate && <div className="reset-generate">{errorMsg}</div>}
             </React.Fragment>
         );
 
@@ -162,7 +171,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                     />
                 </FormGroup>
                 {!this.widgetStore.isAutoBins && (
-                    <div className="select-num-bins">
+                    <div className="line-boundary">
                         <FormGroup label="Number of bins" inline={true}>
                             <Slider
                                 min={this.binsLowerBound}
@@ -174,8 +183,8 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                                 vertical={false}
                             />
                         </FormGroup>
-                        <FormGroup label="" inline={true}>
-                            <Tooltip2 content={resetMaxNumBinsTip} placement="top">
+                        <FormGroup label="Max number of bins" inline={true}>
+                            <Tooltip2 content={resetMaxNumBinsTip} placement="bottom">
                                 <SafeNumericInput value={this.maxNumBins} buttonPosition="none" onValueChange={val => this.onMaxNumBinsChanged(val)} onKeyDown={this.onSetMaxNumBins} />
                             </Tooltip2>
                         </FormGroup>
