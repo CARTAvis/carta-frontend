@@ -9,7 +9,7 @@ import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from
 import {HistogramWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
-import {HistogramConfigPanelComponent} from "../HistogramConfigPanelComponent/HistogramConfigPanelComponent";
+import {HistogramConfigPanelComponent} from "./HistogramConfigPanelComponent";
 
 import "./HistogramSettingsPanelComponent.scss";
 
