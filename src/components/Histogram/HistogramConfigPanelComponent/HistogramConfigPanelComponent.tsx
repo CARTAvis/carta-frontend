@@ -6,8 +6,6 @@ import {observer} from "mobx-react";
 import {SafeNumericInput} from "components/Shared";
 import {HistogramWidgetStore} from "stores/Widgets";
 
-import "./HistogramConfigPanelComponent.scss";
-
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
     private curMaxNumBins: number;
@@ -205,13 +203,11 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
         return (
             <div className="line-settings-panel">
-                <div className="config-panel">
-                    {setPixelBoundsPanel}
-                    <Divider />
-                    {setNumBinsPanel}
-                    <Divider />
-                    {resetConfigPanel}
-                </div>
+                {setPixelBoundsPanel}
+                <Divider />
+                {setNumBinsPanel}
+                <Divider />
+                {resetConfigPanel}
             </div>
         );
     }
