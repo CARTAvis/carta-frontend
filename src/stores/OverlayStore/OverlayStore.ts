@@ -102,7 +102,7 @@ export class OverlayGlobalSettings {
         astString.add("System", this.explicitSystem);
 
         const frame = AppStore.Instance.activeFrame;
-        if (frame.isXY || frame.isYX) {
+        if ((frame.isXY || frame.isYX) && typeof this.explicitSystem !== "undefined") {
             if (this.system === SystemType.FK4) {
                 astString.add("Equinox", "1950");
             } else {

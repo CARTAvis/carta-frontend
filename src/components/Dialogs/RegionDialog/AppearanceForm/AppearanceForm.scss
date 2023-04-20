@@ -1,23 +1,12 @@
-@import "~@blueprintjs/core/lib/scss/variables.scss";
-
 .appearance-form {
-    .form-contents {
-        display: flex;
-        flex-wrap: wrap;
-        user-select: none;
-        .bp4-form-group {
-            flex-grow: 1;
-            padding-right: 10px;
+    .bp4-label {
+        width: 11em;
+        text-align: right;
+    }
 
-            &:last-of-type {
-                padding-right: 0;
-            }
-        }
-
-        .bp4-numeric-input {
-            .bp4-input-group {
-                width: 60px;
-            }
+    .bp4-numeric-input {
+        .bp4-input-group {
+            width: 60px;
         }
     }
 }

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added layout renaming dialog ([#458](https://github.com/CARTAvis/carta-frontend/issues/458)).
 * Added supports for swapped-axes image cubes ([#1953](https://github.com/CARTAvis/carta-frontend/issues/1953)).
 * Added supports for image annotations ([#267](https://github.com/CARTAvis/carta-frontend/issues/267)).
+* Added the ability of changing to a new directory by entering a path ([#609](https://github.com/CARTAvis/carta-frontend/issues/609)).
 ### Fixed
 * Fixed the issue of annoying text input fields ([#1906](https://github.com/CARTAvis/carta-frontend/issues/1906)).
 * Fixed the issues of copying the Session URL in the macOS Electron and Linux AppImage versions ([#2102](https://github.com/CARTAvis/carta-frontend/issues/2102), [#2108](https://github.com/CARTAvis/carta-frontend/issues/2108)).
