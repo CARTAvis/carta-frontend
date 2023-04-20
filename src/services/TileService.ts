@@ -145,11 +145,12 @@ export class TileService {
                     this.updateStream(eventArgs.fileId, eventArgs.channel, eventArgs.stokes, resultArray, eventArgs.width, eventArgs.subsetHeight, eventArgs.layer, eventArgs.tileCoordinate);
                 } else if (event.data[0] === "preview decompress") {
                     const buffer = event.data[1];
-                    const eventArgs = event.data[2] as TileMessageArgs;
-                    const frame = AppStore.Instance.previewFrames.get(event.data[3]);
+                    const eventArgs = event.data[2];
+                    const frame = AppStore.Instance.previewFrames.get(eventArgs.previewId);
                     const length = eventArgs.width * eventArgs.subsetHeight;
                     const resultArray = new Float32Array(buffer, 0, length);
                     frame?.setRasterData(resultArray);
+                    frame?.updatePreviewFrameInfo(event.data[3], eventArgs.oldAspectRatio, eventArgs.oldHeight, eventArgs.oldWidth);
                 }
             };
         }

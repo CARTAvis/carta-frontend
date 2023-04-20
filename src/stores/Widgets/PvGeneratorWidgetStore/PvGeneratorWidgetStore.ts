@@ -4,7 +4,7 @@ import {isEqual} from "lodash";
 import {action, computed, makeObservable, observable, ObservableMap, reaction} from "mobx";
 
 import {SpectralSystem} from "models";
-import {AppStore} from "stores";
+import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
@@ -99,7 +99,15 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 reverse: this.reverse,
                 keep: this.keep,
                 previewSettings: preview
-                    ? {previewId: parseInt(pvGeneratorId.split("-")[2]), regionId: this.effectivePreviewRegionId, rebinXy: this.xyRebin, rebinZ: this.zRebin, compressionQuality: 11, compressionType: CARTA.CompressionType.ZFP}
+                    ? {
+                          previewId: parseInt(pvGeneratorId.split("-")[2]),
+                          regionId: this.effectivePreviewRegionId,
+                          rebinXy: this.xyRebin,
+                          rebinZ: this.zRebin,
+                          imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
+                          animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality || 9,
+                          compressionType: CARTA.CompressionType.ZFP
+                      }
                     : undefined
             };
             if (preview) {

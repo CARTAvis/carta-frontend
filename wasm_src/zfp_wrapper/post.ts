@@ -109,7 +109,11 @@ ctx.onmessage = (event => {
                 layer: eventArgs.layer,
                 fileId: eventArgs.fileId,
                 channel: eventArgs.channel,
-                stokes: eventArgs.stokes
+                stokes: eventArgs.stokes,
+                previewId: eventArgs.previewId,
+                oldAspectRatio: eventArgs.oldAspectRatio,
+                oldHeight: eventArgs.oldHeight,
+                oldWidth: eventArgs.oldWidth,
             }, event.data[3]], [event.data[1]]);
 
             if (Module.debugOutput) {
