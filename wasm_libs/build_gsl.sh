@@ -15,9 +15,15 @@ if ! [[ $(find gsl-2.6.tar.gz -type f 2>/dev/null && md5sum -c gsl.md5 &>/dev/nu
         echo "Failed to fetch GSL 2.6 from http://ftpmirror.gnu.org"
         if ! wget https://mirror.ossplanet.net/gnu/gsl/gsl-2.6.tar.gz; then
             echo "Failed to fetch GSL 2.6 from https://mirror.ossplanet.net"
-            if ! wget https://mirrors.ocf.berkeley.edu/gnu/gsl/gsl-2.6.tar.gz; then
-                echo "Failed to fetch GSL 2.6 from https://mirrors.ocf.berkeley.edu"
-                exit 1
+            if ! wget https://ftp.jaist.ac.jp/pub/GNU/gsl/gsl-2.6.tar.gz; then
+                echo "Failed to fetch GSL 2.6 from https://ftp.jaist.ac.jp" 
+                if ! wget https://mirrors.ocf.berkeley.edu/gnu/gsl/gsl-2.6.tar.gz; then
+                    echo "Failed to fetch GSL 2.6 from https://mirrors.ocf.berkeley.edu"
+                     if ! wget https://mirror.dogado.de/gnu/gsl/gsl-2.6.tar.gz; then
+                         echo "Failed to fetch GSL 2.6 from https://mirror.dogado.de"
+                         exit 1
+                     fi
+                fi
             fi
         fi
     fi
