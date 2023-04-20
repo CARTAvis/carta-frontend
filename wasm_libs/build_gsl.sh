@@ -8,13 +8,19 @@ if ! [[ $(find gsl-2.6.tar.gz -type f 2>/dev/null && md5sum -c gsl.md5 &>/dev/nu
     while (( retry_count < max_retries )); do
         wget http://ftpmirror.gnu.org/gsl/gsl-2.6.tar.gz && break
         ((retry_count++))
-        if (( retry_count == max_retries )); then
-            echo "Failed to fetch GSL 2.6 from http://ftpmirror.gnu.org."
-            exit 1
-        fi
         echo "Download failed. Trying again."
         sleep 10
     done
+    if (( retry_count == max_retries )); then
+        echo "Failed to fetch GSL 2.6 from http://ftpmirror.gnu.org"
+        if ! wget https://mirror.ossplanet.net/gnu/gsl/gsl-2.6.tar.gz; then
+            echo "Failed to fetch GSL 2.6 from https://mirror.ossplanet.net"
+            if ! wget https://mirrors.ocf.berkeley.edu/gnu/gsl/gsl-2.6.tar.gz; then
+                echo "Failed to fetch GSL 2.6 from https://mirrors.ocf.berkeley.edu"
+                exit 1
+            fi
+        fi
+    fi
 fi
 
 mkdir -p gsl; tar -xf gsl-2.6.tar.gz --directory ./gsl --strip-components=1
