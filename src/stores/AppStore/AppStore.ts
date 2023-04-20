@@ -917,7 +917,7 @@ export class AppStore {
         }
     }
 
-    updateCatalogProfile = (fileId: number, frame: FrameStore): string => {
+    @action updateCatalogProfile = (fileId: number, frame: FrameStore): string => {
         let catalogWidgetId;
         // update image associated catalog file
         let associatedCatalogFiles = [];

@@ -101,7 +101,7 @@ export class OverlayGlobalSettings {
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
         astString.add("System", this.explicitSystem);
 
-        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage) {
+        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && typeof this.explicitSystem !== "undefined") {
             if (this.system === SystemType.FK4) {
                 astString.add("Equinox", "1950");
             } else {
