@@ -32,7 +32,7 @@ import {
     WCSPoint2D,
     ZoomPoint
 } from "models";
-import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
+import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
 import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
 import {
     CENTER_POINT_INDEX,
@@ -1138,7 +1138,7 @@ export class FrameStore {
         }
 
         const cursorPosImage = this.cursorInfo.posImageSpace;
-        const cursorValue = {position: cursorPosImage, channel: 0, value: this.rasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)]};
+        const cursorValue = {position: cursorPosImage, channel: 0, value: this.rasterData ? this.rasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)] : NaN};
         return cursorValue;
     }
 
@@ -2852,7 +2852,26 @@ export class FrameStore {
         const oldHeight = this.frameInfo.fileInfoExtended.height;
         const oldWidth = this.frameInfo.fileInfoExtended.width;
 
-        this.setRasterData(new Float32Array(previewData.imageData.buffer.slice(previewData.imageData.byteOffset, previewData.imageData.byteOffset + previewData.imageData.byteLength)));
+        const compressedArray = previewData.imageData;
+        const nanEncodings32 = new Int32Array(previewData.nanEncodings.slice(0).buffer);
+        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, previewData.width * previewData.height * 4));
+        compressedView.set(compressedArray);
+
+        const eventArgs = {
+            fileId: 123,
+            channel: 0,
+            stokes: 0,
+            width: previewData.width,
+            subsetHeight: previewData.height,
+            subsetLength: compressedArray.byteLength,
+            compression: previewData.compressionQuality,
+            nanEncodings: nanEncodings32,
+            tileCoordinate: 0,
+            layer: 0,
+            requestId: 0
+        };
+
+        TileService.Instance.workers[0].postMessage(["preview decompress", compressedView.buffer, eventArgs, previewData.previewId], [compressedView.buffer, nanEncodings32.buffer]);
 
         if (previewData.histogram) {
             this.renderConfig.updateChannelHistogram(previewData.histogram);

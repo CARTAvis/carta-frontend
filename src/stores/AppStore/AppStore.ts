@@ -544,10 +544,11 @@ export class AppStore {
         if (newFrame) {
             this.previewFrames.set(ack.previewId, newFrame);
             newFrame.setIsPreview(true);
-            newFrame.setRasterData(new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength)));
-            newFrame.renderConfig.setPreviewHistogramMax(ack.histogramBounds?.max);
-            newFrame.renderConfig.setPreviewHistogramMin(ack.histogramBounds?.min);
-            newFrame.renderConfig.updateChannelHistogram(ack.histogram);
+            newFrame.updatePreviewData(ack);
+            // newFrame.setRasterData(new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength)));
+            // newFrame.renderConfig.setPreviewHistogramMax(ack.histogramBounds?.max);
+            // newFrame.renderConfig.setPreviewHistogramMin(ack.histogramBounds?.min);
+            // newFrame.renderConfig.updateChannelHistogram(ack.histogram);
             this.setActiveFrame(newFrame);
         }
 

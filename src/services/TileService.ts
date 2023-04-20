@@ -5,6 +5,7 @@ import {Subject} from "rxjs";
 
 import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
+import {AppStore} from "stores";
 import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
@@ -68,7 +69,7 @@ export class TileService {
     private lruCapacitySystem: number;
     private textureArray: Array<WebGLTexture>;
     private textureCoordinateQueue: Array<number>;
-    private readonly workers: Worker[];
+    public readonly workers: Worker[];
     private compressionRequestCounter: number;
     private pendingSynchronisedTiles: Map<string, Array<number>>;
     private receivedSynchronisedTiles: Map<string, Array<{coordinate: number; tile: RasterTile}>>;
@@ -142,6 +143,13 @@ export class TileService {
                     const length = eventArgs.width * eventArgs.subsetHeight;
                     const resultArray = new Float32Array(buffer, 0, length);
                     this.updateStream(eventArgs.fileId, eventArgs.channel, eventArgs.stokes, resultArray, eventArgs.width, eventArgs.subsetHeight, eventArgs.layer, eventArgs.tileCoordinate);
+                } else if (event.data[0] === "preview decompress") {
+                    const buffer = event.data[1];
+                    const eventArgs = event.data[2] as TileMessageArgs;
+                    const frame = AppStore.Instance.previewFrames.get(event.data[3]);
+                    const length = eventArgs.width * eventArgs.subsetHeight;
+                    const resultArray = new Float32Array(buffer, 0, length);
+                    frame?.setRasterData(resultArray);
                 }
             };
         }
