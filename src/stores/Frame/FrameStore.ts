@@ -2846,11 +2846,19 @@ export class FrameStore {
         this.rasterData = rasterData;
     };
 
+    @observable tempPreviewData: CARTA.PvPreviewData;
+
+    @action setTempPreviewData = (previewData: CARTA.PvPreviewData) => {
+        this.tempPreviewData = previewData;
+    };
+
     @action updatePreviewData = (previewData: CARTA.PvPreviewData) => {
         // Old values before updating to the new frameInfo
         const oldAspectRatio = this.aspectRatio;
         const oldHeight = this.frameInfo.fileInfoExtended.height;
         const oldWidth = this.frameInfo.fileInfoExtended.width;
+
+        this.setTempPreviewData(previewData);
 
         const compressedArray = previewData.imageData;
         const nanEncodings32 = new Int32Array(previewData.nanEncodings.slice(0).buffer);
@@ -2897,7 +2905,7 @@ export class FrameStore {
         // this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
         // this.setCenter(isWidthUpdated ? (this.center.x * oldAspectRatio) / this.aspectRatio : this.center.x, isHeightUpdated ? (this.center.y * this.aspectRatio) / oldAspectRatio : this.center.y, false);
 
-        // // Update wcsInfo
+        // Update wcsInfo
         // const astFrameSet = this.initPVFrame();
         // if (astFrameSet) {
         //     this.spectralFrame = AST.getSpectralFrame(astFrameSet);
@@ -2907,25 +2915,18 @@ export class FrameStore {
     };
 
     @action updatePreviewFrameInfo = (previewData: CARTA.PvPreviewData, oldAspectRatio: number, oldHeight: number, oldWidth: number) => {
-        if (previewData.histogram) {
-            this.renderConfig.updateChannelHistogram(previewData.histogram);
+        if (this.tempPreviewData.histogram) {
+            this.renderConfig.updateChannelHistogram(this.tempPreviewData.histogram);
             this.renderConfig.setPreviewHistogramMax(null);
             this.renderConfig.setPreviewHistogramMin(null);
         } else {
-            this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds?.max);
-            this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds?.min);
+            this.renderConfig.setPreviewHistogramMax(this.tempPreviewData.histogramBounds?.max);
+            this.renderConfig.setPreviewHistogramMin(this.tempPreviewData.histogramBounds?.min);
         }
 
         const newFrameInfo = {...this.frameInfo};
-        newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
+        newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(this.tempPreviewData.imageInfo);
         this.setFrameInfo(newFrameInfo);
-
-        const isHeightUpdated = oldHeight !== this.frameInfo.fileInfoExtended.height;
-        const isWidthUpdated = oldWidth !== this.frameInfo.fileInfoExtended.width;
-
-        // Avoid image moving within the frame caused by changing image width or height as rasterData is updating
-        this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
-        this.setCenter(isWidthUpdated ? (this.center.x * oldAspectRatio) / this.aspectRatio : this.center.x, isHeightUpdated ? (this.center.y * this.aspectRatio) / oldAspectRatio : this.center.y, false);
 
         // Update wcsInfo
         const astFrameSet = this.initPVFrame();
@@ -2934,6 +2935,13 @@ export class FrameStore {
             this.wcsInfo = AST.copy(astFrameSet);
             AST.deleteObject(astFrameSet);
         }
+
+        const isHeightUpdated = oldHeight !== this.frameInfo.fileInfoExtended.height;
+        const isWidthUpdated = oldWidth !== this.frameInfo.fileInfoExtended.width;
+
+        // Avoid image moving within the frame caused by changing image width or height as rasterData is updating
+        this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
+        this.setCenter(isWidthUpdated ? (this.center.x * oldAspectRatio) / this.aspectRatio : this.center.x, isHeightUpdated ? (this.center.y * this.aspectRatio) / oldAspectRatio : this.center.y, false);
     };
 
     @action onResizePreviewWidget = (width: number, height: number) => {

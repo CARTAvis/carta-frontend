@@ -545,10 +545,6 @@ export class AppStore {
             this.previewFrames.set(ack.previewId, newFrame);
             newFrame.setIsPreview(true);
             newFrame.updatePreviewData(ack);
-            // newFrame.setRasterData(new Float32Array(ack.imageData.buffer.slice(ack.imageData.byteOffset, ack.imageData.byteOffset + ack.imageData.byteLength)));
-            // newFrame.renderConfig.setPreviewHistogramMax(ack.histogramBounds?.max);
-            // newFrame.renderConfig.setPreviewHistogramMin(ack.histogramBounds?.min);
-            // newFrame.renderConfig.updateChannelHistogram(ack.histogram);
             this.setActiveFrame(newFrame);
         }
 
@@ -1204,6 +1200,7 @@ export class AppStore {
             if (!ack.cancel && ack.previewData) {
                 const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
                 if (pvGeneratorWidgetStore.previewFrame) {
+                    this.cancelRequestingPV(ack.previewData.previewId);
                     pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
                 } else {
                     pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
