@@ -202,7 +202,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const encodedCoordinate = TileCoordinate.EncodeCoordinate(tile);
             const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, frame.channel, frame.stokes, peek);
             if (rasterTile || frame.isPreview) {
-                this.renderTile(tile, frame.isPreview ? {data: frame.rasterData, width: frame.frameInfo.fileInfoExtended.width, height: frame.frameInfo.fileInfoExtended.height, textureCoordinate: 0} : rasterTile, mip);
+                this.renderTile(tile, frame.isPreview ? {data: frame.previewPVRasterData, width: frame.frameInfo.fileInfoExtended.width, height: frame.frameInfo.fileInfoExtended.height, textureCoordinate: 0} : rasterTile, mip);
             } else {
                 // Add high-res placeholders
                 if (numPlaceholderLayersHighRes > 0 && mip >= 2) {

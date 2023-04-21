@@ -1,5 +1,13 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
+.floating-content:has(.pv-generator-widget) {
+    overflow: auto;
+}
+
+.lm_content:has(.pv-generator-widget) {
+    overflow: auto;
+}
+
 .pv-generator-widget {
     margin: 20px;
     display: flex;
@@ -103,7 +111,7 @@
             float: right;
             display: flex;
             div {
-                margin: 1em;
+                margin-left: 1em;
             }
         }
     }

@@ -149,7 +149,7 @@ export class TileService {
                     const frame = AppStore.Instance.previewFrames.get(eventArgs.previewId);
                     const length = eventArgs.width * eventArgs.subsetHeight;
                     const resultArray = new Float32Array(buffer, 0, length);
-                    frame?.setRasterData(resultArray);
+                    frame?.setPreviewPVRasterData(resultArray);
                     frame?.updatePreviewFrameInfo(event.data[3], eventArgs.oldAspectRatio, eventArgs.oldHeight, eventArgs.oldWidth);
                 }
             };

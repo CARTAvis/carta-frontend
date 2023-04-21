@@ -666,7 +666,7 @@ export class RegionStore {
 
     // Update the region with the backend
     // TODO: Determine whether we should await when calling this function from above
-    private updateRegion = async (isRequestingPreview?: boolean) => {
+    private updateRegion = async (isRequestingPreview: boolean = false) => {
         if (this.isValid) {
             if (this.regionId === CURSOR_REGION_ID) {
                 AppStore.Instance.resetCursorRegionSpectralProfileProgress(this.fileId);

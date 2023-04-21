@@ -195,7 +195,7 @@ export class FrameStore {
     @observable isPreview: boolean;
     @observable previewViewWidth: number;
     @observable previewViewHeight: number;
-    @observable rasterData: Float32Array;
+    @observable previewPVRasterData: Float32Array;
 
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
@@ -1138,7 +1138,7 @@ export class FrameStore {
         }
 
         const cursorPosImage = this.cursorInfo.posImageSpace;
-        const cursorValue = {position: cursorPosImage, channel: 0, value: this.rasterData ? this.rasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)] : NaN};
+        const cursorValue = {position: cursorPosImage, channel: 0, value: this.previewPVRasterData ? this.previewPVRasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)] : NaN};
         return cursorValue;
     }
 
@@ -2842,8 +2842,8 @@ export class FrameStore {
         this.isPreview = isPreview;
     };
 
-    @action setRasterData = (rasterData: Float32Array) => {
-        this.rasterData = rasterData;
+    @action setPreviewPVRasterData = (previewPVRasterData: Float32Array) => {
+        this.previewPVRasterData = previewPVRasterData;
     };
 
     @observable tempPreviewData: CARTA.PvPreviewData;

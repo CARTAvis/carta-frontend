@@ -50,6 +50,14 @@ enum PreferenceDialogTabs {
     TELEMETRY
 }
 
+export enum MemoryUnit {
+    TB = "TB",
+    GB = "GB",
+    MB = "MB",
+    kB = "kB",
+    B = "B"
+}
+
 const PercentileSelect = Select.ofType<string>();
 
 const PV_PREVIEW_CUBE_SIZE_LIMIT = 1000000000; //need to be removed and replaced by backend limit
@@ -57,20 +65,18 @@ const PV_PREVIEW_CUBE_SIZE_LIMIT = 1000000000; //need to be removed and replaced
 @observer
 export class PreferenceDialogComponent extends React.Component {
     @observable selectedTab: PreferenceDialogTabs = PreferenceDialogTabs.GLOBAL;
-    @observable pvPreviewCubeSizeLimitUnit: string;
-
     @action private setSelectedTab = (tab: PreferenceDialogTabs) => {
         this.selectedTab = tab;
     };
 
     @computed get pvPreviewCubeSizeMaxValue(): number {
-        if (this.pvPreviewCubeSizeLimitUnit === "TB") {
+        if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.TB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e12;
-        } else if (this.pvPreviewCubeSizeLimitUnit === "GB") {
+        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.GB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e9;
-        } else if (this.pvPreviewCubeSizeLimitUnit === "MB") {
+        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.MB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e6;
-        } else if (this.pvPreviewCubeSizeLimitUnit === "kB") {
+        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.kB) {
             return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e3;
         } else {
             return PV_PREVIEW_CUBE_SIZE_LIMIT;
@@ -103,7 +109,6 @@ export class PreferenceDialogComponent extends React.Component {
     }, 100);
 
     @action private handlePvPreviewCubeSizeUnitChange = _.throttle(unit => {
-        this.pvPreviewCubeSizeLimitUnit = unit;
         PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT, unit);
     }, 100);
 
@@ -770,16 +775,16 @@ export class PreferenceDialogComponent extends React.Component {
                         </option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="PV Preview Cube Size Limit">
+                <FormGroup inline={true} label="PV preview cube size limit">
                     <div className="pv-preview-cube-size-limit">
                         <SafeNumericInput
-                            placeholder="PV Preview Cube Size Limit"
+                            placeholder="PV preview cube size limit"
                             min={1e-12}
                             max={this.pvPreviewCubeSizeMaxValue}
                             value={preference.pvPreivewCubeSizeLimit}
                             majorStepSize={1}
                             stepSize={1}
-                            onValueChange={value => PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, value)}
+                            onValueChange={value => preference.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, value)}
                         />
                         <HTMLSelect value={preference.pvPreivewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
                             {/* {["B", "kB", "MB", "GB", "TB"].map((unit, index, self) =>

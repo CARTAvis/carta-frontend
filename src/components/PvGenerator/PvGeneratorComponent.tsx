@@ -413,17 +413,17 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                     <FormGroup className="cube-size-group" inline label="Preview cube size" labelInfo={this.estimatedCubeSize ? `(${this.estimatedCubeSize.unit})` : ""} disabled={!this.estimatedCubeSize}>
                         <label className="cube-size" style={{color: this.isCubeSizeBelowLimit ? "" : "red"}}>{`${this.estimatedCubeSize?.value ?? ""}`}</label>
                     </FormGroup>
-                    <div className="generate-button">
-                        <div>
-                            <Tooltip2 disabled={isAbleToGeneratePreview} content={previewHint} position={Position.BOTTOM}>
-                                <AnchorButton intent="success" disabled={!isAbleToGeneratePreview} text="Start Preview" onClick={this.onPreviewButtonClicked} />
-                            </Tooltip2>
-                        </div>
-                        <div>
-                            <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
-                                <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
-                            </Tooltip2>
-                        </div>
+                </div>
+                <div className="generate-button">
+                    <div>
+                        <Tooltip2 disabled={isAbleToGeneratePreview} content={previewHint} position={Position.BOTTOM}>
+                            <AnchorButton intent="success" disabled={!isAbleToGeneratePreview} text="Start Preview" onClick={this.onPreviewButtonClicked} />
+                        </Tooltip2>
+                    </div>
+                    <div>
+                        <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
+                            <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
+                        </Tooltip2>
                     </div>
                 </div>
             </div>

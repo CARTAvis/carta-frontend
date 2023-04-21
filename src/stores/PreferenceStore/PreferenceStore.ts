@@ -2,6 +2,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
+import {MemoryUnit} from "components/Dialogs";
 import {CARTA_INFO, CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, ImagePanelMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 import {TelemetryMode} from "services/TelemetryService";
@@ -227,7 +228,7 @@ const DEFAULTS = {
         stopAnimationPlaybackMinutes: 5,
         limitOverlayRedraw: true,
         pvPreviewCubeSizeLimit: 1,
-        pvPreviewCubeSizeLimitUnit: "GB"
+        pvPreviewCubeSizeLimitUnit: MemoryUnit.GB
     },
     LOG_EVENT: {
         eventLoggingEnabled: []
@@ -902,8 +903,7 @@ export class PreferenceStore {
                 PreferenceKeys.REGION_CREATION_MODE,
                 PreferenceKeys.WCS_OVERLAY_AST_COLOR,
                 PreferenceKeys.CATALOG_TABLE_SEPARATOR_POSITION,
-                PreferenceKeys.PIXEL_GRID_COLOR,
-                PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT
+                PreferenceKeys.PIXEL_GRID_COLOR
             ];
 
             const intKeys = [
@@ -935,8 +935,7 @@ export class PreferenceStore {
                 PreferenceKeys.WCS_OVERLAY_COLORBAR_WIDTH,
                 PreferenceKeys.WCS_OVERLAY_COLORBAR_TICKS_DENSITY,
                 PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH,
-                PreferenceKeys.REGION_LINE_WIDTH,
-                PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT
+                PreferenceKeys.REGION_LINE_WIDTH
             ];
 
             const booleanKeys = [

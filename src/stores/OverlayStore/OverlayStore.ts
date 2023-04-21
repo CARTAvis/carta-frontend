@@ -898,9 +898,11 @@ export class OverlayColorbarSettings {
         return this.position === "right" ? padding?.top : padding?.left;
     }
 
-    @action height(frame?: FrameStore): number {
+    @computed get height() {
         const overlayStore = AppStore.Instance?.overlayStore;
-        return this.position === "right" ? frame?.renderHeight || overlayStore?.renderHeight : frame?.renderWidth || overlayStore?.renderWidth;
+        return (frame?: FrameStore) => {
+            return this.position === "right" ? frame?.renderHeight || overlayStore?.renderHeight : frame?.renderWidth || overlayStore?.renderWidth;
+        };
     }
 
     @computed get tickNum(): number {
@@ -1209,19 +1211,23 @@ export class OverlayStore {
         return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
     }
 
-    @action previewRenderWidth(viewWidth: number) {
-        if (!viewWidth) {
-            return undefined;
-        }
-        const renderWidth = viewWidth - this.paddingLeft - this.paddingRight;
-        return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
+    @computed get previewRenderWidth() {
+        return (viewWidth: number) => {
+            if (!viewWidth) {
+                return undefined;
+            }
+            const renderWidth = viewWidth - this.paddingLeft - this.paddingRight;
+            return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
+        };
     }
 
-    @action previewRenderHeight(viewHeight: number) {
-        if (!viewHeight) {
-            return undefined;
-        }
-        const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
-        return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
+    @computed get previewRenderHeight() {
+        return (viewHeight: number) => {
+            if (!viewHeight) {
+                return undefined;
+            }
+            const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
+            return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
+        };
     }
 }
