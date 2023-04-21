@@ -1,184 +1,123 @@
 import * as React from "react";
-import {Classes, H5, InputGroup, Position} from "@blueprintjs/core";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {FormGroup, InputGroup} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import {computed} from "mobx";
 import {observer} from "mobx-react";
 
-import {CoordinateComponent, SafeNumericInput} from "components/Shared";
+import {CoordinateComponent, CoordNumericInput, InputType} from "components/Shared";
 import {Point2D, WCSPoint2D} from "models";
-import {AppStore, NUMBER_FORMAT_LABEL} from "stores";
+import {AppStore} from "stores";
 import {CoordinateMode, PointAnnotationStore, RegionStore} from "stores/Frame";
 import {closeTo, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
-
-import "./PointRegionForm.scss";
-
-const KEYCODE_ENTER = 13;
 
 @observer
 export class PointRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
+    @computed get centerWCS(): WCSPoint2D {
+        const region = this.props.region;
+        if (!region || !this.props.wcsInfo) {
+            return null;
+        }
+        return getFormattedWCSPoint(this.props.wcsInfo, region.center);
+    }
+
     private handleNameChange = ev => {
         this.props.region.setName(ev.currentTarget.value);
     };
 
-    private handleCenterXChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+    private handleCenterXChange = (value: number): boolean => {
         const existingValue = this.props.region.center.x;
-
         if (isFinite(value) && !closeTo(value, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setCenter({x: value, y: this.props.region.center.y});
-            return;
+            return true;
         }
-
-        ev.currentTarget.value = existingValue;
+        return false;
     };
 
-    private handleCenterYChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+    private handleCenterYChange = (value: number): boolean => {
         const existingValue = this.props.region.center.y;
-
         if (isFinite(value) && !closeTo(value, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setCenter({x: this.props.region.center.x, y: value});
-            return;
+            return true;
         }
-
-        ev.currentTarget.value = existingValue;
+        return false;
     };
 
-    private handleCenterWCSXChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.center);
-        if (!centerWCSPoint) {
-            return;
-        }
-        const wcsString = ev.currentTarget.value;
-        if (wcsString === centerWCSPoint.x) {
-            return;
-        }
+    private handleCenterWCSXChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: centerWCSPoint.y});
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.centerWCS.y});
             const existingValue = this.props.region.center.x;
-            if (newPoint && isFinite(newPoint.x) && !closeTo(newPoint.x, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
+            if (isFinite(newPoint?.x) && !closeTo(newPoint.x, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
                 this.props.region.setCenter(newPoint);
-                return;
+                return true;
             }
         }
-
-        ev.currentTarget.value = centerWCSPoint.x;
+        return false;
     };
 
-    private handleCenterWCSYChange = ev => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, this.props.region.center);
-        if (!centerWCSPoint) {
-            return;
-        }
-        const wcsString = ev.currentTarget.value;
-        if (wcsString === centerWCSPoint.y) {
-            return;
-        }
+    private handleCenterWCSYChange = (wcsString: string): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
-            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: centerWCSPoint.x, y: wcsString});
+            const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.centerWCS.x, y: wcsString});
             const existingValue = this.props.region.center.y;
-            if (newPoint && isFinite(newPoint.y) && !closeTo(newPoint.y, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
+            if (isFinite(newPoint?.y) && !closeTo(newPoint.y, existingValue, PointRegionForm.REGION_PIXEL_EPS)) {
                 this.props.region.setCenter(newPoint);
-                return;
+                return true;
             }
         }
-
-        ev.currentTarget.value = centerWCSPoint.y;
+        return false;
     };
 
     public render() {
         // dummy variables related to wcs to trigger re-render
         // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
-        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
-        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
         const region = this.props.region as PointAnnotationStore;
         if (!region || (region.regionType !== CARTA.RegionType.POINT && region.regionType !== CARTA.RegionType.ANNPOINT)) {
             return null;
         }
 
         const centerPoint = region.center;
-        const centerWCSPoint = getFormattedWCSPoint(this.props.wcsInfo, centerPoint);
-        let xInput, yInput;
-        if (region.coordinate === CoordinateMode.Image) {
-            xInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="X coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange} />;
-            yInput = <SafeNumericInput selectAllOnFocus={true} buttonPosition="none" placeholder="Y coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange} />;
-        } else {
-            xInput = (
-                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatX)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={false}
-                        buttonPosition="none"
-                        placeholder="X WCS coordinate"
-                        disabled={!this.props.wcsInfo || !centerWCSPoint}
-                        value={centerWCSPoint ? centerWCSPoint.x : ""}
-                        onBlur={this.handleCenterWCSXChange}
-                        onKeyDown={this.handleCenterWCSXChange}
-                    />
-                </Tooltip2>
-            );
-            yInput = (
-                <Tooltip2 content={`Format: ${NUMBER_FORMAT_LABEL.get(formatY)}`} position={Position.BOTTOM} hoverOpenDelay={300}>
-                    <SafeNumericInput
-                        allowNumericCharactersOnly={false}
-                        buttonPosition="none"
-                        placeholder="Y WCS coordinate"
-                        disabled={!this.props.wcsInfo || !centerWCSPoint}
-                        value={centerWCSPoint ? centerWCSPoint.y : ""}
-                        onBlur={this.handleCenterWCSYChange}
-                        onKeyDown={this.handleCenterWCSYChange}
-                    />
-                </Tooltip2>
-            );
-        }
+        const centerWCSPoint = this.centerWCS;
+        const xInput = (
+            <CoordNumericInput
+                coord={region.coordinate}
+                inputType={InputType.XCoord}
+                value={centerPoint?.x}
+                onChange={this.handleCenterXChange}
+                valueWcs={centerWCSPoint?.x}
+                onChangeWcs={this.handleCenterWCSXChange}
+                wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
+            />
+        );
+        const yInput = (
+            <CoordNumericInput
+                coord={region.coordinate}
+                inputType={InputType.YCoord}
+                value={centerPoint?.y}
+                onChange={this.handleCenterYChange}
+                valueWcs={centerWCSPoint?.y}
+                onChangeWcs={this.handleCenterWCSYChange}
+                wcsDisabled={!this.props.wcsInfo || !centerWCSPoint}
+            />
+        );
+
         const infoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(centerWCSPoint)}` : `Image: ${Point2D.ToString(centerPoint, "px", 3)}`;
-        const pxUnitSpan = region.coordinate === CoordinateMode.Image ? <span className={Classes.TEXT_MUTED}>(px)</span> : "";
+        const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
         return (
-            <div className="form-section point-region-form">
-                <H5>Properties</H5>
-                <div className="form-contents">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>{region.isAnnotation ? "Annotation" : "Region"} Name</td>
-                                <td colSpan={2}>
-                                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Coordinate</td>
-                                <td colSpan={2}>
-                                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Center {pxUnitSpan}</td>
-                                <td>{xInput}</td>
-                                <td>{yInput}</td>
-                                <td>
-                                    <span className="info-string">{infoString}</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div className="region-form">
+                <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
+                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} spellCheck={false} />
+                </FormGroup>
+                <FormGroup label="Coordinate" inline={true}>
+                    <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
+                </FormGroup>
+                <FormGroup label="Center" labelInfo={pxUnit} inline={true}>
+                    {xInput}
+                    {yInput}
+                    <span className="info-string">{infoString}</span>
+                </FormGroup>
             </div>
         );
     }

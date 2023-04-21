@@ -61,7 +61,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private scrollToSelected = (selected: any) => {
         const listRefCurrent = this.listRef.current;
-        const height = listRefCurrent.props.height;
+        const height = listRefCurrent?.props.height;
         if (!listRefCurrent || height < 0) {
             return;
         } else {

@@ -1,9 +1,40 @@
 .region-dialog {
     .bp3-dialog-body {
-        margin: 5px;
         user-select: none;
-        .form-section {
-            padding: 5px;
+
+        .region-form {
+            user-select: none;
+
+            .bp3-label {
+                width: 8em;
+                text-align: right;
+            }
+
+            .bp3-form-group:first-child .bp3-input {
+                width: 255px;
+            }
+
+            .bp3-input {
+                width: 125px;
+            }
+
+            .bp3-form-content {
+                display: flex;
+                flex-wrap: wrap;
+                flex: 1;
+                gap: 0 5px;
+
+                .info-string {
+                    display: flex;
+                    align-items: center;
+                    flex: 1 1 auto;
+                    min-width: 190px;
+                    margin-left: 5px;
+                    font-size: x-small;
+                    font-family: monospace;
+                    user-select: text;
+                }
+            }
         }
     }
 }
