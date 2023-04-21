@@ -63,6 +63,12 @@ body {
     margin-right: -1px !important;
 }
 
+// override menu item style with BlueprintJS v3 style
+.bp4-menu-item.bp4-selected {
+    background-color: #137cbd !important;
+    color: #fff !important;
+}
+
 // hide plotly tips
 body {
     div.plotly-notifier {
