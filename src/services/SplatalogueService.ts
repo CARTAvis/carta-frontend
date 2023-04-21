@@ -115,8 +115,10 @@ export class SplatalogueService {
                 let entry = line[value]?.toString() ?? "";
                 const column = responseData.spectralLineData[j];
 
-                if (key === SpectralLineHeaders.Species || key === SpectralLineHeaders.ResolvedQN || key === SpectralLineHeaders.ChemicalName) {
-                    entry = entry?.replace(/<[^>]+>/g, ""); // remove html tags
+                if (key === SpectralLineHeaders.Species || key === SpectralLineHeaders.ChemicalName || key === SpectralLineHeaders.ResolvedQN || key === SpectralLineHeaders.UnresolvedQN) {
+                    // convert html entities to string, and remove html tags
+                    const dom = new DOMParser().parseFromString(entry, "text/html");
+                    entry = dom.documentElement.textContent;
                 } else if (key === SpectralLineHeaders.RestFrequencyErr || key === SpectralLineHeaders.MeasuredFrequencyErr) {
                     entry = entry?.match(/\((.*?)\)/)?.[1] ?? ""; // match the string between the first "(" and ")"
                 } else if (key === SpectralLineHeaders.ShiftedFrequency || key === SpectralLineHeaders.RestFrequency || key === SpectralLineHeaders.MeasuredFrequency) {
