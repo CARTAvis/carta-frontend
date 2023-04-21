@@ -17,7 +17,7 @@ export class ColorbarStore {
     @computed get roundedNumbers(): {numbers: number[]; precision: number} {
         const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
-        const tickNum = this.overlayStore.colorbar.tickNum;
+        const tickNum = this.overlayStore.colorbar.tickNum(this.frame);
         if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || scaleMinVal >= scaleMaxVal || !tickNum) {
             return null;
         } else {

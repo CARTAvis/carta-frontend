@@ -6,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {TaskProgressDialogComponent} from "components/Dialogs";
+import {MemoryUnit, TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
@@ -39,29 +39,29 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         let unit: string;
         if (bitValue >= 1e9) {
             value = parseFloat(toFixed(bitValue / 1e9, 2));
-            unit = "GB";
+            unit = MemoryUnit.GB;
         } else if (bitValue >= 1e6) {
             value = parseFloat(toFixed(bitValue / 1e6, 2));
-            unit = "MB";
+            unit = MemoryUnit.MB;
         } else if (bitValue >= 1e3) {
             value = parseFloat(toFixed(bitValue / 1e6, 3));
-            unit = "MB";
+            unit = MemoryUnit.MB;
         } else {
             value = parseFloat(toFixed(bitValue / 1e6, 4));
-            unit = "MB";
+            unit = MemoryUnit.MB;
         }
         return {value, unit, bitValue: bitValue};
     };
 
     public static getBitValueFromFormatted = (value: number, unit: string): number => {
         let bitValue = value;
-        if (unit === "TB") {
+        if (unit === MemoryUnit.TB) {
             bitValue = value * 1e12;
-        } else if (unit === "GB") {
+        } else if (unit === MemoryUnit.GB) {
             bitValue = value * 1e9;
-        } else if (unit === "MB") {
+        } else if (unit === MemoryUnit.MB) {
             bitValue = value * 1e6;
-        } else if (unit === "kB") {
+        } else if (unit === MemoryUnit.kB) {
             bitValue = value * 1e3;
         }
         return bitValue;

@@ -1200,7 +1200,7 @@ export class AppStore {
             if (!ack.cancel && ack.previewData) {
                 const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
                 if (pvGeneratorWidgetStore.previewFrame) {
-                    this.cancelRequestingPV(ack.previewData.previewId);
+                    this.backendService.stopPvPreview(ack.previewData.previewId);
                     pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
                 } else {
                     pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));

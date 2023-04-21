@@ -905,9 +905,11 @@ export class OverlayColorbarSettings {
         };
     }
 
-    @computed get tickNum(): number {
-        const tickNum = Math.round((this.height() / 100.0) * this.tickDensity);
-        return this.height && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
+    @computed get tickNum() {
+        return (frame?: FrameStore) => {
+            const tickNum = Math.round((this.height(frame) / 100.0) * this.tickDensity);
+            return this.height && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
+        };
     }
 
     @computed get rightBorderPos(): number {
