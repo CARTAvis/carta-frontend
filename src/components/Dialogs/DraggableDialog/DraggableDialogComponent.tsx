@@ -22,17 +22,19 @@ export class ResizableDialogComponentProps {
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
     private dd: HTMLDivElement;
     private rnd: Rnd;
+    private focusBoxIsFixed: boolean;
 
     componentDidUpdate() {
         // workaround for blueprintjs(@4.8.0) bug, which the blue focus box suppressed to the top due to tabindex="0" replaced in DOM.
-        const wrongTab = this.dd.getElementsByClassName("bp4-overlay-start-focus-trap")?.[0] as HTMLDivElement;
-        if (wrongTab && wrongTab.getAttribute("tabindex") === "0") {
-            wrongTab.removeAttribute("tabindex");
-        }
-        const container = this.dd.getElementsByClassName("bp4-dialog-container")?.[0] as HTMLDivElement;
-        if (container) {
-            container.setAttribute("tabindex", "0");
-            container.focus();
+        if (!this.focusBoxIsFixed) {
+            const wrongFocusedDiv = this.dd.getElementsByClassName("bp4-overlay-start-focus-trap")?.[0] as HTMLDivElement;
+            const correctFocusedDiv = this.dd.getElementsByClassName("bp4-dialog-container")?.[0] as HTMLDivElement;
+            if (wrongFocusedDiv?.getAttribute("tabindex") === "0" && correctFocusedDiv) {
+                wrongFocusedDiv.removeAttribute("tabindex");
+                correctFocusedDiv.setAttribute("tabindex", "0");
+                correctFocusedDiv.focus();
+                this.workaroundDone();
+            }
         }
 
         const header = this.dd.getElementsByClassName("bp4-dialog-header");
@@ -59,6 +61,10 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         if (this.props.onResizeStop) {
             this.props.onResizeStop(elementRef.offsetWidth, elementRef.offsetHeight);
         }
+    };
+
+    private workaroundDone = () => {
+        this.focusBoxIsFixed = true;
     };
 
     render() {
