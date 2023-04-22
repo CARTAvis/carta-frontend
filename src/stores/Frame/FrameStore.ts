@@ -2889,7 +2889,7 @@ export class FrameStore {
             tileCoordinate: 0,
             layer: 0,
             requestId: 0,
-            previewId: previewData.previewId,
+            previewId: previewData.previewId
         };
 
         yield TileService.Instance.workers[0].postMessage(["preview decompress", compressedView.buffer, eventArgs, previewData], [compressedView.buffer, nanEncodings32.buffer]);
