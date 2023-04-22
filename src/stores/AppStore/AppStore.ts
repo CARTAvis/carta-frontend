@@ -544,7 +544,8 @@ export class AppStore {
         if (newFrame) {
             this.previewFrames.set(ack.previewId, newFrame);
             newFrame.setIsPreview(true);
-            newFrame.updatePreviewData(ack);
+            newFrame.updatePreviewDataGenerator = newFrame.updatePreviewData(ack);
+            newFrame.updatePreviewDataGenerator.next();
             this.setActiveFrame(newFrame);
         }
 
@@ -1200,7 +1201,8 @@ export class AppStore {
             if (!ack.cancel && ack.previewData) {
                 const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
                 if (pvGeneratorWidgetStore.previewFrame) {
-                    pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
+                    pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator = pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
+                    pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
                 } else {
                     pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
                     pvGeneratorWidgetStore.lineRegionIdPreviewFrameMap.set(message.regionId, pvGeneratorWidgetStore.previewFrame);
@@ -1981,7 +1983,8 @@ export class AppStore {
         // const frame = this.previewFrames.get(pvPreviewData.previewId);
         // if not needed, we may delete the previewFrames map in AppStore
         if (previewFrame) {
-            previewFrame.updatePreviewData(pvPreviewData);
+            previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(pvPreviewData);
+            previewFrame.updatePreviewDataGenerator.next();
         }
     };
 

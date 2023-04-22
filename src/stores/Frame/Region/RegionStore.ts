@@ -7,7 +7,7 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 import {CustomIconName} from "icons/CustomIcons";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {AppStore} from "stores";
+import {AppStore, PreferenceStore} from "stores";
 import {CoordinateMode, FrameStore} from "stores/Frame";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 
@@ -491,7 +491,7 @@ export class RegionStore {
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-                this.throttledUpdateRegion(true);
+                PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
             }
             if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
                 this.simplePolygonTest(index);
@@ -529,7 +529,7 @@ export class RegionStore {
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
-            this.throttledUpdateRegion(true);
+            PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
         }
     };
 
@@ -684,4 +684,5 @@ export class RegionStore {
     };
 
     private throttledUpdateRegion = throttle(this.updateRegion, 100);
+    private lowBandWidthThrottledUpdateRegion = throttle(this.updateRegion, 200);
 }
