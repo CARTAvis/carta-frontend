@@ -2890,9 +2890,6 @@ export class FrameStore {
             layer: 0,
             requestId: 0,
             previewId: previewData.previewId,
-            oldAspectRatio,
-            oldHeight,
-            oldWidth
         };
 
         yield TileService.Instance.workers[0].postMessage(["preview decompress", compressedView.buffer, eventArgs, previewData], [compressedView.buffer, nanEncodings32.buffer]);

@@ -279,7 +279,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             delete rasterTile.data;
         }
 
-        if (frame.isPreview) {
+        if (frame.isPreview && rasterTile.width * rasterTile.height === rasterTile.data.length) {
             const texture = createFP32Texture(this.gl, rasterTile.width, rasterTile.height, GL2.TEXTURE0);
             copyToFP32Texture(this.gl, texture, rasterTile.data, GL2.TEXTURE0, rasterTile.width, rasterTile.height, 0, 0);
             this.gl.bindTexture(GL2.TEXTURE_2D, texture);
