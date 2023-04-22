@@ -2191,7 +2191,14 @@ export class AppStore {
             workspace.references.raster = this.rasterScalingReference.frameInfo.fileId;
         }
 
+        let hasTemporaryFiles = false;
+
         for (const frame of this.frames) {
+            if (frame.frameInfo.fileId < 0) {
+                hasTemporaryFiles = true;
+                continue;
+            }
+
             const workspaceFile: WorkspaceFile = {
                 id: frame.frameInfo.fileId,
                 directory: frame.frameInfo.directory,
@@ -2270,6 +2277,9 @@ export class AppStore {
             workspace.files.push(workspaceFile);
         }
 
+        if (hasTemporaryFiles) {
+            AppToaster.show(WarningToast("The workspace contains generated files. These will not be preserved when reloading."));
+        }
         if (this.activeFrame) {
             workspace.selectedFile = this.activeFrameFileId;
         }
