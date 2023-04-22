@@ -1,6 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
+import {WorkspaceRenderConfig} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
@@ -446,5 +447,23 @@ export class RenderConfigStore {
         this.scaleMin[this.stokesIndex] = other.scaleMinVal;
         this.scaleMax[this.stokesIndex] = other.scaleMaxVal;
         this.selectedPercentile[this.stokesIndex] = -1;
+    };
+
+    @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
+        this.scaling = config.scaling;
+        this.setColorMap(config.colorMap);
+        this.bias = config.bias;
+        this.contrast = config.contrast;
+        this.gamma = config.gamma;
+        this.alpha = config.alpha;
+        this.inverted = config.inverted;
+        this.visible = config.visible;
+        this.scaleMin = config.scaleMin;
+        this.scaleMax = config.scaleMax;
+        this.selectedPercentile = config.selectedPercentile;
+        // TODO: Handle cube histograms properly. For now, default to false
+        this.useCubeHistogram = false;
+        this.useCubeHistogramContours = false;
+        this.updateSiblings();
     };
 }

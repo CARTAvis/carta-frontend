@@ -2,6 +2,7 @@ import {RGBColor} from "react-color";
 import {action, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
+import {WorkspaceVectorOverlayConfig} from "models";
 import {PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
@@ -150,5 +151,36 @@ export class VectorOverlayConfigStore {
 
     @action toggleVisibility = () => {
         this.visible = !this.visible;
+    };
+
+    @action updateFromWorkspace = (config: WorkspaceVectorOverlayConfig) => {
+        this.angularSource = config.angularSource;
+        this.intensitySource = config.intensitySource;
+        this.pixelAveragingEnabled = config.pixelAveragingEnabled;
+        this.pixelAveraging = config.pixelAveraging;
+        this.fractionalIntensity = config.fractionalIntensity;
+        this.thresholdEnabled = config.thresholdEnabled;
+        this.threshold = config.threshold;
+        this.debiasing = config.debiasing;
+        this.qError = config.qError;
+        this.uError = config.uError;
+
+        this.visible = config.visible;
+        this.thickness = config.thickness;
+        this.colormapBias = config.colormapBias;
+        this.colormapContrast = config.colormapContrast;
+        this.lengthMin = config.lengthMin;
+        this.lengthMax = config.lengthMax;
+        this.intensityMin = config.intensityMin;
+        this.intensityMax = config.intensityMax;
+        this.rotationOffset = config.rotationOffset;
+
+        this.colormapEnabled = config.colormapEnabled;
+        if (config.color) {
+            this.color = config.color;
+        }
+        if (config.colormap) {
+            this.colormap = config.colormap;
+        }
     };
 }

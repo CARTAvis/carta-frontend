@@ -15,6 +15,8 @@ import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, Widge
 import {FrameStore} from "stores/Frame";
 import {toFixed} from "utilities";
 
+import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
+
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
 import "./RootMenuComponent.scss";
@@ -284,6 +286,10 @@ export class RootMenuComponent extends React.Component {
                     />
                 </Tooltip2>
                 <Menu.Item text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
+                <Menu.Item text="Open workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Open)} />
+                <Menu.Item text="Save workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Save)} />
+                <Menu.Item text="Close workspace" disabled={appStore.openFileDisabled} onClick={appStore.closeWorkspace} />
+                <MenuDivider />
                 <Menu.Item text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
                     <ExportImageMenuComponent />
                 </Menu.Item>

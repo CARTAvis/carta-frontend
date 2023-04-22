@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {action, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
+import {WorkspaceContourConfig} from "models";
 import {PreferenceStore} from "stores";
 
 export enum ContourGeneratorType {
@@ -101,5 +102,24 @@ export class ContourConfigStore {
 
     @action toggleVisibility = () => {
         this.visible = !this.visible;
+    };
+
+    @action updateFromWorkspace = (config: WorkspaceContourConfig) => {
+        this.levels = config.levels;
+        this.smoothingMode = config.smoothingMode;
+        this.smoothingFactor = config.smoothingFactor;
+        this.colormapContrast = config.colormapContrast;
+        this.colormapBias = config.colormapBias;
+        this.dashMode = config.dashMode;
+        this.thickness = config.thickness;
+        this.visible = config.visible;
+
+        this.colormapEnabled = config.colormapEnabled;
+        if (config.color) {
+            this.color = config.color;
+        }
+        if (config.colormap) {
+            this.colormap = config.colormap;
+        }
     };
 }
