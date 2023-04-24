@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed mismatch between cursor and image during PV image panning ([#1790](https://github.com/CARTAvis/carta-frontend/issues/1790)).
 * Fixed the hanging problem for computed stokes animation ([#1238](https://github.com/CARTAvis/carta-backend/issues/1238)).
 * Fixed the AST grid rendering issues in different reference systems due to missing explicit equinox in the setup ([#2106](https://github.com/CARTAvis/carta-frontend/issues/2106)).
-* Fixed crash when sending spectral line queries without network connection ([#2119](https://github.com/CARTAvis/carta-backend/issues/2119)).
+* Fixed crash when sending spectral line queries without network connection ([#2119](https://github.com/CARTAvis/carta-frontend/issues/2119)).
 ### Changed
 * Re-arranged the order of File menu ([#2092](https://github.com/CARTAvis/carta-frontend/issues/2092)).
 * Increased the upper limit of averaging width for line/polyline spatial profiles or PV images calculations ([#1949](https://github.com/CARTAvis/carta-frontend/issues/1949)).
