@@ -52,20 +52,20 @@ import {
 } from "stores/Widgets";
 
 export enum WidgetType {
-    Region = "Region List Widget",
-    Log = "Log Widget",
-    SpatialProfiler = "Spatial Profiler",
-    SpectralProfiler = "Spectral Profiler",
-    Statistics = "Statistics Widget",
-    Histogram = "Histogram Widget",
-    Animator = "Animator Widget",
-    RenderConfig = "Render Configuration Widget",
-    StokesAnalysis = "Stokes Analysis Widget",
-    ImageList = "Image List Widget",
-    Catalog = "Catalog Widget",
-    SpectralLineQuery = "Spectral Line Query Widget",
-    CursorInfo = "Cursor Info Widget",
-    PvGenerator = "PV Generator"
+    Region = "Region list widget",
+    Log = "Log widget",
+    SpatialProfiler = "Spatial profiler",
+    SpectralProfiler = "Spectral profiler",
+    Statistics = "Statistics widget",
+    Histogram = "Histogram widget",
+    Animator = "Animator widget",
+    RenderConfig = "Render configuration widget",
+    StokesAnalysis = "Stokes analysis widget",
+    ImageList = "Image list widget",
+    Catalog = "Catalog widget",
+    SpectralLineQuery = "Spectral line query widget",
+    CursorInfo = "Cursor info widget",
+    PvGenerator = "PV generator"
 }
 
 export interface DefaultWidgetConfig {
