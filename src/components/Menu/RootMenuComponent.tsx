@@ -252,7 +252,6 @@ export class RootMenuComponent extends React.Component {
         if (serverMenu.length) {
             serverSubMenu = (
                 <React.Fragment>
-                    <MenuDivider />
                     <MenuItem2 text="Server">{serverMenu}</MenuItem2>
                 </React.Fragment>
             );
@@ -284,7 +283,6 @@ export class RootMenuComponent extends React.Component {
                         onClick={() => appStore.fileBrowserStore.showExportRegions()}
                     />
                 </Tooltip2>
-                <MenuDivider />
                 <MenuItem2 text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
                 <MenuItem2 text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage}>
                     <ExportImageMenuComponent />
