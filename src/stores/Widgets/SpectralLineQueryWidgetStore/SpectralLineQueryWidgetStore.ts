@@ -7,12 +7,6 @@ import {SplatalogueService} from "services";
 import {AppStore, ControlHeader} from "stores";
 import {booleanFiltering, numericFiltering, ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
 
-export enum SplataloguePingStatus {
-    Checking,
-    Success,
-    Failure
-}
-
 export enum SpectralLineQueryRangeType {
     Range = "Range",
     Center = "Center"
@@ -30,23 +24,15 @@ export enum SpectralLineHeaders {
     Species = "Species",
     ChemicalName = "Chemical Name",
     ShiftedFrequency = "Shifted Frequency",
-    RestFrequencySPLA = "Freq-MHz(rest frame,redshifted)",
     RestFrequency = "Rest Frequency",
-    RestFrequencyErrSPLA = "Freq Err(rest frame,redshifted)",
     RestFrequencyErr = "Rest Frequency Error",
-    MeasuredFrequencySPLA = "Meas Freq-MHz(rest frame,redshifted)",
     MeasuredFrequency = "Measured Frequency",
-    MeasuredFrequencyErrSPLA = "Meas Freq Err(rest frame,redshifted)",
     MeasuredFrequencyErr = "Measured Frequency Error",
     ResolvedQN = "Resolved QNs",
-    UnresolvedQNSPLA = "Unresolved Quantum Numbers",
     UnresolvedQN = "Unresolved QNs",
     IntensityCDMS = "CDMS/JPL Intensity",
-    IntensitySijm2SPLA = "S<sub>ij</sub>&#956;<sup>2</sup> (D<sup>2</sup>)",
     IntensitySijm2 = "Sij \u03BC^2",
-    IntensitySijSPLA = "S<sub>ij</sub>",
     IntensitySij = "Sij",
-    IntensityAijSPLA = "Log<sub>10</sub> (A<sub>ij</sub>)",
     IntensityAij = "Log10(Aij)",
     IntensityLovas = "Lovas/AST Intensity",
     EnergyLowerCM = "E_L (cm^-1)",
@@ -55,18 +41,6 @@ export enum SpectralLineHeaders {
     EnergyUpperK = "E_U (K)",
     LineList = "Linelist"
 }
-
-// map for replacing original Splatalogue header to comprehensive header
-const SPLA_HEADER_MAP = new Map<SpectralLineHeaders, SpectralLineHeaders>([
-    [SpectralLineHeaders.RestFrequencySPLA, SpectralLineHeaders.RestFrequency],
-    [SpectralLineHeaders.RestFrequencyErrSPLA, SpectralLineHeaders.RestFrequencyErr],
-    [SpectralLineHeaders.MeasuredFrequencySPLA, SpectralLineHeaders.MeasuredFrequency],
-    [SpectralLineHeaders.MeasuredFrequencyErrSPLA, SpectralLineHeaders.MeasuredFrequencyErr],
-    [SpectralLineHeaders.UnresolvedQNSPLA, SpectralLineHeaders.UnresolvedQN],
-    [SpectralLineHeaders.IntensitySijm2SPLA, SpectralLineHeaders.IntensitySijm2],
-    [SpectralLineHeaders.IntensitySijSPLA, SpectralLineHeaders.IntensitySij],
-    [SpectralLineHeaders.IntensityAijSPLA, SpectralLineHeaders.IntensityAij]
-]);
 
 const SPECTRAL_LINE_DESCRIPTION = new Map<SpectralLineHeaders, string>([
     [SpectralLineHeaders.LineSelection, "Column for line selection"],
@@ -134,7 +108,6 @@ const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
 
 export class SpectralLineQueryWidgetStore {
-    @observable splataloguePingStatus: SplataloguePingStatus;
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
     @observable queryRangeByCenter: NumberRange;
@@ -301,7 +274,7 @@ export class SpectralLineQueryWidgetStore {
         this.isQuerying = true;
         try {
             const ack = yield SplatalogueService.Instance.query(freqMHzFrom, freqMHzTo, this.intensityLimitEnabled ? this.intensityLimitValue : NaN);
-            if (ack.dataSize >= 0) {
+            if (ack?.dataSize >= 0) {
                 this.numDataRows = ack.dataSize;
                 this.columnHeaders = this.preprocessHeaders(ack.headers);
                 this.controlHeader = this.initControlHeader(this.columnHeaders);
@@ -314,7 +287,7 @@ export class SpectralLineQueryWidgetStore {
             }
         } catch (err) {
             this.resetQueryContents();
-            alertStore.showAlert(err);
+            alertStore.showAlert(err?.toString() ?? "Spectral line query failed.");
         }
         this.isQuerying = false;
     }).bind(this);
@@ -456,15 +429,14 @@ export class SpectralLineQueryWidgetStore {
     private preprocessHeaders = (ackHeaders: CARTA.ICatalogHeader[]): Array<CARTA.ICatalogHeader> => {
         let columnHeaders = [];
 
-        // 1. collect headers & rename to comprehensive headers
+        // 1. collect headers & add description
         ackHeaders?.forEach(header => {
-            const headerName = SPLA_HEADER_MAP.has(header.name as SpectralLineHeaders) ? SPLA_HEADER_MAP.get(header.name as SpectralLineHeaders) : header.name;
             columnHeaders.push(
                 new CARTA.CatalogHeader({
-                    name: headerName,
+                    name: header.name,
                     dataType: header.dataType,
                     columnIndex: header.columnIndex,
-                    description: SPECTRAL_LINE_DESCRIPTION.get(headerName as SpectralLineHeaders)
+                    description: SPECTRAL_LINE_DESCRIPTION.get(header.name as SpectralLineHeaders)
                 })
             );
         });
@@ -555,15 +527,8 @@ export class SpectralLineQueryWidgetStore {
         }
     };
 
-    pingSplatalogue = flow(function* pingSplatalogue(this: SpectralLineQueryWidgetStore) {
-        this.splataloguePingStatus = SplataloguePingStatus.Checking;
-        const isAlive = yield SplatalogueService.Instance.aliveCheck();
-        this.splataloguePingStatus = isAlive ? SplataloguePingStatus.Success : SplataloguePingStatus.Failure;
-    }).bind(this);
-
     constructor() {
         makeObservable(this);
-        this.splataloguePingStatus = SplataloguePingStatus.Checking;
         this.queryRangeType = SpectralLineQueryRangeType.Range;
         this.queryRange = [0, 0];
         this.queryRangeByCenter = [0, 0];
@@ -576,7 +541,6 @@ export class SpectralLineQueryWidgetStore {
         this.queryResultTableRef = undefined;
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.resetQueryContents();
-        this.pingSplatalogue();
 
         // update selected spectral profiler when currently selected is closed
         autorun(() => {
