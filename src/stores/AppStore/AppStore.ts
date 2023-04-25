@@ -63,6 +63,7 @@ interface ChannelUpdate {
 
 const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
+export const PREVIEW_PV_FILEID = -2;
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -527,9 +528,8 @@ export class AppStore {
             return undefined;
         }
 
-        // The frameInfo now contains a lot of placeholder right now. Need to be updated.
         const frameInfo: FrameInfo = {
-            fileId: 123,
+            fileId: PREVIEW_PV_FILEID,
             directory,
             hdu,
             fileInfo: new CARTA.FileInfo(ack.imageInfo),
@@ -1205,7 +1205,7 @@ export class AppStore {
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
                 } else {
                     pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
-                    pvGeneratorWidgetStore.lineRegionIdPreviewFrameMap.set(message.regionId, pvGeneratorWidgetStore.previewFrame);
+                    pvGeneratorWidgetStore.setPvCutRegionId(message.regionId);
                     WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
                 }
             } else {
@@ -1980,8 +1980,7 @@ export class AppStore {
             return;
         }
         const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + pvPreviewData.previewId)?.previewFrame;
-        // const frame = this.previewFrames.get(pvPreviewData.previewId);
-        // if not needed, we may delete the previewFrames map in AppStore
+
         if (previewFrame) {
             previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(pvPreviewData);
             previewFrame.updatePreviewDataGenerator.next();

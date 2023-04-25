@@ -33,7 +33,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore, PREVIEW_PV_FILEID} from "stores";
 import {
     CENTER_POINT_INDEX,
     ColorbarStore,
@@ -2842,23 +2842,12 @@ export class FrameStore {
         this.isPreview = isPreview;
     };
 
-    @action setPreviewPVRasterData = (previewPVRasterData: Float32Array) => {
+    @action setPreviewPVRasterData = (previewPVRasterData: Float32Array, skipUpdatePreviewData: boolean = false) => {
         this.previewPVRasterData = previewPVRasterData;
-        this.updatePreviewDataGenerator.next();
+        !skipUpdatePreviewData && this.updatePreviewDataGenerator.next();
     };
 
-    // @observable tempPreviewData: CARTA.PvPreviewData;
-
-    // @action setTempPreviewData = (previewData: CARTA.PvPreviewData) => {
-    //     this.tempPreviewData = previewData;
-    // };
-
-    // private tempPreviewData;
-    // private oldAspectRatio;
-    // private oldHeight;
-    // private oldWidth;
-
-    public updatePreviewDataGenerator;
+    public updatePreviewDataGenerator: Generator<void, void, unknown>;
 
     public *updatePreviewData(previewData: CARTA.PvPreviewData) {
         // Old values before updating to the new frameInfo
@@ -2866,19 +2855,13 @@ export class FrameStore {
         const oldHeight = this.frameInfo.fileInfoExtended.height;
         const oldWidth = this.frameInfo.fileInfoExtended.width;
 
-        // this.setTempPreviewData(previewData);
-        // this.tempPreviewData = previewData;
-        // this.oldAspectRatio = oldAspectRatio;
-        // this.oldHeight = oldHeight;
-        // this.oldWidth = oldWidth;
-
         const compressedArray = previewData.imageData;
         const nanEncodings32 = new Int32Array(previewData.nanEncodings.slice(0).buffer);
         let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, previewData.width * previewData.height * 4));
         compressedView.set(compressedArray);
 
         const eventArgs = {
-            fileId: 123,
+            fileId: PREVIEW_PV_FILEID,
             channel: 0,
             stokes: 0,
             width: previewData.width,
@@ -2922,9 +2905,6 @@ export class FrameStore {
         this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
         this.setCenter(isWidthUpdated ? (this.center.x * oldAspectRatio) / this.aspectRatio : this.center.x, isHeightUpdated ? (this.center.y * this.aspectRatio) / oldAspectRatio : this.center.y, false);
     }
-
-    // public updatePreviewFrameInfo = (previewData: CARTA.PvPreviewData, oldAspectRatio: number, oldHeight: numbldWidth: number) => {
-    // };
 
     @action onResizePreviewWidget = (width: number, height: number) => {
         this.previewViewWidth = width;

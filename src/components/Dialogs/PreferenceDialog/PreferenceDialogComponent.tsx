@@ -787,13 +787,6 @@ export class PreferenceDialogComponent extends React.Component {
                             onValueChange={value => preference.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, value)}
                         />
                         <HTMLSelect value={preference.pvPreivewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
-                            {/* {["B", "kB", "MB", "GB", "TB"].map((unit, index, self) =>
-                                self.indexOf(PvGeneratorComponent.formatBitValue(PV_PREVIEW_CUBE_SIZE_LIMIT).unit) >= index ? (
-                                    <option key={index} value={unit}>
-                                        {unit}
-                                    </option>
-                                ) : undefined
-                            )} */}
                             <option key={0} value={"MB"}>
                                 MB
                             </option>

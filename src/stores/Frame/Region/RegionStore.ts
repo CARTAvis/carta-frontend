@@ -7,7 +7,7 @@ import {action, computed, flow, makeObservable, observable} from "mobx";
 import {CustomIconName} from "icons/CustomIcons";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {AppStore, PreferenceStore} from "stores";
+import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {CoordinateMode, FrameStore} from "stores/Frame";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 
@@ -34,7 +34,6 @@ export class RegionStore {
     @observable locked: boolean = false;
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
-    @observable isPreviewCut: boolean = false;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -326,6 +325,15 @@ export class RegionStore {
 
     @computed get regionProperties(): string {
         return RegionStore.GetRegionProperties(this.regionType, this.controlPoints, this.rotation);
+    }
+
+    @computed get isPreviewCut(): boolean {
+        for (const value of WidgetsStore.Instance.pvGeneratorWidgets.values()) {
+            if (value.pvCutRegionId === this.regionId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static GetRegionProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number): string => {
@@ -658,10 +666,6 @@ export class RegionStore {
         if (coordinate) {
             this.coordinate = coordinate;
         }
-    };
-
-    @action setIsPreviewCut = (isPreviewCut: boolean) => {
-        this.isPreviewCut = this.regionType === CARTA.RegionType.LINE && isPreviewCut;
     };
 
     // Update the region with the backend
