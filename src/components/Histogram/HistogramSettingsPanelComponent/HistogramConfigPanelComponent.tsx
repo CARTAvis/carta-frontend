@@ -8,7 +8,7 @@ import {HistogramWidgetStore} from "stores/Widgets";
 
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
-    private curMaxNumBins: number;
+    private currentMaxNumBins: number;
     private binsLowerBound: number;
     private minPixIntent: Intent;
     private maxPixIntent: Intent;
@@ -18,8 +18,8 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     }
 
     get maxNumBins(): number {
-        if (this.curMaxNumBins !== undefined && this.curMaxNumBins > this.binsLowerBound) {
-            return this.curMaxNumBins;
+        if (this.currentMaxNumBins !== undefined && this.currentMaxNumBins > this.binsLowerBound) {
+            return this.currentMaxNumBins;
         }
         return this.widgetStore.maxNumBins;
     }
@@ -32,7 +32,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     private onMinPixChanged = (minPix: number) => {
         this.widgetStore.setMinPix(minPix);
 
-        if (minPix > this.widgetStore.curMaxPix) {
+        if (minPix >= this.widgetStore.curMaxPix) {
             this.minPixIntent = Intent.DANGER;
         } else {
             this.minPixIntent = Intent.NONE;
@@ -44,7 +44,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     private onMaxPixChanged = (maxPix: number) => {
         this.widgetStore.setMaxPix(maxPix);
 
-        if (maxPix < this.widgetStore.curMinPix) {
+        if (maxPix <= this.widgetStore.curMinPix) {
             this.maxPixIntent = Intent.DANGER;
         } else {
             this.maxPixIntent = Intent.NONE;
@@ -59,13 +59,8 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         this.updateConfigs();
     };
 
-    private onMaxNumBinsChanged = (curMaxNumBins: number) => {
-        if (curMaxNumBins !== undefined && curMaxNumBins > 1) {
-            this.curMaxNumBins = curMaxNumBins;
-        }
-    };
-
-    private onSetMaxNumBins = () => {
+    private onMaxNumBinsChanged = (currentMaxNumBins: number) => {
+        this.currentMaxNumBins = currentMaxNumBins;
         this.widgetStore.setMaxNumBins(this.maxNumBins);
     };
 
@@ -80,7 +75,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
         // Reset the maximum number of bins for the bins slider and its filler
         const newMaxNumBins = this.widgetStore.curNumBins * 2;
-        this.curMaxNumBins = newMaxNumBins;
+        this.currentMaxNumBins = newMaxNumBins;
         this.widgetStore.setMaxNumBins(newMaxNumBins);
 
         // Reset the intent for min/max pixel filler
@@ -115,14 +110,6 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             <span>
                 <i>
                     <small>Reset histogram config with the previous automatic pixel bounds and number of bins.</small>
-                </i>
-            </span>
-        );
-
-        const resetMaxNumBinsTip = (
-            <span>
-                <i>
-                    <small>To change it, please fill the new number and press &lt;Enter&gt;.</small>
                 </i>
             </span>
         );
@@ -182,9 +169,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                             />
                         </FormGroup>
                         <FormGroup label="Max number of bins" inline={true}>
-                            <Tooltip2 content={resetMaxNumBinsTip} placement="bottom">
-                                <SafeNumericInput value={this.maxNumBins} buttonPosition="none" onValueChange={val => this.onMaxNumBinsChanged(val)} onKeyDown={this.onSetMaxNumBins} />
-                            </Tooltip2>
+                            <SafeNumericInput value={this.maxNumBins} buttonPosition="none" onValueChange={val => this.onMaxNumBinsChanged(val)} />
                         </FormGroup>
                     </div>
                 )}
