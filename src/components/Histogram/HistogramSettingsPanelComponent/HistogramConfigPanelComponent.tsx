@@ -110,14 +110,14 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto pixel bounds"}>
                     <Switch
-                        checked={this.widgetStore.isAutoBounds}
+                        checked={this.widgetStore.currentAutoBounds}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.onSetAutoBounds(e.checked);
                         }}
                     />
                 </FormGroup>
-                {!this.widgetStore.isAutoBounds && (
+                {!this.widgetStore.currentAutoBounds && (
                     <div className="line-boundary">
                         <FormGroup label="X min" inline={true}>
                             <Tooltip2 content={errorMinPix} disabled={this.widgetStore.isAbleToGenerate} placement="top">
@@ -138,14 +138,14 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto bins"}>
                     <Switch
-                        checked={this.widgetStore.isAutoBins}
+                        checked={this.widgetStore.currentAutoBins}
                         onChange={event => {
                             const e = event.target as HTMLInputElement;
                             this.onSetAutoBins(e.checked);
                         }}
                     />
                 </FormGroup>
-                {!this.widgetStore.isAutoBins && (
+                {!this.widgetStore.currentAutoBins && (
                     <div className="line-boundary">
                         <FormGroup label="Number of bins" inline={true}>
                             <Slider

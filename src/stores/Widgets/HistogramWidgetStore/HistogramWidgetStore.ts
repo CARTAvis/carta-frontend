@@ -212,14 +212,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @computed get isAutoBounds(): boolean {
-        return this.currentAutoBounds;
-    }
-
-    @computed get isAutoBins(): boolean {
-        return this.currentAutoBins;
-    }
-
     @computed get isAbleToGenerate(): boolean {
         if (!this.currentAutoBounds && this.currentMinPix >= this.currentMaxPix) {
             return false;
