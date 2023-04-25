@@ -121,13 +121,14 @@ export class ToolbarMenuComponent extends React.Component {
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
                         const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
-                        const trimmedStr = widgetType.replace(/\s+/g, "");
+                        const trimmedStr = widgetType?.replace(/\s+/g, "");
+                        const widgetTypeTooltip = widgetType?.charAt(0) + widgetType?.slice(1)?.toLowerCase();
                         return (
                             <Tooltip2
                                 key={`${trimmedStr}Tooltip`}
                                 content={
                                     <span>
-                                        {widgetType}
+                                        {widgetTypeTooltip}
                                         {commonTooltip}
                                     </span>
                                 }
