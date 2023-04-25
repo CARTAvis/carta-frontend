@@ -98,14 +98,6 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             </span>
         );
 
-        const resetButtonToolTip = (
-            <span>
-                <i>
-                    <small>Reset histogram config with the previous automatic pixel bounds and number of bins.</small>
-                </i>
-            </span>
-        );
-
         const setPixelBoundsPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto pixel bounds"}>
@@ -169,11 +161,9 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         const resetConfigPanel = (
             <React.Fragment>
                 <FormGroup label="Reset config" inline={true}>
-                    <Tooltip2 content={resetButtonToolTip} placement="bottom">
-                        <Button className="reset-range-content" icon={"zoom-to-fit"} small={true} disabled={this.widgetStore.currentAutoBounds && this.widgetStore.currentAutoBins} onClick={this.onResetConfig}>
-                            Reset config
-                        </Button>
-                    </Tooltip2>
+                    <Button className="reset-range-content" icon={"zoom-to-fit"} small={true} disabled={this.widgetStore.currentAutoBounds && this.widgetStore.currentAutoBins} onClick={this.onResetConfig}>
+                        Reset config
+                    </Button>
                 </FormGroup>
             </React.Fragment>
         );
