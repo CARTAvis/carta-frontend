@@ -27,6 +27,10 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
     private onSetAutoBounds = (autoBounds: boolean) => {
         this.widgetStore.setAutoBounds(autoBounds);
+        if (autoBounds) {
+            this.minPixIntent = Intent.NONE;
+            this.maxPixIntent = Intent.NONE;
+        }
     };
 
     private onMinPixChanged = (minPix: number) => {
@@ -164,11 +168,13 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
         const resetConfigPanel = (
             <React.Fragment>
-                <Tooltip2 content={resetButtonToolTip} placement="bottom">
-                    <Button className="reset-range-content" icon={"zoom-to-fit"} small={true} onClick={this.onResetConfig}>
-                        Reset config
-                    </Button>
-                </Tooltip2>
+                <FormGroup label="Reset config" inline={true}>
+                    <Tooltip2 content={resetButtonToolTip} placement="bottom">
+                        <Button className="reset-range-content" icon={"zoom-to-fit"} small={true} disabled={this.widgetStore.currentAutoBounds && this.widgetStore.currentAutoBins} onClick={this.onResetConfig}>
+                            Reset config
+                        </Button>
+                    </Tooltip2>
+                </FormGroup>
             </React.Fragment>
         );
 

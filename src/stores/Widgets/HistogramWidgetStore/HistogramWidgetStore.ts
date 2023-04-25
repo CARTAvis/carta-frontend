@@ -161,9 +161,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     }
 
     @action onResetConfig = () => {
-        this.currentAutoBounds = false;
+        this.currentAutoBounds = true;
         this.resetBounds();
-        this.currentAutoBins = false;
+        this.currentAutoBins = true;
         this.resetNumBins();
         this.updateConfigs();
     };
