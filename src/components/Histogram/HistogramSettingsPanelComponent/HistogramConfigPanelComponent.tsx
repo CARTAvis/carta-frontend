@@ -8,8 +8,9 @@ import {HistogramWidgetStore} from "stores/Widgets";
 
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
+    private static readonly BINS_LOWER_BOUND = 2;
+
     private currentMaxNumBins: number;
-    private binsLowerBound: number;
     private minPixIntent: Intent;
     private maxPixIntent: Intent;
 
@@ -18,7 +19,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     }
 
     get maxNumBins(): number {
-        if (this.currentMaxNumBins !== undefined && this.currentMaxNumBins > this.binsLowerBound) {
+        if (this.currentMaxNumBins !== undefined && this.currentMaxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND) {
             return this.currentMaxNumBins;
         }
         return this.widgetStore.maxNumBins;
@@ -114,8 +115,6 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             </span>
         );
 
-        this.binsLowerBound = 2;
-
         const setPixelBoundsPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label={"Auto pixel bounds"}>
@@ -159,10 +158,10 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                     <div className="line-boundary">
                         <FormGroup label="Number of bins" inline={true}>
                             <Slider
-                                min={this.binsLowerBound}
+                                min={HistogramConfigPanelComponent.BINS_LOWER_BOUND}
                                 max={this.widgetStore.maxNumBins}
                                 stepSize={1}
-                                labelStepSize={this.widgetStore.maxNumBins > this.binsLowerBound ? this.widgetStore.maxNumBins - this.binsLowerBound : 0}
+                                labelStepSize={this.widgetStore.maxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND ? this.widgetStore.maxNumBins - HistogramConfigPanelComponent.BINS_LOWER_BOUND : 0}
                                 onChange={this.changeNumBinsHandler}
                                 value={this.widgetStore.curNumBins <= this.widgetStore.maxNumBins ? this.widgetStore.curNumBins : this.widgetStore.maxNumBins}
                                 vertical={false}
