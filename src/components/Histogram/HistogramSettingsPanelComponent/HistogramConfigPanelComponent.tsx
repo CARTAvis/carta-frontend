@@ -27,7 +27,6 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
     private onSetAutoBounds = (autoBounds: boolean) => {
         this.widgetStore.setAutoBounds(autoBounds);
-        this.updateConfigs();
     };
 
     private onMinPixChanged = (minPix: number) => {
@@ -37,7 +36,6 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             this.minPixIntent = Intent.DANGER;
         } else {
             this.minPixIntent = Intent.NONE;
-            this.updateConfigs();
         }
         this.maxPixIntent = Intent.NONE;
     };
@@ -49,15 +47,12 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
             this.maxPixIntent = Intent.DANGER;
         } else {
             this.maxPixIntent = Intent.NONE;
-            this.updateConfigs();
         }
         this.minPixIntent = Intent.NONE;
     };
 
     private onSetAutoBins = (autoBin: boolean) => {
         this.widgetStore.setAutoBins(autoBin);
-        this.widgetStore.resetNumBins();
-        this.updateConfigs();
     };
 
     private onMaxNumBinsChanged = (currentMaxNumBins: number) => {
@@ -67,12 +62,10 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
     private changeNumBinsHandler = (numBins: number) => {
         this.widgetStore.setNumBins(numBins);
-        this.updateConfigs();
     };
 
     private onResetConfig = () => {
         this.widgetStore.onResetConfig();
-        this.updateConfigs();
 
         // Reset the maximum number of bins for the bins slider and its filler
         const newMaxNumBins = this.widgetStore.curNumBins * 2;
@@ -82,12 +75,6 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         // Reset the intent for min/max pixel filler
         this.minPixIntent = Intent.NONE;
         this.maxPixIntent = Intent.NONE;
-    };
-
-    private updateConfigs = () => {
-        if (this.widgetStore.isAbleToGenerate) {
-            this.widgetStore.updateConfigs();
-        }
     };
 
     render() {

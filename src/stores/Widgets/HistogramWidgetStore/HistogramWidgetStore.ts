@@ -116,22 +116,28 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     @action setAutoBounds = (autoBounds: boolean) => {
         this.curAutoBounds = autoBounds;
+        this.updateConfigs();
     };
 
     @action setMinPix = (minPix: number) => {
         this.curMinPix = minPix;
+        this.updateConfigs();
     };
 
     @action setMaxPix = (maxPix: number) => {
         this.curMaxPix = maxPix;
+        this.updateConfigs();
     };
 
     @action setAutoBins = (autoBins: boolean) => {
         this.curAutoBins = autoBins;
+        this.resetNumBins();
+        this.updateConfigs();
     };
 
     @action setNumBins = (numBins: number) => {
         this.curNumBins = numBins;
+        this.updateConfigs();
     };
 
     @action setMaxNumBins = (maxNumBins: number) => {
@@ -159,6 +165,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.resetBounds();
         this.curAutoBins = false;
         this.resetNumBins();
+        this.updateConfigs();
     };
 
     resetBounds = () => {
@@ -184,22 +191,24 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     };
 
     updateConfigs = () => {
-        if (this.curAutoBounds) {
-            this.fixedBounds = false;
-            this.minPix = 0;
-            this.maxPix = 0;
-        } else {
-            this.fixedBounds = true;
-            this.minPix = this.curMinPix;
-            this.maxPix = this.curMaxPix;
-        }
+        if (this.isAbleToGenerate) {
+            if (this.curAutoBounds) {
+                this.fixedBounds = false;
+                this.minPix = 0;
+                this.maxPix = 0;
+            } else {
+                this.fixedBounds = true;
+                this.minPix = this.curMinPix;
+                this.maxPix = this.curMaxPix;
+            }
 
-        if (this.curAutoBins) {
-            this.fixedNumBins = false;
-            this.numBins = -1;
-        } else {
-            this.fixedNumBins = true;
-            this.numBins = this.curNumBins;
+            if (this.curAutoBins) {
+                this.fixedNumBins = false;
+                this.numBins = -1;
+            } else {
+                this.fixedNumBins = true;
+                this.numBins = this.curNumBins;
+            }
         }
     };
 
