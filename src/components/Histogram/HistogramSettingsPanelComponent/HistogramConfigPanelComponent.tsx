@@ -32,7 +32,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     private onMinPixChanged = (minPix: number) => {
         this.widgetStore.setMinPix(minPix);
 
-        if (minPix >= this.widgetStore.curMaxPix) {
+        if (minPix >= this.widgetStore.currentMaxPix) {
             this.minPixIntent = Intent.DANGER;
         } else {
             this.minPixIntent = Intent.NONE;
@@ -43,7 +43,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     private onMaxPixChanged = (maxPix: number) => {
         this.widgetStore.setMaxPix(maxPix);
 
-        if (maxPix <= this.widgetStore.curMinPix) {
+        if (maxPix <= this.widgetStore.currentMinPix) {
             this.maxPixIntent = Intent.DANGER;
         } else {
             this.maxPixIntent = Intent.NONE;
@@ -68,7 +68,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         this.widgetStore.onResetConfig();
 
         // Reset the maximum number of bins for the bins slider and its filler
-        const newMaxNumBins = this.widgetStore.curNumBins * 2;
+        const newMaxNumBins = this.widgetStore.currentNumBins * 2;
         this.currentMaxNumBins = newMaxNumBins;
         this.widgetStore.setMaxNumBins(newMaxNumBins);
 
@@ -117,12 +117,12 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                     <div className="line-boundary">
                         <FormGroup label="X min" inline={true}>
                             <Tooltip2 content={errorMinPix} disabled={this.widgetStore.isAbleToGenerate} placement="top">
-                                <SafeNumericInput intent={this.minPixIntent} value={this.widgetStore.curMinPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
+                                <SafeNumericInput intent={this.minPixIntent} value={this.widgetStore.currentMinPix} buttonPosition="none" onValueChange={val => this.onMinPixChanged(val)} />
                             </Tooltip2>
                         </FormGroup>
                         <FormGroup label="X max" inline={true}>
                             <Tooltip2 content={errorMaxPix} disabled={this.widgetStore.isAbleToGenerate} placement="bottom">
-                                <SafeNumericInput intent={this.maxPixIntent} value={this.widgetStore.curMaxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
+                                <SafeNumericInput intent={this.maxPixIntent} value={this.widgetStore.currentMaxPix} buttonPosition="none" onValueChange={val => this.onMaxPixChanged(val)} />
                             </Tooltip2>
                         </FormGroup>
                     </div>
@@ -150,7 +150,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                                 stepSize={1}
                                 labelStepSize={this.widgetStore.maxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND ? this.widgetStore.maxNumBins - HistogramConfigPanelComponent.BINS_LOWER_BOUND : 0}
                                 onChange={this.changeNumBinsHandler}
-                                value={this.widgetStore.curNumBins <= this.widgetStore.maxNumBins ? this.widgetStore.curNumBins : this.widgetStore.maxNumBins}
+                                value={this.widgetStore.currentNumBins <= this.widgetStore.maxNumBins ? this.widgetStore.currentNumBins : this.widgetStore.maxNumBins}
                                 vertical={false}
                             />
                         </FormGroup>

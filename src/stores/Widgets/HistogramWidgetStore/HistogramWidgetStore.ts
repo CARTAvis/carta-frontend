@@ -30,11 +30,11 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
 
     // Current config settings
-    @observable curAutoBounds: boolean;
-    @observable curMinPix: number;
-    @observable curMaxPix: number;
-    @observable curAutoBins: boolean;
-    @observable curNumBins: number;
+    @observable currentAutoBounds: boolean;
+    @observable currentMinPix: number;
+    @observable currentMaxPix: number;
+    @observable currentAutoBins: boolean;
+    @observable currentNumBins: number;
 
     // Maximum number of histogram bins on the slider
     @observable maxNumBins: number;
@@ -115,28 +115,28 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     };
 
     @action setAutoBounds = (autoBounds: boolean) => {
-        this.curAutoBounds = autoBounds;
+        this.currentAutoBounds = autoBounds;
         this.updateConfigs();
     };
 
     @action setMinPix = (minPix: number) => {
-        this.curMinPix = minPix;
+        this.currentMinPix = minPix;
         this.updateConfigs();
     };
 
     @action setMaxPix = (maxPix: number) => {
-        this.curMaxPix = maxPix;
+        this.currentMaxPix = maxPix;
         this.updateConfigs();
     };
 
     @action setAutoBins = (autoBins: boolean) => {
-        this.curAutoBins = autoBins;
+        this.currentAutoBins = autoBins;
         this.resetNumBins();
         this.updateConfigs();
     };
 
     @action setNumBins = (numBins: number) => {
-        this.curNumBins = numBins;
+        this.currentNumBins = numBins;
         this.updateConfigs();
     };
 
@@ -161,70 +161,70 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     }
 
     @action onResetConfig = () => {
-        this.curAutoBounds = false;
+        this.currentAutoBounds = false;
         this.resetBounds();
-        this.curAutoBins = false;
+        this.currentAutoBins = false;
         this.resetNumBins();
         this.updateConfigs();
     };
 
     resetBounds = () => {
         if (this.cachedMinPix === undefined) {
-            this.curMinPix = this.effectiveFrame.renderConfig.histogramMin;
+            this.currentMinPix = this.effectiveFrame.renderConfig.histogramMin;
         } else {
-            this.curMinPix = this.cachedMinPix;
+            this.currentMinPix = this.cachedMinPix;
         }
 
         if (this.cachedMaxPix === undefined) {
-            this.curMaxPix = this.effectiveFrame.renderConfig.histogramMax;
+            this.currentMaxPix = this.effectiveFrame.renderConfig.histogramMax;
         } else {
-            this.curMaxPix = this.cachedMaxPix;
+            this.currentMaxPix = this.cachedMaxPix;
         }
     };
 
     resetNumBins = () => {
         if (this.cachedNumBins === undefined) {
-            this.curNumBins = this.effectiveFrame.renderConfig.histogram.numBins;
+            this.currentNumBins = this.effectiveFrame.renderConfig.histogram.numBins;
         } else {
-            this.curNumBins = this.cachedNumBins;
+            this.currentNumBins = this.cachedNumBins;
         }
     };
 
     updateConfigs = () => {
         if (this.isAbleToGenerate) {
-            if (this.curAutoBounds) {
+            if (this.currentAutoBounds) {
                 this.fixedBounds = false;
                 this.minPix = 0;
                 this.maxPix = 0;
             } else {
                 this.fixedBounds = true;
-                this.minPix = this.curMinPix;
-                this.maxPix = this.curMaxPix;
+                this.minPix = this.currentMinPix;
+                this.maxPix = this.currentMaxPix;
             }
 
-            if (this.curAutoBins) {
+            if (this.currentAutoBins) {
                 this.fixedNumBins = false;
                 this.numBins = -1;
             } else {
                 this.fixedNumBins = true;
-                this.numBins = this.curNumBins;
+                this.numBins = this.currentNumBins;
             }
         }
     };
 
     @computed get isAutoBounds(): boolean {
-        return this.curAutoBounds;
+        return this.currentAutoBounds;
     }
 
     @computed get isAutoBins(): boolean {
-        return this.curAutoBins;
+        return this.currentAutoBins;
     }
 
     @computed get isAbleToGenerate(): boolean {
-        if (!this.curAutoBounds && this.curMinPix >= this.curMaxPix) {
+        if (!this.currentAutoBounds && this.currentMinPix >= this.currentMaxPix) {
             return false;
         }
-        return !(!this.curAutoBins && this.curNumBins <= 0);
+        return !(!this.currentAutoBins && this.currentNumBins <= 0);
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
@@ -371,9 +371,9 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.coordinate = "z";
 
         // Initialize current config values
-        this.curAutoBounds = true;
+        this.currentAutoBounds = true;
         this.resetBounds();
-        this.curAutoBins = true;
+        this.currentAutoBins = true;
         this.resetNumBins();
 
         // Initialize config settings in the protobuf message
