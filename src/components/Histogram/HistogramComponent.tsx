@@ -12,7 +12,7 @@ import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
-import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, closeTo, getColorForTheme, toExponential, toFixed} from "utilities";
 
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -83,7 +83,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     // todo: consider the bin width setting, which would be correlated with the number of bins setting
                     return false;
                 }
-                return !(regionHistogramData.config.fixedBounds && (!this.areEqual(regionHistogramData.config.bounds.min, this.widgetStore.minPix) || !this.areEqual(regionHistogramData.config.bounds.max, this.widgetStore.maxPix)));
+                return !(regionHistogramData.config.fixedBounds && (!closeTo(regionHistogramData.config.bounds.min, this.widgetStore.minPix) || !closeTo(regionHistogramData.config.bounds.max, this.widgetStore.maxPix)));
             }
         }
         return false;
@@ -267,10 +267,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             }
         }
         return profilerInfo;
-    };
-
-    private areEqual = (num1: number, num2: number): boolean => {
-        return Math.abs((num1 - num2) / (num1 + num2)) < 1e-6;
     };
 
     render() {

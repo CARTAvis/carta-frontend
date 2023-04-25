@@ -5,7 +5,7 @@ import tinycolor from "tinycolor2";
 import {HistogramSettingsTabs} from "components";
 import {LineSettings, PlotType} from "components/Shared";
 import {POLARIZATIONS, VALID_COORDINATES} from "models";
-import {isAutoColor} from "utilities";
+import {closeTo, isAutoColor} from "utilities";
 
 import {RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
@@ -218,10 +218,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return !(!this.curAutoBins && this.curNumBins <= 0);
     }
 
-    private static areEqual(num1: number, num2: number) {
-        return Math.abs(num1 - num2) < 1e-6;
-    }
-
     public static CalculateRequirementsMap(widgetsMap: Map<string, HistogramWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetHistogramRequirements>>();
 
@@ -259,12 +255,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
                 let histogramConfig = regionRequirements.histograms.find(
                     config =>
-                        config.coordinate === coordinate &&
-                        config.fixedNumBins === fixedNumBins &&
-                        config.numBins === numBins &&
-                        config.fixedBounds === fixedBounds &&
-                        this.areEqual(config.bounds.min, minPix) &&
-                        this.areEqual(config.bounds.max, maxPix)
+                        config.coordinate === coordinate && config.fixedNumBins === fixedNumBins && config.numBins === numBins && config.fixedBounds === fixedBounds && closeTo(config.bounds.min, minPix) && closeTo(config.bounds.max, maxPix)
                 );
 
                 if (!histogramConfig) {
@@ -344,8 +335,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
                                 updatedConfig.fixedNumBins !== config.fixedNumBins ||
                                 updatedConfig.numBins !== config.numBins ||
                                 updatedConfig.fixedBounds !== config.fixedBounds ||
-                                !this.areEqual(updatedConfig.bounds.min, config.bounds.min) ||
-                                !this.areEqual(updatedConfig.bounds.max, config.bounds.max)
+                                !closeTo(updatedConfig.bounds.min, config.bounds.min) ||
+                                !closeTo(updatedConfig.bounds.max, config.bounds.max)
                             ) {
                                 diffList.push(updatedRegionRequirements);
                                 return;
