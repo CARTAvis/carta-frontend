@@ -55,65 +55,24 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }
 
     @computed get isTargetData(): boolean {
-        const appStore = AppStore.Instance;
-
-        if (this.widgetStore.effectiveFrame) {
-            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.effectiveRegionId;
-            let coordinate = this.widgetStore.coordinate;
-
-            const frameMap = appStore.regionHistograms.get(fileId);
-            if (!frameMap) {
-                return false;
-            }
-
-            const regionMap = frameMap.get(regionId);
-            if (!regionMap) {
-                return false;
-            }
-
-            const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
-            const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
-            const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
-            if (regionHistogramData) {
-                if (regionHistogramData.config.fixedNumBins !== this.widgetStore.fixedNumBins || regionHistogramData.config.fixedBounds !== this.widgetStore.fixedBounds) {
-                    return false;
-                }
-                if (regionHistogramData.config.fixedNumBins && regionHistogramData.config.numBins !== this.widgetStore.numBins) {
-                    // todo: consider the bin width setting, which would be correlated with the number of bins setting
-                    return false;
-                }
-                return !(regionHistogramData.config.fixedBounds && (!closeTo(regionHistogramData.config.bounds.min, this.widgetStore.minPix) || !closeTo(regionHistogramData.config.bounds.max, this.widgetStore.maxPix)));
-            }
+        const regionHistogramData = this.getRegionHistogramData();
+        if (!regionHistogramData) {
+            return false;
         }
-        return false;
+
+        // Check whether the hostogram data matchs the wieget's configuration
+        if (regionHistogramData.config.fixedNumBins !== this.widgetStore.fixedNumBins || regionHistogramData.config.fixedBounds !== this.widgetStore.fixedBounds) {
+            return false;
+        }
+        if (regionHistogramData.config.fixedNumBins && regionHistogramData.config.numBins !== this.widgetStore.numBins) {
+            return false;
+        }
+        return !regionHistogramData.config.fixedBounds || (closeTo(regionHistogramData.config.bounds.min, this.widgetStore.minPix) && closeTo(regionHistogramData.config.bounds.max, this.widgetStore.maxPix));
     }
 
     @computed get histogramData(): CARTA.IHistogram {
-        const appStore = AppStore.Instance;
-
-        if (this.widgetStore.effectiveFrame) {
-            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.effectiveRegionId;
-            let coordinate = this.widgetStore.coordinate;
-
-            const frameMap = appStore.regionHistograms.get(fileId);
-            if (!frameMap) {
-                return null;
-            }
-            const regionMap = frameMap.get(regionId);
-            if (!regionMap) {
-                return null;
-            }
-            const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
-            const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
-            const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
-            if (!regionHistogramData) {
-                return null;
-            }
-            return regionHistogramData.histograms;
-        }
-        return null;
+        const regionHistogramData = this.getRegionHistogramData();
+        return regionHistogramData ? regionHistogramData.histograms : null;
     }
 
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
@@ -267,6 +226,33 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             }
         }
         return profilerInfo;
+    };
+
+    private getRegionHistogramData = (): CARTA.IRegionHistogramData => {
+        if (!this.widgetStore.effectiveFrame) {
+            return null;
+        }
+
+        const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+        const regionId = this.widgetStore.effectiveRegionId;
+        const coordinate = this.widgetStore.coordinate;
+        const appStore = AppStore.Instance;
+
+        const frameMap = appStore.regionHistograms.get(fileId);
+        if (!frameMap) {
+            return null;
+        }
+
+        const regionMap = frameMap.get(regionId);
+        if (!regionMap) {
+            return null;
+        }
+
+        const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
+        const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
+        const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
+
+        return regionHistogramData ? regionHistogramData : null;
     };
 
     render() {
