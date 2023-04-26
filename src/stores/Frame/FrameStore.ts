@@ -2844,11 +2844,13 @@ export class FrameStore {
 
     @action setPreviewPVRasterData = (previewPVRasterData: Float32Array, skipUpdatePreviewData: boolean = false) => {
         this.previewPVRasterData = previewPVRasterData;
+        // if skipUpdatePreviewData is false, the code after the yield keyword in the updatePreviewData function will be executed by calling the next() function.
         !skipUpdatePreviewData && this.updatePreviewDataGenerator.next();
     };
 
-    public updatePreviewDataGenerator: Generator<void, void, unknown>;
+    public updatePreviewDataGenerator: Generator;
 
+    // The incoming data will be decompressed using zfp WebWorker instance, which runs in a different thread. WebWorker instance has an onmessage event listener function. Generator function is used here to wait for the decompression of rasterData to complete.
     public *updatePreviewData(previewData: CARTA.PvPreviewData) {
         // Old values before updating to the new frameInfo
         const oldAspectRatio = this.aspectRatio;
@@ -2875,7 +2877,9 @@ export class FrameStore {
             previewId: previewData.previewId
         };
 
-        yield TileService.Instance.workers[0].postMessage(["preview decompress", compressedView.buffer, eventArgs, previewData], [compressedView.buffer, nanEncodings32.buffer]);
+        // Using the 'yield' keyword of generator functions to wait for decompressed raster data from other WebWorker thread.
+        // next() will be called in setPreviewPVRasterData, which will be called in the onmessage() function after receiving the decompressed data from other worker thread.
+        yield TileService.Instance.decompressPreviewRasterData(compressedView, eventArgs, previewData, nanEncodings32);
 
         if (previewData.histogram) {
             this.renderConfig.updateChannelHistogram(previewData.histogram);
@@ -2903,7 +2907,7 @@ export class FrameStore {
 
         // Avoid image moving within the frame caused by changing image width or height as rasterData is updating
         this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
-        this.setCenter(isWidthUpdated ? (this.center.x * oldAspectRatio) / this.aspectRatio : this.center.x, isHeightUpdated ? (this.center.y * this.aspectRatio) / oldAspectRatio : this.center.y, false);
+        this.setCenter(isWidthUpdated ? ((this.center.x + 0.5) * oldAspectRatio) / this.aspectRatio - 0.5 : this.center.x, isHeightUpdated ? ((this.center.y + 0.5) * this.aspectRatio) / oldAspectRatio - 0.5 : this.center.y, false);
     }
 
     @action onResizePreviewWidget = (width: number, height: number) => {

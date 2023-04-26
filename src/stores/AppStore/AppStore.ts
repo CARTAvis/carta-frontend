@@ -545,6 +545,7 @@ export class AppStore {
             this.previewFrames.set(ack.previewId, newFrame);
             newFrame.setIsPreview(true);
             newFrame.updatePreviewDataGenerator = newFrame.updatePreviewData(ack);
+            // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
             newFrame.updatePreviewDataGenerator.next();
             this.setActiveFrame(newFrame);
         }
@@ -1202,6 +1203,7 @@ export class AppStore {
                 const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
                 if (pvGeneratorWidgetStore.previewFrame) {
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator = pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
+                    // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
                 } else {
                     pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
@@ -1983,6 +1985,7 @@ export class AppStore {
 
         if (previewFrame) {
             previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(pvPreviewData);
+            // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
             previewFrame.updatePreviewDataGenerator.next();
         }
     };

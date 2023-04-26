@@ -69,7 +69,7 @@ export class TileService {
     private lruCapacitySystem: number;
     private textureArray: Array<WebGLTexture>;
     private textureCoordinateQueue: Array<number>;
-    public readonly workers: Worker[];
+    private readonly workers: Worker[];
     private compressionRequestCounter: number;
     private pendingSynchronisedTiles: Map<string, Array<number>>;
     private receivedSynchronisedTiles: Map<string, Array<{coordinate: number; tile: RasterTile}>>;
@@ -87,6 +87,10 @@ export class TileService {
         if (index >= 0 && index < this.workersReady.length) {
             this.workersReady[index] = true;
         }
+    }
+
+    public decompressPreviewRasterData(compressedView: Uint8Array, eventArgs, previewData: CARTA.PvPreviewData, nanEncodings32: Int32Array) {
+        this.workers[0].postMessage(["preview decompress", compressedView.buffer, eventArgs, previewData], [compressedView.buffer, nanEncodings32.buffer]);
     }
 
     public setAnimationEnabled = (val: boolean) => {
