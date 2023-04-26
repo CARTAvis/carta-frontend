@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import {action, computed, makeObservable, observable} from "mobx";
+import {action, autorun, computed, makeObservable, observable} from "mobx";
 import tinycolor from "tinycolor2";
 
 import {HistogramSettingsTabs} from "components";
@@ -116,28 +116,23 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     @action setAutoBounds = (autoBounds: boolean) => {
         this.currentAutoBounds = autoBounds;
-        this.updateConfigs();
     };
 
     @action setMinPix = (minPix: number) => {
         this.currentMinPix = minPix;
-        this.updateConfigs();
     };
 
     @action setMaxPix = (maxPix: number) => {
         this.currentMaxPix = maxPix;
-        this.updateConfigs();
     };
 
     @action setAutoBins = (autoBins: boolean) => {
         this.currentAutoBins = autoBins;
         this.resetNumBins();
-        this.updateConfigs();
     };
 
     @action setNumBins = (numBins: number) => {
         this.currentNumBins = numBins;
-        this.updateConfigs();
     };
 
     @action setMaxNumBins = (maxNumBins: number) => {
@@ -165,7 +160,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.resetBounds();
         this.currentAutoBins = true;
         this.resetNumBins();
-        this.updateConfigs();
     };
 
     resetBounds = () => {
@@ -187,28 +181,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
             this.currentNumBins = this.effectiveFrame.renderConfig.histogram.numBins;
         } else {
             this.currentNumBins = this.cachedNumBins;
-        }
-    };
-
-    updateConfigs = () => {
-        if (this.isAbleToGenerate) {
-            if (this.currentAutoBounds) {
-                this.fixedBounds = false;
-                this.minPix = 0;
-                this.maxPix = 0;
-            } else {
-                this.fixedBounds = true;
-                this.minPix = this.currentMinPix;
-                this.maxPix = this.currentMaxPix;
-            }
-
-            if (this.currentAutoBins) {
-                this.fixedNumBins = false;
-                this.numBins = -1;
-            } else {
-                this.fixedNumBins = true;
-                this.numBins = this.currentNumBins;
-            }
         }
     };
 
@@ -377,6 +349,28 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
         // Initialize the maximum number of histogram bins on the slider
         this.maxNumBins = this.effectiveFrame.renderConfig.histogram.numBins * 2;
+
+        autorun(() => {
+            if (this.isAbleToGenerate) {
+                if (this.currentAutoBounds) {
+                    this.fixedBounds = false;
+                    this.minPix = 0;
+                    this.maxPix = 0;
+                } else {
+                    this.fixedBounds = true;
+                    this.minPix = this.currentMinPix;
+                    this.maxPix = this.currentMaxPix;
+                }
+
+                if (this.currentAutoBins) {
+                    this.fixedNumBins = false;
+                    this.numBins = -1;
+                } else {
+                    this.fixedNumBins = true;
+                    this.numBins = this.currentNumBins;
+                }
+            }
+        });
     }
 
     // settings
