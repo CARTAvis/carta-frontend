@@ -351,6 +351,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.maxNumBins = this.effectiveFrame.renderConfig.histogram.numBins * 2;
 
         autorun(() => {
+            // Update the config parameters
             if (this.isAbleToGenerate) {
                 if (this.currentAutoBounds) {
                     this.fixedBounds = false;

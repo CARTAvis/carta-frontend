@@ -25,6 +25,14 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         return this.widgetStore.maxNumBins;
     }
 
+    get sliderLabelStepSize(): number {
+        return this.widgetStore.maxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND ? this.widgetStore.maxNumBins - HistogramConfigPanelComponent.BINS_LOWER_BOUND : 0;
+    }
+
+    get sliderValue(): number {
+        return this.widgetStore.currentNumBins <= this.widgetStore.maxNumBins ? this.widgetStore.currentNumBins : this.widgetStore.maxNumBins;
+    }
+
     private onSetAutoBounds = (autoBounds: boolean) => {
         this.widgetStore.setAutoBounds(autoBounds);
         if (autoBounds) {
@@ -144,9 +152,9 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                                 min={HistogramConfigPanelComponent.BINS_LOWER_BOUND}
                                 max={this.widgetStore.maxNumBins}
                                 stepSize={1}
-                                labelStepSize={this.widgetStore.maxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND ? this.widgetStore.maxNumBins - HistogramConfigPanelComponent.BINS_LOWER_BOUND : 0}
+                                labelStepSize={this.sliderLabelStepSize}
                                 onChange={this.changeNumBinsHandler}
-                                value={this.widgetStore.currentNumBins <= this.widgetStore.maxNumBins ? this.widgetStore.currentNumBins : this.widgetStore.maxNumBins}
+                                value={this.sliderValue}
                                 vertical={false}
                             />
                         </FormGroup>
