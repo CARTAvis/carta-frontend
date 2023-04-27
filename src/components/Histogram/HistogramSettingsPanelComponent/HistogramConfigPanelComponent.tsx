@@ -9,20 +9,11 @@ import {HistogramWidgetStore} from "stores/Widgets";
 @observer
 export class HistogramConfigPanelComponent extends React.Component<{widgetStore: HistogramWidgetStore}> {
     private static readonly BINS_LOWER_BOUND = 2;
-
-    private currentMaxNumBins: number;
     private minPixIntent: Intent;
     private maxPixIntent: Intent;
 
     get widgetStore(): HistogramWidgetStore {
         return this.props.widgetStore;
-    }
-
-    get maxNumBins(): number {
-        if (this.currentMaxNumBins !== undefined && this.currentMaxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND) {
-            return this.currentMaxNumBins;
-        }
-        return this.widgetStore.maxNumBins;
     }
 
     get sliderLabelStepSize(): number {
@@ -68,8 +59,8 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     };
 
     private onMaxNumBinsChanged = (currentMaxNumBins: number) => {
-        this.currentMaxNumBins = currentMaxNumBins;
-        this.widgetStore.setMaxNumBins(this.maxNumBins);
+        const maxNumBins = currentMaxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND ? currentMaxNumBins : this.widgetStore.maxNumBins;
+        this.widgetStore.setMaxNumBins(maxNumBins);
     };
 
     private changeNumBinsHandler = (numBins: number) => {
@@ -81,7 +72,6 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
 
         // Reset the maximum number of bins for the bins slider and its filler
         const newMaxNumBins = this.widgetStore.currentNumBins * 2;
-        this.currentMaxNumBins = newMaxNumBins;
         this.widgetStore.setMaxNumBins(newMaxNumBins);
 
         // Reset the intent for min/max pixel filler
@@ -159,7 +149,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
                             />
                         </FormGroup>
                         <FormGroup label="Max number of bins" inline={true}>
-                            <SafeNumericInput value={this.maxNumBins} buttonPosition="none" onValueChange={val => this.onMaxNumBinsChanged(val)} />
+                            <SafeNumericInput value={this.widgetStore.maxNumBins} buttonPosition="none" onValueChange={val => this.onMaxNumBinsChanged(val)} />
                         </FormGroup>
                     </div>
                 )}
