@@ -71,8 +71,10 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
         this.widgetStore.onResetConfig();
 
         // Reset the maximum number of bins for the bins slider and its filler
-        const newMaxNumBins = this.widgetStore.currentNumBins * 2;
-        this.widgetStore.setMaxNumBins(newMaxNumBins);
+        const maxNumBins = this.widgetStore.currentNumBins * 2;
+        if (maxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND) {
+            this.widgetStore.setMaxNumBins(maxNumBins);
+        }
 
         // Reset the intent for min/max pixel filler
         this.minPixIntent = Intent.NONE;
