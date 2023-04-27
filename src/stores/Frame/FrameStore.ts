@@ -2882,9 +2882,9 @@ export class FrameStore {
         yield TileService.Instance.decompressPreviewRasterData(compressedView, eventArgs, previewData, nanEncodings32);
 
         if (previewData.histogram) {
-            this.renderConfig.updateChannelHistogram(previewData.histogram);
             this.renderConfig.setPreviewHistogramMax(null);
             this.renderConfig.setPreviewHistogramMin(null);
+            this.renderConfig.updateChannelHistogram(previewData.histogram);
         } else {
             this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds?.max);
             this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds?.min);

@@ -272,11 +272,11 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMinVal() {
-        return this.previewHistogramMin || this.scaleMin[this.stokesIndex];
+        return this.previewHistogramMin ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex]) : this.scaleMin[this.stokesIndex];
     }
 
     @computed get scaleMaxVal() {
-        return this.previewHistogramMax || this.scaleMax[this.stokesIndex];
+        return this.previewHistogramMax ? Math.min(this.previewHistogramMax, this.scaleMax[this.stokesIndex]) : this.scaleMax[this.stokesIndex];
     }
 
     @computed get selectedPercentileVal() {
