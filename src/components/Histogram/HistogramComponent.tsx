@@ -37,7 +37,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFrame: FrameStore;
-    private curLinePlotProps: LinePlotComponentProps;
+    private currentLinePlotProps: LinePlotComponentProps;
 
     @observable width: number;
     @observable height: number;
@@ -60,7 +60,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             return false;
         }
 
-        // Check whether the hostogram data matchs the wieget's configuration
+        // Check whether the hostogram data matchs the wideget's configuration
         if (regionHistogramData.config.fixedNumBins !== this.widgetStore.fixedNumBins || regionHistogramData.config.fixedBounds !== this.widgetStore.fixedBounds) {
             return false;
         }
@@ -281,7 +281,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const imageName = frame.filename;
         const plotName = `channel ${frame.channel} histogram`;
 
-        if (this.isTargetData || !this.curLinePlotProps) {
+        if (this.isTargetData || !this.currentLinePlotProps) {
             let linePlotProps: LinePlotComponentProps = {
                 xLabel: unit ? `Value (${unit})` : "Value",
                 yLabel: "Count",
@@ -336,7 +336,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 linePlotProps.comments = this.exportHeaders;
             }
 
-            this.curLinePlotProps = linePlotProps;
+            this.currentLinePlotProps = linePlotProps;
         }
 
         const className = classNames("histogram-widget", {"bp3-dark": appStore.darkTheme});
@@ -346,7 +346,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 <div className="histogram-container">
                     <HistogramToolbarComponent widgetStore={this.widgetStore} />
                     <div className="histogram-plot">
-                        <LinePlotComponent {...this.curLinePlotProps} />
+                        <LinePlotComponent {...this.currentLinePlotProps} />
                     </div>
                     <div>
                         <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />
