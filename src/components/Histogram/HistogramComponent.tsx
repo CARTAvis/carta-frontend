@@ -60,7 +60,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             return false;
         }
 
-        // Check whether the hostogram data matchs the wideget's configuration
+        // Check whether the histogram data matches the widget's configuration
         if (regionHistogramData.config.fixedNumBins !== this.widgetStore.fixedNumBins || regionHistogramData.config.fixedBounds !== this.widgetStore.fixedBounds) {
             return false;
         }
