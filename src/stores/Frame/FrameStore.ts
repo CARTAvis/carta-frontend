@@ -33,7 +33,7 @@ import {
     ZoomPoint
 } from "models";
 import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
-import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore, PREVIEW_PV_FILEID} from "stores";
+import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
 import {
     CENTER_POINT_INDEX,
     ColorbarStore,
@@ -2845,7 +2845,9 @@ export class FrameStore {
     @action setPreviewPVRasterData = (previewPVRasterData: Float32Array, skipUpdatePreviewData: boolean = false) => {
         this.previewPVRasterData = previewPVRasterData;
         // if skipUpdatePreviewData is false, the code after the yield keyword in the updatePreviewData function will be executed by calling the next() function.
-        !skipUpdatePreviewData && this.updatePreviewDataGenerator.next();
+        if (!skipUpdatePreviewData) {
+            this.updatePreviewDataGenerator.next();
+        }
     };
 
     public updatePreviewDataGenerator: Generator;
@@ -2857,29 +2859,9 @@ export class FrameStore {
         const oldHeight = this.frameInfo.fileInfoExtended.height;
         const oldWidth = this.frameInfo.fileInfoExtended.width;
 
-        const compressedArray = previewData.imageData;
-        const nanEncodings32 = new Int32Array(previewData.nanEncodings.slice(0).buffer);
-        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, previewData.width * previewData.height * 4));
-        compressedView.set(compressedArray);
-
-        const eventArgs = {
-            fileId: PREVIEW_PV_FILEID,
-            channel: 0,
-            stokes: 0,
-            width: previewData.width,
-            subsetHeight: previewData.height,
-            subsetLength: compressedArray.byteLength,
-            compression: previewData.compressionQuality,
-            nanEncodings: nanEncodings32,
-            tileCoordinate: 0,
-            layer: 0,
-            requestId: 0,
-            previewId: previewData.previewId
-        };
-
         // Using the 'yield' keyword of generator functions to wait for decompressed raster data from other WebWorker thread.
         // next() will be called in setPreviewPVRasterData, which will be called in the onmessage() function after receiving the decompressed data from other worker thread.
-        yield TileService.Instance.decompressPreviewRasterData(compressedView, eventArgs, previewData, nanEncodings32);
+        yield TileService.Instance.decompressPreviewRasterData(previewData);
 
         if (previewData.histogram) {
             this.renderConfig.setPreviewHistogramMax(null);

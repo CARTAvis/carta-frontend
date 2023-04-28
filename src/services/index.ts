@@ -3,7 +3,6 @@ export * from "./BackendService";
 export * from "./CatalogApiService";
 export * from "./CatalogWebGLService";
 export * from "./ContourWebGLService";
-export * from "./PreviewWebGLService";
 export * from "./ScriptingService";
 export * from "./SplatalogueService";
 export * from "./TelemetryService";

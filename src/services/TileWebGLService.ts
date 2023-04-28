@@ -40,7 +40,7 @@ interface ShaderUniforms {
 }
 
 export class TileWebGLService {
-    private static staticInstance: TileWebGLService;
+    protected static staticInstance: TileWebGLService;
 
     readonly gl: WebGL2RenderingContext;
     cmapTexture: WebGLTexture;
@@ -160,7 +160,7 @@ export class TileWebGLService {
         this.gl.bufferData(GL2.ARRAY_BUFFER, uvs, GL2.STATIC_DRAW);
     }
 
-    private constructor() {
+    protected constructor() {
         this.gl = initWebGL2();
         if (!this.gl) {
             return;
@@ -170,5 +170,20 @@ export class TileWebGLService {
         loadImageTexture(this.gl, allMaps, GL2.TEXTURE1).then(texture => {
             this.cmapTexture = texture;
         });
+    }
+}
+
+export class PreviewWebGLService extends TileWebGLService {
+    protected static staticInstance: PreviewWebGLService;
+
+    static get Instance() {
+        if (!PreviewWebGLService.staticInstance) {
+            PreviewWebGLService.staticInstance = new PreviewWebGLService();
+        }
+        return PreviewWebGLService.staticInstance;
+    }
+
+    private constructor() {
+        super();
     }
 }

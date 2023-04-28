@@ -55,14 +55,9 @@
         }
 
         .cube-size-button-group {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-
             .cube-size-group {
                 display: flex;
                 align-items: center;
-                width: 45%;
 
                 .cube-size {
                     vertical-align: middle;
