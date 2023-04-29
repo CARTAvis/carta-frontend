@@ -822,6 +822,9 @@ export class AppStore {
     @action removeAllFrames = () => {
         // Stop animations playing before removing frames
         this.animatorStore.stopAnimation();
+        this.clearSpectralReference();
+        this.clearSpatialReference();
+        this.clearRasterScalingReference();
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
