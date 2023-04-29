@@ -286,13 +286,12 @@ export class RootMenuComponent extends React.Component {
                     />
                 </Tooltip2>
                 <Menu.Item text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
-                <Menu.Item text="Open workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Open)} />
-                <Menu.Item text="Save workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Save)} />
-                <Menu.Item text="Close workspace" disabled={appStore.openFileDisabled} onClick={appStore.closeWorkspace} />
-                <MenuDivider />
                 <Menu.Item text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage}>
                     <ExportImageMenuComponent />
                 </Menu.Item>
+                <MenuDivider />
+                <Menu.Item text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Open)} />
+                <Menu.Item text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Save)} />
                 <Menu.Divider />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE} />
                 {serverSubMenu}

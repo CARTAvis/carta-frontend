@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
-import {AnchorButton, Button, Classes, IDialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
+import {AnchorButton, Classes, IDialogProps, InputGroup, Intent, NonIdealState, Spinner} from "@blueprintjs/core";
 import {Cell, Column, IRegion, RenderMode, SelectionModes, Table, TableLoadingOption} from "@blueprintjs/table";
 import classNames from "classnames";
 import {observer} from "mobx-react";
@@ -143,7 +143,7 @@ export const WorkspaceDialogComponent = observer(() => {
     const className = classNames("workspace-dialog", {"bp3-dark": appStore.darkTheme});
 
     const dialogProps: IDialogProps = {
-        icon: "layout-grid",
+        icon: "control",
         backdropClassName: "minimal-dialog-backdrop",
         className: className,
         canOutsideClickClose: false,
@@ -273,7 +273,6 @@ export const WorkspaceDialogComponent = observer(() => {
                         <AnchorButton intent={Intent.PRIMARY} onClick={handleOpenClicked} text="Open" disabled={isFetching || !selectedRegions?.length} />
                     )}
                     <AnchorButton intent={Intent.WARNING} onClick={handleDeleteClicked} text="Delete" disabled={isFetching || !selectedWorkspace} />
-                    <Button intent={Intent.NONE} text="Close" onClick={handleCloseClicked} />
                 </div>
             </div>
         </DraggableDialogComponent>

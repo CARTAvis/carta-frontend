@@ -2173,7 +2173,8 @@ export class AppStore {
             frontendVersion: CARTA_INFO.version,
             description: "Workspace exported from CARTA",
             files: [],
-            references: {}
+            references: {},
+            date: Date.now() / 1000
         };
 
         const thumbnail = yield exportScreenshot();

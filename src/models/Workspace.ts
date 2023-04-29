@@ -110,6 +110,7 @@ export interface Workspace {
     };
     selectedFile?: number;
     thumbnail?: string;
+    date?: number;
 }
 
 export interface WorkspaceListItem {

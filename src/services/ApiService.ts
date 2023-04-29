@@ -543,11 +543,11 @@ export class ApiService {
                 if (existingWorkspaces) {
                     const validWorkspaces = new Array<WorkspaceListItem>();
                     for (const workspaceName of Object.keys(existingWorkspaces)) {
-                        const valid = true; // TODO: ApiService.WorkspaceValidator(workspace);
-                        if (!valid) {
-                            //console.log(ApiService.WorkspaceValidator.errors);
+                        const workspace = existingWorkspaces[workspaceName];
+                        if (!workspace) {
+                            // TODO: handle validation errors
                         } else {
-                            validWorkspaces.push({name: workspaceName, date: Date.now()});
+                            validWorkspaces.push({name: workspaceName, date: workspace?.date ?? Date.now() / 1000});
                         }
                     }
                     return validWorkspaces;
