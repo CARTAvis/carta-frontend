@@ -1022,7 +1022,7 @@ export class AppStore {
                 styleInfo?.color,
                 styleInfo?.lineWidth,
                 styleInfo?.dashList,
-                false,
+                true,
                 styleInfo?.annotationStyle
             );
         }
