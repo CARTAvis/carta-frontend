@@ -1,4 +1,5 @@
 import * as React from "react";
+import {Tab, Tabs} from "@blueprintjs/core";
 import {autorun, computed} from "mobx";
 import {observer} from "mobx-react";
 
@@ -8,9 +9,16 @@ import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from
 import {HistogramWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
+import {HistogramConfigPanelComponent} from "./HistogramConfigPanelComponent";
+
 import "./HistogramSettingsPanelComponent.scss";
 
 const KEYCODE_ENTER = 13;
+
+export enum HistogramSettingsTabs {
+    STYLING,
+    CONFIG
+}
 
 @observer
 export class HistogramSettingsPanelComponent extends React.Component<WidgetProps> {
@@ -70,6 +78,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
     private handleLogScaleChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore.setLogScale(changeEvent.target.checked);
+    };
+
+    handleSelectedTabChanged = (newTabId: React.ReactText) => {
+        this.widgetStore.setSettingsTabId(Number.parseInt(newTabId.toString()));
     };
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,7 +183,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
         return (
             <div className="histogram-settings-panel">
-                <LinePlotSettingsPanelComponent {...lineSettingsProps} />
+                <Tabs id="histogramSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
+                    <Tab id={HistogramSettingsTabs.CONFIG} panelClassName="config-tab-panel" title="Configuration" panel={<HistogramConfigPanelComponent widgetStore={widgetStore} />} />
+                    <Tab id={HistogramSettingsTabs.STYLING} panelClassName="styling-tab-panel" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps} />} />
+                </Tabs>
             </div>
         );
     }
