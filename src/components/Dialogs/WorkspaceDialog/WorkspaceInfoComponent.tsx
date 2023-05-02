@@ -65,13 +65,12 @@ export const WorkspaceInfoComponent = (props: {workspaceListItem?: WorkspaceList
 
     if (!workspaceListItem) {
         return <NonIdealState className="workspace-info" icon="folder-open" title="No workspace selected" />;
-    }
-    if (isFetchingWorkspace) {
+    } else if (isFetchingWorkspace) {
         return <NonIdealState className="workspace-info" icon={<Spinner />} title="Fetching workspace" />;
-    }
-
-    if (!workspace) {
-        return <NonIdealState className="workspace-info" icon="error" title={errorMessage ?? "Unknown error"} />;
+    } else if (!workspace) {
+        return <NonIdealState className="workspace-info" icon="error" title={errorMessage || "Error fetching workspace"} />;
+    } else if (!workspace.files?.length) {
+        return <NonIdealState className="workspace-info" icon="error" title="Empty workspace" />;
     }
 
     let totalRegions = 0;

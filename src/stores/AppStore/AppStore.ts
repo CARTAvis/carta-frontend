@@ -2198,7 +2198,7 @@ export class AppStore {
         let hasTemporaryFiles = false;
 
         for (const frame of this.frames) {
-            if (frame.frameInfo.fileId < 0) {
+            if (frame.frameInfo.fileId >= 1000 || frame.frameInfo.fileId < 0) {
                 hasTemporaryFiles = true;
                 continue;
             }
