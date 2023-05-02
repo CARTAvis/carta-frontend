@@ -18,7 +18,7 @@ export class HistogramConfigPanelComponent extends React.Component<{widgetStore:
     }
 
     get sliderLabelStepSize(): number {
-        return this.widgetStore.maxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND ? this.widgetStore.maxNumBins - HistogramConfigPanelComponent.BINS_LOWER_BOUND : 0;
+        return this.widgetStore.maxNumBins > HistogramConfigPanelComponent.BINS_LOWER_BOUND ? this.widgetStore.maxNumBins - HistogramConfigPanelComponent.BINS_LOWER_BOUND : 1;
     }
 
     get sliderValue(): number {
