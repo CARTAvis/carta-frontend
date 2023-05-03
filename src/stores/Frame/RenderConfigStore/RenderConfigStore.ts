@@ -165,6 +165,8 @@ export class RenderConfigStore {
     @observable scaleMin: number[];
     @observable scaleMax: number[];
     @observable visible: boolean;
+    @observable previewHistogramMax: number;
+    @observable previewHistogramMin: number;
 
     private frame: FrameStore;
 
@@ -271,11 +273,11 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMinVal() {
-        return this.scaleMin[this.stokesIndex];
+        return this.previewHistogramMin ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex]) : this.scaleMin[this.stokesIndex];
     }
 
     @computed get scaleMaxVal() {
-        return this.scaleMax[this.stokesIndex];
+        return this.previewHistogramMax ? Math.min(this.previewHistogramMax, this.scaleMax[this.stokesIndex]) : this.scaleMax[this.stokesIndex];
     }
 
     @computed get selectedPercentileVal() {
@@ -415,6 +417,14 @@ export class RenderConfigStore {
 
     @action setVisible = (visible: boolean) => {
         this.visible = visible;
+    };
+
+    @action setPreviewHistogramMax = (histogramMax: number) => {
+        this.previewHistogramMax = histogramMax;
+    };
+
+    @action setPreviewHistogramMin = (histogramMin: number) => {
+        this.previewHistogramMin = histogramMin;
     };
 
     @action toggleVisibility = () => {

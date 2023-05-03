@@ -1,11 +1,12 @@
-import {IOptionProps} from "@blueprintjs/core";
+import {OptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable, reaction} from "mobx";
 
 import {SpectralSystem} from "models";
-import {AppStore} from "stores";
+import {AppStore, PreferenceStore} from "stores";
+import {FrameStore} from "stores/Frame";
 
-import {RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
+import {ACTIVE_FILE_ID, RegionId, RegionsType, RegionWidgetStore} from "../RegionWidgetStore/RegionWidgetStore";
 
 export enum PVAxis {
     SPATIAL = "Spatial",
@@ -17,10 +18,15 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
     @observable reverse: boolean;
     @observable keep: boolean;
     @observable range: CARTA.IIntBounds = {min: this.effectiveFrame?.channelValueBounds?.min, max: this.effectiveFrame?.channelValueBounds?.max};
+    @observable xyRebin: number = 1;
+    @observable zRebin: number = 1;
+    @observable previewRegionId: number;
+    @observable previewFrame: FrameStore;
+    @observable pvCutRegionId: number;
 
-    @computed get regionOptions(): IOptionProps[] {
+    @computed get regionOptions(): OptionProps[] {
         const appStore = AppStore.Instance;
-        let regionOptions: IOptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
+        let regionOptions: OptionProps[] = [{value: RegionId.NONE, label: "None"}];
         if (appStore.frames) {
             const selectedFrame = appStore.getFrame(this.fileId);
             if (selectedFrame?.regionSet) {
@@ -37,7 +43,36 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         return regionOptions;
     }
 
-    @action requestPV = () => {
+    @computed get previewRegionOptions(): OptionProps[] {
+        const appStore = AppStore.Instance;
+        let previewRegionOptions: OptionProps[] = [{value: RegionId.IMAGE, label: "Image"}];
+        if (appStore.frames) {
+            const selectedFrame = appStore.getFrame(this.fileId);
+            if (selectedFrame?.regionSet) {
+                const validRegionOptions = selectedFrame.regionSet.regions
+                    ?.filter(r => !r.isTemporary && r.regionType === CARTA.RegionType.RECTANGLE)
+                    ?.map(region => {
+                        return {value: region?.regionId, label: region?.nameString};
+                    });
+                if (validRegionOptions) {
+                    previewRegionOptions = previewRegionOptions.concat(validRegionOptions);
+                }
+            }
+        }
+        return previewRegionOptions;
+    }
+
+    @computed get effectivePreviewRegionId(): number {
+        if (this.effectiveFrame) {
+            const regionId = this.previewRegionId;
+            if (regionId !== RegionId.IMAGE && regionId !== undefined && this.effectiveFrame.getRegion(regionId)) {
+                return regionId;
+            }
+        }
+        return RegionId.IMAGE;
+    }
+
+    @action requestPV = (preview: boolean = false, pvGeneratorId?: string) => {
         const frame = this.effectiveFrame;
         let channelIndexMin = frame.findChannelIndexByValue(this.range.min);
         let channelIndexMax = frame.findChannelIndexByValue(this.range.max);
@@ -60,20 +95,37 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 width: this.width,
                 spectralRange: isFinite(channelIndexMin) && isFinite(channelIndexMax) ? {min: channelIndexMin, max: channelIndexMax} : null,
                 reverse: this.reverse,
-                keep: this.keep
+                keep: this.keep,
+                previewSettings: preview
+                    ? {
+                          previewId: parseInt(pvGeneratorId.split("-")[2]),
+                          regionId: this.effectivePreviewRegionId,
+                          rebinXy: this.xyRebin,
+                          rebinZ: this.zRebin,
+                          imageCompressionQuality: PreferenceStore.Instance.imageCompressionQuality || 11,
+                          animationCompressionQuality: PreferenceStore.Instance.animationCompressionQuality || 9,
+                          compressionType: CARTA.CompressionType.ZFP
+                      }
+                    : undefined
             };
+            if (preview) {
+                AppStore.Instance.requestPreviewPV(requestMessage, frame, pvGeneratorId);
+            } else {
+                AppStore.Instance.requestPV(requestMessage, frame, this.keep);
+            }
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);
-            AppStore.Instance.requestPV(requestMessage, frame, this.keep);
         }
     };
 
-    @action requestingPVCancelled = () => {
-        const frame = this.effectiveFrame;
-        if (frame) {
-            AppStore.Instance.cancelRequestingPV(frame.frameInfo.fileId);
-            frame.setIsRequestPVCancelling(true);
-        }
+    @action requestingPVCancelled = (pvGeneratorId: string) => {
+        return () => {
+            const frame = this.effectiveFrame;
+            if (frame) {
+                AppStore.Instance.cancelRequestingPV(frame.frameInfo.fileId, parseInt(pvGeneratorId.split("-")[2]));
+                frame.setIsRequestPVCancelling(true);
+            }
+        };
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
@@ -106,12 +158,39 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setXYRebin = (val: number) => {
+        this.xyRebin = val;
+    };
+
+    @action setZRebin = (val: number) => {
+        this.zRebin = val;
+    };
+
+    @action setPreviewRegionId = (regionId: number) => {
+        this.previewRegionId = regionId;
+    };
+
+    @action setPreviewFrame = (frame: FrameStore) => {
+        this.previewFrame = frame;
+    };
+
+    @action setPvCutRegionId = (regionId: number) => {
+        this.pvCutRegionId = regionId;
+    };
+
+    @action removePreviewFrame = (id: number) => {
+        AppStore.Instance.removePreviewFrame(id);
+        this.previewFrame = null;
+        this.pvCutRegionId = null;
+    };
+
     constructor() {
         super(RegionsType.LINE);
         makeObservable(this);
         this.width = 3;
         this.reverse = false;
         this.keep = false;
+        this.regionIdMap.set(ACTIVE_FILE_ID, RegionId.NONE);
         reaction(
             () => this.effectiveFrame?.channelValueBounds,
             channelValueBounds => {

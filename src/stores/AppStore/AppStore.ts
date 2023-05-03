@@ -9,7 +9,7 @@ import * as Long from "long";
 import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
 import * as Semver from "semver";
 
-import {getImageViewCanvas, ImageViewLayer} from "components";
+import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
 import {
     CARTA_INFO,
@@ -81,6 +81,7 @@ interface ChannelUpdate {
 
 const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
+export const PREVIEW_PV_FILEID = -2;
 
 export class AppStore {
     private static staticInstance: AppStore;
@@ -116,6 +117,7 @@ export class AppStore {
     @observable cartaComputeReady: boolean;
     // Frames
     @observable frames: FrameStore[];
+    @observable previewFrames: ObservableMap<number, FrameStore>;
     @observable activeFrame: FrameStore;
     @observable hoveredFrame: FrameStore;
     @observable contourDataSource: FrameStore;
@@ -553,6 +555,36 @@ export class AppStore {
         return true;
     };
 
+    @action addPreviewFrame = (ack: any, directory: string, hdu: string) => {
+        if (!ack) {
+            return undefined;
+        }
+
+        const frameInfo: FrameInfo = {
+            fileId: PREVIEW_PV_FILEID,
+            directory,
+            hdu,
+            fileInfo: new CARTA.FileInfo(ack.imageInfo),
+            fileInfoExtended: new CARTA.FileInfoExtended(ack.imageInfo),
+            fileFeatureFlags: ack.fileFeatureFlags,
+            renderMode: CARTA.RenderMode.RASTER,
+            beamTable: ack.beamTable
+        };
+
+        const newFrame = new FrameStore(frameInfo);
+
+        if (newFrame) {
+            this.previewFrames.set(ack.previewId, newFrame);
+            newFrame.setIsPreview(true);
+            newFrame.updatePreviewDataGenerator = newFrame.updatePreviewData(ack);
+            // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
+            newFrame.updatePreviewDataGenerator.next();
+            this.setActiveFrame(newFrame);
+        }
+
+        return newFrame;
+    };
+
     @flow.bound
     *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true) {
         this.startFileLoading();
@@ -753,6 +785,20 @@ export class AppStore {
             // adjust requirements for stores
             this.widgetsStore.removeFrameFromRegionWidgets(fileId);
 
+            // clear pv preview frames
+            const previewFrame = this.previewFrames.get(fileId);
+            let pvGeneratorWidgetId;
+
+            for (const [key, value] of this.widgetsStore.pvGeneratorWidgets) {
+                if (_.isEqual(value?.previewFrame, previewFrame)) {
+                    pvGeneratorWidgetId = key;
+                }
+            }
+
+            this.widgetsStore.pvGeneratorWidgets.get(pvGeneratorWidgetId)?.removePreviewFrame(parseInt(pvGeneratorWidgetId.split("-")[2]));
+            this.widgetsStore.removeFloatingWidget(pvGeneratorWidgetId);
+            this.previewFrames.delete(fileId);
+
             // clear existing requirements for the frame
             this.spectralRequirements.delete(fileId);
             this.spatialRequirements.delete(fileId);
@@ -828,6 +874,12 @@ export class AppStore {
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
+            this.previewFrames.forEach((previewFrameStore, previewFrameId) => {
+                this.removePreviewFrame(previewFrameId);
+            });
+            this.widgetsStore.pvGeneratorWidgets.forEach((value, key) => {
+                this.widgetsStore.removeFloatingWidget(key);
+            });
             this.frames.forEach(frame => {
                 frame.clearContours(false);
                 const fileId = frame.frameInfo.fileId;
@@ -840,6 +892,13 @@ export class AppStore {
             this.frames = [];
             // adjust requirements for stores
             this.widgetsStore.removeFrameFromRegionWidgets();
+        }
+    };
+
+    @action removePreviewFrame = (previewId: number) => {
+        if (this.previewFrames.delete(previewId)) {
+            this.backendService.closePvPreview(previewId);
+            this.activeFrame = this.visibleFrames[0];
         }
     };
 
@@ -1178,10 +1237,47 @@ export class AppStore {
         }
     }
 
-    @action cancelRequestingPV = (fileId: number = -1) => {
+    @flow.bound *requestPreviewPV(message: CARTA.IPvRequest, frame: FrameStore, id: string) {
+        if (!message || !frame) {
+            return;
+        }
+        try {
+            this.startFileLoading();
+            const ack = yield this.backendService.requestPV(message);
+            this.restartTaskProgress();
+            if (!ack.cancel && ack.previewData) {
+                const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
+                if (pvGeneratorWidgetStore.previewFrame) {
+                    pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator = pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
+                    // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
+                    pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
+                } else {
+                    pvGeneratorWidgetStore.setPreviewFrame(this.addPreviewFrame(ack.previewData, this.fileBrowserStore.startingDirectory, ""));
+                    pvGeneratorWidgetStore.setPvCutRegionId(message.regionId);
+                    WidgetsStore.Instance.createFloatingSettingsWidget("PV Preview Viewer", id, PvGeneratorComponent.WIDGET_CONFIG.type);
+                }
+            } else {
+                AppToaster.show({icon: "warning-sign", message: "Load preview failed.", intent: "danger", timeout: 3000});
+            }
+            frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+        } catch (err) {
+            console.error(err);
+            frame.resetPvRequestState();
+            frame.setIsRequestPVCancelling(false);
+            this.endFileLoading();
+            AppToaster.show(ErrorToast(err));
+        }
+    }
+
+    @action cancelRequestingPV = (fileId: number = -1, previewId?: number) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.requestingPVProgress < 1.0) {
             this.backendService.cancelRequestingPV(fileId);
+            if (this.backendService.stopPvPreview(previewId)) {
+                frame.resetPvRequestState();
+            }
         }
     };
 
@@ -1361,7 +1457,6 @@ export class AppStore {
 
             frame.channel = update.channel;
             frame.stokes = update.stokes;
-
             if (this.visibleFrames.includes(frame)) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = frame.requiredFrameView;
@@ -1382,6 +1477,32 @@ export class AppStore {
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
+            }
+        }
+    };
+
+    private throttledSetChannels = _.throttle(this.updateChannels, AppStore.ImageChannelThrottleTime);
+
+    @action setChannelsByFrame = (frame: FrameStore) => {
+        if (frame) {
+            const updates: ChannelUpdate[] = [];
+            // Calculate if new data is required for the active channel
+            const updateRequiredChannels = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
+            // Don't auto-update when animation is playing
+            if (!this.animatorStore.animationActive && updateRequiredChannels) {
+                updates.push({frame: frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+            }
+
+            // Update any sibling channels
+            frame.spectralSiblings.forEach(frame => {
+                const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
+                if (siblingUpdateRequired) {
+                    updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+                }
+            });
+
+            if (updates.length) {
+                this.throttledSetChannels(updates);
             }
         }
     };
@@ -1485,6 +1606,7 @@ export class AppStore {
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
 
         this.frames = [];
+        this.previewFrames = new ObservableMap<number, FrameStore>();
         this.activeFrame = null;
         this.hoveredFrame = null;
         this.contourDataSource = null;
@@ -1674,6 +1796,7 @@ export class AppStore {
         this.backendService.pvProgressStream.subscribe(this.handlePvProgressStream);
         this.backendService.fittingProgressStream.subscribe(this.handleFittingProgressStream);
         this.backendService.vectorTileStream.subscribe(this.handleVectorTileStream);
+        this.backendService.pvPreviewStream.subscribe(this.handlePvPreviewStream);
 
         // Set auth token from URL if it exists
         const url = new URL(window.location.href);
@@ -1899,6 +2022,19 @@ export class AppStore {
         this.fileBrowserStore.updateLoadingState(fileProgress.percentage, fileProgress.checkedCount, fileProgress.totalCount);
         this.fileBrowserStore.showLoadingDialog();
         this.updateTaskProgress(fileProgress.percentage);
+    };
+
+    handlePvPreviewStream = (pvPreviewData: CARTA.PvPreviewData) => {
+        if (!pvPreviewData.width && !pvPreviewData.height && !pvPreviewData.imageData) {
+            return;
+        }
+        const previewFrame = this.widgetsStore.pvGeneratorWidgets.get(PvGeneratorComponent.WIDGET_CONFIG.id + "-" + pvPreviewData.previewId)?.previewFrame;
+
+        if (previewFrame) {
+            previewFrame.updatePreviewDataGenerator = previewFrame.updatePreviewData(pvPreviewData);
+            // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
+            previewFrame.updatePreviewDataGenerator.next();
+        }
     };
 
     handlePvProgressStream = (pvProgress: CARTA.PvProgress) => {
@@ -2359,10 +2495,12 @@ export class AppStore {
             this.overlayStore.setDefaultsFromAST(frame);
         }
         this.activeFrame = frame;
-        this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
-        this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
-        if (this.syncContourToFrame) {
-            this.contourDataSource = frame;
+        if (!frame.isPreview) {
+            this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+            this.catalogStore.resetActiveCatalogFile(frame.frameInfo.fileId);
+            if (this.syncContourToFrame) {
+                this.contourDataSource = frame;
+            }
         }
     }
 

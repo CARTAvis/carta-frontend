@@ -113,7 +113,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const baseFrame = this.props.frame;
         const contourFrames = appStore.contourFrames.get(baseFrame)?.filter(frame => frame !== baseFrame && frame.hasVisibleBeam);
 
-        if (!baseFrame.hasVisibleBeam && !contourFrames.length) {
+        if (!baseFrame.hasVisibleBeam && !contourFrames?.length) {
             return null;
         }
 

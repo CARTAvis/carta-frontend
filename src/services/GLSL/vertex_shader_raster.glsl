@@ -15,7 +15,7 @@ uniform float uPixelAspectRatio;
 uniform vec2 uTileSize;
 uniform vec2 uTileScaling;
 uniform vec2 uTileOffset;
-uniform float uTileTextureSize;
+uniform vec2 uTileTextureSize;
 
 vec2 rotateAboutPoint2D(vec2 vector, vec2 origin, float theta) {
     return rotate2D(vector - origin, theta) + origin;
