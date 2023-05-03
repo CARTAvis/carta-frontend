@@ -71,6 +71,7 @@ export interface WorkspaceRegion {
     lineWidth?: number;
     dashes?: number[];
     locked?: boolean;
+    annotationStyles?: any;
 }
 
 export interface WorkspaceFile {

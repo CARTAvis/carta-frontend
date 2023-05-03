@@ -28,7 +28,8 @@ import {
     ToFileListFilterMode,
     WCSMatchingType,
     Workspace,
-    WorkspaceFile
+    WorkspaceFile,
+    WorkspaceRegion
 } from "models";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
 import {
@@ -2141,7 +2142,18 @@ export class AppStore {
                     // Apply regions if spatial matching isn't enabled
                     if (!frame.spatialReference && fileInfo.regionsSet?.regions) {
                         for (const regionInfo of fileInfo.regionsSet.regions) {
-                            const region = frame.regionSet.addExistingRegion(regionInfo.points, regionInfo.rotation, regionInfo.type, regionInfo.id, regionInfo.name, regionInfo.color, regionInfo.lineWidth, regionInfo.dashes, false);
+                            const region = frame.regionSet.addExistingRegion(
+                                regionInfo.points,
+                                regionInfo.rotation,
+                                regionInfo.type,
+                                regionInfo.id,
+                                regionInfo.name,
+                                regionInfo.color,
+                                regionInfo.lineWidth,
+                                regionInfo.dashes,
+                                false,
+                                regionInfo.annotationStyles
+                            );
                             if (region) {
                                 region.setLocked(regionInfo.locked ?? false);
                                 regionIdMap.set(regionInfo.id, region.regionId);
@@ -2222,7 +2234,7 @@ export class AppStore {
                     if (region.regionId === 0) {
                         continue;
                     }
-                    workspaceFile.regionsSet.regions.push({
+                    const workspaceRegion: WorkspaceRegion = {
                         id: region.regionId,
                         type: region.regionType,
                         rotation: region.rotation,
@@ -2231,8 +2243,12 @@ export class AppStore {
                         color: region.color,
                         lineWidth: region.lineWidth,
                         locked: region.locked,
-                        dashes: region.dashLength ? [region.dashLength] : []
-                    });
+                        dashes: region.dashLength ? [region.dashLength] : [],
+                        // Check if styles are available. If so, add them to the region
+                        annotationStyles: (region as any).getAnnotationStyles?.()
+                    };
+
+                    workspaceFile.regionsSet.regions.push(workspaceRegion);
                 }
             }
 
