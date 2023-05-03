@@ -19,6 +19,7 @@ export * from "./Menu/RootMenuComponent";
 export * from "./Menu/ToolbarMenu/ToolbarMenuComponent";
 export * from "./Placeholder/PlaceholderComponent";
 export * from "./PvGenerator/PvGeneratorComponent";
+export * from "./PvGenerator/PvPreviewComponent";
 export * from "./RegionList/RegionListComponent";
 export * from "./RenderConfig/RenderConfigComponent";
 export * from "./RenderConfig/RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";

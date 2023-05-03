@@ -284,7 +284,7 @@ export class RootMenuComponent extends React.Component {
                     />
                 </Tooltip2>
                 <Menu.Item text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
-                <Menu.Item text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage}>
+                <Menu.Item text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
                     <ExportImageMenuComponent />
                 </Menu.Item>
                 <Menu.Divider />

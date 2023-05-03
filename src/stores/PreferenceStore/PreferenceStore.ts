@@ -2,6 +2,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
+import {MemoryUnit} from "components/Dialogs";
 import {CARTA_INFO, CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, ImagePanelMode, PresetLayout, RegionCreationMode, SpectralType, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {ApiService} from "services";
 import {TelemetryMode} from "services/TelemetryService";
@@ -95,6 +96,8 @@ export enum PreferenceKeys {
     PERFORMANCE_LOW_BAND_WIDTH_MODE = "lowBandwidthMode",
     PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES = "stopAnimationPlaybackMinutes",
     PERFORMANCE_LIMIT_OVERLAY_REDRAW = "limitOverlayRedraw",
+    PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT = "pvPreviewCubeSizeLimit",
+    PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT = "pvPreviewCubeSizeLimitUnit",
 
     LOG_EVENT = "logEventList",
 
@@ -223,7 +226,9 @@ const DEFAULTS = {
         streamContoursWhileZooming: false,
         lowBandwidthMode: false,
         stopAnimationPlaybackMinutes: 5,
-        limitOverlayRedraw: true
+        limitOverlayRedraw: true,
+        pvPreviewCubeSizeLimit: 1,
+        pvPreviewCubeSizeLimitUnit: MemoryUnit.GB
     },
     LOG_EVENT: {
         eventLoggingEnabled: []
@@ -568,6 +573,14 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES) ?? DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes;
     }
 
+    @computed get pvPreivewCubeSizeLimit(): number {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimit;
+    }
+
+    @computed get pvPreivewCubeSizeLimitUnit(): string {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT) ?? DEFAULTS.PERFORMANCE.pvPreviewCubeSizeLimitUnit;
+    }
+
     @computed get isSelectingAllLogEvents(): boolean {
         return this.preferences.get(PreferenceKeys.LOG_EVENT)?.length === Event.EVENT_NUMBER;
     }
@@ -826,7 +839,9 @@ export class PreferenceStore {
             PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
             PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
             PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE,
-            PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW
+            PreferenceKeys.PERFORMANCE_LIMIT_OVERLAY_REDRAW,
+            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT,
+            PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT
         ]);
     };
 

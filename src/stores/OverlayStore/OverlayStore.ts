@@ -94,15 +94,14 @@ export class OverlayGlobalSettings {
     @observable defaultSystem: SystemType;
     @observable validWcs: boolean;
 
-    @computed get styleString() {
+    public styleString(frame?: FrameStore) {
         let astString = new ASTSettingsString();
         astString.add("Labelling", this.labelType);
         astString.add("Color", AstColorsIndex.GLOBAL);
         astString.add("Tol", toFixed(this.tolerance / 100, 2), this.tolerance >= 0.001); // convert to fraction
         astString.add("System", this.explicitSystem);
 
-        const frame = AppStore.Instance.activeFrame;
-        if ((frame.isXY || frame.isYX) && typeof this.explicitSystem !== "undefined") {
+        if ((frame?.isXY || frame?.isYX) && !frame?.isPVImage && typeof this.explicitSystem !== "undefined") {
             if (this.system === SystemType.FK4) {
                 astString.add("Equinox", "1950");
             } else {
@@ -899,14 +898,18 @@ export class OverlayColorbarSettings {
         return this.position === "right" ? padding?.top : padding?.left;
     }
 
-    @computed get height(): number {
+    @computed get height() {
         const overlayStore = AppStore.Instance?.overlayStore;
-        return this.position === "right" ? overlayStore?.renderHeight : overlayStore?.renderWidth;
+        return (frame?: FrameStore) => {
+            return this.position === "right" ? frame?.renderHeight || overlayStore?.renderHeight : frame?.renderWidth || overlayStore?.renderWidth;
+        };
     }
 
-    @computed get tickNum(): number {
-        const tickNum = Math.round((this.height / 100.0) * this.tickDensity);
-        return this.height && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
+    @computed get tickNum() {
+        return (frame?: FrameStore) => {
+            const tickNum = Math.round((this.height(frame) / 100.0) * this.tickDensity);
+            return this.height && tickNum > COLORBAR_TICK_NUM_MIN ? tickNum : COLORBAR_TICK_NUM_MIN;
+        };
     }
 
     @computed get rightBorderPos(): number {
@@ -1108,10 +1111,9 @@ export class OverlayStore {
         return this.labels.hidden && this.numbers.hidden && this.title.hidden;
     }
 
-    @computed get styleString() {
+    public styleString(frame?: FrameStore) {
         let astString = new ASTSettingsString();
-
-        astString.addSection(this.global.styleString);
+        astString.addSection(this.global.styleString(frame));
         astString.addSection(this.title.styleString);
         astString.addSection(this.grid.styleString);
         astString.addSection(this.border.styleString);
@@ -1121,20 +1123,17 @@ export class OverlayStore {
         astString.addSection(this.labels.styleString);
 
         astString.add("LabelUp", 0);
-        astString.add("TitleGap", this.titleGap / this.minSize);
-        astString.add("NumLabGap", this.defaultGap / this.minSize);
-        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize);
+        astString.add("TitleGap", this.titleGap / this.minSize(frame));
+        astString.add("NumLabGap", this.defaultGap / this.minSize(frame));
+        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize(frame));
         astString.add("TextGapType", "plot");
+        frame ? astString.addSection(frame.distanceMeasuring?.styleString) : astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
 
-        return (frame?: FrameStore) => {
-            frame ? astString.addSection(frame.distanceMeasuring?.styleString) : astString.addSection(AppStore.Instance.activeFrame?.distanceMeasuring?.styleString);
-
-            return astString.toString();
-        };
+        return astString.toString();
     }
 
-    @computed get minSize() {
-        return Math.min(this.renderWidth, this.renderHeight);
+    @action minSize(frame?: FrameStore) {
+        return Math.min(frame.renderWidth || this.renderWidth, frame.renderHeight || this.renderHeight);
     }
 
     @computed get showNumbers() {
@@ -1212,5 +1211,25 @@ export class OverlayStore {
     @computed get renderHeight() {
         const renderHeight = this.viewHeight - this.paddingTop - this.paddingBottom;
         return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
+    }
+
+    @computed get previewRenderWidth() {
+        return (viewWidth: number) => {
+            if (!viewWidth) {
+                return undefined;
+            }
+            const renderWidth = viewWidth - this.paddingLeft - this.paddingRight;
+            return renderWidth > 1 ? renderWidth : 1; // return value > 1 to prevent crashing
+        };
+    }
+
+    @computed get previewRenderHeight() {
+        return (viewHeight: number) => {
+            if (!viewHeight) {
+                return undefined;
+            }
+            const renderHeight = viewHeight - this.paddingTop - this.paddingBottom;
+            return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
+        };
     }
 }

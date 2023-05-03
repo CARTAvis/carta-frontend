@@ -67,5 +67,14 @@
         }
     }
 
+    .pv-preview-cube-size-limit {
+        display: flex;
+        flex-direction: row;
+
+        select {
+            margin-left: 5%;
+        }
+    }
+
     user-select: none !important;
 }

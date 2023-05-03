@@ -17,7 +17,7 @@ export class ColorbarStore {
     @computed get roundedNumbers(): {numbers: number[]; precision: number} {
         const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
-        const tickNum = this.overlayStore.colorbar.tickNum;
+        const tickNum = this.overlayStore.colorbar.tickNum(this.frame);
         if (!isFinite(scaleMinVal) || !isFinite(scaleMaxVal) || scaleMinVal >= scaleMaxVal || !tickNum) {
             return null;
         } else {
@@ -63,9 +63,9 @@ export class ColorbarStore {
         const scaleMinVal = this.frame?.renderConfig?.scaleMinVal;
         const scaleMaxVal = this.frame?.renderConfig?.scaleMaxVal;
         if (colorbar.position === "right") {
-            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height(this.frame) * (scaleMaxVal - x)) / (scaleMaxVal - scaleMinVal));
         } else {
-            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
+            return this.roundedNumbers.numbers.map(x => colorbar.yOffset + (colorbar.height(this.frame) * (x - scaleMinVal)) / (scaleMaxVal - scaleMinVal));
         }
     }
 
