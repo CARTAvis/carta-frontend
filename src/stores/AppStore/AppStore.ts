@@ -28,8 +28,7 @@ import {
     ToFileListFilterMode,
     WCSMatchingType,
     Workspace,
-    WorkspaceFile,
-    WorkspaceRegion
+    WorkspaceFile
 } from "models";
 import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
 import {
@@ -2234,7 +2233,7 @@ export class AppStore {
                     if (region.regionId === 0) {
                         continue;
                     }
-                    const workspaceRegion: WorkspaceRegion = {
+                    workspaceFile.regionsSet.regions.push({
                         id: region.regionId,
                         type: region.regionType,
                         rotation: region.rotation,
@@ -2246,9 +2245,7 @@ export class AppStore {
                         dashes: region.dashLength ? [region.dashLength] : [],
                         // Check if styles are available. If so, add them to the region
                         annotationStyles: (region as any).getAnnotationStyles?.()
-                    };
-
-                    workspaceFile.regionsSet.regions.push(workspaceRegion);
+                    });
                 }
             }
 
