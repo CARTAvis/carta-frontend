@@ -15,6 +15,8 @@ import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, Widge
 import {FrameStore} from "stores/Frame";
 import {toFixed} from "utilities";
 
+import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
+
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
 import "./RootMenuComponent.scss";
@@ -287,6 +289,9 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Item text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
                     <ExportImageMenuComponent />
                 </Menu.Item>
+                <MenuDivider />
+                <Menu.Item text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Open)} />
+                <Menu.Item text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Save)} />
                 <Menu.Divider />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE} />
                 {serverSubMenu}

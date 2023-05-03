@@ -2,6 +2,7 @@ import {TabId} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 
 import {FileInfoType} from "components";
+import {WorkspaceDialogMode} from "components/Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
 import {Snippet} from "models";
 import {AppStore, SnippetStore} from "stores";
 
@@ -65,9 +66,20 @@ export class DialogStore {
         this.saveLayoutDialogVisible = false;
     };
 
+    // Workspace
+    @observable workspaceDialogMode = WorkspaceDialogMode.Hidden;
+    @action showWorkspaceDialog = (mode = WorkspaceDialogMode.Save) => {
+        this.fileBrowserDialogVisible = false;
+        this.workspaceDialogMode = mode;
+    };
+    @action hideWorkspaceDialog = () => {
+        this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
+    };
+
     // File Browser
     @observable fileBrowserDialogVisible: boolean = false;
     @action showFileBrowserDialog = () => {
+        this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
         this.fileBrowserDialogVisible = true;
     };
     @action hideFileBrowserDialog = () => {

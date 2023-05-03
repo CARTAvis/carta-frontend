@@ -1,0 +1,41 @@
+.workspace-info {
+    overflow-y: auto;
+    margin-left: 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .workspace-thumbnail {
+        flex: 2;
+        display: flex;
+        justify-content: center;
+
+        img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+    }
+
+    .workspace-properties {
+        margin-top: 10px;
+        flex: 1;
+
+        .info-table {
+            .entry {
+                vertical-align: top;
+
+                ul {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+            }
+        }
+
+        .entry-title {
+            font-weight: bold;
+            padding-right: 10px;
+        }
+    }
+}
