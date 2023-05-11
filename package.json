@@ -1,6 +1,6 @@
 {
     "name": "carta-frontend",
-    "version": "3.0.1",
+    "version": "4.0.0-beta.1",
     "repository": "https://github.com/CARTAvis/carta-frontend",
     "description": "The browser-based frontend component of CARTA, a radio-astronomy visualization tool designed for the ALMA, the VLA and the SKA pathfinders.",
     "homepage": "./",
@@ -42,6 +42,7 @@
         "fuzzy-search": "^3.2.1",
         "glob-to-regexp": "^0.4.1",
         "golden-layout": "^1.5.9",
+        "html2canvas": "^1.4.1",
         "idb": "^7.1.1",
         "jest-canvas-mock": "^2.4.0",
         "jwt-decode": "^3.1.2",
@@ -114,7 +115,9 @@
     },
     "eslintConfig": {
         "extends": "react-app",
-        "plugins": ["simple-import-sort"],
+        "plugins": [
+            "simple-import-sort"
+        ],
         "rules": {
             "no-unused-expressions": "off",
             "@typescript-eslint/no-unused-expressions": "error",
@@ -126,6 +129,7 @@
                     "args": "none"
                 }
             ],
+            "object-curly-spacing": "off",
             "jsx-a11y/alt-text": "off",
             "simple-import-sort/imports": "error",
             "simple-import-sort/exports": "error",
@@ -134,18 +138,40 @@
         },
         "overrides": [
             {
-                "files": ["*.js", "*.jsx", "*.ts", "*.tsx"],
+                "files": [
+                    "*.js",
+                    "*.jsx",
+                    "*.ts",
+                    "*.tsx"
+                ],
                 "rules": {
                     "simple-import-sort/imports": [
                         "error",
                         {
                             "groups": [
-                                ["^react", "^@?\\w"],
-                                ["^(components|icons|models|services|stores|utilities)(/.*|$)"],
-                                ["^\\u0000"],
-                                ["^\\.\\.(?!/?$)", "^\\.\\./?$"],
-                                ["^\\./(?=.*/)(?!/?$)", "^\\.(?!/?$)", "^\\./?$"],
-                                ["^.+\\.?(css)$"] ]
+                                [
+                                    "^react",
+                                    "^@?\\w"
+                                ],
+                                [
+                                    "^(components|icons|models|services|stores|utilities)(/.*|$)"
+                                ],
+                                [
+                                    "^\\u0000"
+                                ],
+                                [
+                                    "^\\.\\.(?!/?$)",
+                                    "^\\.\\./?$"
+                                ],
+                                [
+                                    "^\\./(?=.*/)(?!/?$)",
+                                    "^\\.(?!/?$)",
+                                    "^\\./?$"
+                                ],
+                                [
+                                    "^.+\\.?(css)$"
+                                ]
+                            ]
                         }
                     ]
                 }
@@ -171,6 +197,9 @@
         "moduleNameMapper": {
             "canvas": "jest-canvas-mock",
             "zfp_wrapper": "<rootDir>/src/__mocks__/ZFPWorkerMock.js"
-        }            
-    }    
+        }
+    },
+    "dependencies": {
+        "usehooks-ts": "^2.9.1"
+    }
 }

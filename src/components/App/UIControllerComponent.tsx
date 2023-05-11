@@ -17,7 +17,8 @@ import {
     SaveLayoutDialogComponent,
     StokesDialogComponent,
     TelemetryDialogComponent,
-    VectorOverlayDialogComponent
+    VectorOverlayDialogComponent,
+    WorkspaceDialogComponent
 } from "components/Dialogs";
 
 @observer
@@ -34,6 +35,7 @@ export class UIControllerComponent extends React.Component {
                 <FileBrowserDialogComponent />
                 <PreferenceDialogComponent />
                 <SaveLayoutDialogComponent />
+                <WorkspaceDialogComponent />
                 <CodeSnippetDialogComponent />
                 <AboutDialogComponent />
                 <ExternalPageDialogComponent />

@@ -6,7 +6,7 @@ import {Select2} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import * as _ from "lodash";
-import {action, makeObservable, observable} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 import tinycolor from "tinycolor2";
 
@@ -50,15 +50,38 @@ enum PreferenceDialogTabs {
     TELEMETRY
 }
 
+export enum MemoryUnit {
+    TB = "TB",
+    GB = "GB",
+    MB = "MB",
+    kB = "kB",
+    B = "B"
+}
+
 const PercentileSelect = Select2.ofType<string>();
+
+const PV_PREVIEW_CUBE_SIZE_LIMIT = 1000000000; //need to be removed and replaced by backend limit
 
 @observer
 export class PreferenceDialogComponent extends React.Component {
     @observable selectedTab: PreferenceDialogTabs = PreferenceDialogTabs.GLOBAL;
-
     @action private setSelectedTab = (tab: PreferenceDialogTabs) => {
         this.selectedTab = tab;
     };
+
+    @computed get pvPreviewCubeSizeMaxValue(): number {
+        if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.TB) {
+            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e12;
+        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.GB) {
+            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e9;
+        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.MB) {
+            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e6;
+        } else if (PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit === MemoryUnit.kB) {
+            return PV_PREVIEW_CUBE_SIZE_LIMIT / 1e3;
+        } else {
+            return PV_PREVIEW_CUBE_SIZE_LIMIT;
+        }
+    }
 
     constructor(props: any) {
         super(props);
@@ -83,6 +106,10 @@ export class PreferenceDialogComponent extends React.Component {
 
     private handleSystemTileCacheChange = _.throttle((value: number) => {
         PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, value);
+    }, 100);
+
+    @action private handlePvPreviewCubeSizeUnitChange = _.throttle(unit => {
+        PreferenceStore.Instance.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT, unit);
     }, 100);
 
     private reset = () => {
@@ -581,9 +608,9 @@ export class PreferenceDialogComponent extends React.Component {
                         darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Line Width" labelInfo="(px)">
+                <FormGroup inline={true} label="Line width" labelInfo="(px)">
                     <SafeNumericInput
-                        placeholder="Line Width"
+                        placeholder="Line width"
                         min={RegionStore.MIN_LINE_WIDTH}
                         max={RegionStore.MAX_LINE_WIDTH}
                         value={preference.annotationLineWidth}
@@ -591,9 +618,9 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_LINE_WIDTH, Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
+                <FormGroup inline={true} label="Dash length" labelInfo="(px)">
                     <SafeNumericInput
-                        placeholder="Dash Length"
+                        placeholder="Dash length"
                         min={0}
                         max={RegionStore.MAX_DASH_LENGTH}
                         value={preference.annotationDashLength}
@@ -601,12 +628,12 @@ export class PreferenceDialogComponent extends React.Component {
                         onValueChange={(value: number) => preference.setPreference(PreferenceKeys.ANNOTATION_DASH_LENGTH, Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Point Shape">
+                <FormGroup inline={true} label="Point shape">
                     <PointShapeSelectComponent handleChange={(item: CARTA.PointAnnotationShape) => preference.setPreference(PreferenceKeys.POINT_ANNOTATION_SHAPE, item)} pointShape={preference.pointAnnotationShape} />
                 </FormGroup>
-                <FormGroup inline={true} label="Point Size" labelInfo="(px)">
+                <FormGroup inline={true} label="Point size" labelInfo="(px)">
                     <SafeNumericInput
-                        placeholder="Point Size"
+                        placeholder="Point size"
                         min={1}
                         value={preference.pointAnnotationWidth}
                         stepSize={1}
@@ -747,6 +774,27 @@ export class PreferenceDialogComponent extends React.Component {
                             30 minutes
                         </option>
                     </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="PV preview cube size limit">
+                    <div className="pv-preview-cube-size-limit">
+                        <SafeNumericInput
+                            placeholder="PV preview cube size limit"
+                            min={1e-12}
+                            max={this.pvPreviewCubeSizeMaxValue}
+                            value={preference.pvPreivewCubeSizeLimit}
+                            majorStepSize={1}
+                            stepSize={1}
+                            onValueChange={value => preference.setPreference(PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT, value)}
+                        />
+                        <HTMLSelect value={preference.pvPreivewCubeSizeLimitUnit} onChange={ev => this.handlePvPreviewCubeSizeUnitChange(ev.target.value)}>
+                            <option key={0} value={"MB"}>
+                                MB
+                            </option>
+                            <option key={1} value={"GB"}>
+                                GB
+                            </option>
+                        </HTMLSelect>
+                    </div>
                 </FormGroup>
             </React.Fragment>
         );

@@ -1,6 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 
+import {WorkspaceRenderConfig} from "models";
 import {AppStore, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {clamp, getColorsForValues, getPercentiles, scaleValueInverse} from "utilities";
@@ -164,6 +165,8 @@ export class RenderConfigStore {
     @observable scaleMin: number[];
     @observable scaleMax: number[];
     @observable visible: boolean;
+    @observable previewHistogramMax: number;
+    @observable previewHistogramMin: number;
 
     private frame: FrameStore;
 
@@ -270,11 +273,11 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMinVal() {
-        return this.scaleMin[this.stokesIndex];
+        return this.previewHistogramMin ? Math.max(this.previewHistogramMin, this.scaleMin[this.stokesIndex]) : this.scaleMin[this.stokesIndex];
     }
 
     @computed get scaleMaxVal() {
-        return this.scaleMax[this.stokesIndex];
+        return this.previewHistogramMax ? Math.min(this.previewHistogramMax, this.scaleMax[this.stokesIndex]) : this.scaleMax[this.stokesIndex];
     }
 
     @computed get selectedPercentileVal() {
@@ -416,6 +419,14 @@ export class RenderConfigStore {
         this.visible = visible;
     };
 
+    @action setPreviewHistogramMax = (histogramMax: number) => {
+        this.previewHistogramMax = histogramMax;
+    };
+
+    @action setPreviewHistogramMin = (histogramMin: number) => {
+        this.previewHistogramMin = histogramMin;
+    };
+
     @action toggleVisibility = () => {
         this.visible = !this.visible;
     };
@@ -436,5 +447,23 @@ export class RenderConfigStore {
         this.scaleMin[this.stokesIndex] = other.scaleMinVal;
         this.scaleMax[this.stokesIndex] = other.scaleMaxVal;
         this.selectedPercentile[this.stokesIndex] = -1;
+    };
+
+    @action updateFromWorkspace = (config: WorkspaceRenderConfig) => {
+        this.scaling = config.scaling;
+        this.setColorMap(config.colorMap);
+        this.bias = config.bias;
+        this.contrast = config.contrast;
+        this.gamma = config.gamma;
+        this.alpha = config.alpha;
+        this.inverted = config.inverted;
+        this.visible = config.visible;
+        this.scaleMin = config.scaleMin;
+        this.scaleMax = config.scaleMax;
+        this.selectedPercentile = config.selectedPercentile;
+        // TODO: Handle cube histograms properly. For now, default to false
+        this.useCubeHistogram = false;
+        this.useCubeHistogramContours = false;
+        this.updateSiblings();
     };
 }

@@ -12,7 +12,7 @@ import {Point2D, POLARIZATIONS} from "models";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {HistogramWidgetStore} from "stores/Widgets";
-import {binarySearchByX, clamp, getColorForTheme, toExponential, toFixed} from "utilities";
+import {binarySearchByX, clamp, closeTo, getColorForTheme, toExponential, toFixed} from "utilities";
 
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 
@@ -37,6 +37,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFrame: FrameStore;
+    private currentLinePlotProps: LinePlotComponentProps;
 
     @observable width: number;
     @observable height: number;
@@ -53,31 +54,25 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return new HistogramWidgetStore();
     }
 
-    @computed get histogramData(): CARTA.IHistogram {
-        const appStore = AppStore.Instance;
-
-        if (this.widgetStore.effectiveFrame) {
-            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.effectiveRegionId;
-            let coordinate = this.widgetStore.coordinate;
-
-            const frameMap = appStore.regionHistograms.get(fileId);
-            if (!frameMap) {
-                return null;
-            }
-            const regionMap = frameMap.get(regionId);
-            if (!regionMap) {
-                return null;
-            }
-            const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
-            const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
-            const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
-            if (!regionHistogramData) {
-                return null;
-            }
-            return regionHistogramData.histograms;
+    @computed get isTargetData(): boolean {
+        const regionHistogramData = this.getRegionHistogramData();
+        if (!regionHistogramData) {
+            return false;
         }
-        return null;
+
+        // Check whether the histogram data matches the widget's configuration
+        if (regionHistogramData.config.fixedNumBins !== this.widgetStore.fixedNumBins || regionHistogramData.config.fixedBounds !== this.widgetStore.fixedBounds) {
+            return false;
+        }
+        if (regionHistogramData.config.fixedNumBins && regionHistogramData.config.numBins !== this.widgetStore.numBins) {
+            return false;
+        }
+        return !regionHistogramData.config.fixedBounds || (closeTo(regionHistogramData.config.bounds.min, this.widgetStore.minPix) && closeTo(regionHistogramData.config.bounds.max, this.widgetStore.maxPix));
+    }
+
+    @computed get histogramData(): CARTA.IHistogram {
+        const regionHistogramData = this.getRegionHistogramData();
+        return regionHistogramData ? regionHistogramData.histograms : null;
     }
 
     @computed get plotData(): {values: Array<Point2D>; xMin: number; xMax: number; yMin: number; yMax: number} {
@@ -98,6 +93,18 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
             let yMin = histogram.bins[minIndex];
             let yMax = yMin;
+
+            // Cache automatic settings for histogram min and max values
+            if (this.widgetStore.currentAutoBounds) {
+                this.widgetStore.cacheBounds(xMin, xMax);
+                this.widgetStore.resetBounds();
+            }
+
+            // Cache automatic setting for the number of histogram bins
+            if (this.widgetStore.currentAutoBins) {
+                this.widgetStore.cacheNumBins(histogram.bins.length);
+                this.widgetStore.resetNumBins();
+            }
 
             let values: Array<{x: number; y: number}>;
             const N = maxIndex - minIndex;
@@ -221,6 +228,33 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return profilerInfo;
     };
 
+    private getRegionHistogramData = (): CARTA.IRegionHistogramData => {
+        if (!this.widgetStore.effectiveFrame) {
+            return null;
+        }
+
+        const fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
+        const regionId = this.widgetStore.effectiveRegionId;
+        const coordinate = this.widgetStore.coordinate;
+        const appStore = AppStore.Instance;
+
+        const frameMap = appStore.regionHistograms.get(fileId);
+        if (!frameMap) {
+            return null;
+        }
+
+        const regionMap = frameMap.get(regionId);
+        if (!regionMap) {
+            return null;
+        }
+
+        const stokesIndex = this.widgetStore.effectiveFrame.polarizationInfo.findIndex(polarization => polarization.replace("Stokes ", "") === coordinate.slice(0, coordinate.length - 1));
+        const stokes = stokesIndex >= this.widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes ? this.widgetStore.effectiveFrame.polarizations[stokesIndex] : stokesIndex;
+        const regionHistogramData = regionMap.get(stokes === -1 ? this.widgetStore.effectiveFrame.requiredStokes : stokes);
+
+        return regionHistogramData ? regionHistogramData : null;
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const frame = this.widgetStore.effectiveFrame;
@@ -246,59 +280,63 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
         const imageName = frame.filename;
         const plotName = `channel ${frame.channel} histogram`;
-        let linePlotProps: LinePlotComponentProps = {
-            xLabel: unit ? `Value (${unit})` : "Value",
-            yLabel: "Count",
-            darkMode: appStore.darkTheme,
-            imageName: imageName,
-            plotName: plotName,
-            logY: this.widgetStore.logScaleY,
-            plotType: this.widgetStore.plotType,
-            tickTypeY: TickType.Scientific,
-            graphZoomedX: this.widgetStore.setXBounds,
-            graphZoomedY: this.widgetStore.setYBounds,
-            graphZoomedXY: this.widgetStore.setXYBounds,
-            graphZoomReset: this.widgetStore.clearXYBounds,
-            graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true,
-            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
-            borderWidth: this.widgetStore.lineWidth,
-            pointRadius: this.widgetStore.linePlotPointSize,
-            zeroLineWidth: 2
-        };
 
-        if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
-            const currentPlotData = this.plotData;
-            if (currentPlotData) {
-                linePlotProps.data = currentPlotData.values;
+        if (this.isTargetData || !this.currentLinePlotProps) {
+            let linePlotProps: LinePlotComponentProps = {
+                xLabel: unit ? `Value (${unit})` : "Value",
+                yLabel: "Count",
+                darkMode: appStore.darkTheme,
+                imageName: imageName,
+                plotName: plotName,
+                logY: this.widgetStore.logScaleY,
+                plotType: this.widgetStore.plotType,
+                tickTypeY: TickType.Scientific,
+                graphZoomedX: this.widgetStore.setXBounds,
+                graphZoomedY: this.widgetStore.setYBounds,
+                graphZoomedXY: this.widgetStore.setXYBounds,
+                graphZoomReset: this.widgetStore.clearXYBounds,
+                graphCursorMoved: this.onGraphCursorMoved,
+                scrollZoom: true,
+                mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
+                borderWidth: this.widgetStore.lineWidth,
+                pointRadius: this.widgetStore.linePlotPointSize,
+                zeroLineWidth: 2
+            };
 
-                // set line color
-                let primaryLineColor = getColorForTheme(this.widgetStore.primaryLineColor);
-                linePlotProps.lineColor = primaryLineColor;
+            if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
+                const currentPlotData = this.plotData;
+                if (currentPlotData) {
+                    linePlotProps.data = currentPlotData.values;
 
-                // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
-                if (this.widgetStore.isAutoScaledX) {
-                    linePlotProps.xMin = currentPlotData.xMin;
-                    linePlotProps.xMax = currentPlotData.xMax;
-                } else {
-                    linePlotProps.xMin = this.widgetStore.minX;
-                    linePlotProps.xMax = this.widgetStore.maxX;
+                    // set line color
+                    linePlotProps.lineColor = getColorForTheme(this.widgetStore.primaryLineColor);
+
+                    // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
+                    if (this.widgetStore.isAutoScaledX) {
+                        linePlotProps.xMin = currentPlotData.xMin;
+                        linePlotProps.xMax = currentPlotData.xMax;
+                    } else {
+                        linePlotProps.xMin = this.widgetStore.minX;
+                        linePlotProps.xMax = this.widgetStore.maxX;
+                    }
+
+                    if (this.widgetStore.isAutoScaledY) {
+                        linePlotProps.yMin = currentPlotData.yMin;
+                        linePlotProps.yMax = currentPlotData.yMax;
+                    } else {
+                        linePlotProps.yMin = this.widgetStore.minY;
+                        linePlotProps.yMax = this.widgetStore.maxY;
+                    }
+                    // Fix log plot min bounds for entries with zeros in them
+                    if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
+                        linePlotProps.yMin = 0.5;
+                    }
                 }
 
-                if (this.widgetStore.isAutoScaledY) {
-                    linePlotProps.yMin = currentPlotData.yMin;
-                    linePlotProps.yMax = currentPlotData.yMax;
-                } else {
-                    linePlotProps.yMin = this.widgetStore.minY;
-                    linePlotProps.yMax = this.widgetStore.maxY;
-                }
-                // Fix log plot min bounds for entries with zeros in them
-                if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
-                    linePlotProps.yMin = 0.5;
-                }
+                linePlotProps.comments = this.exportHeaders;
             }
 
-            linePlotProps.comments = this.exportHeaders;
+            this.currentLinePlotProps = linePlotProps;
         }
 
         const className = classNames("histogram-widget", {"bp4-dark": appStore.darkTheme});
@@ -308,7 +346,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 <div className="histogram-container">
                     <HistogramToolbarComponent widgetStore={this.widgetStore} />
                     <div className="histogram-plot">
-                        <LinePlotComponent {...linePlotProps} />
+                        <LinePlotComponent {...this.currentLinePlotProps} />
                     </div>
                     <div>
                         <ProfilerInfoComponent info={this.genProfilerInfo(unit)} />

@@ -32,7 +32,7 @@ import {
     WCSPoint2D,
     ZoomPoint
 } from "models";
-import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE} from "services";
+import {BackendService, CatalogWebGLService, ContourWebGLService, TILE_SIZE, TileService} from "services";
 import {AnimatorStore, AppStore, ASTSettingsString, LogStore, OverlayStore, PreferenceStore} from "stores";
 import {
     CENTER_POINT_INDEX,
@@ -96,7 +96,7 @@ export class FrameStore {
     private static readonly ZoomInertiaDuration = 250;
     private static readonly CursorMovementDuration = 250;
 
-    private readonly spectralFrame: AST.SpecFrame;
+    private spectralFrame: AST.SpecFrame;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private readonly catalogControlMaps: Map<FrameStore, CatalogControlMap>;
     private readonly framePixelRatio: number;
@@ -121,7 +121,7 @@ export class FrameStore {
     public readonly wcsInfoForTransformation: AST.FrameSet;
     public readonly wcsInfo3D: AST.FrameSet;
     public readonly validWcs: boolean;
-    public readonly frameInfo: FrameInfo;
+    @observable public frameInfo: FrameInfo;
     public readonly colorbarStore: ColorbarStore;
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
@@ -192,6 +192,11 @@ export class FrameStore {
 
     @observable stokesFiles: CARTA.StokesFile[];
 
+    @observable isPreview: boolean;
+    @observable previewViewWidth: number;
+    @observable previewViewHeight: number;
+    @observable previewPVRasterData: Float32Array;
+
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
         const extName =
@@ -232,7 +237,7 @@ export class FrameStore {
             return this.framePixelRatio;
         }
 
-        return this.overlayStore.renderWidth / this.frameInfo.fileInfoExtended.width / (this.overlayStore.renderHeight / this.frameInfo.fileInfoExtended.height);
+        return this.renderWidth / this.frameInfo.fileInfoExtended.width / (this.renderHeight / this.frameInfo.fileInfoExtended.height);
     }
 
     get hasSquarePixels(): boolean {
@@ -353,7 +358,7 @@ export class FrameStore {
                 y: -this.spatialTransform.translation.y / this.spatialTransform.scale
             };
             adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
-            if (this.cachedTransformedWcsInfo > 0) {
+            if ((this.cachedTransformedWcsInfo as number) > 0) {
                 AST.deleteObject(this.cachedTransformedWcsInfo);
             }
 
@@ -373,11 +378,11 @@ export class FrameStore {
     }
 
     @computed get renderWidth() {
-        return this.overlayStore.renderWidth;
+        return this.overlayStore.previewRenderWidth(this.previewViewWidth) || this.overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        return this.overlayStore.renderHeight;
+        return this.overlayStore.previewRenderHeight(this.previewViewHeight) || this.overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -610,27 +615,27 @@ export class FrameStore {
 
     // Dir X axis number from the header
     get dirXNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.spatialX;
+        return this.frameInfo.fileInfoExtended.axesNumbers?.spatialX;
     }
 
     // Dir Y axis number from the header
     get dirYNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.spatialY;
+        return this.frameInfo.fileInfoExtended.axesNumbers?.spatialY;
     }
 
     // Spectral axis number from the header
     get spectralNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.spectral;
+        return this.frameInfo.fileInfoExtended.axesNumbers?.spectral;
     }
 
     // Stokes axis number from the header
     get stokesNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.stokes;
+        return this.frameInfo.fileInfoExtended.axesNumbers?.stokes;
     }
 
     // Depth axis number from the header
     get depthNumber(): number {
-        return this.frameInfo.fileInfoExtended.axesNumbers.depth;
+        return this.frameInfo.fileInfoExtended.axesNumbers?.depth;
     }
 
     // Image dimension without stokes axis
@@ -964,8 +969,7 @@ export class FrameStore {
         }
 
         const roundedPosInfo = round2D(this.cursorInfo.posImageSpace);
-        const roundedPosValue = round2D(this.cursorValue.position);
-
+        const roundedPosValue = round2D(this.isPreview ? this.previewCursorValue.position : this.cursorValue.position);
         return this.cursorValue.channel === this.channel && roundedPosInfo.x === roundedPosValue.x && roundedPosInfo.y === roundedPosValue.y;
     }
 
@@ -1128,6 +1132,16 @@ export class FrameStore {
         return getFormattedWCSPoint(this.wcsInfoForTransformation, this.center);
     }
 
+    @computed get previewCursorValue(): {position: Point2D; channel: number; value: number} | null {
+        if (!this.isPreview) {
+            return null;
+        }
+
+        const cursorPosImage = this.cursorInfo.posImageSpace;
+        const cursorValue = {position: cursorPosImage, channel: 0, value: this.previewPVRasterData ? this.previewPVRasterData[Math.round(cursorPosImage.y) * this.frameInfo.fileInfoExtended.width + Math.round(cursorPosImage.x)] : NaN};
+        return cursorValue;
+    }
+
     constructor(frameInfo: FrameInfo) {
         makeObservable(this);
         this.overlayStore = OverlayStore.Instance;
@@ -1188,6 +1202,8 @@ export class FrameStore {
         this.cursorMovementHandle = null;
 
         this.stokesFiles = [];
+
+        this.isPreview = false;
 
         this.distanceMeasuring = new DistanceMeasuringStore();
 
@@ -2820,5 +2836,68 @@ export class FrameStore {
         this.fittingResult = "";
         this.fittingResultRegionParams = [];
         this.fittingLog = "";
+    };
+
+    @action setIsPreview = (isPreview: boolean) => {
+        this.isPreview = isPreview;
+    };
+
+    @action setPreviewPVRasterData = (previewPVRasterData: Float32Array, skipUpdatePreviewData: boolean = false) => {
+        this.previewPVRasterData = previewPVRasterData;
+        // if skipUpdatePreviewData is false, the code after the yield keyword in the updatePreviewData function will be executed by calling the next() function.
+        if (!skipUpdatePreviewData) {
+            this.updatePreviewDataGenerator.next();
+        }
+    };
+
+    public updatePreviewDataGenerator: Generator;
+
+    // The incoming data will be decompressed using zfp WebWorker instance, which runs in a different thread. WebWorker instance has an onmessage event listener function. Generator function is used here to wait for the decompression of rasterData to complete.
+    public *updatePreviewData(previewData: CARTA.PvPreviewData) {
+        // Old values before updating to the new frameInfo
+        const oldAspectRatio = this.aspectRatio;
+        const oldHeight = this.frameInfo.fileInfoExtended.height;
+        const oldWidth = this.frameInfo.fileInfoExtended.width;
+
+        // Using the 'yield' keyword of generator functions to wait for decompressed raster data from other WebWorker thread.
+        // next() will be called in setPreviewPVRasterData, which will be called in the onmessage() function after receiving the decompressed data from other worker thread.
+        yield TileService.Instance.decompressPreviewRasterData(previewData);
+
+        if (previewData.histogram) {
+            this.renderConfig.setPreviewHistogramMax(null);
+            this.renderConfig.setPreviewHistogramMin(null);
+            this.renderConfig.updateChannelHistogram(previewData.histogram);
+        } else {
+            this.renderConfig.setPreviewHistogramMax(previewData.histogramBounds?.max);
+            this.renderConfig.setPreviewHistogramMin(previewData.histogramBounds?.min);
+        }
+
+        const newFrameInfo = {...this.frameInfo};
+        newFrameInfo.fileInfoExtended = new CARTA.FileInfoExtended(previewData.imageInfo);
+        this.setFrameInfo(newFrameInfo);
+
+        // Update wcsInfo
+        const astFrameSet = this.initPVFrame();
+        if (astFrameSet) {
+            this.spectralFrame = AST.getSpectralFrame(astFrameSet);
+            this.wcsInfo = AST.copy(astFrameSet);
+            AST.deleteObject(astFrameSet);
+        }
+
+        const isHeightUpdated = oldHeight !== this.frameInfo.fileInfoExtended.height;
+        const isWidthUpdated = oldWidth !== this.frameInfo.fileInfoExtended.width;
+
+        // Avoid image moving within the frame caused by changing image width or height as rasterData is updating
+        this.setZoom((this.zoomLevel * oldHeight) / this.frameInfo.fileInfoExtended.height);
+        this.setCenter(isWidthUpdated ? ((this.center.x + 0.5) * oldAspectRatio) / this.aspectRatio - 0.5 : this.center.x, isHeightUpdated ? ((this.center.y + 0.5) * this.aspectRatio) / oldAspectRatio - 0.5 : this.center.y, false);
+    }
+
+    @action onResizePreviewWidget = (width: number, height: number) => {
+        this.previewViewWidth = width;
+        this.previewViewHeight = height;
+    };
+
+    @action setFrameInfo = (frameInfo: FrameInfo) => {
+        this.frameInfo = frameInfo;
     };
 }

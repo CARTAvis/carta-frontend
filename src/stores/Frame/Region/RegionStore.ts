@@ -1,12 +1,13 @@
 import {Colors, IconName} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import {throttle} from "lodash";
 import {action, computed, flow, makeObservable, observable} from "mobx";
 
 import {CustomIconName} from "icons/CustomIcons";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {AppStore} from "stores";
+import {AppStore, PreferenceStore, WidgetsStore} from "stores";
 import {CoordinateMode, FrameStore} from "stores/Frame";
 import {add2D, getApproximateEllipsePoints, getApproximatePolygonPoints, isAstBadPoint, length2D, midpoint2D, minMax2D, rotate2D, scale2D, simplePolygonPointTest, simplePolygonTest, subtract2D, toFixed, transformPoint} from "utilities";
 
@@ -326,6 +327,15 @@ export class RegionStore {
         return RegionStore.GetRegionProperties(this.regionType, this.controlPoints, this.rotation);
     }
 
+    @computed get isPreviewCut(): boolean {
+        for (const value of WidgetsStore.Instance.pvGeneratorWidgets.values()) {
+            if (value.pvCutRegionId === this.regionId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static GetRegionProperties = (regionType: CARTA.RegionType, controlPoints: Point2D[], rotation: number): string => {
         const point = controlPoints[CENTER_POINT_INDEX];
         const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 6)}pix, ${toFixed(point.y, 6)}pix` : "Invalid";
@@ -488,6 +498,8 @@ export class RegionStore {
             this.controlPoints[index] = p;
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
+            } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
+                PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
             }
             if (this.regionType === CARTA.RegionType.POLYGON || this.regionType === CARTA.RegionType.ANNPOLYGON) {
                 this.simplePolygonTest(index);
@@ -524,6 +536,8 @@ export class RegionStore {
 
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
+        } else if (this.regionType === CARTA.RegionType.LINE && this.regionId !== -1 && !this.creating && this.isPreviewCut) {
+            PreferenceStore.Instance.lowBandwidthMode ? this.lowBandWidthThrottledUpdateRegion(true) : this.throttledUpdateRegion(true);
         }
     };
 
@@ -656,7 +670,7 @@ export class RegionStore {
 
     // Update the region with the backend
     // TODO: Determine whether we should await when calling this function from above
-    private updateRegion = async () => {
+    private updateRegion = async (isRequestingPreview: boolean = false) => {
         if (this.isValid) {
             if (this.regionId === CURSOR_REGION_ID) {
                 AppStore.Instance.resetCursorRegionSpectralProfileProgress(this.fileId);
@@ -664,7 +678,7 @@ export class RegionStore {
             } else {
                 try {
                     AppStore.Instance.resetRegionSpectralProfileProgress(this.regionId);
-                    await this.backendService.setRegion(this.fileId, this.regionId, this);
+                    await this.backendService.setRegion(this.fileId, this.regionId, this, isRequestingPreview);
                     console.log("Region updated");
                 } catch (err) {
                     console.log(err);
@@ -672,4 +686,7 @@ export class RegionStore {
             }
         }
     };
+
+    private throttledUpdateRegion = throttle(this.updateRegion, 100);
+    private lowBandWidthThrottledUpdateRegion = throttle(this.updateRegion, 200);
 }

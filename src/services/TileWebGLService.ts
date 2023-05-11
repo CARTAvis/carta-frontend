@@ -40,7 +40,7 @@ interface ShaderUniforms {
 }
 
 export class TileWebGLService {
-    private static staticInstance: TileWebGLService;
+    protected static staticInstance: TileWebGLService;
 
     readonly gl: WebGL2RenderingContext;
     cmapTexture: WebGLTexture;
@@ -134,8 +134,8 @@ export class TileWebGLService {
         this.gl.uniform2f(this.shaderUniforms.TileScaling, 1, 1);
         this.gl.uniform2f(this.shaderUniforms.TileOffset, 0, 0);
         this.gl.uniform2f(this.shaderUniforms.TileTextureOffset, 0, 0);
-        this.gl.uniform1f(this.shaderUniforms.TextureSize, TEXTURE_SIZE);
-        this.gl.uniform1f(this.shaderUniforms.TileTextureSize, TILE_SIZE);
+        this.gl.uniform2f(this.shaderUniforms.TextureSize, TEXTURE_SIZE, TEXTURE_SIZE);
+        this.gl.uniform2f(this.shaderUniforms.TileTextureSize, TILE_SIZE, TILE_SIZE);
         this.gl.uniform4f(this.shaderUniforms.NaNColor, 0, 0, 1, 1);
         this.gl.uniform1f(this.shaderUniforms.PixelGridCutoff, 0);
         this.gl.uniform4f(this.shaderUniforms.PixelGridColor, 1, 1, 1, 1);
@@ -149,16 +149,18 @@ export class TileWebGLService {
         }
         this.vertexPositionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexPositionBuffer);
+        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, GL2.FLOAT, false, 0, 0);
         const vertices = new Float32Array([0.0, 0.0, 0, 1.0, 0.0, 0, 0.0, 1.0, 0, 1.0, 1.0, 0]);
         this.gl.bufferData(GL2.ARRAY_BUFFER, vertices, GL2.STATIC_DRAW);
 
         this.vertexUVBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(GL2.ARRAY_BUFFER, this.vertexUVBuffer);
+        this.gl.vertexAttribPointer(this.vertexUVAttribute, 2, GL2.FLOAT, false, 0, 0);
         const uvs = new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
         this.gl.bufferData(GL2.ARRAY_BUFFER, uvs, GL2.STATIC_DRAW);
     }
 
-    private constructor() {
+    protected constructor() {
         this.gl = initWebGL2();
         if (!this.gl) {
             return;
@@ -168,5 +170,20 @@ export class TileWebGLService {
         loadImageTexture(this.gl, allMaps, GL2.TEXTURE1).then(texture => {
             this.cmapTexture = texture;
         });
+    }
+}
+
+export class PreviewWebGLService extends TileWebGLService {
+    protected static staticInstance: PreviewWebGLService;
+
+    static get Instance() {
+        if (!PreviewWebGLService.staticInstance) {
+            PreviewWebGLService.staticInstance = new PreviewWebGLService();
+        }
+        return PreviewWebGLService.staticInstance;
+    }
+
+    private constructor() {
+        super();
     }
 }

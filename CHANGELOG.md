@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.0.0-beta.1]
 
 ### Added
 * Added two entries in Service sub-menu to copy the session ID and the session URL to clipboard ([#1930](https://github.com/cartavis/carta-frontend/issues/1930)).
@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added supports for swapped-axes image cubes ([#1953](https://github.com/CARTAvis/carta-frontend/issues/1953)).
 * Added supports for image annotations ([#267](https://github.com/CARTAvis/carta-frontend/issues/267)).
 * Added the ability of changing to a new directory by entering a path ([#609](https://github.com/CARTAvis/carta-frontend/issues/609)).
+* Added supports for customizing histogram calculations ([#1488](https://github.com/CARTAvis/carta-frontend/issues/1488)).
+* Added pv image preview feature ([#1561](https://github.com/CARTAvis/carta-frontend/issues/1561)).
+* Added support for saving and restoring workspaces ([#1272](https://github.com/CARTAvis/carta-frontend/issues/1272)). Initial support is limited to restoring open images, render/contour/overlay configs and regions.
 ### Fixed
 * Fixed the issue of annoying text input fields ([#1906](https://github.com/CARTAvis/carta-frontend/issues/1906)).
 * Fixed the issues of copying the Session URL in the macOS Electron and Linux AppImage versions ([#2102](https://github.com/CARTAvis/carta-frontend/issues/2102), [#2108](https://github.com/CARTAvis/carta-frontend/issues/2108)).

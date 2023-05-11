@@ -1,5 +1,13 @@
 @import "~@blueprintjs/core/lib/scss/variables.scss";
 
+.floating-content:has(.pv-generator-widget) {
+    overflow: auto;
+}
+
+.lm_content:has(.pv-generator-widget) {
+    overflow: auto;
+}
+
 .pv-generator-widget {
     margin: 20px;
     display: flex;
@@ -27,7 +35,7 @@
             margin-right: 10px;
             .bp4-label {
                 margin: 0px;
-                width: 12em;
+                width: 14em;
             }
         }
 
@@ -43,6 +51,17 @@
                 white-space: nowrap;
                 display: inline-block;
                 vertical-align: bottom;
+            }
+        }
+
+        .cube-size-button-group {
+            .cube-size-group {
+                display: flex;
+                align-items: center;
+
+                .cube-size {
+                    vertical-align: middle;
+                }
             }
         }
 
@@ -65,8 +84,30 @@
             }
         }
 
+        .rebin-select {
+            display: flex;
+            flex-direction: row;
+
+            .bp4-input-group {
+                width: 65px;
+            }
+
+            .bp4-form-group {
+                margin-right: 5px;
+                margin-bottom: 0px;
+                .bp4-label {
+                    margin: 0px;
+                    width: 2em;
+                }
+            }
+        }
+
         .generate-button {
             float: right;
+            display: flex;
+            div {
+                margin-left: 1em;
+            }
         }
     }
 }

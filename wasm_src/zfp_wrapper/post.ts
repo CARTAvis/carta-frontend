@@ -74,7 +74,7 @@ ctx.onmessage = (event => {
         }
         if (eventName === "setid") {
             Module.id = event.data[1];
-        } else if (eventName === "decompress") {
+        } else if (eventName === "decompress" || eventName === "preview decompress") {
             const eventArgs = event.data[2];
             const compressedView = new Uint8Array(event.data[1], 0, eventArgs.subsetLength);
             if (Module.debugOutput) {
@@ -100,7 +100,7 @@ ctx.onmessage = (event => {
                 decodedIndex += L;
             }
 
-            ctx.postMessage(["decompress", event.data[1], {
+            ctx.postMessage([eventName, event.data[1], {
                 width: eventArgs.width,
                 subsetHeight: eventArgs.subsetHeight,
                 subsetLength: eventArgs.subsetLength,
@@ -109,8 +109,12 @@ ctx.onmessage = (event => {
                 layer: eventArgs.layer,
                 fileId: eventArgs.fileId,
                 channel: eventArgs.channel,
-                stokes: eventArgs.stokes
-            }], [event.data[1]]);
+                stokes: eventArgs.stokes,
+                previewId: eventArgs.previewId,
+                oldAspectRatio: eventArgs.oldAspectRatio,
+                oldHeight: eventArgs.oldHeight,
+                oldWidth: eventArgs.oldWidth,
+            }, event.data[3]], [event.data[1]]);
 
             if (Module.debugOutput) {
                 performance.measure("dtDecompress", "decompressStart", "decompressEnd");

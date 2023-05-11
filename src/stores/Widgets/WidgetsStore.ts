@@ -17,6 +17,7 @@ import {
     LogComponent,
     PlaceholderComponent,
     PvGeneratorComponent,
+    PvPreviewComponent,
     RegionListComponent,
     RenderConfigComponent,
     RenderConfigSettingsPanelComponent,
@@ -425,6 +426,8 @@ export class WidgetsStore {
                 return CursorInfoComponent.WIDGET_CONFIG;
             case PvGeneratorComponent.WIDGET_CONFIG.type:
                 return PvGeneratorComponent.WIDGET_CONFIG;
+            case PvPreviewComponent.WIDGET_CONFIG.type:
+                return PvPreviewComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -448,6 +451,8 @@ export class WidgetsStore {
                 return CatalogOverlayPlotSettingsPanelComponent.WIDGET_CONFIG;
             case LayerListComponent.WIDGET_CONFIG.type:
                 return LayerListSettingsPanelComponent.WIDGET_CONFIG;
+            case PvGeneratorComponent.WIDGET_CONFIG.type:
+                return PvPreviewComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -681,6 +686,7 @@ export class WidgetsStore {
         layout.registerComponent("layer-list", LayerListComponent);
         layout.registerComponent("cursor-info", CursorInfoComponent);
         layout.registerComponent("pv-generator", PvGeneratorComponent);
+        layout.registerComponent("pv-preview", PvPreviewComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
@@ -819,6 +825,11 @@ export class WidgetsStore {
 
         if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
             widgetConfig.componentId = id;
+        }
+
+        if (type === PvPreviewComponent.WIDGET_CONFIG.type) {
+            widgetConfig.parentId = itemConfig.props.id;
+            widgetConfig.parentType = PvPreviewComponent.WIDGET_CONFIG.parentType;
         }
 
         const catalogPlotWidgetStore = this.catalogPlotWidgets.get(id);
@@ -1248,7 +1259,7 @@ export class WidgetsStore {
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
         const defaultConfig = WidgetsStore.GetDefaultWidgetSettingsConfig(parentType);
         const config = new WidgetConfig(this.addFloatingSettingsWidget(null, parentId, defaultConfig.type), defaultConfig);
-        config.title = title + " Settings";
+        config.title = parentType === PvGeneratorComponent.WIDGET_CONFIG.type ? title : title + " Settings";
         config.parentId = parentId;
         config.parentType = parentType;
         if (config.id) {
@@ -1423,7 +1434,6 @@ export class WidgetsStore {
         }
         return id;
     }
-
     // endregion
 
     // region Floating Widgets
@@ -1512,6 +1522,15 @@ export class WidgetsStore {
                     associatedFloatingSettingsId = key;
                 }
             });
+
+            const layoutStore = LayoutStore.Instance;
+            if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
+                const matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === associatedFloatingSettingsId);
+                if (matchingComponents.length) {
+                    matchingComponents[0].remove();
+                }
+            }
+
             if (associatedFloatingSettingsId) {
                 this.removeFloatingWidget(associatedFloatingSettingsId, true);
                 this.floatingSettingsWidgets.delete(associatedFloatingSettingsId);

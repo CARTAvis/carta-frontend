@@ -9,7 +9,6 @@ const Tile1024: Point2D = {x: 1024, y: 1024};
 const Tile2048: Point2D = {x: 2048, y: 2048};
 const Tile4096: Point2D = {x: 4096, y: 4096};
 const WideTile: Point2D = {x: 1024, y: 512};
-const TallTile: Point2D = {x: 512, y: 1024};
 
 export const DefaultFrameView: FrameView = {xMin: 0, xMax: 512, yMin: 0, yMax: 512, mip: 1};
 

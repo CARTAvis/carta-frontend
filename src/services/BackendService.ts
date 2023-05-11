@@ -91,6 +91,7 @@ export class BackendService {
     readonly pvProgressStream: Subject<CARTA.PvProgress>;
     readonly fittingProgressStream: Subject<CARTA.FittingProgress>;
     readonly vectorTileStream: Subject<CARTA.VectorOverlayTileData>;
+    readonly pvPreviewStream: Subject<CARTA.PvPreviewData>;
     private readonly decoderMap: Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>;
 
     private constructor() {
@@ -118,6 +119,7 @@ export class BackendService {
         this.pvProgressStream = new Subject<CARTA.PvProgress>();
         this.fittingProgressStream = new Subject<CARTA.FittingProgress>();
         this.vectorTileStream = new Subject<CARTA.VectorOverlayTileData>();
+        this.pvPreviewStream = new Subject<CARTA.PvPreviewData>();
 
         // Construct handler and decoder maps
         this.decoderMap = new Map<CARTA.EventType, {messageClass: any; handler: HandlerFunction}>([
@@ -154,7 +156,8 @@ export class BackendService {
             [CARTA.EventType.PV_RESPONSE, {messageClass: CARTA.PvResponse, handler: this.onDeferredResponse}],
             [CARTA.EventType.FITTING_PROGRESS, {messageClass: CARTA.FittingProgress, handler: this.onStreamedFittingProgress}],
             [CARTA.EventType.FITTING_RESPONSE, {messageClass: CARTA.FittingResponse, handler: this.onDeferredResponse}],
-            [CARTA.EventType.VECTOR_OVERLAY_TILE_DATA, {messageClass: CARTA.VectorOverlayTileData, handler: this.onStreamedVectorOverlayData}]
+            [CARTA.EventType.VECTOR_OVERLAY_TILE_DATA, {messageClass: CARTA.VectorOverlayTileData, handler: this.onStreamedVectorOverlayData}],
+            [CARTA.EventType.PV_PREVIEW_DATA, {messageClass: CARTA.PvPreviewData, handler: this.onStreamedPvPreviewData}]
         ]);
 
         // check ping every 5 seconds
@@ -511,7 +514,7 @@ export class BackendService {
         return false;
     }
 
-    async setRegion(fileId: number, regionId: number, region: RegionStore): Promise<CARTA.ISetRegionAck> {
+    async setRegion(fileId: number, regionId: number, region: RegionStore, isRequestingPreview?: boolean): Promise<CARTA.ISetRegionAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
@@ -522,7 +525,8 @@ export class BackendService {
                     regionType: region.regionType,
                     rotation: region.rotation,
                     controlPoints: region.controlPoints.slice()
-                }
+                },
+                previewRegion: isRequestingPreview
             });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.SET_REGION, requestId, message, false);
@@ -781,6 +785,33 @@ export class BackendService {
         }
     }
 
+    stopPvPreview(previewId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const message = CARTA.StopPvPreview.create({previewId});
+            this.logEvent(CARTA.EventType.STOP_PV_PREVIEW, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.STOP_PV_PREVIEW, CARTA.StopPvPreview.encode(message).finish())) {
+                console.log("stop Pv preview sent");
+                return true;
+            }
+            throw new Error("Could not send event");
+        }
+    }
+
+    closePvPreview(previewId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            throw new Error("Not connected");
+        } else {
+            const message = CARTA.ClosePvPreview.create({previewId});
+            this.logEvent(CARTA.EventType.CLOSE_PV_PREVIEW, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.CLOSE_PV_PREVIEW, CARTA.ClosePvPreview.encode(message).finish())) {
+                return true;
+            }
+            throw new Error("Could not send event");
+        }
+    }
+
     async requestFitting(message: CARTA.IFittingRequest): Promise<CARTA.IFittingResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
@@ -856,6 +887,8 @@ export class BackendService {
                 } else {
                     console.log(`Unsupported event response ${eventType}`);
                 }
+            } else {
+                throw Error("no decoder");
             }
         } catch (e) {
             console.log(e);
@@ -946,6 +979,10 @@ export class BackendService {
 
     private onStreamedFittingProgress(_eventId: number, fittingProgress: CARTA.FittingProgress) {
         this.fittingProgressStream.next(fittingProgress);
+    }
+
+    private onStreamedPvPreviewData(_eventId: number, previewData: CARTA.PvPreviewData) {
+        this.pvPreviewStream.next(previewData);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {

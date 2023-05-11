@@ -1,32 +1,24 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {AnchorButton, FormGroup, HTMLSelect, Position, Switch, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {AnchorButton, FormGroup, HTMLSelect, Position, Switch} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
+import {CARTA} from "carta-protobuf";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
-import {TaskProgressDialogComponent} from "components/Dialogs";
+import {MemoryUnit, TaskProgressDialogComponent} from "components/Dialogs";
 import {SafeNumericInput, SpectralSettingsComponent} from "components/Shared";
 import {Point2D, SpectralSystem} from "models";
-import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
+import {AppStore, DefaultWidgetConfig, HelpType, PreferenceStore, WidgetProps, WidgetsStore} from "stores";
 import {PVAxis, PvGeneratorWidgetStore, RegionId} from "stores/Widgets";
+import {toFixed} from "utilities";
 
 import "./PvGeneratorComponent.scss";
 
-export enum PvGeneratorComponentTabs {
-    PV_IMAGE,
-    PREVIEW_CUBE
-}
-
 @observer
 export class PvGeneratorComponent extends React.Component<WidgetProps> {
-    @observable selectedTabId: TabId = PvGeneratorComponentTabs.PV_IMAGE;
     axesOrder = {};
     @observable isValidSpectralRange: boolean = true;
-
-    @action private setSelectedTab = (tab: TabId) => {
-        this.selectedTabId = tab;
-    };
 
     public static get WIDGET_CONFIG(): DefaultWidgetConfig {
         return {
@@ -34,13 +26,46 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
             type: "pv-generator",
             minWidth: 350,
             minHeight: 500,
-            defaultWidth: 500,
-            defaultHeight: 500,
+            defaultWidth: 520,
+            defaultHeight: 620,
             title: "PV Generator",
             isCloseable: true,
             helpType: HelpType.PV_GENERATOR
         };
     }
+
+    public static formatBitValue = (bitValue: number): {value: number; unit: string; bitValue: number} => {
+        let value: number;
+        let unit: string;
+        if (bitValue >= 1e9) {
+            value = parseFloat(toFixed(bitValue / 1e9, 2));
+            unit = MemoryUnit.GB;
+        } else if (bitValue >= 1e6) {
+            value = parseFloat(toFixed(bitValue / 1e6, 2));
+            unit = MemoryUnit.MB;
+        } else if (bitValue >= 1e3) {
+            value = parseFloat(toFixed(bitValue / 1e6, 3));
+            unit = MemoryUnit.MB;
+        } else {
+            value = parseFloat(toFixed(bitValue / 1e6, 4));
+            unit = MemoryUnit.MB;
+        }
+        return {value, unit, bitValue: bitValue};
+    };
+
+    public static getBitValueFromFormatted = (value: number, unit: string): number => {
+        let bitValue = value;
+        if (unit === MemoryUnit.TB) {
+            bitValue = value * 1e12;
+        } else if (unit === MemoryUnit.GB) {
+            bitValue = value * 1e9;
+        } else if (unit === MemoryUnit.MB) {
+            bitValue = value * 1e6;
+        } else if (unit === MemoryUnit.kB) {
+            bitValue = value * 1e3;
+        }
+        return bitValue;
+    };
 
     @observable width: number;
     @observable height: number;
@@ -99,6 +124,47 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         return false;
     }
 
+    @computed get estimatedCubeSize(): {value: number; unit: string; bitValue: number} {
+        const frame = this.widgetStore?.effectiveFrame;
+
+        if (!frame) {
+            return {value: 0, unit: "", bitValue: 0};
+        }
+
+        // Find percentage of selected channel range
+        const imageDepth = frame?.frameInfo.fileInfoExtended.depth;
+        const channelIndexMin = frame?.findChannelIndexByValue(this.widgetStore.range?.min);
+        const channelIndexMax = frame?.findChannelIndexByValue(this.widgetStore.range?.max);
+        const channelRangePercentage = Math.abs(channelIndexMax - channelIndexMin + 1) / imageDepth;
+
+        // Find byte per image pixel
+        const bytePix = Math.abs(frame?.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.match("BITPIX")).numericValue) / 8;
+
+        // Get rectangular region if exists
+        const region = frame?.getRegion(this.widgetStore.effectivePreviewRegionId);
+
+        const fileInfoExtended = frame?.frameInfo.fileInfoExtended;
+
+        // Get size of entire cube
+        const imageSize = fileInfoExtended.width * fileInfoExtended.height * fileInfoExtended.depth * bytePix;
+
+        // Get size of pixels bounded by the rectangular region
+        const regionBoundSize = region?.regionId === -1 ? null : region?.boundingBoxArea * bytePix * imageDepth;
+
+        // Calculate estimated size using selected range of channels and rebin values
+        const estimatedSize = ((regionBoundSize || imageSize) * channelRangePercentage) / (this.widgetStore.xyRebin * this.widgetStore.zRebin);
+
+        if (region?.regionType !== CARTA.RegionType.RECTANGLE && !estimatedSize) {
+            return undefined;
+        }
+
+        return PvGeneratorComponent.formatBitValue(estimatedSize);
+    }
+
+    @computed get isCubeSizeBelowLimit(): boolean {
+        return this.estimatedCubeSize?.bitValue <= PvGeneratorComponent.getBitValueFromFormatted(PreferenceStore.Instance.pvPreivewCubeSizeLimit, PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit);
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         makeObservable(this);
@@ -130,7 +196,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         if (this.widgetStore.effectiveFrame) {
             const selectedFileId = parseInt(changeEvent.target.value);
             this.widgetStore.setFileId(selectedFileId);
-            this.widgetStore.setRegionId(this.widgetStore.effectiveFrame.frameInfo.fileId, RegionId.ACTIVE);
+            this.widgetStore.setRegionId(this.widgetStore.effectiveFrame.frameInfo.fileId, RegionId.NONE);
         }
     };
 
@@ -142,12 +208,22 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private handlePreviewRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
+        if (this.widgetStore.effectiveFrame) {
+            this.widgetStore.setPreviewRegionId(parseInt(changeEvent.target.value));
+        }
+    };
+
     private handleAxesOrderChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.axesOrder["reverse"] === changeEvent.target.value) {
             this.widgetStore.setReverse(true);
         } else {
             this.widgetStore.setReverse(false);
         }
+    };
+
+    private onPreviewButtonClicked = () => {
+        this.widgetStore.requestPV(true, this.props.id);
     };
 
     private onGenerateButtonClicked = () => {
@@ -203,12 +279,13 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
         const fileInfo = frame ? `${appStore.getFrameIndex(frame.frameInfo.fileId)}: ${frame.filename}` : undefined;
         const regionInfo = this.widgetStore.effectiveRegionInfo;
 
-        let selectedValue = RegionId.ACTIVE;
+        let selectedValue = RegionId.NONE;
         if (this.widgetStore.effectiveFrame?.regionSet) {
             selectedValue = this.widgetStore.regionIdMap.get(this.widgetStore.effectiveFrame.frameInfo.fileId);
         }
 
         const isAbleToGenerate = this.widgetStore.effectiveRegion && !appStore.animatorStore.animationActive && this.isLineIntersectedWithImage && !this.isLineInOnePixel && this.isValidSpectralRange;
+        const isAbleToGeneratePreview = isAbleToGenerate && this.isCubeSizeBelowLimit;
         const hint = (
             <span>
                 <i>
@@ -222,6 +299,20 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         3. Line region has intersection with image.
                         <br />
                         4. Line region is not in one pixel.
+                    </small>
+                </i>
+            </span>
+        );
+
+        const previewHint = (
+            <span>
+                <i>
+                    <small>
+                        Please ensure:
+                        <br />
+                        1. Line region is selected.
+                        <br />
+                        2. Preview cube size is less than the threshold ({`${PreferenceStore.Instance.pvPreivewCubeSizeLimit} ${PreferenceStore.Instance.pvPreivewCubeSizeLimitUnit}`}).
                     </small>
                 </i>
             </span>
@@ -244,7 +335,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 <FormGroup
                     className="label-info-group"
                     inline={true}
-                    label="Region"
+                    label="PV cut"
                     labelInfo={
                         <span className="label-info" title={regionInfo}>
                             {regionInfo ? `(${regionInfo})` : ""}
@@ -291,28 +382,63 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                         }}
                     />
                 </FormGroup>
+
+                <FormGroup className="label-info-group" inline={true} label="Preview region">
+                    <HTMLSelect options={this.widgetStore.previewRegionOptions} onChange={this.handlePreviewRegionChanged} />
+                </FormGroup>
+
+                <FormGroup className="label-info-group" inline={true} label="Preview rebin" labelInfo={`(px)`}>
+                    <div className="rebin-select">
+                        <FormGroup inline={true} label={"XY"}>
+                            <SafeNumericInput
+                                min={1}
+                                max={Math.ceil(Math.max(this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.height, this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.width) / 2) || 1}
+                                stepSize={1}
+                                value={this.widgetStore.xyRebin}
+                                onValueChange={value => this.widgetStore.setXYRebin(value)}
+                            />
+                        </FormGroup>
+                        <FormGroup inline={true} label={"Z"}>
+                            <SafeNumericInput
+                                min={1}
+                                max={Math.ceil(this.widgetStore.effectiveFrame?.frameInfo.fileInfoExtended.depth / 2) || 1}
+                                stepSize={1}
+                                value={this.widgetStore.zRebin}
+                                onValueChange={value => this.widgetStore.setZRebin(value)}
+                            />
+                        </FormGroup>
+                    </div>
+                </FormGroup>
+                <div className="cube-size-button-group">
+                    <FormGroup className="cube-size-group" inline label="Preview cube size" labelInfo={this.estimatedCubeSize ? `(${this.estimatedCubeSize.unit})` : ""} disabled={!this.estimatedCubeSize}>
+                        <label className="cube-size" style={{color: this.isCubeSizeBelowLimit ? "" : "red"}}>{`${this.estimatedCubeSize?.value ?? ""}`}</label>
+                    </FormGroup>
+                </div>
                 <div className="generate-button">
-                    <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
-                        <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
-                    </Tooltip2>
+                    <div>
+                        <Tooltip2 disabled={isAbleToGeneratePreview} content={previewHint} position={Position.BOTTOM}>
+                            <AnchorButton intent="success" disabled={!isAbleToGeneratePreview} text="Start Preview" onClick={this.onPreviewButtonClicked} />
+                        </Tooltip2>
+                    </div>
+                    <div>
+                        <Tooltip2 disabled={isAbleToGenerate} content={hint} position={Position.BOTTOM}>
+                            <AnchorButton intent="success" disabled={!isAbleToGenerate} text="Generate" onClick={this.onGenerateButtonClicked} />
+                        </Tooltip2>
+                    </div>
                 </div>
             </div>
         );
 
         return (
             <div className="pv-generator-widget">
-                <div className="pv-generator-panel">
-                    <Tabs id="pvGeneratorTabs" selectedTabId={this.selectedTabId} onChange={this.setSelectedTab} animate={false}>
-                        <Tab id={PvGeneratorComponentTabs.PV_IMAGE} title="Generate PV Image" panel={pvImagePanel} />
-                    </Tabs>
-                </div>
+                <div className="pv-generator-panel">{pvImagePanel}</div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}></ReactResizeDetector>
                 <TaskProgressDialogComponent
                     isOpen={frame?.isRequestingPV && frame.requestingPVProgress < 1}
                     progress={frame ? frame.requestingPVProgress : 0}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={true}
-                    onCancel={this.widgetStore.requestingPVCancelled}
+                    onCancel={this.widgetStore.requestingPVCancelled(this.props.id)}
                     text={"Generating PV"}
                     isCancelling={frame?.isRequestPVCancelling}
                 />

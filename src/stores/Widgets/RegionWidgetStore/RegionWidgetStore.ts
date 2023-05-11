@@ -8,6 +8,7 @@ import {FrameStore, RegionStore} from "stores/Frame";
 export const ACTIVE_FILE_ID = -1;
 
 export enum RegionId {
+    NONE = -4,
     ACTIVE = -3,
     IMAGE = -1,
     CURSOR = 0
@@ -64,8 +65,10 @@ export class RegionWidgetStore {
     @computed get effectiveRegionId(): number {
         if (this.effectiveFrame) {
             const regionId = this.regionIdMap.get(this.fileId);
-            if (regionId !== RegionId.ACTIVE && regionId !== undefined) {
+            if (regionId !== RegionId.ACTIVE && regionId !== RegionId.NONE && regionId !== undefined) {
                 return regionId;
+            } else if (regionId === RegionId.NONE) {
+                return null;
             } else {
                 const selectedRegion = this.effectiveFrame.regionSet.selectedRegion;
                 if (selectedRegion) {

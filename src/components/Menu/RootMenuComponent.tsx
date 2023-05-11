@@ -15,6 +15,8 @@ import {AppStore, BrowserMode, PreferenceKeys, SnippetStore, WidgetsStore, Widge
 import {FrameStore} from "stores/Frame";
 import {toFixed} from "utilities";
 
+import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
+
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
 import "./RootMenuComponent.scss";
@@ -284,10 +286,13 @@ export class RootMenuComponent extends React.Component {
                     />
                 </Tooltip2>
                 <MenuItem2 text="Import Catalog" label={`${modString}G`} disabled={appStore.appendFileDisabled} onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)} />
-                <MenuItem2 text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage}>
+                <MenuItem2 text="Export Image" disabled={!appStore.activeFrame || appStore.isExportingImage || appStore.activeFrame.isPreview}>
                     <ExportImageMenuComponent />
                 </MenuItem2>
                 <MenuDivider />
+                <MenuItem2 text="Open Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Open)} />
+                <MenuItem2 text="Save Workspace" disabled={appStore.openFileDisabled} onClick={() => appStore.dialogStore.showWorkspaceDialog(WorkspaceDialogMode.Save)} />
+                <MenuItem2 />
                 <MenuItem2 text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE} />
                 {serverSubMenu}
             </Menu>

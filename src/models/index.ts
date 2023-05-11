@@ -29,5 +29,6 @@ export * from "./Transform2D/Transform2D";
 export * from "./TypeDefinition/TypeDefinition";
 export * from "./Wcs/WCSMatchingType";
 export * from "./Wcs/WCSType";
+export * from "./Workspace";
 export * from "./Zoom/Zoom";
 export * from "./Zoom/ZoomPoint";

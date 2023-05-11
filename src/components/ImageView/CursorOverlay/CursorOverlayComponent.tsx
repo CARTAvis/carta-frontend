@@ -23,6 +23,7 @@ class CursorOverlayProps {
     unit?: string;
     currentStokes?: string;
     cursorValueToPercentage?: boolean;
+    isPreview?: boolean;
 }
 
 @observer
@@ -43,6 +44,8 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             }
             if (!this.props.isValueCurrent) {
                 valueString += "*";
+            } else if (this.props.isPreview) {
+                valueString += "~";
             } else {
                 valueString += " ";
             }

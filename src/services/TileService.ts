@@ -5,6 +5,7 @@ import {Subject} from "rxjs";
 
 import {Point2D, TileCoordinate} from "models";
 import {BackendService, TileWebGLService} from "services";
+import {AppStore, PREVIEW_PV_FILEID} from "stores";
 import {copyToFP32Texture, createFP32Texture, GL2} from "utilities";
 
 import ZFPWorker from "!worker-loader!zfp_wrapper";
@@ -88,6 +89,30 @@ export class TileService {
         }
     }
 
+    public decompressPreviewRasterData(previewData: CARTA.PvPreviewData) {
+        const compressedArray = previewData.imageData;
+        const nanEncodings32 = new Int32Array(previewData.nanEncodings.slice(0).buffer);
+        let compressedView = new Uint8Array(Math.max(compressedArray.byteLength, previewData.width * previewData.height * 4));
+        compressedView.set(compressedArray);
+
+        const eventArgs = {
+            fileId: PREVIEW_PV_FILEID,
+            channel: 0,
+            stokes: 0,
+            width: previewData.width,
+            subsetHeight: previewData.height,
+            subsetLength: compressedArray.byteLength,
+            compression: previewData.compressionQuality,
+            nanEncodings: nanEncodings32,
+            tileCoordinate: 0,
+            layer: 0,
+            requestId: 0,
+            previewId: previewData.previewId
+        };
+
+        this.workers[0].postMessage(["preview decompress", compressedView.buffer, eventArgs, previewData], [compressedView.buffer, nanEncodings32.buffer]);
+    }
+
     public setAnimationEnabled = (val: boolean) => {
         this.animationEnabled = val;
     };
@@ -142,6 +167,13 @@ export class TileService {
                     const length = eventArgs.width * eventArgs.subsetHeight;
                     const resultArray = new Float32Array(buffer, 0, length);
                     this.updateStream(eventArgs.fileId, eventArgs.channel, eventArgs.stokes, resultArray, eventArgs.width, eventArgs.subsetHeight, eventArgs.layer, eventArgs.tileCoordinate);
+                } else if (event.data[0] === "preview decompress") {
+                    const buffer = event.data[1];
+                    const eventArgs = event.data[2];
+                    const frame = AppStore.Instance.previewFrames.get(eventArgs.previewId);
+                    const length = eventArgs.width * eventArgs.subsetHeight;
+                    const resultArray = new Float32Array(buffer, 0, length);
+                    frame?.setPreviewPVRasterData(resultArray);
                 }
             };
         }
