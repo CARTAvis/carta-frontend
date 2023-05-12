@@ -207,21 +207,21 @@ export const IsIntensitySupported = (unitStr: string): boolean => {
     return FindIntensityUnitType(unitStr) !== IntensityUnitType.Unsupported;
 };
 
-export type IntensityConfig = {nativeIntensityUnit: string; bmaj?: number; bmin?: number; cdelta1?: number; cdelta2?: number; freqGHz?: number};
+export type IntensityConfig = {nativeIntensityUnit: string; bmaj?: number[]; bmin?: number[]; cdelta1?: number; cdelta2?: number; freqGHz?: number};
 const FindConvertibleIntensityTypes = (config: IntensityConfig): IntensityUnitType[] => {
     let options: IntensityUnitType[] = [];
     const type = FindIntensityUnitType(config?.nativeIntensityUnit);
     if (type !== IntensityUnitType.Unsupported) {
         if (type === IntensityUnitType.Kelvin) {
             options.push(IntensityUnitType.Kelvin);
-            if (isFinite(config?.bmaj) && isFinite(config?.bmin) && isFinite(config?.freqGHz)) {
+            if (config?.bmaj?.every(x => isFinite(x)) && config?.bmin?.every(x => isFinite(x)) && isFinite(config?.freqGHz)) {
                 options.push(IntensityUnitType.JyBeam);
                 options.push(IntensityUnitType.JySr);
                 options.push(IntensityUnitType.JyArcsec2);
             }
         } else if (type === IntensityUnitType.JyBeam) {
             options.push(IntensityUnitType.JyBeam);
-            if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
+            if (config?.bmaj?.every(x => isFinite(x)) && config?.bmin?.every(x => isFinite(x))) {
                 options.push(IntensityUnitType.JySr);
                 options.push(IntensityUnitType.JyArcsec2);
                 if (isFinite(config?.freqGHz)) {
@@ -231,7 +231,7 @@ const FindConvertibleIntensityTypes = (config: IntensityConfig): IntensityUnitTy
         } else if (type === IntensityUnitType.JySr || type === IntensityUnitType.JyArcsec2) {
             options.push(IntensityUnitType.JySr);
             options.push(IntensityUnitType.JyArcsec2);
-            if (isFinite(config?.bmaj) && isFinite(config?.bmin)) {
+            if (config?.bmaj?.every(x => isFinite(x)) && config?.bmin?.every(x => isFinite(x))) {
                 options.push(IntensityUnitType.JyBeam);
                 if (isFinite(config?.freqGHz)) {
                     options.push(IntensityUnitType.Kelvin);
@@ -288,25 +288,25 @@ const FindIntensityConversion = (unitFromType: IntensityUnitType, unitToType: In
     let conversion = undefined;
     if (unitFromType === IntensityUnitType.Kelvin) {
         if (unitToType === IntensityUnitType.JyBeam) {
-            conversion = value => value * scale * JyBeamToKelvin(config.freqGHz, config.bmaj, config.bmin, false);
+            conversion = (value, i) => value * scale * JyBeamToKelvin(config.freqGHz, config.bmaj[i], config.bmin[i], false);
         } else if (unitToType === IntensityUnitType.JySr) {
-            conversion = value => value * scale * JyBeamToKelvin(config.freqGHz, config.bmaj, config.bmin, false) * JyBeamToJySr(config.bmaj, config.bmin);
+            conversion = (value, i) => value * scale * JyBeamToKelvin(config.freqGHz, config.bmaj[i], config.bmin[i], false) * JyBeamToJySr(config.bmaj[i], config.bmin[i]);
         } else if (unitToType === IntensityUnitType.JyArcsec2) {
-            conversion = value => value * scale * JyBeamToKelvin(config.freqGHz, config.bmaj, config.bmin, false) * JyBeamToJySr(config.bmaj, config.bmin) * JySrToJyArcsec2();
+            conversion = (value, i) => value * scale * JyBeamToKelvin(config.freqGHz, config.bmaj[i], config.bmin[i], false) * JyBeamToJySr(config.bmaj[i], config.bmin[i]) * JySrToJyArcsec2();
         }
     } else if (unitFromType === IntensityUnitType.JyBeam) {
         if (unitToType === IntensityUnitType.Kelvin) {
-            conversion = value => value * scale * JyBeamToKelvin(config.freqGHz, config.bmaj, config.bmin);
+            conversion = (value, i) => value * scale * JyBeamToKelvin(config.freqGHz, config.bmaj[i], config.bmin[i]);
         } else if (unitToType === IntensityUnitType.JySr) {
-            conversion = value => value * scale * JyBeamToJySr(config.bmaj, config.bmin);
+            conversion = (value, i) => value * scale * JyBeamToJySr(config.bmaj[i], config.bmin[i]);
         } else if (unitToType === IntensityUnitType.JyArcsec2) {
-            conversion = value => value * scale * JyBeamToJySr(config.bmaj, config.bmin) * JySrToJyArcsec2();
+            conversion = (value, i) => value * scale * JyBeamToJySr(config.bmaj[i], config.bmin[i]) * JySrToJyArcsec2();
         }
     } else if (unitFromType === IntensityUnitType.JySr) {
         if (unitToType === IntensityUnitType.Kelvin) {
-            conversion = value => value * scale * JyBeamToJySr(config.bmaj, config.bmin, false) * JyBeamToKelvin(config.freqGHz, config.bmaj, config.bmin);
+            conversion = (value, i) => value * scale * JyBeamToJySr(config.bmaj[i], config.bmin[i], false) * JyBeamToKelvin(config.freqGHz, config.bmaj[i], config.bmin[i]);
         } else if (unitToType === IntensityUnitType.JyBeam) {
-            conversion = value => value * scale * JyBeamToJySr(config.bmaj, config.bmin, false);
+            conversion = (value, i) => value * scale * JyBeamToJySr(config.bmaj[i], config.bmin[i], false);
         } else if (unitToType === IntensityUnitType.JyArcsec2) {
             conversion = value => value * scale * JySrToJyArcsec2();
         } else if (unitToType === IntensityUnitType.JyPixel) {
@@ -314,9 +314,9 @@ const FindIntensityConversion = (unitFromType: IntensityUnitType, unitToType: In
         }
     } else if (unitFromType === IntensityUnitType.JyArcsec2) {
         if (unitToType === IntensityUnitType.Kelvin) {
-            conversion = value => value * scale * JySrToJyArcsec2(false) * JyBeamToJySr(config.bmaj, config.bmin, false) * JyBeamToKelvin(config.freqGHz, config.bmaj, config.bmin);
+            conversion = (value, i) => value * scale * JySrToJyArcsec2(false) * JyBeamToJySr(config.bmaj[i], config.bmin[i], false) * JyBeamToKelvin(config.freqGHz, config.bmaj[i], config.bmin[i]);
         } else if (unitToType === IntensityUnitType.JyBeam) {
-            conversion = value => value * scale * JySrToJyArcsec2(false) * JyBeamToJySr(config.bmaj, config.bmin, false);
+            conversion = (value, i) => value * scale * JySrToJyArcsec2(false) * JyBeamToJySr(config.bmaj[i], config.bmin[i], false);
         } else if (unitToType === IntensityUnitType.JySr) {
             conversion = value => value * scale * JySrToJyArcsec2(false);
         } else if (unitToType === IntensityUnitType.JyPixel) {

@@ -454,6 +454,30 @@ export class FrameStore {
         return null;
     }
 
+    @computed get beamPropertiesAllChannels(): CARTA.IBeam[] {
+        const channelNum = this.channelInfo?.indexes?.length;
+        if (!channelNum) {
+            return [];
+        }
+
+        const beams = this.channelInfo.indexes.map(channelIndex => {
+            let beam: CARTA.IBeam;
+            if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
+                beam = this.frameInfo.beamTable[0];
+            } else {
+                if (this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.fileInfoExtended.stokes > 1) {
+                    beam = this.frameInfo.beamTable.find(beam => beam.channel === channelIndex && beam.stokes === this.requiredStokes);
+                } else if (this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.fileInfoExtended.stokes <= 1) {
+                    beam = this.frameInfo.beamTable.find(beam => beam.channel === channelIndex);
+                } else if (this.frameInfo.fileInfoExtended.depth <= 1 && this.frameInfo.fileInfoExtended.stokes > 1) {
+                    beam = this.frameInfo.beamTable.find(beam => beam.stokes === this.requiredStokes);
+                }
+            }
+            return beam;
+        });
+        return beams;
+    }
+
     @computed get hasVisibleBeam(): boolean {
         return this.beamProperties?.overlayBeamSettings?.visible;
     }
