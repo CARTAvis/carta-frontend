@@ -225,7 +225,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         return (
             <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}>
-                <div className="image-view-div" style={{gridTemplateColumns: `repeat(${appStore.numImageColumns}, ${appStore.overlayStore.viewWidth}px)`, gridTemplateRows: `repeat(${appStore.numImageRows}, ${appStore.overlayStore.viewHeight}px)`}}>
+                <div
+                    className="image-view-div"
+                    style={{gridTemplateColumns: `repeat(${appStore.numImageColumns}, ${appStore.overlayStore.viewWidth}px)`, gridTemplateRows: `repeat(${appStore.numImageRows}, ${appStore.overlayStore.viewHeight}px)`}}
+                >
                     {divContents}
                 </div>
             </ReactResizeDetector>
