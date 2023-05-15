@@ -76,6 +76,7 @@ import {
 export interface FrameInfo {
     fileId: number;
     directory: string;
+    lelExpr: boolean;
     hdu: string;
     fileInfo: CARTA.FileInfo;
     fileInfoExtended: CARTA.FileInfoExtended;

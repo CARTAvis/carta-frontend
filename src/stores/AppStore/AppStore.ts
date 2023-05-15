@@ -479,7 +479,7 @@ export class AppStore {
         return frameMap;
     }
 
-    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, hdu: string, generated: boolean = false, setAsActive: boolean = true): boolean => {
+    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, lelExpr: boolean, hdu: string, generated: boolean = false, setAsActive: boolean = true): boolean => {
         if (!ack) {
             return false;
         }
@@ -495,6 +495,7 @@ export class AppStore {
         const frameInfo: FrameInfo = {
             fileId: ack.fileId,
             directory,
+            lelExpr,
             hdu,
             fileInfo: new CARTA.FileInfo(ack.fileInfo),
             fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
@@ -563,6 +564,7 @@ export class AppStore {
         const frameInfo: FrameInfo = {
             fileId: PREVIEW_PV_FILEID,
             directory,
+            lelExpr: false,
             hdu,
             fileInfo: new CARTA.FileInfo(ack.imageInfo),
             fileInfoExtended: new CARTA.FileInfoExtended(ack.imageInfo),
@@ -619,7 +621,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.loadFile(path, filename, hdu, this.fileCounter, imageArithmetic);
             this.fileCounter++;
-            if (!this.addFrame(ack, path, hdu, setAsActive)) {
+            if (!this.addFrame(ack, path, imageArithmetic, hdu, setAsActive)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
@@ -642,7 +644,7 @@ export class AppStore {
         try {
             const ack = await this.backendService.loadStokeFiles(stokesFiles, this.fileCounter, CARTA.RenderMode.RASTER);
             this.fileCounter++;
-            if (!this.addFrame(ack.openFileAck, directory, hdu)) {
+            if (!this.addFrame(ack.openFileAck, directory, false, hdu)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
@@ -1174,7 +1176,7 @@ export class AppStore {
             const ack = yield this.backendService.requestMoment(message);
             if (!ack.cancel && ack.openFileAcks) {
                 for (const openFileAck of ack.openFileAcks) {
-                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, "", true)) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
                         frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
                     } else {
@@ -1218,7 +1220,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.requestPV(message);
             if (!ack.cancel && ack.openFileAck) {
-                if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, "", true)) {
+                if (this.addFrame(CARTA.OpenFileAck.create(ack.openFileAck), this.fileBrowserStore.startingDirectory, false, "", true)) {
                     this.fileCounter++;
                     frame.addPvImage(this.frames.find(f => f.frameInfo.fileId === ack.openFileAck.fileId));
                 } else {
@@ -1305,7 +1307,7 @@ export class AppStore {
             if (ack.success) {
                 this.imageFittingStore.setResultString(message.regionId, message.fovInfo, message.fixedParams, ack.resultValues, ack.resultErrors, ack.offsetValue, ack.offsetError, ack.log);
                 if (ack.modelImage) {
-                    if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, "", true)) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
                         frame?.addFittingModelImage(this.getFrame(ack.modelImage.fileId));
                     } else {
@@ -1313,7 +1315,7 @@ export class AppStore {
                     }
                 }
                 if (ack.residualImage) {
-                    if (this.addFrame(CARTA.OpenFileAck.create(ack.residualImage), this.fileBrowserStore.startingDirectory, "", true)) {
+                    if (this.addFrame(CARTA.OpenFileAck.create(ack.residualImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
                         frame?.addFittingResidualImage(this.getFrame(ack.residualImage.fileId));
                     } else {
@@ -2137,6 +2139,7 @@ export class AppStore {
             return {
                 file: info.fileInfo.name,
                 directory: info.directory,
+                lelExpr: info.lelExpr,
                 hdu: info.hdu,
                 fileId: info.fileId,
                 renderMode: info.renderMode,
