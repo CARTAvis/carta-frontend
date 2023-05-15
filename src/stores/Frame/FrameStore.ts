@@ -442,7 +442,7 @@ export class FrameStore {
         return null;
     }
 
-    @computed get beamPropertiesAllChannels(): CARTA.IBeam[] {
+    @computed get beamAllChannels(): CARTA.IBeam[] {
         const channelNum = this.channelInfo?.indexes?.length;
         if (!channelNum) {
             return [];

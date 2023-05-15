@@ -386,12 +386,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const frame = this.effectiveFrame;
         if (frame) {
             let config: IntensityConfig = {nativeIntensityUnit: frame.headerUnit};
-            const beams = frame.beamPropertiesAllChannels;
+            const beams = frame.beamAllChannels;
             if (beams?.length) {
                 config["bmaj"] = beams.map(b => b?.majorAxis);
                 config["bmin"] = beams.map(b => b?.minorAxis);
                 if (frame.spectralAxis?.type?.code === "FREQ") {
-                    config["freqGHz"] = GetFreqInGHz(frame.spectralAxis.type.unit, frame.spectralAxis.value);
+                    config["freqGHz"] = frame.channelInfo?.values.map(x => GetFreqInGHz(frame.spectralAxis.type.unit, x));
                 }
             }
 
