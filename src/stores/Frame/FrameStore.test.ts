@@ -1,19 +1,6 @@
 import {CARTA} from "carta-protobuf";
 import {FrameInfo, FrameStore} from "stores";
 
-jest.mock("ast_wrapper", () => {
-    return {
-        fonts: [],
-        onReady: new Promise(() => {}),
-        emptyFitsChan: () => {},
-        getFrameFromFitsChan: () => {},
-        initDummyFrame: () => {},
-        putFits: () => {},
-        setColor: () => {},
-        geodesicDistance: () => {}
-    };
-});
-
 const stokesCubeframeInfo: FrameInfo = {
     fileId: 0,
     directory: "",
