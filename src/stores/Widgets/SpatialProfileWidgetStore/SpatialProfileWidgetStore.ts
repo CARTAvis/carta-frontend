@@ -35,7 +35,6 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: {minXVal: number; maxXVal: number; minYVal: number; maxYVal: number};
     readonly smoothingStore: ProfileSmoothingStore;
     @observable settingsTabId: SpatialProfilerSettingsTabs;
-    @observable lineRegionSampleWidth: number;
 
     @override setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -113,14 +112,15 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setLineRegionSampleWidth = (val: number) => {
-        this.lineRegionSampleWidth = val;
+        if (this.effectiveRegion) {
+            this.effectiveRegion.lineRegionSampleWidth = val;
+        }
     };
 
     constructor(coordinate: string = "x") {
         super(RegionsType.POINT_AND_LINES);
         makeObservable(this);
         // Describes which data is being visualised
-        this.lineRegionSampleWidth = 3;
         this.coordinate = coordinate;
         this.selectedStokes = DEFAULT_STOKES;
 
@@ -244,7 +244,7 @@ export class SpatialProfileWidgetStore extends RegionWidgetStore {
                 if (existingConfig) {
                     // TODO: Merge existing configs, rather than only allowing a single one
                 } else {
-                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, widgetStore.fullCoordinate, region, widgetStore.lineRegionSampleWidth));
+                    regionRequirements.spatialProfiles.push(SpatialProfileWidgetStore.GetSpatialConfig(frame, widgetStore.fullCoordinate, region, region.lineRegionSampleWidth));
                 }
             }
         });
