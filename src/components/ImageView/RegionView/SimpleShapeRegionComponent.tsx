@@ -538,12 +538,12 @@ export class SimpleShapeRegionComponent extends React.Component<SimpleShapeRegio
             strokeScaleEnabled: false,
             strokeWidth: (region.lineWidth * AppStore.Instance.imageRatio) / zoomLevel,
             width: ((region.size.x / devicePixelRatio) * frame.aspectRatio * AppStore.Instance.imageRatio) / zoomLevel || undefined,
-            height: ((region.size.y / devicePixelRatio) * frame.aspectRatio * AppStore.Instance.imageRatio) / zoomLevel || undefined,
+            height: ((region.size.y / devicePixelRatio) * AppStore.Instance.imageRatio) / zoomLevel || undefined,
             offsetX: frame.spatialReference
                 ? ((region.size.x / devicePixelRatio) * frame.aspectRatio * AppStore.Instance.imageRatio) / frame.spatialReference.zoomLevel / 2.0
                 : ((region.size.x / devicePixelRatio) * frame.aspectRatio * AppStore.Instance.imageRatio) / zoomLevel / 2.0,
             offsetY: frame.spatialReference
-                ? ((region.size.y / devicePixelRatio) * frame.aspectRatio * AppStore.Instance.imageRatio) / frame.spatialReference.zoomLevel / 2.0
+                ? ((region.size.y / devicePixelRatio) * AppStore.Instance.imageRatio) / frame.spatialReference.zoomLevel / 2.0
                 : ((region.size.y / devicePixelRatio) * AppStore.Instance.imageRatio) / zoomLevel / 2.0,
             align,
             verticalAlign,
