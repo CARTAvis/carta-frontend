@@ -316,6 +316,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
         const cursorPosImageSpace = this.getCursorPosImageSpace(mouseEvent.offsetX, mouseEvent.offsetY);
+        const frame = this.props.frame;
+        const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
 
         let dx = cursorPosImageSpace.x - this.regionStartPoint.x;
         let dy = cursorPosImageSpace.y - this.regionStartPoint.y;
@@ -333,8 +335,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             switch (this.creatingRegion.regionType) {
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ANNRECTANGLE:
-                case CARTA.RegionType.ANNTEXT:
                     this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
+                    break;
+                case CARTA.RegionType.ANNTEXT:
+                    this.creatingRegion.setControlPoints([center, {x: Math.abs((dx * zoomLevel) / AppStore.Instance.imageRatio), y: Math.abs((dy * zoomLevel) / AppStore.Instance.imageRatio)}]);
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
@@ -354,8 +358,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             switch (this.creatingRegion.regionType) {
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ANNRECTANGLE:
-                case CARTA.RegionType.ANNTEXT:
                     this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);
+                    break;
+                case CARTA.RegionType.ANNTEXT:
+                    this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs((dx * zoomLevel) / AppStore.Instance.imageRatio), y: 2 * Math.abs((dy * zoomLevel) / AppStore.Instance.imageRatio)}]);
                     break;
                 case CARTA.RegionType.ELLIPSE:
                 case CARTA.RegionType.ANNELLIPSE:
