@@ -275,14 +275,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                     <SafeNumericInput min={7} max={96} placeholder="Font size" value={title.fontSize} disabled={!title.visible} onValueChange={(value: number) => title.setFontSize(value)} />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom text" disabled={!title.visible}>
-                    <Switch
-                        checked={title.customText}
-                        disabled={!title.visible}
-                        onChange={ev => {
-                            title.setCustomText(ev.currentTarget.checked);
-                            appStore.activeFrame?.setTitleCustomText(appStore.activeFrame?.filename);
-                        }}
-                    />
+                    <Switch checked={title.customText} disabled={!title.visible} onChange={ev => title.setCustomText(ev.currentTarget.checked)} />
                 </FormGroup>
                 <Collapse isOpen={title.customText}>
                     <FormGroup inline={true} label="Text" labelInfo="(Current image only)" disabled={!title.visible}>
