@@ -1180,7 +1180,7 @@ export class FrameStore {
         this.moving = false;
         this.zooming = false;
         this.colorbarLabelCustomText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
-        this.titleCustomText = frameInfo.fileInfo.name;
+        this.titleCustomText = frameInfo?.fileInfo?.name;
         this.overlayBeamSettings = new OverlayBeamStore();
         this.spatialReference = null;
         this.spatialTransformAST = null;
