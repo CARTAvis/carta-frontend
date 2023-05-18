@@ -114,6 +114,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString += `, Title=${frame.titleCustomText}`;
             }
 
+            if (!settings.title.customText) {
+                currentStyleString += `, Title=${frame.filename}`;
+            }
+
             plot(currentStyleString);
 
             if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
