@@ -110,12 +110,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 currentStyleString = currentStyleString.replace(/System=.*?,/, "").replaceAll(/Format\(\d\)=.*?,/g, "");
             }
 
-            if (settings.title.customText && frame.titleCustomText?.length) {
-                currentStyleString += `, Title=${frame.titleCustomText}`;
-            } else if (settings.title.customText && frame.titleCustomText?.length === 0) {
-                currentStyleString += `, Title=${""}`;
-            } else {
+            if (!settings.title.customText) {
                 currentStyleString += `, Title=${frame.filename}`;
+            } else if (frame.titleCustomText?.length) {
+                currentStyleString += `, Title=${frame.titleCustomText}`;
+            } else {
+                currentStyleString += `, Title=${""}`;
             }
 
             plot(currentStyleString);
