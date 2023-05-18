@@ -67,7 +67,7 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
         if (exactMatch) {
             return normalizedMoment === normalizedQuery;
         } else {
-            return momentContent.tag.indexOf(normalizedQuery) >= 0;
+            return momentContent.tag.indexOf(normalizedQuery) === 0;
         }
     };
 
