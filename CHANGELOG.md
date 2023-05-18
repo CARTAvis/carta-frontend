@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Fixed the default title string in the image viewer ([#2168](https://github.com/CARTAvis/carta-frontend/issues/2168))
 
-
 ## [4.0.0-beta.1]
 
 ### Added
