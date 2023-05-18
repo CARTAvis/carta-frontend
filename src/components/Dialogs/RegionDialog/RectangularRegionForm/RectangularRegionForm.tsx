@@ -392,9 +392,9 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         // size
         const size = region.size;
         const sizeWCS = this.sizeWCS;
-        const sizeWidthInput = (
+        const sizeWidthInput = (isTextAnnotation: boolean = false) => (
             <CoordNumericInput
-                coord={region.coordinate}
+                coord={isTextAnnotation ? CoordinateMode.Image : region.coordinate}
                 inputType={InputType.Size}
                 value={size.x}
                 onChange={this.handleWidthChange}
@@ -404,9 +404,9 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 customPlaceholder="Width"
             />
         );
-        const sizeHeightInput = (
+        const sizeHeightInput = (isTextAnnotation: boolean = false) => (
             <CoordNumericInput
-                coord={region.coordinate}
+                coord={isTextAnnotation ? CoordinateMode.Image : region.coordinate}
                 inputType={InputType.Size}
                 value={size.y}
                 onChange={this.handleHeightChange}
@@ -418,6 +418,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         );
         const sizeInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
+        const isTextAnnotation = region.regionType === CARTA.RegionType.ANNTEXT;
         return (
             <div className="region-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
@@ -436,10 +437,10 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     {centerInputY}
                     <span className="info-string">{centerInfoString}</span>
                 </FormGroup>
-                <FormGroup label="Size" labelInfo={pxUnit} inline={true}>
-                    {sizeWidthInput}
-                    {sizeHeightInput}
-                    <span className="info-string">{sizeInfoString}</span>
+                <FormGroup label="Size" labelInfo={isTextAnnotation ? "(px)" : pxUnit} inline={true}>
+                    {sizeWidthInput(isTextAnnotation)}
+                    {sizeHeightInput(isTextAnnotation)}
+                    {!isTextAnnotation && <span className="info-string">{sizeInfoString}</span>}
                 </FormGroup>
                 <FormGroup label="Bottom-left" labelInfo={pxUnit} inline={true}>
                     {bottomLeftInputX}
