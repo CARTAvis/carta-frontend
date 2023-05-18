@@ -112,9 +112,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
             if (settings.title.customText && frame.titleCustomText?.length) {
                 currentStyleString += `, Title=${frame.titleCustomText}`;
-            }
-
-            if (!settings.title.customText) {
+            } else if (settings.title.customText && frame.titleCustomText?.length === 0) {
+                currentStyleString += `, Title=${""}`;
+            } else {
                 currentStyleString += `, Title=${frame.filename}`;
             }
 
