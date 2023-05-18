@@ -268,7 +268,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
         const titlePanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
-                    <Switch checked={title.visible} onChange={ev => title.setVisible(ev.currentTarget.checked)}/>
+                    <Switch checked={title.visible} onChange={ev => title.setVisible(ev.currentTarget.checked)} />
                 </FormGroup>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!title.visible}>
                     {this.fontSelect(title.visible, title.font, title.setFont)}
