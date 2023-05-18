@@ -169,7 +169,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const distanceMeasuringColor = frame.distanceMeasuring.color;
         const distanceMeasuringFontSize = frame.distanceMeasuring.fontSize;
         const distanceMeasuringLineWidth = frame.distanceMeasuring.lineWidth;
-        const title = frame.titleCustomText;
+        const title = this.props.overlaySettings.title.customText ? frame.titleCustomText : frame.filename;
         const ratio = AppStore.Instance.imageRatio;
         const titleStyleString = this.props.overlaySettings.title.styleString;
         const gridStyleString = this.props.overlaySettings.grid.styleString;
