@@ -120,8 +120,8 @@ export class ExecutionEntry {
     }
 
     private mapMacro = (parameter: any) => {
-        if (typeof parameter === "object" && parameter.macroVariable) {
-            const targetString = parameter.macroTarget ? `${parameter.macroTarget}.${parameter.macroVariable}` : parameter.macroVariable;
+        if (typeof parameter === "object" && parameter?.macroVariable) {
+            const targetString = parameter?.macroTarget ? `${parameter.macroTarget}.${parameter.macroVariable}` : parameter.macroVariable;
             return ExecutionEntry.GetTargetObject(AppStore.Instance, targetString);
         }
         return parameter;
