@@ -112,7 +112,7 @@ export class ExecutionEntry {
             } else {
                 target = target[targetEntry];
             }
-            if (target == null) {
+            if (target === null) {
                 return null;
             }
         }
