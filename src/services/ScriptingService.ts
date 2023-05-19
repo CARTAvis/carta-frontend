@@ -174,10 +174,11 @@ export class ScriptingService {
                 response: JSON.stringify(toJS(response))
             };
         } catch (err) {
+            console.error(err)
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: false,
-                message: err
+                message: err?.toString()
             };
         }
     };
