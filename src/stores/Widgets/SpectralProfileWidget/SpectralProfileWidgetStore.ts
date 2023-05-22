@@ -623,7 +623,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const frame = this.effectiveFrame;
 
         // Ignoring plotting lines when:
-        // 1. x cooridnate is channel
+        // 1. x coordinate is channel
         // 2. showing multiple profiles of different images in radio/optical velocity.(observation sources are not aligned now)
         const disablePlot = frame?.isCoordChannel || (frame?.isCoordVelocity && this.profileSelectionStore.isShowingProfilesOfMultiImages);
 
@@ -685,7 +685,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     frameRequirements.set(spectralConfig.regionId, regionRequirements);
                 }
 
-                // cooridnate & stats type
+                // coordinate & stats type
                 if (!regionRequirements.spectralProfiles) {
                     regionRequirements.spectralProfiles = [];
                 }

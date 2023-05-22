@@ -74,7 +74,7 @@ export class SpectralProfileSelectionStore {
     private genProfileLabel = (fileId: number, regionName: string, statsType: CARTA.StatsType, coordinate: string): {image: string; plot: string} => {
         return {
             image: AppStore.Instance.getFrameName(fileId),
-            plot: `${regionName}, Statistic ${StatsTypeString(statsType)}, Cooridnate ${POLARIZATION_LABELS.get(coordinate.slice(0, coordinate.length - 1))}`
+            plot: `${regionName}, Statistic ${StatsTypeString(statsType)}, Coordinate ${POLARIZATION_LABELS.get(coordinate.slice(0, coordinate.length - 1))}`
         };
     };
 
