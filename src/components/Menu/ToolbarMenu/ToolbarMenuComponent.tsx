@@ -1,12 +1,13 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Position} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Menu, Position} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
+import {AnnotationMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {RegionCreationMode} from "models";
 import {AppStore, WidgetsStore} from "stores";
@@ -105,6 +106,13 @@ export class ToolbarMenuComponent extends React.Component {
                 </i>
             </span>
         );
+
+        const annotationMenu = (
+            <Menu style={{padding: 0}}>
+                <AnnotationMenuComponent />
+            </Menu>
+        );
+
         return (
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
@@ -118,6 +126,13 @@ export class ToolbarMenuComponent extends React.Component {
                         );
                     })}
                 </ButtonGroup>
+
+                <ButtonGroup className={actionsClassName}>
+                    <Popover2 popoverClassName="annotation-menu" content={annotationMenu} position={Position.BOTTOM} minimal={true} disabled={regionButtonsDisabled}>
+                        <AnchorButton icon={"edit"} disabled={regionButtonsDisabled} />
+                    </Popover2>
+                </ButtonGroup>
+
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
                         const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);

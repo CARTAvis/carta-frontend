@@ -157,7 +157,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const annotationMenu = (
             <Menu style={{padding: 0}}>
-                <AnnotationMenuComponent frame={this.props.frame} />
+                <AnnotationMenuComponent />
             </Menu>
         );
 
