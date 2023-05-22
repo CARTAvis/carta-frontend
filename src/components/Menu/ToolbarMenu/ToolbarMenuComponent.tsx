@@ -128,9 +128,18 @@ export class ToolbarMenuComponent extends React.Component {
                 </ButtonGroup>
 
                 <ButtonGroup className={actionsClassName}>
-                    <Popover2 popoverClassName="annotation-menu" content={annotationMenu} position={Position.BOTTOM} minimal={true} disabled={regionButtonsDisabled}>
-                        <AnchorButton icon={"edit"} disabled={regionButtonsDisabled} />
-                    </Popover2>
+                    <Tooltip2
+                        content={
+                            <span>
+                                Create annotation <br /> <small>Click to select annotation type.</small>
+                            </span>
+                        }
+                        position={Position.BOTTOM}
+                    >
+                        <Popover2 popoverClassName="annotation-menu" content={annotationMenu} position={Position.BOTTOM} minimal={true} disabled={regionButtonsDisabled}>
+                            <AnchorButton icon={"edit"} disabled={regionButtonsDisabled} />
+                        </Popover2>
+                    </Tooltip2>
                 </ButtonGroup>
 
                 <ButtonGroup className={className}>
