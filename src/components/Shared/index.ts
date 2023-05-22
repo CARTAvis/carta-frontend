@@ -1,3 +1,4 @@
+export * from "./AnnotationMenu/AnnotationMenuComponent";
 export * from "./AutoColorPicker/AutoColorPickerComponent";
 export * from "./BiasContrastSelectComponent/BiasContrastSelectComponent";
 export * from "./ClearableNumericInput/ClearableNumericInputComponent";

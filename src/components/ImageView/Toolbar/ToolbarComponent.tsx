@@ -7,7 +7,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ImageViewComponent, ImageViewLayer} from "components";
-import {ExportImageMenuComponent} from "components/Shared";
+import {AnnotationMenuComponent, ExportImageMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {AppStore} from "stores";
 import {FrameStore, RegionMode, RegionStore} from "stores/Frame";
@@ -145,13 +145,19 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         );
         const tooltipPosition: PopoverPosition = "top";
 
+        //const annotationMenu = (
+        //    <Menu style={{padding: 0}}>
+        //        {Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
+        //            const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
+        //            const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
+        //            return <MenuItem icon={annotationIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
+        //        })}
+        //    </Menu>
+        //);
+
         const annotationMenu = (
             <Menu style={{padding: 0}}>
-                {Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
-                    const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-                    const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
-                    return <MenuItem icon={annotationIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
-                })}
+                <AnnotationMenuComponent frame={this.props.frame} />
             </Menu>
         );
 
