@@ -391,7 +391,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 config["bmin"] = frame.beamProperties.minorAxis;
                 if (frame.spectralAxis?.type?.code === "FREQ") {
                     config["freqGHz"] = GetFreqInGHz(frame.spectralAxis.type.unit, frame.spectralAxis.value);
-                } else if(frame.spectralAxis?.type?.code === "VRAD") {
+                } else if (frame.spectralAxis?.type?.code === "VRAD") {
                     const frequency = frequencyFromVelocity(frame.spectralAxis?.value, frame.restFreqStore?.headerRestFreq?.value);
                     config["freqGHz"] = GetFreqInGHz(frame.restFreqStore?.headerRestFreq?.unit, frequency);
                 }
