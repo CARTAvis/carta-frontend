@@ -1720,6 +1720,16 @@ export class AppStore {
                         viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords});
                     }
                 }
+
+                // Clear tiles of invisible matched images during animation
+                if (this.animatorStore?.serverAnimationActive) {
+                    for (const frame of this.activeFrame.spectralSiblings) {
+                        if (!this.visibleFrames.includes(frame)) {
+                            viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null});
+                        }
+                    }
+                }
+
                 throttledSetViews(viewUpdates);
             }
         });
