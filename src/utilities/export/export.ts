@@ -16,7 +16,7 @@ export function exportTsvFile(imageName: string, plotName: string, content: stri
     const a = document.createElement("a") as HTMLAnchorElement;
     a.href = dataURL;
 
-    a.download = `${imageName}-${plotName.replace(" ", "-")}-${getTimestamp()}.tsv`;
+    a.download = `${imageName.replace(" ", "__")}-${plotName.replace(" ", "-")}-${getTimestamp()}.tsv`;
     a.dispatchEvent(new MouseEvent("click"));
 
     return null;
