@@ -8,7 +8,7 @@ import {LineSettings, PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "com
 import {FindIntensityUnitType, GetFreqInGHz, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getAngleInRad, getColorForTheme, isAutoColor} from "utilities";
+import {clamp, frequencyFromVelocity, getAngleInRad, getColorForTheme, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -391,6 +391,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 config["bmin"] = frame.beamProperties.minorAxis;
                 if (frame.spectralAxis?.type?.code === "FREQ") {
                     config["freqGHz"] = GetFreqInGHz(frame.spectralAxis.type.unit, frame.spectralAxis.value);
+                } else if(frame.spectralAxis?.type?.code === "VRAD") {
+                    const frequency = frequencyFromVelocity(frame.spectralAxis?.value, frame.restFreqStore?.headerRestFreq?.value);
+                    config["freqGHz"] = GetFreqInGHz(frame.restFreqStore?.headerRestFreq?.unit, frequency);
                 }
             }
 
