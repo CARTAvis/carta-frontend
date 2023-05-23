@@ -1249,6 +1249,7 @@ export class AppStore {
                 const pvGeneratorWidgetStore = WidgetsStore.Instance.pvGeneratorWidgets.get(id);
                 if (pvGeneratorWidgetStore.previewFrame) {
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator = pvGeneratorWidgetStore.previewFrame.updatePreviewData(ack.previewData);
+                    pvGeneratorWidgetStore.setPvCutRegionId(message.regionId);
                     // The initial next() function call executes the FrameStore.updatePreviewData until the first yield keyword
                     pvGeneratorWidgetStore.previewFrame.updatePreviewDataGenerator.next();
                 } else {
