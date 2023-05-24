@@ -145,16 +145,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         );
         const tooltipPosition: PopoverPosition = "top";
 
-        //const annotationMenu = (
-        //    <Menu style={{padding: 0}}>
-        //        {Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
-        //            const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
-        //            const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
-        //            return <MenuItem icon={annotationIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
-        //        })}
-        //    </Menu>
-        //);
-
         const annotationMenu = (
             <Menu style={{padding: 0}}>
                 <AnnotationMenuComponent />
@@ -174,7 +164,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     return <MenuItem icon={regionIcon} text={text} onClick={() => this.handleRegionTypeClicked(type)} key={index} />;
                 })}
                 <MenuDivider></MenuDivider>
-                <MenuItem icon={"edit"} text={"Annotations"} popoverProps={popoverProps}>
+                <MenuItem icon={"annotation"} text={"Annotations"} popoverProps={popoverProps}>
                     {annotationMenu}
                 </MenuItem>
             </Menu>
@@ -305,8 +295,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             }
                                         >
                                             <AnchorButton
-                                                icon={frame.regionSet.isNewRegionAnnotation ? "edit" : regionIcon}
-                                                active={appStore.activeLayer === ImageViewLayer.RegionCreating}
+                                                icon={frame.regionSet.isNewRegionAnnotation ? "annotation" : regionIcon}
+                                                active={appStore.activeLayer === ImageViewLayer.RegionCreating || appStore.activeFrame.regionSet.mode === RegionMode.CREATING}
                                                 onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)}
                                             />
                                         </Tooltip2>
@@ -332,7 +322,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                                             </span>
                                         }
                                     >
-                                        <AnchorButton icon={frame.regionSet.isNewRegionAnnotation ? "edit" : regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
+                                        <AnchorButton icon={frame.regionSet.isNewRegionAnnotation ? "annotation" : regionIcon} onClick={() => this.handleActiveLayerClicked(ImageViewLayer.RegionCreating)} />
                                     </Tooltip2>
                                 )}
                                 <Tooltip2
