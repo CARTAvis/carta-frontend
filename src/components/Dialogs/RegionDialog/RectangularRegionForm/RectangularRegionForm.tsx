@@ -123,52 +123,57 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleWidthChange = (value: number): boolean => {
+    private handleWidthChange = (value: number, fixedScreenSize: boolean = false): boolean => {
         const existingValue = this.props.region.size.x;
+        const constant = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setSize({x: value, y: this.props.region.size.y});
+            this.props.region.setSize({x: value / constant, y: this.props.region.size.y});
             return true;
         }
         return false;
     };
 
-    private handleWidthWCSChange = (wcsString: string): boolean => {
+    private handleWidthWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
         const value = this.props.frame.getImageXValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = this.props.region.size.x;
+        const constant = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setSize({x: value, y: this.props.region.size.y});
+            this.props.region.setSize({x: value / constant, y: this.props.region.size.y});
             return true;
         }
         return false;
     };
 
-    private handleHeightChange = (value: number): boolean => {
+    private handleHeightChange = (value: number, fixedScreenSize: boolean = false): boolean => {
         const existingValue = this.props.region.size.y;
+        const constant = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setSize({x: this.props.region.size.x, y: value});
+            this.props.region.setSize({x: this.props.region.size.x, y: value / constant});
             return true;
         }
         return false;
     };
 
-    private handleHeightWCSChange = (wcsString: string): boolean => {
+    private handleHeightWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
         const value = this.props.frame.getImageYValueFromArcsec(getValueFromArcsecString(wcsString));
         const existingValue = this.props.region.size.y;
+        const constant = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
         if (isFinite(value) && value > 0 && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setSize({x: this.props.region.size.x, y: value});
+            this.props.region.setSize({x: this.props.region.size.x, y: value / constant});
             return true;
         }
         return false;
     };
 
-    private handleLeftValueChange = (value: number, existingValue: number): boolean => {
+    private handleLeftValueChange = (value: number, existingValue: number, fixedScreenSize: boolean = false): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const sizeDims = region.size;
+            const constant = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const sizeDims = scale2D(region.size, constant);
             const rightValue = centerPoint.x + sizeDims.x / 2.0;
             const newCenter = {x: (value + rightValue) / 2.0, y: centerPoint.y};
-            const newDims = {x: Math.abs(value - rightValue), y: sizeDims.y};
+            const newDims = {x: Math.abs(value - rightValue) / constant, y: sizeDims.y / constant};
             if (newDims.x > 0 && newDims.y > 0) {
                 region.setControlPoints([newCenter, newDims]);
                 return true;
@@ -177,29 +182,30 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleLeftChange = (value: number): boolean => {
+    private handleLeftChange = (value: number, fixedScreenSize: boolean = false): boolean => {
         const existingValue = this.bottomLeftPoint.x;
-        return this.handleLeftValueChange(value, existingValue);
+        return this.handleLeftValueChange(value, existingValue, fixedScreenSize);
     };
 
-    private handleLeftWCSChange = (wcsString: string): boolean => {
+    private handleLeftWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.bottomLeftWCS.y});
             const value = newPoint.x;
             const existingValue = this.bottomLeftPoint.x;
-            return this.handleLeftValueChange(value, existingValue);
+            return this.handleLeftValueChange(value, existingValue, fixedScreenSize);
         }
         return false;
     };
 
-    private handleBottomValueChange = (value: number, existingValue: number): boolean => {
+    private handleBottomValueChange = (value: number, existingValue: number, fixedScreenSize: boolean = false): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const sizeDims = region.size;
+            const constant = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const sizeDims = scale2D(region.size, constant);
             const topValue = centerPoint.y + sizeDims.y / 2.0;
             const newCenter = {x: centerPoint.x, y: (value + topValue) / 2.0};
-            const newDims = {x: sizeDims.x, y: Math.abs(value - topValue)};
+            const newDims = {x: sizeDims.x / constant, y: Math.abs(value - topValue) / constant};
             if (newDims.x > 0 && newDims.y > 0) {
                 region.setControlPoints([newCenter, newDims]);
                 return true;
@@ -208,29 +214,30 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleBottomChange = (value: number): boolean => {
+    private handleBottomChange = (value: number, fixedScreenSize: boolean = false): boolean => {
         const existingValue = this.bottomLeftPoint.y;
-        return this.handleBottomValueChange(value, existingValue);
+        return this.handleBottomValueChange(value, existingValue, fixedScreenSize);
     };
 
-    private handleBottomWCSChange = (wcsString: string): boolean => {
+    private handleBottomWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.bottomLeftWCS.x, y: wcsString});
             const value = newPoint.y;
             const existingValue = this.bottomLeftPoint.y;
-            return this.handleBottomValueChange(value, existingValue);
+            return this.handleBottomValueChange(value, existingValue, fixedScreenSize);
         }
         return false;
     };
 
-    private handleRightValueChange = (value: number, existingValue: number): boolean => {
+    private handleRightValueChange = (value: number, existingValue: number, fixedScreenSize: boolean = false): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const sizeDims = region.size;
+            const constant = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const sizeDims = scale2D(region.size, constant);
             const leftValue = centerPoint.x - sizeDims.x / 2.0;
             const newCenter = {x: (value + leftValue) / 2.0, y: centerPoint.y};
-            const newDims = {x: Math.abs(value - leftValue), y: sizeDims.y};
+            const newDims = {x: Math.abs(value - leftValue) / constant, y: sizeDims.y / constant};
             if (newDims.x > 0 && newDims.y > 0) {
                 region.setControlPoints([newCenter, newDims]);
                 return true;
@@ -239,29 +246,30 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleRightChange = (value: number): boolean => {
+    private handleRightChange = (value: number, fixedScreenSize: boolean = false): boolean => {
         const existingValue = this.topRightPoint.x;
-        return this.handleRightValueChange(value, existingValue);
+        return this.handleRightValueChange(value, existingValue, fixedScreenSize);
     };
 
-    private handleRightWCSChange = (wcsString: string): boolean => {
+    private handleRightWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeX)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: wcsString, y: this.topRightWCS.y});
             const value = newPoint.x;
             const existingValue = this.topRightPoint.x;
-            return this.handleRightValueChange(value, existingValue);
+            return this.handleRightValueChange(value, existingValue, fixedScreenSize);
         }
         return false;
     };
 
-    private handleTopValueChange = (value: number, existingValue: number): boolean => {
+    private handleTopValueChange = (value: number, existingValue: number, fixedScreenSize: boolean = false): boolean => {
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, RectangularRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const centerPoint = region.center;
-            const sizeDims = region.size;
+            const constant = fixedScreenSize ? AppStore.Instance.imageRatio / this.props.frame.zoomLevel : 1;
+            const sizeDims = scale2D(region.size, constant);
             const bottomValue = centerPoint.y - sizeDims.y / 2.0;
             const newCenter = {x: centerPoint.x, y: (value + bottomValue) / 2.0};
-            const newDims = {x: sizeDims.x, y: Math.abs(value - bottomValue)};
+            const newDims = {x: sizeDims.x / constant, y: Math.abs(value - bottomValue) / constant};
             if (newDims.x > 0 && newDims.y > 0) {
                 region.setControlPoints([newCenter, newDims]);
                 return true;
@@ -270,17 +278,17 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return false;
     };
 
-    private handleTopChange = (value: number): boolean => {
+    private handleTopChange = (value: number, fixedScreenSize: boolean = false): boolean => {
         const existingValue = this.topRightPoint.y;
-        return this.handleTopValueChange(value, existingValue);
+        return this.handleTopValueChange(value, existingValue, fixedScreenSize);
     };
 
-    private handleTopWCSChange = (wcsString: string): boolean => {
+    private handleTopWCSChange = (wcsString: string, fixedScreenSize: boolean = false): boolean => {
         if (isWCSStringFormatValid(wcsString, AppStore.Instance.overlayStore.numbers.formatTypeY)) {
             const newPoint = getPixelValueFromWCS(this.props.wcsInfo, {x: this.topRightWCS.x, y: wcsString});
             const value = newPoint.y;
             const existingValue = this.topRightPoint.y;
-            return this.handleTopValueChange(value, existingValue);
+            return this.handleTopValueChange(value, existingValue, fixedScreenSize);
         }
         return false;
     };
@@ -299,6 +307,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
         const region = this.props.region;
+        const isTextAnnotation = region.regionType === CARTA.RegionType.ANNTEXT;
         if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.RECTANGLE && region.regionType !== CARTA.RegionType.ANNRECTANGLE && region.regionType !== CARTA.RegionType.ANNTEXT)) {
             return null;
         }
@@ -334,24 +343,24 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         // bottom left
         const bottomLeftPoint = this.bottomLeftPoint;
         const bottomLeftWCSPoint = this.bottomLeftWCS;
-        const bottomLeftInputX = (
+        const bottomLeftInputX = (isTextAnnotation: boolean = false) => (
             <CoordNumericInput
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={bottomLeftPoint?.x}
-                onChange={this.handleLeftChange}
+                onChange={(value: number) => this.handleLeftChange(value, isTextAnnotation)}
                 valueWcs={bottomLeftWCSPoint?.x}
                 onChangeWcs={this.handleLeftWCSChange}
                 disabled={isRotated}
                 wcsDisabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
             />
         );
-        const bottomLeftInputY = (
+        const bottomLeftInputY = (isTextAnnotation: boolean = false) => (
             <CoordNumericInput
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={bottomLeftPoint?.y}
-                onChange={this.handleBottomChange}
+                onChange={(value: number) => this.handleBottomChange(value, isTextAnnotation)}
                 valueWcs={bottomLeftWCSPoint?.y}
                 onChangeWcs={this.handleBottomWCSChange}
                 disabled={isRotated}
@@ -363,24 +372,24 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         // top right
         const topRightPoint = this.topRightPoint;
         const topRightWCSPoint = this.topRightWCS;
-        const topRightInputX = (
+        const topRightInputX = (isTextAnnotation: boolean = false) => (
             <CoordNumericInput
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
                 value={topRightPoint?.x}
-                onChange={this.handleRightChange}
+                onChange={(value: number) => this.handleRightChange(value, isTextAnnotation)}
                 valueWcs={topRightWCSPoint?.x}
                 onChangeWcs={this.handleRightWCSChange}
                 disabled={isRotated}
                 wcsDisabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
             />
         );
-        const topRightInputY = (
+        const topRightInputY = (isTextAnnotation: boolean = false) => (
             <CoordNumericInput
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
                 value={topRightPoint?.y}
-                onChange={this.handleTopChange}
+                onChange={(value: number) => this.handleTopChange(value, isTextAnnotation)}
                 valueWcs={topRightWCSPoint?.y}
                 onChangeWcs={this.handleTopWCSChange}
                 disabled={isRotated}
@@ -390,14 +399,14 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const topRightInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(topRightWCSPoint)}` : `Image: ${Point2D.ToString(this.topRightPoint, "px", 3)}`;
 
         // size
-        const size = region.size;
+        const size = isTextAnnotation ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
         const sizeWCS = this.sizeWCS;
         const sizeWidthInput = (isTextAnnotation: boolean = false) => (
             <CoordNumericInput
                 coord={isTextAnnotation ? CoordinateMode.Image : region.coordinate}
                 inputType={InputType.Size}
                 value={size.x}
-                onChange={this.handleWidthChange}
+                onChange={(value: number) => this.handleWidthChange(value, isTextAnnotation)}
                 valueWcs={sizeWCS?.x}
                 onChangeWcs={this.handleWidthWCSChange}
                 wcsDisabled={!this.props.wcsInfo}
@@ -409,7 +418,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 coord={isTextAnnotation ? CoordinateMode.Image : region.coordinate}
                 inputType={InputType.Size}
                 value={size.y}
-                onChange={this.handleHeightChange}
+                onChange={(value: number) => this.handleHeightChange(value, isTextAnnotation)}
                 valueWcs={sizeWCS?.y}
                 onChangeWcs={this.handleHeightWCSChange}
                 wcsDisabled={!this.props.wcsInfo}
@@ -418,7 +427,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         );
         const sizeInfoString = region.coordinate === CoordinateMode.Image ? `WCS: ${WCSPoint2D.ToString(this.sizeWCS)}` : `Image: ${Point2D.ToString(size, "px", 3)}`;
         const pxUnit = region.coordinate === CoordinateMode.Image ? "(px)" : "";
-        const isTextAnnotation = region.regionType === CARTA.RegionType.ANNTEXT;
+
         return (
             <div className="region-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
@@ -443,13 +452,13 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     {!isTextAnnotation && <span className="info-string">{sizeInfoString}</span>}
                 </FormGroup>
                 <FormGroup label="Bottom-left" labelInfo={pxUnit} inline={true}>
-                    {bottomLeftInputX}
-                    {bottomLeftInputY}
+                    {bottomLeftInputX(isTextAnnotation)}
+                    {bottomLeftInputY(isTextAnnotation)}
                     <span className="info-string">{bottomLeftInfoString}</span>
                 </FormGroup>
                 <FormGroup label="Top-right" labelInfo={pxUnit} inline={true}>
-                    {topRightInputX}
-                    {topRightInputY}
+                    {topRightInputX(isTextAnnotation)}
+                    {topRightInputY(isTextAnnotation)}
                     <span className="info-string">{topRightInfoString}</span>
                 </FormGroup>
                 <FormGroup label="P.A." labelInfo="(deg)" inline={true}>
