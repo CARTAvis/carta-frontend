@@ -128,7 +128,7 @@ export class ToolbarMenuComponent extends React.Component {
                     <Tooltip2
                         content={
                             <span>
-                                Create annotation <br /> <small>Click to select annotation type.</small>
+                                Annotation <br /> <small>Click to select annotation type.</small>
                             </span>
                         }
                         position={Position.BOTTOM}
