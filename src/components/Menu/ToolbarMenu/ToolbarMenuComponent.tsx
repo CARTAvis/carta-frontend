@@ -125,9 +125,6 @@ export class ToolbarMenuComponent extends React.Component {
                             </Tooltip2>
                         );
                     })}
-                </ButtonGroup>
-
-                <ButtonGroup className={actionsClassName}>
                     <Tooltip2
                         content={
                             <span>
@@ -141,7 +138,6 @@ export class ToolbarMenuComponent extends React.Component {
                         </Popover2>
                     </Tooltip2>
                 </ButtonGroup>
-
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {
                         const widgetConfig = WidgetsStore.Instance.CARTAWidgets.get(widgetType);
