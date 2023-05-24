@@ -34,6 +34,7 @@ export class RegionStore {
     @observable locked: boolean = false;
     @observable isSimplePolygon: boolean;
     @observable activeFrame: FrameStore;
+    @observable lineRegionSampleWidth: number = 3;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
