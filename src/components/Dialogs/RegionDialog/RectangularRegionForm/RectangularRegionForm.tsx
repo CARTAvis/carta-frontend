@@ -9,7 +9,7 @@ import {CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputTyp
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore} from "stores";
 import {CoordinateMode, FrameStore, RegionStore, TextAnnotationStore, WCS_PRECISION} from "stores/Frame";
-import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid} from "utilities";
+import {closeTo, formattedArcsec, getFormattedWCSPoint, getPixelValueFromWCS, getValueFromArcsecString, isWCSStringFormatValid, scale2D} from "utilities";
 
 import "./RectangularRegionForm.scss";
 
@@ -22,7 +22,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         }
 
         const centerPoint = region.center;
-        const sizeDims = region.size;
+        const sizeDims = region.regionType === CARTA.RegionType.ANNTEXT ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
         return {x: centerPoint.x + sizeDims.x / 2.0, y: centerPoint.y + sizeDims.y / 2.0};
     }
 
@@ -33,7 +33,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         }
 
         const centerPoint = region.center;
-        const sizeDims = region.size;
+        const sizeDims = region.regionType === CARTA.RegionType.ANNTEXT ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
         return {x: centerPoint.x - sizeDims.x / 2.0, y: centerPoint.y - sizeDims.y / 2.0};
     }
 
