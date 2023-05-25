@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+* Changed the default title string in the image viewer ([#2168](https://github.com/CARTAvis/carta-frontend/issues/2168))
 ### Fixed
 * Fixed bug where line region computation width cannot be changed in spatial profile setting widget ([#2000](https://github.com/CARTAvis/carta-frontend/issues/2000)).
 * Fixed when multiple images are open, PV generator can only produce PV preview with live update for one of the images ([#2171](https://github.com/CARTAvis/carta-frontend/issues/2171)).
