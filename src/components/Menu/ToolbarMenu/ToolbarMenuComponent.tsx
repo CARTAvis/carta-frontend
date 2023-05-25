@@ -139,10 +139,6 @@ export class ToolbarMenuComponent extends React.Component {
                                 icon={"annotation"}
                                 disabled={regionButtonsDisabled}
                                 active={isRegionCreating === true && appStore.activeFrame.regionSet.isNewRegionAnnotation === true}
-                                onClick={() => {
-                                    appStore.activeFrame.regionSet.setNewRegionType(CARTA.RegionType.ANNPOINT);
-                                    appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
-                                }}
                             />
                         </Tooltip2>
                     </Popover2>
