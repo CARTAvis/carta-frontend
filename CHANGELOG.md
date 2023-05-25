@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Fixed bug where line region computation width cannot be changed in spatial profile setting widget ([#2000](https://github.com/CARTAvis/carta-frontend/issues/2000)).
 * Fixed when multiple images are open, PV generator can only produce PV preview with live update for one of the images ([#2171](https://github.com/CARTAvis/carta-frontend/issues/2171)).
+* Fixed line region anchor rotation degree when the image has non-square pixels ([#1732](https://github.com/CARTAvis/carta-frontend/issues/1732)).
 
 ## [4.0.0-beta.1]
 
