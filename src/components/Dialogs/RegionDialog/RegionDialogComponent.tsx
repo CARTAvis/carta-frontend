@@ -109,7 +109,7 @@ export class RegionDialogComponent extends React.Component {
                     break;
                 case CARTA.RegionType.ANNCOMPASS:
                 case CARTA.RegionType.ANNRULER:
-                    configurationPanel = <CompassRulerRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
+                    configurationPanel = <CompassRulerRegionForm region={region} frame={frame} wcsInfo={frame.validWcs ? frame.wcsInfoForTransformation : 0} />;
                     editableRegion = true;
                     break;
                 default:
