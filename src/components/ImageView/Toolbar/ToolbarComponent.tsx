@@ -146,7 +146,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const tooltipPosition: PopoverPosition = "top";
 
         const annotationMenu = (
-            <Menu>
+            <Menu style={{padding: 0}}>
                 <AnnotationMenuComponent />
             </Menu>
         );
