@@ -17,7 +17,7 @@ import "./ToolbarMenuComponent.scss";
 
 @observer
 export class ToolbarMenuComponent extends React.Component {
-    static handleRegionTypeClicked = (type: CARTA.RegionType) => {
+    handleRegionTypeClicked = (type: CARTA.RegionType) => {
         const appStore = AppStore.Instance;
         appStore.updateActiveLayer(ImageViewLayer.RegionCreating);
         appStore.activeFrame.regionSet.setNewRegionType(type);
@@ -109,7 +109,7 @@ export class ToolbarMenuComponent extends React.Component {
 
         const annotationMenu = (
             <Menu>
-                <AnnotationMenuComponent />
+                <AnnotationMenuComponent handleRegionTypeClicked={type => this.handleRegionTypeClicked(type)} />
             </Menu>
         );
 
@@ -121,7 +121,7 @@ export class ToolbarMenuComponent extends React.Component {
                         const regionIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={regionIconString as CustomIconName} /> : (regionIconString as IconName);
                         return (
                             <Tooltip2 content={this.regionTooltip(type)} position={Position.BOTTOM} key={index}>
-                                <AnchorButton icon={regionIcon} onClick={() => ToolbarMenuComponent.handleRegionTypeClicked(type)} active={isRegionCreating && newRegionType === type} disabled={regionButtonsDisabled} />
+                                <AnchorButton icon={regionIcon} onClick={() => this.handleRegionTypeClicked(type)} active={isRegionCreating && newRegionType === type} disabled={regionButtonsDisabled} />
                             </Tooltip2>
                         );
                     })}
