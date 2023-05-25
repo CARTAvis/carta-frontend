@@ -403,7 +403,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         const sizeWCS = this.sizeWCS;
         const sizeWidthInput = (isTextAnnotation: boolean = false) => (
             <CoordNumericInput
-                coord={isTextAnnotation ? CoordinateMode.Image : region.coordinate}
+                coord={region.coordinate}
                 inputType={InputType.Size}
                 value={size.x}
                 onChange={(value: number) => this.handleWidthChange(value, isTextAnnotation)}
@@ -415,7 +415,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         );
         const sizeHeightInput = (isTextAnnotation: boolean = false) => (
             <CoordNumericInput
-                coord={isTextAnnotation ? CoordinateMode.Image : region.coordinate}
+                coord={region.coordinate}
                 inputType={InputType.Size}
                 value={size.y}
                 onChange={(value: number) => this.handleHeightChange(value, isTextAnnotation)}
@@ -446,10 +446,10 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     {centerInputY}
                     <span className="info-string">{centerInfoString}</span>
                 </FormGroup>
-                <FormGroup label="Size" labelInfo={isTextAnnotation ? "(px)" : pxUnit} inline={true}>
+                <FormGroup label="Size" labelInfo={pxUnit} inline={true}>
                     {sizeWidthInput(isTextAnnotation)}
                     {sizeHeightInput(isTextAnnotation)}
-                    {!isTextAnnotation && <span className="info-string">{sizeInfoString}</span>}
+                    <span className="info-string">{sizeInfoString}</span>
                 </FormGroup>
                 <FormGroup label="Bottom-left" labelInfo={pxUnit} inline={true}>
                     {bottomLeftInputX(isTextAnnotation)}
