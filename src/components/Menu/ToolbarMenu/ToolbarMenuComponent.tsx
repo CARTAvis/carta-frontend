@@ -108,7 +108,7 @@ export class ToolbarMenuComponent extends React.Component {
         );
 
         const annotationMenu = (
-            <Menu style={{padding: 0}}>
+            <Menu>
                 <AnnotationMenuComponent />
             </Menu>
         );
@@ -126,7 +126,7 @@ export class ToolbarMenuComponent extends React.Component {
                         );
                     })}
 
-                    <Popover2 popoverClassName="annotation-menu" content={annotationMenu} position={Position.BOTTOM} minimal={true} disabled={regionButtonsDisabled}>
+                    <Popover2 content={annotationMenu} position={Position.BOTTOM_LEFT} minimal={true} disabled={regionButtonsDisabled}>
                         <Tooltip2
                             content={
                                 <span>
