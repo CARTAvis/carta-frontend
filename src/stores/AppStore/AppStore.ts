@@ -1657,6 +1657,15 @@ export class AppStore {
         }
         this.handleThemeChange(mediaQuery.matches);
 
+        // Add spellCheck="false" attribute in input and textarea elements
+        document.addEventListener("input", (ev: Event) => {
+            const target = ev.target;
+            const isInput = target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement);
+            if (isInput && target.getAttribute("spellCheck") !== "false") {
+                target.setAttribute("spellCheck", "false");
+            }
+        });
+
         // Display toasts when connection status changes
         autorun(() => {
             const newConnectionStatus = this.backendService.connectionStatus;
