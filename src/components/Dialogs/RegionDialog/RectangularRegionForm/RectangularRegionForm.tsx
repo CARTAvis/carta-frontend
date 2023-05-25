@@ -425,7 +425,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNTEXT && (
                     <FormGroup className="ann-text-input" label="Text" inline={true}>
-                        <TextArea placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} />
+                        <TextArea placeholder="Enter text annotation" value={(region as TextAnnotationStore).text} onChange={event => (region as TextAnnotationStore).setText(event.currentTarget.value)} spellCheck={false} />
                     </FormGroup>
                 )}
                 <FormGroup label="Coordinate" inline={true}>

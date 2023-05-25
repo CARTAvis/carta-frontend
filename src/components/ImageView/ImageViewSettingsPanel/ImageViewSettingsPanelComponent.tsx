@@ -279,7 +279,13 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={title.customText}>
                     <FormGroup inline={true} label="Text" labelInfo="(Current image only)" disabled={!title.visible}>
-                        <InputGroup disabled={!title.visible} value={appStore.activeFrame?.titleCustomText} placeholder="Enter title text" onChange={ev => appStore.activeFrame?.setTitleCustomText(ev.currentTarget.value)} />
+                        <InputGroup
+                            disabled={!title.visible}
+                            value={appStore.activeFrame?.titleCustomText}
+                            placeholder="Enter title text"
+                            onChange={ev => appStore.activeFrame?.setTitleCustomText(ev.currentTarget.value)}
+                            spellCheck={false}
+                        />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom color" disabled={!title.visible}>
@@ -472,10 +478,10 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                 </FormGroup>
                 <Collapse isOpen={labels.customText}>
                     <FormGroup inline={true} label="Label text (X)" disabled={!labels.visible}>
-                        <InputGroup disabled={!labels.visible} value={labels.customLabelX} placeholder="Enter label text" onChange={ev => labels.setCustomLabelX(ev.currentTarget.value)} />
+                        <InputGroup disabled={!labels.visible} value={labels.customLabelX} placeholder="Enter label text" onChange={ev => labels.setCustomLabelX(ev.currentTarget.value)} spellCheck={false} />
                     </FormGroup>
                     <FormGroup inline={true} label="Label text (Y)" disabled={!labels.visible}>
-                        <InputGroup disabled={!labels.visible} value={labels.customLabelY} placeholder="Enter label text" onChange={ev => labels.setCustomLabelY(ev.currentTarget.value)} />
+                        <InputGroup disabled={!labels.visible} value={labels.customLabelY} placeholder="Enter label text" onChange={ev => labels.setCustomLabelY(ev.currentTarget.value)} spellCheck={false} />
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom color" disabled={!labels.visible}>
@@ -586,6 +592,7 @@ export class ImageViewSettingsPanelComponent extends React.Component<WidgetProps
                             value={appStore.activeFrame?.colorbarLabelCustomText}
                             placeholder="Enter label text"
                             onChange={ev => appStore.activeFrame?.setColorbarLabelCustomText(ev.currentTarget.value)}
+                            spellCheck={false}
                         />
                     </FormGroup>
                 </Collapse>

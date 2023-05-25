@@ -485,7 +485,7 @@ export class FileBrowserDialogComponent extends React.Component {
             </Popover2>
         );
 
-        return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.saveFilename} onChange={this.handleSaveFileNameChanged} rightElement={fileTypeMenu} />;
+        return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.saveFilename} onChange={this.handleSaveFileNameChanged} rightElement={fileTypeMenu} spellCheck={false} />;
     }
 
     private renderOpenFilenameInput(browserMode: BrowserMode) {

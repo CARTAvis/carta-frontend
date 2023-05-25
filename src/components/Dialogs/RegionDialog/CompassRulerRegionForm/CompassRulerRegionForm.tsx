@@ -108,10 +108,20 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <>
                         <FormGroup label="North label" inline={true}>
-                            <InputGroup placeholder="Enter north label" value={(region as CompassAnnotationStore).northLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)} />
+                            <InputGroup
+                                placeholder="Enter north label"
+                                value={(region as CompassAnnotationStore).northLabel}
+                                onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)}
+                                spellCheck={false}
+                            />
                         </FormGroup>
                         <FormGroup label="East label" inline={true}>
-                            <InputGroup placeholder="Enter east label" value={(region as CompassAnnotationStore).eastLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)} />
+                            <InputGroup
+                                placeholder="Enter east label"
+                                value={(region as CompassAnnotationStore).eastLabel}
+                                onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)}
+                                spellCheck={false}
+                            />
                         </FormGroup>
                     </>
                 )}

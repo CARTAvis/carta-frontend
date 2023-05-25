@@ -134,6 +134,7 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                             placeholder="Click to filter"
                             value={controlHeader?.filter ?? ""}
                             onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, columnHeader.name)}
+                            spellCheck={false}
                         />
                     </Tooltip2>
                 </ColumnHeaderCell>
@@ -264,7 +265,14 @@ export class FilterableTableComponent extends React.Component<FilterableTableCom
                 <ColumnHeaderCell className={"column-name"} nameRenderer={nameRenderer} />
                 <ColumnHeaderCell isActive={controlheader?.filter !== ""}>
                     <Tooltip2 hoverOpenDelay={250} hoverCloseDelay={0} content={filterSyntax} position={Position.BOTTOM}>
-                        <InputGroup key={"column-popover-" + columnIndex} small={true} placeholder="Click to filter" value={controlheader?.filter ?? ""} onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)} />
+                        <InputGroup
+                            key={"column-popover-" + columnIndex}
+                            small={true}
+                            placeholder="Click to filter"
+                            value={controlheader?.filter ?? ""}
+                            onChange={ev => this.props.updateColumnFilter(ev.currentTarget.value, column.name)}
+                            spellCheck={false}
+                        />
                     </Tooltip2>
                 </ColumnHeaderCell>
             </ColumnHeaderCell>

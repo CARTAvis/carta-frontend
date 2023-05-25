@@ -132,7 +132,7 @@ export class CatalogQueryDialogComponent extends React.Component {
                 </FormGroup>
                 {isVizier ? (
                     <FormGroup inline={false} label="Keywords (catalog title)" disabled={disable} className={isVizier ? "vizier-key-words" : ""}>
-                        <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} />
+                        <InputGroup asyncControl={false} disabled={disable} onChange={event => configStore.setVizierKeyWords(event.target.value)} value={configStore.vizierKeyWords} spellCheck={false} />
                     </FormGroup>
                 ) : null}
                 <FormGroup inline={false} label="Object" disabled={disable}>
