@@ -425,19 +425,7 @@ export class FrameStore {
             const delta = getHeaderNumericValue(deltaHeader);
             if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
                 if (this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
-                    let beam: CARTA.IBeam;
-                    if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
-                        beam = this.frameInfo.beamTable[0];
-                    } else {
-                        if (this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.fileInfoExtended.stokes > 1) {
-                            beam = this.frameInfo.beamTable.find(beam => beam.channel === this.requiredChannel && beam.stokes === this.requiredStokes);
-                        } else if (this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.fileInfoExtended.stokes <= 1) {
-                            beam = this.frameInfo.beamTable.find(beam => beam.channel === this.requiredChannel);
-                        } else if (this.frameInfo.fileInfoExtended.depth <= 1 && this.frameInfo.fileInfoExtended.stokes > 1) {
-                            beam = this.frameInfo.beamTable.find(beam => beam.stokes === this.requiredStokes);
-                        }
-                    }
-
+                    const beam = this.getBeam(this.requiredChannel, this.requiredStokes);
                     if (beam && isFinite(beam.majorAxis) && beam.majorAxis > 0 && isFinite(beam.minorAxis) && beam.minorAxis > 0 && isFinite(beam.pa)) {
                         return {
                             x: beam.majorAxis / (unit === "deg" ? 3600 : (180 * 3600) / Math.PI) / Math.abs(delta),
@@ -453,6 +441,32 @@ export class FrameStore {
         }
         return null;
     }
+
+    @computed get beamAllChannels(): CARTA.IBeam[] {
+        const channelNum = this.channelInfo?.indexes?.length;
+        if (!channelNum) {
+            return [];
+        }
+
+        const beams = this.channelInfo.indexes.map(channelIndex => this.getBeam(channelIndex, this.requiredStokes));
+        return beams;
+    }
+
+    private getBeam = (channel: number, stokes: number): CARTA.IBeam => {
+        let beam: CARTA.IBeam;
+        if (this.frameInfo.beamTable.length === 1 && this.frameInfo.beamTable[0].channel === -1 && this.frameInfo.beamTable[0].stokes === -1) {
+            beam = this.frameInfo.beamTable[0];
+        } else {
+            if (this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.fileInfoExtended.stokes > 1) {
+                beam = this.frameInfo.beamTable.find(beam => beam.channel === channel && beam.stokes === stokes);
+            } else if (this.frameInfo.fileInfoExtended.depth > 1 && this.frameInfo.fileInfoExtended.stokes <= 1) {
+                beam = this.frameInfo.beamTable.find(beam => beam.channel === channel);
+            } else if (this.frameInfo.fileInfoExtended.depth <= 1 && this.frameInfo.fileInfoExtended.stokes > 1) {
+                beam = this.frameInfo.beamTable.find(beam => beam.stokes === stokes);
+            }
+        }
+        return beam;
+    };
 
     @computed get hasVisibleBeam(): boolean {
         return this.beamProperties?.overlayBeamSettings?.visible;
@@ -1180,7 +1194,7 @@ export class FrameStore {
         this.moving = false;
         this.zooming = false;
         this.colorbarLabelCustomText = this.requiredUnit === undefined || !this.requiredUnit.length ? "arbitrary units" : this.requiredUnit;
-        this.titleCustomText = "";
+        this.titleCustomText = frameInfo?.fileInfo?.name;
         this.overlayBeamSettings = new OverlayBeamStore();
         this.spatialReference = null;
         this.spatialTransformAST = null;

@@ -54,7 +54,7 @@ export class ExecutionEntry {
             }
             this.parameters = JSON.parse(substitutedParameterString);
         } catch (e) {
-            console.log(e);
+            console.error(e);
             return false;
         }
         return true;
@@ -88,15 +88,11 @@ export class ExecutionEntry {
         let target = baseObject;
         const targetNameArray = targetString.split(".");
 
-        console.log(targetNameArray);
-
         for (const targetEntry of targetNameArray) {
             const arrayRegex = /(\w+)(?:\[(\d+)])?/gm;
             const matches = arrayRegex.exec(targetEntry);
             // Check if there's an array index in this parameter
             if (matches && matches.length === 3 && matches[2] !== undefined) {
-                console.log(target);
-                console.log(matches);
                 target = target[matches[1]];
                 if (target == null) {
                     return null;
@@ -112,7 +108,7 @@ export class ExecutionEntry {
             } else {
                 target = target[targetEntry];
             }
-            if (target == null) {
+            if (target === null) {
                 return null;
             }
         }
@@ -120,8 +116,11 @@ export class ExecutionEntry {
     }
 
     private mapMacro = (parameter: any) => {
-        if (typeof parameter === "object" && parameter.macroVariable) {
-            const targetString = parameter.macroTarget ? `${parameter.macroTarget}.${parameter.macroVariable}` : parameter.macroVariable;
+        if (typeof parameter === "object" && parameter?.macroVariable) {
+            if (parameter.macroVariable === "undefined") {
+                return undefined;
+            }
+            const targetString = parameter?.macroTarget ? `${parameter.macroTarget}.${parameter.macroVariable}` : parameter.macroVariable;
             return ExecutionEntry.GetTargetObject(AppStore.Instance, targetString);
         }
         return parameter;
@@ -174,10 +173,11 @@ export class ScriptingService {
                 response: JSON.stringify(toJS(response))
             };
         } catch (err) {
+            console.error(err);
             return {
                 scriptingRequestId: requestMessage.scriptingRequestId,
                 success: false,
-                message: err
+                message: err?.toString()
             };
         }
     };
@@ -191,16 +191,14 @@ export class ScriptingService {
             try {
                 if (entry.async) {
                     // If entry is asynchronous, don't wait for it to complete before moving to the next entry
-                    const response = entry.execute();
-                    console.log(response);
+                    entry.execute();
                 } else {
-                    const response = await entry.execute();
-                    console.log(response);
+                    await entry.execute();
                     // TODO: more tests to see if this is really necessary
                     await ScriptingService.Delay(10);
                 }
             } catch (err) {
-                console.log(err);
+                console.error(err);
             }
         }
     };
