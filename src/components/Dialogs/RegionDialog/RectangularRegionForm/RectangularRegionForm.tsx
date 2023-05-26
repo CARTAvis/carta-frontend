@@ -408,7 +408,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 value={size.x}
                 onChange={(value: number) => this.handleWidthChange(value, isTextAnnotation)}
                 valueWcs={sizeWCS?.x}
-                onChangeWcs={this.handleWidthWCSChange}
+                onChangeWcs={(wcsValue: string) => this.handleWidthWCSChange(wcsValue, isTextAnnotation)}
                 wcsDisabled={!this.props.wcsInfo}
                 customPlaceholder="Width"
             />
@@ -420,7 +420,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 value={size.y}
                 onChange={(value: number) => this.handleHeightChange(value, isTextAnnotation)}
                 valueWcs={sizeWCS?.y}
-                onChangeWcs={this.handleHeightWCSChange}
+                onChangeWcs={(wcsValue: string) => this.handleHeightWCSChange(wcsValue, isTextAnnotation)}
                 wcsDisabled={!this.props.wcsInfo}
                 customPlaceholder="Height"
             />
