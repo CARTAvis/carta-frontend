@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed when multiple images are open, PV generator can only produce PV preview with live update for one of the images ([#2171](https://github.com/CARTAvis/carta-frontend/issues/2171)).
 * Fixed incorrect beam-related and frequency-related intensity unit conversions in the spectral profiler ([#2033](https://github.com/CARTAvis/carta-frontend/issues/2033)).
 * Fixed line region anchor rotation degree when the image has non-square pixels ([#1732](https://github.com/CARTAvis/carta-frontend/issues/1732)).
+* Fixed the blank screen when using layout with histogram widget ([#2178](https://github.com/CARTAvis/carta-frontend/issues/2178)).
 
 ## [4.0.0-beta.1]
 
