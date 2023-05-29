@@ -477,10 +477,9 @@ export class FrameStore {
             return undefined;
         }
         const N = this.frameInfo.fileInfoExtended.depth;
-        const indexes = new Array<number>(N);
-        const values = new Array<number>(N);
+        const indexes = Array.from({length: N}, (x, i) => i);
 
-        let getChannelIndexSimple = (value: number): number => {
+        const getChannelIndexSimple = (value: number): number => {
             if (!value && value !== 0) {
                 return null;
             }
@@ -498,6 +497,8 @@ export class FrameStore {
 
         // By default, we try to use the WCS information to determine channel info.
         if (this.spectralAxis) {
+            const values = new Array<number>(N);
+
             const refPixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.spectralNumber}`) !== -1);
             const refValHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${this.spectralNumber}`) !== -1);
             const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${this.spectralNumber}`) !== -1);
@@ -510,7 +511,6 @@ export class FrameStore {
                 if (isFinite(refPix) && isFinite(refVal) && isFinite(delta)) {
                     for (let i = 0; i < N; i++) {
                         const channelOffset = i - refPix;
-                        indexes[i] = i;
                         values[i] = channelOffset * delta + refVal;
                     }
                     return {
@@ -541,10 +541,8 @@ export class FrameStore {
         }
 
         // return channels
-        for (let i = 0; i < N; i++) {
-            indexes[i] = i;
-            values[i] = i;
-        }
+        const values = indexes.slice(0);
+
         return {
             fromWCS: false,
             delta: undefined,
