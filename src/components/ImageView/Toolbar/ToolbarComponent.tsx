@@ -147,7 +147,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const annotationMenu = (
             <Menu style={{padding: 0}}>
-                <AnnotationMenuComponent handleRegionTypeClicked={type => this.handleRegionTypeClicked(type)} />
+                <AnnotationMenuComponent handleRegionTypeClicked={this.handleRegionTypeClicked} />
             </Menu>
         );
 

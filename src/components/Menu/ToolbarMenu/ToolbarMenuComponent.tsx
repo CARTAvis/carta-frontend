@@ -109,7 +109,7 @@ export class ToolbarMenuComponent extends React.Component {
 
         const annotationMenu = (
             <Menu>
-                <AnnotationMenuComponent handleRegionTypeClicked={type => this.handleRegionTypeClicked(type)} />
+                <AnnotationMenuComponent handleRegionTypeClicked={this.handleRegionTypeClicked} />
             </Menu>
         );
 

@@ -9,14 +9,14 @@ interface AnnotationMenuComponentProps {
     handleRegionTypeClicked: (type: CARTA.RegionType) => void;
 }
 
-export const AnnotationMenuComponent: React.FC<AnnotationMenuComponentProps> = ({handleRegionTypeClicked}) => {
+export const AnnotationMenuComponent = ({handleRegionTypeClicked}: AnnotationMenuComponentProps) => {
     return (
-        <React.Fragment>
+        <>
             {Array.from(RegionStore.AVAILABLE_ANNOTATION_TYPES).map(([type, text], index) => {
                 const annotationIconString: IconName | CustomIconName = RegionStore.RegionIconString(type);
                 const annotationIcon = RegionStore.IsRegionCustomIcon(type) ? <CustomIcon icon={annotationIconString as CustomIconName} /> : (annotationIconString as IconName);
                 return <MenuItem icon={annotationIcon} text={text} onClick={() => handleRegionTypeClicked(type)} key={index} />;
             })}
-        </React.Fragment>
+        </>
     );
 };
