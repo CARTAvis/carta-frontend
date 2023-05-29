@@ -16,7 +16,7 @@ export function exportTsvFile(imageName: string, plotName: string, content: stri
     const a = document.createElement("a") as HTMLAnchorElement;
     a.href = dataURL;
 
-    a.download = `${imageName.replace(" ", "__")}-${plotName.replace(" ", "-")}-${getTimestamp()}.tsv`;
+    a.download = `${imageName.replaceAll(" ", "__")}-${plotName.replaceAll(" ", "-")}-${getTimestamp()}.tsv`;
     a.dispatchEvent(new MouseEvent("click"));
 
     return null;
@@ -29,7 +29,7 @@ export function exportTxtFile(fileName: string, content: string) {
     const a = document.createElement("a") as HTMLAnchorElement;
     a.href = dataURL;
 
-    a.download = `${fileName.replace(" ", "__")}.txt`;
+    a.download = `${fileName.replaceAll(" ", "__")}.txt`;
     a.dispatchEvent(new MouseEvent("click"));
 
     return null;
