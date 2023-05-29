@@ -501,7 +501,6 @@ export class FrameStore {
             return {
                 fromWCS: true,
                 indexes,
-                delta: undefined,
                 values,
                 getChannelIndexWCS: (value: number): number => {
                     if (!isFinite(value)) {
@@ -528,7 +527,6 @@ export class FrameStore {
 
         return {
             fromWCS: false,
-            delta: undefined,
             indexes,
             values,
             getChannelIndexWCS: null,
