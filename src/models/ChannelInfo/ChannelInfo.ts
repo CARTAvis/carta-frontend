@@ -3,7 +3,6 @@ export interface ChannelInfo {
     delta: number;
     indexes: number[];
     values: number[];
-    rawValues: number[];
     getChannelIndexWCS: (x: number) => number;
     getChannelIndexSimple: (x: number) => number;
 }

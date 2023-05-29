@@ -479,7 +479,6 @@ export class FrameStore {
         const N = this.frameInfo.fileInfoExtended.depth;
         const indexes = new Array<number>(N);
         const values = new Array<number>(N);
-        const rawValues = new Array<number>(N);
 
         let getChannelIndexSimple = (value: number): number => {
             if (!value && value !== 0) {
@@ -512,15 +511,13 @@ export class FrameStore {
                     for (let i = 0; i < N; i++) {
                         const channelOffset = i - refPix;
                         indexes[i] = i;
-                        rawValues[i] = channelOffset * delta + refVal;
-                        values[i] = rawValues[i];
+                        values[i] = channelOffset * delta + refVal;
                     }
                     return {
                         fromWCS: true,
                         indexes,
                         delta,
                         values,
-                        rawValues,
                         getChannelIndexWCS: (value: number): number => {
                             if (!value) {
                                 return null;
@@ -547,14 +544,12 @@ export class FrameStore {
         for (let i = 0; i < N; i++) {
             indexes[i] = i;
             values[i] = i;
-            rawValues[i] = i;
         }
         return {
             fromWCS: false,
             delta: undefined,
             indexes,
             values,
-            rawValues,
             getChannelIndexWCS: null,
             getChannelIndexSimple: getChannelIndexSimple
         };
@@ -581,7 +576,7 @@ export class FrameStore {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const restFreq = this.restFreqStore.restFreqInHz;
 
-                    const freqVal = channelInfo.rawValues[spectralInfo.channel];
+                    const freqVal = channelInfo.values[spectralInfo.channel];
                     // convert frequency value to unit in GHz
                     if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
                         const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
@@ -595,7 +590,7 @@ export class FrameStore {
                         spectralInfo.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
                     }
                 } else if (spectralType.code === "VRAD") {
-                    const velocityVal = channelInfo.rawValues[spectralInfo.channel];
+                    const velocityVal = channelInfo.values[spectralInfo.channel];
                     // convert velocity value to unit in km/s
                     if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
                         const volecityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
