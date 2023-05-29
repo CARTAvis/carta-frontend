@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed incorrect beam-related and frequency-related intensity unit conversions in the spectral profiler ([#2033](https://github.com/CARTAvis/carta-frontend/issues/2033)).
 * Fixed line region anchor rotation degree when the image has non-square pixels ([#1732](https://github.com/CARTAvis/carta-frontend/issues/1732)).
 * Fixed the blank screen when using layout with histogram widget ([#2178](https://github.com/CARTAvis/carta-frontend/issues/2178)).
+* Fixed the problem of resuming LEL images ([#1226](https://github.com/CARTAvis/carta-backend/issues/1226)).
 
 ## [4.0.0-beta.1]
 
