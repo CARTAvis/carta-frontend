@@ -495,49 +495,32 @@ export class FrameStore {
             return ceil - value < value - floor ? ceil : floor;
         };
 
-        // By default, we try to use the WCS information to determine channel info.
-        if (this.spectralAxis) {
-            const values = new Array<number>(N);
+        if (this.spectralAxis && this.wcsInfo3D) {
+            const values = this.getSpectralValuesInNativeWcs(indexes);
 
-            const refPixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.spectralNumber}`) !== -1);
-            const refValHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${this.spectralNumber}`) !== -1);
-            const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${this.spectralNumber}`) !== -1);
-
-            if (refPixHeader && refValHeader && deltaHeader) {
-                // Shift pixel coordinates by -1 to start at zero instead of 1
-                const refPix = getHeaderNumericValue(refPixHeader) - 1;
-                const refVal = getHeaderNumericValue(refValHeader);
-                const delta = getHeaderNumericValue(deltaHeader);
-                if (isFinite(refPix) && isFinite(refVal) && isFinite(delta)) {
-                    for (let i = 0; i < N; i++) {
-                        const channelOffset = i - refPix;
-                        values[i] = channelOffset * delta + refVal;
+            return {
+                fromWCS: true,
+                indexes,
+                delta: undefined,
+                values,
+                getChannelIndexWCS: (value: number): number => {
+                    if (!isFinite(value)) {
+                        return null;
                     }
-                    return {
-                        fromWCS: true,
-                        indexes,
-                        delta,
-                        values,
-                        getChannelIndexWCS: (value: number): number => {
-                            if (!value) {
-                                return null;
-                            }
 
-                            const index = (value - refVal) / delta + refPix;
-                            if (index < 0) {
-                                return 0;
-                            } else if (index > values.length - 1) {
-                                return values.length - 1;
-                            }
+                    const index = this.getSpectralIndexFromNativeWcs(value);
+                    if (index < 0) {
+                        return 0;
+                    } else if (index > values.length - 1) {
+                        return values.length - 1;
+                    }
 
-                            const ceil = Math.ceil(index);
-                            const floor = Math.floor(index);
-                            return Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ? ceil : floor;
-                        },
-                        getChannelIndexSimple: getChannelIndexSimple
-                    };
-                }
-            }
+                    const ceil = Math.ceil(index);
+                    const floor = Math.floor(index);
+                    return Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ? ceil : floor;
+                },
+                getChannelIndexSimple: getChannelIndexSimple
+            };
         }
 
         // return channels
@@ -1487,6 +1470,38 @@ export class FrameStore {
             name = ""; // Use the default axis label in AST
         }
         return name;
+    };
+
+    private getSpectralValuesInNativeWcs = (indexes: number[]): number[] => {
+        const refPix = this.getSpatialRefPix();
+
+        const N = indexes.length;
+        const xIndexes = new Float64Array(N).fill(refPix?.x);
+        const yIndexes = new Float64Array(N).fill(refPix?.y);
+        const zIndexes = new Float64Array(indexes);
+
+        const values = AST.transform3DPointArrays(this.wcsInfo3D, xIndexes, yIndexes, zIndexes);
+        return Array.from(values.z);
+    };
+
+    private getSpectralIndexFromNativeWcs = (index: number): number => {
+        const refPix = this.getSpatialRefPix();
+        const value = AST.transform3DPoint(this.wcsInfo3D, refPix?.x, refPix?.y, index, false);
+        return value.z;
+    };
+
+    private getSpatialRefPix = (): Point2D => {
+        const refXPixHeader = this.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.dirX}`) !== -1);
+        const refYPixHeader = this.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.dirY}`) !== -1);
+
+        if (refXPixHeader && refYPixHeader) {
+            // Shift pixel coordinates by -1 to start at zero instead of 1
+            const refXPix = getHeaderNumericValue(refXPixHeader) - 1;
+            const refYPix = getHeaderNumericValue(refYPixHeader) - 1;
+            return {x: refXPix, y: refYPix};
+        } else {
+            return {x: 0, y: 0};
+        }
     };
 
     private convertSpectral = (values: Array<number>): Array<number> => {

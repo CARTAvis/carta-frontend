@@ -113,6 +113,7 @@ Module.format = Module.cwrap("format", "string", ["number", "number", "number"])
 Module.unformat = Module.cwrap("unformat", "number", ["number", "number", "string", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
 Module.transform3D = Module.cwrap("transform3D", "number", ["number", "number", "number", "number", "number", "number"]);
+Module.transform3DArray = Module.cwrap("transform3DArray", "number", ["number", "number", "number", "number", "number", "number", "number"]);
 Module.spectralTransform = Module.cwrap("spectralTransform", "number", ["number", "string", "string", "string", "number", "number", "number", "number"]);
 Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
 Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
@@ -194,6 +195,37 @@ Module.transformPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn:
     Module._free(yInPtr);
     Module._free(xOutPtr);
     Module._free(yOutPtr);
+    return result;
+};
+
+Module.transform3DPointArrays = function (wcsInfo: number, xIn: Float64Array, yIn: Float64Array, zIn: Float64Array, forward: boolean = true) {
+    // Return empty array if arguments are invalid
+    if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || !(zIn instanceof Float64Array) || xIn.length !== yIn.length || yIn.length !== zIn.length) {
+        return {x: new Float64Array(1), y: new Float64Array(1), z: new Float64Array(1)};
+    }
+
+    // Allocate and assign WASM memory
+    const N = xIn.length;
+    const xInPtr = Module._malloc(N * 8);
+    const yInPtr = Module._malloc(N * 8);
+    const zInPtr = Module._malloc(N * 8);
+    const outPtr = Module._malloc(N * 8 * 3);
+    Module.HEAPF64.set(xIn, xInPtr / 8);
+    Module.HEAPF64.set(yIn, yInPtr / 8);
+    Module.HEAPF64.set(zIn, zInPtr / 8);
+
+    // Perform the AST transform
+    Module.transform3DArray(wcsInfo, N, xInPtr, yInPtr, zInPtr, forward, outPtr);
+
+    // Copy result out to an object
+    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, N * 3);
+    const result = {x: out.slice(0, N), y: out.slice(N, 2 * N), z: out.slice(2 * N, 3 * N)};
+
+    // Free WASM memory
+    Module._free(xInPtr);
+    Module._free(yInPtr);
+    Module._free(zInPtr);
+    Module._free(outPtr);
     return result;
 };
 
