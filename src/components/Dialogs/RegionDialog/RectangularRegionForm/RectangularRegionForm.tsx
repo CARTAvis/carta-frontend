@@ -343,7 +343,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         // bottom left
         const bottomLeftPoint = this.bottomLeftPoint;
         const bottomLeftWCSPoint = this.bottomLeftWCS;
-        const bottomLeftInputX = () => (
+        const bottomLeftInputX = (
             <CoordNumericInput
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
@@ -355,7 +355,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 wcsDisabled={!this.props.wcsInfo || !bottomLeftWCSPoint || isRotated}
             />
         );
-        const bottomLeftInputY = () => (
+        const bottomLeftInputY = (
             <CoordNumericInput
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
@@ -372,7 +372,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         // top right
         const topRightPoint = this.topRightPoint;
         const topRightWCSPoint = this.topRightWCS;
-        const topRightInputX = () => (
+        const topRightInputX = (
             <CoordNumericInput
                 coord={region.coordinate}
                 inputType={InputType.XCoord}
@@ -384,7 +384,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 wcsDisabled={!this.props.wcsInfo || !topRightWCSPoint || isRotated}
             />
         );
-        const topRightInputY = () => (
+        const topRightInputY = (
             <CoordNumericInput
                 coord={region.coordinate}
                 inputType={InputType.YCoord}
@@ -401,7 +401,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         // size
         const size = isTextAnnotation ? scale2D(region.size, AppStore.Instance.imageRatio / this.props.frame.zoomLevel) : region.size;
         const sizeWCS = this.sizeWCS;
-        const sizeWidthInput = () => (
+        const sizeWidthInput = (
             <CoordNumericInput
                 coord={region.coordinate}
                 inputType={InputType.Size}
@@ -413,7 +413,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                 customPlaceholder="Width"
             />
         );
-        const sizeHeightInput = () => (
+        const sizeHeightInput = (
             <CoordNumericInput
                 coord={region.coordinate}
                 inputType={InputType.Size}
@@ -447,18 +447,18 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
                     <span className="info-string">{centerInfoString}</span>
                 </FormGroup>
                 <FormGroup label="Size" labelInfo={pxUnit} inline={true}>
-                    {sizeWidthInput()}
-                    {sizeHeightInput()}
+                    {sizeWidthInput}
+                    {sizeHeightInput}
                     <span className="info-string">{sizeInfoString}</span>
                 </FormGroup>
                 <FormGroup label="Bottom-left" labelInfo={pxUnit} inline={true}>
-                    {bottomLeftInputX()}
-                    {bottomLeftInputY()}
+                    {bottomLeftInputX}
+                    {bottomLeftInputY}
                     <span className="info-string">{bottomLeftInfoString}</span>
                 </FormGroup>
                 <FormGroup label="Top-right" labelInfo={pxUnit} inline={true}>
-                    {topRightInputX()}
-                    {topRightInputY()}
+                    {topRightInputX}
+                    {topRightInputY}
                     <span className="info-string">{topRightInfoString}</span>
                 </FormGroup>
                 <FormGroup label="P.A." labelInfo="(deg)" inline={true}>
