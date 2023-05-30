@@ -499,28 +499,30 @@ export class FrameStore {
         if (this.spectralAxis && this.wcsInfo3D) {
             const values = this.getSpectralValuesInNativeWcs(indexes);
 
-            return {
-                fromWCS: true,
-                indexes,
-                values,
-                getChannelIndexWCS: (value: number): number => {
-                    if (!isFinite(value)) {
-                        return null;
-                    }
-
-                    const index = this.getSpectralIndexFromNativeWcs(value);
-                    if (index < 0) {
-                        return 0;
-                    } else if (index > values.length - 1) {
-                        return values.length - 1;
-                    }
-
-                    const ceil = Math.ceil(index);
-                    const floor = Math.floor(index);
-                    return Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ? ceil : floor;
-                },
-                getChannelIndexSimple: getChannelIndexSimple
-            };
+            if (values) {
+                return {
+                    fromWCS: true,
+                    indexes,
+                    values,
+                    getChannelIndexWCS: (value: number): number => {
+                        if (!isFinite(value)) {
+                            return null;
+                        }
+    
+                        const index = this.getSpectralIndexFromNativeWcs(value);
+                        if (index < 0) {
+                            return 0;
+                        } else if (index > values.length - 1) {
+                            return values.length - 1;
+                        }
+    
+                        const ceil = Math.ceil(index);
+                        const floor = Math.floor(index);
+                        return Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ? ceil : floor;
+                    },
+                    getChannelIndexSimple: getChannelIndexSimple
+                };
+            }
         }
 
         // return channels
@@ -1480,13 +1482,13 @@ export class FrameStore {
         const zIndexes = new Float64Array(indexes);
 
         const values = AST.transform3DPointArrays(this.wcsInfo3D, xIndexes, yIndexes, zIndexes);
-        return Array.from(values.z);
+        return Array.from(values?.z);
     };
 
     private getSpectralIndexFromNativeWcs = (index: number): number => {
         const refPix = this.getSpatialRefPix();
         const value = AST.transform3DPoint(this.wcsInfo3D, refPix?.x, refPix?.y, index, false);
-        return value.z;
+        return value?.z;
     };
 
     private getSpatialRefPix = (): Point2D => {
