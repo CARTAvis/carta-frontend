@@ -18,3 +18,16 @@ Object.defineProperty(window, "matchMedia", {
         dispatchEvent: () => {}
     })
 });
+
+jest.mock("ast_wrapper", () => {
+    return {
+        fonts: [],
+        onReady: new Promise(() => {}),
+        emptyFitsChan: () => {},
+        getFrameFromFitsChan: () => {},
+        initDummyFrame: () => {},
+        putFits: () => {},
+        setColor: () => {},
+        geodesicDistance: () => {}
+    };
+});

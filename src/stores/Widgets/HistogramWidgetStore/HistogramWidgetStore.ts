@@ -164,13 +164,13 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     resetBounds = () => {
         if (this.cachedMinPix === undefined) {
-            this.currentMinPix = this.effectiveFrame.renderConfig.histogramMin;
+            this.currentMinPix = this.effectiveFrame?.renderConfig.histogramMin;
         } else {
             this.currentMinPix = this.cachedMinPix;
         }
 
         if (this.cachedMaxPix === undefined) {
-            this.currentMaxPix = this.effectiveFrame.renderConfig.histogramMax;
+            this.currentMaxPix = this.effectiveFrame?.renderConfig.histogramMax;
         } else {
             this.currentMaxPix = this.cachedMaxPix;
         }
@@ -178,7 +178,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
 
     resetNumBins = () => {
         if (this.cachedNumBins === undefined) {
-            this.currentNumBins = this.effectiveFrame.renderConfig.histogram.numBins;
+            this.currentNumBins = this.effectiveFrame?.renderConfig.histogram.numBins;
         } else {
             this.currentNumBins = this.cachedNumBins;
         }
@@ -348,7 +348,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.maxPix = 0;
 
         // Initialize the maximum number of histogram bins on the slider
-        this.maxNumBins = this.effectiveFrame.renderConfig.histogram.numBins * 2;
+        this.maxNumBins = this.effectiveFrame?.renderConfig.histogram.numBins * 2;
 
         autorun(() => {
             // Update the config parameters

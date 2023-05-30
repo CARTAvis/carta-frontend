@@ -59,7 +59,7 @@ export class RegionWidgetStore {
     }
 
     @computed get isEffectiveFrameEqualToActiveFrame(): boolean {
-        return this.effectiveFrame && this.appStore.activeFrame.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId;
+        return this.effectiveFrame && this.appStore.activeFrame?.frameInfo.fileId === this.effectiveFrame.frameInfo.fileId;
     }
 
     @computed get effectiveRegionId(): number {
@@ -70,7 +70,7 @@ export class RegionWidgetStore {
             } else if (regionId === RegionId.NONE) {
                 return null;
             } else {
-                const selectedRegion = this.effectiveFrame.regionSet.selectedRegion;
+                const selectedRegion = this.effectiveFrame.regionSet?.selectedRegion;
                 if (selectedRegion) {
                     switch (this.type) {
                         case RegionsType.CLOSED:
