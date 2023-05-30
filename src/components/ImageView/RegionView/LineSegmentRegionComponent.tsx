@@ -270,7 +270,7 @@ export class LineSegmentRegionComponent extends React.Component<LineSegmentRegio
         const region = this.props.region;
         const frame = this.props.frame;
         const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
-        let rotation = -region.rotation + 90.0;
+        const rotation = frame.hasSquarePixels ? -region.rotation + 90.0 : (-Math.atan(Math.tan((region.rotation * Math.PI) / 180) * frame.aspectRatio) * 180) / Math.PI;
 
         let controlPoints = region.controlPoints;
         let centerPointCanvasSpace: Point2D;
