@@ -508,14 +508,14 @@ export class FrameStore {
                         if (!isFinite(value)) {
                             return null;
                         }
-    
+
                         const index = this.getSpectralIndexFromNativeWcs(value);
                         if (index < 0) {
                             return 0;
                         } else if (index > values.length - 1) {
                             return values.length - 1;
                         }
-    
+
                         const ceil = Math.ceil(index);
                         const floor = Math.floor(index);
                         return Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ? ceil : floor;
