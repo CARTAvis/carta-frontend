@@ -229,12 +229,14 @@ export class AppStore {
     *loadDefaultFiles() {
         const url = new URL(window.location.href);
         const folderSearchParam = url.searchParams.get("folder");
-        const workspaceSearchParam = url.searchParams.get("workspace");
+        const workspaceKeyParam = url.searchParams.get("key");
+        const workspaceNameParam = url.searchParams.get("workspace");
+        const hasWorkspaceParam = workspaceKeyParam || workspaceNameParam;
 
         // Load workspace first if it exists
-        if (workspaceSearchParam) {
+        if (hasWorkspaceParam) {
             try {
-                yield this.loadWorkspace(workspaceSearchParam);
+                yield this.loadWorkspace(workspaceKeyParam ?? workspaceNameParam, !!workspaceKeyParam);
             } catch (err) {
                 console.error(err);
             }
@@ -259,7 +261,7 @@ export class AppStore {
                     yield this.loadFile(folderSearchParam, file, "", false);
                 }
                 this.setLoadingMultipleFiles(false);
-            } else if (this.preferenceStore.autoLaunch && !workspaceSearchParam) {
+            } else if (this.preferenceStore.autoLaunch && !hasWorkspaceParam) {
                 if (folderSearchParam) {
                     this.fileBrowserStore.setStartingDirectory(folderSearchParam);
                 }
@@ -2188,11 +2190,11 @@ export class AppStore {
     };
 
     @flow.bound
-    public *loadWorkspace(name: string) {
+    public *loadWorkspace(name: string, isKey = false) {
         this.loadingWorkspace = true;
 
         try {
-            const workspace: Workspace = yield this.apiService.getWorkspace(name);
+            const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
             if (!workspace) {
                 this.loadingWorkspace = false;
                 AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
