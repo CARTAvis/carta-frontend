@@ -591,24 +591,24 @@ export class ApiService {
         return undefined;
     };
 
-    public setWorkspace = async (workspaceName: string, workspace: Workspace): Promise<boolean> => {
+    public setWorkspace = async (workspaceName: string, workspace: Workspace): Promise<Workspace | undefined> => {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace`;
                 const response = await this.axiosInstance.put(url, {workspaceName, workspace});
-                return response?.data?.success;
+                return response?.data?.workspace;
             } catch (err) {
                 console.log(err);
-                return false;
+                return undefined;
             }
         } else {
             try {
                 const obj = JSON.parse(localStorage.getItem("savedWorkspaces")) ?? {};
                 obj[workspaceName] = workspace;
                 localStorage.setItem("savedWorkspaces", JSON.stringify(obj));
-                return true;
+                return workspace;
             } catch (err) {
-                return false;
+                return undefined;
             }
         }
     };

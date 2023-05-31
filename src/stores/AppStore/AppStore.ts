@@ -123,6 +123,7 @@ export class AppStore {
     @observable contourDataSource: FrameStore;
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
+    @observable activeWorkspace: Workspace;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -856,6 +857,10 @@ export class AppStore {
                     }
                 }
 
+                if (!this.frames?.length) {
+                    this.activeWorkspace = undefined;
+                }
+
                 // TODO: check this
                 this.tileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
@@ -875,6 +880,7 @@ export class AppStore {
         this.clearSpectralReference();
         this.clearSpatialReference();
         this.clearRasterScalingReference();
+        this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
@@ -2313,6 +2319,7 @@ export class AppStore {
             }
 
             this.loadingWorkspace = false;
+            this.activeWorkspace = workspace;
             return true;
         } catch (err) {
             console.error(err);
@@ -2442,8 +2449,12 @@ export class AppStore {
         if (this.activeFrame) {
             workspace.selectedFile = this.activeFrameFileId;
         }
-
-        return this.apiService.setWorkspace(name, workspace);
+        const savedWorkspace = yield this.apiService.setWorkspace(name, workspace);
+        if (savedWorkspace) {
+            this.activeWorkspace = savedWorkspace;
+            return true;
+        }
+        return false;
     }
 
     async deleteWorkspace(name: string) {

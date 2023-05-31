@@ -64,3 +64,17 @@ export async function exportScreenshot(imageOnly = true, maxWidth = 512, format 
     }
     return undefined;
 }
+
+export async function copyToClipboard(value: string) {
+    if (navigator.clipboard) {
+        await navigator.clipboard.writeText(value);
+    } else {
+        const copyText = document.createElement("textarea");
+        copyText.value = value;
+        document.body.appendChild(copyText);
+        copyText.focus();
+        copyText.select();
+        document.execCommand("copy");
+        document.body.removeChild(copyText);
+    }
+}
