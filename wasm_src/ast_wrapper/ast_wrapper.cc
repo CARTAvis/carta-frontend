@@ -535,21 +535,14 @@ EMSCRIPTEN_KEEPALIVE int transform3D(AstSpecFrame* wcsinfo, double x, double y, 
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int transform3DArray(AstFrameSet* wcsinfo, int npoint, double x[], double y[], double z[], const int forward, double out[])
+EMSCRIPTEN_KEEPALIVE int transform3DArray(AstFrameSet* wcsinfo, int npoint, double in[], const int forward, double out[])
 {
     if (!wcsinfo)
     {
         return 1;
     }
 
-    double in[3][npoint];
-    memcpy(in[0], x, npoint * sizeof(double));
-    memcpy(in[1], y, npoint * sizeof(double));
-    memcpy(in[2], z, npoint * sizeof(double));
-    const double* inPtr = in[0];
-
-    astTranN(wcsinfo, npoint, 3, npoint, inPtr, forward, 3, npoint, out);
-    
+    astTranN(wcsinfo, npoint, 3, npoint, in, forward, 3, npoint, out);  
     if (!astOK)
     {
         astClearStatus;

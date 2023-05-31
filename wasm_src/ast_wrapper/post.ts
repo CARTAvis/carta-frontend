@@ -113,7 +113,7 @@ Module.format = Module.cwrap("format", "string", ["number", "number", "number"])
 Module.unformat = Module.cwrap("unformat", "number", ["number", "number", "string", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
 Module.transform3D = Module.cwrap("transform3D", "number", ["number", "number", "number", "number", "number", "number"]);
-Module.transform3DArray = Module.cwrap("transform3DArray", "number", ["number", "number", "number", "number", "number", "number", "number"]);
+Module.transform3DArray = Module.cwrap("transform3DArray", "number", ["number", "number", "number", "number", "number"]);
 Module.spectralTransform = Module.cwrap("spectralTransform", "number", ["number", "string", "string", "string", "number", "number", "number", "number"]);
 Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
 Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
@@ -206,16 +206,17 @@ Module.transform3DPointArrays = function (wcsInfo: number, xIn: Float64Array, yI
 
     // Allocate and assign WASM memory
     const N = xIn.length;
-    const xInPtr = Module._malloc(N * 8);
-    const yInPtr = Module._malloc(N * 8);
-    const zInPtr = Module._malloc(N * 8);
+    const inPtr = Module._malloc(N * 8 * 3);
+    const xInPtr = inPtr;
+    const yInPtr = xInPtr + 8 * N;
+    const zInPtr = yInPtr + 8 * N;
     const outPtr = Module._malloc(N * 8 * 3);
     Module.HEAPF64.set(xIn, xInPtr / 8);
     Module.HEAPF64.set(yIn, yInPtr / 8);
     Module.HEAPF64.set(zIn, zInPtr / 8);
 
     // Perform the AST transform
-    Module.transform3DArray(wcsInfo, N, xInPtr, yInPtr, zInPtr, forward, outPtr);
+    Module.transform3DArray(wcsInfo, N, inPtr, forward, outPtr);
 
     // Copy result out to an object
     const out = new Float64Array(Module.HEAPF64.buffer, outPtr, N * 3);
