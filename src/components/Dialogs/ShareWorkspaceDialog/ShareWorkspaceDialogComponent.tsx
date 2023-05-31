@@ -11,7 +11,7 @@ import {AppToaster, WarningToast} from "../../Shared";
 import "./ShareWorkspaceDialogComponent.scss";
 
 export const ShareWorkspaceDialogComponent = observer(() => {
-    const [shareKey, setShareKey] = React.useState<string>("test");
+    const [shareKey, setShareKey] = React.useState<string>("");
     const [isGeneratingLink, setIsGeneratingLink] = React.useState<boolean>(false);
     const [saveBeforeShare, setSaveBeforeShare] = React.useState<boolean>(false);
 

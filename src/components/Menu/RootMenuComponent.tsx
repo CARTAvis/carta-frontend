@@ -502,8 +502,7 @@ export class RootMenuComponent extends React.Component {
                         </Tooltip2>
                     </Popover2>
                 )}
-                {appStore.activeWorkspace && (
-                    //{ApiService.RuntimeConfig.apiAddress && appStore.activeWorkspace?.id && (
+                {ApiService.RuntimeConfig.apiAddress && appStore.activeWorkspace?.id && (
                     <Tooltip2
                         content={
                             <span>
