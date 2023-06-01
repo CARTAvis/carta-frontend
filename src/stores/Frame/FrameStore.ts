@@ -12,6 +12,9 @@ import {
     FrameView,
     FULL_POLARIZATIONS,
     GenCoordinateLabel,
+    GetFreqInGHz,
+    GetIntensityOptions,
+    IntensityConfig,
     IsSpectralSystemSupported,
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
@@ -54,6 +57,8 @@ import {
     clamp,
     formattedArcsec,
     formattedFrequency,
+    frequencyFromVelocity,
+    getAngleInRad,
     getFormattedWCSPoint,
     getHeaderNumericValue,
     getPixelSize,
@@ -626,6 +631,29 @@ export class FrameStore {
             return !!(axis1SpatialAxis2Spectral || axis1SpectralAxis2Spatial);
         }
         return false;
+    }
+
+    @computed get intensityConfig(): IntensityConfig {
+        let config: IntensityConfig = {nativeIntensityUnit: this.headerUnit};
+        const beams = this.beamAllChannels;
+        if (beams?.length) {
+            config["bmaj"] = beams.map(b => b?.majorAxis);
+            config["bmin"] = beams.map(b => b?.minorAxis);
+            if (this.spectralAxis?.type?.code === "FREQ") {
+                config["freqGHz"] = this.channelInfo?.values.map(x => GetFreqInGHz(this.spectralAxis.type.unit, x));
+            } else if (this.spectralAxis?.type?.code === "VRAD") {
+                config["freqGHz"] = this.channelInfo?.values.map(x => {
+                    const frequency = frequencyFromVelocity(x, this.restFreqStore?.headerRestFreq?.value);
+                    return GetFreqInGHz(this.restFreqStore?.headerRestFreq?.unit, frequency);
+                });
+            }
+        }
+
+        if (isFinite(this.pixelUnitSizeArcsec?.x) && isFinite(this.pixelUnitSizeArcsec?.y)) {
+            config["cdelta1"] = getAngleInRad(this.pixelUnitSizeArcsec.x);
+            config["cdelta2"] = getAngleInRad(this.pixelUnitSizeArcsec.y);
+        }
+        return config;
     }
 
     // Dir X axis number from the header
@@ -1786,6 +1814,10 @@ export class FrameStore {
         return null;
     };
 
+    @computed get commonIntensityUnitWithSpectralReference(): string[] {
+        return GetIntensityOptions(this.intensityConfig).filter(x => GetIntensityOptions(this.spectralReference?.intensityConfig).includes(x));
+    }
+
     public getRegion = (regionId: number): RegionStore => {
         return this.regionSet?.regions?.find(r => r.regionId === regionId);
     };
@@ -2673,7 +2705,7 @@ export class FrameStore {
         }
         console.log(`Setting spectral reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
-        if (!this.wcsInfo3D || !frame.wcsInfo3D || this.dirX !== frame.dirX || this.dirY !== frame.dirY || this.spectral !== frame.spectral) {
+        if (!this.wcsInfo3D || !frame.wcsInfo3D || this.dirX !== frame.dirX || this.dirY !== frame.dirY || this.spectral !== frame.spectral || !this.commonIntensityUnitWithSpectralReference.length) {
             console.log(`Error creating spectral transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. One of the files is missing spectral information, or at least one of axis numbers is not matched.`);
             this.spectralReference = null;
             return false;

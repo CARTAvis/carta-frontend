@@ -5,10 +5,10 @@ import tinycolor from "tinycolor2";
 
 import {SpectralProfilerSettingsTabs} from "components";
 import {LineSettings, PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {FindIntensityUnitType, GetFreqInGHz, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
+import {FindIntensityUnitType, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
-import {clamp, getAngleInRad, getColorForTheme, isAutoColor} from "utilities";
+import {clamp, getColorForTheme, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {
     NONE = 1,
@@ -385,21 +385,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @computed private get intensityConfig(): IntensityConfig {
         const frame = this.effectiveFrame;
         if (frame) {
-            let config: IntensityConfig = {nativeIntensityUnit: frame.headerUnit};
-            const beams = frame.beamAllChannels;
-            if (beams?.length) {
-                config["bmaj"] = beams.map(b => b?.majorAxis);
-                config["bmin"] = beams.map(b => b?.minorAxis);
-                if (frame.spectralAxis?.type?.code === "FREQ") {
-                    config["freqGHz"] = frame.channelInfo?.values.map(x => GetFreqInGHz(frame.spectralAxis.type.unit, x));
-                }
-            }
-
-            if (isFinite(frame.pixelUnitSizeArcsec?.x) && isFinite(frame.pixelUnitSizeArcsec?.y)) {
-                config["cdelta1"] = getAngleInRad(frame.pixelUnitSizeArcsec.x);
-                config["cdelta2"] = getAngleInRad(frame.pixelUnitSizeArcsec.y);
-            }
-            return config;
+            return frame.intensityConfig;
         }
         return undefined;
     }
@@ -409,7 +395,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get intensityOptions(): string[] {
-        return GetIntensityOptions(this.intensityConfig);
+        const frame = this.effectiveFrame;
+        if (frame.spectralReference && frame.commonIntensityUnitWithSpectralReference) {
+            return frame.commonIntensityUnitWithSpectralReference;
+        } else {
+            return GetIntensityOptions(this.intensityConfig);
+        }
     }
 
     @computed get profileNum(): number {
