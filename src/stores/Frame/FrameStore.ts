@@ -1485,10 +1485,12 @@ export class FrameStore {
         return Array.from(values?.z);
     };
 
-    private getSpectralIndexFromNativeWcs = (index: number): number => {
+    private getSpectralIndexFromNativeWcs = (value: number): number => {
         const refPix = this.getSpatialRefPix();
-        const value = AST.transform3DPoint(this.wcsInfo3D, refPix?.x, refPix?.y, index, false);
-        return value?.z;
+        const refValue = AST.transform3DPoint(this.wcsInfo3D, refPix?.x, refPix?.y, 0);
+
+        const index = AST.transform3DPoint(this.wcsInfo3D, refValue?.x, refValue?.y, value, false);
+        return index?.z;
     };
 
     private getSpatialRefPix = (): Point2D => {
