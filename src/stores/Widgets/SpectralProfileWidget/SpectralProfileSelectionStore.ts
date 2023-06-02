@@ -176,6 +176,7 @@ export class SpectralProfileSelectionStore {
         colorKey: string;
         label: {image: string; plot: string};
         comments: string[];
+        frame: FrameStore;
     }[] {
         let profiles = [];
         this.profileConfigs?.forEach(profileConfig => {
@@ -191,7 +192,8 @@ export class SpectralProfileSelectionStore {
                     data: profileData,
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label,
-                    comments: frame.getRegionProperties(profileConfig.regionId)
+                    comments: frame.getRegionProperties(profileConfig.regionId),
+                    frame
                 });
             }
         });

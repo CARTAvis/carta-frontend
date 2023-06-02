@@ -1814,8 +1814,16 @@ export class FrameStore {
         return null;
     };
 
-    @computed get commonIntensityUnitWithSpectralReference(): string[] {
-        return GetIntensityOptions(this.intensityConfig).filter(x => GetIntensityOptions(this.spectralReference?.intensityConfig).includes(x));
+    public commonIntensityUnitWith(frame: FrameStore | FrameStore[]): string[] {
+        if ((frame as FrameStore[]).length !== undefined) {
+            const intensityConfigArray = (frame as FrameStore[]).map(frame => GetIntensityOptions(frame.intensityConfig));
+            intensityConfigArray.push(GetIntensityOptions(this.intensityConfig));
+            return intensityConfigArray.reduce((prevFrameOptions, currentFrameOptions) => prevFrameOptions.filter(option => currentFrameOptions.includes(option)));
+        } else if (frame) {
+            return GetIntensityOptions(this.intensityConfig).filter(x => GetIntensityOptions((frame as FrameStore).intensityConfig).includes(x));
+        } else {
+            return GetIntensityOptions(this.intensityConfig);
+        }
     }
 
     public getRegion = (regionId: number): RegionStore => {
@@ -2705,7 +2713,7 @@ export class FrameStore {
         }
         console.log(`Setting spectral reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
-        if (!this.wcsInfo3D || !frame.wcsInfo3D || this.dirX !== frame.dirX || this.dirY !== frame.dirY || this.spectral !== frame.spectral || !this.commonIntensityUnitWithSpectralReference.length) {
+        if (!this.wcsInfo3D || !frame.wcsInfo3D || this.dirX !== frame.dirX || this.dirY !== frame.dirY || this.spectral !== frame.spectral || !this.commonIntensityUnitWith(frame).length) {
             console.log(`Error creating spectral transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. One of the files is missing spectral information, or at least one of axis numbers is not matched.`);
             this.spectralReference = null;
             return false;

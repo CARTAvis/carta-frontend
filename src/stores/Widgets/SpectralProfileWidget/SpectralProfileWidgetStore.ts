@@ -52,7 +52,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isHighlighted: boolean;
     @observable private spectralLinesMHz: SpectralLine[];
     @observable intensityUnit: string;
-    @observable intensityConversion: IntensityConversion;
 
     // style settings
     @observable plotType: PlotType;
@@ -109,7 +108,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action setIntensityUnit = (intensityUnitStr: string) => {
         if (IsIntensitySupported(intensityUnitStr)) {
             this.intensityUnit = intensityUnitStr;
-            this.intensityConversion = GetIntensityConversion(this.intensityConfig, this.intensityUnit);
         }
     };
 
@@ -336,14 +334,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
         this.keep = false;
 
-        this.intensityConversion = undefined;
-        this.setIntensityUnit(this.effectiveFrame?.headerUnit);
+        this.setIntensityUnit(this.effectiveFrame?.spectralReference?.headerUnit || this.effectiveFrame?.headerUnit);
 
         reaction(
             () => this.effectiveFrame,
             frame => {
                 if (frame) {
-                    this.setIntensityUnit(frame.headerUnit);
+                    this.setIntensityUnit(frame.spectralReference?.headerUnit || frame.headerUnit);
                 }
             }
         );
@@ -352,7 +349,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             () => this.effectiveFrame?.requiredPolarization,
             polarization => {
                 if (this.effectiveFrame && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
-                    this.setIntensityUnit(this.effectiveFrame.headerUnit);
+                    this.setIntensityUnit(this.effectiveFrame.spectralReference?.headerUnit || this.effectiveFrame.headerUnit);
                 }
             }
         );
@@ -396,8 +393,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get intensityOptions(): string[] {
         const frame = this.effectiveFrame;
-        if (frame.spectralReference && frame.commonIntensityUnitWithSpectralReference) {
-            return frame.commonIntensityUnitWithSpectralReference;
+        if (frame.spectralReference) {
+            // if the frame has a reference frame
+            return frame.spectralReference.commonIntensityUnitWith(frame.spectralSiblings);
+        } else if (frame.secondarySpectralImages) {
+            // if the frame is the reference frame for other frames
+            return frame.commonIntensityUnitWith(frame.secondarySpectralImages);
         } else {
             return GetIntensityOptions(this.intensityConfig);
         }
@@ -443,7 +444,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 labels.push(profile.label);
                 comments.push(profile.comments);
 
-                const intensityValues = this.intensityConversion ? this.intensityConversion(profile.data.values) : profile.data.values;
+                const intensityConversion: IntensityConversion = GetIntensityConversion(profile.frame?.intensityConfig, this.intensityUnit);
+                const intensityValues = intensityConversion ? intensityConversion(profile.data.values) : profile.data.values;
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
 
                 data.push(pointsAndProperties?.points ?? []);
@@ -481,7 +483,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let fittingData: {x: number[]; y: Float32Array | Float64Array};
         if (profiles.length === 1 && dataIndexes.length === 1) {
             let x = profiles[0].channelValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
-            const intensityValues = this.intensityConversion ? this.intensityConversion(profiles[0].data.values) : profiles[0].data.values;
+            const intensityConversion: IntensityConversion = GetIntensityConversion(profiles[0].frame?.intensityConfig, this.intensityUnit);
+            const intensityValues = intensityConversion ? intensityConversion(profiles[0].data.values) : profiles[0].data.values;
             let y = intensityValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE) {
                 const smoothedData = this.smoothingStore.getSmoothingValues(x, y);
