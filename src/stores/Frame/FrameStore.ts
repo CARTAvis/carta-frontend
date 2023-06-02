@@ -1073,7 +1073,7 @@ export class FrameStore {
     }
 
     // including standard and computed polarizations eg.[1, 2, 3, 4, 13, 14, 15, 16, 17]
-    @computed get polarizations(): number[] {
+    @computed get polarizations(): POLARIZATIONS[] {
         const polarizations = this.stokesOptions?.map(option => {
             return option.value;
         });
@@ -2224,6 +2224,29 @@ export class FrameStore {
         } else {
             this.vectorOverlayStore.setData(vectorOverlayData.intensityTiles, vectorOverlayData.angleTiles, vectorOverlayData.progress);
         }
+    }
+
+    @action setChannel = (channel: number, recursive: boolean = true) => {
+        this.setChannels(channel, this.requiredStokes, recursive);
+    };
+
+    @action setStokes = (stokes: POLARIZATIONS, recursive: boolean = false) => {
+        const stokesIndex = this.polarizations?.indexOf(stokes);
+        if (!isFinite(stokesIndex) || stokesIndex === -1) {
+            return;
+        }
+        this.setStokesByIndex(stokesIndex, recursive);
+    };
+
+    @action setStokesByIndex = (stokesIndex: number, recursive: boolean = false) => {
+        if (!isFinite(stokesIndex) || stokesIndex >= this.polarizations.length) {
+            return;
+        }
+    
+        const isComputedPolarization = stokesIndex >= this.frameInfo.fileInfoExtended.stokes;
+        // request standard polarization by the stokes index of image. (eg. "I": 0)
+        // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
+        this.setChannels(this.requiredChannel, isComputedPolarization ? this.polarizations[stokesIndex] : stokesIndex, recursive);
     }
 
     @action setChannels(channel: number, stokes: number, recursive: boolean) {
