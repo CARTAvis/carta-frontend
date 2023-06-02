@@ -8,8 +8,8 @@ import {FrameStore} from "stores/Frame";
 @observer
 export class SpectralSettingsComponent extends React.Component<{
     frame: FrameStore;
-    onSpectralCoordinateChange: (cooridnate: string) => void;
-    onSpectralCoordinateChangeSecondary?: (cooridnate: string) => void;
+    onSpectralCoordinateChange: (coordinate: string) => void;
+    onSpectralCoordinateChangeSecondary?: (coordinate: string) => void;
     onSpectralSystemChange: (system: string) => void;
     disable: boolean;
     disableChannelOption?: boolean;
