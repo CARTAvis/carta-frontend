@@ -2226,30 +2226,52 @@ export class FrameStore {
         }
     }
 
+    /**
+     * Sets the channel of the frame.
+     * @param channel - The channel index to set.
+     * @param recursive - Whether to update channels of spectrally matched frames. Default value is true.
+     */
     @action setChannel = (channel: number, recursive: boolean = true) => {
         this.setChannels(channel, this.requiredStokes, recursive);
     };
 
-    // required for carta-python
-    @action setStokes = (stokes: POLARIZATIONS, recursive: boolean = false) => {
-        const stokesIndex = this.polarizations?.indexOf(stokes);
-        if (!isFinite(stokesIndex) || stokesIndex === -1) {
+    /**
+     * Sets the Stokes parameter of the frame. Required for carta-python.
+     * If the provided `polarization` value is not found in the frame, the function will return without making any changes.
+     * @param polarization - The polarization value.
+     * @param recursive - Whether to update channels of spectrally matched frames. Default value is false.
+     */
+    @action setStokes = (polarization: POLARIZATIONS, recursive: boolean = false) => {
+        const polarizationIndex = this.polarizations?.indexOf(polarization);
+        if (!isFinite(polarizationIndex) || polarizationIndex === -1) {
             return;
         }
-        this.setStokesByIndex(stokesIndex, recursive);
+        this.setStokesByIndex(polarizationIndex, recursive);
     };
 
-    @action setStokesByIndex = (stokesIndex: number, recursive: boolean = false) => {
-        if (!isFinite(stokesIndex) || stokesIndex >= this.polarizations.length) {
+    /**
+     * Sets the Stokes parameter of the frame by the index.
+     * If the provided `polarizationIndex` is not a valid index or exceeds the range, the function will return without making any changes.
+     * @param polarizationIndex - The index of the polarization value.
+     * @param recursive - Whether to update channels of spectrally matched frames. Default value is false.
+     */
+    @action setStokesByIndex = (polarizationIndex: number, recursive: boolean = false) => {
+        if (!isFinite(polarizationIndex) || polarizationIndex >= this.polarizations.length) {
             return;
         }
 
-        const isComputedPolarization = stokesIndex >= this.frameInfo.fileInfoExtended.stokes;
+        const isComputedPolarization = polarizationIndex >= this.frameInfo.fileInfoExtended.stokes;
         // request standard polarization by the stokes index of image. (eg. "I": 0)
         // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
-        this.setChannels(this.requiredChannel, isComputedPolarization ? this.polarizations[stokesIndex] : stokesIndex, recursive);
+        this.setChannels(this.requiredChannel, isComputedPolarization ? this.polarizations[polarizationIndex] : polarizationIndex, recursive);
     };
 
+    /**
+     * Sets the channel and the Stokes parameter of the frame.
+     * @param channel - The channel index to set.
+     * @param stokes - The Stokes parameter to set. Standard polarization requires the polarization index (eg. "I": 0). Computed polarization requires the polarization value (eg. "Pangle": 17).
+     * @param recursive - Whether to update channels of spectrally matched frames.
+     */
     @action setChannels = (channel: number, stokes: number, recursive: boolean) => {
         if (stokes < 0) {
             stokes += this.frameInfo.fileInfoExtended.stokes;
