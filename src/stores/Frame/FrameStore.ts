@@ -2230,6 +2230,7 @@ export class FrameStore {
         this.setChannels(channel, this.requiredStokes, recursive);
     };
 
+    // required for carta-python
     @action setStokes = (stokes: POLARIZATIONS, recursive: boolean = false) => {
         const stokesIndex = this.polarizations?.indexOf(stokes);
         if (!isFinite(stokesIndex) || stokesIndex === -1) {
@@ -2242,14 +2243,14 @@ export class FrameStore {
         if (!isFinite(stokesIndex) || stokesIndex >= this.polarizations.length) {
             return;
         }
-    
+
         const isComputedPolarization = stokesIndex >= this.frameInfo.fileInfoExtended.stokes;
         // request standard polarization by the stokes index of image. (eg. "I": 0)
         // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
         this.setChannels(this.requiredChannel, isComputedPolarization ? this.polarizations[stokesIndex] : stokesIndex, recursive);
-    }
+    };
 
-    @action setChannels(channel: number, stokes: number, recursive: boolean) {
+    @action setChannels = (channel: number, stokes: number, recursive: boolean) => {
         if (stokes < 0) {
             stokes += this.frameInfo.fileInfoExtended.stokes;
         }
@@ -2279,9 +2280,9 @@ export class FrameStore {
         if (this.isSwappedZ) {
             this.updateSpectralVsDirectionWcs();
         }
-    }
+    };
 
-    @action incrementChannels(deltaChannel: number, deltaStokes: number, wrap: boolean = true) {
+    @action incrementChannels = (deltaChannel: number, deltaStokes: number, wrap: boolean = true) => {
         const depth = Math.max(1, this.frameInfo.fileInfoExtended.depth);
         const numStokes = Math.max(1, this.polarizations?.length);
 
@@ -2298,7 +2299,7 @@ export class FrameStore {
         // request standard polarization by the stokes index of image. (eg. "I": 0)
         // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
         this.setChannels(newChannel, isComputedPolarization ? this.polarizations[newStokes] : newStokes, true);
-    }
+    };
 
     @action setZoom = (zoom: number, absolute: boolean = false) => {
         if (this.spatialReference) {
@@ -2727,7 +2728,7 @@ export class FrameStore {
         this.spectralReference = frame;
         this.spectralReference.addSecondarySpectralImage(this);
         const matchedChannel = getTransformedChannel(frame.wcsInfo3D, this.wcsInfo3D, preferenceStore.spectralMatchingType, frame.requiredChannel);
-        this.setChannels(matchedChannel, this.requiredStokes, false);
+        this.setChannel(matchedChannel, false);
 
         // Align spectral settings to spectral reference
         this.setSpectralCoordinate(frame.spectralCoordinate, false);
