@@ -1477,20 +1477,26 @@ export class FrameStore {
         const refPix = this.getSpatialRefPix();
 
         const N = indexes.length;
-        const xIndexes = new Float64Array(N).fill(refPix?.x);
-        const yIndexes = new Float64Array(N).fill(refPix?.y);
-        const zIndexes = new Float64Array(indexes);
+        const xIndexes = this.spectral === 1 ? new Float64Array(indexes) : new Float64Array(N).fill(this.dirX === 1 ? refPix?.x : refPix?.y);
+        const yIndexes = this.spectral === 2 ? new Float64Array(indexes) : new Float64Array(N).fill(this.dirX === 2 ? refPix?.x : refPix?.y);
+        const zIndexes = this.spectral === 3 ? new Float64Array(indexes) : new Float64Array(N).fill(this.dirX === 3 ? refPix?.x : refPix?.y);
 
         const values = AST.transform3DPointArrays(this.wcsInfo3D, xIndexes, yIndexes, zIndexes);
-        return Array.from(values?.z);
+        return Array.from(this.spectral === 1 ? values?.x : this.spectral === 2 ? values?.y : values?.z);
     };
 
     private getSpectralIndexFromNativeWcs = (value: number): number => {
         const refPix = this.getSpatialRefPix();
-        const refValue = AST.transform3DPoint(this.wcsInfo3D, refPix?.x, refPix?.y, 0);
+        const xIndex = this.spectral === 1 ? 0 : this.dirX === 1 ? refPix?.x : refPix?.y;
+        const yIndex = this.spectral === 2 ? 0 : this.dirX === 2 ? refPix?.x : refPix?.y;
+        const zIndex = this.spectral === 3 ? 0 : this.dirX === 3 ? refPix?.x : refPix?.y;
+        const refValue = AST.transform3DPoint(this.wcsInfo3D, xIndex, yIndex, zIndex);
 
-        const index = AST.transform3DPoint(this.wcsInfo3D, refValue?.x, refValue?.y, value, false);
-        return index?.z;
+        const xValue = this.spectral === 1 ? value : this.dirX === 1 ? refValue?.x : refValue?.y;
+        const yValue = this.spectral === 2 ? value : this.dirX === 2 ? refValue?.x : refValue?.y;
+        const zValue = this.spectral === 3 ? value : this.dirX === 3 ? refValue?.x : refValue?.y;
+        const index = AST.transform3DPoint(this.wcsInfo3D, xValue, yValue, zValue, false);
+        return this.spectral === 1 ? index?.x : this.spectral === 2 ? index?.y : index?.z;
     };
 
     private getSpatialRefPix = (): Point2D => {
