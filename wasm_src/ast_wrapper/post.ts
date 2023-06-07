@@ -223,9 +223,7 @@ Module.transform3DPointArrays = function (wcsInfo: number, xIn: Float64Array, yI
     const result = {x: out.slice(0, N), y: out.slice(N, 2 * N), z: out.slice(2 * N, 3 * N)};
 
     // Free WASM memory
-    Module._free(xInPtr);
-    Module._free(yInPtr);
-    Module._free(zInPtr);
+    Module._free(inPtr);
     Module._free(outPtr);
     return result;
 };
