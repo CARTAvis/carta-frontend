@@ -146,7 +146,7 @@ class ProfileSelectionComponent extends React.Component<{profileSelectionStore: 
                     isActiveCategory={profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE}
                     itemOptions={profileSelectionStore.frameOptions}
                     itemSelected={[profileSelectionStore.selectedFrameWidgetFileId]}
-                    disabled={!frame || (frame.spectralReference && !frame.commonIntensityUnitWith(frame.spectralReference).length)}
+                    disabled={!frame}
                     isSelectingSpecificItem={profileSelectionStore.isSelectingActiveFrame}
                     onCategorySelect={() => {
                         profileSelectionStore.setActiveProfileCategory(profileSelectionStore.activeProfileCategory !== MultiProfileCategory.IMAGE ? MultiProfileCategory.IMAGE : MultiProfileCategory.NONE);

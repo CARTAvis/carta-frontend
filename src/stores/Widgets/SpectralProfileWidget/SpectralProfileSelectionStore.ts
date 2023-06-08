@@ -87,8 +87,13 @@ export class SpectralProfileSelectionStore {
                 const selectedCoordinate = this.selectedCoordinates[0];
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 if (this.activeProfileCategory === MultiProfileCategory.IMAGE && matchedFileIds?.includes(this.selectedFrameFileId)) {
+                    const appStore = AppStore.Instance;
+                    const matchedFrames = matchedFileIds.map(fildId => appStore.getFrame(fildId));
+
                     matchedFileIds.forEach(fileId => {
-                        if (profileConfigs.length < MAXIMUM_PROFILES) {
+                        const frame = appStore.getFrame(fileId);
+                        const hasCommonIntensityUnit = frame?.spectralReference && frame?.commonIntensityUnitWith(matchedFrames).length;
+                        if (profileConfigs.length < MAXIMUM_PROFILES && (hasCommonIntensityUnit || fileId === this.selectedFrameFileId)) {
                             profileConfigs.push({
                                 fileId: fileId,
                                 regionId: this.effectiveRegionId,
@@ -282,6 +287,13 @@ export class SpectralProfileSelectionStore {
                     active: frameNameOption.value === appStore.activeFrameFileId,
                     disabled: !frameNameOption.hasZAxis
                 });
+            });
+
+            const matchedFrames = appStore.spatialAndSpectalMatchedFileIds.map(fileId => appStore.getFrame(fileId));
+
+            options.forEach(option => {
+                const frame = appStore.getFrame(option.value as number);
+                option.label += frame.spectralReference && !frame.commonIntensityUnitWith(matchedFrames).length ? " (hidden)" : "";
             });
         } else {
             options = options.concat(
