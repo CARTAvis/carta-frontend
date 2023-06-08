@@ -2713,7 +2713,7 @@ export class FrameStore {
         }
         console.log(`Setting spectral reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
-        if (!this.wcsInfo3D || !frame.wcsInfo3D || this.dirX !== frame.dirX || this.dirY !== frame.dirY || this.spectral !== frame.spectral || !this.commonIntensityUnitWith(frame).length) {
+        if (!this.wcsInfo3D || !frame.wcsInfo3D || this.dirX !== frame.dirX || this.dirY !== frame.dirY || this.spectral !== frame.spectral) {
             console.log(`Error creating spectral transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. One of the files is missing spectral information, or at least one of axis numbers is not matched.`);
             this.spectralReference = null;
             return false;
@@ -2748,6 +2748,9 @@ export class FrameStore {
 
         // Align spectral settings to spectral reference
         this.setSpectralCoordinate(frame.spectralCoordinate, false);
+
+        // Set the intensity units to the intersection of spectrally matched frames
+        AppStore.Instance.widgetsStore.spectralProfileWidgets.forEach(store => store.setIntensityUnit(store.intensityOptions[0]));
 
         return true;
     };

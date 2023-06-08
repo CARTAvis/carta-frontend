@@ -7,7 +7,7 @@ import {SpectralProfilerSettingsTabs} from "components";
 import {LineSettings, PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {FindIntensityUnitType, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
-import {RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
+import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {clamp, getColorForTheme, isAutoColor} from "utilities";
 
 export enum MomentSelectingMode {
@@ -334,14 +334,21 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
         this.keep = false;
 
-        this.setIntensityUnit(this.effectiveFrame?.spectralReference?.headerUnit || this.effectiveFrame?.headerUnit);
+        this.setIntensityUnit(this.effectiveFrame?.headerUnit);
 
         reaction(
             () => this.effectiveFrame,
             frame => {
                 if (frame) {
-                    this.setIntensityUnit(frame.spectralReference?.headerUnit || frame.headerUnit);
+                    this.setIntensityUnit(frame.headerUnit);
                 }
+            }
+        );
+
+        reaction(
+            () => this.profileSelectionStore.activeProfileCategory,
+            () => {
+                this.setIntensityUnit(this.intensityOptions[0]);
             }
         );
 
@@ -349,7 +356,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             () => this.effectiveFrame?.requiredPolarization,
             polarization => {
                 if (this.effectiveFrame && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
-                    this.setIntensityUnit(this.effectiveFrame.spectralReference?.headerUnit || this.effectiveFrame.headerUnit);
+                    this.setIntensityUnit(this.effectiveFrame.headerUnit);
                 }
             }
         );
@@ -393,10 +400,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get intensityOptions(): string[] {
         const frame = this.effectiveFrame;
-        if (frame.spectralReference) {
+        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+        if (frame.spectralReference && isMultiProfileActive) {
             // if the frame has a reference frame
             return frame.spectralReference.commonIntensityUnitWith(frame.spectralSiblings);
-        } else if (frame.secondarySpectralImages) {
+        } else if (frame.secondarySpectralImages && isMultiProfileActive) {
             // if the frame is the reference frame for other frames
             return frame.commonIntensityUnitWith(frame.secondarySpectralImages);
         } else {
