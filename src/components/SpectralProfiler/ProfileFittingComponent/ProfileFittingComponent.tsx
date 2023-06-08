@@ -139,7 +139,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
         }
 
         const content = `${headerString}\n${this.props.fittingStore.resultLog}`;
-        const fileName = `Profile Fitting Result Log-${getTimestamp()}`;
+        const fileName = `Profile_Fitting_Result_Log-${getTimestamp()}`;
         exportTxtFile(fileName, content);
     };
 
