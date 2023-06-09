@@ -479,7 +479,7 @@ export class AppStore {
         return frameMap;
     }
 
-    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, lelExpr: boolean, hdu: string, generated: boolean = false, setAsActive: boolean = true): boolean => {
+    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, lelExpr: boolean, hdu: string, generated: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true): boolean => {
         if (!ack) {
             return false;
         }
@@ -551,7 +551,10 @@ export class AppStore {
                 this.setSpectralMatchingEnabled(newFrame, true);
             }
         }
-        this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
+
+        if (updateStartingDirectory) {
+            this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
+        }
 
         return true;
     };
@@ -588,7 +591,7 @@ export class AppStore {
     };
 
     @flow.bound
-    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true) {
+    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         this.startFileLoading();
 
         if (imageArithmetic) {
@@ -621,7 +624,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.loadFile(path, filename, hdu, this.fileCounter, imageArithmetic);
             this.fileCounter++;
-            if (!this.addFrame(ack, path, imageArithmetic, hdu, setAsActive)) {
+            if (!this.addFrame(ack, path, imageArithmetic, hdu, false, setAsActive, updateStartingDirectory)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
@@ -684,10 +687,10 @@ export class AppStore {
      * @return {Promise<FrameStore>} [async] the FrameStore the opened file
      */
     @flow.bound
-    *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true) {
+    *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive);
+        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
     }
 
     /**
@@ -699,9 +702,9 @@ export class AppStore {
      * @return {Promise<FrameStore>} [async] the FrameStore of the opened file
      */
     @flow.bound
-    *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) {
+    *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean, updateStartingDirectory: boolean = true) {
         this.removeAllFrames();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic);
+        return yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
     }
 
     @flow.bound
