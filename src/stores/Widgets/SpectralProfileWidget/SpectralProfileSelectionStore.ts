@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
-import {LineKey, LineOption, POLARIZATION_LABELS, POLARIZATIONS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
+import {GetIntensityOptions, LineKey, LineOption, POLARIZATION_LABELS, POLARIZATIONS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/Widgets";
@@ -88,11 +88,13 @@ export class SpectralProfileSelectionStore {
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 if (this.activeProfileCategory === MultiProfileCategory.IMAGE && matchedFileIds?.includes(this.selectedFrameFileId)) {
                     const appStore = AppStore.Instance;
-                    const matchedFrames = matchedFileIds.map(fildId => appStore.getFrame(fildId));
+                    // const matchedFrames = matchedFileIds.map(fildId => appStore.getFrame(fildId));
+                    console.log(matchedFileIds, this.selectedFrame.commonIntensityUnitWith(this.selectedFrame));
 
                     matchedFileIds.forEach(fileId => {
                         const frame = appStore.getFrame(fileId);
-                        const hasCommonIntensityUnit = frame?.spectralReference && frame?.commonIntensityUnitWith(matchedFrames).length;
+                        const hasCommonIntensityUnit = GetIntensityOptions(frame.intensityConfig).includes(this.widgetStore.intensityUnit);
+                        // const hasCommonIntensityUnit = frame?.spectralReference && frame?.commonIntensityUnitWith(this.selectedFrame || appStore.activeFrame).length;
                         if (profileConfigs.length < MAXIMUM_PROFILES && (hasCommonIntensityUnit || fileId === this.selectedFrameFileId)) {
                             profileConfigs.push({
                                 fileId: fileId,
@@ -289,11 +291,11 @@ export class SpectralProfileSelectionStore {
                 });
             });
 
-            const matchedFrames = appStore.spatialAndSpectalMatchedFileIds.map(fileId => appStore.getFrame(fileId));
+            // const matchedFrames = appStore.spatialAndSpectalMatchedFileIds.map(fileId => appStore.getFrame(fileId));
 
             options.forEach(option => {
                 const frame = appStore.getFrame(option.value as number);
-                option.label += frame.spectralReference && !frame.commonIntensityUnitWith(matchedFrames).length ? " (hidden)" : "";
+                option.label += !GetIntensityOptions(frame.intensityConfig).includes(this.widgetStore.intensityUnit) ? " (hidden)" : "";
             });
         } else {
             options = options.concat(

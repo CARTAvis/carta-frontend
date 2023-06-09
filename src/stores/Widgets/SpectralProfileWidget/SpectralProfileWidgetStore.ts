@@ -106,9 +106,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setIntensityUnit = (intensityUnitStr: string) => {
-        if (IsIntensitySupported(intensityUnitStr)) {
-            this.intensityUnit = intensityUnitStr;
-        }
+        this.intensityUnit = intensityUnitStr;
     };
 
     @action selectMomentRegion = (regionId: number) => {
@@ -340,7 +338,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             () => this.effectiveFrame,
             frame => {
                 if (frame) {
-                    this.setIntensityUnit(frame.headerUnit);
+                    this.setIntensityUnit(GetIntensityConversion(frame?.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
                 }
             }
         );
@@ -401,7 +399,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @computed get intensityOptions(): string[] {
         const frame = this.effectiveFrame;
         const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
-        if (frame.spectralReference && isMultiProfileActive) {
+        if (frame?.spectralReference && isMultiProfileActive) {
             // if the frame has a reference frame
             return frame.spectralReference.commonIntensityUnitWith(frame.spectralSiblings);
         } else if (frame.secondarySpectralImages && isMultiProfileActive) {
