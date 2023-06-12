@@ -1659,12 +1659,12 @@ export class AppStore {
         }
         this.handleThemeChange(mediaQuery.matches);
 
-        // Add spellCheck="false" attribute in input and textarea elements
+        // Add spellcheck="false" in input elements with no spellcheck attribute
         document.addEventListener("input", (ev: Event) => {
             const target = ev.target;
-            const isInput = target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement);
-            if (isInput && target.getAttribute("spellCheck") !== "false") {
-                target.setAttribute("spellCheck", "false");
+            const isInput = target && target instanceof HTMLInputElement;
+            if (isInput && !target.getAttribute("spellcheck")) {
+                target.setAttribute("spellcheck", "false");
             }
         });
 
