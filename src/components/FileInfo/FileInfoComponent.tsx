@@ -441,7 +441,6 @@ export class FileInfoComponent extends React.Component<{
                             rightElement={searchIter}
                             onChange={this.handleSearchStringChanged}
                             onKeyDown={ev => this.handleClickMatched(1, ev)}
-                            spellCheck={false}
                         />
                     }
                 >

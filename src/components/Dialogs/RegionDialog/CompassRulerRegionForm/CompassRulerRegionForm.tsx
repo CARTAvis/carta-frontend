@@ -115,25 +115,15 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         return (
             <div className="region-form">
                 <FormGroup label="Annotation name" inline={true}>
-                    <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} spellCheck={false} />
+                    <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <>
                         <FormGroup label="North label" inline={true}>
-                            <InputGroup
-                                placeholder="Enter north label"
-                                value={(region as CompassAnnotationStore).northLabel}
-                                onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)}
-                                spellCheck={false}
-                            />
+                            <InputGroup placeholder="Enter north label" value={(region as CompassAnnotationStore).northLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, true)} />
                         </FormGroup>
                         <FormGroup label="East label" inline={true}>
-                            <InputGroup
-                                placeholder="Enter east label"
-                                value={(region as CompassAnnotationStore).eastLabel}
-                                onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)}
-                                spellCheck={false}
-                            />
+                            <InputGroup placeholder="Enter east label" value={(region as CompassAnnotationStore).eastLabel} onChange={event => (region as CompassAnnotationStore).setLabel(event.currentTarget.value, false)} />
                         </FormGroup>
                     </>
                 )}

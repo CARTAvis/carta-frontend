@@ -89,16 +89,7 @@ export class SaveSnippetDialogComponent extends React.Component<SaveSnippetDialo
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Name" className="snippet-save-dialog-formgroup">
-                        <InputGroup
-                            className="snippet-name-input"
-                            fill={true}
-                            placeholder="Enter snippet name"
-                            value={snippetStore.activeSnippetName}
-                            autoFocus={true}
-                            onChange={this.handleInput}
-                            onKeyDown={this.handleKeyDown}
-                            spellCheck={false}
-                        />
+                        <InputGroup className="snippet-name-input" fill={true} placeholder="Enter snippet name" value={snippetStore.activeSnippetName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown} />
                     </FormGroup>
                     <FormGroup inline={true} label="Categories" className="snippet-save-dialog-formgroup">
                         <TagInput
