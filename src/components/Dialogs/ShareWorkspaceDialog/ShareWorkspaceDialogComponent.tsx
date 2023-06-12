@@ -17,6 +17,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
 
     const appStore = AppStore.Instance;
     const {shareWorkspaceDialogVisible, hideShareWorkspaceDialog} = appStore.dialogStore;
+    const {activeWorkspace} = appStore;
 
     const dialogProps: DialogProps = {
         icon: "share",
@@ -30,7 +31,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     };
 
     const handleGenerateClicked = async () => {
-        if (!appStore.activeWorkspace.id) {
+        if (!activeWorkspace?.id) {
             return;
         }
 
@@ -39,9 +40,9 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         try {
             if (saveBeforeShare) {
                 // TODO: need to save workspace before sharing. Problem is we don't have the existing workspace name yet
-                // await appStore.saveWorkspace(appStore.activeWorkspace);
+                // await appStore.saveWorkspace(activeWorkspace);
             }
-            const shareKey = await appStore.apiService.getSharedWorkspaceKey(appStore.activeWorkspace.id);
+            const shareKey = await appStore.apiService.getSharedWorkspaceKey(activeWorkspace.id);
             setShareKey(shareKey);
         } catch (err) {
             console.log(err);
@@ -67,7 +68,7 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     } else {
         footer = (
             <>
-                <Checkbox label="Save workspace before sharing" checked={saveBeforeShare} onChange={() => setSaveBeforeShare(!saveBeforeShare)} />
+                <Checkbox label="Save workspace before sharing" disabled={!activeWorkspace?.editable} checked={saveBeforeShare} onChange={() => setSaveBeforeShare(!saveBeforeShare)} />
                 <AnchorButton disabled={isGeneratingLink} intent={Intent.PRIMARY} text="Generate link" onClick={handleGenerateClicked} />
             </>
         );
