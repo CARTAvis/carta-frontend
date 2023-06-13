@@ -109,7 +109,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
         const nearestIndex = frame.findChannelIndexByValue(x);
         if (frame && isFinite(nearestIndex) && nearestIndex >= 0 && nearestIndex < frame.numChannels) {
-            frame.setChannels(nearestIndex, frame.requiredStokes, true);
+            frame.setChannel(nearestIndex);
             if (!_.isEqual(frame, appStore.activeFrame)) {
                 appStore.setChannelsByFrame(frame);
             }

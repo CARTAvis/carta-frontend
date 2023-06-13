@@ -1101,7 +1101,7 @@ export class FrameStore {
     }
 
     // including standard and computed polarizations eg.[1, 2, 3, 4, 13, 14, 15, 16, 17]
-    @computed get polarizations(): number[] {
+    @computed get polarizations(): POLARIZATIONS[] {
         const polarizations = this.stokesOptions?.map(option => {
             return option.value;
         });
@@ -2266,7 +2266,53 @@ export class FrameStore {
         }
     }
 
-    @action setChannels(channel: number, stokes: number, recursive: boolean) {
+    /**
+     * Sets the channel of the frame.
+     * @param channel - The channel index to set.
+     * @param recursive - Whether to update channels of spectrally matched frames. Default value is true.
+     */
+    @action setChannel = (channel: number, recursive: boolean = true) => {
+        this.setChannels(channel, this.requiredStokes, recursive);
+    };
+
+    /**
+     * Sets the Stokes parameter of the frame. Required for carta-python.
+     * If the provided `polarization` value is not found in the frame, the function will return without making any changes.
+     * @param polarization - The polarization value.
+     * @param recursive - Whether to update channels of spectrally matched frames. Default value is false.
+     */
+    @action setStokes = (polarization: POLARIZATIONS, recursive: boolean = false) => {
+        const polarizationIndex = this.polarizations?.indexOf(polarization);
+        if (!isFinite(polarizationIndex) || polarizationIndex === -1) {
+            return;
+        }
+        this.setStokesByIndex(polarizationIndex, recursive);
+    };
+
+    /**
+     * Sets the Stokes parameter of the frame by the index.
+     * If the provided `polarizationIndex` is not a valid index or exceeds the range, the function will return without making any changes.
+     * @param polarizationIndex - The index of the polarization value.
+     * @param recursive - Whether to update channels of spectrally matched frames. Default value is false.
+     */
+    @action setStokesByIndex = (polarizationIndex: number, recursive: boolean = false) => {
+        if (!isFinite(polarizationIndex) || polarizationIndex >= this.polarizations.length) {
+            return;
+        }
+
+        const isComputedPolarization = polarizationIndex >= this.frameInfo.fileInfoExtended.stokes;
+        // request standard polarization by the stokes index of image. (eg. "I": 0)
+        // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
+        this.setChannels(this.requiredChannel, isComputedPolarization ? this.polarizations[polarizationIndex] : polarizationIndex, recursive);
+    };
+
+    /**
+     * Sets the channel and the Stokes parameter of the frame.
+     * @param channel - The channel index to set.
+     * @param stokes - The Stokes parameter to set. Standard polarization requires the polarization index (eg. "I": 0). Computed polarization requires the polarization value (eg. "Pangle": 17).
+     * @param recursive - Whether to update channels of spectrally matched frames.
+     */
+    @action setChannels = (channel: number, stokes: number, recursive: boolean) => {
         if (stokes < 0) {
             stokes += this.frameInfo.fileInfoExtended.stokes;
         }
@@ -2296,9 +2342,9 @@ export class FrameStore {
         if (this.isSwappedZ) {
             this.updateSpectralVsDirectionWcs();
         }
-    }
+    };
 
-    @action incrementChannels(deltaChannel: number, deltaStokes: number, wrap: boolean = true) {
+    @action incrementChannels = (deltaChannel: number, deltaStokes: number, wrap: boolean = true) => {
         const depth = Math.max(1, this.frameInfo.fileInfoExtended.depth);
         const numStokes = Math.max(1, this.polarizations?.length);
 
@@ -2315,7 +2361,7 @@ export class FrameStore {
         // request standard polarization by the stokes index of image. (eg. "I": 0)
         // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
         this.setChannels(newChannel, isComputedPolarization ? this.polarizations[newStokes] : newStokes, true);
-    }
+    };
 
     @action setZoom = (zoom: number, absolute: boolean = false) => {
         if (this.spatialReference) {
@@ -2744,7 +2790,7 @@ export class FrameStore {
         this.spectralReference = frame;
         this.spectralReference.addSecondarySpectralImage(this);
         const matchedChannel = getTransformedChannel(frame.wcsInfo3D, this.wcsInfo3D, preferenceStore.spectralMatchingType, frame.requiredChannel);
-        this.setChannels(matchedChannel, this.requiredStokes, false);
+        this.setChannel(matchedChannel, false);
 
         // Align spectral settings to spectral reference
         this.setSpectralCoordinate(frame.spectralCoordinate, false);
