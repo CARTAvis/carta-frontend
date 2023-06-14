@@ -2604,13 +2604,7 @@ export class FrameStore {
         this.spatialReference = frame;
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
-        const copySrc = AST.copy(this.wcsInfo);
-        const copyDest = AST.copy(frame.wcsInfo);
-        AST.invert(copySrc);
-        AST.invert(copyDest);
-        this.spatialTransformAST = AST.convert(copySrc, copyDest, "");
-        AST.deleteObject(copySrc);
-        AST.deleteObject(copyDest);
+        this.spatialTransformAST = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;

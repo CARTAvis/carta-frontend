@@ -154,6 +154,19 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* getSkyFrameSet(AstFrameSet* frameSet)
     return skyframeSet;
 }
 
+EMSCRIPTEN_KEEPALIVE AstCmpMap* getSpatialMapping(AstFrameSet* src, AstFrameSet* dest) {
+    astInvert(dest);
+    AstCmpMap* spatialMapping = astCmpMap(src, dest, 1, "");
+    astInvert(dest);
+
+    if (!astOK)
+    {
+        astClearStatus;
+        return nullptr;
+    }
+    return spatialMapping;
+}
+
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
 {
     // 2D scale and rotation matrix

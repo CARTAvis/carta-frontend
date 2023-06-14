@@ -37,6 +37,7 @@ export function putFits(fitsChan: FitsChan, card: string): void;
 export function getFrameFromFitsChan(fitsChan: FitsChan, checkSkyDomain: boolean): FrameSet;
 export function getSpectralFrame(frameSet: FrameSet): SpecFrame;
 export function getSkyFrameSet(frameSet: FrameSet): FrameSet;
+export function getSpatialMapping(src: FrameSet, dest: FrameSet): Mapping;
 export function initDummyFrame(): FrameSet;
 export function set(obj: AstObject, settings: string): number;
 export function clear(obj: AstObject, attrib: string): number;
