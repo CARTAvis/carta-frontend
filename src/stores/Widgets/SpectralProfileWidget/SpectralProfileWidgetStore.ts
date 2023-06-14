@@ -399,12 +399,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @computed get intensityOptions(): string[] {
         const frame = this.effectiveFrame;
         const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+
+        const profiles = this.profileSelectionStore.profiles;
+        const displayedFrames = profiles.map(profile => profile.frame);
+
         if (frame?.spectralReference && isMultiProfileActive) {
-            // if the frame has a reference frame
-            return frame.spectralReference.commonIntensityUnitWith(frame.spectralSiblings);
-        } else if (frame.secondarySpectralImages && isMultiProfileActive) {
-            // if the frame is the reference frame for other frames
-            return frame.commonIntensityUnitWith(frame.secondarySpectralImages);
+            return frame.commonIntensityUnitWith(displayedFrames);
         } else {
             return GetIntensityOptions(this.intensityConfig);
         }

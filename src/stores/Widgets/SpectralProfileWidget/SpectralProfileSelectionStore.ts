@@ -88,13 +88,10 @@ export class SpectralProfileSelectionStore {
                 const matchedFileIds = AppStore.Instance.spatialAndSpectalMatchedFileIds;
                 if (this.activeProfileCategory === MultiProfileCategory.IMAGE && matchedFileIds?.includes(this.selectedFrameFileId)) {
                     const appStore = AppStore.Instance;
-                    // const matchedFrames = matchedFileIds.map(fildId => appStore.getFrame(fildId));
-                    console.log(matchedFileIds, this.selectedFrame.commonIntensityUnitWith(this.selectedFrame));
 
                     matchedFileIds.forEach(fileId => {
                         const frame = appStore.getFrame(fileId);
                         const hasCommonIntensityUnit = GetIntensityOptions(frame.intensityConfig).includes(this.widgetStore.intensityUnit);
-                        // const hasCommonIntensityUnit = frame?.spectralReference && frame?.commonIntensityUnitWith(this.selectedFrame || appStore.activeFrame).length;
                         if (profileConfigs.length < MAXIMUM_PROFILES && (hasCommonIntensityUnit || fileId === this.selectedFrameFileId)) {
                             profileConfigs.push({
                                 fileId: fileId,
@@ -291,11 +288,10 @@ export class SpectralProfileSelectionStore {
                 });
             });
 
-            // const matchedFrames = appStore.spatialAndSpectalMatchedFileIds.map(fileId => appStore.getFrame(fileId));
-
             options.forEach(option => {
                 const frame = appStore.getFrame(option.value as number);
-                option.label += !GetIntensityOptions(frame.intensityConfig).includes(this.widgetStore.intensityUnit) ? " (hidden)" : "";
+                const hasCommonIntensityUnit = GetIntensityOptions(frame.intensityConfig).includes(this.widgetStore.intensityUnit);
+                option.label += !((option.value as number) === ACTIVE_FILE_ID) && !hasCommonIntensityUnit && !((option.value as number) === this.selectedFrameFileId) ? " (hidden)" : "";
             });
         } else {
             options = options.concat(

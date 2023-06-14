@@ -193,7 +193,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                     disable={widgetStore.effectiveFrame?.isPVImage}
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
-                                    <HTMLSelect disabled={!widgetStore.isIntensityConvertible} value={widgetStore.intensityUnit} options={widgetStore.intensityOptions} onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)} />
+                                    <HTMLSelect
+                                        value={widgetStore.intensityUnit}
+                                        options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : [widgetStore.effectiveFrame.headerUnit]}
+                                        onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)}
+                                    />
                                 </FormGroup>
                                 <FormGroup inline={true} label={"Secondary info"}>
                                     <Switch checked={widgetStore.secondaryAxisCursorInfoVisible} onChange={event => widgetStore.setSecondaryAxisCursorInfoVisible(event.currentTarget.checked as boolean)} />
