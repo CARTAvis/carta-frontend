@@ -654,7 +654,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 } else if (this.profileSelectionStore.isCoordinatesPangleOnly) {
                     unitString = "degree";
                 } else {
-                    unitString = isMultiProfileActive ? this.intensityUnit || this.effectiveFrame?.headerUnit : this.effectiveFrame?.intensityUnit;
+                    unitString = isMultiProfileActive
+                        ? GetIntensityConversion(this.effectiveFrame?.intensityConfig, this.intensityUnit) && this.intensityUnit
+                            ? this.intensityUnit
+                            : this.effectiveFrame?.headerUnit
+                        : this.effectiveFrame?.intensityUnit;
                 }
 
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
