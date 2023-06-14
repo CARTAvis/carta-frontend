@@ -33,7 +33,7 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     }
 }
 
-export function transformPoint(astTransform: AST.FrameSet, point: Point2D, forward: boolean = true) {
+export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, forward: boolean = true) {
     return AST.transformPoint(astTransform, point.x, point.y, forward);
 }
 

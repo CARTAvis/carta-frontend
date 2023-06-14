@@ -127,7 +127,7 @@ export class FrameStore {
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
-    public spatialTransformAST: AST.FrameSet;
+    public spatialTransformAST: AST.Mapping;
     private cursorMovementHandle: NodeJS.Timeout;
 
     public distanceMeasuring: DistanceMeasuringStore;

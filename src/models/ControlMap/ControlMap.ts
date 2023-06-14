@@ -15,7 +15,7 @@ export class ControlMap {
     gl: WebGL2RenderingContext;
     private grid: Float32Array;
 
-    constructor(src: FrameStore, dst: FrameStore, astTransform: AST.FrameSet, width: number, height: number, updateBoudary: boolean = true) {
+    constructor(src: FrameStore, dst: FrameStore, astTransform: AST.Mapping, width: number, height: number, updateBoudary: boolean = true) {
         this.source = src;
         this.destination = dst;
         this.width = width;
@@ -33,7 +33,7 @@ export class ControlMap {
         this.maxPoint = {x: maxX + deltaX * 2, y: maxY + deltaY * 2};
     };
 
-    setGrid = (astTransform?: AST.FrameSet) => {
+    setGrid = (astTransform?: AST.Mapping) => {
         let cleanUpTransform: boolean = false;
 
         if (!astTransform || astTransform < 0) {
