@@ -105,7 +105,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setIntensityUnit = (intensityUnitStr: string) => {
+    @action setStickyIntensityUnit = (intensityUnitStr: string) => {
         this.intensityUnit = intensityUnitStr;
     };
 
@@ -332,13 +332,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
         this.keep = false;
 
-        this.setIntensityUnit(this.effectiveFrame?.headerUnit);
+        this.setStickyIntensityUnit(this.effectiveFrame?.headerUnit);
 
         reaction(
             () => this.effectiveFrame,
             frame => {
                 if (frame) {
-                    this.setIntensityUnit(GetIntensityConversion(frame?.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
+                    const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+                    this.effectiveFrame.setIntensityUnit(isMultiProfileActive && GetIntensityConversion(frame?.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.intensityUnit);
                 }
             }
         );
@@ -346,7 +347,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         reaction(
             () => this.profileSelectionStore.activeProfileCategory,
             () => {
-                this.setIntensityUnit(this.intensityOptions[0]);
+                this.setStickyIntensityUnit(this.intensityOptions[0]);
             }
         );
 
@@ -354,7 +355,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             () => this.effectiveFrame?.requiredPolarization,
             polarization => {
                 if (this.effectiveFrame && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
-                    this.setIntensityUnit(this.effectiveFrame.headerUnit);
+                    this.setStickyIntensityUnit(this.effectiveFrame.headerUnit);
                 }
             }
         );
@@ -442,6 +443,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let dataIndexes: {startIndex: number; endIndex: number}[] = [];
         const wantMeanRms = profiles.length === 1;
         const profileColorMap = this.lineColorMap;
+        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
 
         profiles.forEach(profile => {
             if (profile?.data) {
@@ -450,7 +452,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 labels.push(profile.label);
                 comments.push(profile.comments);
 
-                const intensityConversion: IntensityConversion = GetIntensityConversion(profile.frame?.intensityConfig, this.intensityUnit);
+                const intensityConversion: IntensityConversion = GetIntensityConversion(profile.frame?.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.frame.intensityUnit);
                 const intensityValues = intensityConversion ? intensityConversion(profile.data.values) : profile.data.values;
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
 
@@ -489,7 +491,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let fittingData: {x: number[]; y: Float32Array | Float64Array};
         if (profiles.length === 1 && dataIndexes.length === 1) {
             let x = profiles[0].channelValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
-            const intensityConversion: IntensityConversion = GetIntensityConversion(profiles[0].frame?.intensityConfig, this.intensityUnit);
+            const intensityConversion: IntensityConversion = GetIntensityConversion(profiles[0].frame?.intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].frame?.intensityUnit);
             const intensityValues = intensityConversion ? intensityConversion(profiles[0].data.values) : profiles[0].data.values;
             let y = intensityValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE) {
@@ -641,7 +643,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get yUnit(): string {
-        if (this.intensityUnit) {
+        const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
+        if (this.intensityUnit && this.effectiveFrame?.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit && this.profileSelectionStore.isSameCoordinatesUnit) {
                 let unitString: string;
                 if (this.profileSelectionStore.isCoordinatesPFtotalPFlinearOnly) {
@@ -649,7 +652,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 } else if (this.profileSelectionStore.isCoordinatesPangleOnly) {
                     unitString = "degree";
                 } else {
-                    unitString = this.intensityUnit;
+                    unitString = isMultiProfileActive ? this.intensityUnit : this.effectiveFrame?.intensityUnit;
                 }
 
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
@@ -663,7 +666,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 }
             }
         }
-        return "";
+        return this.effectiveFrame?.intensityUnit;
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {

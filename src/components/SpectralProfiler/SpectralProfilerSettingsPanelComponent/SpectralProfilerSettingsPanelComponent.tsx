@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, SmoothingSettingsComponent, SpectralSettingsComponent} from "components/Shared";
 import {AppStore, DefaultWidgetConfig, HelpType, WidgetProps, WidgetsStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/Widgets";
+import {MultiProfileCategory, SpectralProfileWidgetStore} from "stores/Widgets";
 import {parseNumber} from "utilities";
 
 import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
@@ -175,6 +175,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             handleYMaxChange: this.handleYMaxChange
         };
 
+        const isMultiProfileActive = widgetStore.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
         return (
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs" selectedTabId={widgetStore.settingsTabId} onChange={this.handleSelectedTabChanged}>
@@ -194,9 +195,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                 />
                                 <FormGroup label={"Intensity unit"} inline={true}>
                                     <HTMLSelect
-                                        value={widgetStore.intensityUnit}
+                                        value={isMultiProfileActive ? widgetStore.intensityUnit : widgetStore.effectiveFrame.intensityUnit}
                                         options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : [widgetStore.effectiveFrame.headerUnit]}
-                                        onChange={ev => widgetStore.setIntensityUnit(ev.currentTarget.value)}
+                                        onChange={ev => (isMultiProfileActive ? widgetStore.setStickyIntensityUnit(ev.currentTarget.value) : widgetStore.effectiveFrame.setIntensityUnit(ev.currentTarget.value))}
                                     />
                                 </FormGroup>
                                 <FormGroup inline={true} label={"Secondary info"}>

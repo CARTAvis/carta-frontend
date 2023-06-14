@@ -202,6 +202,7 @@ export class FrameStore {
     @observable previewViewWidth: number;
     @observable previewViewHeight: number;
     @observable previewPVRasterData: Float32Array;
+    @observable intensityUnit: string;
 
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
@@ -1254,6 +1255,7 @@ export class FrameStore {
         this.dirAxisSize = -1;
         this.dirAxisFormat = "";
         this.depthAxisFormat = "";
+        this.intensityUnit = this.headerUnit;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
@@ -2796,7 +2798,7 @@ export class FrameStore {
         this.setSpectralCoordinate(frame.spectralCoordinate, false);
 
         // Set the intensity units to the intersection of spectrally matched frames
-        AppStore.Instance.widgetsStore.spectralProfileWidgets.forEach(store => store.setIntensityUnit(store.intensityOptions[0]));
+        AppStore.Instance.widgetsStore.spectralProfileWidgets.forEach(store => store.setStickyIntensityUnit(store.intensityOptions[0]));
 
         return true;
     };
@@ -2952,6 +2954,10 @@ export class FrameStore {
         if (!skipUpdatePreviewData) {
             this.updatePreviewDataGenerator.next();
         }
+    };
+
+    @action setIntensityUnit = (intensityUnitStr: string) => {
+        this.intensityUnit = intensityUnitStr;
     };
 
     public updatePreviewDataGenerator: Generator;
