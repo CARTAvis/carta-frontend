@@ -386,11 +386,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const frame = this.effectiveFrame;
         if (frame) {
             let config: IntensityConfig = {nativeIntensityUnit: frame.headerUnit};
-            if (frame.beamProperties) {
-                config["bmaj"] = frame.beamProperties.majorAxis;
-                config["bmin"] = frame.beamProperties.minorAxis;
+            const beams = frame.beamAllChannels;
+            if (beams?.length) {
+                config["bmaj"] = beams.map(b => b?.majorAxis);
+                config["bmin"] = beams.map(b => b?.minorAxis);
                 if (frame.spectralAxis?.type?.code === "FREQ") {
-                    config["freqGHz"] = GetFreqInGHz(frame.spectralAxis.type.unit, frame.spectralAxis.value);
+                    config["freqGHz"] = frame.channelInfo?.values.map(x => GetFreqInGHz(frame.spectralAxis.type.unit, x));
                 }
             }
 
@@ -623,7 +624,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const frame = this.effectiveFrame;
 
         // Ignoring plotting lines when:
-        // 1. x cooridnate is channel
+        // 1. x coordinate is channel
         // 2. showing multiple profiles of different images in radio/optical velocity.(observation sources are not aligned now)
         const disablePlot = frame?.isCoordChannel || (frame?.isCoordVelocity && this.profileSelectionStore.isShowingProfilesOfMultiImages);
 
@@ -685,7 +686,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     frameRequirements.set(spectralConfig.regionId, regionRequirements);
                 }
 
-                // cooridnate & stats type
+                // coordinate & stats type
                 if (!regionRequirements.spectralProfiles) {
                     regionRequirements.spectralProfiles = [];
                 }

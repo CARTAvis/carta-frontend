@@ -407,7 +407,7 @@ export class CompassAnnotationStore extends RegionStore {
         this.setFont(annotationStyles.font ?? this.font);
         this.setPointerWidth(annotationStyles.pointerWidth ?? this.pointerWidth);
         this.setPointerLength(annotationStyles.pointerLength ?? this.pointerLength);
-        this.setLength(annotationStyles.length ?? this.length);
+        this.setLength(annotationStyles.length ?? this.length, true);
         this.setNorthTextOffset(annotationStyles.northTextOffset?.x ?? this.northTextOffset.x, true);
         this.setNorthTextOffset(annotationStyles.northTextOffset?.y ?? this.northTextOffset.y, false);
         this.setEastTextOffset(annotationStyles.eastTextOffset?.x ?? this.eastTextOffset.x, true);

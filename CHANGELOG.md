@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+* Added a shortcut button for image annotation ([#2167](https://github.com/CARTAvis/carta-frontend/issues/2167))
+### Changed
+* Changed the default title string in the image viewer ([#2168](https://github.com/CARTAvis/carta-frontend/issues/2168)).
+* Modified text annotation textbox to stay the same dimension as user zoom the image ([#2162](https://github.com/CARTAvis/carta-frontend/issues/2162)).
+### Fixed
+* Fixed bug where line region computation width cannot be changed in spatial profile setting widget ([#2000](https://github.com/CARTAvis/carta-frontend/issues/2000)).
+* Fixed when multiple images are open, PV generator can only produce PV preview with live update for one of the images ([#2171](https://github.com/CARTAvis/carta-frontend/issues/2171)).
+* Fixed incorrect beam-related and frequency-related intensity unit conversions in the spectral profiler ([#2033](https://github.com/CARTAvis/carta-frontend/issues/2033)).
+* Fixed line region anchor rotation degree when the image has non-square pixels ([#1732](https://github.com/CARTAvis/carta-frontend/issues/1732)).
+* Fixed the blank screen when using layout with histogram widget ([#2178](https://github.com/CARTAvis/carta-frontend/issues/2178)).
+* Fixed the problem of resuming LEL images ([#1226](https://github.com/CARTAvis/carta-backend/issues/1226)).
+* Fixed tsv and txt file export naming ([#1987](https://github.com/CARTAvis/carta-frontend/issues/1987)).
+
 ## [4.0.0-beta.1]
 
 ### Added
