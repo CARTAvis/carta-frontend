@@ -339,7 +339,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             frame => {
                 if (frame) {
                     const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
-                    this.effectiveFrame.setIntensityUnit(isMultiProfileActive && GetIntensityConversion(frame?.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.intensityUnit);
+                    if (isMultiProfileActive) {
+                        this.setStickyIntensityUnit(GetIntensityConversion(frame?.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
+                    } else {
+                        this.effectiveFrame.setIntensityUnit(GetIntensityConversion(frame?.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.intensityUnit);
+                    }
                 }
             }
         );
@@ -644,7 +648,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get yUnit(): string {
         const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
-        if (this.intensityUnit && this.effectiveFrame?.intensityUnit) {
+        if ((this.intensityUnit && isMultiProfileActive) || (this.effectiveFrame?.intensityUnit && !isMultiProfileActive)) {
             if (this.profileSelectionStore.isSameStatsTypeUnit && this.profileSelectionStore.isSameCoordinatesUnit) {
                 let unitString: string;
                 if (this.profileSelectionStore.isCoordinatesPFtotalPFlinearOnly) {
@@ -666,7 +670,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 }
             }
         }
-        return this.effectiveFrame?.intensityUnit;
+        return "";
     }
 
     public static CalculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {
