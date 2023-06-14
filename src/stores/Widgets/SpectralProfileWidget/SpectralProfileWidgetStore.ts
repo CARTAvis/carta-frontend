@@ -340,9 +340,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 if (frame) {
                     const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
                     if (isMultiProfileActive) {
-                        this.setStickyIntensityUnit(GetIntensityConversion(frame?.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
-                    } else {
-                        this.effectiveFrame.setIntensityUnit(GetIntensityConversion(frame?.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.intensityUnit);
+                        this.setStickyIntensityUnit(GetIntensityConversion(frame.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
                     }
                 }
             }
@@ -648,7 +646,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get yUnit(): string {
         const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
-        if ((this.intensityUnit && isMultiProfileActive) || (this.effectiveFrame?.intensityUnit && !isMultiProfileActive)) {
+        if (this.intensityUnit || this.effectiveFrame?.intensityUnit) {
             if (this.profileSelectionStore.isSameStatsTypeUnit && this.profileSelectionStore.isSameCoordinatesUnit) {
                 let unitString: string;
                 if (this.profileSelectionStore.isCoordinatesPFtotalPFlinearOnly) {
@@ -656,7 +654,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 } else if (this.profileSelectionStore.isCoordinatesPangleOnly) {
                     unitString = "degree";
                 } else {
-                    unitString = isMultiProfileActive ? this.intensityUnit : this.effectiveFrame?.intensityUnit;
+                    unitString = isMultiProfileActive ? this.intensityUnit || this.effectiveFrame?.headerUnit : this.effectiveFrame?.intensityUnit;
                 }
 
                 if (this.profileSelectionStore.isStatsTypeFluxDensityOnly && this.profileSelectionStore.isCoordinatesPangleOnly) {
