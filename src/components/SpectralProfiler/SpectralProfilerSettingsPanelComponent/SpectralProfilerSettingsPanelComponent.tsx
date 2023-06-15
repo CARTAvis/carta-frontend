@@ -196,7 +196,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                                 <FormGroup label={"Intensity unit"} inline={true}>
                                     <HTMLSelect
                                         value={isMultiProfileActive ? widgetStore.intensityUnit : widgetStore.effectiveFrame?.intensityUnit}
-                                        options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : [widgetStore.effectiveFrame.headerUnit]}
+                                        options={widgetStore.isIntensityConvertible ? widgetStore.intensityOptions : [widgetStore.effectiveFrame?.headerUnit]}
                                         onChange={ev => (isMultiProfileActive ? widgetStore.setStickyIntensityUnit(ev.currentTarget.value) : widgetStore.effectiveFrame.setIntensityUnit(ev.currentTarget.value))}
                                     />
                                 </FormGroup>
