@@ -268,8 +268,12 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
 
     public render() {
         // dummy variables related to wcs to trigger re-render
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.LINE && region.regionType !== CARTA.RegionType.ANNLINE && region.regionType !== CARTA.RegionType.ANNVECTOR)) {
             return null;
