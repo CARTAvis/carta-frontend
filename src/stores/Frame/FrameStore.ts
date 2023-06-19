@@ -1489,8 +1489,8 @@ export class FrameStore {
         const entries = this.frameInfo.fileInfoExtended.headerEntries;
         const dirXAxis = entries.find(entry => entry.name.includes(`CTYPE${axisNumber}`));
         let name = dirXAxis?.value ?? "";
-        if (name.match(/^RA/)) {
-            name = "Right Ascension"; // Customize the axis label
+        if (name.match(/^RA/) && this.isSwappedZ) {
+            name = "Right ascension"; // Customize the axis label
         } else {
             name = ""; // Use the default axis label in AST
         }
