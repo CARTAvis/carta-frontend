@@ -120,9 +120,7 @@ export enum PreferenceKeys {
     TELEMETRY_LOGGING = "telemetryLogging",
 
     CHECK_NEW_RELEASE = "checkNewRelease",
-    LATEST_RELEASE = "latestRelease",
-
-    COMPATIBILITY_AIPS_BEAM_SUPPORT = "compatibilityAipsBeamSupport"
+    LATEST_RELEASE = "latestRelease"
 }
 
 const DEFAULTS = {
@@ -247,9 +245,6 @@ const DEFAULTS = {
         telemetryConsentShown: false,
         telemetryMode: TelemetryMode.Usage,
         telemetryLogging: false
-    },
-    COMPATIBILITY: {
-        aipsBeamSupport: false
     }
 };
 
@@ -682,11 +677,6 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.TELEMETRY_UUID);
     }
 
-    // getters for compatibility
-    @computed get aipsBeamSupport(): boolean {
-        return this.preferences.get(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT) ?? DEFAULTS.COMPATIBILITY.aipsBeamSupport;
-    }
-
     // getters for showing new release
     @computed get checkNewRelease(): boolean {
         return this.preferences.get(PreferenceKeys.CHECK_NEW_RELEASE) ?? DEFAULTS.SILENT.checkNewRelease;
@@ -853,10 +843,6 @@ export class PreferenceStore {
             PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT,
             PreferenceKeys.PERFORMANCE_PV_PREVIEW_CUBE_SIZE_LIMIT_UNIT
         ]);
-    };
-
-    @action resetCompatibilitySettings = () => {
-        this.clearPreferences([PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT]);
     };
 
     @action selectAllLogEvents = () => {

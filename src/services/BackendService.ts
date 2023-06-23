@@ -296,8 +296,7 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             throw new Error("Not connected");
         } else {
-            const supportAipsBeam = AppStore.Instance.preferenceStore.aipsBeamSupport;
-            const message = CARTA.FileInfoRequest.create({directory, file, hdu, supportAipsBeam});
+            const message = CARTA.FileInfoRequest.create({directory, file, hdu});
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_INFO_REQUEST, CARTA.FileInfoRequest.encode(message).finish())) {
