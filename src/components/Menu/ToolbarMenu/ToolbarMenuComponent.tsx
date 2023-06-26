@@ -1,12 +1,13 @@
 import * as React from "react";
-import {AnchorButton, ButtonGroup, Position} from "@blueprintjs/core";
+import {AnchorButton, ButtonGroup, Menu, Position} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
-import {Tooltip2} from "@blueprintjs/popover2";
+import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
+import {AnnotationMenuComponent} from "components/Shared";
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {RegionCreationMode} from "models";
 import {AppStore, WidgetsStore} from "stores";
@@ -105,6 +106,13 @@ export class ToolbarMenuComponent extends React.Component {
                 </i>
             </span>
         );
+
+        const annotationMenu = (
+            <Menu>
+                <AnnotationMenuComponent handleRegionTypeClicked={this.handleRegionTypeClicked} />
+            </Menu>
+        );
+
         return (
             <React.Fragment>
                 <ButtonGroup className={actionsClassName}>
@@ -117,6 +125,19 @@ export class ToolbarMenuComponent extends React.Component {
                             </Tooltip2>
                         );
                     })}
+
+                    <Popover2 content={annotationMenu} position={Position.BOTTOM_LEFT} minimal={true} disabled={regionButtonsDisabled}>
+                        <Tooltip2
+                            content={
+                                <span>
+                                    Annotation <br /> <small>Click to select annotation type.</small>
+                                </span>
+                            }
+                            position={Position.BOTTOM}
+                        >
+                            <AnchorButton icon={"annotation"} disabled={regionButtonsDisabled} active={isRegionCreating === true && appStore.activeFrame.regionSet.isNewRegionAnnotation === true} />
+                        </Tooltip2>
+                    </Popover2>
                 </ButtonGroup>
                 <ButtonGroup className={className}>
                     {Array.from(WidgetsStore.Instance.CARTAWidgets.keys()).map(widgetType => {

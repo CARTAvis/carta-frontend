@@ -10,10 +10,20 @@ import {AppStore} from "stores";
 import {CompassAnnotationStore, CoordinateMode, RegionStore} from "stores/Frame";
 import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
+const KEYCODE_ENTER = 13;
+
 @observer
 export class CompassRulerRegionForm extends React.Component<{region: RegionStore; wcsInfo: AST.FrameSet}> {
     private handleNameChange = (formEvent: React.FormEvent<HTMLInputElement>) => {
         this.props.region.setName(formEvent.currentTarget.value);
+    };
+
+    private handleLengthValueChange = ev => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        } else {
+            (this.props.region as CompassAnnotationStore).setLength(Number(ev.target.value));
+        }
     };
 
     private handleValueChange = (WCSStart: WCSPoint2D, WCSFinish: WCSPoint2D, isX: boolean, finish?: boolean, pixel?: boolean) => {
@@ -97,13 +107,15 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
         const system = appStore.overlayStore.global.explicitSystem;
         const region = this.props.region;
         const wcsInfo = this.props.wcsInfo;
+        const isWCS = region.coordinate === CoordinateMode.World;
         const WCSStart = getFormattedWCSPoint(wcsInfo, region?.controlPoints[0]);
         const WCSFinish = getFormattedWCSPoint(wcsInfo, region?.controlPoints[1]);
+        const compassLength = (region as CompassAnnotationStore).length;
 
         return (
             <div className="region-form">
                 <FormGroup label="Annotation name" inline={true}>
-                    <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} spellCheck={false} />
+                    <InputGroup placeholder="Enter an annotation name" value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
                     <>
@@ -119,22 +131,18 @@ export class CompassRulerRegionForm extends React.Component<{region: RegionStore
                     <CoordinateComponent selectedValue={region.coordinate} onChange={region.setCoordinate} disableCoordinate={!this.props.wcsInfo} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNCOMPASS && (
-                    <FormGroup label="Length" labelInfo="(px)" inline={true}>
-                        <SafeNumericInput selectAllOnFocus buttonPosition="none" value={(region as CompassAnnotationStore).length} onBlur={event => (region as CompassAnnotationStore).setLength(Number(event.target.value))} />
+                    <FormGroup label="Length" labelInfo="(canvas px)" inline={true}>
+                        <SafeNumericInput selectAllOnFocus buttonPosition="none" value={compassLength} onBlur={this.handleLengthValueChange} onKeyDown={this.handleLengthValueChange} />
                     </FormGroup>
                 )}
                 <FormGroup label={region.regionType === CARTA.RegionType.ANNCOMPASS ? "Origin" : "Start"} labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
                     {this.coordinateInput(WCSStart, WCSFinish, false)}
-                    {wcsInfo ? <span className="info-string">{region.coordinate === CoordinateMode.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
+                    {wcsInfo ? <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[0], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSStart)}`}</span> : ""}
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNRULER && (
                     <FormGroup label="Finish" labelInfo={wcsInfo ? "" : " (px)"} inline={true}>
                         {this.coordinateInput(WCSStart, WCSFinish, true)}
-                        {wcsInfo ? (
-                            <span className="info-string">{region.coordinate === CoordinateMode.World && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span>
-                        ) : (
-                            ""
-                        )}
+                        {wcsInfo ? <span className="info-string">{isWCS && wcsInfo ? `Image: ${Point2D.ToString(region?.controlPoints[1], "px", 3)}` : `WCS: ${WCSPoint2D.ToString(WCSFinish)}`}</span> : ""}
                     </FormGroup>
                 )}
             </div>
