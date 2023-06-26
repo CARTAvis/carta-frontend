@@ -263,7 +263,7 @@ export const WorkspaceDialogComponent = observer(() => {
                     <div className="workspace-table-container">{tableContent}</div>
                     <div className="workspace-info-container">{workspaceList?.length ? <WorkspaceInfoComponent workspaceListItem={selectedWorkspace} /> : null}</div>
                 </div>
-                <InputGroup className="workspace-name-input" placeholder="Enter workspace name" spellCheck={false} value={workspaceName} autoFocus={true} onChange={handleInput} onKeyDown={handleKeyDown} />
+                <InputGroup className="workspace-name-input" placeholder="Enter workspace name" value={workspaceName} autoFocus={true} onChange={handleInput} onKeyDown={handleKeyDown} />
             </div>
             <div className={Classes.DIALOG_FOOTER}>
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>
