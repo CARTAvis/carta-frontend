@@ -36,6 +36,12 @@
         .entry-title {
             font-weight: bold;
             padding-right: 10px;
+            padding-bottom: 5px;
+        }
+
+        .entry-value {
+            overflow-wrap: anywhere;
+            padding-bottom: 5px;
         }
     }
 }
