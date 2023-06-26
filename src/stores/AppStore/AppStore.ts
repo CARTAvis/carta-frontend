@@ -460,7 +460,7 @@ export class AppStore {
                 matchedIds.push(spatialMatchedFileId);
             }
         });
-        console.log(matchedIds);
+        
         return [...new Set(matchedIds)]; //Remove duplicate
     }
 
