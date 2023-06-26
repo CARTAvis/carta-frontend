@@ -388,7 +388,8 @@ export class BackendService {
                 hdu,
                 fileId,
                 lelExpr: imageArithmetic,
-                renderMode: CARTA.RenderMode.RASTER
+                renderMode: CARTA.RenderMode.RASTER,
+                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport
             });
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
