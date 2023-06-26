@@ -449,17 +449,18 @@ export class AppStore {
         const spatialMatchedFileIds = this.spatialReference?.spatialSiblings?.map(matchedFrame => {
             return matchedFrame.frameInfo.fileId;
         });
-        spatialMatchedFileIds.push(spatialReferenceId);
+        spatialMatchedFileIds.unshift(spatialReferenceId);
         const spectralMatchedFileIds = this.spectralReference?.spectralSiblings?.map(matchedFrame => {
             return matchedFrame.frameInfo.fileId;
         });
-        spectralMatchedFileIds.push(spectralReferenceId);
+        spectralMatchedFileIds.unshift(spectralReferenceId);
 
         spatialMatchedFileIds?.forEach(spatialMatchedFileId => {
             if (spectralMatchedFileIds?.includes(spatialMatchedFileId)) {
                 matchedIds.push(spatialMatchedFileId);
             }
         });
+        console.log(matchedIds);
         return [...new Set(matchedIds)]; //Remove duplicate
     }
 
