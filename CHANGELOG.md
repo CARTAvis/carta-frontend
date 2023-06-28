@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed the default title string in the image viewer ([#2168](https://github.com/CARTAvis/carta-frontend/issues/2168)).
 * Modified text annotation textbox to stay the same dimension as user zoom the image ([#2162](https://github.com/CARTAvis/carta-frontend/issues/2162)).
 * Disabled spell check in text input ([#2138](https://github.com/CARTAvis/carta-frontend/issues/2138)).
+* Support animation playback with matched images in multi-panel view ([#1860](https://github.com/CARTAvis/carta-frontend/issues/1860)).
 ### Fixed
 * Fixed bug where line region computation width cannot be changed in spatial profile setting widget ([#2000](https://github.com/CARTAvis/carta-frontend/issues/2000)).
 * Fixed when multiple images are open, PV generator can only produce PV preview with live update for one of the images ([#2171](https://github.com/CARTAvis/carta-frontend/issues/2171)).
