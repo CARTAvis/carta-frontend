@@ -462,7 +462,7 @@ export class FileBrowserDialogComponent extends React.Component {
                 {coordinateTypeMenu}
             </div>
         );
-        return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={sideMenu} spellCheck={false} />;
+        return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={sideMenu} />;
     }
 
     private renderSaveFilenameInput() {
@@ -557,16 +557,13 @@ export class FileBrowserDialogComponent extends React.Component {
                         onChange={this.handleImageArithmeticStringChanged}
                         leftElement={inputTypeMenu}
                         onKeyDown={this.handleImageArithmeticKeyDown}
-                        spellCheck={false}
                     />
                 );
             } else {
-                return (
-                    <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftElement={inputTypeMenu} rightElement={filterTypeMenu} spellCheck={false} />
-                );
+                return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftElement={inputTypeMenu} rightElement={filterTypeMenu} />;
             }
         } else {
-            return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftIcon="search" rightElement={filterTypeMenu} spellCheck={false} />;
+            return <InputGroup autoFocus={false} placeholder={filterDescription} value={this.fileFilterString} onChange={this.handleFilterStringInputChanged} leftIcon="search" rightElement={filterTypeMenu} />;
         }
     }
 
@@ -688,7 +685,6 @@ export class FileBrowserDialogComponent extends React.Component {
                                     onChange={this.handleInputPathChanged}
                                     onKeyDown={ev => this.submitInputPath(ev)}
                                     defaultValue={"/" + fileBrowserStore.getfileListByMode.directory}
-                                    spellCheck={false}
                                 />
                             ) : (
                                 <Breadcrumbs className="path-breadcrumbs" breadcrumbRenderer={this.renderBreadcrumb} items={this.pathItems} />

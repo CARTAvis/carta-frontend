@@ -60,7 +60,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             if (val >= frame.frameInfo.fileInfoExtended.depth) {
                 val = 0;
             }
-            frame.setChannels(val, frame.requiredStokes, true);
+            frame.setChannel(val);
         }
     };
 
@@ -75,10 +75,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     onStokesChanged = (val: number) => {
         const frame = AppStore.Instance.activeFrame;
-        const isComputedPolarization = val >= frame.frameInfo.fileInfoExtended.stokes;
-        // request standard polarization by the stokes index of image. (eg. "I": 0)
-        // request computed polarization by PolarizationDefinition. (eg. "Pangle": 17)
-        frame?.setChannels(frame.requiredChannel, isComputedPolarization ? frame.polarizations[val] : val, true);
+        frame?.setStokesByIndex(val, true);
     };
 
     onFrameChanged = (val: number) => {
