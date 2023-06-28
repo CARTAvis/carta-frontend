@@ -375,7 +375,7 @@ export class RegionStore {
     };
 
     public getRegionApproximation(
-        astTransform: AST.FrameSet
+        astTransform: AST.Mapping
     ): Point2D[] | {northApproximatePoints: number[]; eastApproximatePoints: number[]} | {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]} {
         let approximatePoints = this.regionApproximationMap.get(astTransform);
         if (!approximatePoints) {

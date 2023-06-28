@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed tsv and txt file export naming ([#1987](https://github.com/CARTAvis/carta-frontend/issues/1987)).
 * Fixed the alignment in workspace dialog ([#2155](https://github.com/CARTAvis/carta-frontend/issues/2155)).
 * Fixed the spectral axis for images with headers in `CDi_j` format ([#2144](https://github.com/CARTAvis/carta-frontend/issues/2144)).
+* Fixed spatial matching error in sub-milliarcsecond scale ([#1734](https://github.com/CARTAvis/carta-frontend/issues/1734)).
 
 ## [4.0.0-beta.1]
 

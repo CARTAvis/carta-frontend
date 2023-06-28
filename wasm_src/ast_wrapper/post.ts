@@ -101,6 +101,7 @@ Module.putFits = Module.cwrap("putFits", null, ["number", "string"]);
 Module.getFrameFromFitsChan = Module.cwrap("getFrameFromFitsChan", "number", ["number", "number"]);
 Module.getSpectralFrame = Module.cwrap("getSpectralFrame", "number", ["number"]);
 Module.getSkyFrameSet = Module.cwrap("getSkyFrameSet", "number", ["number"]);
+Module.getSpatialMapping = Module.cwrap("getSpatialMapping", "number", ["number", "number"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
 Module.set = Module.cwrap("set", "number", ["number", "string"]);
 Module.clear = Module.cwrap("clear", "number", ["number", "string"]);
