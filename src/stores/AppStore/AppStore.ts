@@ -1732,6 +1732,16 @@ export class AppStore {
                         viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords});
                     }
                 }
+
+                // Clear tiles of invisible matched images during animation
+                if (this.animatorStore?.serverAnimationActive) {
+                    for (const frame of this.activeFrame.spectralSiblings) {
+                        if (!this.visibleFrames.includes(frame)) {
+                            viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null});
+                        }
+                    }
+                }
+
                 throttledSetViews(viewUpdates);
             }
         });
@@ -1910,7 +1920,7 @@ export class AppStore {
     };
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
-        if (this.animatorStore.serverAnimationActive) {
+        if (this.animatorStore.serverAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
             const frame = this.getFrame(tileStreamDetails.fileId);
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
