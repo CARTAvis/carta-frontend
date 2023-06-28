@@ -548,6 +548,22 @@ EMSCRIPTEN_KEEPALIVE int transform3D(AstSpecFrame* wcsinfo, double x, double y, 
     return 0;
 }
 
+EMSCRIPTEN_KEEPALIVE int transform3DArray(AstFrameSet* wcsinfo, int npoint, double in[], const int forward, double out[])
+{
+    if (!wcsinfo)
+    {
+        return 1;
+    }
+
+    astTranN(wcsinfo, npoint, 3, npoint, in, forward, 3, npoint, out);  
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
 EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const char* specTypeTo, const char* specUnitTo, const char* specSysTo, const int npoint, const double zIn[], const int forward, double zOut[])
 {
     if (!specFrameFrom)

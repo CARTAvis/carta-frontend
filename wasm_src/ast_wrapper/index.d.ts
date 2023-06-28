@@ -77,5 +77,6 @@ export function transformSpectralPoint(specFrame: SpecFrame, specType: string, s
 export function transformSpectralPointArray(specFrame: SpecFrame, specType: string, specUnit: string, specSys: string, zIn: Float64Array | Array<number>, forward?: boolean): Float64Array;
 export function normalizeCoordinates(frameSet: FrameSet, x: number, y: number): {x: number; y: number};
 export function getTransformGrid(transformFrameSet: FrameSet, xMin: number, xMax: number, numX: number, yMin: number, yMax: number, numY: number, forward: boolean);
+export function transform3DPointArrays(frameSet: FrameSet, xIn: Float64Array, yIn: Float64Array, zIn: Float64Array, forward?: boolean): {x: Float64Array, y: Float64Array, z: Float64Array};
 
 export const onReady: Promise<void>;
