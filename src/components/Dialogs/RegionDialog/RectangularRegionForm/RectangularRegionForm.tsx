@@ -435,7 +435,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return (
             <div className="region-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
-                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} spellCheck={false} />
+                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNTEXT && (
                     <FormGroup className="ann-text-input" label="Text" inline={true}>

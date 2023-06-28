@@ -127,7 +127,7 @@ export class FrameStore {
 
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
-    public spatialTransformAST: AST.FrameSet;
+    public spatialTransformAST: AST.Mapping;
     private cursorMovementHandle: NodeJS.Timeout;
 
     public distanceMeasuring: DistanceMeasuringStore;
@@ -478,11 +478,9 @@ export class FrameStore {
             return undefined;
         }
         const N = this.frameInfo.fileInfoExtended.depth;
-        const indexes = new Array<number>(N);
-        const values = new Array<number>(N);
-        const rawValues = new Array<number>(N);
+        const indexes = Array.from({length: N}, (x, i) => i);
 
-        let getChannelIndexSimple = (value: number): number => {
+        const getChannelIndexSimple = (value: number): number => {
             if (!value && value !== 0) {
                 return null;
             }
@@ -498,64 +496,42 @@ export class FrameStore {
             return ceil - value < value - floor ? ceil : floor;
         };
 
-        // By default, we try to use the WCS information to determine channel info.
-        if (this.spectralAxis) {
-            const refPixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.spectralNumber}`) !== -1);
-            const refValHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${this.spectralNumber}`) !== -1);
-            const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${this.spectralNumber}`) !== -1);
+        if (this.spectralAxis && this.wcsInfo3D) {
+            const values = this.getSpectralValuesInNativeWcs(indexes);
 
-            if (refPixHeader && refValHeader && deltaHeader) {
-                // Shift pixel coordinates by -1 to start at zero instead of 1
-                const refPix = getHeaderNumericValue(refPixHeader) - 1;
-                const refVal = getHeaderNumericValue(refValHeader);
-                const delta = getHeaderNumericValue(deltaHeader);
-                if (isFinite(refPix) && isFinite(refVal) && isFinite(delta)) {
-                    for (let i = 0; i < N; i++) {
-                        const channelOffset = i - refPix;
-                        indexes[i] = i;
-                        rawValues[i] = channelOffset * delta + refVal;
-                        values[i] = rawValues[i];
-                    }
-                    return {
-                        fromWCS: true,
-                        indexes,
-                        delta,
-                        values,
-                        rawValues,
-                        getChannelIndexWCS: (value: number): number => {
-                            if (!value) {
-                                return null;
-                            }
+            if (values) {
+                return {
+                    fromWCS: true,
+                    indexes,
+                    values,
+                    getChannelIndexWCS: (value: number): number => {
+                        if (!isFinite(value)) {
+                            return null;
+                        }
 
-                            const index = (value - refVal) / delta + refPix;
-                            if (index < 0) {
-                                return 0;
-                            } else if (index > values.length - 1) {
-                                return values.length - 1;
-                            }
+                        const index = this.getSpectralIndexFromNativeWcs(value);
+                        if (index < 0) {
+                            return 0;
+                        } else if (index > values.length - 1) {
+                            return values.length - 1;
+                        }
 
-                            const ceil = Math.ceil(index);
-                            const floor = Math.floor(index);
-                            return Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ? ceil : floor;
-                        },
-                        getChannelIndexSimple: getChannelIndexSimple
-                    };
-                }
+                        const ceil = Math.ceil(index);
+                        const floor = Math.floor(index);
+                        return Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ? ceil : floor;
+                    },
+                    getChannelIndexSimple: getChannelIndexSimple
+                };
             }
         }
 
         // return channels
-        for (let i = 0; i < N; i++) {
-            indexes[i] = i;
-            values[i] = i;
-            rawValues[i] = i;
-        }
+        const values = indexes.slice(0);
+
         return {
             fromWCS: false,
-            delta: undefined,
             indexes,
             values,
-            rawValues,
             getChannelIndexWCS: null,
             getChannelIndexSimple: getChannelIndexSimple
         };
@@ -582,7 +558,7 @@ export class FrameStore {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const restFreq = this.restFreqStore.restFreqInHz;
 
-                    const freqVal = channelInfo.rawValues[spectralInfo.channel];
+                    const freqVal = channelInfo.values[spectralInfo.channel];
                     // convert frequency value to unit in GHz
                     if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
                         const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
@@ -596,7 +572,7 @@ export class FrameStore {
                         spectralInfo.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
                     }
                 } else if (spectralType.code === "VRAD") {
-                    const velocityVal = channelInfo.rawValues[spectralInfo.channel];
+                    const velocityVal = channelInfo.values[spectralInfo.channel];
                     // convert velocity value to unit in km/s
                     if (this.isSpectralCoordinateConvertible && spectralType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
                         const volecityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
@@ -1495,6 +1471,46 @@ export class FrameStore {
             name = ""; // Use the default axis label in AST
         }
         return name;
+    };
+
+    private getSpectralValuesInNativeWcs = (indexes: number[]): number[] => {
+        const refPix = this.getSpatialRefPix();
+
+        const N = indexes.length;
+        const xIndexes = this.spectral === 1 ? new Float64Array(indexes) : new Float64Array(N).fill(this.dirX === 1 ? refPix?.x : refPix?.y);
+        const yIndexes = this.spectral === 2 ? new Float64Array(indexes) : new Float64Array(N).fill(this.dirX === 2 ? refPix?.x : refPix?.y);
+        const zIndexes = this.spectral === 3 ? new Float64Array(indexes) : new Float64Array(N).fill(this.dirX === 3 ? refPix?.x : refPix?.y);
+
+        const values = AST.transform3DPointArrays(this.wcsInfo3D, xIndexes, yIndexes, zIndexes);
+        return Array.from(this.spectral === 1 ? values?.x : this.spectral === 2 ? values?.y : values?.z);
+    };
+
+    private getSpectralIndexFromNativeWcs = (value: number): number => {
+        const refPix = this.getSpatialRefPix();
+        const xIndex = this.spectral === 1 ? 0 : this.dirX === 1 ? refPix?.x : refPix?.y;
+        const yIndex = this.spectral === 2 ? 0 : this.dirX === 2 ? refPix?.x : refPix?.y;
+        const zIndex = this.spectral === 3 ? 0 : this.dirX === 3 ? refPix?.x : refPix?.y;
+        const refValue = AST.transform3DPoint(this.wcsInfo3D, xIndex, yIndex, zIndex);
+
+        const xValue = this.spectral === 1 ? value : this.dirX === 1 ? refValue?.x : refValue?.y;
+        const yValue = this.spectral === 2 ? value : this.dirX === 2 ? refValue?.x : refValue?.y;
+        const zValue = this.spectral === 3 ? value : this.dirX === 3 ? refValue?.x : refValue?.y;
+        const index = AST.transform3DPoint(this.wcsInfo3D, xValue, yValue, zValue, false);
+        return this.spectral === 1 ? index?.x : this.spectral === 2 ? index?.y : index?.z;
+    };
+
+    private getSpatialRefPix = (): Point2D => {
+        const refXPixHeader = this.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.dirX}`) !== -1);
+        const refYPixHeader = this.frameInfo?.fileInfoExtended?.headerEntries.find(entry => entry.name.indexOf(`CRPIX${this.dirY}`) !== -1);
+
+        if (refXPixHeader && refYPixHeader) {
+            // Shift pixel coordinates by -1 to start at zero instead of 1
+            const refXPix = getHeaderNumericValue(refXPixHeader) - 1;
+            const refYPix = getHeaderNumericValue(refYPixHeader) - 1;
+            return {x: refXPix, y: refYPix};
+        } else {
+            return {x: 0, y: 0};
+        }
     };
 
     private convertSpectral = (values: Array<number>): Array<number> => {
@@ -2604,13 +2620,7 @@ export class FrameStore {
         this.spatialReference = frame;
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
-        const copySrc = AST.copy(this.wcsInfo);
-        const copyDest = AST.copy(frame.wcsInfo);
-        AST.invert(copySrc);
-        AST.invert(copyDest);
-        this.spatialTransformAST = AST.convert(copySrc, copyDest, "");
-        AST.deleteObject(copySrc);
-        AST.deleteObject(copyDest);
+        this.spatialTransformAST = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;

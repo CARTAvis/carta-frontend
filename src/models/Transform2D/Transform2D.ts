@@ -9,7 +9,7 @@ export class Transform2D {
     scale: number;
     origin: Point2D;
 
-    constructor(astTransform: AST.FrameSet, refPixel: Point2D) {
+    constructor(astTransform: AST.Mapping, refPixel: Point2D) {
         const transformedRef = transformPoint(astTransform, refPixel, true);
         const delta = 1.0;
         const refTop = add2D(refPixel, {x: 0, y: delta / 2.0});
