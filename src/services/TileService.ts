@@ -212,6 +212,8 @@ export class TileService {
     requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, channelsChanged: boolean = false) {
         const key = `${fileId}_${stokes}_${channel}`;
 
+        this.pendingSynchronisedTiles.delete(key);
+
         if (channelsChanged || !this.channelMap.has(fileId)) {
             this.pendingSynchronisedTiles.set(
                 key,
