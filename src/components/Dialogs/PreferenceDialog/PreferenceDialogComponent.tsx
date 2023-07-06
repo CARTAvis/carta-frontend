@@ -212,26 +212,13 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Spectral matching">
-                    <Tooltip2
-                        content={
-                            <span>
-                                For instant changes,
-                                <br />
-                                please modify the settings
-                                <br />
-                                in the <b>Image List Settings</b>.
-                            </span>
-                        }
-                        position={Position.RIGHT}
-                    >
-                        <HTMLSelect value={preference.spectralMatchingType} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, ev.currentTarget.value)}>
-                            {SPECTRAL_MATCHING_TYPES.map(type => (
-                                <option key={type} value={type}>
-                                    {SPECTRAL_TYPE_STRING.get(type)}
-                                </option>
-                            ))}
-                        </HTMLSelect>
-                    </Tooltip2>
+                    <HTMLSelect value={preference.spectralMatchingType} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, ev.currentTarget.value)}>
+                        {SPECTRAL_MATCHING_TYPES.map(type => (
+                            <option key={type} value={type}>
+                                {SPECTRAL_TYPE_STRING.get(type)}
+                            </option>
+                        ))}
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Transparent image background">
                     <Switch checked={preference.transparentImageBackground} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_TRANSPARENT_IMAGE_BACKGROUND, ev.currentTarget.checked)} />
