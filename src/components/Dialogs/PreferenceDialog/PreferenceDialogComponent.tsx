@@ -215,7 +215,11 @@ export class PreferenceDialogComponent extends React.Component {
                     <Tooltip2
                         content={
                             <span>
-                                Please modify the settings in the <b>Image List Settings</b>.
+                                For instant changes,
+                                <br />
+                                please modify the settings
+                                <br />
+                                in the <b>Image List Settings</b>.
                             </span>
                         }
                         position={Position.RIGHT}
