@@ -12,23 +12,7 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
-import {
-    CompressionQuality,
-    CursorInfoVisibility,
-    CursorPosition,
-    Event,
-    FileFilterMode,
-    RegionCreationMode,
-    SPECTRAL_MATCHING_TYPES,
-    SPECTRAL_TYPE_STRING,
-    SpectralType,
-    Theme,
-    TileCache,
-    WCSMatchingType,
-    WCSType,
-    Zoom,
-    ZoomPoint
-} from "models";
+import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
 import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
@@ -228,7 +212,7 @@ export class PreferenceDialogComponent extends React.Component {
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Spectral matching">
-                    <HTMLSelect value={preference.spectralMatchingType} onChange={ev => appStore.setSpectralMatchingType(ev.currentTarget.value as SpectralType)}>
+                    <HTMLSelect value={preference.spectralMatchingType} onChange={ev => preference.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, ev.currentTarget.value)}>
                         {SPECTRAL_MATCHING_TYPES.map(type => (
                             <option key={type} value={type}>
                                 {SPECTRAL_TYPE_STRING.get(type)}

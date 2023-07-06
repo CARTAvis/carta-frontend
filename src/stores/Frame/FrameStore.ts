@@ -2309,7 +2309,7 @@ export class FrameStore {
 
         if (recursive) {
             this.spectralSiblings.forEach(frame => {
-                const siblingChannel = getTransformedChannel(this.wcsInfo3D, frame.wcsInfo3D, PreferenceStore.Instance.spectralMatchingType, sanitizedChannel);
+                const siblingChannel = getTransformedChannel(this.wcsInfo3D, frame.wcsInfo3D, AppStore.Instance.spectralMatchingType, sanitizedChannel);
                 frame.setChannels(siblingChannel, frame.requiredStokes, false);
             });
         }
@@ -2738,12 +2738,12 @@ export class FrameStore {
         // For now, this is just done to ensure a mapping can be constructed
         const copySrc = AST.copy(this.wcsInfo3D);
         const copyDest = AST.copy(frame.wcsInfo3D);
-        const preferenceStore = PreferenceStore.Instance;
-        const spectralMatchingType = preferenceStore.spectralMatchingType;
+        const appStore = AppStore.Instance;
+        const spectralMatchingType = appStore.spectralMatchingType;
         // Ensure that a mapping for the current alignment system is possible
         if (spectralMatchingType !== SpectralType.CHANNEL) {
-            AST.set(copySrc, `AlignSystem=${preferenceStore.spectralMatchingType}`);
-            AST.set(copyDest, `AlignSystem=${preferenceStore.spectralMatchingType}`);
+            AST.set(copySrc, `AlignSystem=${appStore.spectralMatchingType}`);
+            AST.set(copyDest, `AlignSystem=${appStore.spectralMatchingType}`);
         }
         AST.invert(copySrc);
         AST.invert(copyDest);
@@ -2759,7 +2759,7 @@ export class FrameStore {
 
         this.spectralReference = frame;
         this.spectralReference.addSecondarySpectralImage(this);
-        const matchedChannel = getTransformedChannel(frame.wcsInfo3D, this.wcsInfo3D, preferenceStore.spectralMatchingType, frame.requiredChannel);
+        const matchedChannel = getTransformedChannel(frame.wcsInfo3D, this.wcsInfo3D, appStore.spectralMatchingType, frame.requiredChannel);
         this.setChannel(matchedChannel, false);
 
         // Align spectral settings to spectral reference

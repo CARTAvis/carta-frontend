@@ -344,6 +344,9 @@ export class AppStore {
         }
     }
 
+    // Spectral matching type, initialized by global preferences, modified by the Image List Settings
+    @observable spectralMatchingType: SpectralType;
+
     @computed get openFileDisabled(): boolean {
         return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
     }
@@ -1549,6 +1552,7 @@ export class AppStore {
                 await this.loadDefaultFiles();
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
+                this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
                 if (this.preferenceStore.checkNewRelease) {
                     await this.checkNewRelease();
                 }
@@ -2712,8 +2716,8 @@ export class AppStore {
         this.setSpectralMatchingEnabled(frame, !frame.spectralReference);
     };
 
-    setSpectralMatchingType = (spectralMatchingType: SpectralType) => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, spectralMatchingType);
+    @action setSpectralMatchingType = (spectralMatchingType: SpectralType) => {
+        this.spectralMatchingType = spectralMatchingType;
         for (const f of this.frames) {
             if (f.spectralReference) {
                 this.setSpectralMatchingEnabled(f, true);
