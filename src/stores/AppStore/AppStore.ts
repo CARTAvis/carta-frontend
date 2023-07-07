@@ -344,6 +344,9 @@ export class AppStore {
         }
     }
 
+    // Spectral matching type, initialized by global preferences, modified by the Image List Settings
+    @observable spectralMatchingType: SpectralType;
+
     @computed get openFileDisabled(): boolean {
         return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
     }
@@ -479,7 +482,19 @@ export class AppStore {
         return frameMap;
     }
 
-    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, lelExpr: boolean, hdu: string, generated: boolean = false, setAsActive: boolean = true): boolean => {
+    /**
+     * Adds a frame to the frame array based on the provided parameters.
+     *
+     * @param ack - The ack message received after opening a file.
+     * @param directory - The path to the parent directory of the file.
+     * @param lelExpr - Whether the file is opened with an image arithmetic (CASA lattice expression) string.
+     * @param hdu - The Header Data Unit (HDU) identifier of the file.
+     * @param generated - Whether the frame is a generated in-memory image. Used for the telemetry message.
+     * @param setAsActive - Whether the frame should be set as the active frame.
+     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @returns Whether the frame was successfully added.
+     */
+    @action addFrame = (ack: CARTA.IOpenFileAck, directory: string, lelExpr: boolean, hdu: string, generated: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true): boolean => {
         if (!ack) {
             return false;
         }
@@ -551,7 +566,10 @@ export class AppStore {
                 this.setSpectralMatchingEnabled(newFrame, true);
             }
         }
-        this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
+
+        if (updateStartingDirectory) {
+            this.fileBrowserStore.saveStartingDirectory(newFrame.frameInfo.directory);
+        }
 
         return true;
     };
@@ -587,8 +605,21 @@ export class AppStore {
         return newFrame;
     };
 
+    /**
+     * Loads a file at the given path and adds it as a frame to the application.
+     *
+     * @param path - The path to the parent directory of the file to load, or of the file itself.
+     * @param filename - The filename of the file to load.
+     * @param hdu - The Header Data Unit (HDU) to load. If left blank, the first image HDU will be loaded.
+     * @param imageArithmetic - Whether to treat the file as an image arithmetic (CASA lattice expression) string.
+     * @param setAsActive - Whether the loaded frame should be set as the active frame.
+     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @returns The added frame.
+     *
+     * @throws {Error} If there is an error loading the file.
+     */
     @flow.bound
-    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true) {
+    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         this.startFileLoading();
 
         if (imageArithmetic) {
@@ -621,7 +652,7 @@ export class AppStore {
         try {
             const ack = yield this.backendService.loadFile(path, filename, hdu, this.fileCounter, imageArithmetic);
             this.fileCounter++;
-            if (!this.addFrame(ack, path, imageArithmetic, hdu, setAsActive)) {
+            if (!this.addFrame(ack, path, imageArithmetic, hdu, false, setAsActive, updateStartingDirectory)) {
                 AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
             }
             this.endFileLoading();
@@ -674,34 +705,45 @@ export class AppStore {
     };
 
     /**
-     * Appends a file at the given path to the list of existing open files
-     * @access public
-     * @async
-     * @param path - path to the parent directory of the file to open, or of the file itself
-     * @param {string=} filename - filename of the file to open
-     * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
-     * @param {boolean=} imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string
-     * @return {Promise<FrameStore>} [async] the FrameStore the opened file
+     * Appends a file at the given path to the list of existing open files.
+     *
+     * @param path - The path to the parent directory of the file to open, or of the file itself.
+     * @param filename - The filename of the file to open.
+     * @param hdu - The Header Data Unit (HDU) to open. If left blank, the first image HDU will be opened.
+     * @param imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
+     * @param setAsActive - Whether to set the appended file as the active frame.
+     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @returns A promise that resolves to the FrameStore of the opened file.
+     *
+     * @example
+     * // Append a file with the given path and filename
+     * const file = await appendFile("/path/to/directory", "example.fits");
      */
     @flow.bound
-    *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true) {
+    *appendFile(path: string, filename?: string, hdu?: string, imageArithmetic: boolean = false, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
         // Stop animations playing before loading a new frame
         this.animatorStore.stopAnimation();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive);
+        return yield this.loadFile(path, filename, hdu, imageArithmetic, setAsActive, updateStartingDirectory);
     }
 
     /**
-     * Closes all existing files and opens a file at the given path
-     * @param path - path to the parent directory of the file to open, or of the file itself
-     * @param {string=} filename - filename of the file to open
-     * @param {string=} hdu - HDU to open. If left blank, the first image HDU will be opened
-     * @param {boolean=} imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string
-     * @return {Promise<FrameStore>} [async] the FrameStore of the opened file
+     * Closes all existing files and opens a file at the given path.
+     *
+     * @param path - The path to the parent directory of the file to open, or of the file itself.
+     * @param filename - The filename of the file to open.
+     * @param hdu - The Header Data Unit (HDU) to open. If left blank, the first image HDU will be opened.
+     * @param imageArithmetic - Whether to treat the filename as an image arithmetic (CASA lattice expression) string.
+     * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
+     * @returns A promise that resolves to the FrameStore of the opened file.
+     *
+     * @example
+     * // Open a file with the given path and filename
+     * const openedFile = await openFile("/path/to/directory", "example.fits");
      */
     @flow.bound
-    *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean) {
+    *openFile(path: string, filename?: string, hdu?: string, imageArithmetic?: boolean, updateStartingDirectory: boolean = true) {
         this.removeAllFrames();
-        return yield this.loadFile(path, filename, hdu, imageArithmetic);
+        return yield this.loadFile(path, filename, hdu, imageArithmetic, true, updateStartingDirectory);
     }
 
     @flow.bound
@@ -747,8 +789,9 @@ export class AppStore {
     }
 
     /**
-     * Closes the currently active image
-     * @param confirmClose [boolean=] - Flag indicating whether to display a confirmation dialog before closing
+     * Closes the currently active image.
+     *
+     * @param confirmClose - Flag indicating whether to display a confirmation dialog before closing.
      */
     @action closeCurrentFile = (confirmClose: boolean = false) => {
         if (!this.appendFileDisabled) {
@@ -1549,6 +1592,7 @@ export class AppStore {
                 await this.loadDefaultFiles();
                 this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
                 this.updateASTColors();
+                this.setSpectralMatchingType(this.preferenceStore.spectralMatchingType);
                 if (this.preferenceStore.checkNewRelease) {
                     await this.checkNewRelease();
                 }
@@ -1732,6 +1776,16 @@ export class AppStore {
                         viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords});
                     }
                 }
+
+                // Clear tiles of invisible matched images during animation
+                if (this.animatorStore?.serverAnimationActive) {
+                    for (const frame of this.activeFrame.spectralSiblings) {
+                        if (!this.visibleFrames.includes(frame)) {
+                            viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null});
+                        }
+                    }
+                }
+
                 throttledSetViews(viewUpdates);
             }
         });
@@ -1910,7 +1964,7 @@ export class AppStore {
     };
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
-        if (this.animatorStore.serverAnimationActive) {
+        if (this.animatorStore.serverAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
             const frame = this.getFrame(tileStreamDetails.fileId);
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
@@ -2703,8 +2757,8 @@ export class AppStore {
         this.setSpectralMatchingEnabled(frame, !frame.spectralReference);
     };
 
-    setSpectralMatchingType = (spectralMatchingType: SpectralType) => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, spectralMatchingType);
+    @action setSpectralMatchingType = (spectralMatchingType: SpectralType) => {
+        this.spectralMatchingType = spectralMatchingType;
         for (const f of this.frames) {
             if (f.spectralReference) {
                 this.setSpectralMatchingEnabled(f, true);

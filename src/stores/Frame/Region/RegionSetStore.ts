@@ -314,7 +314,7 @@ export class RegionSetStore {
         this.mode = this.mode === RegionMode.MOVING ? RegionMode.CREATING : RegionMode.MOVING;
     };
 
-    @action migrateRegionsFromExistingSet = (sourceRegionSet: RegionSetStore, spatialTransformAST: AST.FrameSet, forward: boolean = false) => {
+    @action migrateRegionsFromExistingSet = (sourceRegionSet: RegionSetStore, spatialTransformAST: AST.Mapping, forward: boolean = false) => {
         if (sourceRegionSet?.regions?.length <= 1) {
             return;
         }

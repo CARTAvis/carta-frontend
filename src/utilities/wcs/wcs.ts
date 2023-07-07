@@ -33,7 +33,7 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     }
 }
 
-export function transformPoint(astTransform: AST.FrameSet, point: Point2D, forward: boolean = true) {
+export function transformPoint(astTransform: AST.FrameSet | AST.Mapping, point: Point2D, forward: boolean = true) {
     return AST.transformPoint(astTransform, point.x, point.y, forward);
 }
 
@@ -94,19 +94,25 @@ export function getTransformedChannel(srcTransform: AST.FrameSet, destTransform:
     }
 
     // Set common spectral
-    AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
-    AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+    const copySrc = AST.copy(srcTransform);
+    const copyDest = AST.copy(destTransform);
+    AST.set(copySrc, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+    AST.set(copyDest, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
 
     // Get spectral value from forward transform
-    const sourceSpectralValue = AST.transform3DPoint(srcTransform, 0, 0, srcChannel, true);
+    const sourceSpectralValue = AST.transform3DPoint(copySrc, 0, 0, srcChannel, true);
     if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z)) {
         return NaN;
     }
 
     // Get a sensible pixel coordinate for the reverse transform by forward transforming first pixel in image
-    const dummySpectralValue = AST.transform3DPoint(destTransform, 0, 0, 0, true);
+    const dummySpectralValue = AST.transform3DPoint(copyDest, 0, 0, 0, true);
     // Get pixel value from destination transform (reverse)
-    const destPixelValue = AST.transform3DPoint(destTransform, dummySpectralValue.x, dummySpectralValue.y, sourceSpectralValue.z, false);
+    const destPixelValue = AST.transform3DPoint(copyDest, dummySpectralValue.x, dummySpectralValue.y, sourceSpectralValue.z, false);
+
+    AST.deleteObject(copySrc);
+    AST.deleteObject(copyDest);
+
     if (!destPixelValue || !isFinite(destPixelValue.z)) {
         return NaN;
     }
@@ -125,24 +131,26 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
     }
 
     // Set common spectral
-    AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
-    AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+    const copySrc = AST.copy(srcTransform);
+    const copyDest = AST.copy(destTransform);
+    AST.set(copySrc, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
+    AST.set(copyDest, `System=${matchingType}, StdOfRest=Helio, Unit=${defaultUnit}`);
 
     // Get a sensible pixel coordinate for the reverse transform by forward transforming first pixel in image
-    const dummySpectralValue = AST.transform3DPoint(destTransform, 1, 1, 1, true);
+    const dummySpectralValue = AST.transform3DPoint(copyDest, 1, 1, 1, true);
 
     const N = lastChannel - firstChannel + 1;
     const destChannels = new Array<number>(N);
     for (let i = 0; i < N; i++) {
         // Get spectral value from forward transform
-        const sourceSpectralValue = AST.transform3DPoint(srcTransform, 1, 1, firstChannel + i, true);
+        const sourceSpectralValue = AST.transform3DPoint(copySrc, 1, 1, firstChannel + i, true);
         if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z) || isAstBad(sourceSpectralValue.z)) {
             destChannels[i] = NaN;
             continue;
         }
 
         // Get pixel value from destination transform (reverse)
-        const destPixelValue = AST.transform3DPoint(destTransform, dummySpectralValue.x, dummySpectralValue.y, sourceSpectralValue.z, false);
+        const destPixelValue = AST.transform3DPoint(copyDest, dummySpectralValue.x, dummySpectralValue.y, sourceSpectralValue.z, false);
         if (!destPixelValue || !isFinite(destPixelValue.z) || isAstBad(sourceSpectralValue.z)) {
             destChannels[i] = NaN;
             continue;
@@ -150,6 +158,9 @@ export function getTransformedChannelList(srcTransform: AST.FrameSet, destTransf
 
         destChannels[i] = destPixelValue.z;
     }
+
+    AST.deleteObject(copySrc);
+    AST.deleteObject(copyDest);
     return destChannels;
 }
 
