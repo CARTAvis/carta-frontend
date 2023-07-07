@@ -199,7 +199,7 @@ export class SpectralProfileSelectionStore {
                     label: profileConfig.label,
                     comments: frame.getRegionProperties(profileConfig.regionId),
                     intensityConfig: frame.intensityConfig,
-                    IntensityUnit: frame.intensityUnit
+                    intensityUnit: frame.intensityUnit
                 });
             }
         });

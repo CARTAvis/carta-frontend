@@ -450,11 +450,11 @@ export class AppStore {
         const spatialMatchedFileIds = this.spatialReference?.spatialSiblings?.map(matchedFrame => {
             return matchedFrame.frameInfo.fileId;
         });
-        spatialMatchedFileIds.unshift(spatialReferenceId);
+        spatialMatchedFileIds?.unshift(spatialReferenceId);
         const spectralMatchedFileIds = this.spectralReference?.spectralSiblings?.map(matchedFrame => {
             return matchedFrame.frameInfo.fileId;
         });
-        spectralMatchedFileIds.unshift(spectralReferenceId);
+        spectralMatchedFileIds?.unshift(spectralReferenceId);
 
         spatialMatchedFileIds?.forEach(spatialMatchedFileId => {
             if (spectralMatchedFileIds?.includes(spatialMatchedFileId)) {
