@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Changed the default title string in the image viewer ([#2168](https://github.com/CARTAvis/carta-frontend/issues/2168)).
 * Modified text annotation textbox to stay the same dimension as user zoom the image ([#2162](https://github.com/CARTAvis/carta-frontend/issues/2162)).
+* Disabled spell check in text input ([#2138](https://github.com/CARTAvis/carta-frontend/issues/2138)).
+* Support animation playback with matched images in multi-panel view ([#1860](https://github.com/CARTAvis/carta-frontend/issues/1860)).
+* Modified spectral matching type selector in Image List Settings won't affact global preferences ([#2098](https://github.com/CARTAvis/carta-frontend/issues/2098)).
 ### Fixed
 * Fixed bug where line region computation width cannot be changed in spatial profile setting widget ([#2000](https://github.com/CARTAvis/carta-frontend/issues/2000)).
 * Fixed when multiple images are open, PV generator can only produce PV preview with live update for one of the images ([#2171](https://github.com/CARTAvis/carta-frontend/issues/2171)).
@@ -20,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the problem of resuming LEL images ([#1226](https://github.com/CARTAvis/carta-backend/issues/1226)).
 * Fixed tsv and txt file export naming ([#1987](https://github.com/CARTAvis/carta-frontend/issues/1987)).
 * Fixed the spectral line offset by correcting the redshift factor calculation ([#1327](https://github.com/CARTAvis/carta-frontend/issues/1327)).
+* Fixed the alignment in workspace dialog ([#2155](https://github.com/CARTAvis/carta-frontend/issues/2155)).
+* Fixed the spectral axis for images with headers in `CDi_j` format ([#2144](https://github.com/CARTAvis/carta-frontend/issues/2144)).
+* Fixed spatial matching error in sub-milliarcsecond scale ([#1734](https://github.com/CARTAvis/carta-frontend/issues/1734)).
+* Fixed inconsistent region coordinate format when images are spatially matched ([#2189](https://github.com/CARTAvis/carta-frontend/issues/2189)).
+* Fixed the right ascension label in the image view ([#2192](https://github.com/CARTAvis/carta-frontend/issues/2192)).
 
 ## [4.0.0-beta.1]
 

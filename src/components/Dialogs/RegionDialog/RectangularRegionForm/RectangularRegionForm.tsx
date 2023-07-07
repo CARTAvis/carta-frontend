@@ -304,8 +304,12 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
 
     public render() {
         // dummy variables related to wcs to trigger re-render
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const system = AppStore.Instance.overlayStore.global.explicitSystem;
+        const formatX = AppStore.Instance.overlayStore.numbers.formatTypeX;
+        const formatY = AppStore.Instance.overlayStore.numbers.formatTypeY;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
+
         const region = this.props.region;
         const isTextAnnotation = region.regionType === CARTA.RegionType.ANNTEXT;
         if (!region || region.controlPoints.length !== 2 || (region.regionType !== CARTA.RegionType.RECTANGLE && region.regionType !== CARTA.RegionType.ANNRECTANGLE && region.regionType !== CARTA.RegionType.ANNTEXT)) {
@@ -431,7 +435,7 @@ export class RectangularRegionForm extends React.Component<{region: RegionStore;
         return (
             <div className="region-form">
                 <FormGroup label={region.isAnnotation ? "Annotation name" : "Region name"} inline={true}>
-                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} spellCheck={false} />
+                    <InputGroup placeholder={region.isAnnotation ? "Enter an annotation name" : "Enter a region name"} value={region.name} onChange={this.handleNameChange} />
                 </FormGroup>
                 {region.regionType === CARTA.RegionType.ANNTEXT && (
                     <FormGroup className="ann-text-input" label="Text" inline={true}>
