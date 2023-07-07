@@ -63,7 +63,6 @@ import GitCommit from "../../static/gitInfo";
 
 interface FrameOption extends IOptionProps {
     hasZAxis: boolean;
-    frame?: FrameStore;
 }
 
 interface ViewUpdate {

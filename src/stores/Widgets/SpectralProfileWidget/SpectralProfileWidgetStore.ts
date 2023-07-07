@@ -5,7 +5,20 @@ import tinycolor from "tinycolor2";
 
 import {SpectralProfilerSettingsTabs} from "components";
 import {LineSettings, PlotType, SmoothingType, VERTICAL_RANGE_PADDING} from "components/Shared";
-import {FindIntensityUnitType, GetIntensityConversion, GetIntensityOptions, IntensityConfig, IntensityConversion, IntensityUnitType, IsIntensitySupported, LineKey, Point2D, POLARIZATIONS, SpectralSystem} from "models";
+import {
+    FindIntensityUnitType,
+    GetCommonIntensityOptions,
+    GetIntensityConversion,
+    GetIntensityOptions,
+    IntensityConfig,
+    IntensityConversion,
+    IntensityUnitType,
+    IsIntensitySupported,
+    LineKey,
+    Point2D,
+    POLARIZATIONS,
+    SpectralSystem
+} from "models";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {clamp, getColorForTheme, isAutoColor} from "utilities";
@@ -404,10 +417,11 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
 
         const profiles = this.profileSelectionStore.profiles;
-        const displayedFrames = profiles.map(profile => profile.frame);
+        const displayedFramesIntensityConfig = profiles.map(profile => profile.intensityConfig);
 
-        if (frame?.spectralReference && isMultiProfileActive) {
-            return frame.getCommonIntensityOptions(displayedFrames.map(frame => frame.intensityConfig));
+        if (frame?.spectralReference && isMultiProfileActive && profiles.length) {
+            const intensityConfigArray = [frame?.intensityConfig, ...displayedFramesIntensityConfig];
+            return GetCommonIntensityOptions(intensityConfigArray);
         } else {
             return GetIntensityOptions(this.intensityConfig);
         }
@@ -454,7 +468,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 labels.push(profile.label);
                 comments.push(profile.comments);
 
-                const intensityConversion: IntensityConversion = GetIntensityConversion(profile.frame?.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.frame.intensityUnit);
+                const intensityConversion: IntensityConversion = GetIntensityConversion(profile.intensityConfig, isMultiProfileActive ? this.intensityUnit : profile.intensityUnit);
                 const intensityValues = intensityConversion ? intensityConversion(profile.data.values) : profile.data.values;
                 const pointsAndProperties = this.getDataPointsAndProperties(profile.channelValues, intensityValues, wantMeanRms);
 
@@ -493,7 +507,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         let fittingData: {x: number[]; y: Float32Array | Float64Array};
         if (profiles.length === 1 && dataIndexes.length === 1) {
             let x = profiles[0].channelValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
-            const intensityConversion: IntensityConversion = GetIntensityConversion(profiles[0].frame?.intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].frame?.intensityUnit);
+            const intensityConversion: IntensityConversion = GetIntensityConversion(profiles[0].intensityConfig, isMultiProfileActive ? this.intensityUnit : profiles[0].intensityUnit);
             const intensityValues = intensityConversion ? intensityConversion(profiles[0].data.values) : profiles[0].data.values;
             let y = intensityValues.slice(dataIndexes[0].startIndex, dataIndexes[0].endIndex + 1);
             if (this.smoothingStore.type !== SmoothingType.NONE) {

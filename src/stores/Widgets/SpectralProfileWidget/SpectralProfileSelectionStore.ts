@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
 
-import {GetIntensityOptions, LineKey, LineOption, POLARIZATION_LABELS, POLARIZATIONS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
+import {GetIntensityOptions, IntensityConfig, LineKey, LineOption, POLARIZATION_LABELS, POLARIZATIONS, STATISTICS_TEXT, StatsTypeString, SUPPORTED_STATISTICS_TYPES, VALID_COORDINATES} from "models";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 import {ACTIVE_FILE_ID, RegionId, SpectralProfileWidgetStore} from "stores/Widgets";
@@ -180,7 +180,8 @@ export class SpectralProfileSelectionStore {
         colorKey: string;
         label: {image: string; plot: string};
         comments: string[];
-        frame: FrameStore;
+        intensityConfig: IntensityConfig;
+        intensityUnit: string;
     }[] {
         let profiles = [];
         this.profileConfigs?.forEach(profileConfig => {
@@ -197,7 +198,8 @@ export class SpectralProfileSelectionStore {
                     colorKey: profileConfig.colorKey,
                     label: profileConfig.label,
                     comments: frame.getRegionProperties(profileConfig.regionId),
-                    frame
+                    intensityConfig: frame.intensityConfig,
+                    IntensityUnit: frame.intensityUnit
                 });
             }
         });

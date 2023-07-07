@@ -13,7 +13,6 @@ import {
     FULL_POLARIZATIONS,
     GenCoordinateLabel,
     GetFreqInGHz,
-    GetIntensityOptions,
     IntensityConfig,
     IsSpectralSystemSupported,
     IsSpectralTypeSupported,
@@ -1815,18 +1814,6 @@ export class FrameStore {
         }
         return null;
     };
-
-    public getCommonIntensityOptions(intensityConfigs: IntensityConfig | IntensityConfig[]): string[] {
-        if ((intensityConfigs as IntensityConfig[]).length !== undefined) {
-            const intensityConfigArray = (intensityConfigs as IntensityConfig[]).map(intensityConfig => GetIntensityOptions(intensityConfig));
-            intensityConfigArray.push(GetIntensityOptions(this.intensityConfig));
-            return intensityConfigArray.reduce((prevFrameOptions, currentFrameOptions) => prevFrameOptions.filter(option => currentFrameOptions.includes(option)));
-        } else if (intensityConfigs) {
-            return GetIntensityOptions(this.intensityConfig).filter(x => GetIntensityOptions(intensityConfigs as IntensityConfig).includes(x));
-        } else {
-            return GetIntensityOptions(this.intensityConfig);
-        }
-    }
 
     public getRegion = (regionId: number): RegionStore => {
         return this.regionSet?.regions?.find(r => r.regionId === regionId);
