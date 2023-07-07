@@ -1025,28 +1025,31 @@ export class OverlayStore {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _ = this.global.system;
             this.setFormatsFromSystem();
-            const frame = AppStore.Instance.activeFrame;
-            if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem) {
-                AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
-            }
+            AppStore.Instance.frames.forEach(frame => {
+                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.global.explicitSystem) {
+                    AST.set(frame.wcsInfoForTransformation, `System=${this.global.explicitSystem}`);
+                }
+            });
         });
 
         autorun(() => {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _ = this.numbers.formatTypeX;
-            const frame = AppStore.Instance.activeFrame;
-            if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeX) {
-                AST.set(frame.wcsInfoForTransformation, `Format(${frame.dirX})=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
-            }
+            AppStore.Instance.frames.forEach(frame => {
+                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeX) {
+                    AST.set(frame.wcsInfoForTransformation, `Format(${frame.dirX})=${this.numbers.formatTypeX}.${WCS_PRECISION}`);
+                }
+            });
         });
 
         autorun(() => {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const _ = this.numbers.formatTypeY;
-            const frame = AppStore.Instance.activeFrame;
-            if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeY) {
-                AST.set(frame.wcsInfoForTransformation, `Format(${frame.dirY})=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
-            }
+            AppStore.Instance.frames.forEach(frame => {
+                if (frame?.validWcs && frame?.wcsInfoForTransformation && this.numbers.formatTypeY) {
+                    AST.set(frame.wcsInfoForTransformation, `Format(${frame.dirY})=${this.numbers.formatTypeY}.${WCS_PRECISION}`);
+                }
+            });
         });
     }
 
