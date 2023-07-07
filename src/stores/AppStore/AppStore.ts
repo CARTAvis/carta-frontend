@@ -405,7 +405,6 @@ export class AppStore {
         return this.frames?.map((frame, index) => {
             return {
                 label: index + ": " + frame.filename,
-                frame,
                 value: frame.frameInfo.fileId,
                 hasZAxis: frame?.channelInfo !== undefined && frame?.channelInfo !== null
             };

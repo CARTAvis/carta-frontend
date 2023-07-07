@@ -105,7 +105,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setStickyIntensityUnit = (intensityUnitStr: string) => {
+    @action setMultiProfileIntensityUnit = (intensityUnitStr: string) => {
         this.intensityUnit = intensityUnitStr;
     };
 
@@ -332,7 +332,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.settingsTabId = SpectralProfilerSettingsTabs.CONVERSION;
         this.keep = false;
 
-        this.setStickyIntensityUnit(this.effectiveFrame?.headerUnit);
+        this.setMultiProfileIntensityUnit(this.effectiveFrame?.headerUnit);
 
         reaction(
             () => this.effectiveFrame,
@@ -340,7 +340,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 if (frame) {
                     const isMultiProfileActive = this.profileSelectionStore.activeProfileCategory === MultiProfileCategory.IMAGE;
                     if (isMultiProfileActive) {
-                        this.setStickyIntensityUnit(GetIntensityConversion(frame.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
+                        this.setMultiProfileIntensityUnit(GetIntensityConversion(frame.intensityConfig, this.intensityUnit) ? this.intensityUnit : frame.headerUnit);
                     }
                 }
             }
@@ -349,7 +349,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         reaction(
             () => this.profileSelectionStore.activeProfileCategory,
             () => {
-                this.setStickyIntensityUnit(this.intensityOptions[0]);
+                this.setMultiProfileIntensityUnit(this.intensityOptions[0]);
             }
         );
 
@@ -357,7 +357,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             () => this.effectiveFrame?.requiredPolarization,
             polarization => {
                 if (this.effectiveFrame && [POLARIZATIONS.PFtotal, POLARIZATIONS.PFlinear, POLARIZATIONS.Pangle].includes(polarization)) {
-                    this.setStickyIntensityUnit(this.effectiveFrame.headerUnit);
+                    this.setMultiProfileIntensityUnit(this.effectiveFrame.headerUnit);
                 }
             }
         );
@@ -407,7 +407,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const displayedFrames = profiles.map(profile => profile.frame);
 
         if (frame?.spectralReference && isMultiProfileActive) {
-            return frame.commonIntensityUnitWith(displayedFrames);
+            return frame.getCommonIntensityOptions(displayedFrames.map(frame => frame.intensityConfig));
         } else {
             return GetIntensityOptions(this.intensityConfig);
         }

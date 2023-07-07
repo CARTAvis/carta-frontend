@@ -644,7 +644,7 @@ export class FrameStore {
                 config["freqGHz"] = this.channelInfo?.values.map(x => GetFreqInGHz(this.spectralAxis.type.unit, x));
             } else if (this.spectralAxis?.type?.code === "VRAD") {
                 config["freqGHz"] = this.channelInfo?.values.map(x => {
-                    const frequency = frequencyFromVelocity(x, this.restFreqStore?.headerRestFreq?.value);
+                    const frequency = frequencyFromVelocity(x, this.restFreqStore?.customRestFreq?.value);
                     return GetFreqInGHz(this.restFreqStore?.headerRestFreq?.unit, frequency);
                 });
             }
@@ -1816,13 +1816,13 @@ export class FrameStore {
         return null;
     };
 
-    public commonIntensityUnitWith(frame: FrameStore | FrameStore[]): string[] {
-        if ((frame as FrameStore[]).length !== undefined) {
-            const intensityConfigArray = (frame as FrameStore[]).map(frame => GetIntensityOptions(frame.intensityConfig));
+    public getCommonIntensityOptions(intensityConfigs: IntensityConfig | IntensityConfig[]): string[] {
+        if ((intensityConfigs as IntensityConfig[]).length !== undefined) {
+            const intensityConfigArray = (intensityConfigs as IntensityConfig[]).map(intensityConfig => GetIntensityOptions(intensityConfig));
             intensityConfigArray.push(GetIntensityOptions(this.intensityConfig));
             return intensityConfigArray.reduce((prevFrameOptions, currentFrameOptions) => prevFrameOptions.filter(option => currentFrameOptions.includes(option)));
-        } else if (frame) {
-            return GetIntensityOptions(this.intensityConfig).filter(x => GetIntensityOptions((frame as FrameStore).intensityConfig).includes(x));
+        } else if (intensityConfigs) {
+            return GetIntensityOptions(this.intensityConfig).filter(x => GetIntensityOptions(intensityConfigs as IntensityConfig).includes(x));
         } else {
             return GetIntensityOptions(this.intensityConfig);
         }
@@ -2798,7 +2798,7 @@ export class FrameStore {
         this.setSpectralCoordinate(frame.spectralCoordinate, false);
 
         // Set the intensity units to the intersection of spectrally matched frames
-        AppStore.Instance.widgetsStore.spectralProfileWidgets.forEach(store => store.setStickyIntensityUnit(store.intensityOptions[0]));
+        AppStore.Instance.widgetsStore.spectralProfileWidgets.forEach(store => store.setMultiProfileIntensityUnit(store.intensityOptions[0]));
 
         return true;
     };
