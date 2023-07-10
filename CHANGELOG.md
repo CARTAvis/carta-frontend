@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed spatial matching error in sub-milliarcsecond scale ([#1734](https://github.com/CARTAvis/carta-frontend/issues/1734)).
 * Fixed inconsistent region coordinate format when images are spatially matched ([#2189](https://github.com/CARTAvis/carta-frontend/issues/2189)).
 * Fixed the right ascension label in the image view ([#2192](https://github.com/CARTAvis/carta-frontend/issues/2192)).
+* Fixed the multi-spectral-profile intensity unit conversion ([#1758](https://github.com/CARTAvis/carta-frontend/issues/1758)).
+* Fixed the Jy/beam to K intensity unit conversion ([#1907](https://github.com/CARTAvis/carta-frontend/issues/1907)).
 
 ## [4.0.0-beta.1]
 
