@@ -4,33 +4,33 @@
  */
 
 .heroBanner {
-  padding: 4rem 0;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
+    padding: 4rem 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
 }
 
 @media screen and (max-width: 996px) {
-  .heroBanner {
-    padding: 2rem;
-  }
+    .heroBanner {
+        padding: 2rem;
+    }
 }
 
 .heroTitle {
-  font-size: xx-large;
-  padding-bottom: 2rem;
+    font-size: xx-large;
+    padding-bottom: 2rem;
 }
 
 .buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
 }
 
 .mainContainer {
-  max-width: 700px !important;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+    max-width: 700px !important;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
 }
