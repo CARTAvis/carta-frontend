@@ -1,6 +1,7 @@
 import {CARTA} from "carta-protobuf";
+
 import * as SpectralDefinition from "models/Spectral/SpectralDefinition.ts";
-import {SpectralProfileWidgetStore, FrameStore} from "stores";
+import {FrameStore,SpectralProfileWidgetStore} from "stores";
 
 const emptyframeInfo = {
     fileId: 0,
