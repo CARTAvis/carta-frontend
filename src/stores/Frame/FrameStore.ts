@@ -620,7 +620,7 @@ export class FrameStore {
             } else if (this.spectralAxis?.type?.code === "VRAD") {
                 config["freqGHz"] = this.channelInfo?.values.map(x => {
                     const frequency = frequencyFromVelocity(x, this.restFreqStore?.customRestFreq?.value);
-                    return GetFreqInGHz(this.restFreqStore?.headerRestFreq?.unit, frequency);
+                    return GetFreqInGHz(this.restFreqStore?.customRestFreq?.unit, frequency);
                 });
             }
         }
