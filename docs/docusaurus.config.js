@@ -112,7 +112,8 @@ const config = {
                 changelogs: true,
                 tsconfigName: "tsconfig.json"
             }
-        ]
+        ],
+        require.resolve("docusaurus-lunr-search")
     ]
 };
 
