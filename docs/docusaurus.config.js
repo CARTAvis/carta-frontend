@@ -21,6 +21,7 @@ const config = {
     // If you aren't using GitHub pages, you don't need these.
     organizationName: "CARTAvis", // Usually your GitHub org/user name.
     projectName: "carta-frontend", // Usually your repo name.
+    trailingSlash: false,
 
     onBrokenLinks: "throw",
     onBrokenMarkdownLinks: "warn",
