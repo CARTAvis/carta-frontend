@@ -444,22 +444,25 @@ export class AppStore {
 
     @computed get spatialAndSpectalMatchedFileIds(): number[] {
         let matchedIds = [];
-        if (this.spatialReference) {
-            matchedIds.push(this.spatialReference.frameInfo.fileId);
-        }
+        const spatialReferenceId = this.spatialReference?.frameInfo?.fileId;
+        const spectralReferenceId = this.spectralReference?.frameInfo?.fileId;
 
         const spatialMatchedFileIds = this.spatialReference?.spatialSiblings?.map(matchedFrame => {
             return matchedFrame.frameInfo.fileId;
         });
-        const spectralMatchedFileIds = this.spatialReference?.spectralSiblings?.map(matchedFrame => {
+        spatialMatchedFileIds?.unshift(spatialReferenceId);
+        const spectralMatchedFileIds = this.spectralReference?.spectralSiblings?.map(matchedFrame => {
             return matchedFrame.frameInfo.fileId;
         });
+        spectralMatchedFileIds?.unshift(spectralReferenceId);
+
         spatialMatchedFileIds?.forEach(spatialMatchedFileId => {
             if (spectralMatchedFileIds?.includes(spatialMatchedFileId)) {
                 matchedIds.push(spatialMatchedFileId);
             }
         });
-        return matchedIds;
+
+        return [...new Set(matchedIds)]; //Remove duplicate
     }
 
     // Calculates which frames have a contour visible as a function of each visible frame
