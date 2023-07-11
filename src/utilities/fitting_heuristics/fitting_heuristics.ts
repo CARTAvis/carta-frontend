@@ -46,7 +46,7 @@ export function profilePreprocessing(data: number[]) {
 
 /**
  * Compute the histogram of a set of data.
- * 
+ *
  * @param data - Input data.
  * @param binN - Defines the number of equal-width bins in the given range.
  * @returns The values of the histogram and the bin edges.
