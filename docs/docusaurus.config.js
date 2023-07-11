@@ -100,6 +100,8 @@ const config = {
                         entry: {
                             index: {path: "src/index.tsx", entry: "."}, // index.tsx has no exports; work-around for displaying the overview page
                             components: {path: "src/components/index.ts", entry: ".", label: "Components"},
+                            "components/Dialogs": { path: "src/components/Dialogs/index.ts", entry: ".", label: "Components - Dialogs" },
+                            "components/Shared": {path: "src/components/Shared/index.ts", entry: ".", label: "Components - Shared"},
                             models: {path: "src/models/index.ts", entry: ".", label: "Models"},
                             services: {path: "src/services/index.ts", entry: ".", label: "Services"},
                             stores: {path: "src/stores/index.ts", entry: ".", label: "Stores"},
