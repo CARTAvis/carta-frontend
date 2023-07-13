@@ -1,27 +1,29 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 
-# Unit Test Guidelines
+# Unit test guidelines
 
 Guidelines for running and writing unit tests.
 
 ## Running unit tests
 
-1. Installing package dependencies:
+1. Install package dependencies:
 
     ```
     npm install
     ```
 
-2. Building carta-protobuf and WebAssembly libraries:
+2. Build carta-protobuf and WebAssembly libraries:
 
     ```
     npm run build-protobuf
+
+    npm run build-libs
     npm run build-wrappers
     ```
 
-3. Running unit tests:
+3. Run unit tests:
 
     ```
     npm test
@@ -57,7 +59,7 @@ Guidelines for running and writing unit tests.
     ```
 -   Test code structure: use `describe` to structure the tests. For example,
 
-    ```
+    ```javascript
     describe("[unit]", () => {
         test("[expected behavior]", () => {});
 
