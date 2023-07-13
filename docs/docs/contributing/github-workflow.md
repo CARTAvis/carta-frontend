@@ -4,4 +4,4 @@ sidebar_position: 2
 
 # Github workflow
 
-TBD
+The workflow of contributing to the codebase.
