@@ -15,22 +15,24 @@ jobs:
 
   doc-format-check:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: npm
-      - run: |
-          cd docs
-          npm ci
-      - run: |
-          cd docs
-          npm run checkformat
+      - run: npm ci
+      - run: npm run checkformat
 
   test-doc:
     name: Test deployment of the documentation website
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs
     needs: doc-format-check
     steps:
       - uses: actions/checkout@v3
@@ -40,13 +42,9 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: |
-          cd docs
-          npm ci
+        run: npm ci
       - name: Test build website
-        run: |
-          cd docs
-          npm run build
+        run: npm run build
 
   node-v16:
     runs-on: [self-hosted, Linux, X64, Docker]
