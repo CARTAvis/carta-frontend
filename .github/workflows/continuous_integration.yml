@@ -29,10 +29,7 @@ jobs:
 
   test-doc:
     name: Test deployment of the documentation website
-    runs-on: [self-hosted, Linux, X64, Docker]
-    container:
-      image: carta/frontend-builder
-      options: --security-opt seccomp=unconfined
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./docs
