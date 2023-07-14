@@ -1812,10 +1812,10 @@ export class AppStore {
                         const isVisible = this.visibleFrames.includes(frame);
                         const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
                         if (!isVisible && siblingUpdateRequired) {
-                            updates.push({ frame, channel: frame.requiredChannel, stokes: frame.requiredStokes });
+                            updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
                         }
                     });
-                }   
+                }
             }
 
             if (updates.length) {
