@@ -832,9 +832,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     </div>
                     <div className="bp3-dialog-footer">
                         <div className="bp3-dialog-footer-actions">
-                            <AnchorButton intent={Intent.PRIMARY} text="Filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} />
-                            <AnchorButton intent={Intent.PRIMARY} text="Reset" onClick={this.handleResetClick} disabled={disable} />
-                            <AnchorButton intent={Intent.PRIMARY} text="Close" onClick={this.handleFileCloseClick} disabled={disable} />
+                            <AnchorButton intent={Intent.SUCCESS} text="Apply Filter" onClick={this.handleFilterRequest} disabled={disable || !profileStore.updateTableView || !profileStore.hasFilter} />
+                            <AnchorButton intent={Intent.WARNING} text="Reset Filter" onClick={this.handleResetClick} disabled={disable} />
+                            <AnchorButton text="Close Catalog" onClick={this.handleFileCloseClick} disabled={disable} />
                             <AnchorButton intent={Intent.PRIMARY} text="Plot" onClick={this.handlePlotClick} disabled={!this.enablePlotButton} />
                         </div>
                     </div>
