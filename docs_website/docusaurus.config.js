@@ -111,7 +111,7 @@ const config = {
                     }
                 ],
                 readmes: true,
-                readmeName: "docs/api/api.md", // api overview page
+                readmeName: "docs_website/api/api.md", // api overview page
                 changelogs: true,
                 tsconfigName: "tsconfig.json"
             }

@@ -13,7 +13,7 @@ function HomepageHeader() {
             <div className="container">
                 <h1 className={clsx("hero__title", styles.heroTitle)}>{siteConfig.tagline}</h1>
                 <div className={styles.buttons}>
-                    <Link className="button button--primary button--lg" to="/docs/documents">
+                    <Link className="button button--primary button--lg" to="/source/documents">
                         Documents
                     </Link>
                     <Link className="button button--primary button--lg" to="/api">
@@ -31,7 +31,7 @@ function HomepageMain() {
             <div className={clsx("container", styles.mainContainer)}>
                 <p>
                     This is automatically generated documentation for the <a href="https://github.com/CARTAvis/carta-frontend">CARTA frontend component</a>.<br />
-                    The intended audience for this site is the CARTA development team.
+                    The intended audience for this site is code snippet users and the CARTA development team.
                 </p>
                 <h2>Documentation for other CARTA components</h2>
                 <ul>
