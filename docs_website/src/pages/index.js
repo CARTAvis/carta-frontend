@@ -13,7 +13,7 @@ function HomepageHeader() {
             <div className="container">
                 <h1 className={clsx("hero__title", styles.heroTitle)}>{siteConfig.tagline}</h1>
                 <div className={styles.buttons}>
-                    <Link className="button button--primary button--lg" to="/source/documents">
+                    <Link className="button button--primary button--lg" to="/docs/documents">
                         Documents
                     </Link>
                     <Link className="button button--primary button--lg" to="/api">

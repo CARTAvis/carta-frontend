@@ -37,6 +37,8 @@ To test the local production build:
 npm run serve
 ```
 
+Please note that the search feature is only available in production builds.
+
 ## Writing documentation pages
 
 The "Docs" pages and the "API/Overview" page are generated from markdown files in the `docs/` and `api/` directories. Simply edit these directories to modify the content or add new pages.
