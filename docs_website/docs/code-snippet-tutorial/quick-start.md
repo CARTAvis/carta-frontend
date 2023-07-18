@@ -56,6 +56,8 @@ app.setActiveFrameById(file2.frameInfo.fileId);
 app.setActiveFrame(file3);
 ```
 
+## Closing images
+
 [`closeCurrentFile`](../../api/.-stores/class/AppStore/#closeCurrentFile) closes the active image.
 
 ```javascript

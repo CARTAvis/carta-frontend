@@ -109,8 +109,8 @@ Please ensure that the CI passes successfully when making the pull request. The 
 The assignee of the pull request is responsible for merging the pull request. When merging the pull request, ensure the following:
 
 -   Sufficient reviewers have approved the pull request.
--   All CI checks have passed successfully.
 -   All items in the checklist are completed.
+-   All CI checks have passed successfully.
 
 After merging the pull request, make sure to close the linked issue if necessary. GitHub automatically closes issues when they are linked properly. Remember to delete the branch after the merge.
 
@@ -142,6 +142,6 @@ If the pull request requires changes in the carta-protobuf submodule and is read
     git push
     ```
 
-5. Finally, you can check the item "protobuf updated to the latest dev commit" in the check list. The pull request is ready for merge if the CI checks pass and all other checklist items are completed.
+5. Finally, you can check the item "protobuf updated to the latest dev commit" in the check list. The pull request is ready for merge if all the other checklist items are completed and the CI checks have passed.
 
 6. For the carta-backend repository, follow similar steps for the corresponding backend branch as in steps 2 to 5. Merge the frontend and backend pull requests simultaneously.
