@@ -42,10 +42,13 @@ function HomepageMain() {
                         <a href="https://cartavis.org/carta-backend">CARTA backend</a> (for the development team)
                     </li>
                     <li>
+                        <a href="https://carta-protobuf.readthedocs.io">CARTA interface control document</a> (for the development team)
+                    </li>
+                    <li>
                         <a href="https://carta-controller.readthedocs.io">CARTA controller</a> (for system administrators)
                     </li>
                     <li>
-                        <a href="https://carta-python.readthedocs.io">CARTA Python scripting wrapper</a> (for users of the scripting interface){" "}
+                        <a href="https://carta-python.readthedocs.io">CARTA Python scripting wrapper</a> (for users of the scripting interface)
                     </li>
                 </ul>
             </div>
