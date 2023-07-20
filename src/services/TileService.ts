@@ -437,7 +437,7 @@ export class TileService {
         if (!pendingCompressionMap && !this.animationEnabled) {
             console.warn(`Missing compression map for key=${key}`);
             return;
-        }      
+        }
         if (this.animationEnabled) {
             this.channelMap.set(tileMessage.fileId, {channel: tileMessage.channel, stokes: tileMessage.stokes});
         }

@@ -1730,7 +1730,7 @@ export class AppStore {
                     const tileSizeFullRes = reqView.mip * 256;
                     const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                     if (tiles.length) {
-                        this.tileService.setSynchronisedTilesCount(frame.frameInfo.fileId, tiles.length)
+                        this.tileService.setSynchronisedTilesCount(frame.frameInfo.fileId, tiles.length);
                         viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords});
                     }
                 }
