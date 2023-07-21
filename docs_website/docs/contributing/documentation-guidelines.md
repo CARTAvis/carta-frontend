@@ -59,12 +59,12 @@ This maintains consistent markdown styling, including indentation, maximum line 
 
 ## Writing API documentation
 
-The "API" subpages are generated from the `tsdoc` documentation in the codebase. Catalogs are created based on the `index.ts` files, and elements need to be exported in the respective `index.ts` file to appear on the catalog subpages. Private and projected elements are not displayed.
+The "API" subpages are generated from TSDoc documentation in the codebase. Catalogs are created based on the `index.ts` files, and elements need to be exported in the respective `index.ts` file to appear on the catalog subpages. Private and projected elements are not displayed.
 
-For the `tsdoc` documentation format, please refer to the [tsdoc documentation](https://tsdoc.org). ESLint is applied to check for the required format. To run the lint checks (from the repository root):
+For TSDoc format, please refer to the [TSDoc documentation](https://tsdoc.org). ESLint is applied to check for the required format. To run the lint checks (from the repository root):
 
 ```
 npm run check-eslint
 ```
 
-Please note that the development server does not automatically re-parse `tsdoc`. Therefore, if you modify `tsdoc` in the codebase, you will need to rebuild it to display the changes.
+Please note that the development server does not automatically re-parse TSDoc. Therefore, if you modify TSDoc in the codebase, you will need to rebuild it to display the changes.

@@ -22,7 +22,7 @@ npm run reformat
 
 ## Code linting
 
-ESLint is applied to identify program errors and to check for the format of imported packages and `tsdoc` documentation.
+ESLint is applied to identify program errors and to check for the format of imported packages and TSDoc documentation.
 To run the lint checks:
 
 ```
