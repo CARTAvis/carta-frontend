@@ -260,6 +260,15 @@ export const GetIntensityOptions = (config: IntensityConfig): string[] => {
     return supportedOptions;
 };
 
+export const GetCommonIntensityOptions = (intensityConfigs: IntensityConfig[]): string[] => {
+    if ((intensityConfigs as IntensityConfig[]).length !== undefined && intensityConfigs[0]) {
+        const intensityOptionsArray = intensityConfigs.map(intensityConfig => GetIntensityOptions(intensityConfig));
+        return intensityOptionsArray.reduce((prevFrameOptions, currentFrameOptions) => prevFrameOptions.filter(option => currentFrameOptions.includes(option)));
+    } else {
+        return [];
+    }
+};
+
 const JyBeamToKelvin = (freqGHz: number, bmaj: number, bmin: number, forward: boolean = true): number => {
     const coefficient = (1.222 * 1e6) / (freqGHz * freqGHz * bmaj * bmin);
     return forward ? coefficient : 1 / coefficient;
