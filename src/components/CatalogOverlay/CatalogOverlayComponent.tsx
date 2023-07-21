@@ -648,7 +648,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             disableSort: profileStore.loadOntoImage,
             tableHeaders: profileStore.catalogHeader,
             onCompleteRender: this.onCompleteRender,
-            catalogType: profileStore.catalogType
+            catalogType: profileStore.catalogType,
+            applyFilterWithEnter: this.handleFilterRequest
         };
 
         if (!profileStore.isFileBasedCatalog) {
