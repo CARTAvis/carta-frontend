@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, CursorInfoVisibility, Zoom} from "models";
-import {AppStore} from "stores";
+import {AnimationMode, AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -194,7 +194,7 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                     />
                     <ToolbarComponent
                         docked={this.props.docked}
-                        visible={this.imageToolbarVisible}
+                        visible={this.imageToolbarVisible && !(appStore.animatorStore.animationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME)}
                         frame={frame}
                         activeLayer={activeLayer}
                         onActiveLayerChange={appStore.updateActiveLayer}
