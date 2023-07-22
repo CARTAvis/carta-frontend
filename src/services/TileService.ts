@@ -239,7 +239,6 @@ export class TileService {
                 const compressedTile = !channelsChanged && this.getCompressedCache(fileId).get(encodedCoordinate);
                 const pendingCompressionMap = this.pendingDecompressions.get(key);
                 const tileIsQueuedForDecompression = pendingCompressionMap && pendingCompressionMap.has(encodedCoordinate);
-                // The animation deleted the decompression map, causing a warning.
                 if (compressedTile && !tileIsQueuedForDecompression) {
                     if (!pendingCompressionMap) {
                         this.pendingDecompressions.set(key, new Map<number, boolean>());
@@ -349,6 +348,7 @@ export class TileService {
         this.pendingDecompressions.forEach((value, key) => {
             if (key.startsWith(fileKey)) {
                 this.pendingDecompressions.delete(key);
+                this.animationPendingDecompressions.delete(key);
             }
         });
     }
@@ -407,6 +407,32 @@ export class TileService {
         } else {
             // mark the channel as complete
             this.completedChannels.set(key, true);
+            const pendingCompressionMap = this.animationEnabled ? this.animationPendingDecompressions.get(key) : this.pendingDecompressions.get(key);
+            const receivedTiles = this.receivedSynchronisedTiles.get(key);
+            const fileId = syncMessage.fileId;
+            const channel = syncMessage.channel;
+            const stokes = syncMessage.stokes;
+            if (receivedTiles?.size && pendingCompressionMap.size === receivedTiles?.size && this.completedChannels.get(key)) {
+                this.completedChannels.delete(key);
+                this.pendingDecompressions.delete(key);
+                const tileCount = receivedTiles.size;
+                this.clearGPUCache(fileId);
+                if (this.animationEnabled) {
+                    this.clearCompressedCache(fileId);
+                }
+
+                receivedTiles.forEach((tile, coordinate) => {
+                    tile.textureCoordinate = this.textureCoordinateQueue.pop();
+                    const gpuCacheCoordinate = TileCoordinate.AddFileId(coordinate, fileId);
+                    const oldValue = this.cachedTiles.setpop(gpuCacheCoordinate, tile);
+                    if (oldValue) {
+                        this.clearTile(oldValue.value, oldValue.key);
+                    }
+                });
+                this.pendingSynchronisedTiles.delete(key);
+                this.receivedSynchronisedTiles.delete(key);
+                this.tileStream.next({tileCount, fileId, channel, stokes, flush: true});
+            }
         }
     };
 
@@ -434,7 +460,7 @@ export class TileService {
 
         const pendingCompressionMap = this.animationEnabled ? this.animationPendingDecompressions.get(key) : this.pendingDecompressions.get(key);
         // When we stop animation playback, the code might have already deleted the compression map for the key, causing a missing compression map
-        if (!pendingCompressionMap && !this.animationEnabled) {
+        if (!pendingCompressionMap) {
             console.warn(`Missing compression map for key=${key}`);
             return;
         }
@@ -523,11 +549,9 @@ export class TileService {
             }
             receivedTiles.set(encodedCoordinate, nextTile);
             // If all tiles are in place, add them to the LRU and fire the stream observable
-            if (receivedTiles?.size && this.synchronisedTilesCount.get(fileId) === receivedTiles?.size && this.completedChannels.get(key)) {
+            if (receivedTiles?.size && pendingCompressionMap.size === receivedTiles?.size && this.completedChannels.get(key)) {
                 this.completedChannels.delete(key);
                 this.pendingDecompressions.delete(key);
-                this.pendingSynchronisedTiles.delete(key);
-                this.receivedSynchronisedTiles.delete(key);
                 const tileCount = receivedTiles.size;
                 this.clearGPUCache(fileId);
                 if (this.animationEnabled) {
@@ -542,6 +566,8 @@ export class TileService {
                         this.clearTile(oldValue.value, oldValue.key);
                     }
                 });
+                this.pendingSynchronisedTiles.delete(key);
+                this.receivedSynchronisedTiles.delete(key);
                 this.tileStream.next({tileCount, fileId, channel, stokes, flush: true});
             }
         } else {
