@@ -71,6 +71,7 @@ interface ViewUpdate {
     channel: number;
     stokes: number;
     focusPoint: Point2D;
+    frame: FrameStore;
 }
 
 interface ChannelUpdate {
@@ -1523,7 +1524,14 @@ export class AppStore {
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
+
+                // If Bunit = km/s, default compressionQuality is set to 20 instead of 11
+                const bunitVariant = ["km/s", "km s-1", "km s^-1"];
+                let compressionQuality = this.preferenceStore.imageCompressionQuality;
+                if (bunitVariant.includes(frame.headerUnit)) {
+                    compressionQuality = Math.max(compressionQuality, 20);
+                }
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
@@ -1558,20 +1566,27 @@ export class AppStore {
 
     private updateViews = (updates: ViewUpdate[]) => {
         for (const update of updates) {
-            this.updateView(update.tiles, update.fileId, update.channel, update.stokes, update.focusPoint);
+            this.updateView(update.tiles, update.fileId, update.channel, update.stokes, update.focusPoint, update.frame);
         }
     };
 
-    private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
+    private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, frame: FrameStore) => {
         const isAnimating = this.animatorStore.serverAnimationActive;
+        // If Bunit = km/s, default compressionQuality is set to 20 instead of 11
+        const bunitVariant = ["km/s", "km s-1", "km s^-1"];
+        let compressionQuality = isAnimating ? this.preferenceStore.animationCompressionQuality : this.preferenceStore.imageCompressionQuality;
+        if (bunitVariant.includes(frame.headerUnit)) {
+            compressionQuality = Math.max(compressionQuality, 20);
+        }
+
         if (isAnimating) {
             this.backendService.addRequiredTiles(
                 fileId,
                 tiles.map(t => t.encode()),
-                this.preferenceStore.animationCompressionQuality
+                compressionQuality
             );
         } else {
-            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.preferenceStore.imageCompressionQuality);
+            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, compressionQuality);
         }
     };
 
@@ -1776,7 +1791,7 @@ export class AppStore {
                     const tileSizeFullRes = reqView.mip * 256;
                     const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                     if (tiles.length) {
-                        viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords});
+                        viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords, frame});
                     }
                 }
 
@@ -1784,7 +1799,7 @@ export class AppStore {
                 if (this.animatorStore?.serverAnimationActive) {
                     for (const frame of this.activeFrame.spectralSiblings) {
                         if (!this.visibleFrames.includes(frame)) {
-                            viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null});
+                            viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null, frame});
                         }
                     }
                 }
