@@ -192,15 +192,17 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />
-                    <ToolbarComponent
-                        docked={this.props.docked}
-                        visible={this.imageToolbarVisible && !(appStore.animatorStore.animationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME)}
-                        frame={frame}
-                        activeLayer={activeLayer}
-                        onActiveLayerChange={appStore.updateActiveLayer}
-                        onRegionViewZoom={this.onRegionViewZoom}
-                        onZoomToFit={this.fitZoomFrameAndRegion}
-                    />
+                    {!(appStore.animatorStore.animationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (
+                        <ToolbarComponent
+                            docked={this.props.docked}
+                            visible={this.imageToolbarVisible}
+                            frame={frame}
+                            activeLayer={activeLayer}
+                            onActiveLayerChange={appStore.updateActiveLayer}
+                            onRegionViewZoom={this.onRegionViewZoom}
+                            onZoomToFit={this.fitZoomFrameAndRegion}
+                        />
+                    )}
                 </div>
             );
         } else {
