@@ -401,6 +401,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleFilterRequest = () => {
         const profileStore = this.profileStore;
+        if (profileStore.loadOntoImage || !profileStore.updateTableView || !profileStore.hasFilter) {
+            return;
+        }
         const catalogWidgetStore = this.widgetStore;
         const appStore = AppStore.Instance;
         if (profileStore && appStore) {

@@ -202,6 +202,9 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
     };
 
     private handleFilter = () => {
+        if (this.widgetStore.numDataRows <= 0) {
+            return;
+        }
         this.widgetStore.filter();
         clearTimeout(this.scrollToTopHandle);
         this.scrollToTopHandle = setTimeout(() => this.resultTableRef?.scrollToRegion(Regions.row(0)), 20);
