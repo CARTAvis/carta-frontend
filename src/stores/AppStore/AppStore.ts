@@ -1525,7 +1525,7 @@ export class AppStore {
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
 
-                // If Bunit = km/s, default compressionQuality is set to 20 instead of 11
+                // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1"];
                 let compressionQuality = this.preferenceStore.imageCompressionQuality;
                 if (bunitVariant.includes(frame.headerUnit)) {
@@ -1572,7 +1572,7 @@ export class AppStore {
 
     private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, headerUnit: string) => {
         const isAnimating = this.animatorStore.serverAnimationActive;
-        // If Bunit = km/s, default compressionQuality is set to 20 instead of 11
+        // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
         const bunitVariant = ["km/s", "km s-1", "km s^-1"];
         const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
         if (isAnimating) {
