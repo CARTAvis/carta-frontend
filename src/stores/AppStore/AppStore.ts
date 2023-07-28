@@ -1477,7 +1477,6 @@ export class AppStore {
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                this.tileService.setSynchronisedTilesCount(frame.frameInfo.fileId, tiles.length);
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
@@ -1730,7 +1729,6 @@ export class AppStore {
                     const tileSizeFullRes = reqView.mip * 256;
                     const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                     if (tiles.length) {
-                        this.tileService.setSynchronisedTilesCount(frame.frameInfo.fileId, tiles.length);
                         viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords});
                     }
                 }
