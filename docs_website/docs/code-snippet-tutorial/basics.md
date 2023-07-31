@@ -93,3 +93,5 @@ delay(-100).catch(err => console.log(err));
 ```
 
 Note that the response to the first "delay" call is printed after the second one, because execution is non-blocking.
+
+For more usages of ES6-based JavaScript, please refer to the features of the language.
