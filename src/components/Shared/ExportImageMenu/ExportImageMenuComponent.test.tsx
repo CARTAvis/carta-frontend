@@ -6,7 +6,8 @@ import {AppStore} from "stores";
 import {ExportImageMenuComponent} from "./ExportImageMenuComponent";
 
 describe("ExportImageMenuComponent", () => {
-    let mockModifierString: jest.SpyInstance;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let mockModifierString: jest.SpyInstance; // Indirectly used when rendering
     let mockExportImage: jest.SpyInstance;
 
     beforeEach(() => {
