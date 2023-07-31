@@ -164,6 +164,7 @@ export class SpectralLineQueryWidgetStore {
         if (redshiftType === RedshiftType.Z && this.redshiftInput < 0) {
             this.redshiftInput = 0;
         }
+        this.applyShiftFactor();
     };
 
     @action setRedshiftInput = (input: number) => {
@@ -358,7 +359,7 @@ export class SpectralLineQueryWidgetStore {
     }
 
     @computed get redshiftFactor() {
-        return this.redshiftType === RedshiftType.V ? Math.sqrt((1 - (this.redshiftInput * 1e3) / SPEED_OF_LIGHT) / (1 + (this.redshiftInput * 1e3) / SPEED_OF_LIGHT)) : 1 / (this.redshiftInput + 1);
+        return this.redshiftType === RedshiftType.V ? 1 - (this.redshiftInput * 1e3) / SPEED_OF_LIGHT : 1 / (this.redshiftInput + 1);
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
