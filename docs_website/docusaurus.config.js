@@ -82,7 +82,7 @@ const config = {
             },
             footer: {
                 style: "dark",
-                copyright: `Copyright © ${new Date().getFullYear()} carta-frontend. Built with Docusaurus.`
+                copyright: `Copyright © ${new Date().getFullYear()} CARTA development team. Built with Docusaurus.`
             },
             prism: {
                 theme: lightCodeTheme,
