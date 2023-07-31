@@ -21,7 +21,7 @@ To log to the development console, use `console.log`.
 console.log("hello world");
 ```
 
-Variables can be defined using `let`/`const`.
+Variables can be defined using `let` (mutable) or `const` (immutable).
 
 ```javascript
 let x = 1;
@@ -38,10 +38,12 @@ function squared(x) {
     return x * x;
 }
 
+// This is an arrow function
 const cubed = x => x * x * x;
 
+// This is an arrow function with a block of codes
 const sqrt = x => {
-    // You can use and builtin JS library functions
+    // You can use builtin JS library functions
     return Math.sqrt(x);
 };
 ```
@@ -90,4 +92,4 @@ delay(100).then(() => console.log("Looks promising"));
 delay(-100).catch(err => console.log(err));
 ```
 
-Notice that the response to the first "delay" call is printed after the second one, because execution is non-blocking.
+Note that the response to the first "delay" call is printed after the second one, because execution is non-blocking.

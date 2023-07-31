@@ -4,7 +4,11 @@ sidebar_position: 3
 
 # Image properties
 
-Actions for modifying various properties of the image.
+Actions for modifying various properties of the image. In the following examples, we assume that an image is loaded as
+
+```javascript
+const file = await app.openFile("my_image.fits");
+```
 
 ## Changing field of view
 
@@ -38,7 +42,7 @@ file.zoomToSizeXWcs('[size in x direction, ex: 2.56"]');
 file.zoomToSizeYWcs('[size in y direction, ex: 2.56"]');
 ```
 
-## Changing the channel and stokes
+## Changing the channel and Stokes
 
 [`setChannel`](/api/.-stores/class/FrameStore/#setChannel) changes the channel of the image.
 
@@ -46,7 +50,7 @@ file.zoomToSizeYWcs('[size in y direction, ex: 2.56"]');
 file.setChannel([channel]);
 ```
 
-[`setStokes`](/api/.-stores/class/FrameStore/#setStokes) and [`setStokesByIndex`](/api/.-stores/class/FrameStore/#setStokesByIndex) change the stokes of the image using [`POLARIZATIONS`](/api/.-models/enum/POLARIZATIONS) or the index.
+[`setStokes`](/api/.-stores/class/FrameStore/#setStokes) and [`setStokesByIndex`](/api/.-stores/class/FrameStore/#setStokesByIndex) change the stokes of the image using [`POLARIZATIONS`](/api/.-models/enum/POLARIZATIONS) enum or the index.
 
 ```javascript
 file.setStokes(2); // Stokes Q
@@ -64,13 +68,13 @@ file.renderConfig.setCustomScale([clip min], [clip max]);
 file.renderConfig.setPercentileRank(90); // Change to 90%
 ```
 
-[`setScaling`](/api/.-stores/class/RenderConfigStore/#setScaling) changes the scaling functions using [`FrameScaling`](/api/.-stores/enum/FrameScaling).
+[`setScaling`](/api/.-stores/class/RenderConfigStore/#setScaling) changes the scaling functions using [`FrameScaling`](/api/.-stores/enum/FrameScaling) enum.
 
 ```javascript
 file.renderConfig.setScaling(1); // Log
 ```
 
-[`setColorMap`](/api/.-stores/class/RenderConfigStore/#setColorMap) changes the color map using options in [`COLOR_MAPS_ALL`](/api/.-stores/class/RenderConfigStore/#COLOR_MAPS_ALL), and [`setInverted`](/api/.-stores/class/RenderConfigStore/#setInverted) inverts the color map.
+[`setColorMap`](/api/.-stores/class/RenderConfigStore/#setColorMap) changes the color map using options in [`COLOR_MAPS_ALL`](/api/.-stores/class/RenderConfigStore/#COLOR_MAPS_ALL) list, and [`setInverted`](/api/.-stores/class/RenderConfigStore/#setInverted) inverts the color map.
 
 ```javascript
 file.renderConfig.setColorMap("gray");

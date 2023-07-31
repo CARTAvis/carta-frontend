@@ -4,7 +4,11 @@ sidebar_position: 4
 
 # Regions
 
-Actions related to regions.
+Actions related to regions. In the following examples, we assume that an image is loaded as
+
+```javascript
+const file = await app.openFile("my_image.fits");
+```
 
 ## Creating regions
 
@@ -36,7 +40,7 @@ region.setColor("#ffffff"); // Change the color to white
 
 ## Importing regions
 
-[`importRegion`](/api/.-stores/class/AppStore/#importRegion) imports regions on the active image with the provided path, filename, and [file type](https://carta-protobuf.readthedocs.io/en/latest/enums.html#filetype).
+[`importRegion`](/api/.-stores/class/AppStore/#importRegion) imports regions to the active image with the provided path, filename, and [file type](https://carta-protobuf.readthedocs.io/en/latest/enums.html#filetype) enum.
 
 ```javascript
 await app.importRegion("[path]", "[filename]", 1); // File type: CRTF
