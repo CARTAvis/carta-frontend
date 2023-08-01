@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, CursorInfoVisibility, Zoom} from "models";
-import {AppStore} from "stores";
+import {AnimationMode, AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
@@ -192,15 +192,17 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                         dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         docked={this.props.docked && activeLayer !== ImageViewLayer.Catalog}
                     />
-                    <ToolbarComponent
-                        docked={this.props.docked}
-                        visible={this.imageToolbarVisible}
-                        frame={frame}
-                        activeLayer={activeLayer}
-                        onActiveLayerChange={appStore.updateActiveLayer}
-                        onRegionViewZoom={this.onRegionViewZoom}
-                        onZoomToFit={this.fitZoomFrameAndRegion}
-                    />
+                    {!(appStore.animatorStore.animationActive && appStore.animatorStore.animationMode === AnimationMode.FRAME) && (
+                        <ToolbarComponent
+                            docked={this.props.docked}
+                            visible={this.imageToolbarVisible}
+                            frame={frame}
+                            activeLayer={activeLayer}
+                            onActiveLayerChange={appStore.updateActiveLayer}
+                            onRegionViewZoom={this.onRegionViewZoom}
+                            onZoomToFit={this.fitZoomFrameAndRegion}
+                        />
+                    )}
                 </div>
             );
         } else {
