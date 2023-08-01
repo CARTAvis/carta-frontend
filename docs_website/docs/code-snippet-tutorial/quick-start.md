@@ -69,7 +69,7 @@ app.closeCurrentFile();
 
 ```javascript
 await app.closeFile(file1);
-app.closeFile(file1, false); // no user confirmation
+app.closeFile(file1, false); // No user confirmation
 ```
 
 [`closeOtherFiles`](/api/.-stores/class/AppStore/#closeOtherFiles) closes all images other than the given file.
