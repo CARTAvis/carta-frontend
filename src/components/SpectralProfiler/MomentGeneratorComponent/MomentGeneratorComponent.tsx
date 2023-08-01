@@ -250,6 +250,11 @@ export class MomentGeneratorComponent extends React.Component<{widgetStore: Spec
                         }}
                     />
                 </FormGroup>
+                {frame === appStore.spatialReference && (
+                    <FormGroup inline={true} label={"Match to spatial reference image"}>
+                        <Switch checked={appStore.momentToMatch} onChange={appStore.toggleMomentToMatch} />
+                    </FormGroup>
+                )}
                 <div className="moment-generate">
                     <Tooltip2 disabled={isAbleToGenerate} content={msg} position={Position.BOTTOM}>
                         <AnchorButton intent="success" onClick={this.handleRequestMoment} disabled={!isAbleToGenerate}>
