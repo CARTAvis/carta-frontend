@@ -428,7 +428,8 @@ export class ImageFittingStore {
     private getRegionParams = (values: CARTA.IGaussianComponent[]): {points: Point2D[]; rotation: number}[] => {
         return values.map(value => {
             const center = {x: value?.center?.x, y: value?.center?.y};
-            const size = {x: value?.fwhm?.x, y: value?.fwhm?.y};
+            // Half lengths of major and minor axes are used to defined an ellipse region. Divide FWHM of Gaussian by 2.
+            const size = {x: value?.fwhm?.x / 2.0, y: value?.fwhm?.y / 2.0};
             return {points: [center, size], rotation: value?.pa};
         });
     };
