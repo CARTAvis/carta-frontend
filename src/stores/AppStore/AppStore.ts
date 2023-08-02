@@ -1804,26 +1804,30 @@ export class AppStore {
         // TODO: Move setChannels actions to AppStore and remove this autorun
         // Update channels when manually changed
         autorun(() => {
-            if (this.activeFrame) {
-                const updates: ChannelUpdate[] = [];
-                // Calculate if new data is required for the active channel
-                const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
-                // Don't auto-update when animation is playing
-                if (!this.animatorStore.animationActive && updateRequiredChannels) {
-                    updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
-                }
+            const updates: ChannelUpdate[] = [];
 
-                // Update any sibling channels
-                this.activeFrame.spectralSiblings.forEach(frame => {
-                    const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
-                    if (siblingUpdateRequired) {
-                        updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+            for (const visibleFrame of this.visibleFrames) {
+                if (visibleFrame) {
+                    // Calculate if new data is required for the active channel
+                    const updateRequiredChannels = visibleFrame.requiredChannel !== visibleFrame?.channel || visibleFrame.requiredStokes !== visibleFrame.stokes;
+                    // Don't auto-update when animation is playing
+                    if (!this.animatorStore.animationActive && updateRequiredChannels) {
+                        updates.push({frame: visibleFrame, channel: visibleFrame.requiredChannel, stokes: visibleFrame.requiredStokes});
                     }
-                });
 
-                if (updates.length) {
-                    throttledSetChannels(updates);
+                    // Update any sibling channels
+                    visibleFrame.spectralSiblings.forEach(frame => {
+                        const isVisible = this.visibleFrames.includes(frame);
+                        const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
+                        if (!isVisible && siblingUpdateRequired) {
+                            updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+                        }
+                    });
                 }
+            }
+
+            if (updates.length) {
+                throttledSetChannels(updates);
             }
         });
 
@@ -2222,7 +2226,8 @@ export class AppStore {
                 stokes: frame.requiredStokes,
                 regions: mapToObject(regions),
                 contourSettings,
-                stokesFiles: frame.stokesFiles
+                stokesFiles: frame.stokesFiles,
+                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport
             };
         });
 
