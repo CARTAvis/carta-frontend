@@ -2218,7 +2218,8 @@ export class AppStore {
                 stokes: frame.requiredStokes,
                 regions: mapToObject(regions),
                 contourSettings,
-                stokesFiles: frame.stokesFiles
+                stokesFiles: frame.stokesFiles,
+                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport
             };
         });
 
