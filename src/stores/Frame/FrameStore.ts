@@ -12,6 +12,8 @@ import {
     FrameView,
     FULL_POLARIZATIONS,
     GenCoordinateLabel,
+    GetFreqInGHz,
+    IntensityConfig,
     IsSpectralSystemSupported,
     IsSpectralTypeSupported,
     IsSpectralUnitSupported,
@@ -54,6 +56,8 @@ import {
     clamp,
     formattedArcsec,
     formattedFrequency,
+    frequencyFromVelocity,
+    getAngleInRad,
     getFormattedWCSPoint,
     getHeaderNumericValue,
     getPixelSize,
@@ -197,6 +201,7 @@ export class FrameStore {
     @observable previewViewWidth: number;
     @observable previewViewHeight: number;
     @observable previewPVRasterData: Float32Array;
+    @observable intensityUnit: string;
 
     @computed get filename(): string {
         // hdu extension name is in field 3 of fileInfoExtended computed entries
@@ -602,6 +607,29 @@ export class FrameStore {
             return !!(axis1SpatialAxis2Spectral || axis1SpectralAxis2Spatial);
         }
         return false;
+    }
+
+    @computed get intensityConfig(): IntensityConfig {
+        let config: IntensityConfig = {nativeIntensityUnit: this.headerUnit};
+        const beams = this.beamAllChannels;
+        if (beams?.length) {
+            config["bmaj"] = beams.map(b => b?.majorAxis);
+            config["bmin"] = beams.map(b => b?.minorAxis);
+            if (this.spectralAxis?.type?.code === "FREQ") {
+                config["freqGHz"] = this.channelInfo?.values.map(x => GetFreqInGHz(this.spectralAxis.type.unit, x));
+            } else if (this.spectralAxis?.type?.code === "VRAD") {
+                config["freqGHz"] = this.channelInfo?.values.map(x => {
+                    const frequency = frequencyFromVelocity(x, this.restFreqStore?.customRestFreq?.value);
+                    return GetFreqInGHz(this.restFreqStore?.customRestFreq?.unit, frequency);
+                });
+            }
+        }
+
+        if (isFinite(this.pixelUnitSizeArcsec?.x) && isFinite(this.pixelUnitSizeArcsec?.y)) {
+            config["cdelta1"] = getAngleInRad(this.pixelUnitSizeArcsec.x);
+            config["cdelta2"] = getAngleInRad(this.pixelUnitSizeArcsec.y);
+        }
+        return config;
     }
 
     // Dir X axis number from the header
@@ -1202,6 +1230,7 @@ export class FrameStore {
         this.dirAxisSize = -1;
         this.dirAxisFormat = "";
         this.depthAxisFormat = "";
+        this.intensityUnit = this.headerUnit;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
@@ -2765,6 +2794,9 @@ export class FrameStore {
         // Align spectral settings to spectral reference
         this.setSpectralCoordinate(frame.spectralCoordinate, false);
 
+        // Set the intensity units to the intersection of spectrally matched frames
+        AppStore.Instance.widgetsStore.spectralProfileWidgets.forEach(store => store.setMultiProfileIntensityUnit(store.intensityOptions[0]));
+
         return true;
     };
 
@@ -2919,6 +2951,10 @@ export class FrameStore {
         if (!skipUpdatePreviewData) {
             this.updatePreviewDataGenerator.next();
         }
+    };
+
+    @action setIntensityUnit = (intensityUnitStr: string) => {
+        this.intensityUnit = intensityUnitStr;
     };
 
     public updatePreviewDataGenerator: Generator;
