@@ -30,7 +30,7 @@ import {
     Workspace,
     WorkspaceFile
 } from "models";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimationMode,
@@ -985,6 +985,9 @@ export class AppStore {
 
         const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
         this.endFileLoading();
+        if (process.env.REACT_APP_SKIP_TELEMETRY === "false") {
+            TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
+        }
         if (frame && ack.success && ack.dataSize) {
             let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
             const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
@@ -1914,7 +1917,8 @@ export class AppStore {
     };
 
     handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
-        if (this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId)) {
+        const frame = this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId);
+        if (frame) {
             let frameMap = this.spectralProfiles.get(spectralProfileData.fileId);
             if (!frameMap) {
                 frameMap = new ObservableMap<number, SpectralProfileStore>();
@@ -1928,6 +1932,10 @@ export class AppStore {
 
             for (let profile of spectralProfileData.profiles) {
                 profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
+                if (process.env.REACT_APP_SKIP_TELEMETRY === "false" && spectralProfileData.progress >= 1 && spectralProfileData.regionId) {
+                    const region = frame.getRegion(spectralProfileData.regionId);
+                    TelemetryService.Instance.addSpectralProfileEntry(region.regionType, region.regionId, region.size.x, region.size.y, frame.depthNumber);
+                }
             }
         }
     };

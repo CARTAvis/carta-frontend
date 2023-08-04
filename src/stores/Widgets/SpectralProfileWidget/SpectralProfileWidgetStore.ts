@@ -19,6 +19,7 @@ import {
     POLARIZATIONS,
     SpectralSystem
 } from "models";
+import {TelemetryAction, TelemetryService} from "services";
 import {AppStore, ProfileFittingStore, ProfileSmoothingStore} from "stores";
 import {MultiProfileCategory, RegionId, RegionsType, RegionWidgetStore, SpectralLine, SpectralProfileSelectionStore} from "stores/Widgets";
 import {clamp, getColorForTheme, isAutoColor} from "utilities";
@@ -216,6 +217,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 frame.resetMomentRequestState();
                 frame.setIsRequestingMoments(true);
                 AppStore.Instance.requestMoment(requestMessage, frame);
+                if (process.env.REACT_APP_SKIP_TELEMETRY === "false") {
+                    const width = this.effectiveRegion.size.x;
+                    const height = this.effectiveRegion.size.y;
+                    const depth = Math.abs(channelIndex1 - channelIndex2);
+                    TelemetryService.Instance.addTelemetryEntry(TelemetryAction.MomentGeneration, {regionId: this.effectiveRegion.regionId, width, height, depth});
+                }
             }
         }
     };

@@ -1,4 +1,5 @@
 import axios, {AxiosInstance} from "axios";
+import {CARTA} from "carta-protobuf";
 import {DBSchema, IDBPDatabase, openDB} from "idb";
 import jwt_decode from "jwt-decode";
 import {computed, flow, makeObservable, observable} from "mobx";
@@ -20,7 +21,11 @@ export enum TelemetryAction {
     OptIn = "optIn",
     OptOut = "optOut",
     FileOpen = "fileOpen",
-    FileClose = "fileClose"
+    FileClose = "fileClose",
+    SpectralProfileGeneration = "spectralProfileGeneration",
+    PvGeneration = "pvGeneration",
+    MomentGeneration = "momentGeneration",
+    CatalogLoading = "catalogLoading"
 }
 
 export interface TelemetryMessage {
@@ -253,6 +258,23 @@ export class TelemetryService {
 
     addFileCloseEntry(id: number) {
         return this.addTelemetryEntry(TelemetryAction.FileClose, {id});
+    }
+
+    addSpectralProfileEntry(regionType: CARTA.RegionType, regionId: number, width: number, height: number, depth: number) {
+        switch (regionType) {
+            case CARTA.RegionType.POINT:
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {regionId: regionId, depth});
+                break;
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.POLYGON:
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {regionId: regionId, width, height, depth});
+                break;
+            case CARTA.RegionType.ELLIPSE:
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.SpectralProfileGeneration, {regionId: regionId, semi_major: width, semi_minor: height, depth});
+                break;
+            default:
+                break;
+        }
     }
 
     async addTelemetryEntry(action: TelemetryAction, details?: object, id?: string) {
