@@ -1156,11 +1156,21 @@ export class AppStore {
         this.fileBrowserStore.updateLoadingState(batchEnd / regions.length, batchEnd, regions.length);
     };
 
+    /**
+     * Exports specified regions and saves a region file to the provided directory.
+     *
+     * @param directory - The directory where the region file will be saved.
+     * @param file - The filename of the region file.
+     * @param coordType - The coordinate system used in the exported region file.
+     * @param fileType - The type of the exported region file.
+     * @param exportRegions - The indices of the regions to be exported.
+     * @param targetFrame - The target frame containing the regions. If not provided, the active frame is used.
+     */
     @flow.bound
-    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) {
-        const frame = this.activeFrame;
+    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[], targetFrame?: FrameStore) {
+        const frame = targetFrame ?? this.activeFrame;
         // Prevent exporting if only the cursor region exists
-        if (!frame.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
+        if (!frame?.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
             return;
         }
 
