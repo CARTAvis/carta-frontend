@@ -1079,15 +1079,35 @@ export class AppStore {
     };
 
     // Region file actions
+
+    /**
+     * Imports a region file to the active frame or a specified frame.
+     * Supported file types are CRTF and DS9.
+     *
+     * @param directory - The directory containing the region file.
+     * @param file - The filename of the region file.
+     * @param type - The {@link https://carta-protobuf.readthedocs.io/en/latest/enums.html#filetype | type} of the region file (`CRTF` or `DS9_REG`).
+     * @param targetFrame - The frame to which the regions should be imported. If not provided, the active frame is used. If the frame is spatially matched, the reference frame is used.
+     */
     @flow.bound
-    *importRegion(directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) {
-        if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
+    *importRegion(directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType, targetFrame?: FrameStore) {
+        if (!(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
             AppToaster.show(ErrorToast("Region type not supported"));
             return;
         }
 
-        // ensure that the same frame is used in the callback, to prevent issues when the active frame changes while the region is being imported
-        const frame = this.activeFrame.spatialReference ?? this.activeFrame;
+        let frame: FrameStore;
+        if (targetFrame) {
+            frame = targetFrame.spatialReference ?? targetFrame;
+        } else if (this.activeFrame) {
+            frame = this.activeFrame.spatialReference ?? this.activeFrame;
+        }
+
+        if (!frame) {
+            AppToaster.show(ErrorToast("No image file"));
+            return;
+        }
+
         try {
             const ack = yield this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
