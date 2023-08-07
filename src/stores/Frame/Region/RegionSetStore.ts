@@ -71,6 +71,26 @@ export class RegionSetStore {
         return regionId;
     };
 
+    /**
+     * Returns an array of region IDs in the region set.
+     */
+    @computed get regionIds(): number[] {
+        return this.regions.map(r => r.regionId);
+    }
+
+    /**
+     * Returns a map associating region IDs with their corresponding RegionStore instances.
+     */
+    @computed get regionMap(): Map<number, RegionStore> {
+        const reigonMap = new Map<number, RegionStore>();
+
+        for (const region of this.regions) {
+            reigonMap.set(region.regionId, region);
+        }
+
+        return reigonMap;
+    }
+
     @computed get regionsAndAnnotationsForRender(): RegionStore[] {
         return this.regions?.filter(r => r.isValid && r.regionId !== 0)?.sort((a, b) => (a.boundingBoxArea > b.boundingBoxArea ? -1 : 1));
     }
