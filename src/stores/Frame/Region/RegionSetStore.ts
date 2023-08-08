@@ -279,19 +279,21 @@ export class RegionSetStore {
         this.regions.push(region);
 
         if (!temporary) {
-            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).then(
-                ack => {
-                    console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
-                    region.setRegionId(ack.regionId);
-                },
-                err => {
-                    console.log(err);
-                }
-            );
+            this.requestSetRegion(this.frame.frameInfo.fileId, region);
         }
 
         return region;
     }
+
+    private requestSetRegion = async (fileId: number, region: RegionStore) => {
+        try {
+            const ack = await this.backendService.setRegion(fileId, -1, region);
+            console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
+            region.setRegionId(ack.regionId);
+        } catch (err) {
+            console.log(err);
+        }
+    };
 
     @action selectRegion = (region: RegionStore) => {
         if (this.regions.indexOf(region) >= 0) {
