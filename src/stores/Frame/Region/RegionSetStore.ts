@@ -100,7 +100,7 @@ export class RegionSetStore {
     }
 
     @action addPointRegion = (center: Point2D, cursorRegion = false) => {
-        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, false, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
+        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
     };
 
     @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
@@ -124,47 +124,47 @@ export class RegionSetStore {
     };
     @action addAnnPointRegion = (center: Point2D, shape: CARTA.PointAnnotationShape, cursorRegion = false) => {
         this.pointShapeCache = shape;
-        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, cursorRegion, true, this.getTempRegionId());
+        return this.addRegion([center], 0, CARTA.RegionType.ANNPOINT, cursorRegion, this.getTempRegionId());
     };
 
     @action addAnnRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
-        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNRECTANGLE, temporary, true);
+        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNRECTANGLE, temporary);
     };
 
     @action addAnnEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
-        return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ANNELLIPSE, temporary, true);
+        return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ANNELLIPSE, temporary);
     };
 
     @action addAnnPolygonalRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYGON, temporary, true);
+        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYGON, temporary);
     };
 
     @action addAnnLineRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNLINE, temporary, true);
+        return this.addRegion(points, 0, CARTA.RegionType.ANNLINE, temporary);
     };
 
     @action addAnnPolylineRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYLINE, temporary, true);
+        return this.addRegion(points, 0, CARTA.RegionType.ANNPOLYLINE, temporary);
     };
 
     @action addAnnVectorRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNVECTOR, temporary, true);
+        return this.addRegion(points, 0, CARTA.RegionType.ANNVECTOR, temporary);
     };
 
     @action addAnnTextRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
-        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNTEXT, temporary, true);
+        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.ANNTEXT, temporary);
     };
 
     @action addAnnCompassRegion = (point: Point2D, length: number, temporary: boolean = false) => {
-        return this.addRegion([point, {x: length, y: length}], 0, CARTA.RegionType.ANNCOMPASS, temporary, true);
+        return this.addRegion([point, {x: length, y: length}], 0, CARTA.RegionType.ANNCOMPASS, temporary);
     };
 
     @action addAnnRulerRegion = (points: Point2D[], temporary: boolean = false) => {
-        return this.addRegion(points, 0, CARTA.RegionType.ANNRULER, temporary, true);
+        return this.addRegion(points, 0, CARTA.RegionType.ANNRULER, temporary);
     };
 
     @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, name: string, color: string, lineWidth: number, dashes: number[], temporary = true, annotationStyles?: any) => {
-        const region = this.addRegion(points, rotation, regionType, temporary, annotationStyles, regionId, name);
+        const region = this.addRegion(points, rotation, regionType, temporary, regionId, name);
         // additional imported style properties;
         if (color) {
             region.color = color;
@@ -201,7 +201,7 @@ export class RegionSetStore {
         return region;
     };
 
-    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, isAnnotation: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
+    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
         let region: RegionStore;
 
         const commonInputParameters = [this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId];
