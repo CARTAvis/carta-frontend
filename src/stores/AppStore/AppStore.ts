@@ -642,7 +642,7 @@ export class AppStore {
         }
 
         // Separate HDU and filename if no HDU is specified
-        if (!hdu?.length) {
+        if (!hdu?.length && !imageArithmetic) {
             const hduRegex = /^(.*)\[(\S+)]$/;
             const matches = hduRegex.exec(filename);
             // Three matching groups. Second is filename, third is HDU
