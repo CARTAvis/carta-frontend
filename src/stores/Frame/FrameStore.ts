@@ -426,8 +426,8 @@ export class FrameStore {
         const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CUNIT${this.renderedAxesNumbers[0]}`) !== -1);
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${this.renderedAxesNumbers[0]}`) !== -1);
 
-        if (!this.isSwappedZ && deltaHeader) {
-            const unit = unitHeader?.value.trim() || "deg";
+        if (!this.isSwappedZ && unitHeader && deltaHeader) {
+            const unit = unitHeader.value.trim();
             const delta = getHeaderNumericValue(deltaHeader);
             if (isFinite(delta) && (unit === "deg" || unit === "rad")) {
                 if (this.frameInfo.beamTable && this.frameInfo.beamTable.length > 0) {
