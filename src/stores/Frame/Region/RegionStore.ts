@@ -421,11 +421,11 @@ export class RegionStore {
         controlPoints: Point2D[],
         regionType: CARTA.RegionType,
         regionId: number = -1,
+        rotation: number = 0,
+        name: string = "",
         color: string = Colors.TURQUOISE5,
         lineWidth: number = 2,
-        dashLength: number = 0,
-        rotation: number = 0,
-        name: string = ""
+        dashLength: number = 0
     ) {
         makeObservable(this);
         this.fileId = fileId;

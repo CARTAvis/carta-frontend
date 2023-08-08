@@ -201,81 +201,8 @@ export class RegionSetStore {
         return region;
     };
 
-    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
-        let region: RegionStore;
-
-        const commonInputParameters = [this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId];
-
-        switch (regionType) {
-            case CARTA.RegionType.ANNCOMPASS:
-                region = new (CompassAnnotationStore.bind.apply(CompassAnnotationStore, [
-                    null,
-                    ...commonInputParameters,
-                    this.preference.annotationColor,
-                    this.preference.annotationLineWidth,
-                    this.preference.annotationDashLength,
-                    rotation,
-                    regionName
-                ]))();
-                break;
-            case CARTA.RegionType.ANNRULER:
-                region = new (RulerAnnotationStore.bind.apply(RulerAnnotationStore, [
-                    null,
-                    ...commonInputParameters,
-                    this.preference.annotationColor,
-                    this.preference.annotationLineWidth,
-                    this.preference.annotationDashLength,
-                    rotation,
-                    regionName
-                ]))();
-                break;
-            case CARTA.RegionType.ANNTEXT:
-                region = new (TextAnnotationStore.bind.apply(TextAnnotationStore, [
-                    null,
-                    ...commonInputParameters,
-                    this.preference.annotationColor,
-                    this.preference.textAnnotationLineWidth,
-                    this.preference.annotationDashLength,
-                    rotation,
-                    regionName
-                ]))();
-                break;
-            case CARTA.RegionType.ANNPOINT:
-                region = new (PointAnnotationStore.bind.apply(PointAnnotationStore, [
-                    null,
-                    ...commonInputParameters,
-                    this.preference.annotationColor,
-                    this.preference.annotationLineWidth,
-                    this.preference.annotationDashLength,
-                    this.pointShapeCache || this.preference.pointAnnotationShape,
-                    this.preference.pointAnnotationWidth,
-                    rotation,
-                    regionName
-                ]))();
-                break;
-            case CARTA.RegionType.ANNVECTOR:
-                region = new (VectorAnnotationStore.bind.apply(VectorAnnotationStore, [
-                    null,
-                    ...commonInputParameters,
-                    this.preference.annotationColor,
-                    this.preference.annotationLineWidth,
-                    this.preference.annotationDashLength,
-                    rotation,
-                    regionName
-                ]))();
-                break;
-            case CARTA.RegionType.ANNELLIPSE:
-            case CARTA.RegionType.ANNRECTANGLE:
-            case CARTA.RegionType.ANNPOLYGON:
-            case CARTA.RegionType.ANNPOLYLINE:
-            case CARTA.RegionType.ANNLINE:
-                region = new (RegionStore.bind.apply(RegionStore, [null, ...commonInputParameters, this.preference.annotationColor, this.preference.annotationLineWidth, this.preference.annotationDashLength, rotation, regionName]))();
-                break;
-            default:
-                region = new (RegionStore.bind.apply(RegionStore, [null, ...commonInputParameters, this.preference.regionColor, this.preference.regionLineWidth, this.preference.regionDashLength, rotation, regionName]))();
-                break;
-        }
-
+    private addRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") => {
+        const region = this.initRegion(points, rotation, regionType, regionId, regionName);
         this.regions.push(region);
 
         if (!temporary) {
@@ -283,7 +210,36 @@ export class RegionSetStore {
         }
 
         return region;
-    }
+    };
+
+    private initRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, regionName: string): RegionStore => {
+        type CommonInputs = [BackendService, number, FrameStore, Point2D[], CARTA.RegionType, number, number, string];
+        type StyleInputs = [string, number, number];
+        const commonInputs: CommonInputs = [this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId, rotation, regionName];
+        const regionStyles: StyleInputs = [this.preference.regionColor, this.preference.regionLineWidth, this.preference.regionDashLength];
+        const annotationStyles: StyleInputs = [this.preference.annotationColor, this.preference.annotationLineWidth, this.preference.annotationDashLength];
+
+        switch (regionType) {
+            case CARTA.RegionType.ANNCOMPASS:
+                return new CompassAnnotationStore(...commonInputs, ...annotationStyles);
+            case CARTA.RegionType.ANNRULER:
+                return new RulerAnnotationStore(...commonInputs, ...annotationStyles);
+            case CARTA.RegionType.ANNTEXT:
+                return new TextAnnotationStore(...commonInputs, ...annotationStyles);
+            case CARTA.RegionType.ANNPOINT:
+                return new PointAnnotationStore(...commonInputs, ...annotationStyles, this.pointShapeCache || this.preference.pointAnnotationShape, this.preference.pointAnnotationWidth);
+            case CARTA.RegionType.ANNVECTOR:
+                return new VectorAnnotationStore(...commonInputs, ...annotationStyles);
+            case CARTA.RegionType.ANNELLIPSE:
+            case CARTA.RegionType.ANNRECTANGLE:
+            case CARTA.RegionType.ANNPOLYGON:
+            case CARTA.RegionType.ANNPOLYLINE:
+            case CARTA.RegionType.ANNLINE:
+                return new RegionStore(...commonInputs, ...annotationStyles);
+            default:
+                return new RegionStore(...commonInputs, ...regionStyles);
+        }
+    };
 
     private requestSetRegion = async (fileId: number, region: RegionStore) => {
         try {
