@@ -201,6 +201,29 @@ export class RegionSetStore {
         return region;
     };
 
+    /**
+     * Adds a new region and returns the corresponding RegionStore object.
+     *
+     * @param regionType - Type of the region.
+     * @param points - Points defining the shape of the region. For rectangles, ellipses, text annotations, and compass annotations, provide [center, size]; for other types, provide an array of positions.
+     * @param rotation - Rotation angle of the region in degrees. Only applicable for rectangles, ellipses, and text annotations.
+     * @param regionName - Optional name for the region. If it is not provided or is an empty string, a default name will be applied.
+     * @returns A promise that resolves to the RegionStore object representing the added region.
+     */
+    addRegionAsync = async (regionType: CARTA.RegionType, points: Point2D[], rotation: number = 0, regionName: string = ""): Promise<RegionStore> => {
+        const tempRegionId = this.getTempRegionId();
+        const region = this.initRegion(points, rotation, regionType, tempRegionId, regionName);
+        this.regions.push(region);
+
+        try {
+            await this.requestSetRegion(this.frame.frameInfo.fileId, region);
+        } catch (err) {
+            console.log(err);
+        }
+
+        return region;
+    };
+
     private addRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") => {
         const region = this.initRegion(points, rotation, regionType, regionId, regionName);
         this.regions.push(region);
