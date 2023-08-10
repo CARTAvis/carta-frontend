@@ -89,7 +89,7 @@ For the pull request:
 
 -   protobuf updated to the latest dev commit / no protobuf update needed:
 
-    Updating the protobuf is required when there are changes in the carat-protobuf submodule. This can be done when the pull request is ready for merge.
+    Updating the protobuf is required when there are changes in the carta-protobuf submodule. This can be done when the pull request is ready for merge.
 
 -   `BackendService` unchanged / `BackendService` changed and corresponding ICD test fix added:
 
