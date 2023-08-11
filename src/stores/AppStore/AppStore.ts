@@ -1932,7 +1932,7 @@ export class AppStore {
                 profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
                 if (spectralProfileData.progress >= 1 && spectralProfileData.regionId) {
                     const region = frame.getRegion(spectralProfileData.regionId);
-                    TelemetryService.Instance.addSpectralProfileEntry(region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
+                    TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
                 }
             }
         }
