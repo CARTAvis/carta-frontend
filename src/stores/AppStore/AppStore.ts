@@ -1928,7 +1928,7 @@ export class AppStore {
                 frameMap.set(spectralProfileData.regionId, profileStore);
             }
 
-            if (spectralProfileData.progress >= 1 && spectralProfileData.regionId) {
+            if (spectralProfileData.progress >= 1 && spectralProfileData.regionId !== CURSOR_REGION_ID) {
                 const region = frame.getRegion(spectralProfileData.regionId);
                 TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
             }
