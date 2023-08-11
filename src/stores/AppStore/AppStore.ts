@@ -71,7 +71,7 @@ interface ViewUpdate {
     channel: number;
     stokes: number;
     focusPoint: Point2D;
-    headerUnit?: string;
+    headerUnit: string;
 }
 
 interface ChannelUpdate {
@@ -1527,10 +1527,7 @@ export class AppStore {
 
                 // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
                 const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-                let compressionQuality = this.preferenceStore.imageCompressionQuality;
-                if (bunitVariant.includes(frame.headerUnit)) {
-                    compressionQuality = Math.max(compressionQuality, 32);
-                }
+                const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
@@ -1572,9 +1569,6 @@ export class AppStore {
 
     private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, headerUnit: string) => {
         const isAnimating = this.animatorStore.serverAnimationActive;
-        // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
-        const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
-        const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
         if (isAnimating) {
             this.backendService.addRequiredTiles(
                 fileId,
@@ -1582,6 +1576,9 @@ export class AppStore {
                 this.preferenceStore.animationCompressionQuality
             );
         } else {
+            // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
+            const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
+            const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
             this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, compressionQuality);
         }
     };
