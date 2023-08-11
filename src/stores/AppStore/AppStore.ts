@@ -1928,12 +1928,13 @@ export class AppStore {
                 frameMap.set(spectralProfileData.regionId, profileStore);
             }
 
+            if (spectralProfileData.progress >= 1 && spectralProfileData.regionId) {
+                const region = frame.getRegion(spectralProfileData.regionId);
+                TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
+            }
+
             for (let profile of spectralProfileData.profiles) {
                 profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
-                if (spectralProfileData.progress >= 1 && spectralProfileData.regionId) {
-                    const region = frame.getRegion(spectralProfileData.regionId);
-                    TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
-                }
             }
         }
     };

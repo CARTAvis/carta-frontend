@@ -114,10 +114,8 @@ export class PvGeneratorWidgetStore extends RegionWidgetStore {
                 AppStore.Instance.requestPreviewPV(requestMessage, frame, pvGeneratorId);
             } else {
                 AppStore.Instance.requestPV(requestMessage, frame, this.keep);
-                if (process.env.REACT_APP_SKIP_TELEMETRY === "false") {
-                    const depth = channelIndexMax - channelIndexMin;
-                    TelemetryService.Instance.addTelemetryEntry(TelemetryAction.PvGeneration, {regionId: this.effectiveRegion.regionId, length: length2D(this.effectiveRegion.size), depth});
-                }
+                const depth = channelIndexMax - channelIndexMin;
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.PvGeneration, {regionId: this.effectiveRegion.regionId, length: length2D(this.effectiveRegion.size), depth});
             }
             frame.resetPvRequestState();
             frame.setIsRequestingPV(true);

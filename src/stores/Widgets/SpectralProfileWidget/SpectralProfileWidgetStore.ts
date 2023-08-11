@@ -217,12 +217,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 frame.resetMomentRequestState();
                 frame.setIsRequestingMoments(true);
                 AppStore.Instance.requestMoment(requestMessage, frame);
-                if (process.env.REACT_APP_SKIP_TELEMETRY === "false") {
-                    const width = this.effectiveRegion.size.x;
-                    const height = this.effectiveRegion.size.y;
-                    const depth = Math.abs(channelIndex1 - channelIndex2);
-                    TelemetryService.Instance.addTelemetryEntry(TelemetryAction.MomentGeneration, {regionId: this.effectiveRegion.regionId, width, height, depth});
-                }
+                const width = this.effectiveRegion.size.x;
+                const height = this.effectiveRegion.size.y;
+                const depth = Math.abs(channelIndex1 - channelIndex2);
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.MomentGeneration, {regionId: this.effectiveRegion.regionId, width, height, depth});
             }
         }
     };
