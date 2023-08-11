@@ -10,7 +10,9 @@ export const ANIMATOR_HELP_CONTENT = (
         </p>
         <p>
             The animator widget controls which image, which channel (if there are multiple channels per active image file), and which polarization component (if there are multiple Stokes per active image file) to view in the image viewer.
-            You may also enable animation playback for image, channel, or polarization, via the <code>Play</code> button. The radio buttons control which one to animate through. Playback mode includes
+        </p>
+        <p>    
+            You can also enable animation playback for image, channel, or polarization, via the <code>Play</code> button. The radio buttons control which one to animate through. Playback mode includes
         </p>
         <ul>
             <li>
