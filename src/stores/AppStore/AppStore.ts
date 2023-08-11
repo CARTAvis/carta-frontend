@@ -985,14 +985,12 @@ export class AppStore {
 
         const ack = yield this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize);
         this.endFileLoading();
-        if (process.env.REACT_APP_SKIP_TELEMETRY === "false") {
-            TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
-        }
         if (frame && ack.success && ack.dataSize) {
             let catalogInfo: CatalogInfo = {fileId, directory, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
             const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
             let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
             if (catalogWidgetId) {
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
                 this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
                 this.catalogStore.addCatalog(fileId, ack.dataSize);
                 this.fileBrowserStore.hideFileBrowser();
@@ -1932,9 +1930,9 @@ export class AppStore {
 
             for (let profile of spectralProfileData.profiles) {
                 profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
-                if (process.env.REACT_APP_SKIP_TELEMETRY === "false" && spectralProfileData.progress >= 1 && spectralProfileData.regionId) {
+                if (spectralProfileData.progress >= 1 && spectralProfileData.regionId) {
                     const region = frame.getRegion(spectralProfileData.regionId);
-                    TelemetryService.Instance.addSpectralProfileEntry(region.regionType, region.regionId, region.size.x, region.size.y, frame.depthNumber);
+                    TelemetryService.Instance.addSpectralProfileEntry(region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
                 }
             }
         }

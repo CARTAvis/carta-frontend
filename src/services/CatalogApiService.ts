@@ -146,10 +146,7 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
         if (catalogWidgetId) {
-            if (process.env.REACT_APP_SKIP_TELEMETRY === "false") {
-                console.log(catalogInfo, headers);
-                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: headers.length, row: catalogInfo.dataSize, remote: true});
-            }
+            TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: headers.length, row: catalogInfo.dataSize, remote: true});
             appStore.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
             appStore.catalogStore.addCatalog(fileId, catalogInfo.dataSize);
             appStore.fileBrowserStore.hideFileBrowser();
