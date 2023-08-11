@@ -219,7 +219,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 AppStore.Instance.requestMoment(requestMessage, frame);
                 const width = this.effectiveRegion.size.x;
                 const height = this.effectiveRegion.size.y;
-                const depth = Math.abs(channelIndex1 - channelIndex2);
+                const depth = Math.abs(channelIndex1 - channelIndex2) + 1;
                 TelemetryService.Instance.addTelemetryEntry(TelemetryAction.MomentGeneration, {regionId: this.effectiveRegion.regionId, width, height, depth});
             }
         }

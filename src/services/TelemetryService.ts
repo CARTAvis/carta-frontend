@@ -298,7 +298,7 @@ export class TelemetryService {
             };
 
             if (loggingEnabled) {
-                console.log(`${loggingPrefix} ${telemetryMessage.action} ${details ? JSON.stringify(details) : ""}`);
+                console.debug(`${loggingPrefix} ${telemetryMessage.action} ${details ? JSON.stringify(details) : ""}`);
             }
 
             try {
