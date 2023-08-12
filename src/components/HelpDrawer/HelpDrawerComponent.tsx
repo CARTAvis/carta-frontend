@@ -127,7 +127,7 @@ export class HelpDrawerComponent extends React.Component {
             position: helpStore.position,
             size: "33%",
             hasBackdrop: false,
-            style: {userSelect: 'text'}
+            style: {userSelect: "text"}
         };
 
         return (
