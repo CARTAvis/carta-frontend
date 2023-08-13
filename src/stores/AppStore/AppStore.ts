@@ -1973,13 +1973,20 @@ export class AppStore {
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
         if (this.animatorStore.serverAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
             const frame = this.getFrame(tileStreamDetails.fileId);
+
+            // Backend stokes type array is defined as [0, 1, 2, 3, 13, 14, 15, 16, 17]
+            // Frontend stokes type array is defined as [1, 2, 3, 4, 13, 14, 15, 16, 17]
+            // "tileStreamDetails" is from the backend. So to get the correct index of stokes type in the frontend,
+            // we need to do the following transformation:
+            const stokes = tileStreamDetails.stokes < 4 && tileStreamDetails.stokes > -1 ? tileStreamDetails.stokes + 1 : tileStreamDetails.stokes;
+
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
                 fileId: tileStreamDetails.fileId,
                 animationId: 0,
                 receivedFrame: {
                     channel: tileStreamDetails.channel,
-                    stokes: frame?.requiredPolarizationIndex ?? tileStreamDetails.stokes
+                    stokes: frame.polarizations.indexOf(stokes)
                 },
                 timestamp: Long.fromNumber(Date.now())
             };
