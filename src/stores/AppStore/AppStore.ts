@@ -1974,15 +1974,11 @@ export class AppStore {
         if (this.animatorStore.serverAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
             const frame = this.getFrame(tileStreamDetails.fileId);
 
-            // Get stokes index from the backend message
+            // Get stokes index from the backend tile stream message
             const stokes_index = tileStreamDetails.stokes;
 
-            // Convert the stokes index to stokes type number
-            const offset = frame.polarizations.length > 0 ? frame.polarizations[0] : 0;
-            const stokes_type = stokes_index < 4 && stokes_index > -1 ? stokes_index + offset : stokes_index;
-
-            // Get the stokes index of stokes type number from the frame polarizations array
-            const stokes = frame.polarizations.indexOf(stokes_type);
+            // Set stokes index in the animation flow control message
+            const stokes = COMPUTED_POLARIZATIONS.has(stokes_index) ? frame.polarizations.indexOf(stokes_index) : stokes_index;
 
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
