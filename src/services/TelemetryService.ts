@@ -18,6 +18,8 @@ export enum TelemetryMode {
 export enum TelemetryAction {
     Connection = "connection",
     EndSession = "endSession",
+    ConnectionClosed = "connectionClosed",
+    RetryConnection = "retryConnection",
     OptIn = "optIn",
     OptOut = "optOut",
     FileOpen = "fileOpen",

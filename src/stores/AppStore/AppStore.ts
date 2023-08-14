@@ -2167,9 +2167,11 @@ export class AppStore {
             if (ack.sessionType === CARTA.SessionType.RESUMED) {
                 console.log(`Reconnected with session ID ${ack.sessionId}`);
                 this.logStore.addInfo(`Reconnected to server with session ID ${ack.sessionId}`, ["network"]);
+                this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "success"});
                 this.resumeSession();
             }
         } catch (err) {
+            this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "failed"});
             console.log(err);
         }
     };
