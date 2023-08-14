@@ -216,7 +216,18 @@ export class ImageFittingStore {
         }
     };
 
-    setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, fixedParams: boolean[], values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], offset_value: number, offset_error: number, fittingLog: string) => {
+    setResultString = (
+        regionId: number,
+        fovInfo: CARTA.IRegionInfo,
+        fixedParams: boolean[],
+        values: CARTA.IGaussianComponent[],
+        errors: CARTA.IGaussianComponent[],
+        offsetValue: number,
+        offsetError: number,
+        integratedFluxValues: number[],
+        integratedFluxErrors: number[],
+        fittingLog: string
+    ) => {
         const frame = this.effectiveFrame;
         if (!frame || !values || !errors) {
             return;
@@ -241,6 +252,7 @@ export class ImageFittingStore {
         };
         const isFormatXDeg = AppStore.Instance.overlayStore.numbers?.formatTypeX === NumberFormatType.Degrees;
         const isFormatYDeg = AppStore.Instance.overlayStore.numbers?.formatTypeY === NumberFormatType.Degrees;
+        const showIntegratedFlux = integratedFluxValues.length === values.length && integratedFluxErrors.length === values.length && (frame.requiredUnit === "Jy/pixel" || frame.requiredUnit === "Jy/beam");
 
         for (let i = 0; i < values.length; i++) {
             const value = values[i];
@@ -258,6 +270,9 @@ export class ImageFittingStore {
                 results += toFixFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
                 results += toFixFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
                 results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                if (showIntegratedFlux) {
+                    results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                }
 
                 log += toExpFormat("Center X       ", value.center?.x, error.center?.x, "px", centerFixedX);
                 log += toExpFormat("Center Y       ", value.center?.y, error.center?.y, "px", centerFixedY);
@@ -265,6 +280,9 @@ export class ImageFittingStore {
                 log += toExpFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
                 log += toExpFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
                 log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                if (showIntegratedFlux) {
+                    log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                }
             } else {
                 const centerValueWCS = getFormattedWCSPoint(frame.wcsInfoForTransformation, value.center as Point2D);
                 if (isFormatXDeg) {
@@ -296,6 +314,9 @@ export class ImageFittingStore {
                 results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
                 results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
                 results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                if (showIntegratedFlux) {
+                    results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                }
 
                 log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerFixedX ? "" : "arcsec", centerFixedX);
                 log += toExpFormat("               ", value.center?.x, error.center?.x, "px", centerFixedX);
@@ -307,13 +328,16 @@ export class ImageFittingStore {
                 log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
                 log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
                 log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                if (showIntegratedFlux) {
+                    log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                }
             }
             results += "\n";
             log += "\n";
         }
 
-        results += toFixFormat("Background     ", offset_value, offset_error, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
-        log += toExpFormat("Background     ", offset_value, offset_error, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
+        results += toFixFormat("Background     ", offsetValue, offsetError, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
+        log += toExpFormat("Background     ", offsetValue, offsetError, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
 
         frame.setFittingResult(results);
         frame.setFittingLog(log);
