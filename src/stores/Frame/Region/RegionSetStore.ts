@@ -72,10 +72,12 @@ export class RegionSetStore {
     };
 
     /**
-     * Returns an array of region IDs in the region set.
+     * Returns an array of region IDs and types in the region set.
      */
-    @computed get regionIds(): number[] {
-        return this.regions.map(r => r.regionId);
+    @computed get regionList(): {id: number; type: CARTA.RegionType}[] {
+        return this.regions.map(r => {
+            return {id: r.regionId, type: r.regionType};
+        });
     }
 
     /**

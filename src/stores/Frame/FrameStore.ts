@@ -1831,6 +1831,16 @@ export class FrameStore {
         return null;
     };
 
+    /**
+     * Converts the position from WCS coordinates to image coordinates.
+     *
+     * @param wcs - The position in WCS coordinates.
+     * @returns  The corresponding position in image coordinates.
+     */
+    getImagePosFromWCS = (wcs: WCSPoint2D): Point2D => {
+        return getPixelValueFromWCS(this.wcsInfoForTransformation, wcs);
+    };
+
     public getRegion = (regionId: number): RegionStore => {
         return this.regionSet?.regions?.find(r => r.regionId === regionId);
     };
