@@ -9,8 +9,8 @@ export const IMAGE_FITTING_HELP_CONTENT = (
             <ImageComponent light={dialogButtonImageFitting} dark={dialogButtonImageFitting_d} width="39%" />
         </p>
         <p>
-            The image fitting dialog provides the capability to fit multiple 2D Gaussian components to your image. The default <code>Data source</code> is the active image which is the current image in the image viewer if it is in single-panel mode or
-            the image highlighted with a red box if it is in multi-panel mode. You may select other images as the input image with the <code>Data source</code> dropdown menu.
+            The image fitting dialog provides the capability to fit multiple 2D Gaussian components to your image. The default <code>Data source</code> is the active image which is the current image in the image viewer if it is in
+            single-panel mode or the image highlighted with a red box if it is in multi-panel mode. You may select other images as the input image with the <code>Data source</code> dropdown menu.
         </p>
         <p>
             By default, the image pixels used for the fitting process are coupled to the field of view of the image viewer. You can use zoom and pan actions to focus on the target image feature for the fit. Alternatively, you can select a
