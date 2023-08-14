@@ -10,7 +10,7 @@ export const SPECTRAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT = (
             <li>line width for steps or lines</li>
             <li>point size for dots</li>
             <li>display mean and RMS</li>
-            <li>x and y ranges</li>
+            <li>plot x and y ranges</li>
         </ul>
         <h4>Profile mean and RMS</h4>
         <p>

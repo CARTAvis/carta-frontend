@@ -6,10 +6,16 @@ import {ImageComponent} from "../ImageComponent";
 export const CATALOG_SETTINGS_SIZE_HELP_CONTENT = (
     <div>
         <h3>Marker size</h3>
+        <p>Contained within this dialog are a set of choices for customizing the sizes of source markers within an image overlay. The ability to shape markers is granted through the Shape dropdown menu.</p>
         <p>
-            This dialog provides options to set the sizes of source markers of an image overlay. The shape of the marker can be set with the <code>Shape</code> dropdown menu. If the <code>Column</code> dropdown menu is None, all markers are
-            rendered with a uniform size as set with the <code>Size</code> spinbox. You may assign a numeric data column for size mapping with the <code>Column</code> dropdown menu. Different scaling functions, size modes, size ranges, or
-            clip bounds can be applied. If the marker shape is ellipse, the major and minor axes can be mapped to different numeric columns (e.g., position errors), respectively.
+            When the Column dropdown menu remains unselected (set to "None"), all markers maintain a consistent size, determined by the value you set using the Size spinbox. Alternatively, for a more nuanced representation, you have the
+            option to assign a numeric data column via the Column dropdown menu. This facilitates size mapping, allowing for dynamic adjustment of marker dimensions. This mapping can be further enriched by incorporating different scaling
+            functions, varied size modes, adjustable size ranges, and clip bounds.
+        </p>
+
+        <p>
+            An added layer of adaptability is introduced when considering marker shapes. If the shape selected is an ellipse, the dialog accommodates the mapping of major and minor axes to distinct numeric columns. This opens avenues for
+            enhanced visualization, for instance, by mapping position errors onto markers with elliptical forms.
         </p>
         <p>
             <ImageComponent light={demoImageOverlaySizeMapping} dark={demoImageOverlaySizeMapping_d} width="100%" />

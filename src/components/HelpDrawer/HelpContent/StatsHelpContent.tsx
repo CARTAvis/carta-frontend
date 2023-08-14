@@ -8,34 +8,38 @@ export const STATS_HELP_CONTENT = (
         <p>
             <ImageComponent light={widgetButtonStatistics} dark={widgetButtonStatistics_d} width="90%" />
         </p>
-        <p>Statistics widget allows you to view statistical quantities over a 2D region. When no region is created or selected, it displays statistical quantities of the full image in the image viewer.</p>
+        <p>
+            The Statistics widget empowers you with the capability to observe statistical measurements across a designated 2D region. In cases where no specific region has been crafted or chosen, the widget presents statistical values
+            concerning the entire image.
+        </p>
         <h3 id="images">Image</h3>
         <p>
-            The <code>Image</code> dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a red
-            box.
+            The Image dropdown menu is primed to default to the "Active" image, signifying the image currently displayed within the image viewer. This selection pertains to the image being viewed in single-panel mode. However, if you're
+            navigating within a multi-panel configuration, the active image is visually distinguished by a conspicuous red box, ensuring clear recognition.
         </p>
         <h3 id="regions">Region</h3>
         <p>
-            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means the region selected in the image viewer. You can select a region by clicking on one in the image viewer, or by clicking on a region entry in
-            the region list widget. Statistics of the selected region will be updated accordingly.
+            Within the Region dropdown menu, the default selection is "Active" region, aligning with the currently highlighted region in the image viewer. Regions can be designated through direct interaction, either by clicking on them
+            within the image viewer or by selecting a specific entry from the region list widget. Any statistical assessments performed will dynamically update based on the chosen region.
         </p>
         <h3 id="polarization">Polarization</h3>
         <p>
-            The <code>Polarization</code> dropdown menu defaults to &quot;Current&quot; which means the polarization component selected in the animator widget.
+            In the context of the Polarization dropdown menu, the default choice is marked as "Current." This choice holds significance as it aligns precisely with the polarization component that mirrors the currently active selection
+            within the animator widget. Notably, this encompasses not only direct polarization components but also extends to computed polarizations derived from Stokes IQUV parameters.
         </p>
         <h3 id="statistic">Statistic</h3>
-        <p>CARTA provides the following statistical quantities:</p>
+        <p>CARTA offers an array of essential statistical measurements, encompassing the following quantities:</p>
         <ul>
-            <li>NumPixels: number of pixels in a region</li>
-            <li>Sum: summation of pixel values in a region</li>
-            <li>FluxDensity: total flux density in a region</li>
-            <li>Mean: average of pixel values in a region</li>
-            <li>StdDev: standard deviation of pixel values in a region</li>
-            <li>Min: minimum pixel value in a region</li>
-            <li>Max: maximum pixel value in a region</li>
-            <li>Extrema: the maximum or minimum value in a region, depending on which absolute value is greater</li>
-            <li>RMS: root mean square of pixel values in a region</li>
-            <li>SumSq: summation of squared pixel values in a region</li>
+            <li>NumPixels: the pixel count within a specified region.</li>
+            <li>Sum: the cumulative sum of pixel values within a region.</li>
+            <li>FluxDensity: the total flux density encapsulated within a region.</li>
+            <li>Mean: the average value of pixel data within a region.</li>
+            <li>StdDev: the standard deviation of pixel values within a region.</li>
+            <li>Min: the minimum pixel value observed within a region.</li>
+            <li>Max: the maximum pixel value observed within a region.</li>
+            <li>Extrema: the higher absolute value between the maximum and minimum within a region.</li>
+            <li>RMS: the root mean square of pixel values within a region.</li>
+            <li>SumSq: the sum of squared pixel values within a region.</li>
         </ul>
         <h3>Text export</h3>
         <p>

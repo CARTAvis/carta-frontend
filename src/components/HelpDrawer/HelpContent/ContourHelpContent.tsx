@@ -9,49 +9,47 @@ export const CONTOUR_HELP_CONTENT = (
             <ImageComponent light={dialogButtonContourConfig} dark={dialogButtonContourConfig_d} width="39%" />
         </p>
         <p>
-            Contour configuration dialog allows you to generate a contour layer on top of a raster image in the image viewer. Steps to create a contour layer with the <code>Levels</code> tab are:
+            With the Contour configuration dialog, a contour layer can be configured and rendered on top of a raster image. If raster images are spatially matched, the same contour layer will be rendered on top of the matched raster images
+            as well. Steps to create a contour layer with the <code>Levels</code> tab are:
         </p>
         <ol>
             <li>
                 <p>
-                    Select an image from the <code>Data Source</code> dropdown menu. A per-channel histogram of the current channel and current Stokes as indicated in the animator will be displayed with visualization of mean (in dashed
-                    line) and mean +/- one standard deviation (in shaded area). Optionally, you can request a per-cube histogram if necessary.
+                    Select data source: Begin by selecting an image from the Data Source dropdown menu. A per-channel histogram, aligned with the current channel and Stokes settings indicated by the animator, takes center stage. This
+                    histogram shows the mean value (as a dashed line) and the range of one standard deviation (as a shaded area). Optionally, you can opt for a per-cube histogram if necessary.
                 </p>
             </li>
             <li>
-                <p>Define a set of contour levels to be calculated and rendered. There are various ways to define levels:</p>
+                <p>Define contour levels: multiple routes to this definition are available:</p>
                 <ul>
-                    <li>
-                        <code>Click</code> on the histogram plot to create a level. &nbsp;<code>Right-Click</code> on a line to remove a level. Numerical values of levels are displayed in the <code>Levels</code> field.
-                    </li>
-                    <li>
-                        Use the level generator. There are four preset generators. The generator will create a set of levels based on the control parameters by clicking the <code>Generate</code> button.
-                    </li>
-                    <li>
-                        Manually input levels in the <code>Levels</code> field. Note that this field can be modified at any time, for example, after using the level generator.
-                    </li>
+                    <li>Interactive: click on the histogram plot to generate a contour level. Right-click on a line to eliminate a level. The Levels field displays numerical values of your defined levels.</li>
+                    <li>Level generator: leverage the built-in level generator, with four preset options. By clicking the Generate button, these generators create a set of levels based on control parameters you define.</li>
+                    <li>Manual input: directly input your desired levels into the Levels field. Notably, this field remains adaptable, allowing adjustments even after utilizing the level generator.</li>
                 </ul>
             </li>
             <li>
                 <p>
-                    When a set of levels is defined, clicking the <code>Apply</code> button will trigger contour calculations and rendering in the image viewer. Contour data is streamed progressively.
+                    Apply and visualize: upon defining your set of levels, a click on the Apply button springs contour calculations into action. This triggers the rendering of contours within the image viewer, with contour data streaming
+                    progressively.
                 </p>
             </li>
         </ol>
         <p>
-            To remove a contour layer, click the <code>Clear</code> button.
+            To remove the contour layer as defined and rendered with the dialog, click the <code>Clear</code> button.
         </p>
         <p>
-            You may use the <code>lock</code> button next to the <code>Data Source</code> dropdown menu to disable or enable synchronization of data source with the active image as specified with the image slider in the animator.
+            Furthermore, a locking mechanism adjacent to the Data Source dropdown menu offers the option to toggle synchronization. This empowers you to disable or enable data source synchronization with the active image, aligning with the
+            image slider's settings in the animator.
         </p>
         <h3 id="contour-smoothness">Contour smoothness</h3>
         <p>
-            By default, the image is Gaussian-smoothed with a kernel size of four by four pixels before contour vertices are calculated. This can be customized in the <code>Configuration</code> tab. Supported smoothing modes are:
+            The generation of contours is underpinned by Gaussian smoothing, with a default kernel size of four by four pixels, conducted prior to contour vertex computation. Tailoring this process to your preferences is made possible
+            within the Configuration tab. Three smoothing modes are at your choices, including:
         </p>
         <ul>
-            <li>No smoothing (not ideal for low signal-to-noise features</li>
-            <li>Block (not ideal for compact objects)</li>
-            <li>Gaussian (default, better appearance)</li>
+            <li>No smoothing (not advised for low signal-to-noise features)</li>
+            <li>Block (suboptimal for compact objects)</li>
+            <li>Gaussian (default and offers enhanced visual quality)</li>
         </ul>
         <h3 id="contour-cosmetics">Contour styling</h3>
         <p>
@@ -60,11 +58,11 @@ export const CONTOUR_HELP_CONTENT = (
         <ul>
             <li>Line thickness</li>
             <li>Representation of dashed line</li>
-            <li>Color as constant color or color-mapped</li>
+            <li>Color as a constant color or as variable</li>
             <li>Bias</li>
             <li>Contrast</li>
         </ul>
-        <p>Note that changes in styling will be applied immediately if the contour level set does not change.</p>
+        <p>Notably, alterations to contour styling take effect immediately, provided the contour level set remains unchanged.</p>
         <h3 id="customizing-the-contour-configuration-dialog">Customizing the contour configuration dialog</h3>
         <p>
             The defaults of many options in the contour configuration dialog are customizable via the <code>Contour configuration</code> tab in the preferences dialog.

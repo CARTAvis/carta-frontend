@@ -47,8 +47,9 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
         </p>
         <p>
             Once moment images are generated, they will be loaded and displayed in the image viewer. They are named as $image_filename.moment.$keyword. For example, if moment 0, 1 and 2 images are generated from the image M51.fits, they
-            will be named as M51.fits.moment.integrated, M51.fits.moment.weighted_coord, and M51.fits.moment.weighted_dispersion_coord, respectively. These images are kept in RAM per session and if there is a new request of moment
-            calculations, these images will be deleted first. Optionally, calculated moment images can be exported in CASA or FITS format via <strong>File</strong> -&gt; <strong>Save image</strong>.
+            will be named as M51.fits.moment.integrated, M51.fits.moment.weighted_coord, and M51.fits.moment.weighted_dispersion_coord, respectively. These images are kept in memory per session and if there is a new request of moment
+            calculations, these images will be deleted first, unless the <code>Keep previous moment image(s)</code> toggle is enabled. Optionally, calculated moment images can be exported in CASA or FITS format via <strong>File</strong>{" "}
+            -&gt; <strong>Save image</strong>.
         </p>
     </div>
 );

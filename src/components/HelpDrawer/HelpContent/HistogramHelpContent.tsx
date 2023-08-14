@@ -12,6 +12,10 @@ export const HISTOGRAM_HELP_CONTENT = (
             The histogram widget displays a histogram plot based on the selections in the <code>Image</code>, <code>Region</code>, and <code>Polarization</code> dropdown menus. When there is no region or no active region, the entire image
             is used to compute the histogram.
         </p>
+        <p>
+            By default, the number of histogram bins is determined by the geometric mean of the region size or the image size if there is no active region for histogram computation. In the Configuration tab of the settings dialog, you can
+            have fine controls of how a histogram is computed, including bounds (text input) and number of bins (slider).
+        </p>
         <h3 id="image">Image</h3>
         <p>
             The <code>Image</code> dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in the single-panel mode. If it is in the multi-panel mode, the active image is highlighted
@@ -49,20 +53,18 @@ export const HISTOGRAM_HELP_CONTENT = (
                 <code>shift + drag-and-drop</code> to pan in x
             </li>
         </ul>
-        <p>In addition, the x and y ranges can be explicitly set in the histogram settings dialog.</p>
+        <p>In addition, the plotting x and y ranges can be explicitly set in the Styling tab of the settings dialog.</p>
         <h3 id="exports">Exports</h3>
         <p>The histogram plot can be exported as a png file or a text file in tsv format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
         <h3 id="plot-cosmetics">Plot cosmetics</h3>
-        <p>The appearance of the histogram plot is customizable via the histogram settings dialog (the cog icon). Supported options are:</p>
+        <p>The appearance of the histogram plot is customizable via the Styling tab of the settings dialog (the cog icon). Supported options are:</p>
         <ul>
             <li>color of the plot</li>
             <li>plot styles including steps (default), lines, and dots</li>
             <li>line width for steps or lines</li>
             <li>point size for dots</li>
             <li>display y in logarithmic scale (default)</li>
+            <li>plotting x and y ranges</li>
         </ul>
-        <br />
-        <h4 id="note">NOTE</h4>
-        <p>In the current release, the number of histogram bins is automatically derived from the square root of the product of the region bounding box sizes.</p>
     </div>
 );

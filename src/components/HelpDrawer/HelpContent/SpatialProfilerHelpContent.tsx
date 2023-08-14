@@ -11,18 +11,18 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
         <p>
             The spatial profiler widget allows you to view a profile from
             <ul>
-                <li>a horizontal cut at the cursor position</li>
-                <li>a vertical cut at the cursor position</li>
+                <li>a horizontal cut at the cursor position or at the point region</li>
+                <li>a vertical cut at the cursor position or at the point region</li>
                 <li>a line region</li>
                 <li>a polyline region</li>
             </ul>
-            You can fix the cursor position in the image viewer by pressing the <code>F</code> key. Pressing again will unfreeze the cursor. For a line region or a polyline region, an averaging width along the region can be set with the{" "}
-            <code>Computation</code> tab of the spatial profiler settings dialog (the <code>cog</code> button at the top right corner of the widget).
+            You can fix the cursor position in the image viewer by pressing the <code>F</code> key. Pressing the <code>F</code> key again will unfreeze the cursor. For a line region or a polyline region, an averaging width along the region
+            can be set with the <code>Computation</code> tab of the settings dialog (the <code>cog</code> button at the top right corner of the widget).
         </p>
         <p>
             When a line region or a polyline region is re-sampled for the spatial profile calculations, the projection distortion of the input image is considered. If the image is considered as <em>flat</em>, the region is sampled with a
-            regular step in pixels. However, if the image is considered as <em>wide</em> with noticeable projection distortion, the region is sampled with a fixed angular increment. For a line region, the spatial profile is computed with an{" "}
-            <em>offset</em> axis with respect to the center of the line region. For a polyline region, the spatial profile is computed with a <em>distance</em> axis instead.
+            regular step in pixels. However, if the image is considered as <em>wide</em> with noticeable projection distortion, the region is sampled with a fixed angular increment derived from the CDELT header. For a line region, the
+            spatial profile is computed with an <em>offset</em> axis with respect to the center of the line region. For a polyline region, the spatial profile is computed with a <em>distance</em> axis instead.
         </p>
         <p>The cursor position in the image viewer is displayed as a red vertical line in the spatial profile plot.</p>
         <p>
@@ -81,7 +81,7 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
                 <code>shift + drag-and-drop</code> to pan in x
             </li>
         </ul>
-        <p>In addition, the x and y ranges can be explicitly set in the spatial profiler settings dialog.</p>
+        <p>In addition, the x and y ranges can be explicitly set in the Styling tab of the settings dialog.</p>
         <h3 id="exports">Profile plot export</h3>
         <p>The spatial profile plot can be exported as a png file or a text file in tsv format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
         <h3 id="plot-cosmetics">Plot cosmetics</h3>
@@ -93,9 +93,9 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
             <li>plot styles including steps (default), lines, and dots</li>
             <li>line width for steps or lines</li>
             <li>point size for dots</li>
-            <li>display alternative horizontal axis in world coordinate</li>
+            <li>display alternative horizontal axis in world coordinate (only for cursor or point region)</li>
             <li>display mean and RMS</li>
-            <li>x and y ranges</li>
+            <li>plot x and y ranges</li>
         </ul>
         <br />
         <h4 id="note">NOTE</h4>

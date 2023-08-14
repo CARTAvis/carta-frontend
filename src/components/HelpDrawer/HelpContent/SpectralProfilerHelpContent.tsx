@@ -10,13 +10,15 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         </p>
         <p>
             The spectral profiler widget provides two different modes of viewing spectral profiles, depending on the states of the <code>Image</code> checkbox, the <code>Region</code> checkbox, the <code>Statistic</code> checkbox, and the{" "}
-            <code>Stokes</code> checkbox.{" "}
+            <code>Polarization</code> checkbox.{" "}
         </p>
+        <h3>Single-profile mode</h3>
         <p>
             When none of the checkboxes is selected, the spectral profiler widget displays only one spectrum at a time. You can view a region spectral profile (via the <code>Region</code> dropdown menu) of an image cube (via the{" "}
             <code>Image</code> dropdown menu) with a specific statistic (via the <code>Statistic</code> dropdown menu; the default is mean). If the polarization axis exists, you may view a specific polarization component via the{" "}
             <code>Polarization</code> dropdown menu. You may have multiple widgets to view spectra side by side.
         </p>
+        <h3>Multi-profile mode</h3>
         <p>
             When one of the checkboxes (Image/Region/Statistic/Polarization) is selected, the spectral profiler widget can display multiple spectra in one plot, depending on the selection in the dropdown menu of the selected checkbox. You
             can compare different spectra with the same x and y ranges directly.
@@ -39,13 +41,7 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
             </li>
         </ul>
         <p>In short, if multiple spectra are plotted, only one option (Image, Region, Statistic or Polarization) can be varied at a time. All other options are fixed to a single value.</p>
-        <p>The cursor information of each profile is displayed at the bottom-left corner. The cursor information box can be resized.</p>
-
-        <h4>LIMITATION</h4>
-        <p>
-            If the intensity units of different matched cubes are different (e.g., Jy/beam vs Kelvin), <em>no</em> unit conversion is applied in the multi-profile plot. Intensity unit conversion is only available with a <em>single</em>{" "}
-            profile with the <code>Conversion</code> tab of the spectral profiler settings dialog (the <code>cog</code> button at the top right corner of the widget).
-        </p>
+        <p>The cursor information of each profile is displayed at the bottom-left corner. The cursor information field can be resized.</p>
 
         <h3 id="images">Image dropdown menu</h3>
         <p>
@@ -78,9 +74,9 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         <p>
             When the <code>Polarization</code> checkbox is selected, the dropdown menu allows multiple selection. You can select different polarization components for region spectral profile calculations.
         </p>
-        <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
+        <h3 id="spectral-conventions-and-reference-frame">Spectral conventions, reference frame, and intensity conversion</h3>
         <p>
-            With the <code>Conversion</code> tab of the spectral profiler settings dialog, you can change the spectral convention, including:
+            With the <code>Conversion</code> tab of the spectral profiler settings dialog, you can change the spectral convention or display a secondary convention in the cursor information field, including:
         </p>
         <ul>
             <li>Radio velocity (km/s, m/s)</li>
@@ -114,16 +110,10 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
             You can fit a model profile to a spectrum in the view via the <code>Fitting</code> tab of the spectral profiler settings dialog (the <code>cog</code> button). You can find a shortcut button to the <code>Fitting</code> tab at the
             top-right corner of the widget. Note that profile fitting is not allowed when there are multiple profiles in the plot.
         </p>
-        <h3 id="responsive-and-progressive-profile-update">Responsive and progressive profile update</h3>
-        <p>
-            When a region spectral profile is requested, depending on the performance of the server, you may see profiles are updated piece by piece with a regular interval. This feature provides a visual progress update for better user
-            experience. In addition, if you move a region while its spectral profile is updating, the old calculations will be terminated immediately and calculations of the new region spectral profile will start. You will see a partial
-            profile in seconds.
-        </p>
         <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
         <p>
             As an option in the <code>Styling</code> tab of the spectral profiler settings dialog, mean and RMS values of a single profile can be visualized as a green dashed line and a shaded area in the profile plot. Numerical values are
-            displayed at the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If the zoom level changes, mean and RMS values will be updated too.
+            displayed at the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If the zoom level changes, mean and RMS values will be updated accordingly.
         </p>
         <h3 id="interactivity-zoom-pan-changing-channel">Interactivity: zoom, pan, changing channel</h3>
         <p>The x and y ranges of the spectral profile plot can be modified by</p>
@@ -166,7 +156,7 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
             <li>line width for steps or lines</li>
             <li>point size for dots</li>
             <li>display mean and RMS</li>
-            <li>x and y ranges</li>
+            <li>plot x and y ranges</li>
         </ul>
         <br />
 

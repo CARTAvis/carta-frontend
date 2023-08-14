@@ -2,8 +2,12 @@ export const STOKES_HYPERCUBE_DIALOG_HELP_CONTENT = (
     <div>
         <h3>Form a Stokes hypercube</h3>
         <p>
-            This dialog allows you to confirm the auto-identification of the Stokes parameters from the image list and make corrections when it is necessary. The auto-identification obtains information from the image headers. If Stokes
-            information is not available in the headers, CARTA will make a guess from the file names. Otherwise, you need to assign the Stokes parameters manually.
+            Within this dialog, you're granted the capability to validate and refine the automatic identification of Stokes parameters sourced from the image list. This process ensures accuracy by allowing necessary adjustments when
+            required.
+        </p>
+        <p>
+            The automatic identification is powered by information derived from the image headers. In cases where Stokes parameter details are absent from the headers, CARTA employs an educated estimation based on file names. However, when
+            these mechanisms fall short, the manual assignment of Stokes parameters becomes imperative for precision.
         </p>
     </div>
 );

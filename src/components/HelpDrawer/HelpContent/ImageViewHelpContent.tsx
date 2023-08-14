@@ -46,8 +46,9 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         <h3>Cursor information</h3>
         <p>
             Information about the world coordinates and image coordinates at the cursor position is shown at the top of the image viewer. Pixel value, spectral information, and polarization information are also displayed. To freeze/unfreeze
-            the cursor position, press the <code>F</code> key. Different modes to display the cursor information are available in the <code>WCS and Image Overlay</code> tab of the preferences dialog (<strong>File</strong> -&gt;{" "}
-            <strong>Preferences</strong>). Alternatively, you can use the cursor information widget to view cursor information from multiple images in one place.
+            the cursor position, press the <code>F</code> key. To mirror cursor position on spatially matched images, press the <code>G</code> button. Different modes to display the cursor information are available in the{" "}
+            <code>WCS and Image Overlay</code> tab of the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong>). Alternatively, you can use the cursor information widget to view cursor information from multiple
+            images in one place.
         </p>
         <h3 id="image-tool-buttons">Image toolbar</h3>
         <p>A set of tool buttons is provided at the bottom-right corner when hovering over the image viewer. You may use these buttons to</p>
@@ -76,7 +77,7 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         <p>
             The pan action is achieved by <code>drag-and-drop</code> as default. This default can be changed via the <code>Global</code> tab of the preferences dialog (<strong>File</strong> -&gt; <strong>Preferences</strong>). The
             alternative mode is <code>click</code>, which causes the clicked pixel to be centered in the image viewer. When the <code>drag-and-drop</code> pan mode is enabled, you can temporarily switch to the alternative mode with{" "}
-            <code>CMD/CTRL + click</code>.
+            <code>CMD/CTRL + click</code>. By double-clicking the <code>Pan</code> button, the <code>Pan and Zoom</code> tab of the settings dialog will show up where you can have fine controls on pan and zoom actions.
         </p>
         <h3 id="matching-image-spatially-and-spectrally">Match image spatially and spectrally</h3>
         <p>
@@ -101,12 +102,12 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         <h3 id="contour-layers">Contour layer</h3>
         <p>A contour layer can be generated via the contour configuration dialog. Contours of spatially matched images are re-projected precisely to other spatially matched raster images.</p>
         <p>
-            <ImageComponent light={contourButton} dark={contourButton_d} width="34%" />
+            <ImageComponent light={contourButton} dark={contourButton_d} width="38%" />
         </p>
         <h3>Vector field overlay layer</h3>
         <p>The vector field overlay layer can be generated via the vector overlay configuration dialog. Vector field overlay of spatially matched images is re-projected precisely to other spatially matched raster images.</p>
         <p>
-            <ImageComponent light={vectorOverlayButton} dark={vectorOverlayButton_d} width="34%" />
+            <ImageComponent light={vectorOverlayButton} dark={vectorOverlayButton_d} width="38%" />
         </p>
 
         <h3 id="catalog-layers">Catalog overlay layer</h3>
@@ -120,25 +121,40 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         <p>
             <ImageComponent light={catalogSelectionButton} dark={catalogSelectionButton_d} width="80%" />
         </p>
-        <h3 id="region-of-interest">Region of interest</h3>
-        <p>Six types of region of interest are supported, including:</p>
-        <ul>
-            <li>Point</li>
-            <li>Rectangle (rotatable)</li>
-            <li>Ellipse (rotatable)</li>
-            <li>Polygon</li>
-            <li>Line (rotatable)</li>
-            <li>Polyline</li>
-        </ul>
+        <h3 id="region-of-interest">Region of interest and image annotation</h3>
+        <p>
+            Six types of region of interest are supported, including:
+            <ul>
+                <li>Point</li>
+                <li>Rectangle (rotatable)</li>
+                <li>Ellipse (rotatable)</li>
+                <li>Polygon</li>
+                <li>Line (rotatable)</li>
+                <li>Polyline</li>
+            </ul>
+            and ten kinds of image annotation elements are provided, including:
+            <ul>
+                <li>Point</li>
+                <li>Line</li>
+                <li>Rectangle</li>
+                <li>Ellipse</li>
+                <li>Polygon</li>
+                <li>Polyline</li>
+                <li>Vector</li>
+                <li>Text</li>
+                <li>Compass</li>
+                <li>Ruler</li>
+            </ul>
+        </p>
         <p>
             <ImageComponent light={regionButton} dark={regionButton_d} width="80%" />
         </p>
         <p>
-            The default region type and the default region creation mode are customizable in the preferences dialog. Region shortcut buttons are available at the top of the CARTA GUI. The tooltip of a region shortcut button provides
-            instructions to create a region.
+            The default region type, the default annotation type and the default region creation mode are customizable in the preferences dialog. Region shortcut buttons are available at the top of the CARTA GUI. The tooltip of a region
+            shortcut button provides instructions to create a region.
         </p>
         <p>
-            <ImageComponent light={regionButtonSet} dark={regionButtonSet_d} width="33%" />
+            <ImageComponent light={regionButtonSet} dark={regionButtonSet_d} width="38%" />
         </p>
         <h3 id="customizing-the-image-plot">Image plot cosmetics</h3>
         <p>
@@ -167,7 +183,7 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         <h3 id="image-information-and-header">Image information and header</h3>
         <p>Basic image information and full image headers are displayed in the file header dialog.</p>
         <p>
-            <ImageComponent light={imageInfoButton} dark={imageInfoButton_d} width="34%" />
+            <ImageComponent light={imageInfoButton} dark={imageInfoButton_d} width="38%" />
         </p>
     </div>
 );

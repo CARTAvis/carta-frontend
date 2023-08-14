@@ -2,8 +2,12 @@ export const LAYER_LIST_SETTINGS_HELP_CONTENT = (
     <div>
         <h3>Matching</h3>
         <p>
-            The image list settings dialog allows you to define a spectral convention for spectral matching with the <code>Matching</code> tab. The default, which can be configured in the <code>Global</code> tab of the preferences dialog,
-            is radio velocity.
+            Within the image list settings dialog, you are afforded the capability to establish a spectral convention tailored to your preferences, specifically designed for spectral matching. This functionality is encapsulated within the
+            Matching tab.
+        </p>
+        <p>
+            It's noteworthy that the default spectral convention, which is subject to modification through the Global tab of the preferences dialog, is set to radio velocity. This ensures that the application aligns with your personalized
+            spectral referencing conventions.
         </p>
         <h3>Rest Frequency</h3>
         <p>

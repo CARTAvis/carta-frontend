@@ -31,25 +31,25 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Transparent image background: when this is enabled, the exported png image will have a transparent background. When it is disabled (default), a white or a black background is added depending on the GUI theme.</li>
             <li>Save last used directory: when this is enabled, the starting directory of a new CARTA session will be the last one used to load an image in the previous CARTA session.</li>
         </ul>
-        <h3 id="render-configuration">Render configuration</h3>
+        <h3 id="render-configuration">Render Configuration</h3>
         <p>This section provides customization of how a raster image is rendered by default.</p>
         <ul>
             <li>Default scaling: scaling function to be applied to the pixel value-to-color mapping</li>
-            <li>Default color map: color map for rendering a raster image</li>
+            <li>Default colormap: colormap for rendering a raster image</li>
             <li>Default percentile ranks: clip level to be applied to the pixel value-to-color mapping</li>
-            <li>NaN color: color to render a NaN (not a number) pixel</li>
+            <li>NaN color: color to render a NaN (not a number) pixel (effective immediately)</li>
             <li>Smoothed bias/contrast: when this is enabled (default), smoothed bias and contrast functions are applied, resulting in a smooth scaling function. When it is disabled, the final scaling function contains kinks.</li>
         </ul>
-        <h3 id="contour-configuration">Contour configuration</h3>
+        <h3 id="contour-configuration">Contour Configuration</h3>
         <p>This section provides customization of how a contour layer is calculated and rendered by default.</p>
         <ul>
             <li>Generator type: default level generator type</li>
             <li>Smoothing mode: smoothing method to be applied to the image before calculating contour vertices</li>
-            <li>Default smoothing factor: kernel size of the selected smoothing mode</li>
+            <li>Default smoothing factor: kernel size of the selected smoothing mode in pixel</li>
             <li>Default contour levels: number of contour levels to be generated</li>
             <li>Thickness: contour line thickness</li>
             <li>Default color mode: to render contours with constant color or to render color-mapped contours</li>
-            <li>Default color map: the color map for rendering color-mapped contours</li>
+            <li>Default colormap: the colormap for rendering color-mapped contours</li>
             <li>Default color: the color for rendering contours in constant color</li>
         </ul>
         <h3 id="vector-overlay-configuration">Vector overlay configuration</h3>
@@ -59,10 +59,10 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Use fractional intensity: compute fractional linear polarization intensity instead of linear polarization intensity</li>
             <li>Thickness: the line thickness for each vector field element</li>
             <li>Default color mode: to render a vector field with constant color or to render a color-mapped vector field</li>
-            <li>Default color map: the color map for rendering a color-mapped vector field</li>
+            <li>Default colormap: the colormap for rendering a color-mapped vector field</li>
             <li>Default color: the color for rendering a vector field in constant color</li>
         </ul>
-        <h3 id="wcs-image-overlay-configuration">WCS and image overlay</h3>
+        <h3 id="wcs-image-overlay-configuration">WCS and Image Overlay</h3>
         <p>This section provides customization of the image overlay in the image viewer.</p>
         <ul>
             <li>Color: the default color of the grid layer and the coordinate bound box</li>
@@ -96,6 +96,15 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Region size (px): the size of a region in screen pixels when it is created with a click</li>
             <li>Creation mode: the way how rectangle and ellipse regions are created with cursor</li>
         </ul>
+        <h3 id="region">Annotation</h3>
+        <p>This section provides customization of annotation rendering properties.</p>
+        <ul>
+            <li>Color: default color to render an annotation element</li>
+            <li>Line width: default line width to render an annotation element</li>
+            <li>Dash length: when greater than zero, an annotation element is rendered in dashed line</li>
+            <li>Point shape: default shape of the point annotation element</li>
+            <li>Point size (px): the size of a point annotation element in screen pixels</li>
+        </ul>
         <h3 id="performance">Performance</h3>
         <p>
             Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the <code>low bandwidth mode</code> which
@@ -105,10 +114,14 @@ export const PREFERENCES_HELP_CONTENT = (
         <p>This section provides customization of the telemetry configuration. Anonymous usage data are collected as a reference for future developments only.</p>
         <ul>
             <li>Telemetry mode: disable telemetry or enable telemetry in minimal or full mode</li>
-            <li>Log telemetry output: show telemetry output on console</li>
+            <li>Log telemetry output: show telemetry output in the browser's console</li>
         </ul>
-
-        <h3 id="log-events">Log events</h3>
+        <h3 id="compatibility">Compatibility</h3>
+        <p>This section provides customization of the data compatibility.</p>
+        <ul>
+            <li>AIPS cube beam support: when it is enabled, CARTA will try to derive the beam size information from the HISTORY headers</li>
+        </ul>
+        <h3 id="log-events">Log Events</h3>
         <p>This is for development and debugging purposes. General users do not need to enable anything here. When messages are enabled, they show up in the browser console when being called.</p>
     </div>
 );

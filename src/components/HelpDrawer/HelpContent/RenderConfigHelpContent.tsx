@@ -9,20 +9,21 @@ export const RENDER_CONFIG_HELP_CONTENT = (
             <ImageComponent light={widgetButtonRenderConfig} dark={widgetButtonRenderConfig_d} width="90%" />
         </p>
         <p>
-            The render configuration widget controls how a raster image is rendered in the image viewer. The widget contains a set of clip levels as buttons on the top. The clip boundaries are displayed in the <code>Clip Min</code> and{" "}
-            <code>Clip Max</code> fields. If these fields are edited manually, the clip level will be switched to <code>Custom</code>. The clip boundaries are visualized as two vertical lines (draggable) in red in the histogram. The green
-            dashed line represents the mean value of the histogram. The green shaded area represents +/- one RMS.
+            The render configuration widget controls how a raster image is rendered in the image viewer. The widget contains a set of clip levels as buttons on the top. The clip boundaries are displayed in the <code>Clip min</code> and{" "}
+            <code>Clip max</code> fields. If these fields are edited manually, the clip level will be switched to <code>Custom</code>. The clip boundaries are visualized as and linked to two red vertical lines (draggable) in the histogram.
+            The green dashed line represents the mean value of the histogram. The green shaded area represents +/- one RMS.
         </p>
         <p>
-            By default, a per-channel histogram is shown, and optionally a per-cube histogram can be displayed via the <code>Histogram</code> dropdown menu.
+            By default, a per-channel histogram is shown, and optionally a per-cube histogram can be displayed via the <code>Histogram</code> dropdown menu if the active image is a cube with a spectral axis.
         </p>
         <p>
-            Different scaling functions and color maps can be chosen via the <code>Scaling</code> and <code>Color map</code> dropdown menus, respectively. A color map may be inverted via the <code>Invert color map</code> toggle.
+            Different scaling functions and color maps can be chosen via the <code>Scaling</code> and <code>Colormap</code> dropdown menus, respectively. A colormap may be inverted via the <code>Invert colormap</code> toggle.
         </p>
         <p>
-            Bias and contrast can be adjusted jointly with the 2D box (x as bias and y as contrast). The effective scaling function is visualized as a gray curve between the two red vertical lines. By default, smooth bias and contrast
-            functions are applied so that the resulting scaling function is a smooth curve. You may disable this feature with the <code>Render configuration</code> tab of the preferences dialog.
+            Bias and contrast can be adjusted jointly with the interactive 2D box (x as bias in [-1. 1] and y as contrast in [0, 2]). The effective scaling function is visualized as a gray curve between the two red vertical lines. By
+            default, smoothed bias and contrast functions are applied so that the resulting scaling function is a smooth curve. You may disable this feature with the <code>Render configuration</code> tab of the preferences dialog.
         </p>
+        <p>The color for rendering pixels with NaN value can be modified with the color picker. Once it is changed, the NaN color selection in the Render Configuration tab of the preferences dialog is also updated.</p>
         <p>The appearance of the histogram plot can be configured through the render configuration settings dialog, including:</p>
         <ul>
             <li>color of the plot</li>

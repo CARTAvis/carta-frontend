@@ -7,9 +7,18 @@ export const CATALOG_SETTINGS_COLOR_HELP_CONTENT = (
     <div>
         <h3>Marker color</h3>
         <p>
-            This dialog provides options to apply a color or a color map to source markers of an image overlay. The shape of the marker can be set with the <code>Shape</code> dropdown menu. If the <code>Column</code> dropdown menu is None,
-            all markers are rendered with a single color as set with the <code>Color</code> dropdown menu. You may assign a numeric data column with the <code>Column</code> dropdown menu for color mapping. Different scaling functions, color
-            maps, or clip bounds can be applied. When a source or a set of sources is selected, the marker color is changed to the color as specified with the <code>Overlay Highlight</code> dropdown menu.
+            Within this dialog, you are presented with a range of choices to enhance the visual representation of source markers within an image overlay. Key options encompass the application of colors or color maps, as well as the ability
+            to define marker shapes through the Shape dropdown menu.
+        </p>
+        <p>
+            When the Column dropdown menu remains unselected (set to "None"), all markers adopt a unified color as determined by the Color dropdown menu. However, should you opt to enhance your visualization, you have the flexibility to
+            designate a numeric data column by choosing from the Column dropdown menu. This empowers you to leverage color mapping, thereby imparting nuanced insights to your data. Customizable parameters include various scaling functions,
+            diverse color maps, and adjustable clip bounds.
+        </p>
+
+        <p>
+            The interactive nature of this dialog is apparent when selecting sources or sets of sources. On such occasions, the marker colors transform to align with your choices as indicated within the Overlay highlight dropdown menu. This
+            dynamic alteration provides a clear visual indicator of selected sources within your visualization.
         </p>
         <p>
             <ImageComponent light={demoImageOverlayColorMapping} dark={demoImageOverlayColorMapping_d} width="100%" />

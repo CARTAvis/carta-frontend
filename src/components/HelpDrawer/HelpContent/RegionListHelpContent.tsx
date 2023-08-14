@@ -9,16 +9,29 @@ export const REGION_LIST_HELP_CONTENT = (
             <ImageComponent light={widgetButtonRegionList} dark={widgetButtonRegionList_d} width="90%" />
         </p>
         <p>
-            The region list widget shows you a list of regions created via the graphical user interface and loaded via region import (<strong>File</strong> -&gt; <strong>Import regions</strong>). The basic information of a region is
-            provided in the list. The active region is highlighted in the list and region control points are visible in the image viewer. To de-select a region, press the <code>Esc</code> key.
+            In CARTA, there are two kinds of objects that you can create in the image viewer:
+            <ul>
+                <li>Region of interest: this kind of object can be used as a reference to derive image analytics.</li>
+                <li>Image annotation: this kind of object can be used to decorate your image for presentation purposes only.</li>
+            </ul>
+            Region and annotation share very similar attributes. The only difference is the ability of serving as a reference for image analytics computations. In the following, we use "region" for short to introduce features.
+        </p>
+        <p>
+            The region list widget shows you a list of regions created via the graphical user interface or loaded via the menu (<strong>File</strong> -&gt; <strong>Import regions</strong>) or the import button at the bottom-right corner of
+            the widget. The basic information of a region is provided in the list. The active region is highlighted in the list and region control points are visible in the image viewer. To de-select a region, press the <code>Esc</code>{" "}
+            key.
         </p>
         <p>
             <code>double-click</code> on a list entry or on a region in the image viewer to bring up the region configuration dialog, where you can adjust region appearance and region properties.
         </p>
         <p>
-            The <code>Lock</code> button for each region entry is used to prevent editing a region accidentally. Locked regions will appear slightly dimmer in the image viewer. The <code>Focus</code> button is used to center a region in the
-            current field of view of the image viewer. You can save a region as a text file with the <code>Export</code> button. You may also export all regions via the <code>Export all</code> button at the top of the list. In the region
-            export file browser, you can also select only a subset of the regions and save them as a region text file.
+            The <code>Lock</code> button in each region entry can be used to prevent editing a region accidentally. Locked regions will appear slightly dimmer in the image viewer. At the top-left corner of the widget, you can use the lock
+            button to lock all regions at once. The <code>Focus</code> button is used to center a region in the current field of view of the image viewer. If there are many regions that block the image view, you can use the{" "}
+            <code>Hide</code> button at the top-left corner of the widget to temporarily hide regions. There are two levels of hiding: one makes regions semi-tranparent and the other makes regions completely transparent.
+        </p>
+        <p>
+            You can save a region as a text file with the <code>Export</code> button. You may also export all regions via the export button at the bottom-right corner of the widget. In the region export file browser, you may select only a
+            subset of the regions and save them as a region text file.
         </p>
         <p>
             To delete an active (selected) region, press <code>delete</code> or <code>backspace</code> key.

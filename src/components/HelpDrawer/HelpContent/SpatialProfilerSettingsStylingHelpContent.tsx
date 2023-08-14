@@ -11,9 +11,9 @@ export const SPATIAL_PROFILER_SETTINGS_STYLING_HELP_CONTENT = (
             <li>plot styles including steps (default), lines, and dots</li>
             <li>line width for steps or lines</li>
             <li>point size for dots</li>
-            <li>display alternative horizontal axis in world coordinate</li>
+            <li>display alternative horizontal axis in world coordinate (only for cursor or point region)</li>
             <li>display mean and RMS</li>
-            <li>x and y ranges</li>
+            <li>plot x and y ranges</li>
         </ul>
     </div>
 );

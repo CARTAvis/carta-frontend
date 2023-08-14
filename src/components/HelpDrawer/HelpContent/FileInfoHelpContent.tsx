@@ -9,14 +9,15 @@ export const FILE_INFO_HELP_CONTENT = (
             <ImageComponent light={dialogButtonFileHeader} dark={dialogButtonFileHeader_d} width="39%" />
         </p>
         <p>
-            The file header dialog provides a full image header (<code>Header</code> tab) and a summary of the properties of the active image (<code>File Information</code> tab). To view the file headers of other images, use the image
-            slider in the animator widget, or use the image list widget.
+            The File header dialog provides both a detailed image header (accessible through the Header tab) and a succinct overview of the active image's properties (available under the File Information tab). To access file headers of
+            different images, utilize either the image slider within the animator widget or employ the image list widget.
         </p>
         <p>
-            You can search the header or export the header as a text file with the tools at the bottom-right corner of the <code>Header</code> tab.
+            You can perform keyword search to the header or export the header as a text file with the tools at the bottom-right corner of the <code>Header</code> tab.
         </p>
         <h4>NOTE</h4>
-        The origin of the image coordinates in FITS definition is 1-based, meaning that the origin at the center of the bottom-left corner pixel is (1, 1). In CARTA, the origin of the image coordinates is 0-based so that the origin at the
-        center of the bottom-left corner pixel is (0, 0). An index shift is applied internally. This applies to the spectral axis too.
+        In the FITS definition, image coordinates originate from a 1-based system, signifying that the reference point lies at the center of the bottom-left pixel, denoted as (1, 1). In contrast, CARTA adopts a 0-based coordinate system,
+        resulting in the reference point residing at the center of the same pixel, marked as (0, 0). This adjustment entails an internal index shift. It's important to note that this indexing adjustment also extends to the spectral axis,
+        ensuring consistency across the application.
     </div>
 );
