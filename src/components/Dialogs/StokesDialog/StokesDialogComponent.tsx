@@ -89,7 +89,7 @@ export class StokesDialogComponent extends React.Component {
                                     directory: fileBrowserStore.fileList.directory,
                                     file: file.fileInfo.name,
                                     hdu: file.hdu,
-                                    polarizationType: this.getStokeType(response.info[k], response.file)
+                                    polarizationType: this.getStokesType(response.info[k], response.file)
                                 };
                                 this.setStokes(file.fileInfo.name, stoke);
                             })
@@ -239,7 +239,7 @@ export class StokesDialogComponent extends React.Component {
         return <MenuItem key={`${stokesType}: ${label}`} text={label} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
 
-    private getStokeType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
+    private getStokesType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
         let type = this.getTypeFromHeader(fileInfoExtended?.headerEntries);
         if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
             type = this.getTypeFromName(file);
