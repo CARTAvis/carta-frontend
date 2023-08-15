@@ -171,7 +171,10 @@ export const IMAGE_VIEW_HELP_CONTENT = (
             <ImageComponent light={exportPNGButton} dark={exportPNGButton_d} width="80%" />
         </p>
         <h3>Distance measure</h3>
-        <p>This tool allows you to measure a geodesic distance between two locations on an image with mouse clicks. The geodesic line between the two clicks as well as the iso-latitude and iso-longitude lines are visualized.</p>
+        <p>
+            This tool allows you to measure a geodesic distance between two locations on an image with mouse clicks. The geodesic line between the two clicks as well as the iso-latitude and iso-longitude lines are visualized. A shortcut
+            button, which brings up the distance measurement dialog, is available in the dialog bar. In the dialog, you can manually provide two coordinates for the calculation and configure the styling.
+        </p>
         <p>
             <ImageComponent light={distanceMeasureButton} dark={distanceMeasureButton_d} width="80%" />
         </p>
