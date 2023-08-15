@@ -4,12 +4,12 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {Freq, FrequencyUnit, LineOption, ToFileListFilterMode} from "models";
+import {Freq, FrequencyUnit, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
 import {RegionId} from "stores/Widgets";
-import {getDataTypeString, ProcessedColumnData} from "utilities";
+import {getDataTypeString, getHeaderNumericValue, ProcessedColumnData} from "utilities";
 
 export enum BrowserMode {
     File,
@@ -315,6 +315,50 @@ export class FileBrowserStore {
     getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string; info: CARTA.IFileInfoExtended}> => {
         const res = await BackendService.Instance.getFileInfo(directory, file, hdu);
         return {file: res.fileInfo.name, info: res.fileInfoExtended};
+    };
+
+    getStokesType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
+        let type = this.getTypeFromHeader(fileInfoExtended?.headerEntries);
+        if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
+            type = this.getTypeFromName(file);
+        }
+        return type;
+    };
+
+    private getTypeFromHeader = (headers: CARTA.IHeaderEntry[]): CARTA.PolarizationType => {
+        let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
+
+        const ctype = headers?.find(obj => obj.value.toUpperCase() === "STOKES");
+        if (ctype && ctype.name.indexOf("CTYPE") !== -1) {
+            const index = ctype.name.substring(5);
+            const crpixHeader = headers.find(entry => entry.name.indexOf(`CRPIX${index}`) !== -1);
+            const crvalHeader = headers.find(entry => entry.name.indexOf(`CRVAL${index}`) !== -1);
+            const cdeltHeader = headers.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
+            const polarizationIndex = getHeaderNumericValue(crvalHeader) + (1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
+            if (polarizationIndex) {
+                const polarizationString = STANDARD_POLARIZATIONS.get(polarizationIndex);
+                if (polarizationString) {
+                    type = CARTA.PolarizationType[polarizationString] ?? CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
+                }
+            }
+        }
+
+        return type;
+    };
+
+    private getTypeFromName = (fileName: string): CARTA.PolarizationType => {
+        let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
+        const separators = [".", "_"];
+        separators.forEach(separator => {
+            const words = fileName.split(separator);
+            words.forEach(word => {
+                const matchedType = CARTA.PolarizationType[word];
+                if (matchedType) {
+                    type = matchedType;
+                }
+            });
+        });
+        return type;
     };
 
     @action selectFile = (file: ISelectedFile) => {
