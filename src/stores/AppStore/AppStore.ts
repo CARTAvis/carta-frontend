@@ -348,6 +348,9 @@ export class AppStore {
     // Spectral matching type, initialized by global preferences, modified by the Image List Settings
     @observable spectralMatchingType: SpectralType;
 
+    // Match generated moment image(s) to the spatial reference image
+    @observable momentToMatch: boolean;
+
     @computed get openFileDisabled(): boolean {
         return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
     }
@@ -1225,7 +1228,11 @@ export class AppStore {
                 for (const openFileAck of ack.openFileAcks) {
                     if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
-                        frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
+                        const newMomentImage = this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId);
+                        frame.addMomentImage(newMomentImage);
+                        if (frame === this.spatialReference && this.momentToMatch) {
+                            newMomentImage.setSpatialReference(this.spatialReference);
+                        }
                     } else {
                         AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                     }
@@ -1675,6 +1682,7 @@ export class AppStore {
         this.toolbarExpanded = true;
         this.imageRatio = 1;
         this.isExportingImage = false;
+        this.momentToMatch = true;
 
         AST.onReady.then(
             action(() => {
@@ -2834,6 +2842,10 @@ export class AppStore {
     @action setMatchingEnabled = (spatial: boolean, spectral: boolean) => {
         this.setSpatialMatchingEnabled(this.activeFrame, spatial);
         this.setSpectralMatchingEnabled(this.activeFrame, spectral);
+    };
+
+    @action toggleMomentToMatch = () => {
+        this.momentToMatch = !this.momentToMatch;
     };
 
     @computed get numImagePages() {
