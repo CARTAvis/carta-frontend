@@ -318,14 +318,14 @@ export class FileBrowserStore {
     };
 
     getStokesType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
-        let type = this.getTypeFromHeader(fileInfoExtended?.headerEntries);
+        let type = FileBrowserStore.GetTypeFromHeader(fileInfoExtended?.headerEntries);
         if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
-            type = this.getTypeFromName(file);
+            type = FileBrowserStore.GetTypeFromName(file);
         }
         return type;
     };
 
-    private getTypeFromHeader = (headers: CARTA.IHeaderEntry[]): CARTA.PolarizationType => {
+    private static GetTypeFromHeader = (headers: CARTA.IHeaderEntry[]): CARTA.PolarizationType => {
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
 
         const ctype = headers?.find(obj => obj.value.toUpperCase() === "STOKES");
@@ -346,7 +346,7 @@ export class FileBrowserStore {
         return type;
     };
 
-    private getTypeFromName = (fileName: string): CARTA.PolarizationType => {
+    private static GetTypeFromName = (fileName: string): CARTA.PolarizationType => {
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
         const separators = [".", "_"];
         separators.forEach(separator => {
