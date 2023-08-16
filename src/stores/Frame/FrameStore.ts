@@ -1832,13 +1832,13 @@ export class FrameStore {
     };
 
     /**
-     * Converts the position from WCS coordinates to image coordinates.
+     * Converts positions from WCS coordinates to image coordinates.
      *
-     * @param wcs - The position in WCS coordinates.
-     * @returns  The corresponding position in image coordinates.
+     * @param wcs - An array of positions in WCS coordinates.
+     * @returns An array of corresponding positions in image coordinates.
      */
-    getImagePosFromWCS = (wcs: WCSPoint2D): Point2D => {
-        return getPixelValueFromWCS(this.wcsInfoForTransformation, wcs);
+    getImagePosFromWCS = (wcsList: WCSPoint2D[]): Point2D[] => {
+        return wcsList.map(wcs => getPixelValueFromWCS(this.wcsInfoForTransformation, wcs));
     };
 
     public getRegion = (regionId: number): RegionStore => {
