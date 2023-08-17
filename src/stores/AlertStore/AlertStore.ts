@@ -3,8 +3,7 @@ import {MaybeElement} from "@blueprintjs/core";
 import {IconName} from "@blueprintjs/icons";
 import {action, makeObservable, observable} from "mobx";
 
-import {Deferred, TelemetryAction} from "services";
-import {AppStore} from "stores/AppStore/AppStore";
+import {Deferred} from "services";
 
 export enum AlertType {
     Info,
@@ -58,7 +57,6 @@ export class AlertStore {
         this.alertType = AlertType.Retry;
         this.alertVisible = true;
         this.showDashboardLink = showDashboard;
-        AppStore.Instance.telemetryService.addTelemetryEntry(TelemetryAction.ConnectionClosed);
         this.interactionPromise = new Deferred<boolean>();
         return this.interactionPromise.promise;
     };

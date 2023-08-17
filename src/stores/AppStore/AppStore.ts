@@ -501,7 +501,7 @@ export class AppStore {
         if (!ack) {
             return false;
         }
-
+        console.log(ack);
         let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
         if (ack.fileInfoExtended.dimensions > 2) {
             dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
@@ -521,7 +521,7 @@ export class AppStore {
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable
         };
-        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
+        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
 

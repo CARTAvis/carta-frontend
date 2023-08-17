@@ -18,7 +18,6 @@ export enum TelemetryMode {
 export enum TelemetryAction {
     Connection = "connection",
     EndSession = "endSession",
-    ConnectionClosed = "connectionClosed",
     RetryConnection = "retryConnection",
     OptIn = "optIn",
     OptOut = "optOut",
@@ -254,8 +253,9 @@ export class TelemetryService {
         return this.db;
     }
 
-    addFileOpenEntry(id: number, width: number, height: number, depth: number, stokes: number, generated: boolean) {
-        return this.addTelemetryEntry(TelemetryAction.FileOpen, {id, width, height, depth, stokes, generated});
+    addFileOpenEntry(id: number, type: CARTA.FileType, width: number, height: number, depth: number, stokes: number, generated: boolean) {
+        const fileType = Object.keys(CARTA.FileType).find(key => CARTA.FileType[key] === type);
+        return this.addTelemetryEntry(TelemetryAction.FileOpen, {id, fileType, width, height, depth, stokes, generated});
     }
 
     addFileCloseEntry(id: number) {
@@ -300,7 +300,7 @@ export class TelemetryService {
             };
 
             if (loggingEnabled) {
-                console.debug(`${loggingPrefix} ${telemetryMessage.action} ${details ? JSON.stringify(details) : ""}`);
+                console.log(`${loggingPrefix} ${telemetryMessage.action} ${details ? JSON.stringify(details) : ""}`);
             }
 
             try {
