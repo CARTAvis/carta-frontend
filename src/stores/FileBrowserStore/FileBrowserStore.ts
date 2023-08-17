@@ -319,7 +319,7 @@ export class FileBrowserStore {
 
     /**
      * Obtains the Stokes type of the file from the header information or the filename.
-     * 
+     *
      * @param fileInfoExtended - The header information of the file.
      * @param file - The name of the file.
      * @returns The Stokes type of the file.
