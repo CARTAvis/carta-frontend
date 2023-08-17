@@ -317,6 +317,13 @@ export class FileBrowserStore {
         return {file: res.fileInfo.name, info: res.fileInfoExtended};
     };
 
+    /**
+     * Obtains the Stokes type of the file from the header information or the filename.
+     * 
+     * @param fileInfoExtended - The header information of the file.
+     * @param file - The name of the file.
+     * @returns The Stokes type of the file.
+     */
     getStokesType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
         let type = FileBrowserStore.GetTypeFromHeader(fileInfoExtended?.headerEntries);
         if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
