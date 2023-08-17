@@ -250,7 +250,7 @@ export class RegionSetStore {
             case CARTA.RegionType.ANNRULER:
                 return new RulerAnnotationStore(...commonInputs, ...annotationStyles);
             case CARTA.RegionType.ANNTEXT:
-                return new TextAnnotationStore(...commonInputs, ...annotationStyles);
+                return new TextAnnotationStore(...commonInputs, this.preference.annotationColor, this.preference.textAnnotationLineWidth, this.preference.annotationDashLength);
             case CARTA.RegionType.ANNPOINT:
                 return new PointAnnotationStore(...commonInputs, ...annotationStyles, this.pointShapeCache || this.preference.pointAnnotationShape, this.preference.pointAnnotationWidth);
             case CARTA.RegionType.ANNVECTOR:
