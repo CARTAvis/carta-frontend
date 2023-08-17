@@ -84,13 +84,13 @@ export class RegionSetStore {
      * Returns a map associating region IDs with their corresponding RegionStore instances.
      */
     @computed get regionMap(): Map<number, RegionStore> {
-        const reigonMap = new Map<number, RegionStore>();
+        const regionMap = new Map<number, RegionStore>();
 
         for (const region of this.regions) {
-            reigonMap.set(region.regionId, region);
+            regionMap.set(region.regionId, region);
         }
 
-        return reigonMap;
+        return regionMap;
     }
 
     @computed get regionsAndAnnotationsForRender(): RegionStore[] {
