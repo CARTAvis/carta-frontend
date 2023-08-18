@@ -1834,11 +1834,21 @@ export class FrameStore {
     /**
      * Converts positions from WCS coordinates to image coordinates.
      *
-     * @param wcs - An array of positions in WCS coordinates.
+     * @param wcsList - An array of positions in WCS coordinates.
      * @returns An array of corresponding positions in image coordinates.
      */
     getImagePosFromWCS = (wcsList: WCSPoint2D[]): Point2D[] => {
         return wcsList.map(wcs => getPixelValueFromWCS(this.wcsInfoForTransformation, wcs));
+    };
+
+    /**
+     * Converts positions from image coordinates to WCS coordinates.
+     *
+     * @param posList - An array of positions in image coordinates.
+     * @returns An array of corresponding positions in WCS coordinates.
+     */
+    getWCSFromImagePos = (posList: Point2D[]): WCSPoint2D[] => {
+        return posList.map(p => getFormattedWCSPoint(this.wcsInfoForTransformation, p));
     };
 
     public getRegion = (regionId: number): RegionStore => {
