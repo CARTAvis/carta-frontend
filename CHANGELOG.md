@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* Added a shortcut button for image annotation ([#2167](https://github.com/CARTAvis/carta-frontend/issues/2167))
+* Added a shortcut button for image annotation ([#2167](https://github.com/CARTAvis/carta-frontend/issues/2167)).
+* Added support for AIPS beam images ([#2164](https://github.com/CARTAvis/carta-frontend/issues/2164)).
+* Added an increase to the default compression ratio to 32 when the header unit of the image is km/s ([#1223](https://github.com/CARTAvis/carta-frontend/issues/1223)).
+* Added a toggle in the moment generator to match generated image(s) ([#2121](https://github.com/CARTAvis/carta-frontend/issues/2121)).
 ### Changed
 * Changed the default title string in the image viewer ([#2168](https://github.com/CARTAvis/carta-frontend/issues/2168)).
 * Modified text annotation textbox to stay the same dimension as user zoom the image ([#2162](https://github.com/CARTAvis/carta-frontend/issues/2162)).
 * Disabled spell check in text input ([#2138](https://github.com/CARTAvis/carta-frontend/issues/2138)).
 * Support animation playback with matched images in multi-panel view ([#1860](https://github.com/CARTAvis/carta-frontend/issues/1860)).
 * Modified spectral matching type selector in Image List Settings won't affact global preferences ([#2098](https://github.com/CARTAvis/carta-frontend/issues/2098)).
+* Enabled enter key to trigger filtering in the filter fields, and modified the buttons in the spectral line query widget and catalog widget ([#2046](https://github.com/CARTAvis/carta-frontend/issues/2046)).
 ### Fixed
 * Fixed bug where line region computation width cannot be changed in spatial profile setting widget ([#2000](https://github.com/CARTAvis/carta-frontend/issues/2000)).
 * Fixed when multiple images are open, PV generator can only produce PV preview with live update for one of the images ([#2171](https://github.com/CARTAvis/carta-frontend/issues/2171)).
@@ -30,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the right ascension label in the image view ([#2192](https://github.com/CARTAvis/carta-frontend/issues/2192)).
 * Fixed the multi-spectral-profile intensity unit conversion ([#1758](https://github.com/CARTAvis/carta-frontend/issues/1758)).
 * Fixed the Jy/beam to K intensity unit conversion ([#1907](https://github.com/CARTAvis/carta-frontend/issues/1907)).
+* Fixed the blinking toolbar in the image view during animating images ([#2163](https://github.com/CARTAvis/carta-frontend/issues/2163)).
 
 ## [4.0.0-beta.1]
 

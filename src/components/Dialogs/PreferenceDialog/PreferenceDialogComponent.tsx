@@ -31,7 +31,8 @@ enum PreferenceDialogTabs {
     PERFORMANCE,
     LOG_EVENT,
     CATALOG,
-    TELEMETRY
+    TELEMETRY,
+    COMPATIBILITY
 }
 
 export enum MemoryUnit {
@@ -128,6 +129,9 @@ export class PreferenceDialogComponent extends React.Component {
                 break;
             case PreferenceDialogTabs.TELEMETRY:
                 preference.resetTelemetrySettings();
+                break;
+            case PreferenceDialogTabs.COMPATIBILITY:
+                preference.resetCompatibilitySettings();
                 break;
             case PreferenceDialogTabs.GLOBAL:
             default:
@@ -858,6 +862,14 @@ export class PreferenceDialogComponent extends React.Component {
             </div>
         );
 
+        const compatibilityPanel = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="AIPS cube beam support">
+                    <Switch checked={preference.aipsBeamSupport} onChange={ev => preference.setPreference(PreferenceKeys.COMPATIBILITY_AIPS_BEAM_SUPPORT, ev.currentTarget.checked)} />
+                </FormGroup>
+            </div>
+        );
+
         const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
 
         const dialogProps: IDialogProps = {
@@ -885,6 +897,7 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tab id={PreferenceDialogTabs.ANNOTATION} title="Annotation" panel={annotationSettingsPanel} />
                         <Tab id={PreferenceDialogTabs.PERFORMANCE} title="Performance" panel={performancePanel} />
                         {process.env.REACT_APP_SKIP_TELEMETRY !== "true" && <Tab id={PreferenceDialogTabs.TELEMETRY} title="Telemetry" panel={telemetryPanel} />}
+                        <Tab id={PreferenceDialogTabs.COMPATIBILITY} title="Compatibility" panel={compatibilityPanel} />
                         <Tab id={PreferenceDialogTabs.LOG_EVENT} title="Log Events" panel={logEventsPanel} />
                     </Tabs>
                 </div>

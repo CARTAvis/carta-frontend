@@ -71,6 +71,7 @@ interface ViewUpdate {
     channel: number;
     stokes: number;
     focusPoint: Point2D;
+    headerUnit: string;
 }
 
 interface ChannelUpdate {
@@ -346,6 +347,9 @@ export class AppStore {
 
     // Spectral matching type, initialized by global preferences, modified by the Image List Settings
     @observable spectralMatchingType: SpectralType;
+
+    // Match generated moment image(s) to the spatial reference image
+    @observable momentToMatch: boolean;
 
     @computed get openFileDisabled(): boolean {
         return this.backendService?.connectionStatus !== ConnectionStatus.ACTIVE || this.fileLoading;
@@ -1224,7 +1228,11 @@ export class AppStore {
                 for (const openFileAck of ack.openFileAcks) {
                     if (this.addFrame(CARTA.OpenFileAck.create(openFileAck), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
-                        frame.addMomentImage(this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId));
+                        const newMomentImage = this.frames.find(f => f.frameInfo.fileId === openFileAck.fileId);
+                        frame.addMomentImage(newMomentImage);
+                        if (frame === this.spatialReference && this.momentToMatch) {
+                            newMomentImage.setSpatialReference(this.spatialReference);
+                        }
                     } else {
                         AppToaster.show({icon: "warning-sign", message: "Load file failed.", intent: "danger", timeout: 3000});
                     }
@@ -1523,7 +1531,11 @@ export class AppStore {
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
+
+                // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
+                const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
+                const compressionQuality = bunitVariant.includes(frame.headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, compressionQuality, true);
             } else {
                 this.tileService.updateHiddenFileChannels(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
@@ -1558,11 +1570,11 @@ export class AppStore {
 
     private updateViews = (updates: ViewUpdate[]) => {
         for (const update of updates) {
-            this.updateView(update.tiles, update.fileId, update.channel, update.stokes, update.focusPoint);
+            this.updateView(update.tiles, update.fileId, update.channel, update.stokes, update.focusPoint, update.headerUnit);
         }
     };
 
-    private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
+    private updateView = (tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, headerUnit: string) => {
         const isAnimating = this.animatorStore.serverAnimationActive;
         if (isAnimating) {
             this.backendService.addRequiredTiles(
@@ -1571,7 +1583,10 @@ export class AppStore {
                 this.preferenceStore.animationCompressionQuality
             );
         } else {
-            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.preferenceStore.imageCompressionQuality);
+            // If BUNIT = km/s, adopted compressionQuality is set to 32 regardless the preferences setup
+            const bunitVariant = ["km/s", "km s-1", "km s^-1", "km.s-1"];
+            const compressionQuality = bunitVariant.includes(headerUnit) ? Math.max(this.preferenceStore.imageCompressionQuality, 32) : this.preferenceStore.imageCompressionQuality;
+            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, compressionQuality);
         }
     };
 
@@ -1667,6 +1682,7 @@ export class AppStore {
         this.toolbarExpanded = true;
         this.imageRatio = 1;
         this.isExportingImage = false;
+        this.momentToMatch = true;
 
         AST.onReady.then(
             action(() => {
@@ -1776,7 +1792,7 @@ export class AppStore {
                     const tileSizeFullRes = reqView.mip * 256;
                     const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                     if (tiles.length) {
-                        viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords});
+                        viewUpdates.push({tiles, fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: midPointTileCoords, headerUnit: frame.headerUnit});
                     }
                 }
 
@@ -1784,7 +1800,7 @@ export class AppStore {
                 if (this.animatorStore?.serverAnimationActive) {
                     for (const frame of this.activeFrame.spectralSiblings) {
                         if (!this.visibleFrames.includes(frame)) {
-                            viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null});
+                            viewUpdates.push({tiles: [], fileId: frame.frameInfo.fileId, channel: frame.channel, stokes: frame.stokes, focusPoint: null, headerUnit: frame.headerUnit});
                         }
                     }
                 }
@@ -1796,26 +1812,30 @@ export class AppStore {
         // TODO: Move setChannels actions to AppStore and remove this autorun
         // Update channels when manually changed
         autorun(() => {
-            if (this.activeFrame) {
-                const updates: ChannelUpdate[] = [];
-                // Calculate if new data is required for the active channel
-                const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
-                // Don't auto-update when animation is playing
-                if (!this.animatorStore.animationActive && updateRequiredChannels) {
-                    updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
-                }
+            const updates: ChannelUpdate[] = [];
 
-                // Update any sibling channels
-                this.activeFrame.spectralSiblings.forEach(frame => {
-                    const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
-                    if (siblingUpdateRequired) {
-                        updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+            for (const visibleFrame of this.visibleFrames) {
+                if (visibleFrame) {
+                    // Calculate if new data is required for the active channel
+                    const updateRequiredChannels = visibleFrame.requiredChannel !== visibleFrame?.channel || visibleFrame.requiredStokes !== visibleFrame.stokes;
+                    // Don't auto-update when animation is playing
+                    if (!this.animatorStore.animationActive && updateRequiredChannels) {
+                        updates.push({frame: visibleFrame, channel: visibleFrame.requiredChannel, stokes: visibleFrame.requiredStokes});
                     }
-                });
 
-                if (updates.length) {
-                    throttledSetChannels(updates);
+                    // Update any sibling channels
+                    visibleFrame.spectralSiblings.forEach(frame => {
+                        const isVisible = this.visibleFrames.includes(frame);
+                        const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
+                        if (!isVisible && siblingUpdateRequired) {
+                            updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+                        }
+                    });
                 }
+            }
+
+            if (updates.length) {
+                throttledSetChannels(updates);
             }
         });
 
@@ -2214,7 +2234,8 @@ export class AppStore {
                 stokes: frame.requiredStokes,
                 regions: mapToObject(regions),
                 contourSettings,
-                stokesFiles: frame.stokesFiles
+                stokesFiles: frame.stokesFiles,
+                supportAipsBeam: AppStore.Instance.preferenceStore.aipsBeamSupport
             };
         });
 
@@ -2821,6 +2842,10 @@ export class AppStore {
     @action setMatchingEnabled = (spatial: boolean, spectral: boolean) => {
         this.setSpatialMatchingEnabled(this.activeFrame, spatial);
         this.setSpectralMatchingEnabled(this.activeFrame, spectral);
+    };
+
+    @action toggleMomentToMatch = () => {
+        this.momentToMatch = !this.momentToMatch;
     };
 
     @computed get numImagePages() {
