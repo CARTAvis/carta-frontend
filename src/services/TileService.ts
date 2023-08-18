@@ -409,7 +409,7 @@ export class TileService {
                 this.pendingDecompressions.set(key, new Map<number, Map<number, boolean>>().set(syncMessage.syncId, new Map<number, boolean>()));
             }
         } else {
-            // mark the channel and as complete
+            // mark the channel as complete
             this.completedChannels.set(key, true);
             this.syncIdMap.set(syncMessage.syncId, true);
         }
