@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the multi-spectral-profile intensity unit conversion ([#1758](https://github.com/CARTAvis/carta-frontend/issues/1758)).
 * Fixed the Jy/beam to K intensity unit conversion ([#1907](https://github.com/CARTAvis/carta-frontend/issues/1907)).
 * Fixed the blinking toolbar in the image view during animating images ([#2163](https://github.com/CARTAvis/carta-frontend/issues/2163)).
+* Fixed image arithmetic bug when there are square brackets in the expression ([#2220]https://github.com/CARTAvis/carta-frontend/issues/2220).
 
 ## [4.0.0-beta.1]
 
