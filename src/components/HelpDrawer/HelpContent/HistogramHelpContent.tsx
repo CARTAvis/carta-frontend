@@ -9,26 +9,25 @@ export const HISTOGRAM_HELP_CONTENT = (
             <ImageComponent light={widgetButtonHistogram} dark={widgetButtonHistogram_d} width="90%" />
         </p>
         <p>
-            The histogram widget displays a histogram plot based on the selections in the <code>Image</code>, <code>Region</code>, and <code>Polarization</code> dropdown menus. When there is no region or no active region, the entire image
-            is used to compute the histogram.
+            The Histogram Widget displays a histogram plot based on the selections in the <b>Image</b>, <b>Region</b>, and <b>Polarization</b> dropdown menus. When there is no region or no active region, the entire image is used to compute
+            the histogram.
         </p>
         <p>
-            By default, the number of histogram bins is determined by the geometric mean of the region size or the image size if there is no active region for histogram computation. In the Configuration tab of the settings dialog, you can
-            have fine controls of how a histogram is computed, including bounds (text input) and number of bins (slider).
+            By default, the number of histogram bins is determined by the geometric mean of the region size or the image size (if there is no active region for histogram computation). In the <b>Configuration</b> tab of the Histogram
+            Settings Dialog, you can have fine controls of how a histogram is computed, including bounds and number of bins.
         </p>
         <h3 id="image">Image</h3>
         <p>
-            The <code>Image</code> dropdown menu defaults to &quot;Active&quot; image which means the current image in the image viewer if it is in the single-panel mode. If it is in the multi-panel mode, the active image is highlighted
-            with a red box.
+            The <b>Image</b> dropdown menu defaults to "Active" image which means the current image in the Image Viewer if it is in the single-panel mode. If it is in the multi-panel mode, the active image is highlighted with a red box.
         </p>
         <h3 id="region">Region</h3>
         <p>
-            The <code>Region</code> dropdown menu defaults to &quot;Active&quot; region which means a selected region in the image viewer. You can select a region by clicking on one in the image viewer, or by clicking on a region entry in
-            the region list widget. The histogram plot of the selected region will be updated accordingly. When there is no region or no region is selected (active), the entire image is used to compute the histogram.
+            The <b>Region</b> dropdown menu defaults to "Active" region which means a selected region in the Image Viewer. You can select a region by clicking on one in the Image Viewer, or by clicking on a region entry in the Region List
+            Widget. The histogram plot of the selected region will be updated accordingly. When there is no region or no region is selected (active), the entire image is used to compute the histogram.
         </p>
         <h3 id="polarization">Polarization</h3>
         <p>
-            The <code>Polarization</code> dropdown menu defaults to &quot;Current&quot; which means the selection as in the animator widget. Besides the Stokes components as defined in the image header, computed components such as linear
+            The <b>Polarization</b> dropdown menu defaults to "Current" which synchronizes with the selection in the Animator Widget. Besides the Stokes components as defined in the image header, computed components such as linear
             polarization intensity, or polarization angle, etc., are also available.
         </p>
         <h3 id="interactivity-zoom-and-pan">Interactivity: zoom and pan</h3>
@@ -53,11 +52,15 @@ export const HISTOGRAM_HELP_CONTENT = (
                 <code>shift + drag-and-drop</code> to pan in x
             </li>
         </ul>
-        <p>In addition, the plotting x and y ranges can be explicitly set in the Styling tab of the settings dialog.</p>
+        <p>
+            In addition, the plotting x and y ranges can be explicitly set in the <b>Styling</b> tab of the Histogram Settings Dialog.
+        </p>
         <h3 id="exports">Exports</h3>
-        <p>The histogram plot can be exported as a png file or a text file in tsv format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
+        <p>The histogram plot can be exported as a PNG file or a text file in TSV format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
         <h3 id="plot-cosmetics">Plot cosmetics</h3>
-        <p>The appearance of the histogram plot is customizable via the Styling tab of the settings dialog (the cog icon). Supported options are:</p>
+        <p>
+            The appearance of the histogram plot is customizable via the <b>Styling</b> tab of the Histogram Settings Dialog (the cog icon). Supported options are:
+        </p>
         <ul>
             <li>color of the plot</li>
             <li>plot styles including steps (default), lines, and dots</li>

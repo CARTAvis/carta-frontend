@@ -2,7 +2,7 @@ export const SPECTRAL_PROFILER_SETTINGS_CONVERSION_HELP_CONTENT = (
     <div>
         <h3>Conversion</h3>
         <p>
-            With the <code>Conversion</code> tab, you can change the spectral convention and optionally display a secondary convention in the cursor information field, including:
+            With the <b>Conversion</b> tab, you can change the spectral convention and optionally display a secondary convention in the cursor information field, including:
         </p>
         <ul>
             <li>Radio velocity (km/s, m/s)</li>

@@ -1,6 +1,6 @@
 export const RENDER_CONFIG_SETTINGS_HELP_CONTENT = (
     <div>
-        <p>The appearance of the histogram plot in the render configuration widget can be customized through this settings dialog, including:</p>
+        <p>The appearance of the histogram plot in the Render Configuration Widget can be customized through this settings dialog, including:</p>
         <ul>
             <li>color of the plot</li>
             <li>plot styles including steps (default), lines, and dots</li>

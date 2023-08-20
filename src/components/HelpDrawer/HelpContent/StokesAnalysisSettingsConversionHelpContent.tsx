@@ -2,7 +2,7 @@ export const STOKES_ANALYSIS_SETTINGS_CONVERSION_HELP_CONTENT = (
     <div>
         <h3>Conversion</h3>
         <p>
-            With the <code>Conversion</code> tab, you can change the spectral convention, including:
+            With the <b>Conversion</b> tab, you can change the spectral convention, including:
         </p>
         <ul>
             <li>Radio velocity (km/s, m/s)</li>

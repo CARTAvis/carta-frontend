@@ -1,10 +1,10 @@
 export const HISTOGRAM_SETTINGS_HELP_CONTENT = (
     <div>
-        <p>Histogram settings dialog allows you to customize how a histogram is computed and the appearance of the histogram plot.</p>
+        <p>Histogram Settings Dialog allows you to customize how a histogram is computed and the appearance of the histogram plot.</p>
         <h3>Configuration</h3>
         <p>
-            By default, the bounds and number of histogram bins are computed automatically. If you need set these parameters manually, disable the Auto pixel bounds toggle and Auto bins toggle and define the values via the text input fields
-            and the slider.
+            By default, the bounds and number of histogram bins are computed automatically. If you need to set these parameters manually, disable the <b>Auto pixel bounds</b> toggle and <b>Auto bins</b> toggle first, and then define the
+            values via the text input fields and the slider.
         </p>
         <h3>Styling</h3>
         <p>Supported options are:</p>

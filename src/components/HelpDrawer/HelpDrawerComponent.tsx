@@ -130,8 +130,7 @@ export class HelpDrawerComponent extends React.Component {
             title: helpStore.type ?? "",
             position: helpStore.position,
             size: "33%",
-            hasBackdrop: false,
-            style: {userSelect: "text"}
+            hasBackdrop: false
         };
 
         return (

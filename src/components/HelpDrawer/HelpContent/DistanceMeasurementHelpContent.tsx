@@ -9,8 +9,8 @@ export const DISTANCE_MEASUREMENT_HELP_CONTENT = (
             <ImageComponent light={dialogButtonDistanceMeasure} dark={dialogButtonDistanceMeasure_d} width="39%" />
         </p>
         <p>
-            With this dialog, you can provide two coordinates for the distance calculations in the <code>Configuration</code> tab. The result will be rendered in the image viewer. The rendering style, including color, line width, and font
-            size, can be modified in the <code>Styling</code> tab.
+            With this dialog, you can provide two coordinates for the distance calculations in the <b>Configuration</b> tab. The result will be rendered in the Image Viewer. The rendering style, including color, line width, and font size,
+            can be modified in the <b>Styling</b> tab.
         </p>
     </div>
 );

@@ -9,23 +9,23 @@ export const STATS_HELP_CONTENT = (
             <ImageComponent light={widgetButtonStatistics} dark={widgetButtonStatistics_d} width="90%" />
         </p>
         <p>
-            The Statistics widget empowers you with the capability to observe statistical measurements across a designated 2D region. In cases where no specific region has been crafted or chosen, the widget presents statistical values
-            concerning the entire image.
+            The Statistics Widget empowers you with the capability to observe statistical measurements in a designated 2D region. In cases where no specific region has been crafted or chosen, the widget presents statistical values
+            concerning the <em>entire</em> image.
         </p>
         <h3 id="images">Image</h3>
         <p>
-            The Image dropdown menu is primed to default to the "Active" image, signifying the image currently displayed within the image viewer. This selection pertains to the image being viewed in single-panel mode. However, if you're
-            navigating within a multi-panel configuration, the active image is visually distinguished by a conspicuous red box, ensuring clear recognition.
+            The <b>Image</b> dropdown menu is primed to default to the "Active" image, signifying the image currently displayed within the Image Viewer. This selection pertains to the image being viewed in single-panel mode. However, if you
+            are using the multi-panel configuration, the active image is visually distinguished by a red box, ensuring clear recognition.
         </p>
         <h3 id="regions">Region</h3>
         <p>
-            Within the Region dropdown menu, the default selection is "Active" region, aligning with the currently highlighted region in the image viewer. Regions can be designated through direct interaction, either by clicking on them
-            within the image viewer or by selecting a specific entry from the region list widget. Any statistical assessments performed will dynamically update based on the chosen region.
+            Within the <b>Region</b> dropdown menu, the default selection is "Active" region, aligning with the currently highlighted region in the Image Viewer. Regions can be designated through direct interaction, either by clicking on
+            them within the Image Viewer or by selecting a specific entry from the Region List Widget. Any statistical assessments performed will dynamically update based on the chosen region.
         </p>
         <h3 id="polarization">Polarization</h3>
         <p>
-            In the context of the Polarization dropdown menu, the default choice is marked as "Current." This choice holds significance as it aligns precisely with the polarization component that mirrors the currently active selection
-            within the animator widget. Notably, this encompasses not only direct polarization components but also extends to computed polarizations derived from Stokes IQUV parameters.
+            In the context of the <b>Polarization</b> dropdown menu, the default choice is marked as "Current." This choice is synchronized with the selection of the <b>Polarization</b> slider in the Animator Widget. Notably, this
+            encompasses not only the native polarization components as defined in the image header but also extends to computed polarizations derived from Stokes IQUV parameters.
         </p>
         <h3 id="statistic">Statistic</h3>
         <p>CARTA offers an array of essential statistical measurements, encompassing the following quantities:</p>
@@ -43,7 +43,7 @@ export const STATS_HELP_CONTENT = (
         </ul>
         <h3>Text export</h3>
         <p>
-            The statistics table can be exported as a text file. The <code>Export</code> button shows up at the bottom-right corner of the widget when you hover over the table.
+            The statistics table can be exported as a text file. The <b>Export</b> button shows up at the bottom-right corner of the widget when you hover over the table.
         </p>
         <br />
         <h4 id="tip">TIP</h4>

@@ -9,14 +9,14 @@ export const PREFERENCES_HELP_CONTENT = (
             <ImageComponent light={dialogButtonPreferences} dark={dialogButtonPreferences_d} width="39%" />
         </p>
         <p>
-            The preferences dialog provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are effective
+            The Preferences Dialog provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are effective
             immediately.
         </p>
         <h3 id="global">Global</h3>
         <p>This section provides usability customization.</p>
         <ul>
             <li>Theme: the color theme of the graphical user interface (effective immediately)</li>
-            <li>Enable Code Snippets: enable the in-browser scripting capability in JavaScript</li>
+            <li>Enable code snippets: enable the in-browser scripting capability in JavaScript</li>
             <li>Auto-launch file browser: launch file browser when CARTA is initialized</li>
             <li>File list: the file parsing mode for file list generation</li>
             <li>Initial layout: the default layout for a new CARTA session</li>
@@ -24,7 +24,7 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Initial zoom level: view full image or view image with one image pixel to one screen pixel ratio when CARTA is initialized</li>
             <li>Zoom to: control the focus of zooming with scrolling wheel</li>
             <li>
-                Enable drag-to-pan: when enabled, pan action is achieved by <code>drag-and-drop</code>. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the image viewer.
+                Enable drag-to-pan: when enabled, pan action is achieved by <code>drag-and-drop</code>. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the Image Viewer.
             </li>
             <li>WCS matching on append: trigger WCS matching automatically for newly appended images</li>
             <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
@@ -52,7 +52,7 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Default colormap: the colormap for rendering color-mapped contours</li>
             <li>Default color: the color for rendering contours in constant color</li>
         </ul>
-        <h3 id="vector-overlay-configuration">Vector overlay configuration</h3>
+        <h3 id="vector-overlay-configuration">Vector Overlay Configuration</h3>
         <p>This section provides customization of how a vector field layer is calculated and rendered by default.</p>
         <ul>
             <li>Default pixel averaging: square kernel size for averaging before computing the vector field elements</li>
@@ -63,12 +63,12 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Default color: the color for rendering a vector field in constant color</li>
         </ul>
         <h3 id="wcs-image-overlay-configuration">WCS and Image Overlay</h3>
-        <p>This section provides customization of the image overlay in the image viewer.</p>
+        <p>This section provides customization of the image overlay in the Image Viewer.</p>
         <ul>
             <li>Color: the default color of the grid layer and the coordinate bound box</li>
             <li>WCS grid visible: grid line rendering</li>
             <li>Labels visible: x and y grid labels rendering</li>
-            <li>Cursor info visible: the condition when the cursor info bar in the image viewer should be rendered</li>
+            <li>Cursor info visible: the condition when the cursor info bar in the Image Viewer should be rendered</li>
             <li>WCS format: show world coordinate in degrees or sexagesimal or auto-formatted</li>
             <li>Colorbar visible: show a colorbar along with the image</li>
             <li>Colorbar interactive: enable the interactive mode of the colorbar to trigger interactive raster image cutoff rendering</li>
@@ -76,13 +76,13 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Colorbar width (px): the width of the colorbar in screen pixel</li>
             <li>Colorbar ticks density (per 100px): the ticks density of the colorbar per 100 screen pixels</li>
             <li>Colorbar label visible: show a colorbar label</li>
-            <li>Beam visible: beam rendering at the bottom-left corner of the image viewer</li>
+            <li>Beam visible: beam rendering at the bottom-left corner of the Image Viewer</li>
             <li>Beam color: the color to render a beam element</li>
             <li>Beam type: render a beam as an open ellipse or a filled ellipse</li>
             <li>Beam width: line width to render an open beam</li>
         </ul>
         <h3>Catalog</h3>
-        <p>This section provides options to configure the catalog widget.</p>
+        <p>This section provides options to configure the Catalog Widget.</p>
         <ul>
             <li>Displayed columns: default displayed number of columns of a catalog in the widget.</li>
         </ul>
@@ -107,8 +107,8 @@ export const PREFERENCES_HELP_CONTENT = (
         </ul>
         <h3 id="performance">Performance</h3>
         <p>
-            Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the <code>low bandwidth mode</code> which
-            reduces displayed image resolution and cursor responsiveness.
+            Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the <b>low bandwidth mode</b> which reduces
+            displayed image resolution and cursor responsiveness.
         </p>
         <h3 id="telemetry">Telemetry</h3>
         <p>This section provides customization of the telemetry configuration. Anonymous usage data are collected as a reference for future developments only.</p>

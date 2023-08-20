@@ -22,7 +22,7 @@ export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
             <a href="https://spec.jpl.nasa.gov" target="_blank" rel="noreferrer">
                 JPL
             </a>{" "}
-            line intensity (log value). The spectral range can be defined as from-to or center-width.
+            line intensity (log10 value). The spectral range can be defined as <b>From-To</b> or <b>Center-Width</b> parameters.
         </p>
         <h4>QUERY LIMITATION</h4>
         <ul>
@@ -32,14 +32,6 @@ export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
             <li>Up to 100000 lines are displayed.</li>
         </ul>
         <h4>NOTE</h4>
-        <p>
-            Currently, the Splatalogue query service is under active development. Unexpected query results might happen. If you believe there is something wrong, please contact the <a href="mailto:support@carta.freshdesk.com">helpdesk</a>{" "}
-            or file an issue on{" "}
-            <a href="https://github.com/CARTAvis/carta/issues" target="_blank" rel="noreferrer">
-                Github
-            </a>
-            .
-        </p>
         <h3>Spectral line filtering</h3>
         <p>
             Once a query is successfully made, the line catalog will be displayed in the tables. The upper table shows the column information in the catalog with options to show or hide a specific column. The actual line catalog is
@@ -91,14 +83,14 @@ export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
             For string columns, partial match is adopted. For example, <code>CH3</code> (no quotation) will return entries containing the &quot;CH3&quot; string.
         </p>
         <p>
-            Once a set of filters is set, you can click the <code>Apply filter</code> button to apply it to the line table. With the <code>Reset filter</code> button you can remove all filters at once.
+            Once a set of filters is set, you can click the <b>Apply filter</b> button to apply it to the line table. With the <b>Reset filter</b> button you can remove all filters at once.
         </p>
         <h3>Spectral line ID visualization</h3>
-        <p>The &quot;Shifted Frequency&quot; column is computed based on the user input of a velocity or a redshift. This &quot;Shifted Frequency&quot; is adopted for line ID overlay in a spectral profiler widget.</p>
-        <p>You can use the checkbox to select a set of lines to be overplotted in a spectral profiler widget. The maximum number of line ID overlays is 1000.</p>
+        <p>The "Shifted Frequency" column is computed based on the user input of a velocity or a redshift. This "Shifted Frequency" is adopted for line ID overlay in the Spectral Profiler Widget.</p>
+        <p>You can use the checkboxes in the first column to select a set of lines to be overplotted in the Spectral Profiler Widget. The maximum number of line ID overlays is 1000.</p>
         <p>
-            The text labels of the line ID overlay are shown dynamically based on the zoom level of a profile. Different line ID overlays (with different velocity shifts) can be created on different spectral profilers widgets via the{" "}
-            <code>Spectral profiler</code> dropdown. By clicking the <code>Clear plot</code> button, the line ID overlay on the selected &quot;Spectral Profiler&quot; will be removed.
+            The text labels of the line ID overlay are shown dynamically based on the zoom level of a profile. Different line ID overlays (with different velocity shifts) can be created in different Spectral Profilers Widgets via the{" "}
+            <b>Spectral profiler</b> dropdown. By clicking the <b>Clear plot</b> button, the line ID overlay in the selected Spectral Profiler Widget will be removed.
         </p>
 
         <br />
