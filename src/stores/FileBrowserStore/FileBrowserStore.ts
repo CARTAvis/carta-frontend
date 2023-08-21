@@ -359,7 +359,7 @@ export class FileBrowserStore {
         separators.forEach(separator => {
             const words = fileName.split(separator);
             words.forEach(word => {
-                const matchedType = CARTA.PolarizationType[word];
+                const matchedType = CARTA.PolarizationType[word.toUpperCase()];
                 if (matchedType) {
                     type = matchedType;
                 }
