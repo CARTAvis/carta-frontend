@@ -2294,7 +2294,7 @@ export class FrameStore {
     /**
      * Sets the channel of the frame.
      * @param channel - The channel index to set.
-     * @param recursive - Whether to update channels of spectrally matched frames. Default value is true.
+     * @param recursive - Whether to update channels of spectrally matched frames.
      */
     @action setChannel = (channel: number, recursive: boolean = true) => {
         this.setChannels(channel, this.requiredStokes, recursive);
@@ -2304,7 +2304,7 @@ export class FrameStore {
      * Sets the Stokes parameter of the frame. Required for carta-python.
      * If the provided `polarization` value is not found in the frame, the function will return without making any changes.
      * @param polarization - The polarization value.
-     * @param recursive - Whether to update channels of spectrally matched frames. Default value is false.
+     * @param recursive - Whether to update channels of spectrally matched frames.
      */
     @action setStokes = (polarization: POLARIZATIONS, recursive: boolean = false) => {
         const polarizationIndex = this.polarizations?.indexOf(polarization);
@@ -2318,7 +2318,7 @@ export class FrameStore {
      * Sets the Stokes parameter of the frame by the index.
      * If the provided `polarizationIndex` is not a valid index or exceeds the range, the function will return without making any changes.
      * @param polarizationIndex - The index of the polarization value.
-     * @param recursive - Whether to update channels of spectrally matched frames. Default value is false.
+     * @param recursive - Whether to update channels of spectrally matched frames.
      */
     @action setStokesByIndex = (polarizationIndex: number, recursive: boolean = false) => {
         if (!isFinite(polarizationIndex) || polarizationIndex >= this.polarizations.length) {
