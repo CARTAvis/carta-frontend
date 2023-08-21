@@ -501,7 +501,7 @@ export class AppStore {
         if (!ack) {
             return false;
         }
-        console.log(ack);
+        
         let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
         if (ack.fileInfoExtended.dimensions > 2) {
             dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
