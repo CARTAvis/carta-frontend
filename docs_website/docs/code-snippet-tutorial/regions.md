@@ -19,12 +19,12 @@ console.log(file.regionSet.regions); // View all regions
 console.log(file.regionSet.selectedRegion); // View the selected region
 ```
 
-[`add...Region`](/api/.-stores/class/RegionSetStore/#addRectangularRegion) functions create regions on a specific image.
+[`addRegionAsync`](/api/.-stores/class/RegionSetStore/#addRegionAsync) creates regions on the loaded image with available [region types](https://carta-protobuf.readthedocs.io/en/latest/enums.html#regiontype).
 
 ```javascript
 const regionSet = file.regionSet;
-const region = regionSet.addRectangularRegion({x: [center x], y: [center y]}, [width], [height]);
-const region2 = regionSet.addLineRegion([{x: [start x], y: [start y]}, {x: [end x], y: [end y]}]);
+const region = await regionSet.addRegionAsync(3, [{x: [center x], y: [center y]}, {x: [width], y: [height]}]); // Add a rectangle region
+const region2 = await regionSet.addRegionAsync(1, [{x: [start x], y: [start y]}, {x: [end x], y: [end y]}]); // Add a line region
 ```
 
 ## Changing region properties
