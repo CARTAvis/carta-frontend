@@ -76,7 +76,10 @@ export const ShareWorkspaceDialogComponent = observer(() => {
     return (
         <Dialog {...dialogProps}>
             <div className={Classes.DIALOG_BODY}>
-                <p>Something about generating a link to share with others</p>
+                <p>
+                    This workspace will be marked as shared, and a shareable link will be generated. Please note that this does not automatically grant other users access to files in the workplace. Please contact your system administrator
+                    to adjust file permissions.
+                </p>
             </div>
             <div className={Classes.DIALOG_FOOTER}>
                 <div className={Classes.DIALOG_FOOTER_ACTIONS}>{footer}</div>
