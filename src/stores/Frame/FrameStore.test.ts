@@ -1,4 +1,5 @@
 import {CARTA} from "carta-protobuf";
+
 import {FrameInfo, FrameStore} from "stores";
 
 const stokesCubeframeInfo: FrameInfo = {
