@@ -4,8 +4,8 @@ import {Tooltip2} from "@blueprintjs/popover2";
 import {observer} from "mobx-react";
 
 import {AppStore} from "stores";
+import {copyToClipboard} from "utilities";
 
-import {copyToClipboard} from "../../../utilities";
 import {AppToaster, WarningToast} from "../../Shared";
 
 import "./ShareWorkspaceDialogComponent.scss";

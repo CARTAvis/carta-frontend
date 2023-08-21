@@ -1,6 +1,6 @@
 import {IconName, IToastProps, Position, Toaster} from "@blueprintjs/core";
 
-import {copyToClipboard} from "../../utilities";
+import {copyToClipboard} from "utilities";
 
 export const AppToaster = Toaster.create({
     className: "app-toaster",
