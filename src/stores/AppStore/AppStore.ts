@@ -623,7 +623,7 @@ export class AppStore {
      * @param updateStartingDirectory - Whether to update the starting directory in the file browser. Required for carta-python.
      * @returns The added frame.
      *
-     * @throws {Error} If there is an error loading the file.
+     * @throws If there is an error loading the file.
      */
     @flow.bound
     *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
@@ -646,7 +646,7 @@ export class AppStore {
         }
 
         // Separate HDU and filename if no HDU is specified
-        if (!hdu?.length) {
+        if (!hdu?.length && !imageArithmetic) {
             const hduRegex = /^(.*)\[(\S+)]$/;
             const matches = hduRegex.exec(filename);
             // Three matching groups. Second is filename, third is HDU
