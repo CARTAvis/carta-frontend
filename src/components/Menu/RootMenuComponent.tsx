@@ -161,7 +161,8 @@ export class RootMenuComponent extends React.Component {
             <Menu>
                 {snippetEntries}
                 {snippetEntries.length > 0 && <Menu.Divider />}
-                <Menu.Item text="Create new snippet" icon="add" onClick={appStore.dialogStore.showNewCodeSnippet} />
+                <Menu.Item text="Create New Snippet" icon="add" onClick={appStore.dialogStore.showNewCodeSnippet} />
+                <Menu.Item text="Online Tutorial" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://cartavis.org/carta-frontend/docs/category/code-snippet-tutorial")} />
             </Menu>
         );
     }
@@ -370,7 +371,7 @@ export class RootMenuComponent extends React.Component {
 
         const helpMenu = (
             <Menu>
-                <Menu.Item text="Online Manual" icon={"manual"} onClick={this.handleDocumentationClicked} />
+                <Menu.Item text="Online Manual" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://carta.readthedocs.io/en/3.0")} />
                 <Menu.Item text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog} />
                 <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog} />
             </Menu>
@@ -563,8 +564,8 @@ export class RootMenuComponent extends React.Component {
         );
     }
 
-    handleDocumentationClicked = () => {
-        window.open("https://carta.readthedocs.io/en/3.0", "_blank", "width=1024");
+    private handleDocumentationClicked = (url: string) => {
+        window.open(url, "_blank", "width=1024");
         if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);

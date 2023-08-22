@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for AIPS beam images ([#2164](https://github.com/CARTAvis/carta-frontend/issues/2164)).
 * Added an increase to the default compression ratio to 32 when the header unit of the image is km/s ([#1223](https://github.com/CARTAvis/carta-frontend/issues/1223)).
 * Added a toggle in the moment generator to match generated image(s) ([#2121](https://github.com/CARTAvis/carta-frontend/issues/2121)).
+* Added automatically generated documentation website.
 ### Changed
 * Changed the default title string in the image viewer ([#2168](https://github.com/CARTAvis/carta-frontend/issues/2168)).
 * Modified text annotation textbox to stay the same dimension as user zoom the image ([#2162](https://github.com/CARTAvis/carta-frontend/issues/2162)).
@@ -35,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the multi-spectral-profile intensity unit conversion ([#1758](https://github.com/CARTAvis/carta-frontend/issues/1758)).
 * Fixed the Jy/beam to K intensity unit conversion ([#1907](https://github.com/CARTAvis/carta-frontend/issues/1907)).
 * Fixed the blinking toolbar in the image view during animating images ([#2163](https://github.com/CARTAvis/carta-frontend/issues/2163)).
+* Fixed image arithmetic bug when there are square brackets in the expression ([#2220]https://github.com/CARTAvis/carta-frontend/issues/2220).
 * Fixed the stuck of stokes animation at low frame rates ([#1293](https://github.com/CARTAvis/carta-backend/issues/1293)).
 
 ## [4.0.0-beta.1]
