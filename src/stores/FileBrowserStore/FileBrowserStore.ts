@@ -355,15 +355,12 @@ export class FileBrowserStore {
 
     private static GetTypeFromName = (fileName: string): CARTA.PolarizationType => {
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
-        const separators = [".", "_"];
-        separators.forEach(separator => {
-            const words = fileName.split(separator);
-            words.forEach(word => {
-                const matchedType = CARTA.PolarizationType[word.toUpperCase()];
-                if (matchedType) {
-                    type = matchedType;
-                }
-            });
+        const words = fileName.split(/[._]/);
+        words.forEach(word => {
+            const matchedType = CARTA.PolarizationType[word.toUpperCase()];
+            if (matchedType) {
+                type = matchedType;
+            }
         });
         return type;
     };
