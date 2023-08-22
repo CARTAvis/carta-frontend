@@ -1990,11 +1990,11 @@ export class AppStore {
         if (this.animatorStore.serverAnimationActive && tileStreamDetails?.fileId === this.activeFrameFileId) {
             const frame = this.getFrame(tileStreamDetails.fileId);
 
-            // Get stokes index from the backend tile stream message
-            const stokes_index = tileStreamDetails.stokes;
+            // Get stokes from the backend tile stream message
+            const stokes = tileStreamDetails.stokes;
 
             // Set stokes index in the animation flow control message
-            const stokes = COMPUTED_POLARIZATIONS.has(stokes_index) ? frame.polarizations.indexOf(stokes_index) : stokes_index;
+            const stokesIndex = COMPUTED_POLARIZATIONS.has(stokes) ? frame.polarizations.indexOf(stokes) : stokes;
 
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
@@ -2002,7 +2002,7 @@ export class AppStore {
                 animationId: 0,
                 receivedFrame: {
                     channel: tileStreamDetails.channel,
-                    stokes: stokes
+                    stokes: stokesIndex
                 },
                 timestamp: Long.fromNumber(Date.now())
             };
