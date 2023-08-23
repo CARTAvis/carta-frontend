@@ -312,7 +312,24 @@ export class FileBrowserStore {
         }
     };
 
-    getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string; info: CARTA.IFileInfoExtended}> => {
+    getStokesFile = async (file: string, hdu: string): Promise<CARTA.IStokesFile> => {
+        try {
+            const response = await this.getConcatFilesHeader(this.fileList.directory, file, hdu);
+            // In fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
+            const k = Object.keys(response.info)[0];
+            return {
+                directory: this.fileList.directory,
+                file,
+                hdu,
+                polarizationType: this.getStokesType(response.info[k], response.file)
+            };
+        } catch (err) {
+            console.log(err);
+            return undefined;
+        }
+    };
+
+    private getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string; info: CARTA.IFileInfoExtended}> => {
         const res = await BackendService.Instance.getFileInfo(directory, file, hdu);
         return {file: res.fileInfo.name, info: res.fileInfoExtended};
     };
@@ -355,9 +372,9 @@ export class FileBrowserStore {
 
     private static GetTypeFromName = (fileName: string): CARTA.PolarizationType => {
         let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
-        const words = fileName.split(/[._]/);
-        words.forEach(word => {
-            const matchedType = CARTA.PolarizationType[word.toUpperCase()];
+        const words = fileName?.split(/[._]/);
+        words?.forEach(word => {
+            const matchedType = CARTA.PolarizationType[word?.toUpperCase()];
             if (matchedType) {
                 type = matchedType;
             }

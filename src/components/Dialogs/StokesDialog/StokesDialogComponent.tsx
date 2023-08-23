@@ -78,23 +78,11 @@ export class StokesDialogComponent extends React.Component {
                 if (stokesDialogVisible) {
                     const fileBrowserStore = AppStore.Instance.fileBrowserStore;
                     this.stokes = new Map();
-                    fileBrowserStore.selectedFiles.forEach(file => {
-                        fileBrowserStore
-                            .getConcatFilesHeader(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu)
-                            .then(response => {
-                                // In fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
-                                const k = Object.keys(response.info)[0];
-                                const stoke: CARTA.IStokesFile = {
-                                    directory: fileBrowserStore.fileList.directory,
-                                    file: file.fileInfo.name,
-                                    hdu: file.hdu,
-                                    polarizationType: fileBrowserStore.getStokesType(response.info[k], response.file)
-                                };
-                                this.setStokes(file.fileInfo.name, stoke);
-                            })
-                            .catch(err => {
-                                console.log(err);
-                            });
+                    fileBrowserStore.selectedFiles.forEach(async file => {
+                        const stokes = await fileBrowserStore.getStokesFile(file.fileInfo.name, file.hdu);
+                        if (stokes) {
+                            this.setStokes(file.fileInfo.name, stokes);
+                        }
                     });
                 }
             }
