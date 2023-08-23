@@ -79,7 +79,7 @@ export class StokesDialogComponent extends React.Component {
                     const fileBrowserStore = AppStore.Instance.fileBrowserStore;
                     this.stokes = new Map();
                     fileBrowserStore.selectedFiles.forEach(async file => {
-                        const stokes = await fileBrowserStore.getStokesFile(file.fileInfo.name, file.hdu);
+                        const stokes = await fileBrowserStore.getStokesFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
                         if (stokes) {
                             this.setStokes(file.fileInfo.name, stokes);
                         }

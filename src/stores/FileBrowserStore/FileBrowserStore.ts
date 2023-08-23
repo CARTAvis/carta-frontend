@@ -312,13 +312,13 @@ export class FileBrowserStore {
         }
     };
 
-    getStokesFile = async (file: string, hdu: string): Promise<CARTA.IStokesFile> => {
+    getStokesFile = async (directory: string, file: string, hdu: string): Promise<CARTA.IStokesFile> => {
         try {
-            const response = await this.getConcatFilesHeader(this.fileList.directory, file, hdu);
+            const response = await this.getConcatFilesHeader(directory, file, hdu);
             // In fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
             const k = Object.keys(response.info)[0];
             return {
-                directory: this.fileList.directory,
+                directory,
                 file,
                 hdu,
                 polarizationType: this.getStokesType(response.info[k], response.file)
@@ -341,7 +341,7 @@ export class FileBrowserStore {
      * @param file - The name of the file.
      * @returns The Stokes type of the file.
      */
-    getStokesType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
+    private getStokesType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
         let type = FileBrowserStore.GetTypeFromHeader(fileInfoExtended?.headerEntries);
         if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
             type = FileBrowserStore.GetTypeFromName(file);
