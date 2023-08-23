@@ -595,8 +595,8 @@ export class ApiService {
         if (ApiService.RuntimeConfig.apiAddress) {
             try {
                 const url = `${ApiService.RuntimeConfig.apiAddress}/database/workspace`;
-                const response = await this.axiosInstance.put(url, {workspaceName, workspace});
-                return response?.data?.workspace;
+                await this.axiosInstance.put(url, {workspaceName, workspace});
+                return {...workspace, name: workspaceName};
             } catch (err) {
                 console.log(err);
                 return undefined;
