@@ -312,6 +312,14 @@ export class FileBrowserStore {
         }
     };
 
+    /**
+     * Retrieves Stokes file information from a given directory, file, and HDU.
+     *
+     * @param directory - The directory where the file is located.
+     * @param file - The name of the file.
+     * @param hdu - The Header Data Unit (HDU) identifier of the file.
+     * @returns A promise resolving to the Stokes file information.
+     */
     getStokesFile = async (directory: string, file: string, hdu: string): Promise<CARTA.IStokesFile> => {
         try {
             const response = await this.getConcatFilesHeader(directory, file, hdu);
@@ -329,6 +337,14 @@ export class FileBrowserStore {
         }
     };
 
+    /**
+     * Retrieves header information from a given directory, file, and HDU.
+     *
+     * @param directory - The directory where the file is located.
+     * @param file - The name of the file.
+     * @param hdu - The Header Data Unit (HDU) identifier of the file.
+     * @returns A promise resolving to the header information.
+     */
     private getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string; info: CARTA.IFileInfoExtended}> => {
         const res = await BackendService.Instance.getFileInfo(directory, file, hdu);
         return {file: res.fileInfo.name, info: res.fileInfoExtended};
