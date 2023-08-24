@@ -321,7 +321,7 @@ export class FileBrowserStore {
                 directory,
                 file,
                 hdu,
-                polarizationType: this.getStokesType(response.info[k], response.file)
+                polarizationType: FileBrowserStore.GetStokesType(response.info[k], response.file)
             };
         } catch (err) {
             console.log(err);
@@ -341,7 +341,7 @@ export class FileBrowserStore {
      * @param file - The name of the file.
      * @returns The Stokes type of the file.
      */
-    private getStokesType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
+    private static GetStokesType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
         let type = FileBrowserStore.GetTypeFromHeader(fileInfoExtended?.headerEntries);
         if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
             type = FileBrowserStore.GetTypeFromName(file);
