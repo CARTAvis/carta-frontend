@@ -10,7 +10,7 @@ export interface SpectralLineResponse {
 }
 
 export class SplatalogueService {
-    private static BaseUrl = "https://splatalogue.online/splata-slap/advanced/false/";
+    private static BaseUrl = "https://splatalogue.online/splata-slap/advanceded/false/";
     private readonly axiosInstance: AxiosInstance;
 
     private static SplatalogueHeaderTypeMap = new Map<SpectralLineHeaders, CARTA.ColumnType>([
