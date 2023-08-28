@@ -103,8 +103,10 @@ npm install
 WebAssembly libraries can be built with `npm run build-libs`.
 Additional build steps (building WebAssembly wrappers, protocol buffer modules and compiling the Typescript code) are performed by `npm run build`. This produces a production build in the `build` folder.
 
-To run a development build server, simply run `npm run start`. 
+To run a development build server, simply run `npm run start`.
+
+## Developer documentation
+
+Automatically generated documentation can be found at [cartavis.org/carta-frontend](https://cartavis.org/carta-frontend/).
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3377984.svg)](https://doi.org/10.5281/zenodo.3377984)
-
-

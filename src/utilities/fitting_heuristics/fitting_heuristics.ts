@@ -47,12 +47,9 @@ export function profilePreprocessing(data: number[]) {
 /**
  * Compute the histogram of a set of data.
  *
- * @param {number[]} data Input data.
- * @param {number[]} binN defines the number of equal-width bins in the given range.
- * @return {hist: number[], binEdges: number[]}
- *
- * hist: The values of the histogram.
- * binEdges: Return the bin edges.
+ * @param data - Input data.
+ * @param binN - Defines the number of equal-width bins in the given range.
+ * @returns The values of the histogram and the bin edges.
  */
 export function histogram(data: number[], binN: number): {hist: number[]; binEdges: number[]} {
     if (isFinite(binN) && binN > 0) {
