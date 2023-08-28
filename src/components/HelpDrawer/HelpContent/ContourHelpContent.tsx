@@ -42,7 +42,7 @@ export const CONTOUR_HELP_CONTENT = (
             </li>
         </ol>
         <p>
-            To remove the contour layer as defined and rendered with the dialog, click the <b>Clear</b>Clear button.
+            To remove the contour layer as defined and rendered with the dialog, click the <b>Clear</b> button.
         </p>
         <p>
             Furthermore, a locking mechanism (<b>Lock</b> button) adjacent to the <b>Data source</b> dropdown menu offers the option to toggle synchronization. This empowers you to disable or enable data source synchronization with the

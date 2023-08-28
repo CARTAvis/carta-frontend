@@ -118,7 +118,7 @@ export const CATALOG_OVERLAY_HELP_CONTENT = (
         <p>
             CARTA supports the loading of multiple catalog files. The <b>File</b> dropdown, positioned atop the widget, facilitates switching between loaded catalog files. It's also possible to concurrently launch multiple catalog widgets,
             each dedicated to displaying different catalog files. The <b>System</b> dropdown menu displays the coordinate system inherent to the catalog file. The <b>Close catalog</b> button located at the widget's bottom permits the
-            closure of the selected catalog file from the <b>File</b>File dropdown. Additionally, in scenarios involving spatially matched images, the sharing of catalog image overlays is executed among these matched images, all while
+            closure of the selected catalog file from the <b>File</b> dropdown. Additionally, in scenarios involving spatially matched images, the sharing of catalog image overlays is executed among these matched images, all while
             adhering to appropriate coordinate transformations.
         </p>
     </div>
