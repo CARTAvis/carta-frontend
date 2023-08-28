@@ -7,8 +7,9 @@ export const CATALOG_HISTOGRAM_PLOT_HELP_CONTENT = (
         <p>
             The data used for plotting a histogram is determined by the lower table within the Catalog Widget. Due to the progressive loading mechanism, not all entries may be immediately visible within the table. As you navigate through
             the catalog table, new entries are progressively loaded to facilitate table visualization. Consequently, it's important to note that when initializing the widget, the histogram plot might not encompass all entries (even
-            post-filtration). The <b>Plot</b> button enables you to trigger a full download of all entries. This ensures that the histogram plot incorporates the complete dataset post-filtration. Flexibility is granted in terms of selecting
-            a catalog file (<b>File</b> dropdown) and a column therein (<b>X</b> dropdown), configuring the number of bins (<b>Bins</b> input field) and selecting the y-axis scale (linear or logarithmic; <b>Log scale</b> toggle).
+            post-filtration). The <b>Plot</b> button in the Catalog Histogram Plot Widget enables you to trigger a full download of all entries. This ensures that the histogram plot incorporates the complete dataset post-filtration.
+            Flexibility is granted in terms of selecting a catalog file (<b>File</b> dropdown) and a column therein (<b>X</b> dropdown), configuring the number of bins (<b>Bins</b> input field) and selecting the y-axis scale (linear or
+            logarithmic; <b>Log scale</b> toggle).
         </p>
         <p>
             The <b>Statistic source</b> dropdown menu lets you select a numeric column from the catalog, prompting the display of fundamental statistical metrics. This includes data count, mean, root mean square (rms), standard deviation,

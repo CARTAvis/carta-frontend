@@ -7,7 +7,8 @@ export const CATALOG_SCATTER_PLOT_HELP_CONTENT = (
         <p>
             The data used for rendering a 2D scatter plot is determined by the lower table in the Catalog Widget. As a result of the progressive loading mechanism, not all catalog entries may be instantly viewable within the table. As you
             navigate through the catalog, new entries are continuously loaded to facilitate visualization. Thus, it's worth noting that during the widget's initialization, the 2D scatter plot might not encompass all entries (even
-            post-filtration). To address this, the <b>Plot</b> button facilitates a download of all entries. Subsequently, the 2D scatter plot incorporates the complete dataset after applying any filters.
+            post-filtration). To address this, the <b>Plot</b> button in the Catalog 2D Scatter Plot Widget facilitates a download of all entries. Subsequently, the 2D scatter plot incorporates the complete dataset after applying any
+            filters.
         </p>
         <p>
             When there are multiple catalog files loaded, you can use the <b>File</b> dropdown menu to select a target catalog and use the <b>X</b> and <b>Y</b> dropdown menus to identify two numeric columns therein for 2D scatter plot
