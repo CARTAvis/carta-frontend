@@ -72,7 +72,8 @@ export class SplatalogueService {
 
     query = async (freqMin: number, freqMax: number, intensityLimit?: number): Promise<SpectralLineResponse> => {
         const params = SplatalogueService.GetParams(freqMin, freqMax, intensityLimit);
-        const response = await this.axiosInstance.post("", {body: JSON.stringify(params), headers: {"Accept-Encoding": "gzip"}});
+        const headers = {"Accept-Encoding": "gzip"};
+        const response = await this.axiosInstance.post("", {body: JSON.stringify(params), headers: headers});
         return SplatalogueService.ConvertTable(response?.data);
     };
 
