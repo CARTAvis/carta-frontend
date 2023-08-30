@@ -30,7 +30,7 @@ import {
     Workspace,
     WorkspaceFile
 } from "models";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimationMode,
@@ -528,7 +528,7 @@ export class AppStore {
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable
         };
-        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
+        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
 
@@ -1002,6 +1002,7 @@ export class AppStore {
             const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
             let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
             if (catalogWidgetId) {
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
                 this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
                 this.catalogStore.addCatalog(fileId, ack.dataSize);
                 this.fileBrowserStore.hideFileBrowser();
@@ -1938,7 +1939,8 @@ export class AppStore {
     };
 
     handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
-        if (this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId)) {
+        const frame = this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId);
+        if (frame) {
             let frameMap = this.spectralProfiles.get(spectralProfileData.fileId);
             if (!frameMap) {
                 frameMap = new ObservableMap<number, SpectralProfileStore>();
@@ -1948,6 +1950,11 @@ export class AppStore {
             if (!profileStore) {
                 profileStore = new SpectralProfileStore(spectralProfileData.fileId, spectralProfileData.regionId);
                 frameMap.set(spectralProfileData.regionId, profileStore);
+            }
+
+            if (spectralProfileData.progress >= 1 && spectralProfileData.regionId !== CURSOR_REGION_ID && !this.animatorStore.animationActive) {
+                const region = frame.getRegion(spectralProfileData.regionId);
+                TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
             }
 
             for (let profile of spectralProfileData.profiles) {
@@ -2191,9 +2198,11 @@ export class AppStore {
             if (ack.sessionType === CARTA.SessionType.RESUMED) {
                 console.log(`Reconnected with session ID ${ack.sessionId}`);
                 this.logStore.addInfo(`Reconnected to server with session ID ${ack.sessionId}`, ["network"]);
+                this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "success"});
                 this.resumeSession();
             }
         } catch (err) {
+            this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "failed"});
             console.log(err);
         }
     };

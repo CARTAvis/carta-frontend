@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added a shortcut button for image annotation ([#2167](https://github.com/CARTAvis/carta-frontend/issues/2167)).
 * Added support for AIPS beam images ([#2164](https://github.com/CARTAvis/carta-frontend/issues/2164)).
+* Added telemetry data for spectral profile, PV, moment, and catalog creation. ([#2208](https://github.com/CARTAvis/carta-frontend/issues/2208)).
 * Added an increase to the default compression ratio to 32 when the header unit of the image is km/s ([#1223](https://github.com/CARTAvis/carta-frontend/issues/1223)).
 * Added a toggle in the moment generator to match generated image(s) ([#2121](https://github.com/CARTAvis/carta-frontend/issues/2121)).
 * Added automatically generated documentation website.

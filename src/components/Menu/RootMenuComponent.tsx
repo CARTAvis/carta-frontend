@@ -341,7 +341,7 @@ export class RootMenuComponent extends React.Component {
 
         const helpMenu = (
             <Menu>
-                <Menu.Item text="Online Manual" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://carta.readthedocs.io/en/3.0")} />
+                <Menu.Item text="Online Manual" icon={"manual"} onClick={() => this.handleDocumentationClicked("https://carta.readthedocs.io/en/4.0")} />
                 <Menu.Item text="Controls and Shortcuts" icon={"key-control"} label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog} />
                 <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog} />
             </Menu>
