@@ -3,6 +3,7 @@ export const WORKSPACE_HELP_CONTENT = (
         <p>
             <em>Full workspace features are under development. In this release, workspace support is limited.</em>
         </p>
+        <h3>Workspace saving and restoring</h3>
         <p>
             A "workspace" in CARTA refers to a snapshot of the GUI state that you can save and restore for future usage. Ultimately, a CARTA workspace will also be sharable so that you can use it as a collaborative tool to work with your
             collaborators over the internet. As an initial attempt of supporting a CARTA workspace, with the current release, the following components are saveable and restorable:
@@ -38,6 +39,17 @@ export const WORKSPACE_HELP_CONTENT = (
                 Github
             </a>{" "}
             repository to file an issue.
+        </p>
+        <h3>Workspace sharing (experimental; controller only feature)</h3>
+        <p>
+            If you are using a site-deployment-mode version of CARTA with the CARTA{" "}
+            <a href="https://carta-controller.readthedocs.io/en/dev/" target="_blank" rel="noreferrer">
+                controller
+            </a>
+            , you may share a workspace with your collaborators via a URL. Once you have saved a workspace via <b>File -&gt; Save Workspace</b>, a <b>Share</b> button in gray color will show up at the top-right corner of the CARTA GUI. Once
+            you click the <b>Share</b> button, through the popup window you can generate a unique URL linked to the current workspace that you have just saved. Via the URL, your collaborators will be able to restore the workspace to proceed
+            data investigation. Please note that your collaborators need to have file read permission for all the images in the workspace in order to get the workspace fully restored. If there are images that your collaborators do not have
+            read permission on the server, those images will be discarded in the workspace restoration process with a warning.
         </p>
     </div>
 );

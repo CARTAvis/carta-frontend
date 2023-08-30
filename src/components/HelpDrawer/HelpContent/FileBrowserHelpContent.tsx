@@ -43,7 +43,6 @@ export const FILE_BROWSER_HELP_CONTENT = (
             browser. If you often work with directories which contain many different types of files, you may wish to switch to the alternative image file list generation modes, "Filter by extension" or "All files", to speed up the list
             generation process.
         </p>
-
         <h3 id="images">Images</h3>
         <p>
             Images can be loaded and rendered as a raster image via <b>File -&gt; Open Image</b>, or appended via <b>File -&gt; Append Image</b>. All loaded images will be closed if you load an image or a set of images with{" "}
@@ -95,16 +94,6 @@ export const FILE_BROWSER_HELP_CONTENT = (
         </p>
         <br />
         <h4>TIPS</h4>
-        <ul>
-            <li>
-                CARTA can remember the directory where you loaded an image and set it as the initial directory when you launch CARTA next time. This is configurable in the <b>Global</b> tab of the Preferences Dialog (
-                <b>File -&gt; Preferences</b>).
-            </li>
-            <li>
-                By default, CARTA loads one channel slice in memory at a time. Image analytics involving multiple channels or polarizations loads data on the fly from the file storage. To speed up image analytics, you have the option to
-                load <em>the entire</em> cube into the memory. This is configurable with the <code>--reserved_memory</code> keyword argument followed by a positive integer in MB while you launch <code>carta</code> or{" "}
-                <code>carta_backend</code>. Use with caution if your system has a limited amount of free memory.
-            </li>
-        </ul>
+        CARTA can remember the directory where you loaded an image and set it as the initial directory when you launch CARTA next time. This is configurable in the <b>Global</b> tab of the Preferences Dialog (<b>File -&gt; Preferences</b>).
     </div>
 );
