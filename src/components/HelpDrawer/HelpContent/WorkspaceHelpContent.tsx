@@ -40,7 +40,9 @@ export const WORKSPACE_HELP_CONTENT = (
             </a>{" "}
             repository to file an issue.
         </p>
-        <h3>Workspace sharing (experimental; controller only feature)</h3>
+        <h3>
+            Workspace sharing (<em>experimental</em>; controller-only feature)
+        </h3>
         <p>
             If you are using a site-deployment-mode version of CARTA with the CARTA{" "}
             <a href="https://carta-controller.readthedocs.io/en/dev/" target="_blank" rel="noreferrer">
