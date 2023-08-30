@@ -507,7 +507,7 @@ export class RootMenuComponent extends React.Component {
                     <Tooltip2
                         content={
                             <span>
-                                Share workspace
+                                Share workspace (experimental)
                                 <br />
                                 <i>
                                     <small>Generate a URL to share workspace with other users</small>

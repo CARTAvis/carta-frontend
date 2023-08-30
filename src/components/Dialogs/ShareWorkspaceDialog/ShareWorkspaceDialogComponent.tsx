@@ -1,4 +1,4 @@
-import * as React from "react";
+import {ReactNode, useEffect, useState} from "react";
 import {AnchorButton, Checkbox, Classes, Dialog, DialogProps, InputGroup, Intent} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import {observer} from "mobx-react";
@@ -11,11 +11,18 @@ import {AppToaster, WarningToast} from "../../Shared";
 import "./ShareWorkspaceDialogComponent.scss";
 
 export const ShareWorkspaceDialogComponent = observer(() => {
-    const [shareKey, setShareKey] = React.useState<string>("");
-    const [isGeneratingLink, setIsGeneratingLink] = React.useState<boolean>(false);
-    const [saveBeforeShare, setSaveBeforeShare] = React.useState<boolean>(false);
-
+    const [shareKey, setShareKey] = useState<string>("");
+    const [isGeneratingLink, setIsGeneratingLink] = useState<boolean>(false);
+    const [saveBeforeShare, setSaveBeforeShare] = useState<boolean>(false);
     const appStore = AppStore.Instance;
+
+    // Reset the dialog when the active workspace changes
+    useEffect(() => {
+        setShareKey("");
+        setIsGeneratingLink(false);
+        setSaveBeforeShare(false);
+    }, [appStore.activeWorkspace]);
+
     const {shareWorkspaceDialogVisible, hideShareWorkspaceDialog} = appStore.dialogStore;
     const {activeWorkspace} = appStore;
 
@@ -49,25 +56,34 @@ export const ShareWorkspaceDialogComponent = observer(() => {
         }
     };
 
-    let footer: React.ReactNode;
+    let footer: ReactNode;
 
     if (shareKey) {
         const baseUrl = window.location.href.split("?")[0];
         const link = `${baseUrl}?key=${shareKey}`;
-        const copyButton = (
-            <Tooltip2>
-                <AnchorButton intent={Intent.SUCCESS} minimal={true} icon="clipboard" onClick={() => copyToClipboard(link)} />
-            </Tooltip2>
-        );
-        footer = (
-            <>
-                <InputGroup fill={true} intent={Intent.SUCCESS} readOnly={true} defaultValue={link} rightElement={copyButton} />
-            </>
-        );
+        const copyButton = <AnchorButton intent={Intent.SUCCESS} minimal={true} icon="clipboard" onClick={() => copyToClipboard(link)} />;
+        footer = <InputGroup fill={true} intent={Intent.SUCCESS} readOnly={true} defaultValue={link} rightElement={copyButton} />;
     } else {
+        const isReadOnly = !activeWorkspace?.editable || !activeWorkspace.name;
+        const saveCheckbox = <Checkbox label="Save workspace before sharing" disabled={isReadOnly} checked={saveBeforeShare} onChange={() => setSaveBeforeShare(!saveBeforeShare)} />;
+        const readOnlyTooltip = (
+            <span>
+                Workspace is not editable
+                <br />
+                <i>
+                    <small>You will need to save as a new workspace before sharing to preserve changes</small>
+                </i>
+            </span>
+        );
         footer = (
             <>
-                <Checkbox label="Save workspace before sharing" disabled={!activeWorkspace?.editable || !activeWorkspace.name} checked={saveBeforeShare} onChange={() => setSaveBeforeShare(!saveBeforeShare)} />
+                {isReadOnly ? (
+                    <Tooltip2 usePortal={false} content={readOnlyTooltip}>
+                        {saveCheckbox}
+                    </Tooltip2>
+                ) : (
+                    saveCheckbox
+                )}
                 <AnchorButton disabled={isGeneratingLink} intent={Intent.PRIMARY} text="Generate link" onClick={handleGenerateClicked} />
             </>
         );
