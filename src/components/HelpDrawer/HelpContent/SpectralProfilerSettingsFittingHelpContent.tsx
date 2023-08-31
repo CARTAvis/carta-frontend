@@ -17,7 +17,7 @@ export const SPECTRAL_PROFILER_SETTINGS_FITTING_HELP_CONTENT = (
         </p>
         <p>
             The auto-detect function will report how many components are found in the spectrum and visualize them as green boxes in the plot. Their numerical values are provided too. To see the initial values of different components, please
-            use the slider for navigation. New components may be added via the <b>Components</b> spinbox. A component may be removed with the <b>Delete</b> button (the crash can button).
+            use the slider for navigation. New components may be added via the <b>Components</b> spinbox. A component may be removed with the <b>Delete</b> button (the garbage can button).
         </p>
         <p>
             You may use the GUI to define an initial solution <em>manually</em> by entering the values in the input fields, or by using the mouse to draw a <em>box</em> on the plot. The height, width, and center position of the box

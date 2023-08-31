@@ -45,8 +45,7 @@ export const PV_GENERATOR_HELP_CONTENT = (
         <p>
             In addition to the production mode, CARTA supports a preview mode of PV image on-the-fly when the selected PV cut is being dragged. You will need to use the <b>Preview region</b> dropdown and the <b>Preview rebin</b> input
             fields to configure how the downsampled cube should be derived from the full resolution cube. The <b>Preview cube size</b> will be calculated and displayed accordingly. The downsampled cube has a default upper limit of 1 GB in
-            size. The upper limit may be reconfigured in the file <code>~/.carta/config/preferences.json</code> with the key-value pairs <code>"pvPreviewCubeSizeLimit": 1.0</code> and <code>"pvPreviewCubeSizeLimitUnit": "GB"</code>. Please
-            be caution when you change the setup if your <code>carta_backend</code> system has limited memory resource.
+            size.
         </p>
         <p>
             When a downsampled cube is generated, a PV Preview Widget will show up and display a PV image derived along the selected PV cut. You can drag the PV cut along and have a live update of the preview PV images. This feature would

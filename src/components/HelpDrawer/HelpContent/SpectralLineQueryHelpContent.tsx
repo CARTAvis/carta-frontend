@@ -31,7 +31,6 @@ export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
             <li>When an intensity limit is applied, only the lines from CDMS and JPL catalogs will be returned.</li>
             <li>Up to 100000 lines are displayed.</li>
         </ul>
-        <h4>NOTE</h4>
         <h3>Spectral line filtering</h3>
         <p>
             Once a query is successfully made, the line catalog will be displayed in the tables. The upper table shows the column information in the catalog with options to show or hide a specific column. The actual line catalog is

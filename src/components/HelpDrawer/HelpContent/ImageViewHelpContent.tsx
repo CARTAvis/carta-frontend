@@ -151,8 +151,8 @@ export const IMAGE_VIEW_HELP_CONTENT = (
             <ImageComponent light={regionButton} dark={regionButton_d} width="80%" />
         </p>
         <p>
-            The default region type, the default annotation type and the default region creation mode are customizable in the Preferences Dialog. Region shortcut buttons are available at the top of the CARTA GUI. The tooltip of a region
-            shortcut button provides instructions on how to create a region.
+            The default region type and the default region creation mode are customizable in the Preferences Dialog. Region shortcut buttons are available at the top of the CARTA GUI. The tooltip of a region shortcut button provides
+            instructions on how to create a region.
         </p>
         <p>
             <ImageComponent light={regionButtonSet} dark={regionButtonSet_d} width="38%" />

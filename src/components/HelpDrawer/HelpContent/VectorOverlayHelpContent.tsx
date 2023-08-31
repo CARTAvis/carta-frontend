@@ -10,7 +10,7 @@ export const VECTOR_OVERLAY_HELP_CONTENT = (
         </p>
         <h3>Configuration</h3>
         <p>
-            The Vector overlay configuration dialog is primarily designed for visualization of linear polarization images. There are different ways to configure how a vector element is derived from the <b>Data Source</b> via the{" "}
+            The Vector Overlay Configuration Dialog is primarily designed for visualization of linear polarization images. There are different ways to configure how a vector element is derived from the <b>Data Source</b> via the{" "}
             <b>Angular source</b> and <b>Intensity source</b> dropdown menus.
             <ul>
                 <li>
@@ -35,7 +35,7 @@ export const VECTOR_OVERLAY_HELP_CONTENT = (
             (default 4 by 4) to apply pixel averaging.
         </p>
         <p>
-            When the <b>Intensity Source</b> is &quot;Computed PI&quot;, you can select &quot;Absolute&quot; or &quot;Fractional&quot; polarization intensity with the <b>Polarization intensity</b> radio buttons. A threshold for Stokes I may
+            When the <b>Intensity source</b> is &quot;Computed PI&quot;, you can select &quot;Absolute&quot; or &quot;Fractional&quot; polarization intensity with the <b>Polarization intensity</b> radio buttons. A threshold for Stokes I may
             be applied to mask out noisy parts of the image with the <b>Threshold</b> field when the <b>Threshold enabled</b> toggle is switched on. If Stokes I is not available (i.e., the input image has Stokes Q and U only), the threshold
             is applied to Stokes Q and Stokes U to construct a mask. Optionally, you may apply <b>Debiasing</b> to the polarization intensity and angle calculations by enabling the <b>Debiasing</b> toggle and set errors for Stokes Q and U
             in the <b>Stokes Q error</b> and the <b>Stokes U error</b> fields, respectively.
