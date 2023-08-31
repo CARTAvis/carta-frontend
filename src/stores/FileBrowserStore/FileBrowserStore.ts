@@ -4,12 +4,12 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {FileInfoType} from "components";
 import {AppToaster, ErrorToast} from "components/Shared";
-import {Freq, FrequencyUnit, LineOption, ToFileListFilterMode} from "models";
+import {Freq, FrequencyUnit, LineOption, STANDARD_POLARIZATIONS, ToFileListFilterMode} from "models";
 import {BackendService} from "services";
 import {AppStore, DialogStore, PreferenceKeys, PreferenceStore} from "stores";
 import {RegionStore} from "stores/Frame";
 import {RegionId} from "stores/Widgets";
-import {getDataTypeString, ProcessedColumnData} from "utilities";
+import {getDataTypeString, getHeaderNumericValue, ProcessedColumnData} from "utilities";
 
 export enum BrowserMode {
     File,
@@ -312,9 +312,90 @@ export class FileBrowserStore {
         }
     };
 
-    getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string; info: CARTA.IFileInfoExtended}> => {
+    /**
+     * Retrieves Stokes file information from a given directory, file, and HDU.
+     *
+     * @param directory - The directory where the file is located.
+     * @param file - The name of the file.
+     * @param hdu - The Header Data Unit (HDU) identifier of the file.
+     * @returns A promise resolving to the Stokes file information.
+     */
+    getStokesFile = async (directory: string, file: string, hdu: string): Promise<CARTA.IStokesFile> => {
+        try {
+            const response = await this.getConcatFilesHeader(directory, file, hdu);
+            // In fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
+            const k = Object.keys(response.info)[0];
+            return {
+                directory,
+                file,
+                hdu,
+                polarizationType: FileBrowserStore.GetStokesType(response.info[k], response.file)
+            };
+        } catch (err) {
+            console.log(err);
+            return undefined;
+        }
+    };
+
+    /**
+     * Retrieves header information from a given directory, file, and HDU.
+     *
+     * @param directory - The directory where the file is located.
+     * @param file - The name of the file.
+     * @param hdu - The Header Data Unit (HDU) identifier of the file.
+     * @returns A promise resolving to the header information.
+     */
+    private getConcatFilesHeader = async (directory: string, file: string, hdu: string): Promise<{file: string; info: CARTA.IFileInfoExtended}> => {
         const res = await BackendService.Instance.getFileInfo(directory, file, hdu);
         return {file: res.fileInfo.name, info: res.fileInfoExtended};
+    };
+
+    /**
+     * Obtains the Stokes type of the file from the header information or the filename.
+     *
+     * @param fileInfoExtended - The header information of the file.
+     * @param file - The name of the file.
+     * @returns The Stokes type of the file.
+     */
+    private static GetStokesType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
+        let type = FileBrowserStore.GetTypeFromHeader(fileInfoExtended?.headerEntries);
+        if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
+            type = FileBrowserStore.GetTypeFromName(file);
+        }
+        return type;
+    };
+
+    private static GetTypeFromHeader = (headers: CARTA.IHeaderEntry[]): CARTA.PolarizationType => {
+        let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
+
+        const ctype = headers?.find(obj => obj.value.toUpperCase() === "STOKES");
+        if (ctype && ctype.name.indexOf("CTYPE") !== -1) {
+            const index = ctype.name.substring(5);
+            const crpixHeader = headers.find(entry => entry.name.indexOf(`CRPIX${index}`) !== -1);
+            const crvalHeader = headers.find(entry => entry.name.indexOf(`CRVAL${index}`) !== -1);
+            const cdeltHeader = headers.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
+            const polarizationIndex = getHeaderNumericValue(crvalHeader) + (1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
+            if (polarizationIndex) {
+                const polarizationString = STANDARD_POLARIZATIONS.get(polarizationIndex);
+                if (polarizationString) {
+                    type = CARTA.PolarizationType[polarizationString] ?? CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
+                }
+            }
+        }
+
+        return type;
+    };
+
+    private static GetTypeFromName = (fileName: string): CARTA.PolarizationType => {
+        let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
+        const words = fileName?.split(/[._]/);
+        words?.forEach(word => {
+            const matchedType = CARTA.PolarizationType[word?.toUpperCase()];
+            if (matchedType) {
+                type = matchedType;
+            }
+        });
+        return type;
     };
 
     @action selectFile = (file: ISelectedFile) => {
