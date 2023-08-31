@@ -321,21 +321,17 @@ export class ImageFittingStore {
     };
 
     createRegions = async () => {
-        const preferenceStore = AppStore.Instance.preferenceStore;
-        const defaultColor = preferenceStore?.regionColor;
-        const defaultLineWidth = preferenceStore?.regionLineWidth;
-        const defaultDashLength = [2];
-        const params = this.effectiveFrame?.fittingResultRegionParams;
+        const frame = this.effectiveFrame;
+        const params = frame?.fittingResultRegionParams;
         try {
-            await Promise.all(
-                params.map((param, index) => {
-                    const temporaryId = -1 - index;
+            const newRegions = await Promise.all(
+                params?.map((param, index) => {
                     const name = `Fitting result: Component #${index + 1}`;
-                    const newRegion = this.effectiveFrame?.regionSet?.addExistingRegion(param.points.slice(), param.rotation, CARTA.RegionType.ELLIPSE, temporaryId, name, defaultColor, defaultLineWidth, defaultDashLength);
-                    return newRegion.endCreating();
+                    return frame?.regionSet?.addRegionAsync(CARTA.RegionType.ELLIPSE, param.points.slice(), param.rotation, name);
                 })
             );
-            AppToaster.show(SuccessToast("tick", `Created ${params.length} ellipse regions.`));
+            newRegions?.forEach(r => r?.setDashLength(2));
+            AppToaster.show(SuccessToast("tick", `Created ${params?.length} ellipse regions.`));
         } catch (err) {
             console.log(err);
         }
