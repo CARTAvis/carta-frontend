@@ -100,6 +100,8 @@ export interface WorkspaceFile {
 
 export interface Workspace {
     id?: string;
+    name?: string;
+    editable?: boolean;
     workspaceVersion: number;
     frontendVersion: number;
     description?: string;

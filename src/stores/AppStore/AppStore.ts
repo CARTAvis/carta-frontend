@@ -124,6 +124,7 @@ export class AppStore {
     @observable contourDataSource: FrameStore;
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
+    @observable activeWorkspace: Workspace;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -230,12 +231,14 @@ export class AppStore {
     *loadDefaultFiles() {
         const url = new URL(window.location.href);
         const folderSearchParam = url.searchParams.get("folder");
-        const workspaceSearchParam = url.searchParams.get("workspace");
+        const workspaceKeyParam = url.searchParams.get("key");
+        const workspaceNameParam = url.searchParams.get("workspace");
+        const hasWorkspaceParam = workspaceKeyParam || workspaceNameParam;
 
         // Load workspace first if it exists
-        if (workspaceSearchParam) {
+        if (hasWorkspaceParam) {
             try {
-                yield this.loadWorkspace(workspaceSearchParam);
+                yield this.loadWorkspace(workspaceKeyParam ?? workspaceNameParam, !!workspaceKeyParam);
             } catch (err) {
                 console.error(err);
             }
@@ -260,7 +263,7 @@ export class AppStore {
                     yield this.loadFile(folderSearchParam, file, "", false);
                 }
                 this.setLoadingMultipleFiles(false);
-            } else if (this.preferenceStore.autoLaunch && !workspaceSearchParam) {
+            } else if (this.preferenceStore.autoLaunch && !hasWorkspaceParam) {
                 if (folderSearchParam) {
                     this.fileBrowserStore.setStartingDirectory(folderSearchParam);
                 }
@@ -904,6 +907,10 @@ export class AppStore {
                     }
                 }
 
+                if (!this.frames?.length) {
+                    this.activeWorkspace = undefined;
+                }
+
                 // TODO: check this
                 this.tileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
@@ -923,6 +930,7 @@ export class AppStore {
         this.clearSpectralReference();
         this.clearSpatialReference();
         this.clearRasterScalingReference();
+        this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
@@ -2321,11 +2329,11 @@ export class AppStore {
     };
 
     @flow.bound
-    public *loadWorkspace(name: string) {
+    public *loadWorkspace(name: string, isKey = false) {
         this.loadingWorkspace = true;
 
         try {
-            const workspace: Workspace = yield this.apiService.getWorkspace(name);
+            const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
             if (!workspace) {
                 this.loadingWorkspace = false;
                 AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
@@ -2444,6 +2452,7 @@ export class AppStore {
             }
 
             this.loadingWorkspace = false;
+            this.activeWorkspace = workspace;
             return true;
         } catch (err) {
             console.error(err);
@@ -2573,8 +2582,12 @@ export class AppStore {
         if (this.activeFrame) {
             workspace.selectedFile = this.activeFrameFileId;
         }
-
-        return this.apiService.setWorkspace(name, workspace);
+        const savedWorkspace = yield this.apiService.setWorkspace(name, workspace);
+        if (savedWorkspace) {
+            this.activeWorkspace = savedWorkspace;
+            return true;
+        }
+        return false;
     }
 
     async deleteWorkspace(name: string) {

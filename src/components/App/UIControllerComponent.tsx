@@ -15,6 +15,7 @@ import {
     PreferenceDialogComponent,
     RegionDialogComponent,
     SaveLayoutDialogComponent,
+    ShareWorkspaceDialogComponent,
     StokesDialogComponent,
     TelemetryDialogComponent,
     VectorOverlayDialogComponent,
@@ -36,6 +37,7 @@ export class UIControllerComponent extends React.Component {
                 <PreferenceDialogComponent />
                 <SaveLayoutDialogComponent />
                 <WorkspaceDialogComponent />
+                <ShareWorkspaceDialogComponent />
                 <CodeSnippetDialogComponent />
                 <AboutDialogComponent />
                 <ExternalPageDialogComponent />
