@@ -16,7 +16,7 @@ import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFil
 import {TelemetryMode} from "services";
 import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
-import {SWATCH_COLORS} from "utilities";
+import {copyToClipboard, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
@@ -143,7 +143,7 @@ export class PreferenceDialogComponent extends React.Component {
     private handleUserIdCopied = async () => {
         const appStore = AppStore.Instance;
         try {
-            await navigator.clipboard?.writeText(appStore.telemetryService.decodedUserId);
+            await copyToClipboard(appStore.telemetryService.decodedUserId);
             AppToaster.show(SuccessToast("clipboard", "Copied user ID to clipboard."));
         } catch (err) {
             console.log(err);

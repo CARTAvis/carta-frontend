@@ -76,6 +76,15 @@ export class DialogStore {
         this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
     };
 
+    // Workspace sharing
+    @observable shareWorkspaceDialogVisible: boolean;
+    @action showShareWorkspaceDialog = () => {
+        this.shareWorkspaceDialogVisible = true;
+    };
+    @action hideShareWorkspaceDialog = () => {
+        this.shareWorkspaceDialogVisible = false;
+    };
+
     // File Browser
     @observable fileBrowserDialogVisible: boolean = false;
     @action showFileBrowserDialog = () => {

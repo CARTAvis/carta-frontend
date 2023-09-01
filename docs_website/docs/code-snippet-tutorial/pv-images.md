@@ -13,10 +13,7 @@ The configuration for the generator is accessible via [`PvGeneratorWidgetStore`]
 const file = await app.openFile("[filename]");
 
 // Create a line region
-const region = file.regionSet.addLineRegion([{x: [start x], y: [start y]}, {x: [end x], y: [end y]}]);
-
-// Wait for the region to be created
-await app.delay(200);
+const region = await file.regionSet.addRegionAsync(1, [{x: [start x], y: [start y]}, {x: [end x], y: [end y]}]);
 
 // Create a pv generator widget
 app.widgetsStore.createFloatingPvGeneratorWidget();

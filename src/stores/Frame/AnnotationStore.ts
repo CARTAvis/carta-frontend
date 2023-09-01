@@ -36,15 +36,15 @@ export class PointAnnotationStore extends RegionStore {
         controlPoints: Point2D[],
         regionType: CARTA.RegionType,
         regionId: number = -1,
+        rotation: number = 0,
+        name: string = "",
         color: string = Colors.TURQUOISE5,
         lineWidth: number = 2,
         dashLength: number = 0,
         pointShape: CARTA.PointAnnotationShape = CARTA.PointAnnotationShape.SQUARE,
-        pointWidth: number = 6,
-        rotation: number = 0,
-        name: string = ""
+        pointWidth: number = 6
     ) {
-        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
+        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
         makeObservable(this);
         this.pointShape = pointShape || CARTA.PointAnnotationShape.SQUARE;
         this.pointWidth = pointWidth || 6;
@@ -95,13 +95,13 @@ export class TextAnnotationStore extends RegionStore {
         controlPoints: Point2D[],
         regionType: CARTA.RegionType,
         regionId: number = -1,
+        rotation: number = 0,
+        name: string = "",
         color: string = Colors.TURQUOISE5,
         lineWidth: number = 2,
-        dashLength: number = 0,
-        rotation: number = 0,
-        name: string = ""
+        dashLength: number = 0
     ) {
-        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
+        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
         makeObservable(this);
         this.modifiedTimestamp = performance.now();
     }
@@ -183,13 +183,13 @@ export class VectorAnnotationStore extends RegionStore {
         controlPoints: Point2D[],
         regionType: CARTA.RegionType,
         regionId: number = -1,
+        rotation: number = 0,
+        name: string = "",
         color: string = Colors.TURQUOISE5,
         lineWidth: number = 2,
-        dashLength: number = 0,
-        rotation: number = 0,
-        name: string = ""
+        dashLength: number = 0
     ) {
-        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
+        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
         makeObservable(this);
         this.modifiedTimestamp = performance.now();
     }
@@ -238,13 +238,13 @@ export class CompassAnnotationStore extends RegionStore {
         controlPoints: Point2D[],
         regionType: CARTA.RegionType,
         regionId: number = -1,
+        rotation: number = 0,
+        name: string = "",
         color: string = Colors.TURQUOISE5,
         lineWidth: number = 2,
-        dashLength: number = 0,
-        rotation: number = 0,
-        name: string = ""
+        dashLength: number = 0
     ) {
-        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
+        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
         makeObservable(this);
         this.modifiedTimestamp = performance.now();
         this.setLength(controlPoints[1].x, true);
@@ -432,13 +432,13 @@ export class RulerAnnotationStore extends RegionStore {
         controlPoints: Point2D[],
         regionType: CARTA.RegionType,
         regionId: number = -1,
+        rotation: number = 0,
+        name: string = "",
         color: string = Colors.TURQUOISE5,
         lineWidth: number = 2,
-        dashLength: number = 0,
-        rotation: number = 0,
-        name: string = ""
+        dashLength: number = 0
     ) {
-        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, color, lineWidth, dashLength, rotation, name);
+        super(backendService, fileId, activeFrame, controlPoints, regionType, regionId, rotation, name, color, lineWidth, dashLength);
         makeObservable(this);
         this.modifiedTimestamp = performance.now();
     }

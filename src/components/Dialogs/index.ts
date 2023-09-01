@@ -13,6 +13,7 @@ export * from "./FittingDialog/FittingDialogComponent";
 export * from "./LayoutDialog/SaveLayoutDialogComponent";
 export * from "./PreferenceDialog/PreferenceDialogComponent";
 export * from "./RegionDialog/RegionDialogComponent";
+export * from "./ShareWorkspaceDialog/ShareWorkspaceDialogComponent";
 export * from "./StokesDialog/StokesDialogComponent";
 export * from "./TaskProgressDialog/TaskProgressDialogComponent";
 export * from "./TelemetryDialog/TelemetryDialogComponent";

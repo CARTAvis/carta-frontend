@@ -30,7 +30,7 @@ import {
     Workspace,
     WorkspaceFile
 } from "models";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
 import {
     AlertStore,
     AnimationMode,
@@ -124,6 +124,7 @@ export class AppStore {
     @observable contourDataSource: FrameStore;
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
+    @observable activeWorkspace: Workspace;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -230,12 +231,14 @@ export class AppStore {
     *loadDefaultFiles() {
         const url = new URL(window.location.href);
         const folderSearchParam = url.searchParams.get("folder");
-        const workspaceSearchParam = url.searchParams.get("workspace");
+        const workspaceKeyParam = url.searchParams.get("key");
+        const workspaceNameParam = url.searchParams.get("workspace");
+        const hasWorkspaceParam = workspaceKeyParam || workspaceNameParam;
 
         // Load workspace first if it exists
-        if (workspaceSearchParam) {
+        if (hasWorkspaceParam) {
             try {
-                yield this.loadWorkspace(workspaceSearchParam);
+                yield this.loadWorkspace(workspaceKeyParam ?? workspaceNameParam, !!workspaceKeyParam);
             } catch (err) {
                 console.error(err);
             }
@@ -260,7 +263,7 @@ export class AppStore {
                     yield this.loadFile(folderSearchParam, file, "", false);
                 }
                 this.setLoadingMultipleFiles(false);
-            } else if (this.preferenceStore.autoLaunch && !workspaceSearchParam) {
+            } else if (this.preferenceStore.autoLaunch && !hasWorkspaceParam) {
                 if (folderSearchParam) {
                     this.fileBrowserStore.setStartingDirectory(folderSearchParam);
                 }
@@ -525,7 +528,7 @@ export class AppStore {
             renderMode: CARTA.RenderMode.RASTER,
             beamTable: ack.beamTable
         };
-        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
+        this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
         let newFrame = new FrameStore(frameInfo);
 
@@ -904,6 +907,10 @@ export class AppStore {
                     }
                 }
 
+                if (!this.frames?.length) {
+                    this.activeWorkspace = undefined;
+                }
+
                 // TODO: check this
                 this.tileService.handleFileClosed(fileId);
                 // Clean up if frame has associated catalog files
@@ -923,6 +930,7 @@ export class AppStore {
         this.clearSpectralReference();
         this.clearSpatialReference();
         this.clearRasterScalingReference();
+        this.activeWorkspace = undefined;
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
@@ -994,6 +1002,7 @@ export class AppStore {
             const columnData = ProtobufProcessing.ProcessCatalogData(ack.previewData);
             let catalogWidgetId = this.updateCatalogProfile(fileId, frame);
             if (catalogWidgetId) {
+                TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: ack.headers.length, row: ack.dataSize, remote: false});
                 this.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
                 this.catalogStore.addCatalog(fileId, ack.dataSize);
                 this.fileBrowserStore.hideFileBrowser();
@@ -1083,15 +1092,35 @@ export class AppStore {
     };
 
     // Region file actions
+
+    /**
+     * Imports a region file to the active frame or a specified frame.
+     * Supported file types are CRTF and DS9.
+     *
+     * @param directory - The directory containing the region file.
+     * @param file - The filename of the region file.
+     * @param type - The {@link https://carta-protobuf.readthedocs.io/en/latest/enums.html#filetype | type} of the region file (`CRTF` or `DS9_REG`).
+     * @param targetFrame - The frame to which the regions should be imported. If not provided, the active frame is used. If the frame is spatially matched, the reference frame is used.
+     */
     @flow.bound
-    *importRegion(directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) {
-        if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
+    *importRegion(directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType, targetFrame?: FrameStore) {
+        if (!(type === CARTA.FileType.CRTF || type === CARTA.FileType.DS9_REG)) {
             AppToaster.show(ErrorToast("Region type not supported"));
             return;
         }
 
-        // ensure that the same frame is used in the callback, to prevent issues when the active frame changes while the region is being imported
-        const frame = this.activeFrame.spatialReference ?? this.activeFrame;
+        let frame: FrameStore;
+        if (targetFrame) {
+            frame = targetFrame.spatialReference ?? targetFrame;
+        } else if (this.activeFrame) {
+            frame = this.activeFrame.spatialReference ?? this.activeFrame;
+        }
+
+        if (!frame) {
+            AppToaster.show(ErrorToast("No image file"));
+            return;
+        }
+
         try {
             const ack = yield this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId);
             if (frame && ack.success && ack.regions) {
@@ -1140,11 +1169,21 @@ export class AppStore {
         this.fileBrowserStore.updateLoadingState(batchEnd / regions.length, batchEnd, regions.length);
     };
 
+    /**
+     * Exports specified regions and saves a region file to the provided directory.
+     *
+     * @param directory - The directory where the region file will be saved.
+     * @param file - The filename of the region file.
+     * @param coordType - The coordinate system used in the exported region file.
+     * @param fileType - The type of the exported region file.
+     * @param exportRegions - The indices of the regions to be exported.
+     * @param targetFrame - The target frame containing the regions. If not provided, the active frame is used.
+     */
     @flow.bound
-    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[]) {
-        const frame = this.activeFrame;
+    *exportRegions(directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType, exportRegions: number[], targetFrame?: FrameStore) {
+        const frame = targetFrame ?? this.activeFrame;
         // Prevent exporting if only the cursor region exists
-        if (!frame.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
+        if (!frame?.regionSet?.regions || frame.regionSet.regions.length <= 1 || exportRegions?.length < 1) {
             return;
         }
 
@@ -1360,7 +1399,18 @@ export class AppStore {
         try {
             const ack = yield this.backendService.requestFitting(message);
             if (ack.success) {
-                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, message.fixedParams, ack.resultValues, ack.resultErrors, ack.offsetValue, ack.offsetError, ack.log);
+                this.imageFittingStore.setResultString(
+                    message.regionId,
+                    message.fovInfo,
+                    message.fixedParams,
+                    ack.resultValues,
+                    ack.resultErrors,
+                    ack.offsetValue,
+                    ack.offsetError,
+                    ack.integratedFluxValues,
+                    ack.integratedFluxErrors,
+                    ack.log
+                );
                 if (ack.modelImage) {
                     if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;
@@ -1930,7 +1980,8 @@ export class AppStore {
     };
 
     handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
-        if (this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId)) {
+        const frame = this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId);
+        if (frame) {
             let frameMap = this.spectralProfiles.get(spectralProfileData.fileId);
             if (!frameMap) {
                 frameMap = new ObservableMap<number, SpectralProfileStore>();
@@ -1940,6 +1991,11 @@ export class AppStore {
             if (!profileStore) {
                 profileStore = new SpectralProfileStore(spectralProfileData.fileId, spectralProfileData.regionId);
                 frameMap.set(spectralProfileData.regionId, profileStore);
+            }
+
+            if (spectralProfileData.progress >= 1 && spectralProfileData.regionId !== CURSOR_REGION_ID && !this.animatorStore.animationActive) {
+                const region = frame.getRegion(spectralProfileData.regionId);
+                TelemetryService.Instance.addSpectralProfileEntry(spectralProfileData.profiles.length, region.regionType, region.regionId, region.size.x, region.size.y, frame.frameInfo.fileInfoExtended.depth);
             }
 
             for (let profile of spectralProfileData.profiles) {
@@ -2183,9 +2239,11 @@ export class AppStore {
             if (ack.sessionType === CARTA.SessionType.RESUMED) {
                 console.log(`Reconnected with session ID ${ack.sessionId}`);
                 this.logStore.addInfo(`Reconnected to server with session ID ${ack.sessionId}`, ["network"]);
+                this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "success"});
                 this.resumeSession();
             }
         } catch (err) {
+            this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "failed"});
             console.log(err);
         }
     };
@@ -2282,11 +2340,11 @@ export class AppStore {
     };
 
     @flow.bound
-    public *loadWorkspace(name: string) {
+    public *loadWorkspace(name: string, isKey = false) {
         this.loadingWorkspace = true;
 
         try {
-            const workspace: Workspace = yield this.apiService.getWorkspace(name);
+            const workspace: Workspace = yield this.apiService.getWorkspace(name, isKey);
             if (!workspace) {
                 this.loadingWorkspace = false;
                 AppToaster.show({icon: "warning-sign", message: `Could not load workspace "${name}"`, intent: "danger", timeout: 3000});
@@ -2405,6 +2463,7 @@ export class AppStore {
             }
 
             this.loadingWorkspace = false;
+            this.activeWorkspace = workspace;
             return true;
         } catch (err) {
             console.error(err);
@@ -2534,8 +2593,12 @@ export class AppStore {
         if (this.activeFrame) {
             workspace.selectedFile = this.activeFrameFileId;
         }
-
-        return this.apiService.setWorkspace(name, workspace);
+        const savedWorkspace = yield this.apiService.setWorkspace(name, workspace);
+        if (savedWorkspace) {
+            this.activeWorkspace = savedWorkspace;
+            return true;
+        }
+        return false;
     }
 
     async deleteWorkspace(name: string) {
