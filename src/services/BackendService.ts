@@ -225,6 +225,7 @@ export class BackendService {
         this.connection.onerror = ev => {
             AppStore.Instance.logStore.addInfo(`Connecting to server ${url} failed.`, ["network"]);
             console.log(ev);
+            return deferredResponse.reject(ev);
         };
 
         return await deferredResponse.promise;

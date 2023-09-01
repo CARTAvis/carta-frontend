@@ -8,9 +8,8 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {POLARIZATION_LABELS, STANDARD_POLARIZATIONS} from "models";
+import {POLARIZATION_LABELS} from "models";
 import {AppStore, BrowserMode, HelpType} from "stores";
-import {getHeaderNumericValue} from "utilities";
 
 import "./StokesDialogComponent.scss";
 
@@ -79,23 +78,11 @@ export class StokesDialogComponent extends React.Component {
                 if (stokesDialogVisible) {
                     const fileBrowserStore = AppStore.Instance.fileBrowserStore;
                     this.stokes = new Map();
-                    fileBrowserStore.selectedFiles.forEach(file => {
-                        AppStore.Instance.fileBrowserStore
-                            .getConcatFilesHeader(AppStore.Instance.fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu)
-                            .then(response => {
-                                // In fileInfoExtended: { [k: string]: CARTA.IFileInfoExtended }, sometimes k is " "
-                                const k = Object.keys(response.info)[0];
-                                const stoke: CARTA.IStokesFile = {
-                                    directory: fileBrowserStore.fileList.directory,
-                                    file: file.fileInfo.name,
-                                    hdu: file.hdu,
-                                    polarizationType: this.getStokeType(response.info[k], response.file)
-                                };
-                                this.setStokes(file.fileInfo.name, stoke);
-                            })
-                            .catch(err => {
-                                console.log(err);
-                            });
+                    fileBrowserStore.selectedFiles.forEach(async file => {
+                        const stokes = await fileBrowserStore.getStokesFile(fileBrowserStore.fileList.directory, file.fileInfo.name, file.hdu);
+                        if (stokes) {
+                            this.setStokes(file.fileInfo.name, stokes);
+                        }
                     });
                 }
             }
@@ -238,48 +225,4 @@ export class StokesDialogComponent extends React.Component {
         const label = this.getLabelFromValue(stokesType);
         return <MenuItem key={`${stokesType}: ${label}`} text={label} onClick={itemProps.handleClick} active={itemProps.modifiers.active} />;
     };
-
-    private getStokeType = (fileInfoExtended: CARTA.IFileInfoExtended, file: string): CARTA.PolarizationType => {
-        let type = this.getTypeFromHeader(fileInfoExtended?.headerEntries);
-        if (type === CARTA.PolarizationType.POLARIZATION_TYPE_NONE) {
-            type = this.getTypeFromName(file);
-        }
-        return type;
-    };
-
-    private getTypeFromHeader(headers: CARTA.IHeaderEntry[]): CARTA.PolarizationType {
-        let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
-
-        const ctype = headers?.find(obj => obj.value.toUpperCase() === "STOKES");
-        if (ctype && ctype.name.indexOf("CTYPE") !== -1) {
-            const index = ctype.name.substring(5);
-            const crpixHeader = headers.find(entry => entry.name.indexOf(`CRPIX${index}`) !== -1);
-            const crvalHeader = headers.find(entry => entry.name.indexOf(`CRVAL${index}`) !== -1);
-            const cdeltHeader = headers.find(entry => entry.name.indexOf(`CDELT${index}`) !== -1);
-            const polarizationIndex = getHeaderNumericValue(crvalHeader) + (1 - getHeaderNumericValue(crpixHeader)) * getHeaderNumericValue(cdeltHeader);
-            if (polarizationIndex) {
-                const polarizationString = STANDARD_POLARIZATIONS.get(polarizationIndex);
-                if (polarizationString) {
-                    type = CARTA.PolarizationType[polarizationString] ?? CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
-                }
-            }
-        }
-
-        return type;
-    }
-
-    private getTypeFromName(fileName: string): CARTA.PolarizationType {
-        let type = CARTA.PolarizationType.POLARIZATION_TYPE_NONE;
-        const separators = [".", "_"];
-        separators.forEach(separator => {
-            const words = fileName.split(separator);
-            words.forEach(word => {
-                const matchedType = CARTA.PolarizationType[word];
-                if (matchedType) {
-                    type = matchedType;
-                }
-            });
-        });
-        return type;
-    }
 }

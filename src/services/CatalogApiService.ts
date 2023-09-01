@@ -7,6 +7,8 @@ import {CatalogInfo, CatalogType, WCSPoint2D} from "models";
 import {AppStore, CatalogOnlineQueryConfigStore, CatalogOnlineQueryProfileStore, RadiusUnits, SystemType} from "stores";
 import {CatalogApiProcessing, ProcessedColumnData, VizierResource} from "utilities";
 
+import {TelemetryAction, TelemetryService} from "./TelemetryService";
+
 export enum CatalogDatabase {
     SIMBAD = "SIMBAD",
     VIZIER = "VizieR"
@@ -49,7 +51,7 @@ export class CatalogApiService {
         return this.axiosInstanceSimbad.get(`sync?request=doQuery&lang=adql&format=json&query=${query}`);
     };
 
-    public cancleQuery(type: CatalogDatabase) {
+    public cancelQuery(type: CatalogDatabase) {
         if (type === CatalogDatabase.SIMBAD) {
             this.cancelTokenSourceSimbad.cancel("Simbad query canceled by the user.");
         } else if (type === CatalogDatabase.VIZIER) {
@@ -144,6 +146,7 @@ export class CatalogApiService {
         const appStore = AppStore.Instance;
         const catalogWidgetId = appStore.updateCatalogProfile(fileId, appStore.activeFrame);
         if (catalogWidgetId) {
+            TelemetryService.Instance.addTelemetryEntry(TelemetryAction.CatalogLoading, {column: headers.length, row: catalogInfo.dataSize, remote: true});
             appStore.catalogStore.catalogWidgets.set(fileId, catalogWidgetId);
             appStore.catalogStore.addCatalog(fileId, catalogInfo.dataSize);
             appStore.fileBrowserStore.hideFileBrowser();

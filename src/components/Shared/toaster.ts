@@ -1,5 +1,7 @@
 import {IconName, IToastProps, Position, Toaster} from "@blueprintjs/core";
 
+import {copyToClipboard} from "utilities";
+
 export const AppToaster = Toaster.create({
     className: "app-toaster",
     position: Position.BOTTOM
@@ -21,7 +23,7 @@ export function ErrorToast(message: string): IToastProps {
         message: message,
         timeout: 30000,
         action: {
-            onClick: () => navigator.clipboard?.writeText(message),
+            onClick: () => copyToClipboard(message),
             icon: "clipboard"
         }
     };
@@ -34,7 +36,7 @@ export function WarningToast(message: string): IToastProps {
         message: message,
         timeout: 30000,
         action: {
-            onClick: () => navigator.clipboard?.writeText(message),
+            onClick: () => copyToClipboard(message),
             icon: "clipboard"
         }
     };
