@@ -2,7 +2,7 @@ export const IMAGE_VIEW_SETTINGS_HELP_CONTENT = (
     <div>
         <p>The Image Viewer Settings Dialog allows you to customize the appearance of the Image Viewer or to have fine controls on positioning the image in the Image Viewer.</p>
         <h3 id="pan_and_zoom">Pan and Zoom</h3>
-        <p>With this tab, you have fine controls on how an image should be positioned in the Image Viewer. The center and the size of the field of view are configurable in world or image coordinate.</p>
+        <p>In this tab, you have fine-grained control over the positioning of the image in the Image Viewer. The center and the size of the field of view are configurable in world or image coordinates.</p>
         <h3 id="global">Global</h3>
         <p>This section allows you to</p>
         <ul>

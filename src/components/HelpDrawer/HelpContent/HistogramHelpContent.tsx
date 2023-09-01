@@ -13,8 +13,7 @@ export const HISTOGRAM_HELP_CONTENT = (
             the histogram.
         </p>
         <p>
-            By default, the number of histogram bins is determined by the geometric mean of the region size or the image size (if there is no active region for histogram computation). In the <b>Configuration</b> tab of the Histogram
-            Settings Dialog, you can have fine controls of how a histogram is computed, including bounds and number of bins.
+            In the <b>Configuration</b> tab of the Histogram Settings Dialog, you have fine-grained control over the histogram generation parameters, including bounds and number of bins.
         </p>
         <h3 id="image">Image</h3>
         <p>

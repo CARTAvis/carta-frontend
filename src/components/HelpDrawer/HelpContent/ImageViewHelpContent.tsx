@@ -77,8 +77,8 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         </p>
         <p>
             The pan action is achieved by <code>drag-and-drop</code> as default. This default can be changed via the <b>Global</b> tab of the Preferences Dialog (<b>File -&gt; Preferences</b>). The alternative mode is <code>click</code>,
-            which causes the clicked pixel to be centered in the Image Viewer. When the <code>drag-and-drop</code> pan mode is enabled, you can temporarily switch to the alternative mode with <code>ctrl/cmd + click</code>. By
-            double-clicking the <b>Pan</b> button, the <b>Pan and Zoom</b> tab of the Image Viewer Settings Dialog will show up and provide you fine controls to pan and zoom actions.
+            which causes the clicked pixel to be centered in the Image Viewer. When the <code>drag-and-drop</code> pan mode is enabled, you can temporarily switch to the alternative mode with <code>ctrl/cmd + click</code>. Double-click the{" "}
+            <b>Pan</b> button to open the <b>Pan and Zoom</b> tab of the Image Viewer Settings Dialog, which provides fine-grained controls for pan and zoom actions.
         </p>
         <h3 id="matching-image-spatially-and-spectrally">Match image spatially and spectrally</h3>
         <p>

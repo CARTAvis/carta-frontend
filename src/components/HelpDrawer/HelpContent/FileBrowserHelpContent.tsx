@@ -1,9 +1,9 @@
 export const FILE_BROWSER_HELP_CONTENT = (
     <div>
-        <p>File browser provides options to</p>
+        <p>File Browser provides options to</p>
         <ul>
             <li>Load images in CASA, FITS, MIRIAD, or HDF5-IDIA schema format as raster</li>
-            <li>Load individual Stokes images and form a single Stokes hypercube</li>
+            <li>Load individual Stokes images to form a single Stokes hypercube</li>
             <li>
                 Load images with the Lattice Expression Language (
                 <a href="https://casacore.github.io/casacore-notes/223.html" target="_blank" rel="noreferrer">
@@ -45,10 +45,9 @@ export const FILE_BROWSER_HELP_CONTENT = (
         </p>
         <h3 id="images">Images</h3>
         <p>
-            Images can be loaded and rendered as a raster image via <b>File -&gt; Open Image</b>, or appended via <b>File -&gt; Append Image</b>. All loaded images will be closed if you load an image or a set of images with{" "}
-            <b>Open Image</b>. The active image shown in the Image Viewer can be closed via <b>File -&gt; Close Image</b>. Images or subimages can be saved in CASA or FITS format via <b>File -&gt; Save Image</b>. Note that images can only
-            be saved if appropriate write permissions are configured on your file system. Optionally, you may apply a new rest frequency to the saved image cube so that its velocity axis can be re-computed with respect to the new rest
-            frequency.
+            Images can be loaded and rendered as raster images via <b>File -&gt; Open Image</b>, or appended via <b>File -&gt; Append Image</b>. All loaded images will be closed if you load an image or a set of images with <b>Open Image</b>
+            . The active image shown in the Image Viewer can be closed via <b>File -&gt; Close Image</b>. Images or subimages can be saved in CASA or FITS format via <b>File -&gt; Save Image</b>. Note that images can only be saved if
+            appropriate write permissions are configured on your file system. Optionally, you may apply a new rest frequency to the saved image cube so that its velocity axis can be re-computed with respect to the new rest frequency.
         </p>
         <p>
             When an image file is selected, its basic image properties are summarized in the <b>File Information</b> tab on the right-hand side. The full image header is shown in the <b>Header</b> tab. You can search the header or export

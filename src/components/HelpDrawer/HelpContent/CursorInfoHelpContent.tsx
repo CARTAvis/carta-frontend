@@ -9,13 +9,12 @@ export const CURSOR_INFO_HELP_CONTENT = (
             <ImageComponent light={wigetButtonCursorInfo} dark={wigetButtonCursorInfo_d} width="90%" />
         </p>
         <p>
-            The Cursor Information Widget serves as a centralized hub for displaying cursor-related details across multiple images. Within this widget, the active image stands out distinctly, emphasized in boldface text style. In cases
-            where the cursor is positioned over an unmatched image, the widget displays the cursor information specific to that particular image. Alternatively, when the cursor resides over a matched image, the widget effectively presents
-            the cursor information associated with all the matched images, each displayed correspondingly in a row.
+            The Cursor Information Widget is a centralized location for displaying cursor information across multiple images. Information for the active image is highlighted in boldface text. If the cursor is positioned over an unmatched
+            image, the widget only displays the cursor information for that single image. If the cursor is positioned over a matched image, the widget presents the cursor information for all the matched images, each in a separate row.
         </p>
         <p>
-            The process of image matching can be configured through the Image List Widget or via the <b>WCS matching</b> button in the toolbar of the Image Viewer. Within this interface, the <b>XY</b> button serves as an identifier for
-            spatial matching, while the <b>Z</b> button signifies spectral matching.
+            Image matching can be configured through the Image List Widget or through the <b>WCS matching</b> button in the toolbar of the Image Viewer. In the Image List Widget, the <b>XY</b> button toggles spatial matching, while the{" "}
+            <b>Z</b> button toggles spectral matching.
         </p>
     </div>
 );

@@ -5,8 +5,8 @@ export const WORKSPACE_HELP_CONTENT = (
         </p>
         <h3>Workspace saving and restoring</h3>
         <p>
-            A "workspace" in CARTA refers to a snapshot of the GUI state that you can save and restore for future usage. Ultimately, a CARTA workspace will also be sharable so that you can use it as a collaborative tool to work with your
-            collaborators over the internet. As an initial attempt of supporting a CARTA workspace, with the current release, the following components are saveable and restorable:
+            A "workspace" in CARTA refers to a snapshot of the GUI state that you can save and restore for future usage. Ultimately, a CARTA workspace will also be shareable so that you can use it as a collaborative tool to work with your
+            collaborators over the internet. In this initial implementation, the following components are saveable and restorable:
             <ul>
                 <li>All loaded images except generated in-memory images (e.g., moment images, PV images, etc.)</li>
                 <li>Image matching states, including spatial, spectral, and raster</li>
@@ -33,8 +33,8 @@ export const WORKSPACE_HELP_CONTENT = (
             </ul>
         </p>
         <p>
-            If you find the image validation result is <code>invalid</code>, please check if the image is still accessible on the file system. Should you encounter situations that raise concerns, we encourage you to reach out for
-            assistance. You can connect with our <a href="mailto:support@carta.freshdesk.com">helpdesk</a> or utilize the{" "}
+            If the image validation result is <code>invalid</code>, please check if the image is still accessible on the file system. If you encounter an error, we encourage you to reach out for assistance. You can contact our{" "}
+            <a href="mailto:support@carta.freshdesk.com">helpdesk</a> or visit our{" "}
             <a href="https://github.com/CARTAvis/carta/issues" target="_blank" rel="noreferrer">
                 Github
             </a>{" "}
@@ -48,10 +48,10 @@ export const WORKSPACE_HELP_CONTENT = (
             <a href="https://carta-controller.readthedocs.io/en/dev/" target="_blank" rel="noreferrer">
                 controller
             </a>
-            , you may share a workspace with your collaborators via a URL. Once you have saved a workspace via <b>File -&gt; Save Workspace</b>, a <b>Share</b> button in gray color will show up at the top-right corner of the CARTA GUI. Once
-            you click the <b>Share</b> button, through the popup window you can generate a unique URL linked to the current workspace that you have just saved. Via the URL, your collaborators will be able to restore the workspace to proceed
-            data investigation. Please note that your collaborators need to have file read permission for all the images in the workspace in order to get the workspace fully restored. If there are images that your collaborators do not have
-            read permission on the server, those images will be discarded in the workspace restoration process with a warning.
+            , you may share workspaces with your collaborators via a URL. Once you have saved a workspace via <b>File -&gt; Save Workspace</b>, a <b>Share</b> button in gray color will appear in the top-right corner of the CARTA GUI. When
+            you click the <b>Share</b> button, a popup window will prompt you to generate a unique URL linked to the workspace that you have just saved. Via the URL, your collaborators will be able to restore and view the workspace. Please
+            note that your collaborators need to have file read permissions for all the images in the workspace in order to restore it fully. If there are images that your collaborators do not have permission to read, those images will be
+            skipped in the workspace restoration process and a warning will be displayed.
         </p>
     </div>
 );

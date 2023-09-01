@@ -42,7 +42,7 @@ export const SPECTRAL_PROFILER_SETTINGS_MOMENTS_HELP_CONTENT = (
         </ul>
         <p>
             When all the parameters are defined, click the <b>Generate</b> button to start the moment image calculations. Depending on the file size, moment calculations may take a while. If that happens, you may wish to cancel the
-            calculations and re-define a proper region and/or spectral range via the <b>Cancel</b> button.
+            calculations via the <b>Cancel</b> button and re-define a proper region and/or spectral range.
         </p>
         <p>
             Once moment images are generated, they will be loaded and displayed in the Image viewer. They are named as <code>$image_filename.moment.$keyword</code>. For example, if moment 0, 1 and 2 images are generated from{" "}

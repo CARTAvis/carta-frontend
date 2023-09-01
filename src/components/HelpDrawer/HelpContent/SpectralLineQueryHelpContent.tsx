@@ -89,7 +89,7 @@ export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
         <p>You can use the checkboxes in the first column to select a set of lines to be overplotted in the Spectral Profiler Widget. The maximum number of line ID overlays is 1000.</p>
         <p>
             The text labels of the line ID overlay are shown dynamically based on the zoom level of a profile. Different line ID overlays (with different velocity shifts) can be created in different Spectral Profilers Widgets via the{" "}
-            <b>Spectral profiler</b> dropdown. By clicking the <b>Clear plot</b> button, the line ID overlay in the selected Spectral Profiler Widget will be removed.
+            <b>Spectral profiler</b> dropdown. You can remove the line ID overlay in the selected Spectral Profiler Widget by clicking the <b>Clear plot</b> button.
         </p>
 
         <br />

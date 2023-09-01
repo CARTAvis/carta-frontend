@@ -25,7 +25,7 @@ export const ONLINE_CATALOG_QUERY_HELP_CONTENT = (
             <b>Set to view</b> button which adopts the field of view of the active image view.
         </p>
         <p>
-            If the database is VizieR, additionally you may supply catalog keywords in the <b>Keywords</b> field for the query. After you have clicked the <b>Query</b> button, a set of catalog <em>titles</em> will be displayed once you
+            If the database is VizieR, you may additionally supply catalog keywords in the <b>Keywords</b> field for the query. After you have clicked the <b>Query</b> button, a set of catalog <em>titles</em> will be displayed once you
             click the <b>VizieR catalog</b> field. You can then select the desired catalog titles (multi-selection) and click the <b>Load selected</b> button to retrieve corresponding source catalogs.
         </p>
         <p>

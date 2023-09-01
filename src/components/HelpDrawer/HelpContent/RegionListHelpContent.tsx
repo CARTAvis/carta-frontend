@@ -14,7 +14,8 @@ export const REGION_LIST_HELP_CONTENT = (
                 <li>Region of interest: this kind of object can be used as a reference to derive image analytics.</li>
                 <li>Image annotation: this kind of object can be used to decorate your image for presentation purposes only.</li>
             </ul>
-            Region and annotation share very similar attributes. The only difference is the ability of serving as a reference for image analytics computations. In the following, we use "region" for short to introduce features.
+            Regions and annotations share most of their attributes. The only difference is that annotations cannot be used as a reference for image analytics computations. In the following section, we use "region" as a shorthand for both
+            objects to introduce features.
         </p>
         <p>
             The Region List Widget shows you a list of regions created via the graphical user interface or loaded via the menu (<b>File -&gt; Import Regions</b>) or the <b>Import</b> button at the bottom-right corner of the widget. The

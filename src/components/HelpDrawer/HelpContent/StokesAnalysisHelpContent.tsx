@@ -9,31 +9,30 @@ export const STOKES_ANALYSIS_HELP_CONTENT = (
             <ImageComponent light={widgetButtonStokes} dark={widgetButtonStokes_d} width="90%" />
         </p>
         <p>
-            The Stokes Analysis Widget is implemented for efficient visualization of a cube with multiple channels and multiple Stokes parameters (at least Stokes Q and U). In scenarios where you have individual Stokes images as separate
-            files, you can use the File Browser Dialog to select them (multiple selection) in the file list first and then click the <b>Load as hypercube</b> button to form a virtual Stokes cube.
+            The Stokes Analysis Widget is designed for efficient visualization of a cube with multiple channels and multiple Stokes parameters (at least Stokes Q and U). If you have individual Stokes images as separate files, you can use
+            the File Browser Dialog to select them in the file list (multiple selection), and then click the <b>Load as hypercube</b> button to form a virtual Stokes cube.
         </p>
-        <p>The widget includes plots as:</p>
+        <p>The widget includes the following plots:</p>
         <ul>
             <li>Region spectral profiles for Stokes Q and Stokes U, portrayed either in absolute or fractional values (in the presence of Stokes I).</li>
-            <li>Polarized intensity spectral profile, again represented as absolute or fractional values (in the presence of Stokes I).</li>
-            <li>Linearly polarization angle spectral profile</li>
+            <li>Polarized intensity spectral profile, in absolute or fractional values (if Stokes I is available).</li>
+            <li>Linear polarization angle spectral profile</li>
             <li>A scatter plot correlating Stokes Q and Stokes U.</li>
         </ul>
-        <p>This suite of plots is interlinked. When zooming into profiles, data within the visible range is reciprocally highlighted in the scatter plot, fostering a dynamic and cohesive analytical experience.</p>
+        <p>These plots interact with each other to provide a cohesive analytical experience. When you zoom into a profile, the data within the visible range will be highlighted dynamically in the scatter plot, and vice versa.</p>
         <h3 id="images">Image dropdown menu</h3>
         <p>
-            The <b>Image</b> dropdown menu comes pre-configured with the "Active" image as its default option. This denotes the current image displayed within the Image Viewer, particularly when the viewer is set to single-panel mode.
-            Should the viewer be operating in multi-panel mode, the active image is highlighted with a red box.
+            The <b>Image</b> dropdown menu defaults to the "Active" image. This is the image which is currently displayed in the Image Viewer if it is in single-panel mode, or the image which is highlighted with a red box if the viewer is
+            in multi-panel mode.
         </p>
         <h3 id="regions">Region dropdown menu</h3>
         <p>
-            Within the <b>Region</b> dropdown menu, the default selection is "Active" region. This indicates that the region is actively chosen within the Image Viewer. You have the flexibility to pick a region by directly clicking on one
-            within the Image Viewer or by selecting a region entry from the Region List Widget. Subsequently, the plots depicting Stokes and polarization profiles for the selected region will be promptly updated to reflect the changes. In
-            instances where no specific region is chosen, the term "Active" region defaults to your cursor's position, ensuring uninterrupted functionality.
+            The <b>Region</b> dropdown menu defaults to the "Active" region, which is the region currently highlighted in the Image Viewer. You can select a region by clicking on it in the Image Viewer or by selecting an entry in the Region
+            List Widget. The Stokes and polarization profile plots will be updated automatically. If no region is selected, the "Active" region defaults to the cursor position.
         </p>
         <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
         <p>
-            Within the Stokes Analysis Settings Dialog, the <b>Conversion</b> tab equips you with the capability to configure the spectral convention to your preferences, offering an array of choices including:
+            In the Stokes Analysis Settings Dialog, the <b>Conversion</b> tab allows you to configure the spectral convention. The available options are:
         </p>
         <ul>
             <li>Radio velocity (km/s, m/s)</li>
@@ -43,14 +42,14 @@ export const STOKES_ANALYSIS_HELP_CONTENT = (
             <li>Air wavelength (m, mm, um, Angstrom)</li>
             <li>Channel</li>
         </ul>
-        <p>Moreover, the same tab empowers you to set the spectral reference frame, presenting a range of options:</p>
+        <p>The same tab allows you to set the spectral reference frame to one of the following options:</p>
         <ul>
             <li>LSRK: the rest-frame of the kinematical local standard of rest</li>
             <li>LSRD: the rest-frame of the dynamical local standard of rest</li>
             <li>BARY: barycentric, the rest-frame of the solar-system barycenter</li>
             <li>TOPO: topocentric, the observer's rest-frame on Earth</li>
         </ul>
-        <p>Note that the availability of these options may vary based on the completeness of image headers, with some conversions potentially being limited by the available data.</p>
+        <p>Note that some of these options depend on the completeness of image headers. Some conversions may not be available.</p>
         <h3 id="data-smoothing">Data smoothing</h3>
         <p>
             The displayed profiles and the scatter plot can be smoothed via the <b>Smoothing</b> tab of the Stokes Analysis Settings Dialog (the cog button). A shortcut button to the <b>Smoothing</b> tab can be found at the top-right corner

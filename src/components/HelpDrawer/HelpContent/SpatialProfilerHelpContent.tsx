@@ -82,7 +82,7 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
             </li>
         </ul>
         <p>
-            In addition, the x and y ranges can be explicitly set in the <b>Styling</b> tab of the Spatial Profiler Settings Dialog.
+            In addition, the x and y ranges can be set explicitly in the <b>Styling</b> tab of the Spatial Profiler Settings Dialog.
         </p>
         <h3 id="exports">Profile plot export</h3>
         <p>The spatial profile plot can be exported as a PNG file or a text file in TSV format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
