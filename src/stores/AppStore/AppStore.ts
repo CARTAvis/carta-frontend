@@ -1399,7 +1399,18 @@ export class AppStore {
         try {
             const ack = yield this.backendService.requestFitting(message);
             if (ack.success) {
-                this.imageFittingStore.setResultString(message.regionId, message.fovInfo, message.fixedParams, ack.resultValues, ack.resultErrors, ack.offsetValue, ack.offsetError, ack.log);
+                this.imageFittingStore.setResultString(
+                    message.regionId,
+                    message.fovInfo,
+                    message.fixedParams,
+                    ack.resultValues,
+                    ack.resultErrors,
+                    ack.offsetValue,
+                    ack.offsetError,
+                    ack.integratedFluxValues,
+                    ack.integratedFluxErrors,
+                    ack.log
+                );
                 if (ack.modelImage) {
                     if (this.addFrame(CARTA.OpenFileAck.create(ack.modelImage), this.fileBrowserStore.startingDirectory, false, "", true)) {
                         this.fileCounter++;

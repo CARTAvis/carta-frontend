@@ -216,7 +216,18 @@ export class ImageFittingStore {
         }
     };
 
-    setResultString = (regionId: number, fovInfo: CARTA.IRegionInfo, fixedParams: boolean[], values: CARTA.IGaussianComponent[], errors: CARTA.IGaussianComponent[], offset_value: number, offset_error: number, fittingLog: string) => {
+    setResultString = (
+        regionId: number,
+        fovInfo: CARTA.IRegionInfo,
+        fixedParams: boolean[],
+        values: CARTA.IGaussianComponent[],
+        errors: CARTA.IGaussianComponent[],
+        offsetValue: number,
+        offsetError: number,
+        integratedFluxValues: number[],
+        integratedFluxErrors: number[],
+        fittingLog: string
+    ) => {
         const frame = this.effectiveFrame;
         if (!frame || !values || !errors) {
             return;
@@ -239,8 +250,9 @@ export class ImageFittingStore {
             const errorString = fixed ? "" : " \u00b1 " + toExponential(error, 12);
             return `${param} = ${valueString}${errorString}${unit ? ` (${unit})` : ""}${fixed ? " (fixed)" : ""}\n`;
         };
-        const isFormatXDeg = AppStore.Instance.overlayStore.numbers?.formatTypeX === NumberFormatType.Degrees;
-        const isFormatYDeg = AppStore.Instance.overlayStore.numbers?.formatTypeY === NumberFormatType.Degrees;
+        const formatTypeX = AppStore.Instance.overlayStore.numbers?.formatTypeX;
+        const formatTypeY = AppStore.Instance.overlayStore.numbers?.formatTypeY;
+        const showIntegratedFlux = integratedFluxValues.length === values.length && integratedFluxErrors.length === values.length && (frame.requiredUnit === "Jy/pixel" || frame.requiredUnit === "Jy/beam");
 
         for (let i = 0; i < values.length; i++) {
             const value = values[i];
@@ -258,6 +270,9 @@ export class ImageFittingStore {
                 results += toFixFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
                 results += toFixFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
                 results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                if (showIntegratedFlux) {
+                    results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                }
 
                 log += toExpFormat("Center X       ", value.center?.x, error.center?.x, "px", centerFixedX);
                 log += toExpFormat("Center Y       ", value.center?.y, error.center?.y, "px", centerFixedY);
@@ -265,15 +280,26 @@ export class ImageFittingStore {
                 log += toExpFormat("FWHM Major Axis", value.fwhm?.x, error.fwhm?.x, "px", fwhmFixedX);
                 log += toExpFormat("FWHM Minor Axis", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
                 log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                if (showIntegratedFlux) {
+                    log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                }
             } else {
                 const centerValueWCS = getFormattedWCSPoint(frame.wcsInfoForTransformation, value.center as Point2D);
-                if (isFormatXDeg) {
+                if (formatTypeX === NumberFormatType.Degrees) {
                     centerValueWCS.x += " (deg)";
                 }
-                if (isFormatYDeg) {
+                if (formatTypeY === NumberFormatType.Degrees) {
                     centerValueWCS.y += " (deg)";
                 }
                 const centerErrorWCS = frame.getWcsSizeInArcsec(error.center as Point2D);
+                if (formatTypeX === NumberFormatType.HMS) {
+                    centerErrorWCS.x /= 15; // convert from arcsec to sec
+                }
+                if (formatTypeY === NumberFormatType.HMS) {
+                    centerErrorWCS.y /= 15; // convert from arcsec to sec
+                }
+                const centerXUnit = centerFixedX ? "" : formatTypeX === NumberFormatType.HMS ? "s" : "arcsec";
+                const centerYUnit = centerFixedY ? "" : formatTypeY === NumberFormatType.HMS ? "s" : "arcsec";
 
                 let fwhmValueWCS = frame.getWcsSizeInArcsec(value.fwhm as Point2D);
                 let fwhmErrorWCS = frame.getWcsSizeInArcsec(error.fwhm as Point2D);
@@ -290,16 +316,19 @@ export class ImageFittingStore {
                     fwhmErrorWCS.y = AngularSize.convertValueFromArcsec(fwhmErrorWCS.y, fwhmUnit);
                 }
 
-                results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerFixedX ? "" : "arcsec", centerFixedX);
-                results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerFixedY ? "" : "arcsec", centerFixedY);
+                results += toFixFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerXUnit, centerFixedX);
+                results += toFixFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerYUnit, centerFixedY);
                 results += toFixFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
                 results += toFixFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
                 results += toFixFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
                 results += toFixFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                if (showIntegratedFlux) {
+                    results += toFixFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                }
 
-                log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerFixedX ? "" : "arcsec", centerFixedX);
+                log += toExpFormat("Center X       ", centerValueWCS?.x, centerErrorWCS?.x, centerXUnit, centerFixedX);
                 log += toExpFormat("               ", value.center?.x, error.center?.x, "px", centerFixedX);
-                log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerFixedY ? "" : "arcsec", centerFixedY);
+                log += toExpFormat("Center Y       ", centerValueWCS?.y, centerErrorWCS?.y, centerYUnit, centerFixedY);
                 log += toExpFormat("               ", value.center?.y, error.center?.y, "px", centerFixedY);
                 log += toExpFormat("Amplitude      ", value.amp, error.amp, frame.requiredUnit, amplitudeFixed);
                 log += toExpFormat("FWHM Major Axis", fwhmValueWCS?.x, fwhmErrorWCS?.x, fwhmUnit, fwhmFixedX);
@@ -307,13 +336,16 @@ export class ImageFittingStore {
                 log += toExpFormat("FWHM Minor Axis", fwhmValueWCS?.y, fwhmErrorWCS?.y, fwhmUnit, fwhmFixedY);
                 log += toExpFormat("               ", value.fwhm?.y, error.fwhm?.y, "px", fwhmFixedY);
                 log += toExpFormat("P.A.           ", value.pa, error.pa, "deg", paFixed);
+                if (showIntegratedFlux) {
+                    log += toExpFormat("Integrated flux", integratedFluxValues[i], integratedFluxErrors[i], "Jy", amplitudeFixed && fwhmFixedX && fwhmFixedY);
+                }
             }
             results += "\n";
             log += "\n";
         }
 
-        results += toFixFormat("Background     ", offset_value, offset_error, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
-        log += toExpFormat("Background     ", offset_value, offset_error, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
+        results += toFixFormat("Background     ", offsetValue, offsetError, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
+        log += toExpFormat("Background     ", offsetValue, offsetError, frame.requiredUnit, fixedParams[fixedParams.length - 1]);
 
         frame.setFittingResult(results);
         frame.setFittingLog(log);
