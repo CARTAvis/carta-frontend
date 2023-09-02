@@ -9,31 +9,32 @@ export const LAYER_LIST_HELP_CONTENT = (
             <ImageComponent light={widgetButtonImageList} dark={widgetButtonImageList_d} width="90%" />
         </p>
         <p>
-            The image list widget displays all loaded images as a list, which includes the image name, rendering layers (R for raster, C for contours, V for vector field), layer visibility state, spatial matching state, spectral matching
-            state, color range matching state, channel index, and polarization type. The channel index and polarization type are synchronized with the animator.
+            The Image List Widget is a centralized location for basic information about all loaded images. Each entry includes the image name, rendering layers (<b>R</b> for raster, <b>C</b> for contours, and <b>V</b> for vector field),
+            layer visibility state, spatial matching state, spectral matching state, color range matching state, channel index, and polarization type. Note that the channel index and polarization type are synchronized with the Animator
+            Widget.
         </p>
         <p>
-            You may click <code>R</code> to hide/show a raster layer, <code>C</code> to hide/show a contour layer, and <code>V</code> to hide/show a vector field layer.
+            You can click the <b>R</b> button in an image entry to toggle the visibility of its raster layer. Similarly, the <b>C</b> and <b>V</b> buttons control the visibility of the image's contour and vector field layers, respectively.
         </p>
         <p>
-            Per image, you can click the <code>XY</code> button to enable/disable spatial matching and click the <code>Z</code> button to enable/disable spectral matching. To match the color range to the reference image, click the{" "}
-            <code>R</code> button.
+            The <b>XY</b> button allows you to toggle an image's spatial matching. Similarly, the <b>Z</b> button controls spectral matching, an the <b>R</b> button toggles aligning the color range with the reference image.
         </p>
         <p>
-            To change a reference image, <code>right-click</code> on a row to bring up the context menu. The spatial reference image, the spectral reference image, and the raster scaling reference image can be defined independently. By
-            default, spectral matching is performed with respect to radio velocity convention. If other spectral conventions (e.g., frequency, channel, etc) are desired, use the <code>Matching</code> tab of the image list settings dialog
-            (the <code>cog</code> at the top-right corner of the image list widget).
+            To change a reference image, <code>right-click</code> on a row to bring up the context menu. The spatial reference image, the spectral reference image, and the raster scaling reference image can be defined independently.
+            Spectral matching defaults to the <em>radio velocity</em> convention, but an alternative spectral convention (such as frequency or channel) can be configured in the <b>Matching</b> tab of the Image List Settings Dialog
+            (accessible through the cog icon at the top-right corner of the image list widget).
         </p>
         <p>
-            When images are matched spectrally in the velocity domain, the rest frequency for the frequency-to-velocity conversion per image can be re-defined. This allows you to compare different spectral features efficiently without
-            changing the RESTFRQ header iteratively and permanently. You can <code>right-click</code> on a row to bring up the context menu or use the <code>Rest Frequency</code> tab of the image list settings dialog.
+            When spectrally matching in the velocity domain, it is possible to redefine the rest frequency for frequency-to-velocity conversion per image. This enables efficient comparison of distinct spectral features without the need for
+            permanent alterations to the <code>RESTFRQ</code> header. You can access this functionality either through <code>right-clicking</code> on a row or through the <b>Rest Frequency</b> tab in the Image List Settings Dialog.
         </p>
         <p>
-            To close an image (or images), <code>right-click</code> on a row to bring up the context menu.
+            Images can also be closed from this widget: <code>right-click</code> on a row to access the context menu. Alternatively, to close the active image, use the <b>File</b> menu and select <b>Close Image</b>.
         </p>
         <p>
-            The list order reflects the order of the image slider in the animator. When the image viewer is in the multi-panel mode, the list order also determines the image order in the grid layout following the left-right then top-down
-            rule. To change the order, <code>drag-and-drop</code> an image in the list to the desired new position.
+            The order of entries in the list matches the <b>Image</b> slider of the Animator. In the multi-panel view of the Image Viewer, this list order determines the arrangement of images according to the left-right and top-down
+            pattern. Images in the list can be rearranged through <code>drag-and-drop</code>: click or click and drag in the index column to select one or more rows, then hover over the selected rows in the index column until an open hand
+            cursor appears. You can then click and drag to move the rows. Click outside the index column to clear the selection.
         </p>
     </div>
 );

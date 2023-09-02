@@ -9,51 +9,55 @@ export const ANIMATOR_HELP_CONTENT = (
             <ImageComponent light={widgetButtonAnimator} dark={widgetButtonAnimator_d} width="90%" />
         </p>
         <p>
-            The animator widget controls which image, which channel (if there are multiple channels per active image file), and which polarization component (if there are multiple Stokes per active image file) to view in the image viewer.
-            You may also enable animation playback for image, channel, or polarization, via the <code>Play</code> button. The radio buttons control which one to animate through. Playback mode includes
+            The Animator Widget controls the rendered context of an image cube in the Image Viewer. This includes the ability to select which image, channel (if multiple channels are present in the active image), and polarization component
+            (if the active image has multiple Stokes parameters) you wish to explore. You can also enable animation playback for any of these selections – image, channel, or polarization – using the <b>Play</b> button. To change the
+            animation reference, use the accompanying radio buttons. Various playback modes are available:
         </p>
         <ul>
             <li>
-                <code>Forward</code>: with index increasing
+                <b>Forward</b>: the animation plays the frames in order, looping back to the first frame when the last frame is reached.
             </li>
             <li>
-                <code>Backward</code>: with index decreasing
+                <b>Backward</b>: the animation plays the frames in reverse order, looping back to the last frame when the first frame is reached.
             </li>
             <li>
-                <code>Bouncing</code>: with index increasing and decreasing so on and so forth between the boundary
+                <b>Bouncing</b>: the animation oscillates between the two boundaries, cycling between forward and reverse playback.
             </li>
             <li>
-                <code>Blink</code>: with index jumping between the boundary
+                <b>Blink</b>: the animation alternates between the first and last frame.
             </li>
         </ul>
-        <p>For channels, you may limit a channel range for animation playback via the double slider.</p>
-        <p>A desired frame rate per second (fps) can be defined in the frame rate spinbox. Note that the real fps depends on computer performance and network performance.</p>
+        <p>For channel-specific animations, the double slider empowers you to constrain the channel range eligible for animation playback.</p>
         <p>
-            A step for channel animation playback (default 1) can be set with the step spinbox. Click the frame rate dropdown to select <code>Step</code> and use the spinbox to define a step.
+            You can specify the desired frames per second (fps) through the <b>Frame rate</b> spinbox. Please note that the actual achievable frame rate depends on CARTA backend performance and network capacity.
         </p>
         <p>
-            For performance reasons and resource management, animation playback will be automatically stopped after 5 minutes by default. This can be customized in the <code>Performance</code> tab of the preferences dialog (
-            <strong>File</strong> -&gt; <strong>Preferences</strong>). Maximum playback time is 30 mins.
+            To specify a step value for the channel animation, click the <b>Frame rate</b> dropdown to select the <b>Step</b> mode, and use the accompanying spinbox. The default value is 1.
         </p>
         <p>
-            The polarization slider includes the Stokes components defined in the image header, as well as the components <em>computed</em> from the Stokes components, such as:
+            The <b>Polarization</b> slider includes both the Stokes components defined in the image header and components computed from the Stokes components, such as:
             <ul>
                 <li>
-                    <code>Ptotal</code>: total polarization intensity (computed from Stokes QU or QUV)
+                    <b>Ptotal</b>: total polarization intensity (computed from Stokes QU or QUV).
                 </li>
                 <li>
-                    <code>Plinear</code>: linear polarization intensity (computed from Stokes QU)
+                    <b>Plinear</b>: linear polarization intensity (computed from Stokes QU).
                 </li>
                 <li>
-                    <code>PFtotal</code>: fractional total polarization intensity (computed from Stokes IQU or IQUV)
+                    <b>PFtotal</b>: fractional total polarization intensity (computed from Stokes IQU or IQUV).
                 </li>
                 <li>
-                    <code>PFlinear</code>: fractional linear polarization intensity (computed from Stokes IQU)
+                    <b>PFlinear</b>: fractional linear polarization intensity (computed from Stokes IQU).
                 </li>
                 <li>
-                    <code>Pangle</code>: linear polarization angle (computed from Stokes QU)
+                    <b>Pangle</b>: linear polarization angle (computed from Stokes QU).
                 </li>
             </ul>
+        </p>
+        <h4>NOTE</h4>
+        <p>
+            For performance reasons and resource management, animation playback will be stopped automatically after 5 minutes by default. This can be customized in the <b>Performance</b> tab of the Preferences Dialog (
+            <b>File -&gt; Preferences</b>). Maximum playback time is 30 mins.
         </p>
     </div>
 );

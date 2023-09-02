@@ -1,21 +1,20 @@
 export const CATALOG_HISTOGRAM_PLOT_HELP_CONTENT = (
     <div>
+        <p>The Catalog Histogram Plot Widget shows a histogram of a selected numeric column from a catalog file. The available numeric columns for plotting are shown in the "Display" column of the upper table in the Catalog Widget.</p>
         <p>
-            The catalog histogram plot widget shows a histogram of a selected numeric column from a catalog file. The available numeric columns for plotting are determined by the <code>Display</code> column of the upper table in the Catalog
-            widget.
+            The data used to plot the histogram is determined by the lower table in the Catalog Widget. The catalog table may not immediately display the full list of entries, which are loaded progressively as needed. The histogram plot may
+            thus not include all entries when the widget is initialized. The <b>Plot</b> button in the Catalog Histogram Plot Widget allows you to request a full download of all the entries, which ensures that all data (after filtering) is
+            included in the histogram plot. You can select a catalog file (<b>File</b> dropdown) and a column within the file (<b>X</b> dropdown), configure the number of bins (<b>Bins</b> input field), and select the y-axis scale (linear
+            or logarithmic; <b>Log scale</b> toggle).
         </p>
         <p>
-            The data used for plotting the histogram is determined by the lower table in the Catalog widget. The table may not show all the entries because of the progressive loading feature. When you scroll down the catalog table, new
-            catalog entries will be streamed for visualization. Thus, the histogram plot may not include all entries (even after filtering) when the widget is initialized. The <code>Plot</code> button allows you to request a full download
-            of all the entries and the histogram plot will then include all data (after filtering). The number of bins and the scale of the y-axis (linear or log) can be customized.
+            You can use the <b>Statistic source</b> dropdown menu to select a numeric column from a catalog and show basic statistical quantities for that column. This includes data count, mean, root mean square (rms), standard deviation,
+            minimum, and maximum values.
         </p>
         <p>
-            You can use the <code>Statistic Source</code> dropdown menu to select a numeric column from a catalog to show basic statistical quantities, including data count, mean, rms, standard deviation, min, and max.
-        </p>
-        <p>
-            When you click on a specific histogram bin, source entries of that bin will be highlighted in the source catalog table, in the 2D scatter plot (if it exists), and in the image viewer (if the catalog overlay is enabled). A
-            certain histogram bin will be highlighted if source entries of that bin are selected in the source catalog table, in the 2D scatter plot (if exists), or in the image viewer (if the catalog overlay is enabled). The{" "}
-            <code>Selected only</code> toggle can be used to update the source catalog table to show only the selected sources.
+            The plot is interactive. When you select a specific histogram bin, the corresponding source entries will be highlighted in multiple linked components: the source catalog table, the 2D scatter plot (if applicable), and the Image
+            Viewer (when the catalog overlay feature is enabled). Conversely, if source entries are selected in the source catalog table, 2D scatter plot, or Image Viewer (with the catalog overlay enabled), the corresponding histogram bin
+            will be highlighted. The <b>Selected only</b> toggle simplifies the source catalog table by showing only the selected sources.
         </p>
     </div>
 );

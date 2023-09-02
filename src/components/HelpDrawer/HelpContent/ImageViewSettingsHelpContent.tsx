@@ -1,7 +1,8 @@
 export const IMAGE_VIEW_SETTINGS_HELP_CONTENT = (
     <div>
-        <p>The image view settings dialog allows you to customize the appearance of the image viewer.</p>
-
+        <p>The Image Viewer Settings Dialog allows you to customize the appearance of the Image Viewer and to control the position of the image in the Image Viewer.</p>
+        <h3 id="pan_and_zoom">Pan and Zoom</h3>
+        <p>In this tab, you have fine-grained control over the positioning of the image in the Image Viewer. The center and the size of the field of view are configurable in world or image coordinates.</p>
         <h3 id="global">Global</h3>
         <p>This section allows you to</p>
         <ul>
@@ -56,7 +57,7 @@ export const IMAGE_VIEW_SETTINGS_HELP_CONTENT = (
         </ul>
 
         <h3 id="beam">Beam</h3>
-        <p>This section allows you to change the appearance of the beam overlay (visibility, color, type, and line width) and adjust its position in the image viewer.</p>
+        <p>This section allows you to change the appearance of the beam overlay (visibility, color, type, and line width) and adjust its position in the Image Viewer.</p>
 
         <h3>Conversion</h3>
         <p>
