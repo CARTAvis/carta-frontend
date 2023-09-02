@@ -52,7 +52,7 @@ export const STOKES_ANALYSIS_HELP_CONTENT = (
         <p>Note that some of these options depend on the completeness of image headers. Some conversions may not be available.</p>
         <h3 id="data-smoothing">Data smoothing</h3>
         <p>
-            The displayed profiles and the scatter plot can be smoothed via the <b>Smoothing</b> tab of the Stokes Analysis Settings Dialog (the cog button). A shortcut button to the <b>Smoothing</b> tab can be found at the top-right corner
+            The displayed profiles and the scatter plot can be smoothed via the <b>Smoothing</b> tab of the Stokes Analysis Settings Dialog (the cog button). A shortcut button to the <b>Smoothing</b> tab can be found in the top-right corner
             of the widget.
         </p>
         <h3 id="interactivity-zoom-pan-changing-channel">Interactivity: zoom, pan, changing channel</h3>
@@ -83,7 +83,7 @@ export const STOKES_ANALYSIS_HELP_CONTENT = (
         </p>
         <h3 id="exports">Profile plot and scatter plot export</h3>
         <p>
-            To export these visualizations, you can save them as either a PNG image file or a text file in TSV format. This process is achieved through dedicated buttons at the bottom-right corner of each plot. These <b>Export</b> buttons
+            To export these visualizations, you can save them as either a PNG image file or a text file in TSV format. This process is achieved through dedicated buttons in the bottom-right corner of each plot. These <b>Export</b> buttons
             appear when you hover over the plot.
         </p>
         <h3 id="plot-cosmetics">Plot cosmetics</h3>

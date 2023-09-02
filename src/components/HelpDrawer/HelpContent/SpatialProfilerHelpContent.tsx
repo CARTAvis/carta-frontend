@@ -26,7 +26,7 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
         </p>
         <p>The cursor position in the Image Viewer is displayed as a red vertical line in the spatial profile plot.</p>
         <p>
-            When the cursor is in the Image Viewer, the cursor position in image and world coordinates and pointed pixel value are reported at the bottom-left corner of the Spatial Profiler Widget. When the cursor moves onto the spatial
+            When the cursor is in the Image Viewer, the cursor position in image and world coordinates and pointed pixel value are reported in the bottom-left corner of the Spatial Profiler Widget. When the cursor moves onto the spatial
             profile plot (displayed as a gray vertical line), these values derived from the profile data will be reported instead.
         </p>
         <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
@@ -85,7 +85,7 @@ export const SPATIAL_PROFILER_HELP_CONTENT = (
             In addition, the x and y ranges can be set explicitly in the <b>Styling</b> tab of the Spatial Profiler Settings Dialog.
         </p>
         <h3 id="exports">Profile plot export</h3>
-        <p>The spatial profile plot can be exported as a PNG file or a text file in TSV format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
+        <p>The spatial profile plot can be exported as a PNG file or a text file in TSV format via the buttons in the bottom-right corner (shown when hovering over the plot).</p>
         <h3 id="plot-cosmetics">Plot cosmetics</h3>
         <p>
             The appearance of the spatial profile plot is customizable via the <b>Styling</b> tab of the Spatial Profiler Settings Dialog (the cog icon). Supported options are:

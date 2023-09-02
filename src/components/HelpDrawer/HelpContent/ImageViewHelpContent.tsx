@@ -52,7 +52,7 @@ export const IMAGE_VIEW_HELP_CONTENT = (
             <b>WCS and Image Overlay</b> tab of the Preferences Dialog (<b>File -&gt; Preferences</b>). Alternatively, you can use the Cursor Information Widget to view cursor data from multiple images in one centralized place.
         </p>
         <h3 id="image-tool-buttons">Image toolbar</h3>
-        <p>A set of tool buttons is provided at the bottom-right corner when hovering over the Image Viewer. You may use these buttons to</p>
+        <p>A set of tool buttons is provided in the bottom-right corner when hovering over the Image Viewer. You may use these buttons to</p>
         <ul>
             <li>Measure angular distance on image</li>
             <li>Select a source from catalog overlay</li>
@@ -69,7 +69,7 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         </p>
         <h3 id="zoom-and-pan">Zoom and pan</h3>
         <p>
-            The zoom action can be triggered in different ways. You can use the mouse scroll wheel: scroll up to zoom in, and scroll down to zoom out. Alternatively, you may use the tool buttons at the bottom-right corner of the Image
+            The zoom action can be triggered in different ways. You can use the mouse scroll wheel: scroll up to zoom in, and scroll down to zoom out. Alternatively, you may use the tool buttons in the bottom-right corner of the Image
             viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.
         </p>
         <p>

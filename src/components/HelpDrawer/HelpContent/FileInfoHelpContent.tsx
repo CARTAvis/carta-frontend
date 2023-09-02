@@ -13,7 +13,7 @@ export const FILE_INFO_HELP_CONTENT = (
             of different images, use either the <b>Image</b> slider in the Animator Widget, or the Image List Widget.
         </p>
         <p>
-            You can perform a keyword search in the header or export the header as a text file with the tools at the bottom-right corner of the <b>Header</b> tab.
+            You can perform a keyword search in the header or export the header as a text file with the tools in the bottom-right corner of the <b>Header</b> tab.
         </p>
         <h4>NOTE</h4>
         The FITS standard uses a 1-based coordinate system. This means that the origin, defined as the center of the bottom-left pixel, is at <code>(1, 1)</code>. In contrast, CARTA uses a 0-based coordinate system, and the origin (at the

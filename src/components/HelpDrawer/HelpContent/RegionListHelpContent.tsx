@@ -18,19 +18,19 @@ export const REGION_LIST_HELP_CONTENT = (
             objects to introduce features.
         </p>
         <p>
-            The Region List Widget shows you a list of regions created via the graphical user interface or loaded via the menu (<b>File -&gt; Import Regions</b>) or the <b>Import</b> button at the bottom-right corner of the widget. The
+            The Region List Widget shows you a list of regions created via the graphical user interface or loaded via the menu (<b>File -&gt; Import Regions</b>) or the <b>Import</b> button in the bottom-right corner of the widget. The
             basic information of a region is provided in the list. The active region is highlighted in the list and region control points are visible in the Image Viewer. To de-select a region, press the <code>Esc</code> key.
         </p>
         <p>
             <code>double-click</code> on a list entry or on a region in the Image Viewer to bring up the Region Configuration Dialog, where you can adjust region appearance and region properties.
         </p>
         <p>
-            The <b>Lock</b> button in each region entry can be used to prevent editing a region accidentally. Locked regions will appear slightly dimmer in the Image Viewer. At the top-left corner of the widget, you can use the <b>Lock</b>{" "}
+            The <b>Lock</b> button in each region entry can be used to prevent editing a region accidentally. Locked regions will appear slightly dimmer in the Image Viewer. In the top-left corner of the widget, you can use the <b>Lock</b>{" "}
             button to lock all regions at once. The <b>Focus</b> button is used to center a region in the current field of view of the Image Viewer. If there are many regions that block the image view, you can use the <b>Hide</b> button at
             the top-left corner of the widget to temporarily hide regions. There are two levels of hiding: one makes regions semi-transparent and the other makes regions completely transparent.
         </p>
         <p>
-            You can save a region as a text file with the <b>Export</b> button. You may also export all regions via the <b>Export</b> button at the bottom-right corner of the widget. In the region export file browser, you may select only a
+            You can save a region as a text file with the <b>Export</b> button. You may also export all regions via the <b>Export</b> button in the bottom-right corner of the widget. In the region export file browser, you may select only a
             subset of the regions and save them as a region text file.
         </p>
         <p>

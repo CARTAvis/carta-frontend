@@ -43,7 +43,7 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         <p>
             In short, if multiple spectra are plotted, only one option (<b>Image</b>, <b>Region</b>, <b>Statistic</b> or <b>Polarization</b>) can be varied at a time. All other options are fixed to a single value.
         </p>
-        <p>The cursor information of each profile is displayed at the bottom-left corner. The cursor information field can be resized.</p>
+        <p>The cursor information of each profile is displayed in the bottom-left corner. The cursor information field can be resized.</p>
 
         <h3 id="images">Image dropdown menu</h3>
         <p>
@@ -99,21 +99,21 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         <p>Note that depending on the integrity of image headers, some conversions may not be possible.</p>
         <h3 id="profile-smoothing">Profile smoothing</h3>
         <p>
-            The displayed profile can be smoothed via the <b>Smoothing</b> tab of the Spectral Profiler Settings Dialog (the cog button). A shortcut button to the <b>Smoothing</b> tab can be found at the top-right corner of the widget.
+            The displayed profile can be smoothed via the <b>Smoothing</b> tab of the Spectral Profiler Settings Dialog (the cog button). A shortcut button to the <b>Smoothing</b> tab can be found in the top-right corner of the widget.
         </p>
         <h3 id="moment-image-generator">Moment image generator</h3>
         <p>
-            Moment images can be generated via the <b>Moments</b> tab of the Spectral Profiler Settings Dialog (the cog button). A shortcut button to the <b>Moments</b> tab can be found at the top-right corner of the widget.
+            Moment images can be generated via the <b>Moments</b> tab of the Spectral Profiler Settings Dialog (the cog button). A shortcut button to the <b>Moments</b> tab can be found in the top-right corner of the widget.
         </p>
         <h3>Profile fitting</h3>
         <p>
-            You can fit a model profile to a spectrum in the view via the <b>Fitting</b> tab of the Spectral Profiler Settings Dialog (the cog button). You can find a shortcut button to the <b>Fitting</b> tab at the top-right corner of the
+            You can fit a model profile to a spectrum in the view via the <b>Fitting</b> tab of the Spectral Profiler Settings Dialog (the cog button). You can find a shortcut button to the <b>Fitting</b> tab in the top-right corner of the
             widget. Note that profile fitting is not allowed when there are multiple profiles in the plot.
         </p>
         <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
         <p>
             As an option in the <b>Styling</b> tab of the Spectral Profiler Settings Dialog, mean and RMS values of a single profile can be visualized as a green dashed line and a shaded area in the profile plot. Numeric values are
-            displayed at the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If the zoom level changes, mean and RMS values will be updated accordingly.
+            displayed in the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If the zoom level changes, mean and RMS values will be updated accordingly.
         </p>
         <h3 id="interactivity-zoom-pan-changing-channel">Interactivity: zoom, pan, changing channel</h3>
         <p>The x and y ranges of the spectral profile plot can be modified by</p>
@@ -145,7 +145,7 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
             the Animator Widget.
         </p>
         <h3 id="exports">Profile export</h3>
-        <p>The spectral profile plot can be exported as a PNG file or a text file in TSV format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
+        <p>The spectral profile plot can be exported as a PNG file or a text file in TSV format via the buttons in the bottom-right corner (shown when hovering over the plot).</p>
         <h3 id="plot-cosmetics">Plot cosmetics</h3>
         <p>
             The appearance of the spectral profile plot is customizable via the <b>Styling</b> tab of the Spectral Profiler Settings Dialog (the cog button). Supported options are:

@@ -51,7 +51,7 @@ export const FILE_BROWSER_HELP_CONTENT = (
         </p>
         <p>
             When an image file is selected, its basic image properties are summarized in the <b>File Information</b> tab on the right-hand side. The full image header is shown in the <b>Header</b> tab. You can search the header or export
-            the header as a text file with the tools at the bottom-right corner of the <b>Header</b> tab.
+            the header as a text file with the tools in the bottom-right corner of the <b>Header</b> tab.
         </p>
         <p>
             You can load or append multiple images at once by selecting multiple images with <code>ctrl/cmd+click</code> or <code>shift+click</code> from the file list, and then clicking the <b>Load selected</b> button or the{" "}

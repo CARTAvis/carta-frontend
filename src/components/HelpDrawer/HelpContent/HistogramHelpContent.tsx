@@ -55,7 +55,7 @@ export const HISTOGRAM_HELP_CONTENT = (
             In addition, the plotting x and y ranges can be explicitly set in the <b>Styling</b> tab of the Histogram Settings Dialog.
         </p>
         <h3 id="exports">Exports</h3>
-        <p>The histogram plot can be exported as a PNG file or a text file in TSV format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
+        <p>The histogram plot can be exported as a PNG file or a text file in TSV format via the buttons in the bottom-right corner (shown when hovering over the plot).</p>
         <h3 id="plot-cosmetics">Plot cosmetics</h3>
         <p>
             The appearance of the histogram plot is customizable via the <b>Styling</b> tab of the Histogram Settings Dialog (the cog icon). Supported options are:

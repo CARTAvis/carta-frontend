@@ -26,13 +26,13 @@ export const IMAGE_FITTING_HELP_CONTENT = (
         </p>
         <p>
             Once the initial solutions of a set of Gaussian components are set, you can click the <b>Fit</b> button to trigger the image fitting process. The fitting result is displayed in the <b>Fitting Result</b> tab. In the{" "}
-            <b>Full Log</b> tab, more information about the fitting results is provided, including the best-fit solution in the image coordinate. Via the <b>Export</b> button at the bottom-right corner of the <b>Fitting Result</b> tab, you
+            <b>Full Log</b> tab, more information about the fitting results is provided, including the best-fit solution in the image coordinate. Via the <b>Export</b> button in the bottom-right corner of the <b>Fitting Result</b> tab, you
             can export the fitting result or log as a text file.
         </p>
         <p>Three different solvers are provided in the Image Fitting Dialog. During the fitting process, you may cancel it if necessary.</p>
         <p>
             By default, model image and residual image will be generated and appended once the fitting process succeeds. If these are not required, you can use the toggles to disable the feature. Optionally, via the <code>Region</code>{" "}
-            button at the bottom-right corner of the <code>Fitting Result</code> tab, you can generate a set of ellipse regions as a representation of the FWHM of the best-fit Gaussians.
+            button in the bottom-right corner of the <code>Fitting Result</code> tab, you can generate a set of ellipse regions as a representation of the FWHM of the best-fit Gaussians.
         </p>
     </div>
 );

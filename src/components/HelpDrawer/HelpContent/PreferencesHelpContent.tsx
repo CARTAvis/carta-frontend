@@ -76,7 +76,7 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Colorbar width (px): the width of the colorbar in screen pixel</li>
             <li>Colorbar ticks density (per 100px): the ticks density of the colorbar per 100 screen pixels</li>
             <li>Colorbar label visible: show a colorbar label</li>
-            <li>Beam visible: beam rendering at the bottom-left corner of the Image Viewer</li>
+            <li>Beam visible: beam rendering in the bottom-left corner of the Image Viewer</li>
             <li>Beam color: the color to render a beam element</li>
             <li>Beam type: render a beam as an open ellipse or a filled ellipse</li>
             <li>Beam width: line width to render an open beam</li>
