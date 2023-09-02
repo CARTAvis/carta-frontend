@@ -29,7 +29,7 @@ export const IMAGE_VIEW_HELP_CONTENT = (
     <div>
         <p>
             The Image Viewer Widget serves as the core component of CARTA. It allows you to visualize images as rasters, contours, or vector fields. Regions of interest can be defined interactively with the Image Viewer and subsequent image
-            analysis can be performed collaborativly with other widgets. Catalog files can be loaded and visualized in the Image Viewer as catalog overlays via the Catalog Widget.
+            analysis can be performed collaboratively with other widgets. Catalog files can be loaded and visualized in the Image Viewer as catalog overlays via the Catalog Widget.
         </p>
         <p>
             Images can be loaded via <b>File -&gt; Open Image</b> (will close all loaded images first). You may append more images via <b>File -&gt; Append Image</b>. All images are loaded and rendered as raster by default. Contour layers
@@ -40,10 +40,10 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         </p>
         <h3>Image view mode</h3>
         <p>
-            There are two modes of the Image Viewer: single-panel view and multi-panel view (default). You can use the <b>Panel mode</b> button at the top right corner of the widget to switch to the other mode. When the current view mode
-            cannot show all the loaded images in the view, you can also use the <b>Page</b> buttons at the top-right corner of the widget to switch to other pages to view images. The grid layout of the multi-panel view mode can be
-            configured in the <b>Global</b> tab of the Image Viewer Settings Dialog. The active image is highlighted with a red box in the multi-panel view mode. With the multi-panel view mode, the loaded images are rendered in order from
-            left to right and then from top to bottom. The image order can be rearranged with the Image List Widget by <code>drag-and-drop</code> a row to a desired order.
+            The Image Viewer has two modes: single-panel view and multi-panel view (default). You can use the <b>Panel mode</b> button at the top right corner of the widget to switch to the other mode. When the current view mode cannot
+            display all the loaded images at once, you can also use the <b>Page</b> buttons at the top-right corner of the widget to navigate through pages of images. The grid layout of the multi-panel view mode can be configured in the{" "}
+            <b>Global</b> tab of the Image Viewer Settings Dialog. The active image is highlighted with a red box in the multi-panel view mode. With the multi-panel view mode, the loaded images are rendered in order from left to right and
+            then from top to bottom. To rearrange the images, use the Image List Widget to <code>drag-and-drop</code> image rows to the desired positions.
         </p>
         <h3>Cursor information</h3>
         <p>
@@ -52,7 +52,7 @@ export const IMAGE_VIEW_HELP_CONTENT = (
             <b>WCS and Image Overlay</b> tab of the Preferences Dialog (<b>File -&gt; Preferences</b>). Alternatively, you can use the Cursor Information Widget to view cursor data from multiple images in one centralized place.
         </p>
         <h3 id="image-tool-buttons">Image toolbar</h3>
-        <p>A set of tool buttons is provided in the bottom-right corner when hovering over the Image Viewer. You may use these buttons to</p>
+        <p>A set of tool buttons appears in the bottom-right corner when you hover over the Image Viewer. You may use these buttons to</p>
         <ul>
             <li>Measure angular distance on image</li>
             <li>Select a source from catalog overlay</li>
@@ -82,8 +82,8 @@ export const IMAGE_VIEW_HELP_CONTENT = (
         </p>
         <h3 id="matching-image-spatially-and-spectrally">Match image spatially and spectrally</h3>
         <p>
-            Different images may be matched in world coordinates spatially and/or spectrally. This can be triggered by the <b>WCS matching</b> button. Matching WCS on image appending can be enabled in the Preferences Dialog. Alternatively,
-            you can use the Image List Widget to see all loaded images and apply spatial and/or spectral matching.
+            Different images may be matched in world coordinates spatially and/or spectrally. This can be triggered with the <b>WCS matching</b> button. Matching WCS on image appending can be enabled in the Preferences Dialog.
+            Alternatively, you can use the Image List Widget to see all loaded images and apply spatial and/or spectral matching.
         </p>
         <p>
             <ImageComponent light={WCSMatchButton} dark={WCSMatchButton_d} width="80%" />

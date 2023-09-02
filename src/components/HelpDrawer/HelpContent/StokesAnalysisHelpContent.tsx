@@ -22,13 +22,13 @@ export const STOKES_ANALYSIS_HELP_CONTENT = (
         <p>These plots interact with each other to provide a cohesive analytical experience. When you zoom into a profile, the data within the visible range will be highlighted dynamically in the scatter plot, and vice versa.</p>
         <h3 id="images">Image dropdown menu</h3>
         <p>
-            The <b>Image</b> dropdown menu defaults to the "Active" image. This is the image which is currently displayed in the Image Viewer if it is in single-panel mode, or the image which is highlighted with a red box if the viewer is
-            in multi-panel mode.
+            The <b>Image</b> dropdown menu defaults to "Active", which means the currently selected image. This is the image which is visible in the Image Viewer (if it is in the single-panel mode). If the viewer is in the multi-panel mode,
+            the active image is highlighted with a red box.
         </p>
         <h3 id="regions">Region dropdown menu</h3>
         <p>
-            The <b>Region</b> dropdown menu defaults to the "Active" region, which is the region currently highlighted in the Image Viewer. You can select a region by clicking on it in the Image Viewer or by selecting an entry in the Region
-            List Widget. The Stokes and polarization profile plots will be updated automatically. If no region is selected, the "Active" region defaults to the cursor position.
+            The <b>Region</b> dropdown menu defaults to "Active", which means the region currently selected in the Image Viewer. You can select a region by clicking on it in the Image Viewer or by selecting an entry in the Region List
+            Widget. The Stokes and polarization profile plots will be updated automatically. If no region is selected, the "Active" region defaults to the cursor position.
         </p>
         <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
         <p>

@@ -14,9 +14,9 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         </p>
         <h3>Single-profile mode</h3>
         <p>
-            When none of the checkboxes is selected, the Spectral Profiler Widget displays only one spectrum at a time. You can view a region spectral profile (via the <b>Region</b> dropdown menu) of an image cube (via the <b>Image</b>{" "}
-            dropdown menu) with a specific statistic (via the <b>Statistic</b> dropdown menu; the default is mean). If the polarization axis exists, you may view a specific polarization component via the <b>Polarization</b> dropdown menu.
-            You may have multiple widgets to view spectra side by side.
+            When no checkboxes are selected, the Spectral Profiler Widget displays only one spectrum at a time. You can view a region spectral profile (via the <b>Region</b> dropdown menu) of an image cube (via the <b>Image</b> dropdown
+            menu) with a specific statistic (via the <b>Statistic</b> dropdown menu; the default is mean). If the polarization axis exists, you may view a specific polarization component via the <b>Polarization</b> dropdown menu. You may
+            have multiple widgets to view spectra side by side.
         </p>
         <h3>Multi-profile mode</h3>
         <p>
@@ -47,8 +47,8 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
 
         <h3 id="images">Image dropdown menu</h3>
         <p>
-            The <b>Image</b> dropdown menu defaults to &quot;Active&quot; image which means the current image in the Image Viewer if it is in single-panel mode. If it is in multi-panel mode, the active image is highlighted with a red box.
-            You may use the Animator Widget or the Image List Widget to change the active image.
+            The <b>Image</b> dropdown menu defaults to "Active", which means the currently selected image. This is the image which is visible in the Image Viewer (if it is in the single-panel mode). If the viewer is in the multi-panel mode,
+            the active image is highlighted with a red box. You may use the Animator Widget or the Image List Widget to change the active image.
         </p>
         <p>
             When the <b>Image</b> checkbox is selected and if there are spatially and spectrally matched images (apply matching via the Image List Widget), the dropdown menu will display an image list with information about the matching
@@ -57,7 +57,7 @@ export const SPECTRAL_PROFILER_HELP_CONTENT = (
         </p>
         <h3 id="regions">Region dropdown menu</h3>
         <p>
-            The <b>Region</b> dropdown menu defaults to &quot;Active&quot; region which means the selected region in the Image Viewer. You can select an active region by clicking one in the Image Viewer, or by clicking a region entry in the
+            The <b>Region</b> dropdown menu defaults to "Active", which means the region currently selected in the Image Viewer. You can select an active region by clicking one in the Image Viewer, or by clicking a region entry in the
             Region List Widget. The spectral profile plot of the selected active region will be updated accordingly. If no region is selected, the region defaults to cursor.
         </p>
         <p>

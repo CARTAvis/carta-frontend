@@ -13,13 +13,13 @@ export const STATS_HELP_CONTENT = (
         </p>
         <h3 id="images">Image</h3>
         <p>
-            The <b>Image</b> dropdown menu defaults to the "Active" image. This is the image which is currently displayed in the Image Viewer if it is in single-panel mode, or the image which is highlighted with a red box if the viewer is
-            in multi-panel mode.
+            The <b>Image</b> dropdown menu defaults to "Active", which means the currently selected image. This is the image which is visible in the Image Viewer (if it is in the single-panel mode). If the viewer is in the multi-panel mode,
+            the active image is highlighted with a red box.
         </p>
         <h3 id="regions">Region</h3>
         <p>
-            The <b>Region</b> dropdown menu defaults to the "Active" region, which is the region currently highlighted in the Image Viewer. You can select a region by clicking on it in the Image Viewer or by selecting an entry in the Region
-            List Widget. The displayed statistics will be updated automatically.
+            The <b>Region</b> dropdown menu defaults to "Active", which means the region currently selected in the Image Viewer. You can select a region by clicking on it in the Image Viewer or by selecting an entry in the Region List
+            Widget. The displayed statistics will be updated automatically.
         </p>
         <h3 id="polarization">Polarization</h3>
         <p>

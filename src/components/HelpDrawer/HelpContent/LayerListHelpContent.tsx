@@ -9,9 +9,9 @@ export const LAYER_LIST_HELP_CONTENT = (
             <ImageComponent light={widgetButtonImageList} dark={widgetButtonImageList_d} width="90%" />
         </p>
         <p>
-            The Image List Widget is a centralized location for basic information about all loaded images. Each entry includes the image name, rendering layers (designated as <b>R</b> for raster, <b>C</b> for contours, and <b>V</b> for
-            vector field), layer visibility state, spatial matching state, spectral matching state, color range matching state, channel index, and polarization type. Note that the channel index and polarization type are synchronized with
-            the Animator Widget.
+            The Image List Widget is a centralized location for basic information about all loaded images. Each entry includes the image name, rendering layers (<b>R</b> for raster, <b>C</b> for contours, and <b>V</b> for vector field),
+            layer visibility state, spatial matching state, spectral matching state, color range matching state, channel index, and polarization type. Note that the channel index and polarization type are synchronized with the Animator
+            Widget.
         </p>
         <p>
             You can click the <b>R</b> button in an image entry to toggle the visibility of its raster layer. Similarly, the <b>C</b> and <b>V</b> buttons control the visibility of the image's contour and vector field layers, respectively.

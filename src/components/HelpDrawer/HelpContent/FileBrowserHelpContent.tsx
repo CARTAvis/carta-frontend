@@ -1,6 +1,6 @@
 export const FILE_BROWSER_HELP_CONTENT = (
     <div>
-        <p>File Browser provides options to</p>
+        <p>The File Browser provides options to</p>
         <ul>
             <li>Load images in CASA, FITS, MIRIAD, or HDF5-IDIA schema format as raster</li>
             <li>Load individual Stokes images to form a single Stokes hypercube</li>
@@ -68,8 +68,8 @@ export const FILE_BROWSER_HELP_CONTENT = (
             <a href="https://casacore.github.io/casacore-notes/223.html" target="_blank" rel="noreferrer">
                 LEL
             </a>
-            ). With LEL, you can apply image arithmetics and load the resulting image for visualization and analysis. To enable this image loading mode, click the <b>Filter</b> dropdown menu and switch to <b>Image arithmetic</b> mode. You
-            may click on image files in the file list to set up the expression quickly.
+            ). With LEL, you can apply image arithmetic and load the resulting image for visualization and analysis. To enable this image loading mode, click the <b>Filter</b> dropdown menu and switch to <b>Image arithmetic</b> mode. You
+            may click on image files in the file list to enter them into the expression prompt more quickly.
         </p>
         <p>
             If you have non-standard cubes with axes swapped intentionally (e.g., RA-FREQ-DEC-STOKES), you can load them in CARTA as well. The axes labels are derived from the image header "CTYPEn".{" "}

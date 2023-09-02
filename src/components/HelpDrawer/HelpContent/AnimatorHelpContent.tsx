@@ -35,7 +35,7 @@ export const ANIMATOR_HELP_CONTENT = (
             To specify a step value for the channel animation, click the <b>Frame rate</b> dropdown to select the <b>Step</b> mode, and use the accompanying spinbox. The default value is 1.
         </p>
         <p>
-            The <b>Polarization</b> slider encompasses a set of Stokes components derived from the image header. Additionally, it encompasses components derived from the Stokes parameters. These include:
+            The <b>Polarization</b> slider includes both the Stokes components defined in the image header and components computed from the Stokes components, such as:
             <ul>
                 <li>
                     <b>Ptotal</b>: total polarization intensity (computed from Stokes QU or QUV).

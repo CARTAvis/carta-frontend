@@ -24,7 +24,7 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Initial zoom level: view full image or view image with one image pixel to one screen pixel ratio when CARTA is initialized</li>
             <li>Zoom to: control the focus of zooming with scrolling wheel</li>
             <li>
-                Enable drag-to-pan: when enabled, pan action is achieved by <code>drag-and-drop</code>. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the Image Viewer.
+                Enable drag-to-pan: when this is enabled, pan action is achieved by <code>drag-and-drop</code>. When this is disabled, pan action is achieved by a click on the pixel to be centered in the Image Viewer.
             </li>
             <li>WCS matching on append: trigger WCS matching automatically for newly appended images</li>
             <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
@@ -107,8 +107,8 @@ export const PREFERENCES_HELP_CONTENT = (
         </ul>
         <h3 id="performance">Performance</h3>
         <p>
-            Performance related control parameters are included here. We do not recommend you to change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the <b>low bandwidth mode</b> which reduces
-            displayed image resolution and cursor responsiveness.
+            Performance-related control parameters are included here. We do not recommend that you change the settings here. If the bandwidth connecting to a CARTA server is limited, you may enable the <b>low bandwidth mode</b> which
+            reduces displayed image resolution and cursor responsiveness.
         </p>
         <h3 id="telemetry">Telemetry</h3>
         <p>This section provides customization of the telemetry configuration. Anonymous usage data are collected as a reference for future developments only.</p>
@@ -117,7 +117,7 @@ export const PREFERENCES_HELP_CONTENT = (
             <li>Log telemetry output: show telemetry output in the browser's console</li>
         </ul>
         <h3 id="compatibility">Compatibility</h3>
-        <p>This section provides customization of the data compatibility.</p>
+        <p>This section provides options for data compatibility.</p>
         <ul>
             <li>AIPS cube beam support: when it is enabled, CARTA will try to derive the beam size information from the HISTORY headers</li>
         </ul>

@@ -90,13 +90,13 @@ export const CATALOG_OVERLAY_HELP_CONTENT = (
         <p>To configure the visualization of a source catalog, use the dropdown menu at the bottom of the widget to select one of the supported rendering options:</p>
         <ul>
             <li>
-                <b>Image overlay</b>: Superimpose the catalog data onto an image. Two columns must be selected as coordinates.
+                <b>Image overlay</b>: superimpose the catalog data onto an image. Two columns must be selected as coordinates.
             </li>
             <li>
-                <b>2D scatter</b>: Select two numeric columns to construct a two-dimensional scatter plot.
+                <b>2D scatter</b>: select two numeric columns to construct a two-dimensional scatter plot.
             </li>
             <li>
-                <b>Histogram</b>: Select one numeric column to generate a histogram.
+                <b>Histogram</b>: select one numeric column to generate a histogram.
             </li>
         </ul>
         <p>
@@ -112,7 +112,7 @@ export const CATALOG_OVERLAY_HELP_CONTENT = (
         </p>
         <p>
             CARTA supports the loading of multiple catalog files. The <b>File</b> dropdown at the top of the widget can be used to switch between loaded files. It's also possible to launch multiple catalog widgets concurrently, each
-            displaying different files. The <b>System</b> dropdown menu can be used to configure the coordinate system used by the currently selected file, and the <b>Close catalog</b> button at the bottom of the widget closes it. If there
+            displaying a different file. The <b>System</b> dropdown menu can be used to configure the coordinate system used by the currently selected file, and the <b>Close catalog</b> button at the bottom of the widget closes it. If there
             are spatially matched images, catalog image overlays are shared between them, with the appropriate coordinate transformations applied.
         </p>
     </div>

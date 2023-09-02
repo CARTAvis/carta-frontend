@@ -9,7 +9,7 @@ export const REGION_DIALOG_HELP_CONTENT = (
             and a <b>Styling</b> tab, where you can configure region appearance settings such as
             <ul>
                 <li>Color</li>
-                <li>Linewidth</li>
+                <li>Line width</li>
                 <li>Line style (solid or dashed)</li>
             </ul>
         </p>

@@ -22,7 +22,7 @@ export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
             <a href="https://spec.jpl.nasa.gov" target="_blank" rel="noreferrer">
                 JPL
             </a>{" "}
-            line intensity (log10 value). The spectral range can be defined as <b>From-To</b> or <b>Center-Width</b> parameters.
+            line intensity (log10 value). The spectral range can be defined in <b>From-To</b> or <b>Center-Width</b> parameters.
         </p>
         <h4>QUERY LIMITATION</h4>
         <ul>
@@ -82,7 +82,7 @@ export const SPECTRAL_LINE_QUERY_HELP_CONTENT = (
             For string columns, partial match is adopted. For example, <code>CH3</code> (no quotation) will return entries containing the &quot;CH3&quot; string.
         </p>
         <p>
-            Once a set of filters is set, you can click the <b>Apply filter</b> button to apply it to the line table. With the <b>Reset filter</b> button you can remove all filters at once.
+            Once a set of filters is configured, you can click the <b>Apply filter</b> button to apply it to the line table. With the <b>Reset filter</b> button you can remove all filters at once.
         </p>
         <h3>Spectral line ID visualization</h3>
         <p>The "Shifted Frequency" column is computed based on the user input of a velocity or a redshift. This "Shifted Frequency" is adopted for line ID overlay in the Spectral Profiler Widget.</p>
