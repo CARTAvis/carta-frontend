@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.0.0-rc.0]
 
 ### Added
 * Added a shortcut button for image annotation ([#2167](https://github.com/CARTAvis/carta-frontend/issues/2167)).
@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the multi-spectral-profile intensity unit conversion ([#1758](https://github.com/CARTAvis/carta-frontend/issues/1758)).
 * Fixed the Jy/beam to K intensity unit conversion ([#1907](https://github.com/CARTAvis/carta-frontend/issues/1907)).
 * Fixed the blinking toolbar in the image view during animating images ([#2163](https://github.com/CARTAvis/carta-frontend/issues/2163)).
-* Fixed image arithmetic bug when there are square brackets in the expression ([#2220]https://github.com/CARTAvis/carta-frontend/issues/2220).
+* Fixed image arithmetic bug when there are square brackets in the expression ([#2220](https://github.com/CARTAvis/carta-frontend/issues/2220)).
 * Fixed missing tiles and distorted tiles during and after animation. ([#1988](https://github.com/CARTAvis/carta-frontend/issues/1988)).
 * Fixed the stuck of stokes animation at low frame rates ([#1293](https://github.com/CARTAvis/carta-backend/issues/1293)).
 
