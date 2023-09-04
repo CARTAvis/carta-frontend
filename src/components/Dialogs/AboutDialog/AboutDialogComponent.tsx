@@ -3,7 +3,7 @@ import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {CARTA_INFO} from "models";
+import {build_year,CARTA_INFO} from "models";
 import {DialogStore} from "stores";
 
 import "./AboutDialogComponent.scss";
@@ -93,7 +93,7 @@ export class AboutDialogComponent extends React.Component {
                     </ul>
                     <h3>License</h3>
                     <p className={Classes.TEXT_SMALL}>
-                        Copyright (C) 2018-2022 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
+                        Copyright (C) 2018-{build_year} ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
                         <a href="http://www.gnu.org/copyleft/gpl.html" rel="noopener noreferrer" target="_blank">
                             GNU General Public License version 3
                         </a>
