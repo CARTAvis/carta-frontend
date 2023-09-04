@@ -6,7 +6,7 @@ const {version} = require("../../../package.json");
 const build_date = preval`module.exports = new Date()`;
 const date = moment(build_date).format("D MMM YYYY");
 
-export const build_year = moment(build_date).year();
+export const year = moment(build_date).year();
 
 export const CARTA_INFO = {
     acronym: "CARTA",
