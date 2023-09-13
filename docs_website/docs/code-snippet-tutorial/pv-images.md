@@ -6,7 +6,7 @@ sidebar_position: 6
 
 The process of generating PV images can be done using code snippets.
 
-The configuration for the generator is accessible via [`PvGeneratorWidgetStore`](/api/.-stores/class/PvGeneratorWidgetStore). Example code:
+The configuration for the generator is accessible via <ApiLink path="/.-stores/class/PvGeneratorWidgetStore">`PvGeneratorWidgetStore`</ApiLink>. Example code:
 
 ```javascript
 // Open an image

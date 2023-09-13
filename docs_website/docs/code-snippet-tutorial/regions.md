@@ -2,6 +2,8 @@
 sidebar_position: 4
 ---
 
+import Link from '@docusaurus/Link';
+
 # Regions
 
 Actions related to regions. In the following examples, we assume that an image is loaded as
@@ -12,14 +14,14 @@ const file = await app.openFile("my_image.fits");
 
 ## Creating regions
 
-Regions on a specific image is accessible via [`RegionSetStore`](/api/.-stores/class/RegionSetStore) under each image. Each region is represented by a [`RegionStore`](/api/.-stores/class/RegionStore) object.
+Regions on a specific image is accessible via <ApiLink path="/.-stores/class/RegionSetStore">`RegionSetStore`</ApiLink> under each image. Each region is represented by a <ApiLink path="/.-stores/class/RegionStore">`RegionStore`</ApiLink> object.
 
 ```javascript
 console.log(file.regionSet.regions); // View all regions
 console.log(file.regionSet.selectedRegion); // View the selected region
 ```
 
-[`addRegionAsync`](/api/.-stores/class/RegionSetStore/#addRegionAsync) creates regions on the loaded image with available [region types](https://carta-protobuf.readthedocs.io/en/latest/enums.html#regiontype).
+<p><ApiLink path="/.-stores/class/RegionSetStore/#addRegionAsync"><code>addRegionAsync</code></ApiLink> creates regions on the loaded image with available <Link to="https://carta-protobuf.readthedocs.io/en/latest/enums.html#regiontype">region types</Link>.</p>
 
 ```javascript
 const regionSet = file.regionSet;
@@ -29,7 +31,7 @@ const region2 = await regionSet.addRegionAsync(1, [{x: [start x], y: [start y]},
 
 ## Changing region properties
 
-Properties of a region can be modified using the [`RegionStore`](/api/.-stores/class/RegionStore) object.
+Properties of a region can be modified using the <ApiLink path="/.-stores/class/RegionStore">`RegionStore`</ApiLink> object.
 
 ```javascript
 // ex: a rectangle region
@@ -40,7 +42,7 @@ region.setColor("#ffffff"); // Change the color to white
 
 ## Importing regions
 
-[`importRegion`](/api/.-stores/class/AppStore/#importRegion) imports regions to the active image with the provided path, filename, and [file type](https://carta-protobuf.readthedocs.io/en/latest/enums.html#filetype) enum.
+<p><ApiLink path="/.-stores/class/AppStore/#importRegion"><code>importRegion</code></ApiLink> imports regions to the active image with the provided path, filename, and <Link to="https://carta-protobuf.readthedocs.io/en/latest/enums.html#filetype">file type</Link> enum.</p>
 
 ```javascript
 await app.importRegion("[path]", "[filename]", 1); // File type: CRTF

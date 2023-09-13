@@ -6,7 +6,7 @@ sidebar_position: 7
 
 The process of fitting images with multiple Gaussians can be done using code snippets.
 
-The configuration for the fitting is accessible via [`ImageFittingStore`](/api/.-stores/class/ImageFittingStore). Example code:
+The configuration for the fitting is accessible via <ApiLink path="/.-stores/class/ImageFittingStore">`ImageFittingStore`</ApiLink>. Example code:
 
 ```javascript
 // Open an image

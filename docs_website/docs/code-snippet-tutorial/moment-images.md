@@ -6,7 +6,7 @@ sidebar_position: 5
 
 The process of generating moment images can be done using code snippets.
 
-The configuration for the generator is accessible via [`SpectralProfileWidgetStore`](/api/.-stores/class/SpectralProfileWidgetStore). Available moment types (as enum) can be found [here](https://carta-protobuf.readthedocs.io/en/latest/enums.html#moment). Example code:
+The configuration for the generator is accessible via <ApiLink path="/.-stores/class/SpectralProfileWidgetStore">`SpectralProfileWidgetStore`</ApiLink>. Available moment types (as enum) can be found [here](https://carta-protobuf.readthedocs.io/en/latest/enums.html#moment). Example code:
 
 ```javascript
 // Open an image
