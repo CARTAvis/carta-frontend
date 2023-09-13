@@ -33,7 +33,7 @@ console.log(app.frames[0]);
 console.log(app.activeFrame);
 ```
 
-<p><ApiLink path="/.-stores/class/AppStore/#openFile"><code>openFile</code></ApiLink> takes up to three arguments: directory, filename and HDU. If no HDU is provided, the first HDU ("0") is adopted. The directory and filename can also be combined into a single argument. <ApiLink path="/.-stores/class/AppStore/#openFile"><code>openFile</code></ApiLink> must be called with <code>await</code>, as it is an asynchronous function that requires communicating with the backend. In the following example, in the end we will see that only the last image is loaded as each <ApiLink path="/.-stores/class/AppStore/#openFile"><code>openFile</code></ApiLink> will close all loaded image first before loading the target image.</p>
+&#8203;<ApiLink path="/.-stores/class/AppStore/#openFile">`openFile`</ApiLink> takes up to three arguments: directory, filename and HDU. If no HDU is provided, the first HDU ("0") is adopted. The directory and filename can also be combined into a single argument. <ApiLink path="/.-stores/class/AppStore/#openFile">`openFile`</ApiLink> must be called with `await`, as it is an asynchronous function that requires communicating with the backend. In the following example, in the end we will see that only the last image is loaded as each <ApiLink path="/.-stores/class/AppStore/#openFile">`openFile`</ApiLink> will close all loaded image first before loading the target image.
 
 ```javascript
 await app.openFile("test_directory", "testfile.fits", "0");
@@ -59,20 +59,20 @@ app.setActiveFrame(file3);
 
 ## Closing images
 
-<p><ApiLink path="/.-stores/class/AppStore/#closeCurrentFile"><code>closeCurrentFile</code></ApiLink> closes the active image. There will be no user confirmation if the active image serves as the spatial reference image and there are other images matched to it.</p>
+&#8203;<ApiLink path="/.-stores/class/AppStore/#closeCurrentFile">`closeCurrentFile`</ApiLink> closes the active image. There will be no user confirmation if the active image serves as the spatial reference image and there are other images matched to it.
 
 ```javascript
 app.closeCurrentFile();
 ```
 
-<p><ApiLink path="/.-stores/class/AppStore/#closeFile"><code>closeFile</code></ApiLink> takes an optional boolean argument to control whether user confirmation is required if other images are matched to the given file. This defaults to true. <code>await</code> is required to delay execution until the user confirms.</p>
+&#8203;<ApiLink path="/.-stores/class/AppStore/#closeFile">`closeFile`</ApiLink> takes an optional boolean argument to control whether user confirmation is required if other images are matched to the given file. This defaults to true. `await` is required to delay execution until the user confirms.
 
 ```javascript
 await app.closeFile(file1);
 app.closeFile(file1, false); // No user confirmation
 ```
 
-<p><ApiLink path="/.-stores/class/AppStore/#closeOtherFiles"><code>closeOtherFiles</code></ApiLink> closes all images other than the given file.</p>
+&#8203;<ApiLink path="/.-stores/class/AppStore/#closeOtherFiles">`closeOtherFiles`</ApiLink> closes all images other than the given file.
 
 ```javascript
 app.closeOtherFiles(file2);

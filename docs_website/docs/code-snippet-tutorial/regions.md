@@ -21,7 +21,7 @@ console.log(file.regionSet.regions); // View all regions
 console.log(file.regionSet.selectedRegion); // View the selected region
 ```
 
-<p><ApiLink path="/.-stores/class/RegionSetStore/#addRegionAsync"><code>addRegionAsync</code></ApiLink> creates regions on the loaded image with available <Link to="https://carta-protobuf.readthedocs.io/en/latest/enums.html#regiontype">region types</Link>.</p>
+&#8203;<ApiLink path="/.-stores/class/RegionSetStore/#addRegionAsync">`addRegionAsync`</ApiLink> creates regions on the loaded image with available <Link to="https://carta-protobuf.readthedocs.io/en/latest/enums.html#regiontype">region types</Link>.
 
 ```javascript
 const regionSet = file.regionSet;
@@ -42,7 +42,7 @@ region.setColor("#ffffff"); // Change the color to white
 
 ## Importing regions
 
-<p><ApiLink path="/.-stores/class/AppStore/#importRegion"><code>importRegion</code></ApiLink> imports regions to the active image with the provided path, filename, and <Link to="https://carta-protobuf.readthedocs.io/en/latest/enums.html#filetype">file type</Link> enum.</p>
+&#8203;<ApiLink path="/.-stores/class/AppStore/#importRegion">`importRegion`</ApiLink> imports regions to the active image with the provided path, filename, and <Link to="https://carta-protobuf.readthedocs.io/en/latest/enums.html#filetype">file type</Link> enum.
 
 ```javascript
 await app.importRegion("[path]", "[filename]", 1); // File type: CRTF
