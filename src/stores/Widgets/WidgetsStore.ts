@@ -714,7 +714,7 @@ export class WidgetsStore {
             stack.on("activeContentItemChanged", (contentItem: any) => {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
                     const component = stack.getActiveContentItem().config.component;
-                    const stackHeaderControlButtons = stack.header.controlsContainer;
+                    const stackHeaderControlButtons = stack.header.controlsContainer[0];
 
                     // show/hide help button
                     $(stackHeaderControlButtons)
