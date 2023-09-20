@@ -132,6 +132,7 @@ export class FrameStore {
     public spectralCoordsSupported: Map<string, {type: SpectralType; unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
     public spatialTransformAST: AST.Mapping;
+    public spatialTransformFrameSet: AST.FrameSet;
     private cursorMovementHandle: NodeJS.Timeout;
 
     public distanceMeasuring: DistanceMeasuringStore;
@@ -2670,6 +2671,15 @@ export class FrameStore {
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
 
         this.spatialTransformAST = AST.getSpatialMapping(this.wcsInfo, frame.wcsInfo);
+
+        const copySrc = AST.copy(this.wcsInfo);
+        const copyDest = AST.copy(frame.wcsInfo);
+        AST.invert(copySrc);
+        AST.invert(copyDest);
+        this.spatialTransformFrameSet = AST.convert(copySrc, copyDest, "");
+        AST.deleteObject(copySrc);
+        AST.deleteObject(copyDest);
+
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
             this.spatialReference = null;
