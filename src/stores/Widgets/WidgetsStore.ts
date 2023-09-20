@@ -694,7 +694,6 @@ export class WidgetsStore {
         layout.registerComponent("catalog-plot", CatalogPlotComponent);
 
         const showCogWidgets = ["image-view", "spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes", "catalog-overlay", "layer-list"];
-        const hideHelpButtonWidgets = ["pv-preview"];
         // add drag source buttons for ToolbarMenuComponent
         this.CARTAWidgets.forEach((props, widgetType) => {
             const widgetButtonID = widgetType.replace(/\s+/g, "") + "Button";
@@ -714,12 +713,7 @@ export class WidgetsStore {
             stack.on("activeContentItemChanged", (contentItem: any) => {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
                     const component = stack.getActiveContentItem().config.component;
-                    const stackHeaderControlButtons = stack.header.controlsContainer;
-
-                    // show/hide help button
-                    $(stackHeaderControlButtons)
-                        ?.find("li.lm-help")
-                        ?.attr("style", hideHelpButtonWidgets.includes(component) ? "display:none;" : "");
+                    const stackHeaderControlButtons = stack.header.controlsContainer[0];
 
                     // show/hide cog button
                     $(stackHeaderControlButtons)
@@ -955,7 +949,6 @@ export class WidgetsStore {
             const config = item.config as GoldenLayout.ReactComponentConfig;
             const isCatalogTable = config.component === CatalogOverlayComponent.WIDGET_CONFIG.type;
             const isCatalogPlot = config.component === CatalogPlotComponent.WIDGET_CONFIG.type;
-            const isPvPreview = config.component === PvPreviewComponent.WIDGET_CONFIG.type;
             // Clean up removed widget's store (ignoring items that have been floated)
             const id = config.id as string;
             if (config.component !== "floated" && !isCatalogTable && !isCatalogPlot) {
@@ -971,13 +964,6 @@ export class WidgetsStore {
             // remove all catalog plots associated to current catalog plot widget
             if (isCatalogPlot) {
                 CatalogStore.Instance.clearCatalogPlotsByWidgetId(id);
-            }
-
-            // remove preview frame for current pv preview widget
-            if (isPvPreview) {
-                const regexPattern = /pv-generator-(\d+)/;
-                const pvGeneratorId = id.match(regexPattern);
-                this.pvGeneratorWidgets.get(pvGeneratorId[0])?.removePreviewFrame(parseInt(id.split("-")[2]));
             }
         }
     };
