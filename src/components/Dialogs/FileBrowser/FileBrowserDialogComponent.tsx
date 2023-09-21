@@ -158,14 +158,16 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         const activeFrame = appStore.activeFrame;
         const filename = fileBrowserStore.saveFilename.trim();
-        const channelStart = fileBrowserStore.saveSpectralRange ? activeFrame.findChannelIndexByValue(parseFloat(fileBrowserStore.saveSpectralRange[0])) : 0;
-        const channelEnd = fileBrowserStore.saveSpectralRange ? activeFrame.findChannelIndexByValue(parseFloat(fileBrowserStore.saveSpectralRange[1])) : activeFrame.numChannels - 1;
+
+        const nonStandardSpecSysIsChannel = activeFrame.spectralSystemsSupported.length === 0 && !fileBrowserStore.saveIsNativeValue;
+        const channelStart = fileBrowserStore.saveSpectralStart ? (nonStandardSpecSysIsChannel ? fileBrowserStore.saveSpectralStart : activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralStart)) : 0;
+        const channelEnd = fileBrowserStore.saveSpectralEnd ? (nonStandardSpecSysIsChannel ? fileBrowserStore.saveSpectralEnd : activeFrame.findChannelIndexByValue(fileBrowserStore.saveSpectralEnd)) : activeFrame.numChannels - 1;
 
         const saveChannelStart = Math.min(channelStart, channelEnd);
         const saveChannelEnd = Math.max(channelStart, channelEnd);
         let saveChannels = [];
         if (activeFrame.numChannels > 1) {
-            saveChannels = [Math.max(saveChannelStart, 0), Math.min(saveChannelEnd, activeFrame.numChannels - 1), 1];
+            saveChannels = [Math.max(saveChannelStart, 0), Math.min(saveChannelEnd, activeFrame.numChannels - 1), fileBrowserStore.saveSpectralStride];
         }
         const saveStokes = fileBrowserStore.saveStokesRange;
 
