@@ -9,3 +9,4 @@ export * from "./TelemetryService";
 export * from "./TileService";
 export * from "./TileWebGLService";
 export * from "./VectorOverlayWebGLService";
+export * from "./WorkspaceService";

@@ -114,6 +114,7 @@ export class FrameStore {
     private spectralTransformAST: AST.FrameSet;
     private cachedTransformedWcsInfo: AST.FrameSet = -1;
     private zoomTimeoutHandler;
+    private _replicatedId: string;
 
     private dirAxis: number;
     private dirAxisSize: number;
@@ -3027,4 +3028,12 @@ export class FrameStore {
     @action setFrameInfo = (frameInfo: FrameInfo) => {
         this.frameInfo = frameInfo;
     };
+
+    setReplicatedId = (replicatedId: string) => {
+        this._replicatedId = replicatedId;
+    };
+
+    get replicatedId() {
+        return this._replicatedId;
+    }
 }

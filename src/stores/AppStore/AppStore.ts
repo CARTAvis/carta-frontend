@@ -7,7 +7,9 @@ import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import * as Long from "long";
 import {action, autorun, computed, flow, makeObservable, observable, ObservableMap, when} from "mobx";
+import {BehaviorSubject, Subscription} from "rxjs";
 import * as Semver from "semver";
+import {v4 as uuidv4} from "uuid";
 
 import {getImageViewCanvas, ImageViewLayer, PvGeneratorComponent} from "components";
 import {AppToaster, ErrorToast, SuccessToast, WarningToast} from "components/Shared";
@@ -30,7 +32,7 @@ import {
     Workspace,
     WorkspaceFile
 } from "models";
-import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails} from "services";
+import {ApiService, BackendService, ConnectionStatus, ScriptingService, TelemetryAction, TelemetryService, TileService, TileStreamDetails, WorkspaceService} from "services";
 import {
     AlertStore,
     AnimationMode,
@@ -97,6 +99,7 @@ export class AppStore {
     readonly scriptingService: ScriptingService;
     readonly apiService: ApiService;
     readonly telemetryService: TelemetryService;
+    readonly workspaceService: WorkspaceService;
 
     // Other stores
     readonly alertStore: AlertStore;
@@ -125,6 +128,7 @@ export class AppStore {
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
     @observable activeWorkspace: Workspace;
+    @observable activeDocumentId: string;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -150,6 +154,7 @@ export class AppStore {
     private fileCounter = 0;
     private previousConnectionStatus: ConnectionStatus;
     private canvasUpdatedTimer;
+    private workspaceSubscription: Subscription;
 
     public getAppContainer = (): HTMLElement => {
         return this.appContainer;
@@ -226,6 +231,20 @@ export class AppStore {
             console.error(err);
         }
     };
+
+    @flow.bound
+    *setWorksapce(id: string) {
+        if (this.workspaceSubscription) {
+            this.workspaceSubscription.unsubscribe();
+        }
+        const workspaceObservable: BehaviorSubject<any> = yield this.workspaceService.setWorkspace(id);
+        if (workspaceObservable) {
+            this.activeDocumentId = id;
+            this.workspaceSubscription = workspaceObservable.subscribe(workspace => {
+                console.log(workspace.name);
+            });
+        }
+    }
 
     @flow.bound
     *loadDefaultFiles() {
@@ -629,7 +648,7 @@ export class AppStore {
      * @throws If there is an error loading the file.
      */
     @flow.bound
-    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true, updateStartingDirectory: boolean = true) {
+    *loadFile(path: string, filename: string, hdu: string, imageArithmetic: boolean, setAsActive: boolean = true, updateStartingDirectory: boolean = true, replicatedId?: string) {
         this.startFileLoading();
 
         if (imageArithmetic) {
@@ -672,7 +691,15 @@ export class AppStore {
             WidgetsStore.ResetWidgetPlotXYBounds(this.widgetsStore.stokesAnalysisWidgets);
             // Ensure loading finishes before next file is added
             yield this.delay(10);
-            return this.getFrame(ack.fileId);
+            const frame = this.getFrame(ack.fileId);
+            if (replicatedId) {
+                frame.setReplicatedId(replicatedId);
+            } else if (!replicatedId) {
+                replicatedId = uuidv4();
+                frame.setReplicatedId(replicatedId);
+                this.workspaceService.replicateOpenFile(replicatedId, ack.fileId, path, filename, hdu, this.frames.indexOf(frame));
+            }
+            return frame;
         } catch (err) {
             this.alertStore.showAlert(`Error loading file: ${err}`);
             this.endFileLoading();
@@ -778,10 +805,12 @@ export class AppStore {
     }
 
     @flow.bound
-    *closeFile(frame: FrameStore, confirmClose: boolean = true) {
+    *closeFile(frame: FrameStore, confirmClose: boolean = true, replicate = true) {
         if (!frame) {
             return;
         }
+
+        const replicatedId = frame.replicatedId;
         // Display confirmation if image has secondary images
         const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
         const numSecondaries = secondaries.length;
@@ -796,6 +825,10 @@ export class AppStore {
         }
 
         this.widgetsStore.updateImageWidgetTitle(this.layoutStore.dockedLayout);
+
+        if (replicate) {
+            this.workspaceService.replicateCloseFile(replicatedId);
+        }
     }
 
     /**
@@ -1332,7 +1365,8 @@ export class AppStore {
         }
     }
 
-    @flow.bound *requestPreviewPV(message: CARTA.IPvRequest, frame: FrameStore, id: string) {
+    @flow.bound
+    *requestPreviewPV(message: CARTA.IPvRequest, frame: FrameStore, id: string) {
         if (!message || !frame) {
             return;
         }
@@ -1696,6 +1730,7 @@ export class AppStore {
         this.scriptingService = ScriptingService.Instance;
         this.apiService = ApiService.Instance;
         this.telemetryService = TelemetryService.Instance;
+        this.workspaceService = WorkspaceService.Instance;
 
         // Assign lower level store instances
         this.alertStore = AlertStore.Instance;
@@ -1942,6 +1977,11 @@ export class AppStore {
         const authTokenParam = url.searchParams.get("token");
         if (authTokenParam) {
             this.apiService.setToken(authTokenParam);
+        }
+
+        const documentId = url.searchParams.get("documentId");
+        if (documentId) {
+            this.setWorksapce(documentId);
         }
 
         autorun(() => {
