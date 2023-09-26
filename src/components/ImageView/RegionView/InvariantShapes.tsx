@@ -1,4 +1,4 @@
-import {Group, Shape} from "react-konva";
+import {Group, Shape, Text} from "react-konva";
 import {CARTA} from "carta-protobuf";
 import Konva from "konva";
 
@@ -180,6 +180,7 @@ interface CursorMarkerProps {
     y: number;
     rotation: number;
     color: string;
+    label?: string;
 }
 
 export const CursorMarker = (props: CursorMarkerProps) => {
@@ -202,6 +203,7 @@ export const CursorMarker = (props: CursorMarkerProps) => {
 
     return (
         <Group x={props.x} y={props.y} rotation={-props.rotation}>
+            {props.label && <Text listening={false} strokeScaleEnabled={true} x={CURSOR_CROSS_CENTER_SQUARE} y={CURSOR_CROSS_CENTER_SQUARE} text={props.label} fontSize={CURSOR_CROSS_CENTER_SQUARE * 2} fill={props.color} />}
             <Shape listening={false} strokeScaleEnabled={false} strokeWidth={1} stroke={"black"} sceneFunc={handleSquareDraw} />
             <Shape listening={false} strokeScaleEnabled={false} fill={props.color} strokeWidth={1} stroke={"black"} sceneFunc={handleCrossDraw} />
         </Group>

@@ -1928,6 +1928,9 @@ export class AppStore {
         autorun(() => {
             const pos = this.hoveredFrame?.cursorInfo?.posImageSpace;
             if (pos) {
+                if (this.hoveredFrame) {
+                    this.workspaceService.setPresenceCursor(this.hoveredFrame.replicatedId, pos.x, pos.y);
+                }
                 if (this.preferenceStore.lowBandwidthMode) {
                     throttledSetCursorLowBandwidth(this.hoveredFrame.frameInfo.fileId, pos);
                 } else if (this.hoveredFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
@@ -1935,6 +1938,8 @@ export class AppStore {
                 } else {
                     throttledSetCursor(this.hoveredFrame.frameInfo.fileId, pos);
                 }
+            } else {
+                this.workspaceService.clearPresenceCursor();
             }
         });
 
@@ -1999,6 +2004,16 @@ export class AppStore {
         autorun(() => {
             this.activateStatsPanel(this.preferenceStore.statsPanelEnabled);
         });
+
+        // autorun(()=> {
+        //     const otherUsers = this.workspaceService.presentUsers?.filter(u=>u.id !== this.workspaceService.userId) ?? [];
+        //     for (const userPresence of otherUsers) {
+        //         const frame = userPresence.cursor?.id ? this.getFrame(userPresence.cursor?.id);
+        //         if (frame) {
+        //             frame.regionSet.
+        //         }
+        //     }
+        // })
     }
 
     // region Subscription handlers

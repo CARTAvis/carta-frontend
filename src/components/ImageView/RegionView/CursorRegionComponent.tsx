@@ -4,6 +4,8 @@ import {observer} from "mobx-react";
 import {AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
+import {UserPresence} from "../../../services";
+
 import {CursorMarker} from "./InvariantShapes";
 import {transformedImageToCanvasPos} from "./shared";
 
@@ -32,3 +34,19 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
         return null;
     }
 }
+
+export const PresenceCursor = observer(({presence, width, height, stageRef}: {presence: UserPresence; width: number; height: number; stageRef: any}) => {
+    const appStore = AppStore.Instance;
+    const frame = appStore.frames?.find(f => f.replicatedId === presence.cursor?.id);
+    if (!frame || !stageRef || !presence.cursor) {
+        return null;
+    }
+    const posImageSpace = {x: presence.cursor.x, y: presence.cursor.y};
+
+    if (!posImageSpace) {
+        return null;
+    }
+    const rotation = frame.spatialReference ? (frame.spatialTransform.rotation * 180.0) / Math.PI : 0.0;
+    const cursorCanvasSpace = transformedImageToCanvasPos(posImageSpace, frame, width, height, stageRef.current);
+    return isFinite(cursorCanvasSpace.x) && isFinite(cursorCanvasSpace.y) && <CursorMarker x={cursorCanvasSpace.x} y={cursorCanvasSpace.y} rotation={-rotation} color={presence.color ?? "white"} label={presence.name} />;
+});
