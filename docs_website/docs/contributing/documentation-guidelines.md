@@ -43,7 +43,7 @@ Please note that the search feature is only available in production builds.
 
 The "Docs" pages and the "API/Overview" page are generated from markdown files in the `docs/` and `api/` directories. Simply edit these directories to modify the content or add new pages.
 
-For links to the "API" subpages, it is required to use the `ApiLink` MDX component to ensure the corresponding version is linked. If the file contains MDX components, it is recommended to use the `.mdx` extension.
+For links to the "Docs" index pages and "API" subpages, it is required to use the `DocsIndexLink` and `ApiLink` MDX components to ensure the corresponding version is linked. If the file contains MDX components, it is recommended to use the `.mdx` extension.
 
 :::note
 

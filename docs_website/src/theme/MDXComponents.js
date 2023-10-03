@@ -1,8 +1,9 @@
 import React from "react";
 import MDXComponents from "@theme-original/MDXComponents";
-import ApiLink from "@site/src/components/ApiLink";
+import {ApiLink, DocsIndexLink} from "@site/src/components/VersionedLink";
 
 export default {
     ...MDXComponents,
-    ApiLink
+    ApiLink,
+    DocsIndexLink
 };
