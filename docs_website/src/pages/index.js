@@ -6,31 +6,17 @@ import Layout from "@theme/Layout";
 
 import styles from "./index.module.css";
 
-const versions = require("../../versions.json");
-
 function HomepageHeader() {
     const {siteConfig} = useDocusaurusContext();
-
-    const versionLink = document.querySelector(".navbar__item.dropdown.dropdown--hoverable.dropdown--right .navbar__link");
-    const currentVersion = versionLink?.textContent;
-    let version = "";
-    if (currentVersion) {
-        if (currentVersion === "Next") {
-            version = "/next";
-        } else if (currentVersion !== versions?.[0]) {
-            version = "/" + currentVersion;
-        }
-    }
-
     return (
         <header className={clsx("hero hero--secondary", styles.heroBanner)}>
             <div className="container">
                 <h1 className={clsx("hero__title", styles.heroTitle)}>{siteConfig.tagline}</h1>
                 <div className={styles.buttons}>
-                    <Link className="button button--primary button--lg" to={"/docs" + version}>
+                    <Link className="button button--primary button--lg" to="/docs">
                         Documents
                     </Link>
-                    <Link className="button button--primary button--lg" to={"/api" + version}>
+                    <Link className="button button--primary button--lg" to="/api">
                         Frontend API
                     </Link>
                 </div>
