@@ -56,6 +56,7 @@ export class BackendService {
     }
 
     private static readonly IcdVersion = 28;
+    private static readonly FrontendVersion = "4.0.0";
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     private static readonly MaxConnectionAttempts = 15;
     private static readonly ConnectionAttemptDelay = 1000;
@@ -211,7 +212,7 @@ export class BackendService {
                 this.connectionDropped = true;
             }
             this.connectionStatus = ConnectionStatus.ACTIVE;
-            const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+            const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, version: BackendService.FrontendVersion, clientFeatureFlags: BackendService.DefaultFeatureFlags});
             // observer map is cleared, so that old subscriptions don't get incorrectly fired
 
             this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
@@ -229,6 +230,10 @@ export class BackendService {
         };
 
         return await deferredResponse.promise;
+    }
+
+    disconnect() {
+        this.connection.close();
     }
 
     sendPing = () => {

@@ -224,6 +224,8 @@ export class AppStore {
             this.logStore.addInfo(`Connected to server ${wsURL} with session ID ${ack.sessionId}`, ["network"]);
         } catch (err) {
             console.error(err);
+            AppToaster.show(ErrorToast(`${err}`));
+            this.backendService.disconnect();
         }
     };
 
@@ -2245,6 +2247,8 @@ export class AppStore {
         } catch (err) {
             this.telemetryService.addTelemetryEntry(TelemetryAction.RetryConnection, {status: "failed"});
             console.log(err);
+            AppToaster.show(ErrorToast(`${err}`));
+            this.backendService.disconnect();
         }
     };
 
