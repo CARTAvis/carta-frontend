@@ -78,7 +78,7 @@ If you wish to modify or develop the CARTA frontend, you may build a production 
 
 The build process relies heavily on `npm` and `nodejs`, so make sure they are installed and accessible.
 
-We recommend using [Docker](https://www.docker.com) or [Singularity](https://singularity.lbl.gov/index.html) to perform WebAssembly compilation. If neither is available, the Emscripten compiler (`emcc` version 2.0.14 recommended) needs to be available in the build environment. Installation instructions are available on the [Emscripten homepage](https://emscripten.org/docs/getting_started/downloads.html).
+We recommend using [Docker](https://www.docker.com) or [Singularity](https://apptainer.org/docs/) to perform WebAssembly compilation. If neither is available, the Emscripten compiler (`emcc` version 2.0.14 recommended) needs to be available in the build environment. Installation instructions are available on the [Emscripten homepage](https://emscripten.org/docs/getting_started/downloads.html).
 
 ### Build process (using Docker/Singularity)
 Initialise submodules and install package dependencies:
