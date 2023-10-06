@@ -433,7 +433,7 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
 }
 
 //xin and yin needs to be transformed
-EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[], double yin[], double out[])
+EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, AstMapping* mapping, int npoint, double xin[], double yin[], double out[])
 {
     if (!wcsinfo)
     {
@@ -444,7 +444,9 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
     double start[] = {xin[0], yin[0]};
     double finish[] = {xin[1], yin[1]};
 
-    double dist = astDistance(wcsinfo, start, finish);
+    AstFrame* frame = static_cast<AstFrame*>astGetFrame(wcsinfo, AST__BASE);
+
+    double dist = astDistance(frame, start, finish);
     double discreteDist = dist/npoint;
     double output[2];
 
@@ -455,12 +457,12 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
     
     for(int i = 0; i < npoint; i++) {
         double distance = discreteDist * i;
-        astOffset(wcsinfo, start, finish, distance, output);
+        astOffset(frame, start, finish, distance, output);
         xout[i] = output[0];
         yout[i] = output[1];
     }
 
-    astTran2(wcsinfo, npoint, xout, yout, 0, xOut, yOut);
+    astTran2(mapping, npoint, xout, yout, 0, xOut, yOut);
 
     for(int i = 0; i < npoint; i++) {
          out[i * 2] = xOut[i];

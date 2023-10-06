@@ -229,8 +229,9 @@ Module.transform3DPointArrays = function (wcsInfo: number, xIn: Float64Array, yI
     return result;
 };
 
-Module.getGeodesicPointArray = function (wcsInfo: number, npoint: number, start: {x: number, y: number}, finish: {x: number, y: number}) {
+Module.getGeodesicPointArray = function (wcsInfo: number, mapping: number, npoint: number, start: {x: number, y: number}, finish: {x: number, y: number}) {
     // Return empty array if arguments are invalid
+
     const yIn = new Float64Array([start.y, finish.y]);
     const xIn = new Float64Array([start.x, finish.x]);
 
@@ -246,7 +247,7 @@ Module.getGeodesicPointArray = function (wcsInfo: number, npoint: number, start:
     Module.HEAPF64.set(xIn, xInPtr / 8);
     Module.HEAPF64.set(yIn, yInPtr / 8);
     // Perform the AST transform
-    Module.pointList(wcsInfo, npoint, xInPtr, yInPtr, outPtr);
+    Module.pointList(wcsInfo, mapping, npoint, xInPtr, yInPtr, outPtr);
 
     // Copy result out to an object
     const out = new Float64Array(Module.HEAPF64.buffer, outPtr, npoint * 2);
