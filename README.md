@@ -84,7 +84,7 @@ We recommend using [Docker](https://www.docker.com) or [Singularity](https://sin
 Initialise submodules and install package dependencies:
 ```
 git submodule update --init --recursive
-npm install
+npm install --legacy-peer-deps
 ```
 WebAssembly libraries can be built with `npm run build-libs-docker` or `npm run build-libs-singularity`.
 Additional build steps (building WebAssembly wrappers, protocol buffer modules and compiling the Typescript code) are performed by `npm run build-docker` or `npm run build-singularity`. This produces a production build in the `build` folder.
@@ -97,7 +97,7 @@ If your build environment does not have access to Docker or Singularity, WebAsse
 Initialise submodules and install package dependencies:
 ```
 git submodule update --init --recursive
-npm install
+npm install --legacy-peer-deps
 ```
 
 WebAssembly libraries can be built with `npm run build-libs`.
