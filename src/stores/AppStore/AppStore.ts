@@ -233,7 +233,7 @@ export class AppStore {
     };
 
     @flow.bound
-    *setWorksapce(id: string) {
+    *setWorkspace(id: string) {
         if (this.workspaceSubscription) {
             this.workspaceSubscription.unsubscribe();
         }
@@ -1986,7 +1986,7 @@ export class AppStore {
 
         const documentId = url.searchParams.get("documentId");
         if (documentId) {
-            this.setWorksapce(documentId);
+            this.setWorkspace(documentId);
         }
 
         autorun(() => {
@@ -2564,6 +2564,7 @@ export class AppStore {
 
             const workspaceFile: WorkspaceFile = {
                 id: frame.frameInfo.fileId,
+                replicatedId: frame.replicatedId,
                 directory: frame.frameInfo.directory,
                 filename: frame.filename,
                 hdu: frame.frameInfo.hdu,

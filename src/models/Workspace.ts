@@ -76,6 +76,7 @@ export interface WorkspaceRegion {
 
 export interface WorkspaceFile {
     id: number;
+    replicatedId?: string;
     directory?: string;
     filename: string;
     hdu?: string;

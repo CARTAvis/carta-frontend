@@ -57,7 +57,7 @@ export class WorkspaceService {
                     const existingFile = appStore.frames.find(f => f.replicatedId === key);
                     if (!existingFile) {
                         // Open file without replication
-                        await appStore.loadFile(newFile.path, newFile.filename, newFile.hdu, false, false, false, key);
+                        await appStore.loadFile(newFile.directory, newFile.filename, newFile.hdu, false, false, false, key);
                     }
                 } else {
                     console.log(`File ${key} closed`);
@@ -72,18 +72,26 @@ export class WorkspaceService {
     }
 
     public setPresenceCursor(id: string, x: number, y: number) {
-        this.provider.awareness.setLocalStateField("cursor", {id, x, y});
+        this.provider?.awareness?.setLocalStateField("cursor", {id, x, y});
     }
 
     public clearPresenceCursor() {
-        this.provider.awareness.setLocalStateField("cursor", undefined);
+        this.provider?.awareness?.setLocalStateField("cursor", undefined);
     }
 
-    public replicateOpenFile(id: string, fileId: string, path: string, filename: string, hdu: string, orderIndex: number) {
-        this.workspaceDoc.getMap("files").set(id, {fileId, path, filename, hdu, orderIndex});
+    public replicateOpenFile(id: string, fileId: number, directory: string, filename: string, hdu: string, orderIndex: number) {
+        if (!this.workspaceDoc.getMap("files")) {
+            return false;
+        }
+        this.workspaceDoc.getMap("files").set(id, {fileId, directory, filename, hdu, orderIndex});
+        return true;
     }
 
     public replicateCloseFile(id: string) {
+        if (!this.workspaceDoc.getMap("files")) {
+            return false;
+        }
         this.workspaceDoc.getMap("files").delete(id);
+        return true;
     }
 }
