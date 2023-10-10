@@ -32,7 +32,8 @@ export class WorkspaceService {
 
     public async setWorkspace(id: string) {
         this.workspaceDoc = new Y.Doc();
-        this.provider = new WebsocketProvider("ws://localhost:1234", id, this.workspaceDoc);
+        const token = AppStore.Instance.apiService.accessToken;
+        this.provider = new WebsocketProvider("wss://www.veggiesaurus.net/workspaces/api/collaboration", id, this.workspaceDoc, {params: {token}});
         const userNum = Math.floor(Math.random() * 1000);
         this.userId = uuidv4();
         this.provider.awareness.setLocalStateField("user", {

@@ -2652,6 +2652,10 @@ export class AppStore {
         const savedWorkspace = yield this.apiService.setWorkspace(name, workspace);
         if (savedWorkspace) {
             this.activeWorkspace = savedWorkspace;
+            const docId = savedWorkspace.id;
+            if (docId) {
+                this.workspaceService.setWorkspace(docId).then(() => {});
+            }
             return true;
         }
         return false;
