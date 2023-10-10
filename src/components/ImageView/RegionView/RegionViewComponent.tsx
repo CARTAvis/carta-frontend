@@ -747,7 +747,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             cursor = "default";
         }
 
-        const userPresence = AppStore.Instance.workspaceService.presentUsers.filter(u => u.id !== AppStore.Instance.workspaceService.userId && u.cursor?.id === frame.replicatedId);
+        const userPresence = AppStore.Instance.workspaceService.presentUsers?.filter(u => u.id !== AppStore.Instance.workspaceService.userId && u.cursor?.id === frame.replicatedId);
 
         return (
             <div onKeyDown={this.onKeyDown} tabIndex={0}>
@@ -773,7 +773,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     <Layer ref={this.layerRef} opacity={regionSet.locked ? 0.7 * regionSet.opacity : regionSet.opacity} listening={!regionSet.locked}>
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsAndAnnotationsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
-                        {userPresence.map(u => (
+                        {userPresence?.map(u => (
                             <PresenceCursor key={u.id} presence={u} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         ))}
                         {creatingLine}

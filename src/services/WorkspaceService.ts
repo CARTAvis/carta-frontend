@@ -80,7 +80,7 @@ export class WorkspaceService {
     }
 
     public replicateOpenFile(id: string, fileId: number, directory: string, filename: string, hdu: string, orderIndex: number) {
-        if (!this.workspaceDoc.getMap("files")) {
+        if (!this.workspaceDoc?.getMap("files")) {
             return false;
         }
         this.workspaceDoc.getMap("files").set(id, {fileId, directory, filename, hdu, orderIndex});
@@ -88,7 +88,7 @@ export class WorkspaceService {
     }
 
     public replicateCloseFile(id: string) {
-        if (!this.workspaceDoc.getMap("files")) {
+        if (!this.workspaceDoc?.getMap("files")) {
             return false;
         }
         this.workspaceDoc.getMap("files").delete(id);
