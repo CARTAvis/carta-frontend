@@ -45,10 +45,10 @@ export class WorkspaceService {
             this.presentUsers = Array.from(this.provider.awareness.getStates().values()).map(({user, cursor}) => ({...user, cursor})) ?? [];
         });
 
-        this.workspaceDoc.getMap("files").observe(event => {
+        this.workspaceDoc.getMap("files").observe(async event => {
             const fileMap = this.workspaceDoc.getMap("files").toJSON();
 
-            event.keysChanged.forEach(async key => {
+            for (const key of event.keysChanged) {
                 const appStore = AppStore.Instance;
 
                 if (fileMap[key]) {
@@ -68,7 +68,7 @@ export class WorkspaceService {
                         await appStore.closeFile(existingFile, false, false);
                     }
                 }
-            });
+            }
         });
     }
 

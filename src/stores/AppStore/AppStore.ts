@@ -2411,111 +2411,114 @@ export class AppStore {
             this.tileService.clearRequestQueue();
             this.removeAllFrames();
 
-            // Maps workspace file ID to new session's file ID
-            const frameIdMap = new Map<number, number>();
-            // Maps workspace region ID to new session's region ID
-            const regionIdMap = new Map<number, number>();
+            yield this.workspaceService.setWorkspace(workspace.id);
 
-            if (workspace.files) {
-                for (const fileInfo of workspace.files) {
-                    const frame: FrameStore = yield this.appendFile(fileInfo.directory, fileInfo.filename, fileInfo.hdu, false, false);
-                    if (frame) {
-                        frameIdMap.set(fileInfo.id, frame.frameInfo.fileId);
-
-                        // Channel/Stokes
-                        frame.setChannels(fileInfo.channel ?? 0, fileInfo.stokes ?? 0, false);
-
-                        // References
-                        if (workspace.references?.spatial === fileInfo.id) {
-                            this.setSpatialReference(frame);
-                        }
-                        if (workspace.references?.spectral === fileInfo.id) {
-                            this.setSpectralReference(frame);
-                        }
-                        if (workspace.references?.raster === fileInfo.id) {
-                            this.setRasterScalingReference(frame);
-                        }
-                    }
-                }
-
-                for (const fileInfo of workspace.files) {
-                    if (!frameIdMap.has(fileInfo.id)) {
-                        continue;
-                    }
-
-                    const frame = this.frameMap.get(frameIdMap.get(fileInfo.id));
-                    if (!frame) {
-                        continue;
-                    }
-
-                    if (workspace.selectedFile === frame.frameInfo.fileId) {
-                        this.setActiveFrame(frame);
-                    }
-
-                    if (fileInfo.renderConfig) {
-                        frame.renderConfig.updateFromWorkspace(fileInfo.renderConfig);
-                    }
-
-                    if (workspace.references && fileInfo.references) {
-                        if (this.spatialReference && fileInfo.references.spatial === workspace.references.spatial) {
-                            this.setSpatialMatchingEnabled(frame, true);
-                        }
-                        if (this.spectralReference && fileInfo.references.spectral === workspace.references.spectral) {
-                            this.setSpectralMatchingEnabled(frame, true);
-                        }
-                        if (this.rasterScalingReference && fileInfo.references.raster === workspace.references.raster) {
-                            this.setRasterScalingMatchingEnabled(frame, true);
-                        }
-                    }
-
-                    if (fileInfo.contourConfig) {
-                        frame.contourConfig.updateFromWorkspace(fileInfo.contourConfig);
-                        frame.applyContours();
-                    }
-                    if (fileInfo.vectorOverlayConfig) {
-                        frame.vectorOverlayConfig.updateFromWorkspace(fileInfo.vectorOverlayConfig);
-                        frame.applyVectorOverlay();
-                    }
-
-                    // Set pan/zoom parameters
-                    if (fileInfo.center) {
-                        frame.center = fileInfo.center;
-                    }
-                    if (fileInfo.zoomLevel) {
-                        frame.zoomLevel = fileInfo.zoomLevel;
-                    }
-
-                    // Apply regions if spatial matching isn't enabled
-                    if (!frame.spatialReference && fileInfo.regionsSet?.regions) {
-                        for (const regionInfo of fileInfo.regionsSet.regions) {
-                            const region = frame.regionSet.addExistingRegion(
-                                regionInfo.points,
-                                regionInfo.rotation,
-                                regionInfo.type,
-                                regionInfo.id,
-                                regionInfo.name,
-                                regionInfo.color,
-                                regionInfo.lineWidth,
-                                regionInfo.dashes,
-                                false,
-                                regionInfo.annotationStyles
-                            );
-                            if (region) {
-                                region.setLocked(regionInfo.locked ?? false);
-                                regionIdMap.set(regionInfo.id, region.regionId);
-                                if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
-                                    frame.regionSet.selectRegion(region);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Sync up raster scaling once all images are loaded and configured
-            if (this.rasterScalingReference) {
-                this.rasterScalingReference.renderConfig.updateSiblings();
-            }
+            // Temporarily disable this, workspaces will be delivered via the state instead
+            // // Maps workspace file ID to new session's file ID
+            // const frameIdMap = new Map<number, number>();
+            // // Maps workspace region ID to new session's region ID
+            // const regionIdMap = new Map<number, number>();
+            //
+            // if (workspace.files) {
+            //     for (const fileInfo of workspace.files) {
+            //         const frame: FrameStore = yield this.appendFile(fileInfo.directory, fileInfo.filename, fileInfo.hdu, false, false);
+            //         if (frame) {
+            //             frameIdMap.set(fileInfo.id, frame.frameInfo.fileId);
+            //
+            //             // Channel/Stokes
+            //             frame.setChannels(fileInfo.channel ?? 0, fileInfo.stokes ?? 0, false);
+            //
+            //             // References
+            //             if (workspace.references?.spatial === fileInfo.id) {
+            //                 this.setSpatialReference(frame);
+            //             }
+            //             if (workspace.references?.spectral === fileInfo.id) {
+            //                 this.setSpectralReference(frame);
+            //             }
+            //             if (workspace.references?.raster === fileInfo.id) {
+            //                 this.setRasterScalingReference(frame);
+            //             }
+            //         }
+            //     }
+            //
+            //     for (const fileInfo of workspace.files) {
+            //         if (!frameIdMap.has(fileInfo.id)) {
+            //             continue;
+            //         }
+            //
+            //         const frame = this.frameMap.get(frameIdMap.get(fileInfo.id));
+            //         if (!frame) {
+            //             continue;
+            //         }
+            //
+            //         if (workspace.selectedFile === frame.frameInfo.fileId) {
+            //             this.setActiveFrame(frame);
+            //         }
+            //
+            //         if (fileInfo.renderConfig) {
+            //             frame.renderConfig.updateFromWorkspace(fileInfo.renderConfig);
+            //         }
+            //
+            //         if (workspace.references && fileInfo.references) {
+            //             if (this.spatialReference && fileInfo.references.spatial === workspace.references.spatial) {
+            //                 this.setSpatialMatchingEnabled(frame, true);
+            //             }
+            //             if (this.spectralReference && fileInfo.references.spectral === workspace.references.spectral) {
+            //                 this.setSpectralMatchingEnabled(frame, true);
+            //             }
+            //             if (this.rasterScalingReference && fileInfo.references.raster === workspace.references.raster) {
+            //                 this.setRasterScalingMatchingEnabled(frame, true);
+            //             }
+            //         }
+            //
+            //         if (fileInfo.contourConfig) {
+            //             frame.contourConfig.updateFromWorkspace(fileInfo.contourConfig);
+            //             frame.applyContours();
+            //         }
+            //         if (fileInfo.vectorOverlayConfig) {
+            //             frame.vectorOverlayConfig.updateFromWorkspace(fileInfo.vectorOverlayConfig);
+            //             frame.applyVectorOverlay();
+            //         }
+            //
+            //         // Set pan/zoom parameters
+            //         if (fileInfo.center) {
+            //             frame.center = fileInfo.center;
+            //         }
+            //         if (fileInfo.zoomLevel) {
+            //             frame.zoomLevel = fileInfo.zoomLevel;
+            //         }
+            //
+            //         // Apply regions if spatial matching isn't enabled
+            //         if (!frame.spatialReference && fileInfo.regionsSet?.regions) {
+            //             for (const regionInfo of fileInfo.regionsSet.regions) {
+            //                 const region = frame.regionSet.addExistingRegion(
+            //                     regionInfo.points,
+            //                     regionInfo.rotation,
+            //                     regionInfo.type,
+            //                     regionInfo.id,
+            //                     regionInfo.name,
+            //                     regionInfo.color,
+            //                     regionInfo.lineWidth,
+            //                     regionInfo.dashes,
+            //                     false,
+            //                     regionInfo.annotationStyles
+            //                 );
+            //                 if (region) {
+            //                     region.setLocked(regionInfo.locked ?? false);
+            //                     regionIdMap.set(regionInfo.id, region.regionId);
+            //                     if (fileInfo.regionsSet.selectedRegion === regionInfo.id) {
+            //                         frame.regionSet.selectRegion(region);
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+            //
+            // // Sync up raster scaling once all images are loaded and configured
+            // if (this.rasterScalingReference) {
+            //     this.rasterScalingReference.renderConfig.updateSiblings();
+            // }
 
             this.loadingWorkspace = false;
             this.activeWorkspace = workspace;
@@ -2654,7 +2657,12 @@ export class AppStore {
             this.activeWorkspace = savedWorkspace;
             const docId = savedWorkspace.id;
             if (docId) {
-                this.workspaceService.setWorkspace(docId).then(() => {});
+                this.workspaceService.setWorkspace(docId).then(() => {
+                    // update document with initial content
+                    for (const frame of this.frames) {
+                        this.workspaceService.replicateOpenFile(frame.replicatedId, frame.frameInfo.fileId, frame.frameInfo.directory, frame.filename, frame.frameInfo.hdu, this.frames.indexOf(frame));
+                    }
+                });
             }
             return true;
         }
