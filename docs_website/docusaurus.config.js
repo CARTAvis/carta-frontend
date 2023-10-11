@@ -22,7 +22,7 @@ const apiOnClick = `
 `;
 
 const apiButton = `
-    <a class="navbar__link api_link" onclick="${apiOnClick}">API</a>
+    <a class="navbar__link menu__link api_link" onclick="${apiOnClick}">API</a>
 `;
 
 /** @type {import('@docusaurus/types').Config} */

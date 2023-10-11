@@ -34,3 +34,11 @@
 .api_link {
     cursor: pointer;
 }
+
+.navbar__items .api_link {
+    padding: 0;
+}
+
+.menu__list .api_link {
+    color: var(--ifm-menu-color);
+}
