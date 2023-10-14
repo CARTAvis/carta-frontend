@@ -201,6 +201,7 @@
     "dependencies": {
         "patch-package": "^6.5.1",
         "react-scripts": "^5.0.1",
+        "react-virtualized": "^9.22.5",
         "usehooks-ts": "^2.9.1"
     }
 }

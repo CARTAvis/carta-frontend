@@ -1,7 +1,8 @@
 import * as React from "react";
+import {AutoSizer, List, WindowScroller} from 'react-virtualized';
 import {Checkbox, Icon, IconName} from "@blueprintjs/core";
 import {computed, makeObservable} from "mobx";
-import {observer} from "mobx-react";
+import {Observer, observer} from "mobx-react";
 
 import {CustomIcon, CustomIconName} from "icons/CustomIcons";
 import {FileBrowserStore, SelectionMode} from "stores";
@@ -10,6 +11,8 @@ import "./RegionSelectComponent.scss";
 
 @observer
 export class RegionSelectComponent extends React.Component {
+    private reference: HTMLDivElement;
+
     @computed private get isSelectAll(): boolean {
         const fileBrowserStore = FileBrowserStore.Instance;
         return fileBrowserStore.exportRegionNum === fileBrowserStore.regionOptionNum && fileBrowserStore.regionOptionNum > 0;
@@ -113,23 +116,56 @@ export class RegionSelectComponent extends React.Component {
         );
     };
 
-    private renderRegionOptions = () => {
+    private renderRegionOptions = ({index, key, style}: {index: number, key: string, style: React.CSSProperties}) => {
         const fileBrowserStore = FileBrowserStore.Instance;
-        return fileBrowserStore.exportRegionOptions.map(item => (
-            <Checkbox
-                key={item.value}
-                checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
-                labelElement={
-                    <React.Fragment>
-                        {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
-                        <span>&ensp;</span>
-                        {item.active ? <b>{item.label} (Active)</b> : item.label}
-                    </React.Fragment>
+        const item = fileBrowserStore.exportRegionOptions[index];
+        return (
+            <Observer>
+                {
+                    () => (
+                        <Checkbox
+                            key={key}
+                            style={style}
+                            checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
+                            labelElement={
+                                <React.Fragment>
+                                    {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
+                                    <span>&ensp;</span>
+                                    {item.active ? <b>{item.label} (Active)</b> : item.label}
+                                </React.Fragment>
+                            }
+                            onChange={() => this.handleSelectRegionChanged(item.value as number)}
+                        />
+                    )
                 }
-                onChange={() => this.handleSelectRegionChanged(item.value as number)}
-            />
-        ));
+            </Observer>
+        );
     };
+
+    private renderVirtualizedRegions = () => {
+        const fileBrowserStore = FileBrowserStore.Instance;
+        return (
+            <WindowScroller scrollElement={this.reference}>
+                {({ height, isScrolling, scrollTop }) => (
+                    <AutoSizer disableHeight>
+                        {({width}) => (
+                            <List
+                                autoHeight
+                                isScrolling={isScrolling}
+                                width={width}
+                                height={height}
+                                rowHeight={28}
+                                rowRenderer={this.renderRegionOptions}
+                                scrollTop={scrollTop}
+                                rowCount={fileBrowserStore.exportRegionOptions.length}
+                                overscanRowCount={5}
+                            />)
+                        }
+                    </AutoSizer>
+                )}
+            </WindowScroller>
+        )
+    }
 
     render() {
         const optionNum = FileBrowserStore.Instance.regionOptionNum;
@@ -139,14 +175,14 @@ export class RegionSelectComponent extends React.Component {
         const regionNum = optionNum - annotationNum;
 
         return (
-            <div className="select-region">
+            <div ref={ref => this.reference = ref} className="select-region">
                 {optionNum > 0 ? (
                     <React.Fragment>
                         {this.renderSelectStatus()}
                         {optionNum > 1 && this.renderSelectAll(SelectionMode.All)}
                         {includesRegion && includesAnnotation && regionNum > 1 && this.renderSelectAll(SelectionMode.Region)}
                         {includesAnnotation && includesRegion && annotationNum > 1 && this.renderSelectAll(SelectionMode.Annotation)}
-                        {this.renderRegionOptions()}
+                        {this.renderVirtualizedRegions()}
                     </React.Fragment>
                 ) : (
                     <pre className="select-status">No regions in the active image.</pre>
