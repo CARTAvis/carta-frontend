@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AutoSizer, List, WindowScroller} from 'react-virtualized';
+import {AutoSizer, List, WindowScroller} from "react-virtualized";
 import {Checkbox, Icon, IconName} from "@blueprintjs/core";
 import {computed, makeObservable} from "mobx";
 import {Observer, observer} from "mobx-react";
@@ -116,28 +116,26 @@ export class RegionSelectComponent extends React.Component {
         );
     };
 
-    private renderRegionOptions = ({index, key, style}: {index: number, key: string, style: React.CSSProperties}) => {
+    private renderRegionOptions = ({index, key, style}: {index: number; key: string; style: React.CSSProperties}) => {
         const fileBrowserStore = FileBrowserStore.Instance;
         const item = fileBrowserStore.exportRegionOptions[index];
         return (
             <Observer>
-                {
-                    () => (
-                        <Checkbox
-                            key={key}
-                            style={style}
-                            checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
-                            labelElement={
-                                <React.Fragment>
-                                    {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
-                                    <span>&ensp;</span>
-                                    {item.active ? <b>{item.label} (Active)</b> : item.label}
-                                </React.Fragment>
-                            }
-                            onChange={() => this.handleSelectRegionChanged(item.value as number)}
-                        />
-                    )
-                }
+                {() => (
+                    <Checkbox
+                        key={key}
+                        style={style}
+                        checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
+                        labelElement={
+                            <React.Fragment>
+                                {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
+                                <span>&ensp;</span>
+                                {item.active ? <b>{item.label} (Active)</b> : item.label}
+                            </React.Fragment>
+                        }
+                        onChange={() => this.handleSelectRegionChanged(item.value as number)}
+                    />
+                )}
             </Observer>
         );
     };
@@ -146,7 +144,7 @@ export class RegionSelectComponent extends React.Component {
         const fileBrowserStore = FileBrowserStore.Instance;
         return (
             <WindowScroller scrollElement={this.reference}>
-                {({ height, isScrolling, scrollTop }) => (
+                {({height, isScrolling, scrollTop}) => (
                     <AutoSizer disableHeight>
                         {({width}) => (
                             <List
@@ -159,13 +157,13 @@ export class RegionSelectComponent extends React.Component {
                                 scrollTop={scrollTop}
                                 rowCount={fileBrowserStore.exportRegionOptions.length}
                                 overscanRowCount={5}
-                            />)
-                        }
+                            />
+                        )}
                     </AutoSizer>
                 )}
             </WindowScroller>
-        )
-    }
+        );
+    };
 
     render() {
         const optionNum = FileBrowserStore.Instance.regionOptionNum;
@@ -175,7 +173,7 @@ export class RegionSelectComponent extends React.Component {
         const regionNum = optionNum - annotationNum;
 
         return (
-            <div ref={ref => this.reference = ref} className="select-region">
+            <div ref={ref => (this.reference = ref)} className="select-region">
                 {optionNum > 0 ? (
                     <React.Fragment>
                         {this.renderSelectStatus()}
