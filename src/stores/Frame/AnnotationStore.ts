@@ -334,7 +334,7 @@ export class CompassAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    public getRegionApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.Mapping): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
+    public getCompassApproximation(astTransform: AST.FrameSet, spatiallyMatched?: boolean, spatialTransform?: AST.Mapping): {northApproximatePoints: number[]; eastApproximatePoints: number[]} {
         const originPoint = spatiallyMatched ? transformPoint(spatialTransform, this.controlPoints[0], false) : this.controlPoints[0];
         const transformed = AST.transformPoint(astTransform, originPoint.x, originPoint.y);
 
@@ -489,7 +489,7 @@ export class RulerAnnotationStore extends RegionStore {
         this.modifiedTimestamp = performance.now();
     };
 
-    public getRegionApproximation(astTransform: AST.FrameSet, mapping?: AST.Mapping): {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]} {
+    public getCurveApproximation(astTransform: AST.FrameSet, mapping?: AST.Mapping): {xApproximatePoints: number[]; yApproximatePoints: number[]; hypotenuseApproximatePoints: number[]} {
         let xApproximatePoints;
         let yApproximatePoints;
         let hypotenuseApproximatePoints;
@@ -497,6 +497,7 @@ export class RulerAnnotationStore extends RegionStore {
         const xIn = new Float64Array(2);
         const yIn = new Float64Array(2);
 
+        // If matched, transform image coordinate of reference image to matched image using Mapping
         const imagePointStart = mapping ? transformPoint(mapping, this.controlPoints[0], false) : this.controlPoints[0];
         const imagePointFinish = mapping ? transformPoint(mapping, this.controlPoints[1], false) : this.controlPoints[1];
         xIn[0] = imagePointStart.x;
@@ -504,7 +505,7 @@ export class RulerAnnotationStore extends RegionStore {
         yIn[0] = imagePointStart.y;
         yIn[1] = imagePointFinish.y;
 
-        const transformed = AST.transformPointArrays(mapping || astTransform, xIn, yIn);
+        const transformed = AST.transformPointArrays(astTransform, xIn, yIn);
 
         const startX = transformed.x[0];
         const finishX = transformed.x[1];
@@ -517,9 +518,9 @@ export class RulerAnnotationStore extends RegionStore {
         const start = {x: startX, y: startY};
         const finish = {x: finishX, y: finishY};
 
-        xApproximatePoints = AST.getGeodesicPointArray(astTransform, mapping || astTransform, NUMBER_OF_POINT_TRANSFORMED, corner, start);
-        yApproximatePoints = AST.getGeodesicPointArray(astTransform, mapping || astTransform, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
-        hypotenuseApproximatePoints = AST.getGeodesicPointArray(astTransform, mapping || astTransform, NUMBER_OF_POINT_TRANSFORMED, start, finish);
+        xApproximatePoints = AST.getGeodesicPointArray(astTransform, NUMBER_OF_POINT_TRANSFORMED, corner, start);
+        yApproximatePoints = AST.getGeodesicPointArray(astTransform, NUMBER_OF_POINT_TRANSFORMED, finish, corner);
+        hypotenuseApproximatePoints = AST.getGeodesicPointArray(astTransform, NUMBER_OF_POINT_TRANSFORMED, start, finish);
 
         return {xApproximatePoints, yApproximatePoints, hypotenuseApproximatePoints};
     }
