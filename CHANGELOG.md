@@ -48,7 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed image arithmetic bug when there are square brackets in the expression ([#2220](https://github.com/CARTAvis/carta-frontend/issues/2220)).
 * Fixed missing tiles and distorted tiles during and after animation. ([#1988](https://github.com/CARTAvis/carta-frontend/issues/1988)).
 * Fixed the stuck of stokes animation at low frame rates ([#1293](https://github.com/CARTAvis/carta-backend/issues/1293)).
-* Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 
 ## [4.0.0-beta.1]
 
