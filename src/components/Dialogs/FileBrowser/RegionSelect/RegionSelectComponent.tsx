@@ -1,5 +1,6 @@
 import * as React from "react";
-import {AutoSizer, List, WindowScroller} from "react-virtualized";
+import AutoSizer from "react-virtualized-auto-sizer";
+import {FixedSizeList as List} from "react-window";
 import {Checkbox, Icon, IconName} from "@blueprintjs/core";
 import {computed, makeObservable} from "mobx";
 import {Observer, observer} from "mobx-react";
@@ -116,14 +117,13 @@ export class RegionSelectComponent extends React.Component {
         );
     };
 
-    private renderRegionOptions = ({index, key, style}: {index: number; key: string; style: React.CSSProperties}) => {
+    private renderRegionOptions = ({index, style}: {index: number; style: React.CSSProperties}) => {
         const fileBrowserStore = FileBrowserStore.Instance;
         const item = fileBrowserStore.exportRegionOptions[index];
         return (
             <Observer>
                 {() => (
                     <Checkbox
-                        key={key}
                         style={style}
                         checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
                         labelElement={
@@ -143,25 +143,13 @@ export class RegionSelectComponent extends React.Component {
     private renderVirtualizedRegions = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         return (
-            <WindowScroller scrollElement={this.reference}>
-                {({height, isScrolling, scrollTop}) => (
-                    <AutoSizer disableHeight>
-                        {({width}) => (
-                            <List
-                                autoHeight
-                                isScrolling={isScrolling}
-                                width={width}
-                                height={height}
-                                rowHeight={28}
-                                rowRenderer={this.renderRegionOptions}
-                                scrollTop={scrollTop}
-                                rowCount={fileBrowserStore.exportRegionOptions.length}
-                                overscanRowCount={5}
-                            />
-                        )}
-                    </AutoSizer>
+            <AutoSizer>
+                {({height, width}) => (
+                    <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height}>
+                        {this.renderRegionOptions}
+                    </List>
                 )}
-            </WindowScroller>
+            </AutoSizer>
         );
     };
 
