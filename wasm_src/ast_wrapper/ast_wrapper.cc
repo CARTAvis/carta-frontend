@@ -444,9 +444,7 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
     double start[] = {xin[0], yin[0]};
     double finish[] = {xin[1], yin[1]};
 
-    AstFrame* frame = static_cast<AstFrame*>astGetFrame(wcsinfo, AST__CURRENT);
-
-    double dist = astDistance(frame, start, finish);
+    double dist = astDistance(wcsinfo, start, finish);
     double discreteDist = dist/npoint;
     double output[2];
 
@@ -457,7 +455,7 @@ EMSCRIPTEN_KEEPALIVE int pointList(AstFrameSet* wcsinfo, int npoint, double xin[
     
     for(int i = 0; i < npoint; i++) {
         double distance = discreteDist * i;
-        astOffset(frame, start, finish, distance, output);
+        astOffset(wcsinfo, start, finish, distance, output);
         xout[i] = output[0];
         yout[i] = output[1];
     }

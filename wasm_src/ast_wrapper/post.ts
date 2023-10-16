@@ -231,7 +231,6 @@ Module.transform3DPointArrays = function (wcsInfo: number, xIn: Float64Array, yI
 
 Module.getGeodesicPointArray = function (wcsInfo: number, npoint: number, start: {x: number, y: number}, finish: {x: number, y: number}) {
     // Return empty array if arguments are invalid
-
     const yIn = new Float64Array([start.y, finish.y]);
     const xIn = new Float64Array([start.x, finish.x]);
 
