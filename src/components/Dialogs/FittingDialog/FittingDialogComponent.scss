@@ -66,9 +66,9 @@
     }
 
     .bp3-label {
-        display: flex;
         min-width: 10em;
         user-select: none;
+		text-align: right;
 
         .bp3-text-muted {
             margin-left: 5px;
@@ -149,6 +149,7 @@
         .bp3-tabs {
             width: 100%;
             height: 100%;
+			text-align: right;
 
             .bp3-tab-list {
                 width: 125px;

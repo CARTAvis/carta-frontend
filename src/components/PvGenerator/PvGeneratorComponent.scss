@@ -32,10 +32,11 @@
         margin: 0;
 
         .bp3-form-group {
-            margin-right: 10px;
+            // margin-right: 10px;
             .bp3-label {
-                margin: 0px;
+                // margin: 0px;
                 width: 14em;
+				text-align: right;
             }
         }
 
@@ -75,6 +76,7 @@
                 .bp3-label {
                     margin: 0px;
                     width: 3em;
+					text-align: left;
                 }
             }
 
@@ -98,6 +100,7 @@
                 .bp3-label {
                     margin: 0px;
                     width: 2em;
+					text-align: left;
                 }
             }
         }

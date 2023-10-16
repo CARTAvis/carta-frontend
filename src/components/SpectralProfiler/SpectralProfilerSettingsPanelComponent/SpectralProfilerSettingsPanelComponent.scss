@@ -8,7 +8,7 @@
     }
 
     .bp3-form-group .bp3-label {
-        text-align: left;
+        text-align: right;
     }
 
     .conversion-tab-panel {
@@ -26,6 +26,13 @@
     .moment-tab-panel {
         .bp3-form-group .bp3-label {
             width: 9em;
+        }
+    }
+
+	.fitting-tab-panel {
+        .bp3-form-group .bp3-label {
+            width: 12em;
+			text-align: right;
         }
     }
 }

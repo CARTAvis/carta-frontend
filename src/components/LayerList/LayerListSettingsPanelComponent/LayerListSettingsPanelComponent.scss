@@ -9,6 +9,10 @@
         }
     }
 
+	.bp3-form-group .bp3-label {
+		text-align: right;
+	}
+
     .bp3-button-text {
         display: block;
         white-space: nowrap;
@@ -50,6 +54,7 @@
 
         .bp3-label {
             width: 110px;
+			// text-align: right;
         }
 
         .bp3-form-group {
