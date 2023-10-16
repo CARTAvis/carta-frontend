@@ -145,7 +145,7 @@ export class RegionSelectComponent extends React.Component {
         return (
             <AutoSizer>
                 {({height, width}) => (
-                    <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height}>
+                    <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height * 0.85}>
                         {this.renderRegionOptions}
                     </List>
                 )}
