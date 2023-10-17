@@ -734,9 +734,7 @@ export class FileBrowserDialogComponent extends React.Component {
                     {fileInput}
                 </div>
                 <div className="bp3-dialog-footer">
-                    <div className="bp3-dialog-footer-actions">
-                        {actionButton}
-                    </div>
+                    <div className="bp3-dialog-footer-actions">{actionButton}</div>
                 </div>
                 <Alert
                     className={appStore.darkTheme ? "bp3-dark" : ""}
