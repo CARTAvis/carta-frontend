@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
+import {Classes, IDialogProps} from "@blueprintjs/core";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -99,11 +99,6 @@ export class AboutDialogComponent extends React.Component {
                         </a>
                         &#160; as published by the Free Software Foundation.
                     </p>
-                </div>
-                <div className={Classes.DIALOG_FOOTER}>
-                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.NONE} onClick={dialogStore.hideAboutDialog} text="Close" />
-                    </div>
                 </div>
             </DraggableDialogComponent>
         );

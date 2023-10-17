@@ -735,7 +735,6 @@ export class FileBrowserDialogComponent extends React.Component {
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.NONE} onClick={this.closeFileBrowser} disabled={appStore.fileLoading} text="Close" />
                         {actionButton}
                     </div>
                 </div>
