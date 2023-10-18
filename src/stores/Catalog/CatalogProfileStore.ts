@@ -116,7 +116,6 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
         const subsetEndIndex = catalogFilter.subsetEndIndex;
         const startIndex = subsetEndIndex - subsetDataSize;
 
-        const totalDataSize = catalogFilter.requestEndIndex;
         this.filterDataSize = catalogFilter.filterDataSize;
 
         if (this.subsetEndIndex <= this.filterDataSize) {
@@ -129,17 +128,17 @@ export class CatalogProfileStore extends AbstractCatalogProfileStore {
                     if (currentData.dataType === CARTA.ColumnType.String) {
                         const currentArr = currentData.data as Array<string>;
                         const newArr = newData.data as Array<string>;
-                        currentData.data = CatalogProfileStore.FillAllocatedArray<string>(currentArr, newArr, startIndex, totalDataSize);
+                        currentData.data = CatalogProfileStore.FillAllocatedArray<string>(currentArr, newArr, startIndex, subsetEndIndex);
                     } else if (currentData.dataType === CARTA.ColumnType.Bool) {
                         const currentArr = currentData.data as Array<boolean>;
                         const newArr = newData.data as Array<boolean>;
-                        currentData.data = CatalogProfileStore.FillAllocatedArray<boolean>(currentArr, newArr, startIndex, totalDataSize);
+                        currentData.data = CatalogProfileStore.FillAllocatedArray<boolean>(currentArr, newArr, startIndex, subsetEndIndex);
                     } else if (currentData.dataType === CARTA.ColumnType.UnsupportedType) {
                         return;
                     } else {
                         const currentArr = currentData.data as Array<number>;
                         const newArr = newData.data as Array<number>;
-                        currentData.data = CatalogProfileStore.FillAllocatedArray<number>(currentArr, newArr, startIndex, totalDataSize);
+                        currentData.data = CatalogProfileStore.FillAllocatedArray<number>(currentArr, newArr, startIndex, subsetEndIndex);
                     }
                 }
             });
