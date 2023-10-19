@@ -526,7 +526,8 @@ export class AppStore {
             fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
             fileFeatureFlags: ack.fileFeatureFlags,
             renderMode: CARTA.RenderMode.RASTER,
-            beamTable: ack.beamTable
+            beamTable: ack.beamTable,
+            generated
         };
         this.telemetryService.addFileOpenEntry(ack.fileId, ack.fileInfo.type, ack.fileInfoExtended.width, ack.fileInfoExtended.height, ack.fileInfoExtended.depth, ack.fileInfoExtended.stokes, generated);
 
@@ -598,7 +599,8 @@ export class AppStore {
             fileInfoExtended: new CARTA.FileInfoExtended(ack.imageInfo),
             fileFeatureFlags: ack.fileFeatureFlags,
             renderMode: CARTA.RenderMode.RASTER,
-            beamTable: ack.beamTable
+            beamTable: ack.beamTable,
+            generated: true
         };
 
         const newFrame = new FrameStore(frameInfo);

@@ -87,6 +87,7 @@ export interface FrameInfo {
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
     beamTable: CARTA.IBeam[];
+    generated: boolean;
 }
 
 export enum CoordinateMode {
