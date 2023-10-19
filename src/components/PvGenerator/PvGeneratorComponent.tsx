@@ -417,7 +417,7 @@ export class PvGeneratorComponent extends React.Component<WidgetProps> {
                 <div className="generate-button">
                     <div>
                         <Tooltip2 disabled={isAbleToGeneratePreview} content={previewHint} position={Position.BOTTOM}>
-                            <AnchorButton intent="success" disabled={!isAbleToGeneratePreview} text="Start Preview" onClick={this.onPreviewButtonClicked} />
+                            <AnchorButton intent="success" disabled={!isAbleToGeneratePreview} text="Start preview" onClick={this.onPreviewButtonClicked} />
                         </Tooltip2>
                     </div>
                     <div>
