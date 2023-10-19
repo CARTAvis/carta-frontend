@@ -1,6 +1,10 @@
 .catalog-settings {
     margin: 20px;
 
+    .bp3-form-group.bp3-inline .bp3-label {
+        width: 100px;
+    }
+
     .file-menu .bp3-button {
         white-space: nowrap;
         display: inline-block;
