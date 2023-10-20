@@ -2,6 +2,16 @@
     .bp3-dialog-body {
         user-select: none;
 
+        .bp3-label {
+            min-width: 6em;
+            width: 6em;
+            text-align: right;
+        }
+
+        .bp3-button {
+            white-space: pre;
+        }
+
         .bp3-form-group {
             &:first-of-type {
                 margin-left: 0;
@@ -11,8 +21,8 @@
         .vector-overlay-config-panel,
         .vector-overlay-style-panel {
             .bp3-form-group .bp3-label {
+                min-width: 10em;
                 width: 10em;
-                text-align: right;
             }
         }
 
@@ -32,6 +42,18 @@
 
         .bp3-tabs {
             margin: 2px;
+        }
+
+        .parameter-container {
+            .parameter-line.parameter-intensity,
+            .parameter-line.parameter-length {
+                .bp3-form-group.bp3-inline {
+                    .bp3-label {
+                        min-width: 2em;
+                        width: 3em;
+                    }
+                }
+            }
         }
     }
 }

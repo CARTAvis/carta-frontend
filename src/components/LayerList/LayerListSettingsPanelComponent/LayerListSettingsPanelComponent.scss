@@ -10,6 +10,8 @@
     }
 
     .bp3-form-group .bp3-label {
+        min-width: 12em;
+        width: 12em;
         text-align: right;
     }
 
@@ -22,6 +24,7 @@
 
     .name-text {
         .bp3-label {
+            min-width: 110px;
             width: 110px;
         }
 
@@ -53,6 +56,7 @@
         display: flex;
 
         .bp3-label {
+            min-width: 110px;
             width: 110px;
         }
 
@@ -60,6 +64,7 @@
             margin-right: 7px;
 
             .bp3-input-group {
+                min-width: 130px;
                 width: 130px;
             }
         }

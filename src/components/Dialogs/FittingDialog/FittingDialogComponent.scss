@@ -79,7 +79,7 @@
 
     .bp3-form-content {
         display: flex;
-        flex-wrap: wrap;
+        // flex-wrap: nowrap;
         width: 100%;
         user-select: none;
     }
@@ -147,6 +147,7 @@
 
     .fitting-result-panel {
         .bp3-tabs {
+            display: flex;
             width: 100%;
             height: 100%;
             text-align: right;

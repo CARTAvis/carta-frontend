@@ -35,8 +35,10 @@ export class VectorOverlayDialogComponent extends React.Component {
     @observable qError: number;
     @observable uError: number;
 
-    private static readonly DefaultWidth = 500;
-    private static readonly DefaultHeight = 720;
+    private static readonly minWidth = 350;
+    private static readonly minHeight = 265;
+    private static readonly defaultWidth = 500;
+    private static readonly defaultHeight = 720;
 
     private cachedFrame: FrameStore;
 
@@ -258,8 +260,10 @@ export class VectorOverlayDialogComponent extends React.Component {
                 <DraggableDialogComponent
                     dialogProps={dialogProps}
                     helpType={HelpType.VECTOR_OVERLAY}
-                    defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
-                    defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
+                    minWidth={VectorOverlayDialogComponent.minWidth}
+                    minHeight={VectorOverlayDialogComponent.minHeight}
+                    defaultWidth={VectorOverlayDialogComponent.defaultWidth}
+                    defaultHeight={VectorOverlayDialogComponent.defaultHeight}
                     enableResizing={true}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
@@ -385,7 +389,15 @@ export class VectorOverlayDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.VECTOR_OVERLAY} defaultWidth={VectorOverlayDialogComponent.DefaultWidth} defaultHeight={VectorOverlayDialogComponent.DefaultHeight} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.VECTOR_OVERLAY}
+                minWidth={VectorOverlayDialogComponent.minWidth}
+                minHeight={VectorOverlayDialogComponent.minHeight}
+                defaultWidth={VectorOverlayDialogComponent.defaultWidth}
+                defaultHeight={VectorOverlayDialogComponent.defaultHeight}
+                enableResizing={true}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">
                         <DataSourceSelect

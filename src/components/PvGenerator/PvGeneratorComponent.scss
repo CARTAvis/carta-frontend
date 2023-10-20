@@ -33,6 +33,7 @@
 
         .bp3-form-group {
             .bp3-label {
+                min-width: 14em;
                 width: 14em;
                 text-align: right;
             }
@@ -97,6 +98,7 @@
                 margin-bottom: 0px;
                 .bp3-label {
                     margin: 0px;
+                    min-width: 2em;
                     width: 2em;
                     text-align: left;
                 }

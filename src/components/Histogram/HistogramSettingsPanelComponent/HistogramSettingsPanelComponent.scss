@@ -5,5 +5,9 @@
         &:first-of-type {
             margin-left: 0px;
         }
+        .bp3-label {
+            min-width: 12em;
+            width: 12em;
+        }
     }
 }

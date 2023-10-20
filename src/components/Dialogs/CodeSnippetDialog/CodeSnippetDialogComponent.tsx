@@ -23,6 +23,11 @@ export class CodeSnippetDialogComponent extends React.Component {
     @observable saveDialogOpen: boolean = false;
     private editorRef;
 
+    private static readonly minWidth = 475;
+    private static readonly minHeight = 300;
+    private static readonly defaultWidth = 700;
+    private static readonly defaultHeight = 400;
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
@@ -142,7 +147,14 @@ export class CodeSnippetDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={700} defaultHeight={400} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                minWidth={CodeSnippetDialogComponent.minWidth}
+                minHeight={CodeSnippetDialogComponent.minHeight}
+                defaultWidth={CodeSnippetDialogComponent.defaultWidth}
+                defaultHeight={CodeSnippetDialogComponent.defaultHeight}
+                enableResizing={true}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />
                 </div>

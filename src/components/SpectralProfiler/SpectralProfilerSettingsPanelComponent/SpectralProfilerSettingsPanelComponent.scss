@@ -13,26 +13,34 @@
 
     .conversion-tab-panel {
         .bp3-form-group .bp3-label {
-            width: 12em;
+            min-width: 10em;
+            width: 10em;
         }
     }
 
     .styling-tab-panel {
         .bp3-form-group .bp3-label {
-            width: 12em;
+            min-width: 10em;
+            width: 10em;
         }
     }
 
     .moment-tab-panel {
         .bp3-form-group .bp3-label {
-            width: 9em;
+            min-width: 10em;
+            width: 10em;
         }
     }
 
     .fitting-tab-panel {
         .bp3-form-group .bp3-label {
-            width: 12em;
+            min-width: 10em;
+            width: 10em;
             text-align: right;
         }
+    }
+
+    .profile-fitting-panel.profile-fitting-form.fitting-result {
+        width: 100%;
     }
 }

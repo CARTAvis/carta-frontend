@@ -2,6 +2,12 @@
     .bp3-dialog-body {
         user-select: none;
 
+        .bp3-label {
+            min-width: 6em;
+            width: 6em;
+            text-align: right;
+        }
+
         .bp3-form-group {
             &:first-of-type {
                 margin-left: 0px;
@@ -9,13 +15,13 @@
         }
 
         .contour-level-panel-levels .bp3-form-group .bp3-label {
-            width: 6em;
-            text-align: right;
+            min-width: 8em;
+            width: 8em;
         }
 
         .contour-config-panel .bp3-form-group .bp3-label {
-            width: 10em;
-            text-align: right;
+            min-width: 8em;
+            width: 8em;
         }
 
         .bp3-tabs {
@@ -25,6 +31,16 @@
         .histogram-plot {
             height: 200px;
             position: relative;
+        }
+
+        .bp3-form-group.bp3-inline {
+            .bp3-form-content {
+                display: inline-flex;
+            }
+        }
+
+        .bp3-button {
+            white-space: pre;
         }
 
         .lock-button {
