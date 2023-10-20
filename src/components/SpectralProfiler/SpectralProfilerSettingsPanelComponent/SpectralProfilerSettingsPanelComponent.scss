@@ -23,12 +23,20 @@
             min-width: 10em;
             width: 10em;
         }
+        .bp3-form-group .bp3-form-helper-text {
+            white-space: nowrap;
+        }
     }
 
     .moment-tab-panel {
         .bp3-form-group .bp3-label {
             min-width: 10em;
             width: 10em;
+        }
+        .range-select .bp3-form-group .bp3-label {
+            margin: 0 10px 0 0;
+            min-width: 3em;
+            width: 3em;
         }
     }
 
