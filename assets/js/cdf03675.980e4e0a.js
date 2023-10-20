@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkcarta_frontend_docs=self.webpackChunkcarta_frontend_docs||[]).push([[7620],{8818:e=>{e.exports=JSON.parse('{"name":"docusaurus-plugin-typedoc-api","id":"default"}')}}]);
