@@ -1,10 +1,12 @@
 ## Table of Contents
 
--   [<h4>Components</h4>](api/.-components)
-    -   [<h5>Components - Dialogs</h5>](api/.-components/Dialogs)
-    -   [<h5>Components - Shared</h5>](api/.-components/Shared)
--   [<h4>Models</h4>](api/.-models)
--   [<h4>Services</h4>](api/.-services)
--   [<h4>Stores</h4>](api/.-stores)
--   [<h4>Utilities</h4>](api/.-utilities)
--   [<h4>Changelog</h4>](api/changelog)
+-   <ApiLink path="/.-components"><h4>Components</h4></ApiLink>
+
+    -   <ApiLink path="/.-components/Dialogs"><h5>Components - Dialogs</h5></ApiLink>
+    -   <ApiLink path="/.-components/Shared"><h5>Components - Shared</h5></ApiLink>
+
+-   <ApiLink path="/.-models"><h4>Models</h4></ApiLink>
+-   <ApiLink path="/.-services"><h4>Services</h4></ApiLink>
+-   <ApiLink path="/.-stores"><h4>Stores</h4></ApiLink>
+-   <ApiLink path="/.-utilities"><h4>Utilities</h4></ApiLink>
+-   <ApiLink path="/changelog"><h4>Changelog</h4></ApiLink>
