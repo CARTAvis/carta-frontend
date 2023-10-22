@@ -30,3 +30,15 @@
     --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
     --ifm-hero-background-color: #242526;
 }
+
+.api_link {
+    cursor: pointer;
+}
+
+.navbar__items .api_link {
+    padding: 0;
+}
+
+.menu__list .api_link {
+    color: var(--ifm-menu-color);
+}
