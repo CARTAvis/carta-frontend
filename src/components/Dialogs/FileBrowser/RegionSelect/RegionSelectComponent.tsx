@@ -118,24 +118,27 @@ export class RegionSelectComponent extends React.Component {
     };
 
     private renderRegionOptions = ({index, style}: {index: number; style: React.CSSProperties}) => {
-        const fileBrowserStore = FileBrowserStore.Instance;
-        const item = fileBrowserStore.exportRegionOptions[index];
         return (
             <Observer>
-                {() => (
-                    <Checkbox
-                        style={style}
-                        checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
-                        labelElement={
-                            <React.Fragment>
-                                {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
-                                <span>&ensp;</span>
-                                {item.active ? <b>{item.label} (Active)</b> : item.label}
-                            </React.Fragment>
-                        }
-                        onChange={() => this.handleSelectRegionChanged(item.value as number)}
-                    />
-                )}
+                {() => {
+                    const fileBrowserStore = FileBrowserStore.Instance;
+                    const item = fileBrowserStore.exportRegionOptions[index];
+
+                    return (
+                        <Checkbox
+                            style={style}
+                            checked={fileBrowserStore.exportRegionIndexes?.includes(item.value as number)}
+                            labelElement={
+                                <React.Fragment>
+                                    {item.isCustomIcon ? <CustomIcon icon={item.icon as CustomIconName} /> : <Icon icon={item.icon as IconName} />}
+                                    <span>&ensp;</span>
+                                    {item.active ? <b>{item.label} (Active)</b> : item.label}
+                                </React.Fragment>
+                            }
+                            onChange={() => this.handleSelectRegionChanged(item.value as number)}
+                        />
+                    );
+                }}
             </Observer>
         );
     };
@@ -145,7 +148,7 @@ export class RegionSelectComponent extends React.Component {
         return (
             <AutoSizer>
                 {({height, width}) => (
-                    <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height * 0.85}>
+                    <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height}>
                         {this.renderRegionOptions}
                     </List>
                 )}
