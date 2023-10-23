@@ -5,6 +5,8 @@
     margin-top: 10px;
     padding-top: 10px;
     padding-left: 7px;
+    display: flex;
+    flex-direction: column;
 
     .select-status {
         margin-top: 0;
@@ -12,5 +14,10 @@
 
     .bp3-icon {
         opacity: 0.5;
+    }
+
+    .region-list {
+        height: 100%;
+        width: 100%;
     }
 }

@@ -146,13 +146,15 @@ export class RegionSelectComponent extends React.Component {
     private renderVirtualizedRegions = () => {
         const fileBrowserStore = FileBrowserStore.Instance;
         return (
-            <AutoSizer>
-                {({height, width}) => (
-                    <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height - 60}>
-                        {this.renderRegionOptions}
-                    </List>
-                )}
-            </AutoSizer>
+            <div className="region-list">
+                <AutoSizer>
+                    {({height, width}) => (
+                        <List itemSize={24} itemCount={fileBrowserStore.exportRegionOptions.length} width={width} height={height}>
+                            {this.renderRegionOptions}
+                        </List>
+                    )}
+                </AutoSizer>
+            </div>
         );
     };
 
