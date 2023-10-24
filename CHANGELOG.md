@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Removed unused help button for PV preview widget ([#2248](https://github.com/CARTAvis/carta-frontend/issues/2248)).
 * Fixed PV preview bug where no PV preview shows up after closing a docked PV preview widget ([#2249](https://github.com/CARTAvis/carta-frontend/issues/2249)).
+* Improved the dragging performance of 'Export Region' widget when the list of region/annotation to be exported is large. ([#1867](https://github.com/CARTAvis/carta-frontend/issues/1867)).
 
 ## [4.0.0]
 
