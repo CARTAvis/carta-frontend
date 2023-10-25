@@ -45,8 +45,8 @@ export class FittingDialogComponent extends React.Component {
 
     private static readonly DefaultWidth = 600;
     private static readonly DefaultHeight = 660;
-    private static readonly MinWidth = 550;
-    private static readonly MinHeight = 265;
+    private static readonly MinWidth = 575;
+    private static readonly MinHeight = 500;
 
     constructor(props: any) {
         super(props);

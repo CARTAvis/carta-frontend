@@ -462,8 +462,6 @@ export class CatalogOverlayPlotSettingsPanelComponent extends React.Component<Wi
                                 onKeyDown={ev => this.handleChange(ev, "angle-min")}
                             />
                         </FormGroup>
-                        {/* </FormGroup>
-                <FormGroup inline={true} label="Orientation max" labelInfo="(degree)" disabled={disableOrientationMap}> */}
                         <FormGroup inline={true} label="Max">
                             <SafeNumericInput
                                 allowNumericCharactersOnly={true}
