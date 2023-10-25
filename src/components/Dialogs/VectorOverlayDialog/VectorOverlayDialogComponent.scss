@@ -45,13 +45,10 @@
         }
 
         .parameter-container {
-            .parameter-line.parameter-intensity,
-            .parameter-line.parameter-length {
-                .bp3-form-group.bp3-inline {
-                    .bp3-label {
-                        min-width: 2em;
-                        width: 3em;
-                    }
+            .bp3-form-group.bp3-inline {
+                .bp3-label {
+                    min-width: 2em;
+                    width: 3em;
                 }
             }
         }

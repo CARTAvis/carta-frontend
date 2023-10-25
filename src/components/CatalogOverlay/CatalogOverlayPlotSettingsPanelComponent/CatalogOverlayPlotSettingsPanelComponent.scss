@@ -12,8 +12,8 @@
     }
 
     .bp3-form-group.bp3-inline.file-menu .bp3-label {
-        width: 8em;
-        min-width: 8em;
+        width: 3em;
+        min-width: 3em;
         text-align: right;
     }
 
@@ -40,6 +40,15 @@
         width: 100%;
         .lock-button {
             margin-bottom: 20px;
+        }
+    }
+
+    .parameter-container {
+        .bp3-form-group.bp3-inline {
+            .bp3-label {
+                min-width: 2em;
+                width: 3em;
+            }
         }
     }
 }

@@ -43,10 +43,10 @@ export class FittingDialogComponent extends React.Component {
         this.isMouseEntered = false;
     };
 
-    private static readonly minWidth = 350;
-    private static readonly minHeight = 265;
-    private static readonly defaultWidth = 600;
-    private static readonly defaultHeight = 660;
+    private static readonly DefaultWidth = 600;
+    private static readonly DefaultHeight = 660;
+    private static readonly MinWidth = 550;
+    private static readonly MinHeight = 265;
 
     constructor(props: any) {
         super(props);
@@ -117,10 +117,10 @@ export class FittingDialogComponent extends React.Component {
                 <DraggableDialogComponent
                     dialogProps={dialogProps}
                     helpType={HelpType.IMAGE_FITTING}
-                    minWidth={FittingDialogComponent.minWidth}
-                    minHeight={FittingDialogComponent.minHeight}
-                    defaultWidth={FittingDialogComponent.defaultWidth}
-                    defaultHeight={FittingDialogComponent.defaultHeight}
+                    minWidth={FittingDialogComponent.MinWidth}
+                    minHeight={FittingDialogComponent.MinHeight}
+                    defaultWidth={FittingDialogComponent.DefaultWidth}
+                    defaultHeight={FittingDialogComponent.DefaultHeight}
                     enableResizing={true}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
@@ -169,10 +169,10 @@ export class FittingDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.IMAGE_FITTING}
-                minWidth={FittingDialogComponent.minWidth}
-                minHeight={FittingDialogComponent.minHeight}
-                defaultWidth={FittingDialogComponent.defaultWidth}
-                defaultHeight={FittingDialogComponent.defaultHeight}
+                minWidth={FittingDialogComponent.MinWidth}
+                minHeight={FittingDialogComponent.MinHeight}
+                defaultWidth={FittingDialogComponent.DefaultWidth}
+                defaultHeight={FittingDialogComponent.DefaultHeight}
                 enableResizing={true}
             >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>

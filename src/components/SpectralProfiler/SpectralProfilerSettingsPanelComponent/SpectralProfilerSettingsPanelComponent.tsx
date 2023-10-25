@@ -29,8 +29,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         return {
             id: "spectral-profiler-floating-settings",
             type: "floating-settings",
-            minWidth: 280,
-            minHeight: 225,
+            minWidth: 400,
+            minHeight: 400,
             defaultWidth: 575,
             defaultHeight: 650,
             title: "spectral-profiler-settings",

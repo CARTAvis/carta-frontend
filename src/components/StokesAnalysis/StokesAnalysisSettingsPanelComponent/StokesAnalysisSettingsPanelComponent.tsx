@@ -23,10 +23,10 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         return {
             id: "stokes-floating-settings",
             type: "floating-settings",
-            minWidth: 350,
+            minWidth: 470,
             minHeight: 300,
             defaultWidth: 475,
-            defaultHeight: 450,
+            defaultHeight: 400,
             title: "stokes-settings",
             isCloseable: true,
             parentId: "stokes",
