@@ -1,0 +1,49 @@
+---
+sidebar_position: 4
+---
+
+import Link from "@docusaurus/Link";
+
+# Regions
+
+Actions related to regions. In the following examples, we assume that an image is loaded as
+
+```javascript
+const file = await app.openFile("my_image.fits");
+```
+
+## Creating regions
+
+Regions on a specific image is accessible via <ApiLink path="/.-stores/class/RegionSetStore">`RegionSetStore`</ApiLink> under each image. Each region is represented by a <ApiLink path="/.-stores/class/RegionStore">`RegionStore`</ApiLink> object.
+
+```javascript
+console.log(file.regionSet.regions); // View all regions
+console.log(file.regionSet.selectedRegion); // View the selected region
+```
+
+&#8203;<ApiLink path="/.-stores/class/RegionSetStore/#addRegionAsync">`addRegionAsync`</ApiLink> creates regions on the loaded image with available [region types](https://carta-protobuf.readthedocs.io/en/latest/enums.html#regiontype).
+
+```javascript
+const regionSet = file.regionSet;
+const region = await regionSet.addRegionAsync(3, [{x: [center x], y: [center y]}, {x: [width], y: [height]}]); // Add a rectangle region
+const region2 = await regionSet.addRegionAsync(1, [{x: [start x], y: [start y]}, {x: [end x], y: [end y]}]); // Add a line region
+```
+
+## Changing region properties
+
+Properties of a region can be modified using the <ApiLink path="/.-stores/class/RegionStore">`RegionStore`</ApiLink> object.
+
+```javascript
+// ex: a rectangle region
+region.setCenter({x: 0, y: 0}); // Move the region to position (0, 0)
+region.setSize({x: 100, y: 100}); // Resize to 100 x 100 pixels
+region.setColor("#ffffff"); // Change the color to white
+```
+
+## Importing regions
+
+&#8203;<ApiLink path="/.-stores/class/AppStore/#importRegion">`importRegion`</ApiLink> imports regions to the active image with the provided path, filename, and [file type](https://carta-protobuf.readthedocs.io/en/latest/enums.html#filetype) enum.
+
+```javascript
+await app.importRegion("[path]", "[filename]", 1); // File type: CRTF
+```
