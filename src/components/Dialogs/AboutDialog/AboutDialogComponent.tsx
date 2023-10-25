@@ -10,6 +10,11 @@ import "./AboutDialogComponent.scss";
 
 @observer
 export class AboutDialogComponent extends React.Component {
+    private static readonly DefaultWidth = 610;
+    private static readonly DefaultHeight = 670;
+    private static readonly MinWidth = 610;
+    private static readonly MinHeight = 670;
+
     public render() {
         const dialogStore = DialogStore.Instance;
 
@@ -26,7 +31,14 @@ export class AboutDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={705} enableResizing={false}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                defaultWidth={AboutDialogComponent.DefaultWidth}
+                defaultHeight={AboutDialogComponent.DefaultHeight}
+                minWidth={AboutDialogComponent.MinWidth}
+                minHeight={AboutDialogComponent.MinHeight}
+                enableResizing={false}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src="carta_logo.png" width={80} />
