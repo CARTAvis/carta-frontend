@@ -4,6 +4,26 @@
 const lightCodeTheme = require("prism-react-renderer/themes/github");
 const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const path = require("path");
+const versions = require('./versions.json');
+
+const apiOnClick = `
+    const versionLink = document.querySelector('.navbar__item.dropdown.dropdown--hoverable.dropdown--right .navbar__link');
+    const currentVersion = versionLink?.textContent;
+    let version = '';
+    if (currentVersion) {
+        if (currentVersion === 'Next') {
+            version = '/next';
+        } else if (currentVersion !== '${versions?.[0]}') {
+            version = '/' + currentVersion;
+        }
+    }
+    
+    window.location.href = '/carta-frontend/api' + version;
+`;
+
+const apiButton = `
+    <a class="navbar__link menu__link api_link" onclick="${apiOnClick}">API</a>
+`;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -66,9 +86,15 @@ const config = {
                         label: "Docs"
                     },
                     {
-                        to: "api",
-                        label: "API",
-                        position: "left"
+                        type: "html",
+                        position: "left",
+                        value: apiButton,
+                        className: "navbar__link",
+                    },
+                    {
+                        type: 'docsVersionDropdown',
+                        position: 'right',
+                        dropdownActiveClassDisabled: true,
                     },
                     {
                         href: "https://github.com/CARTAvis/carta-frontend",

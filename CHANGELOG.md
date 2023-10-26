@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+* Fixed the blank screen when clicking X/Y profile setting button without images opened ([#2247](https://github.com/CARTAvis/carta-frontend/issues/2247)).
+* Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
+* Removed unused help button for PV preview widget ([#2248](https://github.com/CARTAvis/carta-frontend/issues/2248)).
+* Fixed PV preview bug where no PV preview shows up after closing a docked PV preview widget ([#2249](https://github.com/CARTAvis/carta-frontend/issues/2249)).
 * Fixed incorrect range values in the save image dialogue with non-standard spectral axis images.([#2225](https://github.com/CARTAvis/carta-frontend/issues/2225)).
 
 ## [4.0.0]

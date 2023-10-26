@@ -14,4 +14,5 @@ For the pull request:
 - [ ] e2e test passing / corresponding fix added / new e2e test created
 - [ ] changelog updated / no changelog update needed
 - [ ] protobuf updated to the latest dev commit / no protobuf update needed
+- [ ] protobuf version bumped / protobuf version not bumped
 - [ ] `BackendService` unchanged / `BackendService` changed and corresponding ICD test fix added
