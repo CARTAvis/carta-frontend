@@ -11,9 +11,9 @@ import "./AboutDialogComponent.scss";
 @observer
 export class AboutDialogComponent extends React.Component {
     private static readonly DefaultWidth = 610;
-    private static readonly DefaultHeight = 670;
+    private static readonly DefaultHeight = 675;
     private static readonly MinWidth = 610;
-    private static readonly MinHeight = 670;
+    private static readonly MinHeight = 675;
 
     public render() {
         const dialogStore = DialogStore.Instance;
