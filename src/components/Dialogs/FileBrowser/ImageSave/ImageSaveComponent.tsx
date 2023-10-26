@@ -28,12 +28,20 @@ export class ImageSaveComponent extends React.Component {
 
     @computed get validSaveSpectralRangeStart() {
         const fileBrowser = FileBrowserStore.Instance;
-        return AppStore.Instance.activeFrame?.channelValueBounds?.min <= fileBrowser.saveSpectralStart && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd;
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (activeFrame?.spectralSystemsSupported.length === 0 && !fileBrowser.saveIsNativeValue && fileBrowser.saveSpectralStart < 0) {
+            return false;
+        }
+        return activeFrame?.channelValueBounds?.min <= fileBrowser.saveSpectralStart && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd;
     }
 
     @computed get validSaveSpectralRangeEnd() {
         const fileBrowser = FileBrowserStore.Instance;
-        return fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd && fileBrowser.saveSpectralEnd <= AppStore.Instance.activeFrame?.channelValueBounds?.max;
+        const activeFrame = AppStore.Instance.activeFrame;
+        if (activeFrame?.spectralSystemsSupported.length === 0 && !fileBrowser.saveIsNativeValue && fileBrowser.saveSpectralEnd > activeFrame?.numChannels - 1) {
+            return false;
+        }
+        return fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd && fileBrowser.saveSpectralEnd <= activeFrame?.channelValueBounds?.max;
     }
 
     private onChangeShouldDropDegenerateAxes = () => {
@@ -157,10 +165,10 @@ export class ImageSaveComponent extends React.Component {
                                         <SpectralSettingsComponent
                                             frame={activeFrame}
                                             onSpectralCoordinateChange={coord => {
-                                                activeFrame.setSpectralCoordinate(coord);
+                                                this.updateSpectralCoordinate(coord);
                                             }}
                                             onSpectralSystemChange={sys => {
-                                                activeFrame.setSpectralSystem(sys as SpectralSystem);
+                                                this.updateSpectralSystem(sys as SpectralSystem);
                                             }}
                                             disable={false}
                                             label="Range Unit"
