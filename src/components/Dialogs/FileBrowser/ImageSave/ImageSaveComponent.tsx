@@ -29,19 +29,19 @@ export class ImageSaveComponent extends React.Component {
     @computed get validSaveSpectralRangeStart() {
         const fileBrowser = FileBrowserStore.Instance;
         const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame?.spectralSystemsSupported.length === 0 && !fileBrowser.saveIsNativeValue && fileBrowser.saveSpectralStart < 0) {
+        if (activeFrame?.spectralSystemsSupported.length === 0 && !fileBrowser.saveIsNativeValue && parseFloat(fileBrowser.saveSpectralStart) < 0) {
             return false;
         }
-        return activeFrame?.channelValueBounds?.min <= fileBrowser.saveSpectralStart && fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd;
+        return activeFrame?.channelValueBounds?.min <= parseFloat(fileBrowser.saveSpectralStart) && parseFloat(fileBrowser.saveSpectralStart) <= parseFloat(fileBrowser.saveSpectralEnd);
     }
 
     @computed get validSaveSpectralRangeEnd() {
         const fileBrowser = FileBrowserStore.Instance;
         const activeFrame = AppStore.Instance.activeFrame;
-        if (activeFrame?.spectralSystemsSupported.length === 0 && !fileBrowser.saveIsNativeValue && fileBrowser.saveSpectralEnd > activeFrame?.numChannels - 1) {
+        if (activeFrame?.spectralSystemsSupported.length === 0 && !fileBrowser.saveIsNativeValue && parseFloat(fileBrowser.saveSpectralEnd) > activeFrame?.numChannels - 1) {
             return false;
         }
-        return fileBrowser.saveSpectralStart <= fileBrowser.saveSpectralEnd && fileBrowser.saveSpectralEnd <= activeFrame?.channelValueBounds?.max;
+        return parseFloat(fileBrowser.saveSpectralStart) <= parseFloat(fileBrowser.saveSpectralEnd) && parseFloat(fileBrowser.saveSpectralEnd) <= activeFrame?.channelValueBounds?.max;
     }
 
     private onChangeShouldDropDegenerateAxes = () => {
@@ -54,11 +54,11 @@ export class ImageSaveComponent extends React.Component {
     };
 
     private handleSaveSpectralRangeStartChanged = (_valueAsNumber: number, valueAsString: string) => {
-        FileBrowserStore.Instance?.setSaveSpectralStart(_valueAsNumber);
+        FileBrowserStore.Instance?.setSaveSpectralStart(valueAsString);
     };
 
     private handleSaveSpectralRangeEndChanged = (_valueAsNumber: number, valueAsString: string) => {
-        FileBrowserStore.Instance?.setSaveSpectralEnd(_valueAsNumber);
+        FileBrowserStore.Instance?.setSaveSpectralEnd(valueAsString);
     };
 
     updateSpectralCoordinate(coordStr: string): void {

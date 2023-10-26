@@ -80,8 +80,8 @@ export class FileBrowserStore {
     // Save image
     @observable saveFilename: string = "";
     @observable saveFileType: CARTA.FileType = CARTA.FileType.CASA;
-    @observable saveSpectralStart: number;
-    @observable saveSpectralEnd: number;
+    @observable saveSpectralStart: string;
+    @observable saveSpectralEnd: string;
     @observable saveSpectralStride: number = 1;
     @observable saveStokesOption: number;
     @observable saveRegionId: number;
@@ -309,15 +309,15 @@ export class FileBrowserStore {
         const activeFrame = AppStore.Instance.activeFrame;
         if (activeFrame && activeFrame.numChannels > 1 && activeFrame.isSpectralChannel) {
             if (activeFrame.spectralSystemsSupported.length > 0) {
-                this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
-                this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
+                this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
+                this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
             } else {
                 if (this.saveIsNativeValue) {
-                    this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
-                    this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min));
+                    this.setSaveSpectralStart(Math.min(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
+                    this.setSaveSpectralEnd(Math.max(activeFrame.channelValueBounds.max, activeFrame.channelValueBounds.min).toString());
                 } else {
-                    this.setSaveSpectralStart(0);
-                    this.setSaveSpectralEnd(activeFrame.numChannels - 1);
+                    this.setSaveSpectralStart("0");
+                    this.setSaveSpectralEnd((activeFrame.numChannels - 1).toString());
                 }
             }
         }
@@ -578,11 +578,11 @@ export class FileBrowserStore {
         }
     };
 
-    @action setSaveSpectralStart = (start: number) => {
+    @action setSaveSpectralStart = (start: string) => {
         this.saveSpectralStart = start;
     };
 
-    @action setSaveSpectralEnd = (end: number) => {
+    @action setSaveSpectralEnd = (end: string) => {
         this.saveSpectralEnd = end;
     };
 
