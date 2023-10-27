@@ -494,7 +494,6 @@ export class ContourDialogComponent extends React.Component {
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!dataSource.contourConfig.enabled} text="Clear" />
                         <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.enabled)} text="Apply" />
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideContourDialog} text="Close" />
                     </div>
                 </div>
                 <Alert className={appStore.darkTheme ? "bp3-dark" : ""} icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>

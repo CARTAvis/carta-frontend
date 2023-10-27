@@ -906,7 +906,6 @@ export class PreferenceDialogComponent extends React.Component {
                         <Tooltip2 content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults" />
                         </Tooltip2>
-                        <Button intent={Intent.NONE} onClick={appStore.dialogStore.hidePreferenceDialog} text="Close" />
                     </div>
                 </div>
             </DraggableDialogComponent>
