@@ -152,7 +152,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const newDims = {x: Math.abs(value - region.controlPoints[1].x), y: region.size.y};
-            if (newDims.x > 0 || newDims.y > 0) {
+            if (Math.abs(newDims.x) > 0 || Math.abs(newDims.y) > 0) {
                 region.setControlPoint(0, {x: value, y: region.controlPoints[0].y});
                 return true;
             }
@@ -179,7 +179,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const newDims = {x: region.size.x, y: Math.abs(value - region.controlPoints[1].y)};
-            if (newDims.x > 0 || newDims.y > 0) {
+            if (Math.abs(newDims.x) > 0 || Math.abs(newDims.y) > 0) {
                 region.setControlPoint(0, {x: region.controlPoints[0].x, y: value});
                 return true;
             }
@@ -206,7 +206,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const newDims = {x: Math.abs(value - region.controlPoints[0].x), y: region.size.y};
-            if (newDims.x > 0 || newDims.y > 0) {
+            if (Math.abs(newDims.x) > 0 || Math.abs(newDims.y) > 0) {
                 region.setControlPoint(1, {x: value, y: region.controlPoints[1].y});
                 return true;
             }
@@ -233,7 +233,7 @@ export class LineRegionForm extends React.Component<{region: RegionStore; frame:
         if (isFinite(value) && isFinite(existingValue) && !closeTo(value, existingValue, LineRegionForm.REGION_PIXEL_EPS)) {
             const region = this.props.region;
             const newDims = {x: region.size.x, y: Math.abs(value - region.controlPoints[0].y)};
-            if (newDims.x > 0 || newDims.y > 0) {
+            if (Math.abs(newDims.x) > 0 || Math.abs(newDims.y) > 0) {
                 region.setControlPoint(1, {x: region.controlPoints[1].x, y: value});
                 return true;
             }
