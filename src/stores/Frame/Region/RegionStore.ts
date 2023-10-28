@@ -216,7 +216,8 @@ export class RegionStore {
             case CARTA.RegionType.ANNLINE:
             case CARTA.RegionType.ANNVECTOR:
             case CARTA.RegionType.ANNRULER:
-                return subtract2D(this.controlPoints[0], this.controlPoints[1]);
+                const size = subtract2D(this.controlPoints[0], this.controlPoints[1]);
+                return {x: Math.abs(size.x), y: Math.abs(size.y)};
             default:
                 return {x: undefined, y: undefined};
         }
