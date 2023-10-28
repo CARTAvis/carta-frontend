@@ -504,8 +504,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring && !isSecondaryClick) {
             const imagePos = this.getDistanceMeasureImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
             const wcsPos = transformPoint(frame.wcsInfo, imagePos);
-            if (!isAstBadPoint(wcsPos)) {
-                const dist = frame.distanceMeasuring;
+            const dist = frame.distanceMeasuring;
+            if (!isAstBadPoint(wcsPos) && dist) {
                 if (!dist.isCreating && !dist.showCurve) {
                     dist.setStart(imagePos.x, imagePos.y);
                     dist.setIsCreating(true);
@@ -664,7 +664,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     break;
             }
         } else {
-            if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring && frame.distanceMeasuring.isCreating) {
+            if (frame.wcsInfo && AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring && frame.distanceMeasuring?.isCreating) {
                 this.updateDistanceMeasureFinishPos(mouseEvent.offsetX, mouseEvent.offsetY);
             }
             if (!AppStore.Instance.cursorFrozen) {
@@ -739,7 +739,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         let cursor: string;
-        if (regionSet.mode === RegionMode.CREATING || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) {
+        if ((regionSet.mode === RegionMode.CREATING || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) && !frame.isPreview) {
             cursor = "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
             cursor = "move";

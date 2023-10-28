@@ -1474,7 +1474,9 @@ export class FrameStore {
         });
 
         autorun(() => {
-            this.distanceMeasuring.updateTransformedPos(this.spatialTransform);
+            if (!this.isPreview) {
+                this.distanceMeasuring.updateTransformedPos(this.spatialTransform);
+            }
         });
     }
 
@@ -2964,6 +2966,7 @@ export class FrameStore {
 
     @action setIsPreview = (isPreview: boolean) => {
         this.isPreview = isPreview;
+        this.distanceMeasuring = null;
     };
 
     @action setPreviewPVRasterData = (previewPVRasterData: Float32Array, skipUpdatePreviewData: boolean = false) => {
