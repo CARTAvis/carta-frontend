@@ -9,7 +9,7 @@ import * as prism from "prismjs";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, WarningToast} from "components/Shared";
 import {Snippet} from "models";
-import {AppStore, SnippetStore} from "stores";
+import {AppStore, DialogStore, SnippetStore} from "stores";
 
 import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
 import {ThemeProvider} from "./ThemeProvider";
@@ -111,6 +111,11 @@ export class CodeSnippetDialogComponent extends React.Component {
         const snippetStore = appStore.snippetStore;
         const className = classNames("code-snippet-dialog", {"bp3-dark": appStore.darkTheme});
 
+        const dialogStore = DialogStore.Instance;
+        const id: string = "code-snippet-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+
         const dialogProps: IDialogProps = {
             icon: "console",
             className: className,
@@ -142,7 +147,15 @@ export class CodeSnippetDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={700} defaultHeight={400} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                defaultWidth={700}
+                defaultHeight={400}
+                enableResizing={true}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />
                 </div>

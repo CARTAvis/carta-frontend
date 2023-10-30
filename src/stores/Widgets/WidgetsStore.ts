@@ -52,6 +52,11 @@ import {
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
 
+interface ZIndexUpdate {
+    id: string;
+    zIndex: number;
+}
+
 export enum WidgetType {
     Region = "Region List Widget",
     Log = "Log Widget",
@@ -101,7 +106,7 @@ export class WidgetConfig implements DefaultWidgetConfig {
     parentType?: string;
     helpType?: HelpType | HelpType[];
     componentId?: string;
-    zIndex?: number = 0;
+    @observable zIndex?: number = 0;
 
     @action setDefaultPosition = (x: number, y: number) => {
         this.defaultX = x;
@@ -1467,29 +1472,68 @@ export class WidgetsStore {
     };
 
     @action updateSelectFloatingWidgetzIndex = (id: string) => {
-        const selectedWidgetIndex = this.floatingWidgets.findIndex(w => w.id === id);
-        const selectedWidget = this.floatingWidgets[selectedWidgetIndex];
-        const N = this.floatingWidgets.length;
-        if (N > 1 && selectedWidgetIndex >= 0 && selectedWidget.zIndex < N) {
-            for (let i = 0; i < N; i++) {
-                let currentWidgetzIndex = this.floatingWidgets[i].zIndex;
-                if (currentWidgetzIndex >= selectedWidget.zIndex) {
-                    this.floatingWidgets[i].zIndex = currentWidgetzIndex - 1;
+        // const selectedWidgetIndex = this.floatingWidgets.findIndex(w => w.id === id);
+        // const selectedWidget = this.floatingWidgets[selectedWidgetIndex];
+        // const N = this.floatingWidgets.length;
+        // if (N > 1 && selectedWidgetIndex >= 0 && selectedWidget.zIndex < N) {
+        //     for (let i = 0; i < N; i++) {
+        //         let currentWidgetzIndex = this.floatingWidgets[i].zIndex;
+        //         if (currentWidgetzIndex >= selectedWidget.zIndex) {
+        //             this.floatingWidgets[i].zIndex = currentWidgetzIndex - 1;
+        //         }
+        //     }
+        //     this.floatingWidgets[selectedWidgetIndex].zIndex = this.floatingWidgets.length;
+        // }
+        const appStore = AppStore.Instance;
+        const selectedObjIndex = appStore.floatingObjs.findIndex(w => w.id === id);
+        const selectedObj = appStore.floatingObjs[selectedObjIndex];
+        const NFloatingObj = appStore.floatingObjs.length;
+        if (NFloatingObj > 1 && selectedObjIndex >= 0 && selectedObj.zIndex < NFloatingObj) {
+            for (let i = 0; i < NFloatingObj; i++) {
+                let currentObjzIndex = appStore.floatingObjs[i].zIndex;
+                if (currentObjzIndex >= selectedObj.zIndex) {
+                    appStore.floatingObjs[i].zIndex = currentObjzIndex - 1;
                 }
             }
-            this.floatingWidgets[selectedWidgetIndex].zIndex = this.floatingWidgets.length;
+            appStore.floatingObjs[selectedObjIndex].zIndex = appStore.floatingObjs.length;
+        }
+        // update floatingWidget's zIndex 
+        const N = this.floatingWidgets.length;
+        if (N >= 1) {
+            for (let i = 0; i < N; i++) {
+                let counterpartId = appStore.floatingObjs.findIndex(w => w.id === this.floatingWidgets[i].id);
+                this.floatingWidgets[i].zIndex = appStore.floatingObjs[counterpartId].zIndex;
+            }
         }
     };
 
     // update widget zIndex when remove a widget
     private updateFloatingWidgetzIndexOnRemove(widgetzIndex: number) {
-        const N = this.floatingWidgets.length;
-        if (widgetzIndex < N) {
-            for (let index = 0; index < N; index++) {
-                const zIndex = this.floatingWidgets[index].zIndex;
+        // const N = this.floatingWidgets.length;
+        // if (widgetzIndex < N) {
+        //     for (let index = 0; index < N; index++) {
+        //         const zIndex = this.floatingWidgets[index].zIndex;
+        //         if (zIndex > widgetzIndex) {
+        //             this.floatingWidgets[index].zIndex = zIndex - 1;
+        //         }
+        //     }
+        // }
+        const appStore = AppStore.Instance;
+        const NFloatingObj = appStore.floatingObjs.length;
+        if (widgetzIndex < NFloatingObj) {
+            for (let index = 0; index < NFloatingObj; index++) {
+                const zIndex = appStore.floatingObjs[index].zIndex;
                 if (zIndex > widgetzIndex) {
-                    this.floatingWidgets[index].zIndex = zIndex - 1;
+                    appStore.floatingObjs[index].zIndex = zIndex - 1;
                 }
+            }
+        }
+        // update floatingWidget's zIndex
+        const N = this.floatingWidgets.length;
+        if (N >= 1) {
+            for (let i = 0; i < N; i++) {
+                let counterpartId = appStore.floatingObjs.findIndex(w => w.id === this.floatingWidgets[i].id);
+                this.floatingWidgets[i].zIndex = appStore.floatingObjs[counterpartId].zIndex;
             }
         }
     }
@@ -1499,8 +1543,14 @@ export class WidgetsStore {
             const offset = this.getFloatingWidgetOffset();
             widget.setDefaultPosition(offset, offset);
         }
-        widget.zIndex = this.floatingWidgets.length + 1;
+        // widget.zIndex = this.floatingWidgets.length + 1;
         this.floatingWidgets.push(widget);
+
+        const appStore = AppStore.Instance;
+        let zIndexNew = appStore.floatingObjs.length + 1;
+        widget.zIndex = zIndexNew;
+        let zIndexUpdate : ZIndexUpdate  = { id: widget.id, zIndex: zIndexNew };
+        appStore.floatingObjs.push(zIndexUpdate);
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store
@@ -1515,6 +1565,8 @@ export class WidgetsStore {
 
             this.removeWidget(id, widget.type);
         }
+        const appStore = AppStore.Instance;
+        appStore.floatingObjs = appStore.floatingObjs.filter(w => w.id !== id);
     };
     // endregion
 

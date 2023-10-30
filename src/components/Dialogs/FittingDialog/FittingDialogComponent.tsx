@@ -10,7 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogStore, HelpType} from "stores";
 import {CoordinateMode} from "stores/Frame";
 import {exportTxtFile, getTimestamp} from "utilities";
 
@@ -96,6 +96,11 @@ export class FittingDialogComponent extends React.Component {
         const fittingStore = appStore.imageFittingStore;
         let component = fittingStore.components[fittingStore.selectedComponentIndex];
 
+        const dialogStore = DialogStore.Instance;
+        const id: string = "fitting-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,
             className: "fitting-dialog",
@@ -153,7 +158,18 @@ export class FittingDialogComponent extends React.Component {
         const imageUnitString = fittingStore.effectiveFrame?.requiredUnit ? `(${fittingStore.effectiveFrame?.requiredUnit})` : "";
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.IMAGE_FITTING} minWidth={350} minHeight={265} defaultWidth={600} defaultHeight={660} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.IMAGE_FITTING}
+                minWidth={350}
+                minHeight={265}
+                defaultWidth={600}
+                defaultHeight={660}
+                enableResizing={true}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+            >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data source" inline={true}>
                         <HTMLSelect value={fittingStore.selectedFileId} options={fittingStore.frameOptions} onChange={ev => fittingStore.setSelectedFileId(parseInt(ev.target.value))} />

@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
+import {AppStore, CatalogOnlineQueryConfigStore, DialogStore, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./CatalogOnlineQueryDialogComponent.scss";
@@ -68,6 +68,11 @@ export class CatalogQueryDialogComponent extends React.Component {
         if (appStore.darkTheme) {
             className += " bp3-dark";
         }
+
+        const dialogStore = DialogStore.Instance;
+        const id: string = "catalogQuery-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
 
         const dialogProps: IDialogProps = {
             icon: "geosearch",
@@ -257,6 +262,9 @@ export class CatalogQueryDialogComponent extends React.Component {
                 defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
                 defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
                 enableResizing={true}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
             >
                 <div className="bp3-dialog-body">{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>

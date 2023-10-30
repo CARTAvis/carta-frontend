@@ -131,6 +131,10 @@ export class DistanceMeasuringDialog extends React.Component {
         const WCSFinish = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.finish);
         const dialogStore = DialogStore.Instance;
 
+        const id: string = "distanceMeasure-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="distanceMeasuring" />,
             backdropClassName: "minimal-dialog-backdrop",
@@ -181,7 +185,18 @@ export class DistanceMeasuringDialog extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.DISTANCE_MEASUREMENT} defaultWidth={525} defaultHeight={350} minHeight={300} minWidth={450} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.DISTANCE_MEASUREMENT}
+                defaultWidth={525}
+                defaultHeight={350}
+                minHeight={300}
+                minWidth={450}
+                enableResizing={true}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (
                         <Tabs id="regionDialogTabs" selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>

@@ -10,7 +10,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D} from "models";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogStore, HelpType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
 import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
@@ -276,6 +276,11 @@ export class ContourDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
+        const dialogStore = DialogStore.Instance;
+        const id: string = "contour-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE} />,
             backdropClassName: "minimal-dialog-backdrop",
@@ -466,7 +471,16 @@ export class ContourDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.CONTOUR} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.CONTOUR}
+                defaultWidth={ContourDialogComponent.DefaultWidth}
+                defaultHeight={ContourDialogComponent.DefaultHeight}
+                enableResizing={true}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">
                         <DataSourceSelect

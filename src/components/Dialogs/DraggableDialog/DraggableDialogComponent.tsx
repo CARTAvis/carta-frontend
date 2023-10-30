@@ -17,6 +17,9 @@ export class ResizableDialogComponentProps {
     enableResizing: boolean;
     helpType?: HelpType;
     onResizeStop?: (newWidth: number, newHeight: number) => void;
+    zIndex?: number;
+    onSelected?: () => void;
+    onClosed?: () => void;
 }
 
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
@@ -91,6 +94,8 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                             this.rnd = c;
                         }}
                         onResizeStop={this.onResizeStop}
+                        style={{zIndex: this.props.zIndex}}
+                        onMouseDown={this.props.onSelected}
                     >
                         <Dialog portalClassName="dialog-portal" hasBackdrop={false} usePortal={false} enforceFocus={false} autoFocus={true} {...this.props.dialogProps} children={this.props.children} />
                     </Rnd>

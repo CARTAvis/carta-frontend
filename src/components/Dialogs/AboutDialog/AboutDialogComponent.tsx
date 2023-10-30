@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {CARTA_INFO} from "models";
-import {DialogStore} from "stores";
+import {AppStore, DialogStore} from "stores";
 
 import "./AboutDialogComponent.scss";
 
@@ -17,6 +17,11 @@ export class AboutDialogComponent extends React.Component {
 
     public render() {
         const dialogStore = DialogStore.Instance;
+
+        const appStore = AppStore.Instance;
+        const id: string = "about-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -38,6 +43,9 @@ export class AboutDialogComponent extends React.Component {
                 minWidth={AboutDialogComponent.MinWidth}
                 minHeight={AboutDialogComponent.MinHeight}
                 enableResizing={false}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>

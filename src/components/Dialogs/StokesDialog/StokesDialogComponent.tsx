@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {POLARIZATION_LABELS} from "models";
-import {AppStore, BrowserMode, HelpType} from "stores";
+import {AppStore, BrowserMode, DialogStore, HelpType} from "stores";
 
 import "./StokesDialogComponent.scss";
 
@@ -132,6 +132,11 @@ export class StokesDialogComponent extends React.Component {
             />
         );
 
+        const dialogStore = DialogStore.Instance;
+        const id: string = "stokes-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+
         const dialogProps: IDialogProps = {
             icon: "git-merge",
             className: className,
@@ -144,7 +149,18 @@ export class StokesDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.STOKES} minWidth={300} minHeight={250} defaultWidth={602} defaultHeight={300} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.STOKES}
+                minWidth={300}
+                minHeight={250}
+                defaultWidth={602}
+                defaultHeight={300}
+                enableResizing={true}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+            >
                 <div className="bp3-dialog-body">
                     <Table
                         className={"file-table"}

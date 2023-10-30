@@ -5,7 +5,7 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore} from "stores";
+import {AppStore, DialogStore} from "stores";
 
 import "./ExternalPageDialogComponent.scss";
 
@@ -14,6 +14,11 @@ export class ExternalPageDialogComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const className = classNames("iframe-dialog", {"bp3-dark": appStore.darkTheme});
+
+        const dialogStore = DialogStore.Instance;
+        const id: string = "externalPage-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -27,7 +32,17 @@ export class ExternalPageDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                minWidth={400}
+                minHeight={400}
+                defaultWidth={800}
+                defaultHeight={600}
+                enableResizing={true}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+            >
                 <div className="bp3-dialog-body">
                     <Iframe url={appStore.dialogStore.externalPageDialogUrl} />
                 </div>

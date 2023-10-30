@@ -80,6 +80,11 @@ interface ChannelUpdate {
     stokes: number;
 }
 
+interface ZIndexUpdate {
+    id: string;
+    zIndex: number;
+}
+
 const IMPORT_REGION_BATCH_SIZE = 1000;
 const EXPORT_IMAGE_DELAY = 500;
 export const PREVIEW_PV_FILEID = -2;
@@ -3221,4 +3226,7 @@ export class AppStore {
     get pixelRatio() {
         return devicePixelRatio;
     }
+
+    // dynamic zIndex
+    @observable floatingObjs: ZIndexUpdate[] = [];
 }

@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogStore, HelpType} from "stores";
 import {FrameStore, VectorOverlaySource} from "stores/Frame";
 import {SWATCH_COLORS} from "utilities";
 
@@ -241,6 +241,11 @@ export class VectorOverlayDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
+        const dialogStore = DialogStore.Instance;
+        const id: string = "vector-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="vectorOverlay" size={CustomIcon.SIZE_LARGE} />,
             backdropClassName: "minimal-dialog-backdrop",
@@ -385,7 +390,16 @@ export class VectorOverlayDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.VECTOR_OVERLAY} defaultWidth={VectorOverlayDialogComponent.DefaultWidth} defaultHeight={VectorOverlayDialogComponent.DefaultHeight} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.VECTOR_OVERLAY}
+                defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
+                defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
+                enableResizing={true}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">
                         <DataSourceSelect

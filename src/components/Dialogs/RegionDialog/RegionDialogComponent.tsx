@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogStore, HelpType} from "stores";
 import {RegionStore} from "stores/Frame";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
@@ -53,6 +53,11 @@ export class RegionDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
+
+        const dialogStore = DialogStore.Instance;
+        const id: string = "region-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -138,7 +143,18 @@ export class RegionDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.REGION_DIALOG} defaultWidth={525} defaultHeight={575} minHeight={300} minWidth={450} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.REGION_DIALOG}
+                defaultWidth={525}
+                defaultHeight={575}
+                minHeight={300}
+                minWidth={450}
+                enableResizing={true}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+            >
                 <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>

@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {PresetLayout} from "models";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogStore, HelpType} from "stores";
 
 import "./SaveLayoutDialogComponent.scss";
 
@@ -75,6 +75,11 @@ export class SaveLayoutDialogComponent extends React.Component {
         const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
         const isSave = appStore.layoutStore.isSave;
 
+        const dialogStore = DialogStore.Instance;
+        const id: string = "saveLayout-dialog";
+        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
+        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+
         const dialogProps: IDialogProps = {
             icon: "layout-grid",
             backdropClassName: "minimal-dialog-backdrop",
@@ -87,7 +92,16 @@ export class SaveLayoutDialogComponent extends React.Component {
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.SAVE_LAYOUT} defaultWidth={400} defaultHeight={185} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.SAVE_LAYOUT}
+                defaultWidth={400}
+                defaultHeight={185}
+                enableResizing={true}
+                zIndex={zIndexNew}
+                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
+                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>
                         <Tooltip2 isOpen={!this.isEmpty && !this.validName} position={Position.BOTTOM_LEFT} content={"Layout name should not contain ~, `, !, *, (, ), -, +, =, [, ., ', ?, <, >, /, |, \\, :, ; or &"}>
