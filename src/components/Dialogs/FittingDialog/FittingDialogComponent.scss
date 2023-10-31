@@ -66,9 +66,10 @@
     }
 
     .bp3-label {
-        min-width: 10em;
+        display: flex;
+        justify-content: flex-end;
+        min-width: 11em;
         user-select: none;
-        text-align: right;
 
         .bp3-text-muted {
             margin-left: 5px;
