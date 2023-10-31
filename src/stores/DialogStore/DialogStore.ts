@@ -39,6 +39,7 @@ export class DialogStore {
     }
 
     @action updateSelectDialogzIndex = (id: string) => {
+        // update floatingWidget's and dialog's zIndex 
         const appStore = AppStore.Instance;
         const selectedObjIndex = appStore.floatingObjs.findIndex(w => w.id === id);
         const selectedObj = appStore.floatingObjs[selectedObjIndex];
@@ -52,7 +53,6 @@ export class DialogStore {
             }
             appStore.floatingObjs[selectedObjIndex].zIndex = appStore.floatingObjs.length;
         }
-        console.log('gg');
         appStore.floatingObjs.map(w => console.log(w.id, w.zIndex));
         // update floatingWidget's zIndex 
         const floatingWidgets = WidgetsStore.Instance.floatingWidgets;
@@ -66,6 +66,7 @@ export class DialogStore {
     };
 
     @action updateDialogzIndexOnRemove(dialogzIndex: number) {
+        // update floatingWidget's and dialog's zIndex 
         const appStore = AppStore.Instance;
         const NFloatingObj = appStore.floatingObjs.length;
         if (dialogzIndex < NFloatingObj) {
@@ -227,6 +228,7 @@ export class DialogStore {
     @action showNewCodeSnippet = () => {
         SnippetStore.Instance.clearActiveSnippet();
         this.codeSnippetDialogVisible = true;
+        this.addDialog("code-snippet-dialog");
     };
 
     @action showCodeSnippetDialog = () => {

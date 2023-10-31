@@ -1472,18 +1472,7 @@ export class WidgetsStore {
     };
 
     @action updateSelectFloatingWidgetzIndex = (id: string) => {
-        // const selectedWidgetIndex = this.floatingWidgets.findIndex(w => w.id === id);
-        // const selectedWidget = this.floatingWidgets[selectedWidgetIndex];
-        // const N = this.floatingWidgets.length;
-        // if (N > 1 && selectedWidgetIndex >= 0 && selectedWidget.zIndex < N) {
-        //     for (let i = 0; i < N; i++) {
-        //         let currentWidgetzIndex = this.floatingWidgets[i].zIndex;
-        //         if (currentWidgetzIndex >= selectedWidget.zIndex) {
-        //             this.floatingWidgets[i].zIndex = currentWidgetzIndex - 1;
-        //         }
-        //     }
-        //     this.floatingWidgets[selectedWidgetIndex].zIndex = this.floatingWidgets.length;
-        // }
+        // update floatingWidget's and dialog's zIndex 
         const appStore = AppStore.Instance;
         const selectedObjIndex = appStore.floatingObjs.findIndex(w => w.id === id);
         const selectedObj = appStore.floatingObjs[selectedObjIndex];
@@ -1509,15 +1498,7 @@ export class WidgetsStore {
 
     // update widget zIndex when remove a widget
     private updateFloatingWidgetzIndexOnRemove(widgetzIndex: number) {
-        // const N = this.floatingWidgets.length;
-        // if (widgetzIndex < N) {
-        //     for (let index = 0; index < N; index++) {
-        //         const zIndex = this.floatingWidgets[index].zIndex;
-        //         if (zIndex > widgetzIndex) {
-        //             this.floatingWidgets[index].zIndex = zIndex - 1;
-        //         }
-        //     }
-        // }
+        // update floatingWidget's and dialog's zIndex 
         const appStore = AppStore.Instance;
         const NFloatingObj = appStore.floatingObjs.length;
         if (widgetzIndex < NFloatingObj) {
