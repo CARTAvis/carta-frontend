@@ -90,10 +90,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     styleString,
                     frame.distanceMeasuring?.showCurve,
                     frame.isPVImage,
-                    frame.distanceMeasuring?.transformedStart.x,
-                    frame.distanceMeasuring?.transformedStart.y,
-                    frame.distanceMeasuring?.transformedFinish.x,
-                    frame.distanceMeasuring?.transformedFinish.y
+                    frame.distanceMeasuring?.transformedStart?.x,
+                    frame.distanceMeasuring?.transformedStart?.y,
+                    frame.distanceMeasuring?.transformedFinish?.x,
+                    frame.distanceMeasuring?.transformedFinish?.y
                 );
             };
 

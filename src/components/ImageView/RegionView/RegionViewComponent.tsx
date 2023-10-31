@@ -739,7 +739,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         let cursor: string;
-        if ((regionSet.mode === RegionMode.CREATING || AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring) && !frame.isPreview) {
+        if (regionSet.mode === RegionMode.CREATING || (AppStore.Instance?.activeLayer === ImageViewLayer.DistanceMeasuring && !frame.isPreview)) {
             cursor = "crosshair";
         } else if (regionSet.selectedRegion && regionSet.selectedRegion.editing) {
             cursor = "move";

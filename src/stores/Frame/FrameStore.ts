@@ -87,6 +87,7 @@ export interface FrameInfo {
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
     beamTable: CARTA.IBeam[];
+    preview?: boolean;
 }
 
 export enum CoordinateMode {
@@ -1222,9 +1223,9 @@ export class FrameStore {
 
         this.stokesFiles = [];
 
-        this.isPreview = false;
+        this.isPreview = frameInfo.preview;
 
-        this.distanceMeasuring = new DistanceMeasuringStore();
+        this.distanceMeasuring = !frameInfo.preview && new DistanceMeasuringStore();
 
         this.dirAxis = -1;
         this.dirAxisSize = -1;
@@ -2962,11 +2963,6 @@ export class FrameStore {
         this.fittingResult = "";
         this.fittingResultRegionParams = [];
         this.fittingLog = "";
-    };
-
-    @action setIsPreview = (isPreview: boolean) => {
-        this.isPreview = isPreview;
-        this.distanceMeasuring = null;
     };
 
     @action setPreviewPVRasterData = (previewPVRasterData: Float32Array, skipUpdatePreviewData: boolean = false) => {
