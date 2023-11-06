@@ -1,9 +1,11 @@
 import {makeObservable, observable} from "mobx";
+import {PerfectCursor} from "perfect-cursors";
 import generateRandomAnimal from "random-animal-name";
 import {v4 as uuidv4} from "uuid";
 import {WebsocketProvider} from "y-websocket";
 import * as Y from "yjs";
 
+import {Point2D} from "../models";
 import {AppStore} from "../stores";
 import {SWATCH_COLORS} from "../utilities";
 
@@ -19,6 +21,10 @@ export class WorkspaceService {
     private workspaceDoc: Y.Doc;
     private provider: WebsocketProvider;
     @observable presentUsers: UserPresence[];
+    @observable.deep interpolatedCursorPoints = new Map<string, Point2D>();
+
+    private interpolatedCursorHandlers = new Map<string, PerfectCursor>();
+
     public userId: string;
 
     static get Instance() {
@@ -28,6 +34,10 @@ export class WorkspaceService {
     private constructor() {
         WorkspaceService.staticInstance = this;
         makeObservable(this);
+    }
+
+    public updateCursorPoint(id: string, x: number, y: number) {
+        this.interpolatedCursorPoints.set(id, {x, y});
     }
 
     public async setWorkspace(id: string) {
@@ -43,6 +53,17 @@ export class WorkspaceService {
         });
         this.provider.awareness.on("change", () => {
             this.presentUsers = Array.from(this.provider.awareness.getStates().values()).map(({user, cursor}) => ({...user, cursor})) ?? [];
+            for (const user of this.presentUsers) {
+                if (user.cursor) {
+                    let cursor = this.interpolatedCursorHandlers.get(user.id);
+                    if (!cursor) {
+                        cursor = new PerfectCursor(point => this.updateCursorPoint(user.id, point[0], point[1]));
+                        this.interpolatedCursorHandlers.set(user.id, cursor);
+                    }
+                    cursor.addPoint([user.cursor.x, user.cursor.y]);
+                } else {
+                }
+            }
         });
 
         this.workspaceDoc.getMap("files").observe(async event => {

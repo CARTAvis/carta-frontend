@@ -35,13 +35,15 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
     }
 }
 
-export const PresenceCursor = observer(({presence, width, height, stageRef}: {presence: UserPresence; width: number; height: number; stageRef: any}) => {
+export const PresenceCursor = observer(({presence, width, height, stageRef, interpolated}: {presence: UserPresence; width: number; height: number; stageRef: any; interpolated?: boolean}) => {
     const appStore = AppStore.Instance;
     const frame = appStore.frames?.find(f => f.replicatedId === presence.cursor?.id);
-    if (!frame || !stageRef || !presence.cursor) {
+    const cursorPosition = interpolated ? appStore.workspaceService?.interpolatedCursorPoints?.get(presence.id) : presence.cursor;
+
+    if (!frame || !stageRef || !presence?.cursor || !cursorPosition) {
         return null;
     }
-    const posImageSpace = {x: presence.cursor.x, y: presence.cursor.y};
+    const posImageSpace = {x: cursorPosition.x, y: cursorPosition.y};
 
     if (!posImageSpace) {
         return null;

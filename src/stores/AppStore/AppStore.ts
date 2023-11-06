@@ -1928,9 +1928,6 @@ export class AppStore {
         autorun(() => {
             const pos = this.hoveredFrame?.cursorInfo?.posImageSpace;
             if (pos) {
-                if (this.hoveredFrame) {
-                    this.workspaceService.setPresenceCursor(this.hoveredFrame.replicatedId, pos.x, pos.y);
-                }
                 if (this.preferenceStore.lowBandwidthMode) {
                     throttledSetCursorLowBandwidth(this.hoveredFrame.frameInfo.fileId, pos);
                 } else if (this.hoveredFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
@@ -2808,6 +2805,10 @@ export class AppStore {
     private setCursor = (fileId: number, pos: Point2D) => {
         const frame = this.getFrame(fileId);
         frame?.updateCursorRegion(pos);
+
+        if (frame.replicatedId) {
+            this.workspaceService.setPresenceCursor(frame.replicatedId, pos.x, pos.y);
+        }
     };
 
     @action setSpatialReference = (frame: FrameStore) => {

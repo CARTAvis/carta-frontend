@@ -774,7 +774,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                         <RegionComponents frame={frame} regions={frame?.regionSet?.regionsAndAnnotationsForRender} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         <CursorRegionComponent frame={frame} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
                         {userPresence?.map(u => (
-                            <PresenceCursor key={u.id} presence={u} width={this.props.width} height={this.props.height} stageRef={this.stageRef} />
+                            <PresenceCursor key={u.id} presence={u} width={this.props.width} height={this.props.height} stageRef={this.stageRef} interpolated />
                         ))}
                         {creatingLine}
                     </Layer>

@@ -202,6 +202,7 @@
     },
     "dependencies": {
         "patch-package": "^6.5.1",
+        "perfect-cursors": "^1.0.5",
         "random-animal-name": "^0.1.1",
         "react-scripts": "^5.0.1",
         "usehooks-ts": "^2.9.1"
