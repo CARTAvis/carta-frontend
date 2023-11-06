@@ -150,6 +150,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
     render() {
         const widgetStore = this.widgetStore;
+        const lineRegionSampleWidth = this.widgetStore.effectiveRegion?.lineRegionSampleWidth;
         const profileCoordinateOptions = [
             {
                 value: "x",
@@ -201,7 +202,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
                         title="Computation"
                         panel={
                             <FormGroup label={"Width"} inline={true}>
-                                <SafeNumericInput min={1} max={20} stepSize={1} value={this.widgetStore.effectiveRegion.lineRegionSampleWidth} onValueChange={value => this.widgetStore.setLineRegionSampleWidth(value)} />
+                                <SafeNumericInput min={1} max={20} stepSize={1} disabled={!widgetStore.effectiveRegion} value={lineRegionSampleWidth} onValueChange={value => widgetStore.setLineRegionSampleWidth(value)} />
                             </FormGroup>
                         }
                     />
