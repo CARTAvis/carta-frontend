@@ -14,7 +14,7 @@ export class SpectralSettingsComponent extends React.Component<{
     disable: boolean;
     disableChannelOption?: boolean;
     secondaryAxisCursorInfoVisible?: boolean;
-    label?: string;
+    customLabel?: string;
 }> {
     render() {
         const frame = this.props.frame;
@@ -35,7 +35,7 @@ export class SpectralSettingsComponent extends React.Component<{
 
         return (
             <React.Fragment>
-                <FormGroup label={this.props.label ? this.props.label : "Coordinate"} inline={true} disabled={disableCoordinateSetting}>
+                <FormGroup label={this.props.customLabel ? this.props.customLabel : "Coordinate"} inline={true} disabled={disableCoordinateSetting}>
                     <HTMLSelect
                         disabled={disableCoordinateSetting}
                         value={frame && frame.spectralCoordinate ? frame.spectralCoordinate : ""}
@@ -54,7 +54,7 @@ export class SpectralSettingsComponent extends React.Component<{
                     </FormGroup>
                 )}
 
-                <FormGroup label={this.props.label ? " " : "System"} inline={true} disabled={disableSystemSetting}>
+                <FormGroup label="System" inline={true} disabled={disableSystemSetting}>
                     <HTMLSelect
                         disabled={disableSystemSetting}
                         value={frame && frame.spectralSystem ? frame.spectralSystem : ""}

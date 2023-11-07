@@ -171,7 +171,7 @@ export class ImageSaveComponent extends React.Component {
                                                 this.updateSpectralSystem(sys as SpectralSystem);
                                             }}
                                             disable={false}
-                                            label="Range Unit"
+                                            customLabel="Range Unit"
                                         />
                                     )}
                                     {activeFrame?.spectralSystemsSupported.length === 0 && (
