@@ -1,5 +1,5 @@
 import * as React from "react";
-import {AnchorButton, Button, Classes, FormGroup, IDialogProps, InputGroup, Intent, Position} from "@blueprintjs/core";
+import {AnchorButton, Classes, FormGroup, IDialogProps, InputGroup, Intent, Position} from "@blueprintjs/core";
 import {Tooltip2} from "@blueprintjs/popover2";
 import classNames from "classnames";
 import {computed, makeObservable, observable} from "mobx";
@@ -100,13 +100,6 @@ export class SaveLayoutDialogComponent extends React.Component {
                         <Tooltip2 content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={isSave ? this.saveLayout : this.renameLayout} text={isSave ? "Save" : "Rename"} disabled={this.isEmpty || !this.validName} />
                         </Tooltip2>
-                        <Button
-                            intent={Intent.NONE}
-                            text="Close"
-                            onClick={() => {
-                                appStore.dialogStore.hideSaveLayoutDialog();
-                            }}
-                        />
                     </div>
                 </div>
             </DraggableDialogComponent>

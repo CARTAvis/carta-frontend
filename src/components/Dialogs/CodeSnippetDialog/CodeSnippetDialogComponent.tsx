@@ -155,7 +155,6 @@ export class CodeSnippetDialogComponent extends React.Component {
                         <AnchorButton icon="add" intent={Intent.SUCCESS} onClick={this.handleNewClicked} disabled={snippetStore.isExecuting} text="New" />
                         <AnchorButton icon="trash" intent={Intent.WARNING} onClick={this.handleDeleteClicked} disabled={snippetStore.isExecuting || !snippetStore.activeSnippetName} text="Delete" />
                         <AnchorButton icon="floppy-disk" intent={Intent.PRIMARY} onClick={this.showSaveDialog} disabled={snippetStore.isExecuting} text="Save" />
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideCodeSnippetDialog} text="Close" />
                     </div>
                 </div>
                 <SaveSnippetDialogComponent onSaveClicked={this.handleSaveClicked} onCancelClicked={this.hideSaveDialog} isOpen={this.saveDialogOpen} />
