@@ -1,0 +1,16 @@
+.presence-avatar {
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 12px;
+
+    border-radius: 50%;
+    border: 1px solid black;
+    cursor: pointer;
+
+    p {
+        text-transform: capitalize;
+        text-align: center;
+        font-weight: bold;
+    }
+}

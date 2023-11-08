@@ -17,6 +17,7 @@ import {copyToClipboard, toFixed} from "utilities";
 
 import {WorkspaceDialogMode} from "../Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
 
+import {PresenceList} from "./PresenceList/PresenceList";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
 import "./RootMenuComponent.scss";
@@ -496,6 +497,7 @@ export class RootMenuComponent extends React.Component {
                 <Alert className={appStore.darkTheme ? "bp3-dark" : ""} isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
+                <PresenceList users={appStore.workspaceService.presentUsers} />
                 {appStore.showNewRelease && (
                     <Popover2 content={newReleaseMessage} position={Position.BOTTOM_RIGHT}>
                         <Tooltip2 content="New release available!" position={Position.BOTTOM_RIGHT}>

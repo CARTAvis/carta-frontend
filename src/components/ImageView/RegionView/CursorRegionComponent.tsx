@@ -38,7 +38,8 @@ export class CursorRegionComponent extends React.Component<CursorRegionComponent
 export const PresenceCursor = observer(({presence, width, height, stageRef, interpolated}: {presence: UserPresence; width: number; height: number; stageRef: any; interpolated?: boolean}) => {
     const appStore = AppStore.Instance;
     const frame = appStore.frames?.find(f => f.replicatedId === presence.cursor?.id);
-    const cursorPosition = interpolated ? appStore.workspaceService?.interpolatedCursorPoints?.get(presence.id) : presence.cursor;
+    const key = `${presence.id}-${presence.cursor.id}`;
+    const cursorPosition = interpolated ? appStore.workspaceService?.interpolatedCursorPoints?.get(key) : presence.cursor;
 
     if (!frame || !stageRef || !presence?.cursor || !cursorPosition) {
         return null;
@@ -50,5 +51,5 @@ export const PresenceCursor = observer(({presence, width, height, stageRef, inte
     }
     const rotation = frame.spatialReference ? (frame.spatialTransform.rotation * 180.0) / Math.PI : 0.0;
     const cursorCanvasSpace = transformedImageToCanvasPos(posImageSpace, frame, width, height, stageRef.current);
-    return isFinite(cursorCanvasSpace.x) && isFinite(cursorCanvasSpace.y) && <CursorMarker x={cursorCanvasSpace.x} y={cursorCanvasSpace.y} rotation={-rotation} color={presence.color ?? "white"} label={presence.name} />;
+    return isFinite(cursorCanvasSpace.x) && isFinite(cursorCanvasSpace.y) && <CursorMarker x={cursorCanvasSpace.x} y={cursorCanvasSpace.y} rotation={-rotation} color={presence.color ?? "white"} />;
 });

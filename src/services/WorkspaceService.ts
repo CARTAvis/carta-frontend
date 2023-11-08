@@ -14,6 +14,7 @@ export interface UserPresence {
     name: string;
     color: string;
     cursor?: {id: string; x: number; y: number};
+    view?: {id: string; center: Point2D; zoom: number};
 }
 
 export class WorkspaceService {
@@ -55,10 +56,11 @@ export class WorkspaceService {
             this.presentUsers = Array.from(this.provider.awareness.getStates().values()).map(({user, cursor}) => ({...user, cursor})) ?? [];
             for (const user of this.presentUsers) {
                 if (user.cursor) {
-                    let cursor = this.interpolatedCursorHandlers.get(user.id);
+                    const key = `${user.id}-${user.cursor.id}`;
+                    let cursor = this.interpolatedCursorHandlers.get(key);
                     if (!cursor) {
-                        cursor = new PerfectCursor(point => this.updateCursorPoint(user.id, point[0], point[1]));
-                        this.interpolatedCursorHandlers.set(user.id, cursor);
+                        cursor = new PerfectCursor(point => this.updateCursorPoint(key, point[0], point[1]));
+                        this.interpolatedCursorHandlers.set(key, cursor);
                     }
                     cursor.addPoint([user.cursor.x, user.cursor.y]);
                 } else {
