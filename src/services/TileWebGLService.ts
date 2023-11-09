@@ -5,7 +5,7 @@ import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
 import {rasterShaders} from "./GLSL";
 
-interface ShaderUniforms {
+export interface ShaderUniforms {
     MinVal: WebGLUniformLocation;
     MaxVal: WebGLUniformLocation;
     PixelHighlightVal: WebGLUniformLocation;

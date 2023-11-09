@@ -5,11 +5,13 @@ import {observer} from "mobx-react";
 
 import {ImageViewLayer} from "components";
 import {CursorInfo, CursorInfoVisibility, Zoom} from "models";
+import {PreviewWebGLService, TileWebGLService} from "services";
 import {AnimationMode, AppStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {BeamProfileOverlayComponent} from "../BeamProfileOverlay/BeamProfileOverlayComponent";
 import {CatalogViewGLComponent} from "../CatalogView/CatalogViewGLComponent";
+import {ChannelMapViewComponent} from "../ChannelMapView/ChannelMapViewComponent";
 import {ColorbarComponent} from "../Colorbar/ColorbarComponent";
 import {ContourViewComponent} from "../ContourView/ContourViewComponent";
 import {CursorOverlayComponent} from "../CursorOverlay/CursorOverlayComponent";
@@ -154,9 +156,42 @@ export class ImagePanelComponent extends React.Component<ImagePanelComponentProp
                 }
             }
 
+            // const channelFrames = [frame, frame, frame, frame, frame, frame] // using one frame to mock the array of frames at different channels
+
             return (
                 <div id={`image-panel-${this.props.column}-${this.props.row}`} className={className} style={style} onWheel={this.onMouseWheel} onMouseDown={this.onMouseDown} onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                    <RasterViewComponent frame={frame} docked={this.props.docked} pixelHighlightValue={this.pixelHighlightValue} row={this.props.row} column={this.props.column} />
+                    {/* <RasterViewComponent
+                        frame={frame}
+                        gl={frame.isPreview ? PreviewWebGLService.Instance.gl : TileWebGLService.Instance.gl}
+                        docked={this.props.docked}
+                        pixelHighlightValue={this.pixelHighlightValue}
+                        renderWidth={frame.renderWidth}
+                        renderHeight={frame.renderHeight}
+                        row={this.props.row}
+                        column={this.props.column}
+                        tileBasedRender={!frame.isPreview}
+                        rasterData={frame.previewPVRasterData}
+                    /> */}
+                    <ChannelMapViewComponent
+                        frame={frame}
+                        gl={TileWebGLService.Instance.gl}
+                        pixelHighlightValue={this.pixelHighlightValue}
+                        docked={this.props.docked}
+                        renderWidth={overlayStore.fullViewWidth}
+                        renderHeight={overlayStore.fullViewHeight}
+                        numImageColumn={3}
+                        numImageRow={2}
+                    />
+                    {/* {channelFrames.map(frame => 
+                        <RasterViewComponent
+                            frame={frame}
+                            gl={frame.isPreview ? PreviewWebGLService.Instance.gl : TileWebGLService.Instance.gl}
+                            docked={this.props.docked}
+                            pixelHighlightValue={this.pixelHighlightValue}
+                            row={this.props.row}
+                            column={this.props.column}
+                        />
+                    )} */}
                     <ContourViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
                     <VectorOverlayViewComponent frame={frame} docked={this.props.docked} row={this.props.row} column={this.props.column} />
                     <OverlayComponent frame={frame} overlaySettings={overlayStore} docked={this.props.docked} />

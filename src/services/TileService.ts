@@ -206,7 +206,7 @@ export class TileService {
         }
     }
 
-    getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number, peek: boolean = false) {
+    getTile(tileCoordinateEncoded: number, fileId: number, peek: boolean = false) {
         const gpuCacheCoordinate = TileCoordinate.AddFileId(tileCoordinateEncoded, fileId);
         if (peek) {
             return this.cachedTiles.peek(gpuCacheCoordinate);
