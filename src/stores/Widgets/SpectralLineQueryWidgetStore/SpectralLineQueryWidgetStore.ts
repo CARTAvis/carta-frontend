@@ -5,7 +5,7 @@ import {action, autorun, computed, flow, makeObservable, observable} from "mobx"
 
 import {SplatalogueService} from "services";
 import {AppStore, ControlHeader} from "stores";
-import {booleanFiltering, numericFiltering, ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
+import {booleanFiltering, getComparisonOperatorAndValue, numericFiltering, ProcessedColumnData, ProtobufProcessing, SPEED_OF_LIGHT, stringFiltering, wavelengthToFrequency} from "utilities";
 
 export enum SpectralLineQueryRangeType {
     Range = "Range",
@@ -107,6 +107,9 @@ const RESOLVED_QN_COLUMN_INDEX = 7;
 const FREQUENCY_RANGE_LIMIT = 2 * 1e4; // 20000 MHz
 const DEFAULT_HEADER_WIDTH = 150;
 
+const TRUE_REGEX = /^[tTyY].*$/;
+const FALSE_REGEX = /^[fFnN].*$/;
+
 export class SpectralLineQueryWidgetStore {
     @observable queryRangeType: SpectralLineQueryRangeType;
     @observable queryRange: NumberRange;
@@ -121,12 +124,14 @@ export class SpectralLineQueryWidgetStore {
     @observable queryResultTableRef: Table;
     @observable private queryResult: Map<number, ProcessedColumnData>;
     @observable filterResult: Map<number, ProcessedColumnData>;
-    @observable private filteredRowIndexes: Array<number>;
+    @observable filteredRowIndexes: Array<number>;
     @observable private isDataFiltered: boolean;
     @observable private filterNum: number;
     @observable numDataRows: number;
     @observable selectedSpectralProfilerID: string;
     @observable controlHeader: Map<string, ControlHeader>;
+    @observable sortingInfo: { columnName: string; sortingType: CARTA.SortingType };
+    @observable sortedIndexMap: Array<number>;
 
     // raw copy of the shifted frequency column, does not apply shifting factor
     private shiftedFreqColumnRawData: Array<number>;
@@ -228,6 +233,8 @@ export class SpectralLineQueryWidgetStore {
         this.filteredRowIndexes = rowIndexes;
         this.shiftedFreqColumnRawData = this.filterResult.get(SHIFTIED_FREQUENCY_COLUMN_INDEX).data as Array<number>;
         this.applyShiftFactor();
+        this.initSortedIndexMap();
+        this.updateSortedIndexMap();
     };
 
     @action private resetQueryContents = () => {
@@ -348,6 +355,85 @@ export class SpectralLineQueryWidgetStore {
 
     @action.bound setResultTableColumnWidth(width: number, columnName: string) {
         this.controlHeader.get(columnName).columnWidth = width;
+    }
+
+    @action setSortingInfo(columnName: string, sortingType: CARTA.SortingType) {
+        this.sortingInfo = { columnName, sortingType };
+        this.updateSortedIndexMap();
+    }
+
+    @action updateSortedIndexMap() {
+        const dataIndex = this.controlHeader.get(this.sortingInfo.columnName)?.dataIndex - 1;
+        if (dataIndex >= 0) {
+            let direction = 0;
+            const sortingType = this.sortingInfo.sortingType;
+            if (sortingType === 0) {
+                direction = 1;
+            } else if (sortingType === 1) {
+                direction = -1;
+            }
+            if (direction === 0 && this.hasFilter) {
+                this.initSortedIndexMap();
+                return;
+            }
+            let queryColumn = this.filterResult.get(dataIndex);
+            if (this.hasFilter) {
+                this.initSortedIndexMap();
+            }
+            switch (queryColumn?.dataType) {
+                case CARTA.ColumnType.String:
+                    this.sortedIndexMap.sort((a: number, b: number) => {
+                        const aString = String(queryColumn.data[a]);
+                        const bString = String(queryColumn.data[b]);
+                        if (!aString) {
+                            return direction * -1;
+                        }
+
+                        if (!bString) {
+                            return direction * 1;
+                        }
+                        return direction * aString.localeCompare(bString);
+                    });
+                    break;
+                case CARTA.ColumnType.UnsupportedType:
+                    console.log("Data type is not supported");
+                    break;
+                default:
+                    this.sortedIndexMap.sort((a: number, b: number) => {
+                        const aNumber = Number(queryColumn.data[a]);
+                        const bNumber = Number(queryColumn.data[b]);
+                        return direction * (aNumber < bNumber ? -1 : 1);
+                    });
+                    break;
+            }
+        }
+    }
+
+    @action initSortedIndexMap() {
+        this.sortedIndexMap = [];
+        for (let index = 0; index < this.numVisibleRows; index++) {
+            this.sortedIndexMap.push(index);
+        }
+    }
+
+    @computed get hasFilter(): boolean {
+        let hasfilter = false;
+        this.controlHeader.forEach((value, key) => {
+            if (value.filter && value.display) {
+                const column = this.queryResult.get(value.dataIndex);
+                if (column?.dataType === CARTA.ColumnType.String) {
+                    hasfilter = true;
+                } else if (column?.dataType === CARTA.ColumnType.Bool) {
+                    hasfilter = value.filter.match(TRUE_REGEX)?.length > 0 || value.filter.match(FALSE_REGEX)?.length > 0;
+                } else {
+                    const {operator, values} = getComparisonOperatorAndValue(value.filter);
+                    if (operator >= 0 && values.length) {
+                        hasfilter = true;
+                    }
+                }
+            }
+        });
+        return hasfilter;
     }
 
     @computed get fullRowIndexes(): Array<number> {
@@ -542,6 +628,9 @@ export class SpectralLineQueryWidgetStore {
         this.queryResultTableRef = undefined;
         this.selectedSpectralProfilerID = AppStore.Instance.widgetsStore.spectralProfilerList.length > 0 ? AppStore.Instance.widgetsStore.spectralProfilerList[0] : undefined;
         this.resetQueryContents();
+        this.sortingInfo = { columnName: null, sortingType: null };
+        // this.sortedIndexMap = [];
+        this.initSortedIndexMap();
 
         // update selected spectral profiler when currently selected is closed
         autorun(() => {

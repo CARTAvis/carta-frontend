@@ -4,6 +4,7 @@ import SplitPane, {Pane} from "react-split-pane";
 import {AnchorButton, Button, Classes, ControlGroup, FormGroup, HTMLSelect, Intent, Menu, MenuItem, Overlay, Position, Spinner, Switch} from "@blueprintjs/core";
 import {Popover2, Tooltip2} from "@blueprintjs/popover2";
 import {Cell, Column, Regions, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import {CARTA} from "carta-protobuf";
 import classNames from "classnames";
 import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -237,6 +238,11 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
         }
     };
 
+    private updateSortRequest = (columnName: string, sortingType: CARTA.SortingType, columnIndex: number) => {
+        const widgetStore = this.widgetStore;
+        widgetStore.setSortingInfo(columnName, sortingType);
+    };
+
     render() {
         const appStore = AppStore.Instance;
         const widgetStore = this.widgetStore;
@@ -349,13 +355,19 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
             updateTableRef: ref => {
                 this.resultTableRef = ref;
             },
-            disableSort: true,
+            updateSortRequest: this.updateSortRequest,
+            sortingInfo: widgetStore.sortingInfo,
+            disableSort: false,
             updateColumnFilter: widgetStore.setColumnFilter,
             columnWidths: widgetStore.resultTableColumnWidths,
             updateTableColumnWidth: widgetStore.setResultTableColumnWidth,
             tableHeaders: widgetStore.columnHeaders,
             applyFilterWithEnter: this.handleFilter
         };
+
+        if (widgetStore.sortedIndexMap.length > 0) {
+            queryResultTableProps.sortedIndexMap = widgetStore.sortedIndexMap;
+        }
 
         const className = classNames("spectral-line-query-widget", {"bp3-dark": appStore.darkTheme});
         const isSelectedLinesUnderLimit = widgetStore.numSelectedLines <= PLOT_LINES_LIMIT;
@@ -394,7 +406,7 @@ export class SpectralLineQueryComponent extends React.Component<WidgetProps> {
                         <FormGroup inline={true} label={this.width < MINIMUM_WIDTH ? "" : "Spectral profiler"}>
                             {widgetMenu}
                         </FormGroup>
-                        <AnchorButton text="Apply filter" intent={Intent.SUCCESS} disabled={widgetStore.numDataRows <= 0} onClick={this.handleFilter} />
+                        <AnchorButton text="Apply filter" intent={Intent.SUCCESS} disabled={widgetStore.numDataRows <= 0 || !widgetStore.hasFilter} onClick={this.handleFilter} />
                         <AnchorButton text="Reset filter" intent={Intent.WARNING} onClick={this.handleResetFilter} />
                         <Tooltip2 content={plotTip} position={Position.BOTTOM}>
                             <AnchorButton text="Plot" intent={Intent.PRIMARY} disabled={!appStore.activeFrame || widgetStore.filterResult.size <= 0 || !isSelectedWidgetExisted || !isSelectedLinesUnderLimit} onClick={this.handlePlot} />
