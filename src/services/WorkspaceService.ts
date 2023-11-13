@@ -44,7 +44,7 @@ export class WorkspaceService {
     public async setWorkspace(id: string) {
         this.workspaceDoc = new Y.Doc();
         const token = AppStore.Instance.apiService.accessToken;
-        this.provider = new WebsocketProvider("wss://carta-yjs.veggiesaurus.ngrok.io/workspaces/api/collaboration", id, this.workspaceDoc, {params: {token}});
+        this.provider = new WebsocketProvider("wss://carta-yjs.veggiesaurus.ngrok.io/api/collaboration", id, this.workspaceDoc, {params: {token}});
         const userNum = Math.floor(Math.random() * 1000);
         this.userId = uuidv4();
         this.provider.awareness.setLocalStateField("user", {
