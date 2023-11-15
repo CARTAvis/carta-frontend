@@ -458,7 +458,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     <ColormapConfigComponent renderConfig={frame.renderConfig} />
                     <FormGroup label="Alpha" inline={true}>
-                        <NumericInput min={0} max={1} stepSize={0.05} value={frame.renderConfig.blendAlpha} onValueChange={frame.renderConfig.setBlendAlpha} />
+                        <NumericInput min={0} max={1} stepSize={0.05} minorStepSize={0.01} value={frame.renderConfig.blendAlpha} onValueChange={frame.renderConfig.setBlendAlpha} />
                     </FormGroup>
                     <FormGroup label="Mode" inline={true}>
                         <HTMLSelect
