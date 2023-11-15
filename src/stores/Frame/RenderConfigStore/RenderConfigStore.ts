@@ -154,6 +154,8 @@ export class RenderConfigStore {
     @observable gamma: number;
     @observable alpha: number;
     @observable inverted: boolean;
+    @observable blendAlpha: number;
+    @observable blendMode: GlobalCompositeOperation;
     @observable channelHistogram: CARTA.IHistogram;
     @observable cubeHistogram: CARTA.IHistogram;
     @observable useCubeHistogram: boolean;
@@ -182,6 +184,8 @@ export class RenderConfigStore {
         this.gamma = preference.scalingGamma;
         this.scaling = preference.scaling;
         this.inverted = false;
+        this.blendAlpha = 1;
+        this.blendMode = "source-over";
         this.cubeHistogramProgress = 0;
         this.setColorMap(preference.colormap);
         this.stokesIndex = 0;
@@ -429,6 +433,14 @@ export class RenderConfigStore {
 
     @action toggleVisibility = () => {
         this.visible = !this.visible;
+    };
+
+    @action setBlendAlpha = (alpha: number) => {
+        this.blendAlpha = alpha;
+    };
+
+    @action setBlendMode = (mode: GlobalCompositeOperation) => {
+        this.blendMode = mode;
     };
 
     @action updateSiblings = () => {

@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
-import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, IOptionProps, NonIdealState} from "@blueprintjs/core";
+import {Button, ButtonGroup, Colors, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as _ from "lodash";
 import {action, autorun, computed, makeObservable, observable} from "mobx";
@@ -457,6 +457,43 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         <SafeNumericInput value={frame.renderConfig.scaleMaxVal} selectAllOnFocus={true} buttonPosition={"none"} onBlur={this.handleScaleMaxChange} onKeyDown={this.handleScaleMaxChange} />
                     </FormGroup>
                     <ColormapConfigComponent renderConfig={frame.renderConfig} />
+                    <FormGroup label="Alpha" inline={true}>
+                        <NumericInput min={0} max={1} stepSize={0.05} value={frame.renderConfig.blendAlpha} onValueChange={frame.renderConfig.setBlendAlpha} />
+                    </FormGroup>
+                    <FormGroup label="Mode" inline={true}>
+                        <HTMLSelect
+                            options={[
+                                "color",
+                                "color-burn",
+                                "color-dodge",
+                                "copy",
+                                "darken",
+                                "destination-atop",
+                                "destination-in",
+                                "destination-out",
+                                "destination-over",
+                                "difference",
+                                "exclusion",
+                                "hard-light",
+                                "hue",
+                                "lighten",
+                                "lighter",
+                                "luminosity",
+                                "multiply",
+                                "overlay",
+                                "saturation",
+                                "screen",
+                                "soft-light",
+                                "source-atop",
+                                "source-in",
+                                "source-out",
+                                "source-over",
+                                "xor"
+                            ]}
+                            value={frame.renderConfig.blendMode}
+                            onChange={ev => frame.renderConfig.setBlendMode(ev.currentTarget.value as GlobalCompositeOperation)}
+                        />
+                    </FormGroup>
                     {this.width < histogramCutoff && percentileSelectDiv}
                 </div>
                 <TaskProgressDialogComponent
