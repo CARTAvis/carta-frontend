@@ -2936,7 +2936,7 @@ export class AppStore {
     }
 
     @computed get visibleFrames(): FrameStore[] {
-        if (!this.frames?.length) {
+        if (!this.frames?.length || !this.activeFrame) {
             return [];
         }
 

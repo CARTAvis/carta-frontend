@@ -57,16 +57,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         ctx.clearRect(0, 0, w, h);
 
         let renderFrames: FrameStore[];
-        if (this.props.frame.renderConfig.blendMode === "source-over") {
+        if (!this.props.frame.renderConfig.blendEnabled) {
             renderFrames = [this.props.frame];
         } else {
-            renderFrames = appsStore.visibleFrames;
+            renderFrames = [...this.props.frame.spatialSiblings, this.props.frame];
+            ctx.globalCompositeOperation = "lighter";
         }
 
-        ctx.globalCompositeOperation = this.props.frame.renderConfig.blendMode;
         for (const frame of renderFrames) {
             // set alpha for blending if there are multiple frames
-            ctx.globalAlpha = (renderFrames.length === 1) ? 1.0: frame.renderConfig.blendAlpha;
+            ctx.globalAlpha = renderFrames.length === 1 ? 1.0 : frame.renderConfig.blendAlpha;
             const tileRenderService = frame.isPreview ? PreviewWebGLService.Instance : TileWebGLService.Instance;
             if (frame && this.canvas && this.gl && tileRenderService.cmapTexture) {
                 const histStokesIndex = frame.renderConfig.stokesIndex;
@@ -389,26 +389,15 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const frameView = spatialReference.requiredFrameView;
             const currentView = spatialReference.currentFrameView;
 
-            const blendMode = frame.renderConfig.blendMode;
-            const alphas = appStore.visibleFrames.map(f => f.renderConfig.blendAlpha).reduce((p, v) => p + v, 0);
-
-            const colorMapping = {
-                min: frame.renderConfig.scaleMinVal,
-                max: frame.renderConfig.scaleMaxVal,
-                colorMap: frame.renderConfig.colorMapIndex,
-                contrast: frame.renderConfig.contrast,
-                bias: frame.renderConfig.bias,
-                useSmoothedBiasContrast: appStore.preferenceStore?.useSmoothedBiasContrast,
-                scaling: frame.renderConfig.scaling,
-                gamma: frame.renderConfig.gamma,
-                alpha: frame.renderConfig.alpha,
-                inverted: frame.renderConfig.inverted,
-                visibility: frame.renderConfig.visible,
-                nanColorHex: appStore.preferenceStore.nanColorHex,
-                nanAlpha: appStore.preferenceStore.nanAlpha,
-                pixelGridVisible: appStore.preferenceStore.pixelGridVisible,
-                pixelGridColor: getColorForTheme(appStore.preferenceStore.pixelGridColor)
-            };
+            const blendMode = frame.renderConfig.blendEnabled;
+            let framesToRender = [frame];
+            if (blendMode) {
+                framesToRender = [...frame.spatialSiblings, frame];
+            }
+            for (const frame of framesToRender) {
+                const {scaleMaxVal, scaleMinVal, colorMapIndex, contrast, bias, scaling, gamma, alpha, inverted, visible, blendAlpha} = frame.renderConfig;
+                const {useSmoothedBiasContrast, pixelGridVisible, pixelGridColor, theme, nanColorHex, nanAlpha} = appStore.preferenceStore;
+            }
 
             const ratio = appStore.imageRatio;
         }

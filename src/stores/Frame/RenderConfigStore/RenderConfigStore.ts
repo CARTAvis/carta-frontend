@@ -131,7 +131,7 @@ export class RenderConfigStore {
     @observable alpha: number;
     @observable inverted: boolean;
     @observable blendAlpha: number;
-    @observable blendMode: GlobalCompositeOperation;
+    @observable blendEnabled: boolean;
     @observable channelHistogram: CARTA.IHistogram;
     @observable cubeHistogram: CARTA.IHistogram;
     @observable useCubeHistogram: boolean;
@@ -161,7 +161,7 @@ export class RenderConfigStore {
         this.scaling = preference.scaling;
         this.inverted = false;
         this.blendAlpha = 1;
-        this.blendMode = "source-over";
+        this.blendEnabled = false;
         this.cubeHistogramProgress = 0;
         this.setColorMap(preference.colormap);
         this.stokesIndex = 0;
@@ -415,8 +415,8 @@ export class RenderConfigStore {
         this.blendAlpha = alpha;
     };
 
-    @action setBlendMode = (mode: GlobalCompositeOperation) => {
-        this.blendMode = mode;
+    @action setBlendEnabled = (enabled: boolean) => {
+        this.blendEnabled = enabled;
     };
 
     @action updateSiblings = () => {
