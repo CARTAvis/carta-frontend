@@ -106,36 +106,12 @@ export class RenderConfigStore {
         "YlGn",
         "YlGnBu",
         "YlOrBr",
-        "YlOrRd"
+        "YlOrRd",
+        "BkRd",
+        "BkBu",
+        "BkGn"
     ];
-    static readonly COLOR_MAPS_SELECTED = [
-        "afmhot",
-        "Blues",
-        "coolwarm",
-        "cubehelix",
-        "gist_heat",
-        "gist_stern",
-        "gnuplot",
-        "gnuplot2",
-        "gray",
-        "greens",
-        "greys",
-        "hot",
-        "inferno",
-        "jet",
-        "magma",
-        "nipy_spectral",
-        "plasma",
-        "rainbow",
-        "RdBu",
-        "RdGy",
-        "reds",
-        "seismic",
-        "spectral",
-        "tab10",
-        "viridis"
-    ];
-
+    static readonly COLOR_MAPS_SELECTED = RenderConfigStore.COLOR_MAPS_ALL;
     static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
     static readonly GAMMA_MIN = 0.1;

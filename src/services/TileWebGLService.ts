@@ -3,6 +3,8 @@ import allMaps from "static/allmaps.png";
 import {TEXTURE_SIZE, TILE_SIZE} from "services";
 import {getShaderProgram, GL2, initWebGL2, loadImageTexture} from "utilities";
 
+import {RenderConfigStore} from "../stores";
+
 import {rasterShaders} from "./GLSL";
 
 interface ShaderUniforms {
@@ -119,7 +121,7 @@ export class TileWebGLService {
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
         this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
-        this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
+        this.gl.uniform1i(this.shaderUniforms.NumCmaps, RenderConfigStore.COLOR_MAPS_ALL.length);
         this.gl.uniform1i(this.shaderUniforms.CmapIndex, 2);
         this.gl.uniform1f(this.shaderUniforms.MinVal, 3.4);
         this.gl.uniform1f(this.shaderUniforms.MaxVal, 5.5);
