@@ -5,20 +5,20 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {AppStore, DialogStore, HelpType} from "stores";
+import {AppStore, HelpType} from "stores";
+import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import "./FileInfoDialogComponent.scss";
 
 @observer
 export class FileInfoDialogComponent extends React.Component {
+    public static DialogId = "fileInfo-dialog";
+
     render() {
         const appStore = AppStore.Instance;
         const className = classNames("file-info-dialog", {"bp3-dark": appStore.darkTheme});
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "fileInfo-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(FileInfoDialogComponent.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: "app-header",
@@ -40,9 +40,9 @@ export class FileInfoDialogComponent extends React.Component {
                 defaultWidth={800}
                 defaultHeight={600}
                 enableResizing={true}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(FileInfoDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className="bp3-dialog-body">
                     <FileInfoComponent

@@ -57,7 +57,7 @@ import {
 } from "stores";
 import {CompassAnnotationStore, CURSOR_REGION_ID, DistanceMeasuringStore, FrameInfo, FrameStore, PointAnnotationStore, RegionStore, RulerAnnotationStore, TextAnnotationStore} from "stores/Frame";
 import {HistogramWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "stores/Widgets";
-import {clamp, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing} from "utilities";
+import {clamp, distinct, exportScreenshot, getColorForTheme, GetRequiredTiles, getTimestamp, mapToObject, ProtobufProcessing, ZIndexUpdate} from "utilities";
 
 import GitCommit from "../../static/gitInfo";
 
@@ -78,11 +78,6 @@ interface ChannelUpdate {
     frame: FrameStore;
     channel: number;
     stokes: number;
-}
-
-interface ZIndexUpdate {
-    id: string;
-    zIndex: number;
 }
 
 const IMPORT_REGION_BATCH_SIZE = 1000;

@@ -7,8 +7,9 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, DialogStore, HelpType} from "stores";
+import {AppStore, HelpType} from "stores";
 import {RegionStore} from "stores/Frame";
+import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
@@ -41,6 +42,13 @@ export class RegionDialogComponent extends React.Component {
     private static readonly MissingRegionNode = (<NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"} />);
     private static readonly InvalidRegionNode = (<NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"} />);
 
+    private static readonly DefaultWidth = 525;
+    private static readonly DefaultHeight = 575;
+    private static readonly MinWidth = 450;
+    private static readonly MinHeight = 300;
+
+    public static DialogId = "region-dialog";
+
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
         appStore.dialogStore.hideRegionDialog();
@@ -54,10 +62,7 @@ export class RegionDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "region-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(RegionDialogComponent.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -146,14 +151,14 @@ export class RegionDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.REGION_DIALOG}
-                defaultWidth={525}
-                defaultHeight={575}
-                minHeight={300}
-                minWidth={450}
+                defaultWidth={RegionDialogComponent.DefaultWidth}
+                defaultHeight={RegionDialogComponent.DefaultHeight}
+                minHeight={RegionDialogComponent.MinHeight}
+                minWidth={RegionDialogComponent.MinWidth}
                 enableResizing={true}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(RegionDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
                 <div className={Classes.DIALOG_FOOTER}>

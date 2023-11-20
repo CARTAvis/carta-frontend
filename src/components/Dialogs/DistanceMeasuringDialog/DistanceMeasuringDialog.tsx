@@ -12,7 +12,7 @@ import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
 import {AppStore, DialogStore, HelpType} from "stores";
 import {CoordinateMode, DistanceMeasuringStore} from "stores/Frame";
-import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
+import {findzIndex, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import "./DistanceMeasuringDialog.scss";
 
@@ -23,6 +23,8 @@ enum DistanceMeasuringDialogTabs {
 
 @observer
 export class DistanceMeasuringDialog extends React.Component {
+    public static DialogId = "distanceMeasure-dialog";
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
@@ -131,9 +133,7 @@ export class DistanceMeasuringDialog extends React.Component {
         const WCSFinish = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.finish);
         const dialogStore = DialogStore.Instance;
 
-        const id: string = "distanceMeasure-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(DistanceMeasuringDialog.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="distanceMeasuring" />,
@@ -193,9 +193,9 @@ export class DistanceMeasuringDialog extends React.Component {
                 minHeight={300}
                 minWidth={450}
                 enableResizing={true}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(DistanceMeasuringDialog.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (

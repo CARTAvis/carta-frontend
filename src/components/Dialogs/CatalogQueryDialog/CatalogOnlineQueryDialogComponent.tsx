@@ -9,8 +9,8 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
 import {CatalogApiService, CatalogDatabase} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, DialogStore, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
-import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
+import {AppStore, CatalogOnlineQueryConfigStore, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
+import {clamp, findzIndex, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import "./CatalogOnlineQueryDialogComponent.scss";
 
@@ -20,6 +20,8 @@ const KEYCODE_ENTER = 13;
 export class CatalogQueryDialogComponent extends React.Component {
     private static readonly DefaultWidth = 550;
     private static readonly DefaultHeight = 550;
+
+    public static DialogId = "catalogQuery-dialog";
 
     @observable resultSize: number;
     @observable objectSize: number;
@@ -69,10 +71,7 @@ export class CatalogQueryDialogComponent extends React.Component {
             className += " bp3-dark";
         }
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "catalogQuery-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(CatalogQueryDialogComponent.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: "geosearch",
@@ -262,9 +261,9 @@ export class CatalogQueryDialogComponent extends React.Component {
                 defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
                 defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
                 enableResizing={true}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(CatalogQueryDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className="bp3-dialog-body">{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>

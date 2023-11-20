@@ -14,9 +14,9 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
 import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {TelemetryMode} from "services";
-import {AppStore, BeamType, DialogStore, HelpType, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
-import {copyToClipboard, SWATCH_COLORS} from "utilities";
+import {copyToClipboard, findzIndex, SWATCH_COLORS, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
@@ -49,6 +49,13 @@ const PV_PREVIEW_CUBE_SIZE_LIMIT = 1000000000; //need to be removed and replaced
 
 @observer
 export class PreferenceDialogComponent extends React.Component {
+    private static readonly DefaultWidth = 775;
+    private static readonly DefaultHeight = 500;
+    private static readonly MinWidth = 450;
+    private static readonly MinHeight = 300;
+
+    public static DialogId = "preference-dialog";
+
     @observable selectedTab: PreferenceDialogTabs = PreferenceDialogTabs.GLOBAL;
     @action private setSelectedTab = (tab: PreferenceDialogTabs) => {
         this.selectedTab = tab;
@@ -155,10 +162,7 @@ export class PreferenceDialogComponent extends React.Component {
         const preference = appStore.preferenceStore;
         const layoutStore = appStore.layoutStore;
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "preference-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndex = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(PreferenceDialogComponent.DialogId);
 
         const globalPanel = (
             <React.Fragment>
@@ -892,14 +896,14 @@ export class PreferenceDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.PREFERENCES}
-                minWidth={450}
-                minHeight={300}
-                defaultWidth={775}
-                defaultHeight={500}
+                minWidth={PreferenceDialogComponent.MinWidth}
+                minHeight={PreferenceDialogComponent.MinHeight}
+                defaultWidth={PreferenceDialogComponent.DefaultWidth}
+                defaultHeight={PreferenceDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndex)}
+                onSelected={() => updateSelectFloatingObjzIndex(PreferenceDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className="bp3-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>

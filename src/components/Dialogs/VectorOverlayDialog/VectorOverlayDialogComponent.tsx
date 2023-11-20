@@ -8,9 +8,9 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, DialogStore, HelpType} from "stores";
+import {AppStore, HelpType} from "stores";
 import {FrameStore, VectorOverlaySource} from "stores/Frame";
-import {SWATCH_COLORS} from "utilities";
+import {findzIndex, SWATCH_COLORS, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import "./VectorOverlayDialogComponent.scss";
 
@@ -37,6 +37,10 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     private static readonly DefaultWidth = 500;
     private static readonly DefaultHeight = 720;
+    private static readonly MinWidth = 400;
+    private static readonly MinHeight = 600;
+
+    public static DialogId = "vector-dialog";
 
     private cachedFrame: FrameStore;
 
@@ -241,10 +245,7 @@ export class VectorOverlayDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "vector-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(VectorOverlayDialogComponent.DialogId);
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="vectorOverlay" size={CustomIcon.SIZE_LARGE} />,
@@ -395,10 +396,12 @@ export class VectorOverlayDialogComponent extends React.Component {
                 helpType={HelpType.VECTOR_OVERLAY}
                 defaultWidth={VectorOverlayDialogComponent.DefaultWidth}
                 defaultHeight={VectorOverlayDialogComponent.DefaultHeight}
+                minWidth={VectorOverlayDialogComponent.MinWidth}
+                minHeight={VectorOverlayDialogComponent.MinHeight}
                 enableResizing={true}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(VectorOverlayDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">

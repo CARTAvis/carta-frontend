@@ -10,8 +10,9 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {SimpleTableComponentProps} from "components/Shared";
-import {AppStore, BrowserMode, CatalogProfileStore, DialogStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
+import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 
@@ -30,11 +31,18 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable enableEditPath: boolean = false;
     private readonly imageArithmeticInputRef: React.RefObject<HTMLInputElement>;
 
+    private static readonly DefaultWidth = 1200;
+    private static readonly DefaultHeight = 600;
+    private static readonly MinWidth = 800;
+    private static readonly MinHeight = 400;
+
+    public static DialogId = "fileBrowser-dialog";
+
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        this.defaultWidth = 1200;
-        this.defaultHeight = 600;
+        // this.defaultWidth = 1200;
+        // this.defaultHeight = 600;
         this.imageArithmeticInputRef = React.createRef<HTMLInputElement>();
     }
 
@@ -609,10 +617,7 @@ export class FileBrowserDialogComponent extends React.Component {
         const fileBrowserStore = appStore.fileBrowserStore;
         const className = classNames("file-browser-dialog", {"bp3-dark": appStore.darkTheme});
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "fileBrowser-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(FileBrowserDialogComponent.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: "folder-open",
@@ -664,15 +669,15 @@ export class FileBrowserDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.FILE_BROWSER}
-                minWidth={400}
-                minHeight={400}
-                defaultWidth={this.defaultWidth}
-                defaultHeight={this.defaultHeight}
+                minWidth={FileBrowserDialogComponent.MinWidth}
+                minHeight={FileBrowserDialogComponent.MinHeight}
+                defaultWidth={FileBrowserDialogComponent.DefaultWidth}
+                defaultHeight={FileBrowserDialogComponent.DefaultHeight}
                 enableResizing={true}
                 onResizeStop={this.updateDefaultSize}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(FileBrowserDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className="file-path">
                     {this.pathItems && (

@@ -10,10 +10,10 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D} from "models";
-import {AppStore, DialogStore, HelpType} from "stores";
+import {AppStore, HelpType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
-import {clamp, getColorForTheme, toExponential, toFixed} from "utilities";
+import {clamp, findzIndex, getColorForTheme, toExponential, toFixed, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
@@ -43,6 +43,8 @@ export class ContourDialogComponent extends React.Component {
     private readonly widgetStore: RenderConfigWidgetStore;
     private cachedFrame: FrameStore;
     private cachedHistogram: CARTA.IHistogram;
+
+    public static DialogId = "contour-dialog";
 
     constructor(props: {appStore: AppStore}) {
         super(props);
@@ -276,10 +278,7 @@ export class ContourDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "contour-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(ContourDialogComponent.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE} />,
@@ -477,9 +476,9 @@ export class ContourDialogComponent extends React.Component {
                 defaultWidth={ContourDialogComponent.DefaultWidth}
                 defaultHeight={ContourDialogComponent.DefaultHeight}
                 enableResizing={true}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(ContourDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">

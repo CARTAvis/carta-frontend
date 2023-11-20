@@ -9,12 +9,20 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {POLARIZATION_LABELS} from "models";
-import {AppStore, BrowserMode, DialogStore, HelpType} from "stores";
+import {AppStore, BrowserMode, HelpType} from "stores";
+import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import "./StokesDialogComponent.scss";
 
 @observer
 export class StokesDialogComponent extends React.Component {
+    private static readonly DefaultWidth = 610;
+    private static readonly DefaultHeight = 300;
+    private static readonly MinWidth = 300;
+    private static readonly MinHeight = 250;
+
+    public static DialogId = "stokes-dialog";
+
     @observable stokes: Map<string, CARTA.IStokesFile>;
     @observable stokesHeader: Map<string, CARTA.IFileInfoExtended>;
 
@@ -132,10 +140,7 @@ export class StokesDialogComponent extends React.Component {
             />
         );
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "stokes-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(StokesDialogComponent.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: "git-merge",
@@ -152,14 +157,14 @@ export class StokesDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.STOKES}
-                minWidth={300}
-                minHeight={250}
-                defaultWidth={602}
-                defaultHeight={300}
+                minWidth={StokesDialogComponent.MinWidth}
+                minHeight={StokesDialogComponent.MinHeight}
+                defaultWidth={StokesDialogComponent.DefaultWidth}
+                defaultHeight={StokesDialogComponent.DefaultHeight}
                 enableResizing={true}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(StokesDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className="bp3-dialog-body">
                     <Table

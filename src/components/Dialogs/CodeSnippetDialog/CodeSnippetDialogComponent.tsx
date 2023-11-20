@@ -9,7 +9,8 @@ import * as prism from "prismjs";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, WarningToast} from "components/Shared";
 import {Snippet} from "models";
-import {AppStore, DialogStore, SnippetStore} from "stores";
+import {AppStore, SnippetStore} from "stores";
+import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
 import {ThemeProvider} from "./ThemeProvider";
@@ -22,6 +23,8 @@ const KEYCODE_ENTER = 13;
 export class CodeSnippetDialogComponent extends React.Component {
     @observable saveDialogOpen: boolean = false;
     private editorRef;
+
+    public static DialogId = "code-snippet-dialog";
 
     constructor(props: any) {
         super(props);
@@ -111,10 +114,7 @@ export class CodeSnippetDialogComponent extends React.Component {
         const snippetStore = appStore.snippetStore;
         const className = classNames("code-snippet-dialog", {"bp3-dark": appStore.darkTheme});
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "code-snippet-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(CodeSnippetDialogComponent.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: "console",
@@ -152,9 +152,9 @@ export class CodeSnippetDialogComponent extends React.Component {
                 defaultWidth={700}
                 defaultHeight={400}
                 enableResizing={true}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(CodeSnippetDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />

@@ -10,9 +10,9 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
 import {Point2D, WCSPoint2D} from "models";
-import {AppStore, DialogStore, HelpType} from "stores";
+import {AppStore, HelpType} from "stores";
 import {CoordinateMode} from "stores/Frame";
-import {exportTxtFile, getTimestamp} from "utilities";
+import {exportTxtFile, findzIndex, getTimestamp, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import "./FittingDialogComponent.scss";
 
@@ -26,6 +26,8 @@ export class FittingDialogComponent extends React.Component {
     @observable private coord: CoordinateMode = CoordinateMode.Image;
     @observable private fittingResultTabId: FittingResultTabs = FittingResultTabs.RESULT;
     @observable private isMouseEntered: boolean = false;
+
+    public static DialogId = "fitting-dialog";
 
     @action private setCoord = (coord: CoordinateMode) => {
         this.coord = coord;
@@ -96,10 +98,7 @@ export class FittingDialogComponent extends React.Component {
         const fittingStore = appStore.imageFittingStore;
         let component = fittingStore.components[fittingStore.selectedComponentIndex];
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "fitting-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(FittingDialogComponent.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,
@@ -166,9 +165,9 @@ export class FittingDialogComponent extends React.Component {
                 defaultWidth={600}
                 defaultHeight={660}
                 enableResizing={true}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(FittingDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data source" inline={true}>

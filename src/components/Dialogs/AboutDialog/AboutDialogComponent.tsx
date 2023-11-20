@@ -4,7 +4,8 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {CARTA_INFO} from "models";
-import {AppStore, DialogStore} from "stores";
+import {DialogStore} from "stores";
+import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import "./AboutDialogComponent.scss";
 
@@ -15,13 +16,12 @@ export class AboutDialogComponent extends React.Component {
     private static readonly MinWidth = 610;
     private static readonly MinHeight = 675;
 
+    public static DialogId = "about-dialog";
+
     public render() {
         const dialogStore = DialogStore.Instance;
 
-        const appStore = AppStore.Instance;
-        const id: string = "about-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(AboutDialogComponent.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -43,9 +43,9 @@ export class AboutDialogComponent extends React.Component {
                 minWidth={AboutDialogComponent.MinWidth}
                 minHeight={AboutDialogComponent.MinHeight}
                 enableResizing={false}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(AboutDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>

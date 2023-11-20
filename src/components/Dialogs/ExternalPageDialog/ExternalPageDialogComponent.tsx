@@ -5,20 +5,20 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, DialogStore} from "stores";
+import {AppStore} from "stores";
+import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import "./ExternalPageDialogComponent.scss";
 
 @observer
 export class ExternalPageDialogComponent extends React.Component {
+    public static DialogId = "externalPage-dialog";
+
     render() {
         const appStore = AppStore.Instance;
         const className = classNames("iframe-dialog", {"bp3-dark": appStore.darkTheme});
 
-        const dialogStore = DialogStore.Instance;
-        const id: string = "externalPage-dialog";
-        const selectDialog = appStore.floatingObjs.find(w => w.id === id);
-        let zIndexNew = selectDialog ? selectDialog.zIndex : 0;
+        let zIndex = findzIndex(ExternalPageDialogComponent.DialogId);
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -39,9 +39,9 @@ export class ExternalPageDialogComponent extends React.Component {
                 defaultWidth={800}
                 defaultHeight={600}
                 enableResizing={true}
-                zIndex={zIndexNew}
-                onSelected={() => dialogStore.updateSelectDialogzIndex(id)}
-                onClosed={() => dialogStore.updateDialogzIndexOnRemove(zIndexNew)}
+                zIndex={zIndex}
+                onSelected={() => updateSelectFloatingObjzIndex(ExternalPageDialogComponent.DialogId)}
+                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
             >
                 <div className="bp3-dialog-body">
                     <Iframe url={appStore.dialogStore.externalPageDialogUrl} />

@@ -165,22 +165,22 @@ export class ToolbarMenuComponent extends React.Component {
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
                     <Tooltip2 content={<span>File header</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={"app-header"} onClick={dialogStore.showFileInfoDialog} active={dialogStore.fileInfoDialogVisible} />
+                        <AnchorButton icon={"app-header"} disabled={!appStore.activeFrame} onClick={dialogStore.showFileInfoDialog} active={dialogStore.fileInfoDialogVisible} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Preferences</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={"wrench"} onClick={dialogStore.showPreferenceDialog} active={dialogStore.preferenceDialogVisible} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Contours</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={<CustomIcon icon={"contour"} />} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible} />
+                        <AnchorButton icon={<CustomIcon icon={"contour"} />} disabled={!appStore.activeFrame} onClick={dialogStore.showContourDialog} active={dialogStore.contourDialogVisible} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Vector overlay</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={<CustomIcon icon={"vectorOverlay"} />} onClick={dialogStore.showVectorOverlayDialog} active={dialogStore.vectorOverlayDialogVisible} />
+                        <AnchorButton icon={<CustomIcon icon={"vectorOverlay"} />} disabled={!appStore.activeFrame} onClick={dialogStore.showVectorOverlayDialog} active={dialogStore.vectorOverlayDialogVisible} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Image fitting</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon={<CustomIcon icon="imageFitting" />} onClick={dialogStore.showFittingDialog} active={dialogStore.fittingDialogVisible} />
+                        <AnchorButton icon={<CustomIcon icon="imageFitting" />} disabled={!appStore.activeFrame} onClick={dialogStore.showFittingDialog} active={dialogStore.fittingDialogVisible} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Online catalog query</span>} position={Position.BOTTOM}>
-                        <AnchorButton icon="geosearch" onClick={dialogStore.showCatalogQueryDialog} active={dialogStore.catalogQueryDialogVisible} />
+                        <AnchorButton icon="geosearch" disabled={!appStore.activeFrame} onClick={dialogStore.showCatalogQueryDialog} active={dialogStore.catalogQueryDialogVisible} />
                     </Tooltip2>
                     <Tooltip2 content={<span>Distance measurement</span>} position={Position.BOTTOM}>
                         <AnchorButton icon={<CustomIcon icon="distanceMeasuring" />} active={dialogStore.distanceMeasuringDialogVisible} onClick={this.handleDistanceMeasuringClicked} />

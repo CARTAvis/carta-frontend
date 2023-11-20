@@ -13,3 +13,4 @@ export * from "./tiling/tiling";
 export * from "./units/units";
 export * from "./wcs/wcs";
 export * from "./webgl/webgl";
+export * from "./zindex/zindex";
