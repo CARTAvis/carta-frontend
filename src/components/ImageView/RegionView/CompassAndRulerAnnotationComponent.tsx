@@ -122,7 +122,8 @@ export const CompassAnnotation = observer((props: CompassRulerAnnotationProps) =
 
     const imageRatio = AppStore.Instance.imageRatio;
     const zoomLevel = frame.spatialReference?.zoomLevel || frame.zoomLevel;
-    const approxPoints = region.getCompassApproximation(frame.wcsInfo, frame.spatialReference ? true : false, frame.spatialTransformAST);
+    const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
+    const approxPoints = region.getCompassApproximation(wcsInfo, frame.spatialReference ? true : false, frame.spatialTransformAST);
     const northApproxPoints = approxPoints.northApproximatePoints;
     const eastApproxPoints = approxPoints.eastApproximatePoints;
     const northPointArray = [];
