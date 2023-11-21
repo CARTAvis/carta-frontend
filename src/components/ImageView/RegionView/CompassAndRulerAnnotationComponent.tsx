@@ -386,7 +386,8 @@ export const RulerAnnotation = observer((props: CompassRulerAnnotationProps) => 
     const canvasPosStart = transformedImageToCanvasPos(secondaryImagePointStart, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
     const canvasPosFinish = transformedImageToCanvasPos(secondaryImagePointFinish, frame, props.layerWidth, props.layerHeight, props.stageRef.current);
 
-    const approxPoints = region.getCurveApproximation(frame.wcsInfo, frame.spatialTransformAST);
+    const wcsInfo = frame?.validWcs ? frame.wcsInfoForTransformation : 0;
+    const approxPoints = region.getCurveApproximation(wcsInfo, frame.spatialTransformAST);
 
     const xApproxPoints = approxPoints.xApproximatePoints;
     const yApproxPoints = approxPoints.yApproximatePoints;
