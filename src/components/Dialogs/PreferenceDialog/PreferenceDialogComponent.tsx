@@ -12,11 +12,27 @@ import tinycolor from "tinycolor2";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, AutoColorPickerComponent, ColormapComponent, ColorPickerComponent, PointShapeSelectComponent, SafeNumericInput, ScalingSelectComponent, SuccessToast} from "components/Shared";
-import {CompressionQuality, CursorInfoVisibility, CursorPosition, Event, FileFilterMode, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {
+    CompressionQuality,
+    CursorInfoVisibility,
+    CursorPosition,
+    Event,
+    FileFilterMode,
+    RegionCreationMode,
+    SPECTRAL_MATCHING_TYPES,
+    SPECTRAL_TYPE_STRING,
+    Theme,
+    TileCache,
+    WCSMatchingType,
+    WCSType,
+    ZIndexManagement,
+    Zoom,
+    ZoomPoint
+} from "models";
 import {TelemetryMode} from "services";
-import {AppStore, BeamType, HelpType, PreferenceKeys, PreferenceStore} from "stores";
+import {AppStore, BeamType, DialogId, HelpType, PreferenceKeys, PreferenceStore} from "stores";
 import {ContourGeneratorType, FrameScaling, RegionStore, RenderConfigStore} from "stores/Frame";
-import {copyToClipboard, findzIndex, SWATCH_COLORS, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
+import {copyToClipboard, SWATCH_COLORS} from "utilities";
 
 import "./PreferenceDialogComponent.scss";
 
@@ -53,8 +69,6 @@ export class PreferenceDialogComponent extends React.Component {
     private static readonly DefaultHeight = 500;
     private static readonly MinWidth = 450;
     private static readonly MinHeight = 300;
-
-    public static DialogId = "preference-dialog";
 
     @observable selectedTab: PreferenceDialogTabs = PreferenceDialogTabs.GLOBAL;
     @action private setSelectedTab = (tab: PreferenceDialogTabs) => {
@@ -162,7 +176,8 @@ export class PreferenceDialogComponent extends React.Component {
         const preference = appStore.preferenceStore;
         const layoutStore = appStore.layoutStore;
 
-        let zIndex = findzIndex(PreferenceDialogComponent.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.Preference, appStore.floatingObjs);
 
         const globalPanel = (
             <React.Fragment>
@@ -902,8 +917,8 @@ export class PreferenceDialogComponent extends React.Component {
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(PreferenceDialogComponent.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Preference, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Preference, appStore.floatingObjs)}
             >
                 <div className="bp3-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>

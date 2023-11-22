@@ -7,9 +7,9 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, HelpType} from "stores";
+import {ZIndexManagement} from "models";
+import {AppStore, DialogId, HelpType} from "stores";
 import {RegionStore} from "stores/Frame";
-import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {CompassRulerRegionForm} from "./CompassRulerRegionForm/CompassRulerRegionForm";
@@ -47,8 +47,6 @@ export class RegionDialogComponent extends React.Component {
     private static readonly MinWidth = 450;
     private static readonly MinHeight = 300;
 
-    public static DialogId = "region-dialog";
-
     private handleDeleteClicked = () => {
         const appStore = AppStore.Instance;
         appStore.dialogStore.hideRegionDialog();
@@ -62,7 +60,8 @@ export class RegionDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        let zIndex = findzIndex(RegionDialogComponent.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.Region, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -157,8 +156,8 @@ export class RegionDialogComponent extends React.Component {
                 minWidth={RegionDialogComponent.MinWidth}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(RegionDialogComponent.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Region, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Region, appStore.floatingObjs)}
             >
                 <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
                 <div className={Classes.DIALOG_FOOTER}>

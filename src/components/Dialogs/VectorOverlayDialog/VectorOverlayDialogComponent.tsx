@@ -8,9 +8,10 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {AppStore, HelpType} from "stores";
+import {ZIndexManagement} from "models";
+import {AppStore, DialogId, HelpType} from "stores";
 import {FrameStore, VectorOverlaySource} from "stores/Frame";
-import {findzIndex, SWATCH_COLORS, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
+import {SWATCH_COLORS} from "utilities";
 
 import "./VectorOverlayDialogComponent.scss";
 
@@ -39,8 +40,6 @@ export class VectorOverlayDialogComponent extends React.Component {
     private static readonly DefaultHeight = 720;
     private static readonly MinWidth = 400;
     private static readonly MinHeight = 600;
-
-    public static DialogId = "vector-dialog";
 
     private cachedFrame: FrameStore;
 
@@ -245,7 +244,8 @@ export class VectorOverlayDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        let zIndex = findzIndex(VectorOverlayDialogComponent.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.Vector, appStore.floatingObjs);
 
         const dialogProps: DialogProps = {
             icon: <CustomIcon icon="vectorOverlay" size={CustomIcon.SIZE_LARGE} />,
@@ -400,8 +400,8 @@ export class VectorOverlayDialogComponent extends React.Component {
                 minHeight={VectorOverlayDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(VectorOverlayDialogComponent.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Vector, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Vector, appStore.floatingObjs)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">

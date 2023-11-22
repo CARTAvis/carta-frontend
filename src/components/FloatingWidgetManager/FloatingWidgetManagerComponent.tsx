@@ -30,8 +30,8 @@ import {
     StokesAnalysisComponent,
     StokesAnalysisSettingsPanelComponent
 } from "components";
+import {ZIndexManagement} from "models";
 import {AppStore, CatalogStore, WidgetConfig, WidgetsStore} from "stores";
-import {updateSelectFloatingObjzIndex} from "utilities";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component {
@@ -39,7 +39,8 @@ export class FloatingWidgetManagerComponent extends React.Component {
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
         // rearrange will cause a bug of empty table, change to zIndex
-        updateSelectFloatingObjzIndex(widget.id);
+        const zIndexManagement = ZIndexManagement.Instance;
+        zIndexManagement.updateFloatingObjzIndexOnSelect(widget.id, AppStore.Instance.floatingObjs);
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {

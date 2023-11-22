@@ -8,9 +8,10 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
+import {ZIndexManagement} from "models";
 import {CatalogApiService, CatalogDatabase} from "services";
-import {AppStore, CatalogOnlineQueryConfigStore, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
-import {clamp, findzIndex, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
+import {AppStore, CatalogOnlineQueryConfigStore, DialogId, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
+import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
 
 import "./CatalogOnlineQueryDialogComponent.scss";
 
@@ -20,8 +21,8 @@ const KEYCODE_ENTER = 13;
 export class CatalogQueryDialogComponent extends React.Component {
     private static readonly DefaultWidth = 550;
     private static readonly DefaultHeight = 550;
-
-    public static DialogId = "catalogQuery-dialog";
+    private static readonly MinWidth = 450;
+    private static readonly MinHeight = 450;
 
     @observable resultSize: number;
     @observable objectSize: number;
@@ -71,7 +72,8 @@ export class CatalogQueryDialogComponent extends React.Component {
             className += " bp3-dark";
         }
 
-        let zIndex = findzIndex(CatalogQueryDialogComponent.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.CatalogQuery, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: "geosearch",
@@ -91,6 +93,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                     helpType={HelpType.ONLINE_CATALOG_QUERY}
                     defaultWidth={CatalogQueryDialogComponent.DefaultWidth}
                     defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
+                    minWidth={CatalogQueryDialogComponent.MinWidth}
+                    minHeight={CatalogQueryDialogComponent.MinHeight}
                     enableResizing={true}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
@@ -262,8 +266,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                 defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(CatalogQueryDialogComponent.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.CatalogQuery, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.CatalogQuery, appStore.floatingObjs)}
             >
                 <div className="bp3-dialog-body">{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>

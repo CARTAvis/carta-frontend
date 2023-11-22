@@ -10,9 +10,9 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {SimpleTableComponentProps} from "components/Shared";
-import {AppStore, BrowserMode, CatalogProfileStore, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
+import {ZIndexManagement} from "models";
+import {AppStore, BrowserMode, CatalogProfileStore, DialogId, FileBrowserStore, FileFilteringType, HelpType, ISelectedFile, PreferenceKeys, PreferenceStore} from "stores";
 import {FrameStore} from "stores/Frame";
-import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
 
 import {FileListTableComponent} from "./FileListTable/FileListTableComponent";
 
@@ -23,8 +23,8 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
     @observable fileFilterString: string = "";
     @observable debouncedFilterString: string = "";
-    @observable defaultWidth: number;
-    @observable defaultHeight: number;
+    // @observable defaultWidth: number;
+    // @observable defaultHeight: number;
     @observable enableImageArithmetic: boolean = false;
     @observable imageArithmeticString: string = "";
     @observable inputPathString: string = "";
@@ -36,13 +36,9 @@ export class FileBrowserDialogComponent extends React.Component {
     private static readonly MinWidth = 800;
     private static readonly MinHeight = 400;
 
-    public static DialogId = "fileBrowser-dialog";
-
     constructor(props: any) {
         super(props);
         makeObservable(this);
-        // this.defaultWidth = 1200;
-        // this.defaultHeight = 600;
         this.imageArithmeticInputRef = React.createRef<HTMLInputElement>();
     }
 
@@ -607,17 +603,18 @@ export class FileBrowserDialogComponent extends React.Component {
         }
     };
 
-    @action private updateDefaultSize = (newWidth: number, newHeight: number) => {
-        this.defaultWidth = newWidth;
-        this.defaultHeight = newHeight;
-    };
+    // @action private updateDefaultSize = (newWidth: number, newHeight: number) => {
+    //     this.defaultWidth = newWidth;
+    //     this.defaultHeight = newHeight;
+    // };
 
     public render() {
         const appStore = AppStore.Instance;
         const fileBrowserStore = appStore.fileBrowserStore;
         const className = classNames("file-browser-dialog", {"bp3-dark": appStore.darkTheme});
 
-        let zIndex = findzIndex(FileBrowserDialogComponent.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.FileBrowser, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: "folder-open",
@@ -674,10 +671,10 @@ export class FileBrowserDialogComponent extends React.Component {
                 defaultWidth={FileBrowserDialogComponent.DefaultWidth}
                 defaultHeight={FileBrowserDialogComponent.DefaultHeight}
                 enableResizing={true}
-                onResizeStop={this.updateDefaultSize}
+                // onResizeStop={this.updateDefaultSize}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(FileBrowserDialogComponent.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.FileBrowser, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.FileBrowser, appStore.floatingObjs)}
             >
                 <div className="file-path">
                     {this.pathItems && (

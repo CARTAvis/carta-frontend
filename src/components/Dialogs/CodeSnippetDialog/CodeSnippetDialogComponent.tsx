@@ -8,9 +8,8 @@ import * as prism from "prismjs";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppToaster, WarningToast} from "components/Shared";
-import {Snippet} from "models";
-import {AppStore, SnippetStore} from "stores";
-import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
+import {Snippet, ZIndexManagement} from "models";
+import {AppStore, DialogId, SnippetStore} from "stores";
 
 import {SaveSnippetDialogComponent} from "./SaveSnippetDialog/SaveSnippetDialogComponent";
 import {ThemeProvider} from "./ThemeProvider";
@@ -24,7 +23,10 @@ export class CodeSnippetDialogComponent extends React.Component {
     @observable saveDialogOpen: boolean = false;
     private editorRef;
 
-    public static DialogId = "code-snippet-dialog";
+    private static readonly DefaultWidth = 700;
+    private static readonly DefaultHeight = 400;
+    private static readonly MinWidth = 450;
+    private static readonly MinHeight = 450;
 
     constructor(props: any) {
         super(props);
@@ -114,7 +116,8 @@ export class CodeSnippetDialogComponent extends React.Component {
         const snippetStore = appStore.snippetStore;
         const className = classNames("code-snippet-dialog", {"bp3-dark": appStore.darkTheme});
 
-        let zIndex = findzIndex(CodeSnippetDialogComponent.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.Snippet, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: "console",
@@ -149,12 +152,14 @@ export class CodeSnippetDialogComponent extends React.Component {
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                defaultWidth={700}
-                defaultHeight={400}
+                defaultWidth={CodeSnippetDialogComponent.DefaultWidth}
+                defaultHeight={CodeSnippetDialogComponent.DefaultHeight}
+                minWidth={CodeSnippetDialogComponent.MinWidth}
+                minHeight={CodeSnippetDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(CodeSnippetDialogComponent.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Snippet, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Snippet, appStore.floatingObjs)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <ThemeProvider darkTheme={appStore.darkTheme} children={editor} />

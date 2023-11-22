@@ -9,10 +9,10 @@ import {ImageViewLayer} from "components";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorPickerComponent, CoordinateComponent, CoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {Point2D, WCSPoint2D} from "models";
-import {AppStore, DialogStore, HelpType} from "stores";
+import {Point2D, WCSPoint2D, ZIndexManagement} from "models";
+import {AppStore, DialogId, DialogStore, HelpType} from "stores";
 import {CoordinateMode, DistanceMeasuringStore} from "stores/Frame";
-import {findzIndex, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
+import {getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid, SWATCH_COLORS} from "utilities";
 
 import "./DistanceMeasuringDialog.scss";
 
@@ -23,7 +23,10 @@ enum DistanceMeasuringDialogTabs {
 
 @observer
 export class DistanceMeasuringDialog extends React.Component {
-    public static DialogId = "distanceMeasure-dialog";
+    private static readonly DefaultWidth = 525;
+    private static readonly DefaultHeight = 350;
+    private static readonly MinWidth = 300;
+    private static readonly MinHeight = 450;
 
     constructor(props: any) {
         super(props);
@@ -133,7 +136,8 @@ export class DistanceMeasuringDialog extends React.Component {
         const WCSFinish = getFormattedWCSPoint(wcsInfo, distanceMeasuringStore?.finish);
         const dialogStore = DialogStore.Instance;
 
-        let zIndex = findzIndex(DistanceMeasuringDialog.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.DistanceMeasure, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="distanceMeasuring" />,
@@ -188,14 +192,14 @@ export class DistanceMeasuringDialog extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.DISTANCE_MEASUREMENT}
-                defaultWidth={525}
-                defaultHeight={350}
-                minHeight={300}
-                minWidth={450}
+                defaultWidth={DistanceMeasuringDialog.DefaultWidth}
+                defaultHeight={DistanceMeasuringDialog.DefaultHeight}
+                minWidth={DistanceMeasuringDialog.MinWidth}
+                minHeight={DistanceMeasuringDialog.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(DistanceMeasuringDialog.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.DistanceMeasure, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.DistanceMeasure, appStore.floatingObjs)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     {appStore.activeLayer === ImageViewLayer.DistanceMeasuring ? (

@@ -6,9 +6,8 @@ import {computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {PresetLayout} from "models";
-import {AppStore, HelpType} from "stores";
-import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
+import {PresetLayout, ZIndexManagement} from "models";
+import {AppStore, DialogId, HelpType} from "stores";
 
 import "./SaveLayoutDialogComponent.scss";
 
@@ -20,8 +19,6 @@ export class SaveLayoutDialogComponent extends React.Component {
     private static readonly DefaultHeight = 185;
     private static readonly MinWidth = 300;
     private static readonly MinHeight = 150;
-
-    public static DialogId = "saveLayout-dialog";
 
     @observable private layoutName: string = "";
 
@@ -83,7 +80,8 @@ export class SaveLayoutDialogComponent extends React.Component {
         const className = classNames("preference-dialog", {"bp3-dark": appStore.darkTheme});
         const isSave = appStore.layoutStore.isSave;
 
-        let zIndex = findzIndex(SaveLayoutDialogComponent.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.Layout, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: "layout-grid",
@@ -106,8 +104,8 @@ export class SaveLayoutDialogComponent extends React.Component {
                 minHeight={SaveLayoutDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(SaveLayoutDialogComponent.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Layout, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Layout, appStore.floatingObjs)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label={isSave ? "Save current layout as:" : `Rename ${appStore.layoutStore.oldLayoutName} to:`}>

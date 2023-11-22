@@ -8,9 +8,8 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {POLARIZATION_LABELS} from "models";
-import {AppStore, BrowserMode, HelpType} from "stores";
-import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
+import {POLARIZATION_LABELS, ZIndexManagement} from "models";
+import {AppStore, BrowserMode, DialogId, HelpType} from "stores";
 
 import "./StokesDialogComponent.scss";
 
@@ -20,8 +19,6 @@ export class StokesDialogComponent extends React.Component {
     private static readonly DefaultHeight = 300;
     private static readonly MinWidth = 300;
     private static readonly MinHeight = 250;
-
-    public static DialogId = "stokes-dialog";
 
     @observable stokes: Map<string, CARTA.IStokesFile>;
     @observable stokesHeader: Map<string, CARTA.IFileInfoExtended>;
@@ -140,7 +137,8 @@ export class StokesDialogComponent extends React.Component {
             />
         );
 
-        let zIndex = findzIndex(StokesDialogComponent.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.Stokes, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: "git-merge",
@@ -163,8 +161,8 @@ export class StokesDialogComponent extends React.Component {
                 defaultHeight={StokesDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(StokesDialogComponent.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Stokes, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Stokes, appStore.floatingObjs)}
             >
                 <div className="bp3-dialog-body">
                     <Table

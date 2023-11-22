@@ -2,28 +2,25 @@ import {TabId} from "@blueprintjs/core";
 import {action, makeObservable, observable} from "mobx";
 
 import {FileInfoType} from "components";
-import {
-    AboutDialogComponent,
-    CatalogQueryDialogComponent,
-    CodeSnippetDialogComponent,
-    ContourDialogComponent,
-    DistanceMeasuringDialog,
-    ExternalPageDialogComponent,
-    FileBrowserDialogComponent,
-    FileInfoDialogComponent,
-    FittingDialogComponent,
-    PreferenceDialogComponent,
-    RegionDialogComponent,
-    SaveLayoutDialogComponent,
-    StokesDialogComponent,
-    VectorOverlayDialogComponent
-} from "components/Dialogs";
 import {WorkspaceDialogMode} from "components/Dialogs/WorkspaceDialog/WorkspaceDialogComponent";
-import {Snippet} from "models";
+import {Snippet, ZIndexManagement} from "models";
 import {AppStore, SnippetStore} from "stores";
-import {addFloatingObjzIndex, removeFloatingObjzIndex} from "utilities";
 
-export enum WorkSpaceId {
+export enum DialogId {
+    About = "about-dialog",
+    CatalogQuery = "catalogQuery-dialog",
+    Snippet = "code-snippet-dialog",
+    Contour = "contour-dialog",
+    DistanceMeasure = "distanceMeasure-dialog",
+    ExternalPage = "externalPage-dialog",
+    FileBrowser = "fileBrowser-dialog",
+    FileInfo = "fileInfo-dialog",
+    Fitting = "fitting-dialog",
+    Layout = "saveLayout-dialog",
+    Preference = "preference-dialog",
+    Region = "region-dialog",
+    Stokes = "stokes-dialog",
+    Vector = "vector-dialog",
     Workspace = "workspace-dialog",
     ShareWorkspace = "shareWork-dialog"
 }
@@ -42,15 +39,17 @@ export class DialogStore {
         return DialogStore.staticInstance;
     }
 
+    zIndexManagement = ZIndexManagement.Instance;
+
     // Region
     @observable regionDialogVisible: boolean;
     @action showRegionDialog = () => {
         this.regionDialogVisible = true;
-        addFloatingObjzIndex(RegionDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Region, AppStore.Instance.floatingObjs);
     };
     @action hideRegionDialog = () => {
         this.regionDialogVisible = false;
-        removeFloatingObjzIndex(RegionDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.Region, AppStore.Instance.floatingObjs);
     };
 
     // Hotkey
@@ -66,22 +65,22 @@ export class DialogStore {
     @observable aboutDialogVisible: boolean;
     @action showAboutDialog = () => {
         this.aboutDialogVisible = true;
-        addFloatingObjzIndex(AboutDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.About, AppStore.Instance.floatingObjs);
     };
     @action hideAboutDialog = () => {
         this.aboutDialogVisible = false;
-        removeFloatingObjzIndex(AboutDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.About, AppStore.Instance.floatingObjs);
     };
 
     // Preference
     @observable preferenceDialogVisible: boolean;
     @action showPreferenceDialog = () => {
         this.preferenceDialogVisible = true;
-        addFloatingObjzIndex(PreferenceDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Preference, AppStore.Instance.floatingObjs);
     };
     @action hidePreferenceDialog = () => {
         this.preferenceDialogVisible = false;
-        removeFloatingObjzIndex(PreferenceDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.Preference, AppStore.Instance.floatingObjs);
     };
 
     // Layout
@@ -89,11 +88,11 @@ export class DialogStore {
     @action showSaveLayoutDialog = (oldLayoutName?: string) => {
         this.saveLayoutDialogVisible = true;
         AppStore.Instance.layoutStore.setOldLayoutName(oldLayoutName);
-        addFloatingObjzIndex(SaveLayoutDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Layout, AppStore.Instance.floatingObjs);
     };
     @action hideSaveLayoutDialog = () => {
         this.saveLayoutDialogVisible = false;
-        removeFloatingObjzIndex(SaveLayoutDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.Layout, AppStore.Instance.floatingObjs);
     };
 
     // Workspace
@@ -101,22 +100,22 @@ export class DialogStore {
     @action showWorkspaceDialog = (mode = WorkspaceDialogMode.Save) => {
         this.fileBrowserDialogVisible = false;
         this.workspaceDialogMode = mode;
-        addFloatingObjzIndex(WorkSpaceId.Workspace);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Workspace, AppStore.Instance.floatingObjs);
     };
     @action hideWorkspaceDialog = () => {
         this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
-        removeFloatingObjzIndex(WorkSpaceId.Workspace);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.Workspace, AppStore.Instance.floatingObjs);
     };
 
     // Workspace sharing
     @observable shareWorkspaceDialogVisible: boolean;
     @action showShareWorkspaceDialog = () => {
         this.shareWorkspaceDialogVisible = true;
-        addFloatingObjzIndex(WorkSpaceId.ShareWorkspace);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.ShareWorkspace, AppStore.Instance.floatingObjs);
     };
     @action hideShareWorkspaceDialog = () => {
         this.shareWorkspaceDialogVisible = false;
-        removeFloatingObjzIndex(WorkSpaceId.ShareWorkspace);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.ShareWorkspace, AppStore.Instance.floatingObjs);
     };
 
     // File Browser
@@ -124,11 +123,11 @@ export class DialogStore {
     @action showFileBrowserDialog = () => {
         this.workspaceDialogMode = WorkspaceDialogMode.Hidden;
         this.fileBrowserDialogVisible = true;
-        addFloatingObjzIndex(FileBrowserDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.FileBrowser, AppStore.Instance.floatingObjs);
     };
     @action hideFileBrowserDialog = () => {
         this.fileBrowserDialogVisible = false;
-        removeFloatingObjzIndex(FileBrowserDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.FileBrowser, AppStore.Instance.floatingObjs);
     };
 
     // File Info
@@ -136,11 +135,11 @@ export class DialogStore {
     @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_HEADER;
     @action showFileInfoDialog = () => {
         this.fileInfoDialogVisible = true;
-        addFloatingObjzIndex(FileInfoDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.FileInfo, AppStore.Instance.floatingObjs);
     };
     @action hideFileInfoDialog = () => {
         this.fileInfoDialogVisible = false;
-        removeFloatingObjzIndex(FileInfoDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.FileInfo, AppStore.Instance.floatingObjs);
     };
     @action setSelectedFileInfoDialogTab = (newId: TabId) => {
         this.selectedFileInfoDialogTab = newId;
@@ -150,22 +149,22 @@ export class DialogStore {
     @observable contourDialogVisible: boolean = false;
     @action showContourDialog = () => {
         this.contourDialogVisible = true;
-        addFloatingObjzIndex(ContourDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Contour, AppStore.Instance.floatingObjs);
     };
     @action hideContourDialog = () => {
         this.contourDialogVisible = false;
-        removeFloatingObjzIndex(ContourDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.Contour, AppStore.Instance.floatingObjs);
     };
 
     // Vector overlay dialog
     @observable vectorOverlayDialogVisible: boolean = false;
     @action showVectorOverlayDialog = () => {
         this.vectorOverlayDialogVisible = true;
-        addFloatingObjzIndex(VectorOverlayDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Vector, AppStore.Instance.floatingObjs);
     };
     @action hideVectorOverlayDialog = () => {
         this.vectorOverlayDialogVisible = false;
-        removeFloatingObjzIndex(VectorOverlayDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.Vector, AppStore.Instance.floatingObjs);
     };
 
     // Code snippet dialog
@@ -175,22 +174,22 @@ export class DialogStore {
             SnippetStore.Instance.setActiveSnippet(snippet, name);
         }
         this.codeSnippetDialogVisible = true;
-        addFloatingObjzIndex(CodeSnippetDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Snippet, AppStore.Instance.floatingObjs);
     };
 
     @action showNewCodeSnippet = () => {
         SnippetStore.Instance.clearActiveSnippet();
         this.codeSnippetDialogVisible = true;
-        addFloatingObjzIndex(CodeSnippetDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Snippet, AppStore.Instance.floatingObjs);
     };
 
     @action showCodeSnippetDialog = () => {
         this.codeSnippetDialogVisible = true;
-        addFloatingObjzIndex(CodeSnippetDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Snippet, AppStore.Instance.floatingObjs);
     };
     @action hideCodeSnippetDialog = () => {
         this.codeSnippetDialogVisible = false;
-        removeFloatingObjzIndex(CodeSnippetDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.Snippet, AppStore.Instance.floatingObjs);
     };
 
     // External page dialog
@@ -201,54 +200,54 @@ export class DialogStore {
         this.externalPageDialogUrl = url;
         this.externalPageDialogTitle = title;
         this.externalPageDialogVisible = true;
-        addFloatingObjzIndex(ExternalPageDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.ExternalPage, AppStore.Instance.floatingObjs);
     };
     @action hideExternalPageDialog = () => {
         this.externalPageDialogVisible = false;
-        removeFloatingObjzIndex(ExternalPageDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.ExternalPage, AppStore.Instance.floatingObjs);
     };
 
     // Stokes dialog
     @observable stokesDialogVisible: boolean = false;
     @action showStokesDialog = () => {
         this.stokesDialogVisible = true;
-        addFloatingObjzIndex(StokesDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Stokes, AppStore.Instance.floatingObjs);
     };
     @action hideStokesDialog = () => {
         this.stokesDialogVisible = false;
-        removeFloatingObjzIndex(StokesDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.Stokes, AppStore.Instance.floatingObjs);
     };
 
     // Catalog query dialog
     @observable catalogQueryDialogVisible: boolean = false;
     @action showCatalogQueryDialog = () => {
         this.catalogQueryDialogVisible = true;
-        addFloatingObjzIndex(CatalogQueryDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.CatalogQuery, AppStore.Instance.floatingObjs);
     };
     @action hideCatalogQueryDialog = () => {
         this.catalogQueryDialogVisible = false;
-        removeFloatingObjzIndex(CatalogQueryDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.CatalogQuery, AppStore.Instance.floatingObjs);
     };
 
     // Fitting dialog
     @observable fittingDialogVisible: boolean = false;
     @action showFittingDialog = () => {
         this.fittingDialogVisible = true;
-        addFloatingObjzIndex(FittingDialogComponent.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.Fitting, AppStore.Instance.floatingObjs);
     };
     @action hideFittingDialog = () => {
         this.fittingDialogVisible = false;
-        removeFloatingObjzIndex(FittingDialogComponent.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.Fitting, AppStore.Instance.floatingObjs);
     };
 
     // Distance Measuring dialog
     @observable distanceMeasuringDialogVisible: boolean = false;
     @action showDistanceMeasuringDialog = () => {
         this.distanceMeasuringDialogVisible = true;
-        addFloatingObjzIndex(DistanceMeasuringDialog.DialogId);
+        this.zIndexManagement.assignFloatingObjzIndex(DialogId.DistanceMeasure, AppStore.Instance.floatingObjs);
     };
     @action hideDistanceMeasuringDialog = () => {
         this.distanceMeasuringDialogVisible = false;
-        removeFloatingObjzIndex(DistanceMeasuringDialog.DialogId);
+        AppStore.Instance.floatingObjs = this.zIndexManagement.removeFloatingObjzIndex(DialogId.DistanceMeasure, AppStore.Instance.floatingObjs);
     };
 }

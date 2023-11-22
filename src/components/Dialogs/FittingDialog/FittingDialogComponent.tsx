@@ -9,10 +9,10 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, CoordinateComponent, CoordNumericInput, ImageCoordNumericInput, InputType, SafeNumericInput} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {Point2D, WCSPoint2D} from "models";
-import {AppStore, HelpType} from "stores";
+import {Point2D, WCSPoint2D, ZIndexManagement} from "models";
+import {AppStore, DialogId, HelpType} from "stores";
 import {CoordinateMode} from "stores/Frame";
-import {exportTxtFile, findzIndex, getTimestamp, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
+import {exportTxtFile, getTimestamp} from "utilities";
 
 import "./FittingDialogComponent.scss";
 
@@ -27,7 +27,10 @@ export class FittingDialogComponent extends React.Component {
     @observable private fittingResultTabId: FittingResultTabs = FittingResultTabs.RESULT;
     @observable private isMouseEntered: boolean = false;
 
-    public static DialogId = "fitting-dialog";
+    private static readonly DefaultWidth = 600;
+    private static readonly DefaultHeight = 660;
+    private static readonly MinWidth = 350;
+    private static readonly MinHeight = 265;
 
     @action private setCoord = (coord: CoordinateMode) => {
         this.coord = coord;
@@ -98,7 +101,8 @@ export class FittingDialogComponent extends React.Component {
         const fittingStore = appStore.imageFittingStore;
         let component = fittingStore.components[fittingStore.selectedComponentIndex];
 
-        let zIndex = findzIndex(FittingDialogComponent.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.Fitting, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="imageFitting" size={CustomIcon.SIZE_LARGE} />,
@@ -160,14 +164,14 @@ export class FittingDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.IMAGE_FITTING}
-                minWidth={350}
-                minHeight={265}
-                defaultWidth={600}
-                defaultHeight={660}
+                defaultWidth={FittingDialogComponent.DefaultWidth}
+                defaultHeight={FittingDialogComponent.DefaultHeight}
+                minWidth={FittingDialogComponent.MinWidth}
+                minHeight={FittingDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(FittingDialogComponent.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Fitting, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Fitting, appStore.floatingObjs)}
             >
                 <div className={classNames(Classes.DIALOG_BODY, "pinned-input-panel")}>
                     <FormGroup label="Data source" inline={true}>

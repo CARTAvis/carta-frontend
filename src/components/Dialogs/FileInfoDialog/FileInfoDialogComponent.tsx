@@ -5,20 +5,24 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {AppStore, HelpType} from "stores";
-import {findzIndex, updateFloatingObjzIndexOnRemove, updateSelectFloatingObjzIndex} from "utilities";
+import {ZIndexManagement} from "models";
+import {AppStore, DialogId, HelpType} from "stores";
 
 import "./FileInfoDialogComponent.scss";
 
 @observer
 export class FileInfoDialogComponent extends React.Component {
-    public static DialogId = "fileInfo-dialog";
+    private static readonly DefaultWidth = 800;
+    private static readonly DefaultHeight = 600;
+    private static readonly MinWidth = 400;
+    private static readonly MinHeight = 400;
 
     render() {
         const appStore = AppStore.Instance;
         const className = classNames("file-info-dialog", {"bp3-dark": appStore.darkTheme});
 
-        let zIndex = findzIndex(FileInfoDialogComponent.DialogId);
+        const zIndexManagement = ZIndexManagement.Instance;
+        let zIndex = zIndexManagement.findzIndex(DialogId.FileInfo, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: "app-header",
@@ -35,14 +39,14 @@ export class FileInfoDialogComponent extends React.Component {
             <DraggableDialogComponent
                 dialogProps={dialogProps}
                 helpType={HelpType.FILE_INFO}
-                minWidth={400}
-                minHeight={400}
-                defaultWidth={800}
-                defaultHeight={600}
+                defaultWidth={FileInfoDialogComponent.DefaultWidth}
+                defaultHeight={FileInfoDialogComponent.DefaultHeight}
+                minWidth={FileInfoDialogComponent.MinWidth}
+                minHeight={FileInfoDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => updateSelectFloatingObjzIndex(FileInfoDialogComponent.DialogId)}
-                onClosed={() => updateFloatingObjzIndexOnRemove(zIndex)}
+                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.FileInfo, appStore.floatingObjs)}
+                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.FileInfo, appStore.floatingObjs)}
             >
                 <div className="bp3-dialog-body">
                     <FileInfoComponent

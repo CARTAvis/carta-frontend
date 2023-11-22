@@ -31,7 +31,7 @@ import {
     // setting Panel
     StokesAnalysisSettingsPanelComponent
 } from "components";
-import {ImagePanelMode} from "models";
+import {ImagePanelMode, ZIndexManagement} from "models";
 import {AppStore, CatalogStore, HelpStore, HelpType, LayoutStore, PreferenceKeys, PreferenceStore} from "stores";
 import {
     ACTIVE_FILE_ID,
@@ -51,7 +51,6 @@ import {
     StatsWidgetStore,
     StokesAnalysisWidgetStore
 } from "stores/Widgets";
-import {addFloatingObjzIndex, updateFloatingObjzIndexOnRemove} from "utilities";
 
 export enum WidgetType {
     Region = "Region List Widget",
@@ -1474,17 +1473,19 @@ export class WidgetsStore {
         }
         this.floatingWidgets.push(widget);
 
-        addFloatingObjzIndex(widget.id);
+        const zIndexManagement = ZIndexManagement.Instance;
+        zIndexManagement.assignFloatingObjzIndex(widget.id, AppStore.Instance.floatingObjs);
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store
     @action removeFloatingWidget = (id: string, preserveStore: boolean = false) => {
         const widget = this.floatingWidgets.find(w => w.id === id);
         const appStore = AppStore.Instance;
-        const selectedFloatingObj = appStore.floatingObjs.find(w => w.id === id);
+        const zIndexManagement = ZIndexManagement.Instance;
 
         if (widget) {
-            updateFloatingObjzIndexOnRemove(selectedFloatingObj.zIndex);
+            zIndexManagement.updateFloatingObjzIndexOnRemove(id, appStore.floatingObjs);
+            appStore.floatingObjs = zIndexManagement.removeFloatingObjzIndex(id, appStore.floatingObjs);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (preserveStore) {
                 return;
@@ -1492,8 +1493,6 @@ export class WidgetsStore {
 
             this.removeWidget(id, widget.type);
         }
-
-        appStore.floatingObjs = appStore.floatingObjs.filter(w => w.id !== id);
     };
     // endregion
 
@@ -1501,10 +1500,11 @@ export class WidgetsStore {
     @action removeFloatingWidgetComponent = (componentId: string) => {
         const widget = this.floatingWidgets.find(w => w.componentId === componentId);
         const appStore = AppStore.Instance;
-        const selectedFloatingObj = appStore.floatingObjs.find(w => w.id === componentId);
+        const zIndexManagement = ZIndexManagement.Instance;
 
         if (widget) {
-            updateFloatingObjzIndexOnRemove(selectedFloatingObj.zIndex);
+            zIndexManagement.updateFloatingObjzIndexOnRemove(componentId, appStore.floatingObjs);
+            appStore.floatingObjs = zIndexManagement.removeFloatingObjzIndex(componentId, appStore.floatingObjs);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
             this.removeAssociatedFloatingSetting(componentId);
         }
