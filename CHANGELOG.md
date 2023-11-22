@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed ruler annotation matching bug ([#2242](https://github.com/CARTAvis/carta-frontend/issues/2242)).
 * Removed unused help button for PV preview widget ([#2248](https://github.com/CARTAvis/carta-frontend/issues/2248)).
 * Fixed PV preview bug where no PV preview shows up after closing a docked PV preview widget ([#2249](https://github.com/CARTAvis/carta-frontend/issues/2249)).
+* Fixed the incorrect deletion of contour levels ([#2251](https://github.com/CARTAvis/carta-frontend/issues/2251)).
 * Fixed bug that the frontend crashes when deleting annotations if the export window is opened ([#2278](https://github.com/CARTAvis/carta-frontend/issues/2278))
-
 
 ## [4.0.0]
 
