@@ -990,8 +990,22 @@ export class OverlayStore {
     }
 
     // View size options
-    @observable fullViewWidth: number;
-    @observable fullViewHeight: number;
+    @observable
+    private _fullViewWidth: number;
+    public get fullViewWidth(): number {
+        return this._fullViewWidth;
+    }
+    public set fullViewWidth(value: number) {
+        this._fullViewWidth = value;
+    }
+    @observable
+    private _fullViewHeight: number;
+    public get fullViewHeight(): number {
+        return this._fullViewHeight;
+    }
+    public set fullViewHeight(value: number) {
+        this._fullViewHeight = value;
+    }
 
     // Individual settings
     @observable global: OverlayGlobalSettings;
@@ -1005,7 +1019,7 @@ export class OverlayStore {
     @observable colorbar: OverlayColorbarSettings;
     @observable beam: OverlayBeamSettings;
 
-    private constructor() {
+    public constructor() {
         makeObservable(this);
         this.global = new OverlayGlobalSettings();
         this.title = new OverlayTitleSettings();
@@ -1235,4 +1249,16 @@ export class OverlayStore {
             return renderHeight > 1 ? renderHeight : 1; // return value > 1 to prevent crashing
         };
     }
+}
+
+export class ChannelMapOverlayStore extends OverlayStore{
+    @computed get fullViewWidth() {
+        return OverlayStore.Instance.fullViewWidth;
+    }
+    @computed get fullViewHeight() {
+        return OverlayStore.Instance.fullViewHeight;
+    }
+
+    // Overwrite padding, renderWidth, renderHeight,
+    // Make a single colorbar
 }

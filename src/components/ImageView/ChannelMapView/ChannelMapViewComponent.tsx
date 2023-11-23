@@ -4,11 +4,12 @@ import classNames from "classnames";
 import {observer} from "mobx-react";
 
 import {TileWebGLService} from "services";
-import {AppStore} from "stores";
+import {AppStore, ChannelMapOverlayStore} from "stores";
 import {FrameStore} from "stores/Frame";
 
 import {RasterViewComponent, renderCanvas, updateUniforms} from "../RasterView/RasterViewComponent";
 import {RegionViewComponent} from "../RegionView/RegionViewComponent";
+import { OverlayComponent } from "../Overlay/OverlayComponent";
 
 export class ChannelMapViewComponentProps {
     docked: boolean;
@@ -27,6 +28,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
     const appStore = AppStore.Instance;
     const imageRenderWidth = props.renderWidth / props.numImageColumn;
     const imageRenderHeight = props.renderHeight / props.numImageRow;
+    const overlayStore = ChannelMapOverlayStore.Instance;
     // The channel map will need multiple rasterView to render the array of channels, one overlayComponent to render the axis, one contourView
 
     const channelFrames = [props.frame.previewPVRasterData, props.frame.previewPVRasterData, props.frame.previewPVRasterData, props.frame.previewPVRasterData, props.frame.previewPVRasterData, props.frame.previewPVRasterData];
@@ -66,6 +68,7 @@ export const ChannelMapViewComponent: React.FC<ChannelMapViewComponentProps> = o
                             tileBasedRender={false}
                             rasterData={data}
                         />
+                        <OverlayComponent frame={props.frame} overlaySettings={overlayStore} docked={props.docked} />
                         <RegionViewComponent
                             frame={props.frame}
                             width={props.renderWidth}

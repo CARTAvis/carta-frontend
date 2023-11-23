@@ -89,8 +89,8 @@ export const RasterViewComponent: React.FC<RasterViewComponentProps> = observer(
                 id="raster-canvas"
                 ref={ref => (canvas.current = ref)}
                 style={{
-                    top: padding.top + (props.row * props.renderHeight * 2) / props.numImageRows,
-                    left: padding.left + (props.column * props.renderWidth * 2) / props.numImageColumns,
+                    top: padding.top,
+                    left: padding.left,
                     width: frame?.isRenderable ? props.renderWidth || 1 : 1,
                     height: frame?.isRenderable ? props.renderHeight || 1 : 1
                 }}
@@ -121,8 +121,8 @@ const updateCanvas = (
         const histChannel = frame.renderConfig.histogram ? frame.renderConfig.histChannel : undefined;
         if ((frame.renderConfig.useCubeHistogram || frame.channel === histChannel || frame.isPreview) && (frame.stokes === histStokesIndex || frame.polarizations.indexOf(frame.stokes) === histStokesIndex)) {
             const pixelRatio = devicePixelRatio * AppStore.Instance.imageRatio;
-            const xOffset = column * renderWidth * pixelRatio;
-            const yOffset = gl.canvas.height - renderHeight * (row + 1) * pixelRatio;
+            const xOffset = 0;
+            const yOffset = 0;
             updateCanvasSize(frame, gl, canvas, renderWidth, renderHeight, numImageColumns, numImageRows, tileBasedRender);
             updateUniforms(frame, gl, tileRenderService.shaderUniforms, renderWidth, renderHeight, pixelHighlightValue);
             renderCanvas(frame, gl, xOffset, yOffset, renderWidth, renderHeight, tileBasedRender, rasterData); // change column and row to x and y offset
@@ -153,7 +153,7 @@ function updateCanvasSize(frame: FrameStore, gl: WebGL2RenderingContext, canvas:
         canvas.height = requiredHeight;
     }
     // Resize and clear the shared WebGL canvas if required
-    tileRenderService.setCanvasSize(requiredWidth * numImageColumns, requiredHeight * numImageRows);
+    tileRenderService.setCanvasSize(requiredWidth, requiredHeight);
 
     if (gl.drawingBufferWidth !== gl.canvas.width || gl.drawingBufferHeight !== gl.canvas.height) {
         appStore.decreaseImageRatio();
