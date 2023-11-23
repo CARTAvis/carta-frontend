@@ -7,7 +7,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {CustomIcon} from "icons/CustomIcons";
-import {ZIndexManagement} from "models";
+import {FloatingObjzIndexManager} from "models";
 import {AppStore, DialogId, HelpType} from "stores";
 import {RegionStore} from "stores/Frame";
 
@@ -60,8 +60,8 @@ export class RegionDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const zIndexManagement = ZIndexManagement.Instance;
-        let zIndex = zIndexManagement.findzIndex(DialogId.Region, appStore.floatingObjs);
+        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Region, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -156,8 +156,8 @@ export class RegionDialogComponent extends React.Component {
                 minWidth={RegionDialogComponent.MinWidth}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Region, appStore.floatingObjs)}
-                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Region, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Region, appStore.floatingObjs)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Region, appStore.floatingObjs)}
             >
                 <div className={Classes.DIALOG_BODY}>{bodyContent}</div>
                 <div className={Classes.DIALOG_FOOTER}>

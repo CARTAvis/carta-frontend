@@ -9,7 +9,7 @@ import {observer} from "mobx-react";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {LinePlotComponent, LinePlotComponentProps, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {CustomIcon} from "icons/CustomIcons";
-import {Point2D, ZIndexManagement} from "models";
+import {FloatingObjzIndexManager, Point2D} from "models";
 import {AppStore, DialogId, HelpType} from "stores";
 import {FrameStore} from "stores/Frame";
 import {RenderConfigWidgetStore} from "stores/Widgets";
@@ -278,8 +278,8 @@ export class ContourDialogComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
 
-        const zIndexManagement = ZIndexManagement.Instance;
-        let zIndex = zIndexManagement.findzIndex(DialogId.Contour, appStore.floatingObjs);
+        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Contour, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE} />,
@@ -304,8 +304,8 @@ export class ContourDialogComponent extends React.Component {
                     minHeight={ContourDialogComponent.MinHeight}
                     enableResizing={true}
                     zIndex={zIndex}
-                    onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Contour, appStore.floatingObjs)}
-                    onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Contour, appStore.floatingObjs)}
+                    onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Contour, appStore.floatingObjs)}
+                    onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Contour, appStore.floatingObjs)}
                 >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
@@ -491,8 +491,8 @@ export class ContourDialogComponent extends React.Component {
                 minHeight={ContourDialogComponent.MinHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Contour, appStore.floatingObjs)}
-                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Contour, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Contour, appStore.floatingObjs)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Contour, appStore.floatingObjs)}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data source">

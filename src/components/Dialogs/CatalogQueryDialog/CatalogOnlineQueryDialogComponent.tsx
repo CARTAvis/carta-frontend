@@ -8,7 +8,7 @@ import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ClearableNumericInputComponent, SafeNumericInput} from "components/Shared";
-import {ZIndexManagement} from "models";
+import {FloatingObjzIndexManager} from "models";
 import {CatalogApiService, CatalogDatabase} from "services";
 import {AppStore, CatalogOnlineQueryConfigStore, DialogId, HelpType, NUMBER_FORMAT_LABEL, RadiusUnits, SystemType, VizierItem} from "stores";
 import {clamp, getFormattedWCSPoint, getPixelValueFromWCS, isWCSStringFormatValid} from "utilities";
@@ -72,8 +72,8 @@ export class CatalogQueryDialogComponent extends React.Component {
             className += " bp3-dark";
         }
 
-        const zIndexManagement = ZIndexManagement.Instance;
-        let zIndex = zIndexManagement.findzIndex(DialogId.CatalogQuery, appStore.floatingObjs);
+        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.CatalogQuery, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: "geosearch",
@@ -266,8 +266,8 @@ export class CatalogQueryDialogComponent extends React.Component {
                 defaultHeight={CatalogQueryDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.CatalogQuery, appStore.floatingObjs)}
-                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.CatalogQuery, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.CatalogQuery, appStore.floatingObjs)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.CatalogQuery, appStore.floatingObjs)}
             >
                 <div className="bp3-dialog-body">{configBoard}</div>
                 <Overlay autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={disable} usePortal={false}>

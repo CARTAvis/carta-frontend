@@ -3,25 +3,25 @@ export interface ZIndexUpdate {
     zIndex: number;
 }
 
-export class ZIndexManagement {
-    private static staticInstance: ZIndexManagement;
+export class FloatingObjzIndexManager {
+    private static staticInstance: FloatingObjzIndexManager;
 
     static get Instance() {
-        return ZIndexManagement.staticInstance || new ZIndexManagement();
+        return FloatingObjzIndexManager.staticInstance || new FloatingObjzIndexManager();
     }
 
-    public assignFloatingObjzIndex = (id: string, floatingObjs: ZIndexUpdate[]) => {
+    public assignIndex = (id: string, floatingObjs: ZIndexUpdate[]) => {
         let zIndex = floatingObjs.length + 1;
         let zIndexUpdate: ZIndexUpdate = {id: id, zIndex: zIndex};
         floatingObjs.push(zIndexUpdate);
     };
 
-    public removeFloatingObjzIndex = (id: string, floatingObjs: ZIndexUpdate[]) => { 
+    public removeIndex = (id: string, floatingObjs: ZIndexUpdate[]) => {
         return floatingObjs.filter(w => w.id !== id);
-    }
+    };
 
     // update floating Object's zIndex
-    public updateFloatingObjzIndexOnSelect = (id: string, floatingObjs: ZIndexUpdate[]) => {
+    public updateIndexOnSelect = (id: string, floatingObjs: ZIndexUpdate[]) => {
         const selectedObjIndex = floatingObjs.findIndex(w => w.id === id);
         const selectedObj = floatingObjs[selectedObjIndex];
         const NFloatingObj = floatingObjs.length;
@@ -36,8 +36,8 @@ export class ZIndexManagement {
         }
     };
 
-    // update widget zIndex when removing a floating object
-    public updateFloatingObjzIndexOnRemove = (id: string, floatingObjs: ZIndexUpdate[]) => {
+    // update zIndex when removing a floating object
+    public updateIndexOnRemove = (id: string, floatingObjs: ZIndexUpdate[]) => {
         const NFloatingObj = floatingObjs.length;
         const selectedObj = floatingObjs.find(w => w.id === id);
         const selectedObjzIndex = selectedObj.zIndex;
@@ -52,7 +52,7 @@ export class ZIndexManagement {
         }
     };
 
-    public findzIndex = (id: string, floatingObjs: ZIndexUpdate[]) => {
+    public findIndex = (id: string, floatingObjs: ZIndexUpdate[]) => {
         const selectDialog = floatingObjs.find(w => w.id === id);
         let zIndex = selectDialog ? selectDialog.zIndex : 0;
         return zIndex;

@@ -8,7 +8,7 @@ import {action, computed, makeObservable, observable, reaction} from "mobx";
 import {observer} from "mobx-react";
 
 import {DraggableDialogComponent} from "components/Dialogs";
-import {POLARIZATION_LABELS, ZIndexManagement} from "models";
+import {FloatingObjzIndexManager, POLARIZATION_LABELS} from "models";
 import {AppStore, BrowserMode, DialogId, HelpType} from "stores";
 
 import "./StokesDialogComponent.scss";
@@ -137,8 +137,8 @@ export class StokesDialogComponent extends React.Component {
             />
         );
 
-        const zIndexManagement = ZIndexManagement.Instance;
-        let zIndex = zIndexManagement.findzIndex(DialogId.Stokes, appStore.floatingObjs);
+        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Stokes, appStore.floatingObjs);
 
         const dialogProps: IDialogProps = {
             icon: "git-merge",
@@ -161,8 +161,8 @@ export class StokesDialogComponent extends React.Component {
                 defaultHeight={StokesDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Stokes, appStore.floatingObjs)}
-                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Stokes, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Stokes, appStore.floatingObjs)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Stokes, appStore.floatingObjs)}
             >
                 <div className="bp3-dialog-body">
                     <Table

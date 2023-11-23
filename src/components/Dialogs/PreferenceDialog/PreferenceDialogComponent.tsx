@@ -18,6 +18,7 @@ import {
     CursorPosition,
     Event,
     FileFilterMode,
+    FloatingObjzIndexManager,
     RegionCreationMode,
     SPECTRAL_MATCHING_TYPES,
     SPECTRAL_TYPE_STRING,
@@ -25,7 +26,6 @@ import {
     TileCache,
     WCSMatchingType,
     WCSType,
-    ZIndexManagement,
     Zoom,
     ZoomPoint
 } from "models";
@@ -176,8 +176,8 @@ export class PreferenceDialogComponent extends React.Component {
         const preference = appStore.preferenceStore;
         const layoutStore = appStore.layoutStore;
 
-        const zIndexManagement = ZIndexManagement.Instance;
-        let zIndex = zIndexManagement.findzIndex(DialogId.Preference, appStore.floatingObjs);
+        const floatingObjzIndexManager = FloatingObjzIndexManager.Instance;
+        let zIndex = floatingObjzIndexManager.findIndex(DialogId.Preference, appStore.floatingObjs);
 
         const globalPanel = (
             <React.Fragment>
@@ -917,8 +917,8 @@ export class PreferenceDialogComponent extends React.Component {
                 defaultHeight={PreferenceDialogComponent.DefaultHeight}
                 enableResizing={true}
                 zIndex={zIndex}
-                onSelected={() => zIndexManagement.updateFloatingObjzIndexOnSelect(DialogId.Preference, appStore.floatingObjs)}
-                onClosed={() => zIndexManagement.updateFloatingObjzIndexOnRemove(DialogId.Preference, appStore.floatingObjs)}
+                onSelected={() => floatingObjzIndexManager.updateIndexOnSelect(DialogId.Preference, appStore.floatingObjs)}
+                onClosed={() => floatingObjzIndexManager.updateIndexOnRemove(DialogId.Preference, appStore.floatingObjs)}
             >
                 <div className="bp3-dialog-body">
                     <Tabs id="preferenceTabs" vertical={true} selectedTabId={this.selectedTab} onChange={this.setSelectedTab}>
