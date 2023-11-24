@@ -50,7 +50,9 @@ file.zoomToSizeYWcs('[size in y direction, ex: 2.56"]');
 file.setChannel([channel]);
 ```
 
-<ApiLink path="/.-stores/class/FrameStore/#setStokes">`setStokes`</ApiLink> and <ApiLink path="/.-stores/class/FrameStore/#setStokesByIndex">`setStokesByIndex`</ApiLink> change the stokes of the image using <ApiLink path="/.-models/enum/POLARIZATIONS">`POLARIZATIONS`</ApiLink> enum or the index.
+<ApiLink path="/.-stores/class/FrameStore/#setStokes">`setStokes`</ApiLink> and <ApiLink path="/.-stores/class/FrameStore/#setStokesByIndex">`setStokesByIndex`</ApiLink> change the stokes of the image using <ApiLink path="/.-models/enum/POLARIZATIONS">
+    `POLARIZATIONS`
+</ApiLink> enum or the index.
 
 ```javascript
 file.setStokes(2); // Stokes Q
@@ -74,7 +76,9 @@ file.renderConfig.setPercentileRank(90); // Change to 90%
 file.renderConfig.setScaling(1); // Log
 ```
 
-<ApiLink path="/.-stores/class/RenderConfigStore/#setColorMap">`setColorMap`</ApiLink> changes the color map using options in <ApiLink path="/.-stores/class/RenderConfigStore/#COLOR_MAPS_ALL">`COLOR_MAPS_ALL`</ApiLink> list, and <ApiLink path="/.-stores/class/RenderConfigStore/#setInverted">`setInverted`</ApiLink> inverts the color map.
+<ApiLink path="/.-stores/class/RenderConfigStore/#setColorMap">`setColorMap`</ApiLink> changes the color map using options in <ApiLink path="/.-stores/class/RenderConfigStore/#COLOR_MAPS_ALL">`COLOR_MAPS_ALL`</ApiLink> list, and <ApiLink path="/.-stores/class/RenderConfigStore/#setInverted">
+    `setInverted`
+</ApiLink> inverts the color map.
 
 ```javascript
 file.renderConfig.setColorMap("gray");
