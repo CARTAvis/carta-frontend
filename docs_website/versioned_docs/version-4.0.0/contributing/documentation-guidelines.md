@@ -45,12 +45,6 @@ The "Docs" pages and the "API/Overview" page are generated from markdown files i
 
 For links to the "Docs" index pages and "API" subpages, it is required to use the `DocsIndexLink` and `ApiLink` MDX components to ensure the corresponding version is linked. If the file contains MDX components, it is recommended to use the `.mdx` extension.
 
-:::note
-
-There is a [known issue](https://docusaurus.io/docs/markdown-features/react#markdown-and-jsx-interoperability) when the MDX component is placed at the start of the paragraph, the Markdown syntax parsing fails. As a workaround, zero-width spaces `&#8203;` are placed at the start of the paragraph in such cases.
-
-:::
-
 ### Formatting
 
 To check the format of the changes, run (from the `docs_website/` folder):
