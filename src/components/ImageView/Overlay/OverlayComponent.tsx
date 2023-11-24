@@ -88,12 +88,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     settings.padding.top * pixelRatio,
                     settings.padding.bottom * pixelRatio,
                     styleString,
-                    frame.distanceMeasuring.showCurve,
+                    frame.distanceMeasuring?.showCurve,
                     frame.isPVImage,
-                    frame.distanceMeasuring.transformedStart.x,
-                    frame.distanceMeasuring.transformedStart.y,
-                    frame.distanceMeasuring.transformedFinish.x,
-                    frame.distanceMeasuring.transformedFinish.y
+                    frame.distanceMeasuring?.transformedStart?.x,
+                    frame.distanceMeasuring?.transformedStart?.y,
+                    frame.distanceMeasuring?.transformedFinish?.x,
+                    frame.distanceMeasuring?.transformedFinish?.y
                 );
             };
 
@@ -161,14 +161,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const labelsColor = this.props.overlaySettings.labels.color;
         const darktheme = AppStore.Instance.darkTheme;
         const distanceMeasuring = frame.distanceMeasuring;
-        const distanceMeasuringShowCurve = frame.distanceMeasuring.showCurve;
-        const distanceMeasuringStart = frame.distanceMeasuring.start;
-        const distanceMeasuringFinish = frame.distanceMeasuring.finish;
-        const distanceMeasuringTransformedStart = frame.distanceMeasuring.transformedStart;
-        const distanceMeasuringTransformedFinish = frame.distanceMeasuring.transformedFinish;
-        const distanceMeasuringColor = frame.distanceMeasuring.color;
-        const distanceMeasuringFontSize = frame.distanceMeasuring.fontSize;
-        const distanceMeasuringLineWidth = frame.distanceMeasuring.lineWidth;
+        const distanceMeasuringShowCurve = frame.distanceMeasuring?.showCurve;
+        const distanceMeasuringStart = frame.distanceMeasuring?.start;
+        const distanceMeasuringFinish = frame.distanceMeasuring?.finish;
+        const distanceMeasuringTransformedStart = frame.distanceMeasuring?.transformedStart;
+        const distanceMeasuringTransformedFinish = frame.distanceMeasuring?.transformedFinish;
+        const distanceMeasuringColor = frame.distanceMeasuring?.color;
+        const distanceMeasuringFontSize = frame.distanceMeasuring?.fontSize;
+        const distanceMeasuringLineWidth = frame.distanceMeasuring?.lineWidth;
         const title = this.props.overlaySettings.title.customText ? frame.titleCustomText : frame.filename;
         const ratio = AppStore.Instance.imageRatio;
         const titleStyleString = this.props.overlaySettings.title.styleString;
