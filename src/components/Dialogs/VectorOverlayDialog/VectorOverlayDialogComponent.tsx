@@ -426,7 +426,6 @@ export class VectorOverlayDialogComponent extends React.Component {
                             disabled={(this.angularSource === VectorOverlaySource.None && this.intensitySource === VectorOverlaySource.None) || (!this.configChanged && dataSource.vectorOverlayConfig.enabled)}
                             text="Apply"
                         />
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideVectorOverlayDialog} text="Close" />
                     </div>
                 </div>
             </DraggableDialogComponent>

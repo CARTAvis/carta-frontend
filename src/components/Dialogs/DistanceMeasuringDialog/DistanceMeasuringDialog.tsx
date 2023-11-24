@@ -105,7 +105,7 @@ export class DistanceMeasuringDialog extends React.Component {
                 <CoordNumericInput
                     coord={this.WCSMode && wcsInfo ? CoordinateMode.World : CoordinateMode.Image}
                     inputType={InputType.XCoord}
-                    value={finish ? distanceMeasuringStore?.finish.x : distanceMeasuringStore?.start.x}
+                    value={finish ? distanceMeasuringStore?.finish?.x : distanceMeasuringStore?.start?.x}
                     onChange={DistanceMeasuringDialog.HandleValueChange(distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, true, finish, true) as (val: number) => boolean}
                     valueWcs={finish ? WCSFinish?.x : WCSStart?.x}
                     onChangeWcs={DistanceMeasuringDialog.HandleValueChange(distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, true, finish, false) as (val: string) => boolean}
@@ -114,7 +114,7 @@ export class DistanceMeasuringDialog extends React.Component {
                 <CoordNumericInput
                     coord={this.WCSMode && wcsInfo ? CoordinateMode.World : CoordinateMode.Image}
                     inputType={InputType.YCoord}
-                    value={finish ? distanceMeasuringStore?.finish.y : distanceMeasuringStore?.start.y}
+                    value={finish ? distanceMeasuringStore?.finish?.y : distanceMeasuringStore?.start?.y}
                     onChange={DistanceMeasuringDialog.HandleValueChange(distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, false, finish, true) as (val: number) => boolean}
                     valueWcs={finish ? WCSFinish?.y : WCSStart?.y}
                     onChangeWcs={DistanceMeasuringDialog.HandleValueChange(distanceMeasuringStore, wcsInfo, WCSStart, WCSFinish, false, finish, false) as (val: string) => boolean}
