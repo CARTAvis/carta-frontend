@@ -101,7 +101,7 @@ Please ensure that the CI passes successfully when making the pull request. The 
 
 -   Codebase formatting: Check [here](./developer-tips.md/#checking-and-fixing-code-format) for automatic codebase formatting.
 -   Production builds with different Node versions: The build will not be successful if the lint check fails. Check [here](./developer-tips.md/#code-linting) for details.
--   Documentation page formatting: Check [here](./documentation-guidelines.md/#writing-documentation-pages) for automatic formatting.
+-   Documentation page formatting: Check [here](./documentation-guidelines.md/#formatting) for automatic formatting.
 -   Production build of the documentation website: Details of building the website locally can be found [here](./documentation-guidelines.md/#building-documentaiton).
 
 ### Merging a pull request

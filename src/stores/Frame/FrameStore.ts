@@ -88,6 +88,7 @@ export interface FrameInfo {
     renderMode: CARTA.RenderMode;
     beamTable: CARTA.IBeam[];
     generated: boolean;
+    preview?: boolean;
 }
 
 export enum CoordinateMode {
@@ -198,7 +199,6 @@ export class FrameStore {
 
     @observable stokesFiles: CARTA.StokesFile[];
 
-    @observable isPreview: boolean;
     @observable previewViewWidth: number;
     @observable previewViewHeight: number;
     @observable previewPVRasterData: Float32Array;
@@ -1152,6 +1152,10 @@ export class FrameStore {
         return getFormattedWCSPoint(this.wcsInfoForTransformation, this.center);
     }
 
+    @computed get isPreview(): boolean {
+        return this.frameInfo.preview;
+    }
+
     @computed get previewCursorValue(): {position: Point2D; channel: number; value: number} | null {
         if (!this.isPreview) {
             return null;
@@ -1223,9 +1227,7 @@ export class FrameStore {
 
         this.stokesFiles = [];
 
-        this.isPreview = false;
-
-        this.distanceMeasuring = new DistanceMeasuringStore();
+        this.distanceMeasuring = frameInfo.preview ? null : new DistanceMeasuringStore();
 
         this.dirAxis = -1;
         this.dirAxisSize = -1;
@@ -1475,7 +1477,9 @@ export class FrameStore {
         });
 
         autorun(() => {
-            this.distanceMeasuring.updateTransformedPos(this.spatialTransform);
+            if (!this.isPreview) {
+                this.distanceMeasuring.updateTransformedPos(this.spatialTransform);
+            }
         });
     }
 
@@ -2961,10 +2965,6 @@ export class FrameStore {
         this.fittingResult = "";
         this.fittingResultRegionParams = [];
         this.fittingLog = "";
-    };
-
-    @action setIsPreview = (isPreview: boolean) => {
-        this.isPreview = isPreview;
     };
 
     @action setPreviewPVRasterData = (previewPVRasterData: Float32Array, skipUpdatePreviewData: boolean = false) => {
