@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the incorrect deletion of contour levels ([#2251](https://github.com/CARTAvis/carta-frontend/issues/2251)).
 * Fixed compass and ruler annotations update bug in the spatially matched image when changing the coordinate ([#2270](https://github.com/CARTAvis/carta-frontend/issues/2270)).
 * Removed distance measurement tool render from PV preview frames ([#2267](https://github.com/CARTAvis/carta-frontend/issues/2267)).
+* Fixed bug that the frontend crashes when deleting annotations if the export window is opened ([#2278](https://github.com/CARTAvis/carta-frontend/issues/2278)).
 
 ## [4.0.0]
 
