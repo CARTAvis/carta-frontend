@@ -37,7 +37,7 @@ export class VectorOverlayDialogComponent extends React.Component {
 
     private static readonly DefaultWidth = 500;
     private static readonly DefaultHeight = 720;
-    private static readonly MinWidth = 400;
+    private static readonly MinWidth = 425;
     private static readonly MinHeight = 400;
 
     private cachedFrame: FrameStore;
