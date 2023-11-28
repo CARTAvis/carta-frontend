@@ -6,7 +6,8 @@ This PR is for the release version bump, the final step before tagging a beta re
 
 - [ ] `package.json` version string updated
 - [ ] `package-lock.json` version string updated (by running `npm install`)
-- [ ] changelog version string udpated
+- [ ] changelog version string updated
+- [ ] user manual URL in the about dialog updated (for stable releases)
 
 **Note**
 
