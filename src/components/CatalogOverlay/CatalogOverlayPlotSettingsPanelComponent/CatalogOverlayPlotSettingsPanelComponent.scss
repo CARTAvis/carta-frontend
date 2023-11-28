@@ -50,7 +50,7 @@
 
             .bp3-form-content {
                 display: inline-flex;
-                width: calc(100% - 8em - 15px);
+                width: calc(100% - 5em);
                 max-width: fit-content;
             }
         }
@@ -67,7 +67,7 @@
 
     .bp3-form-content {
         display: inline-flex;
-        width: calc(100% - 5em - 15px);
+        width: calc(100% - 3em);
         max-width: fit-content;
     }
 }
