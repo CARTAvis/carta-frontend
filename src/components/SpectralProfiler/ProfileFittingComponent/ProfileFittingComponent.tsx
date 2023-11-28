@@ -406,6 +406,7 @@ export class ProfileFittingComponent extends React.Component<ProfileFittingCompo
                             <Popover2
                                 isOpen={this.isShowingLog}
                                 onClose={this.handleLogClose}
+                                fill={true}
                                 content={
                                     <div className="fitting-popover">
                                         <div className="fitting-log">

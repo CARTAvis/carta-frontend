@@ -3,7 +3,6 @@
 
     .file-menu .bp3-button {
         white-space: nowrap;
-        display: inline-block;
     }
     .bp3-form-group {
         &:first-of-type {
@@ -37,7 +36,6 @@
 
     .numeric-input-lock {
         display: inline-flex;
-        width: 100%;
         .lock-button {
             margin-bottom: 20px;
         }
@@ -49,6 +47,28 @@
                 min-width: 2em;
                 width: 3em;
             }
+                            
+            .bp3-form-content {
+                display: inline-flex;
+                width: calc(100% - 8em - 15px);
+                max-width: fit-content;
+            }
         }
     }
+
+    .bp3-button:not([class*=bp3-intent-]) {
+        white-space: nowrap;
+        width: 100%;
+
+        .bp3-button-text {
+            overflow: hidden;
+        }
+    }
+
+    .bp3-form-content {
+        display: inline-flex;
+        width: calc(100% - 5em - 15px);
+        max-width: fit-content;
+    }
+
 }

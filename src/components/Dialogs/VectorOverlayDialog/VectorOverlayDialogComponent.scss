@@ -8,8 +8,13 @@
             text-align: right;
         }
 
-        .bp3-button {
-            white-space: pre;
+        .bp3-button:not([class*=bp3-intent-]) {
+            white-space: nowrap;
+            width: 100%;
+
+            .bp3-button-text {
+                overflow: hidden;
+            }
         }
 
         .bp3-form-group {
@@ -51,6 +56,12 @@
                     width: 3em;
                 }
             }
+        }
+
+        .bp3-form-content {
+            display: inline-flex;
+            width: calc(100% - 8em - 15px);
+            max-width: fit-content;
         }
     }
 }
