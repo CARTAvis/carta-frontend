@@ -6,7 +6,7 @@ sidebar_position: 4
 
 Guidelines for building and writing this website.
 
-## Building documentaiton
+## Building documentation
 
 The website is hosted on Github Pages, and whenever the `dev` branch is updated, the website is automatically updated using Github Actions.
 
