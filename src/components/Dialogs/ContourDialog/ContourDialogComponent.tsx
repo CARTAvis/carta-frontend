@@ -37,8 +37,10 @@ export class ContourDialogComponent extends React.Component {
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
-    private static readonly DefaultWidth = 600;
+    private static readonly DefaultWidth = 500;
     private static readonly DefaultHeight = 660;
+    private static readonly MinWidth = 425;
+    private static readonly MinHeight = 450;
 
     private readonly widgetStore: RenderConfigWidgetStore;
     private cachedFrame: FrameStore;
@@ -290,7 +292,15 @@ export class ContourDialogComponent extends React.Component {
 
         if (!appStore || !appStore.contourDataSource) {
             return (
-                <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.CONTOUR} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
+                <DraggableDialogComponent
+                    dialogProps={dialogProps}
+                    helpType={HelpType.CONTOUR}
+                    minWidth={ContourDialogComponent.MinWidth}
+                    minHeight={ContourDialogComponent.MinHeight}
+                    defaultWidth={ContourDialogComponent.DefaultWidth}
+                    defaultHeight={ContourDialogComponent.DefaultHeight}
+                    enableResizing={true}
+                >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"} />
                 </DraggableDialogComponent>
             );
@@ -466,9 +476,17 @@ export class ContourDialogComponent extends React.Component {
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.CONTOUR} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                helpType={HelpType.CONTOUR}
+                minWidth={ContourDialogComponent.MinWidth}
+                minHeight={ContourDialogComponent.MinHeight}
+                defaultWidth={ContourDialogComponent.DefaultWidth}
+                defaultHeight={ContourDialogComponent.DefaultHeight}
+                enableResizing={true}
+            >
                 <div className={Classes.DIALOG_BODY}>
-                    <FormGroup inline={true} label="Data source">
+                    <FormGroup className={"source-menu"} inline={true} label="Data source">
                         <DataSourceSelect
                             activeItem={dataSource}
                             onItemSelect={appStore.setContourDataSource}

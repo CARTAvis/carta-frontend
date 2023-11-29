@@ -817,6 +817,6 @@ export class FileBrowserStore {
     }
 
     @computed get exportAnnotationNum(): number {
-        return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame.regionSet.regions[exportIndex].isAnnotation ? 1 : 0), 0);
+        return this.exportRegionIndexes?.reduce((accum, exportIndex, i) => accum + (AppStore.Instance.activeFrame.regionSet.regions[exportIndex]?.isAnnotation ? 1 : 0), 0);
     }
 }
